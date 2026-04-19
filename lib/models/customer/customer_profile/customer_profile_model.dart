@@ -1,0 +1,400 @@
+// -----------------------------------------------------------------------------
+// FILE: customer_profile_model.dart
+// MODULE: Customer → Customer Profile
+// CHANGE LOG:
+//   - Added: AdvanceOrderModel — maps to SalesOrders + OrderAdvances tables
+//   - Added: CustomerDueModel  — maps to unpaid Bills
+//   - Updated: CustomerProfileModel — advanceOrders, dues fields added
+//   - Updated: copyWith — includes new fields
+// -----------------------------------------------------------------------------
+
+import 'package:flutter/foundation.dart';
+
+// ── GENDER ────────────────────────────────────────────────────────────────
+enum CustomerGender { male, female }
+
+// ── CREDIT STATUS ─────────────────────────────────────────────────────────
+enum CreditStatus {
+  clear,
+  due,
+  defaulter;
+
+  String get label {
+    switch (this) {
+      case CreditStatus.clear:     return "CLEAR";
+      case CreditStatus.due:       return "DUE";
+      case CreditStatus.defaulter: return "DEFAULTER";
+    }
+  }
+
+  static CreditStatus calculate({
+    required double outstanding,
+    required double creditLimit,
+  }) {
+    if (outstanding <= 0) return CreditStatus.clear;
+    if (outstanding <= creditLimit) return CreditStatus.due;
+    return CreditStatus.defaulter;
+  }
+}
+
+// ── ADVANCE ORDER STATUS ──────────────────────────────────────────────────
+enum AdvanceOrderStatus {
+  pending,
+  ready,
+  delivered,
+  cancelled;
+
+  String get label {
+    switch (this) {
+      case AdvanceOrderStatus.pending:   return "PENDING";
+      case AdvanceOrderStatus.ready:     return "READY";
+      case AdvanceOrderStatus.delivered: return "DELIVERED";
+      case AdvanceOrderStatus.cancelled: return "CANCELLED";
+    }
+  }
+
+  static AdvanceOrderStatus fromString(String val) {
+    switch (val.toUpperCase()) {
+      case 'READY':     return AdvanceOrderStatus.ready;
+      case 'DELIVERED': return AdvanceOrderStatus.delivered;
+      case 'CANCELLED': return AdvanceOrderStatus.cancelled;
+      default:          return AdvanceOrderStatus.pending;
+    }
+  }
+}
+
+// ── BILL MODEL ────────────────────────────────────────────────────────────
+@immutable
+class CustomerBillModel {
+  final int id;
+  final String billNo;
+  final double totalAmount;
+  final double paidAmount;
+  final String status;
+  final DateTime billDate;
+
+  const CustomerBillModel({
+    required this.id,
+    required this.billNo,
+    required this.totalAmount,
+    required this.status,
+    required this.billDate,
+    this.paidAmount = 0.0,
+  });
+
+  bool get isPaid => status.toUpperCase() == 'PAID';
+  bool get isActive => status.toUpperCase() == 'ACTIVE';
+
+  double get dueAmount => (totalAmount - paidAmount).clamp(0.0, double.infinity);
+
+  String get formattedAmount => "₹ ${totalAmount.toStringAsFixed(2)}";
+
+  String get formattedDate {
+    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return "${billDate.day.toString().padLeft(2, '0')} "
+        "${months[billDate.month]} ${billDate.year}";
+  }
+}
+
+// ── LOAN MODEL ────────────────────────────────────────────────────────────
+@immutable
+class CustomerLoanModel {
+  final int id;
+  final String loanNo;
+  final String itemDesc;
+  final double grossWeight;
+  final double loanAmount;
+  final double interestRate;
+  final DateTime startDate;
+  final String status;
+
+  const CustomerLoanModel({
+    required this.id,
+    required this.loanNo,
+    required this.itemDesc,
+    required this.grossWeight,
+    required this.loanAmount,
+    required this.interestRate,
+    required this.startDate,
+    required this.status,
+  });
+
+  bool get isActive => status.toUpperCase() == 'ACTIVE';
+  bool get isReleased => status.toUpperCase() == 'RELEASED';
+
+  double get accruedInterest {
+    final months = DateTime.now().difference(startDate).inDays / 30;
+    return (loanAmount * interestRate / 100) * months;
+  }
+
+  String get formattedDate {
+    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return "${startDate.day.toString().padLeft(2, '0')} "
+        "${months[startDate.month]} ${startDate.year}";
+  }
+
+  int get daysActive => DateTime.now().difference(startDate).inDays;
+}
+
+// ── ADVANCE ORDER MODEL ──────────────────────────────────────────────────  ✅ NEW
+@immutable
+class CustomerAdvanceOrderModel {
+  final int id;
+  final String orderNo;
+  final String itemName;
+  final String metalType;
+  final String purity;
+  final double approxWeight;
+  final double lockedRate;
+  final String bookingType;
+  final AdvanceOrderStatus status;
+  final DateTime? deliveryDate;
+  final String? notes;
+  final double totalAdvancePaid;  // Sum of all advance payments
+  final double estimatedTotal;    // approxWeight * lockedRate (approx)
+  final DateTime createdAt;
+
+  const CustomerAdvanceOrderModel({
+    required this.id,
+    required this.orderNo,
+    required this.itemName,
+    required this.metalType,
+    required this.purity,
+    required this.approxWeight,
+    required this.lockedRate,
+    required this.bookingType,
+    required this.status,
+    required this.totalAdvancePaid,
+    required this.estimatedTotal,
+    required this.createdAt,
+    this.deliveryDate,
+    this.notes,
+  });
+
+  bool get isPending   => status == AdvanceOrderStatus.pending;
+  bool get isReady     => status == AdvanceOrderStatus.ready;
+  bool get isDelivered => status == AdvanceOrderStatus.delivered;
+  bool get isCancelled => status == AdvanceOrderStatus.cancelled;
+
+  double get remainingBalance =>
+      (estimatedTotal - totalAdvancePaid).clamp(0.0, double.infinity);
+
+  String get formattedDate {
+    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return "${createdAt.day.toString().padLeft(2, '0')} "
+        "${months[createdAt.month]} ${createdAt.year}";
+  }
+
+  String get formattedDelivery {
+    if (deliveryDate == null) return "No date set";
+    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return "${deliveryDate!.day.toString().padLeft(2, '0')} "
+        "${months[deliveryDate!.month]} ${deliveryDate!.year}";
+  }
+}
+
+// ── DUES MODEL ───────────────────────────────────────────────────────────  ✅ NEW
+@immutable
+class CustomerDueModel {
+  final int billId;
+  final String billNo;
+  final double totalAmount;
+  final double paidAmount;
+  final DateTime billDate;
+
+  const CustomerDueModel({
+    required this.billId,
+    required this.billNo,
+    required this.totalAmount,
+    required this.paidAmount,
+    required this.billDate,
+  });
+
+  double get dueAmount =>
+      (totalAmount - paidAmount).clamp(0.0, double.infinity);
+
+  String get formattedDue => "₹${dueAmount.toStringAsFixed(0)}";
+
+  String get formattedDate {
+    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return "${billDate.day.toString().padLeft(2, '0')} "
+        "${months[billDate.month]} ${billDate.year}";
+  }
+}
+
+// ── FULL PROFILE MODEL ────────────────────────────────────────────────────
+@immutable
+class CustomerProfileModel {
+  final int id;
+  final String name;
+  final String mobile;
+  final String whatsapp;
+  final String city;
+  final String type;
+  final DateTime createdAt;
+  final double creditLimit;
+  final double outstanding;
+  final List<CustomerBillModel> bills;
+  final List<CustomerLoanModel> loans;
+  final List<CustomerAdvanceOrderModel> advanceOrders; // ✅ NEW
+  final List<CustomerDueModel> dues;                   // ✅ NEW
+  final String initials;
+
+  const CustomerProfileModel({
+    required this.id,
+    required this.name,
+    required this.mobile,
+    this.whatsapp    = "",
+    this.city        = "",
+    this.type        = "Regular",
+    required this.createdAt,
+    this.creditLimit = 50000.0,
+    this.outstanding = 0.0,
+    this.bills       = const [],
+    this.loans       = const [],
+    this.advanceOrders = const [], // ✅ NEW
+    this.dues          = const [], // ✅ NEW
+    required this.initials,
+  });
+
+  // ── GENDER DETECTION ───────────────────────────────────────────────────
+  CustomerGender get gender {
+    final nameLower = name.toLowerCase().trim();
+    final parts = nameLower.split(RegExp(r'\s+'));
+    final lastName = parts.length >= 2 ? parts.last : "";
+    final firstName = parts.first;
+
+    const femaleEndwords = [
+      'devi', 'kumari', 'bai', 'rani', 'mata', 'ben', 'bhen',
+      'priya', 'lata', 'prabha', 'bala', 'mala', 'kala',
+      'rekha', 'radha', 'sita', 'geeta', 'meeta', 'neeta',
+      'anita', 'sunita', 'kavita', 'savita', 'lalita', 'mamta',
+      'shanti', 'tara', 'usha', 'asha', 'nisha', 'misha',
+      'komal', 'kamal', 'deepa', 'rupa', 'sarla', 'sudha',
+      'vidya', 'divya', 'pooja', 'puja', 'jyoti', 'kiran',
+      'seema', 'reema', 'neha', 'sneha', 'ankita', 'namita',
+      'archana', 'kanchan', 'vandana', 'preeti', 'swati',
+      'ritu', 'mitu', 'pintu', 'rinku', 'anjali', 'manali',
+      'shruti', 'smriti', 'aditi', 'kriti', 'arti', 'bharti',
+      'shobha', 'prabha', 'subha', 'abha', 'vibha', 'shikha',
+      'rekha', 'leela', 'sheela', 'meela', 'kamla', 'vimla',
+      'nirmala', 'urmila', 'sushila', 'shushila', 'pushpa',
+      'champa', 'chameli', 'gulabi', 'hemlata', 'shakuntalaa',
+    ];
+
+    for (final word in femaleEndwords) {
+      if (lastName == word || firstName == word ||
+          nameLower.contains(' $word') || nameLower.endsWith(word)) {
+        return CustomerGender.female;
+      }
+    }
+    return CustomerGender.male;
+  }
+
+  bool get isFemale => gender == CustomerGender.female;
+  bool get isVip => type.toLowerCase() == 'vip';
+
+  // ── CREDIT STATS ───────────────────────────────────────────────────────
+  CreditStatus get creditStatus => CreditStatus.calculate(
+    outstanding: outstanding,
+    creditLimit: creditLimit,
+  );
+
+  double get availableCredit =>
+      (creditLimit - outstanding).clamp(0, double.infinity);
+
+  double get usedPercent => creditLimit > 0
+      ? (outstanding / creditLimit * 100).clamp(0, 100)
+      : 0;
+
+  // ── BILL STATS ─────────────────────────────────────────────────────────
+  int get totalBills => bills.length;
+  double get totalBillAmount =>
+      bills.fold(0.0, (sum, b) => sum + b.totalAmount);
+  double get totalPaidAmount =>
+      bills.where((b) => b.isPaid).fold(0.0, (sum, b) => sum + b.totalAmount);
+  int get paidBillsCount => bills.where((b) => b.isPaid).length;
+  int get unpaidBillsCount => bills.where((b) => !b.isPaid).length;
+
+  // ── LOAN (GIRVI) STATS ─────────────────────────────────────────────────
+  int get totalLoans => loans.length;
+  int get activeLoans => loans.where((l) => l.isActive).length;
+  int get completedLoans => loans.where((l) => l.isReleased).length;
+
+  double get totalActiveLoanAmount => loans
+      .where((l) => l.isActive)
+      .fold(0.0, (sum, l) => sum + l.loanAmount);
+
+  double get totalInterestAccrued => loans
+      .where((l) => l.isActive)
+      .fold(0.0, (sum, l) => sum + l.accruedInterest);
+
+  double get totalLoanAmount =>
+      loans.fold(0.0, (sum, l) => sum + l.loanAmount);
+
+  // ── ADVANCE STATS ──────────────────────────────────────────────────────  ✅ NEW
+  int get activeAdvanceCount =>
+      advanceOrders.where((a) => a.isPending || a.isReady).length;
+
+  double get totalAdvancePaid =>
+      advanceOrders.fold(0.0, (sum, a) => sum + a.totalAdvancePaid);
+
+  double get totalAdvanceRemaining =>
+      advanceOrders.where((a) => !a.isDelivered && !a.isCancelled)
+          .fold(0.0, (sum, a) => sum + a.remainingBalance);
+
+  // ── DUES STATS ─────────────────────────────────────────────────────────  ✅ NEW
+  double get totalDueAmount =>
+      dues.fold(0.0, (sum, d) => sum + d.dueAmount);
+
+  bool get hasDues => dues.isNotEmpty && totalDueAmount > 0;
+
+  // ── FORMATTERS ─────────────────────────────────────────────────────────
+  String get formattedMemberSince {
+    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return "${months[createdAt.month]} ${createdAt.year}";
+  }
+
+  CustomerProfileModel copyWith({
+    double? creditLimit,
+    String? name,
+    String? mobile,
+    String? whatsapp,
+    String? city,
+    String? type,
+    List<CustomerAdvanceOrderModel>? advanceOrders,
+    List<CustomerDueModel>? dues,
+  }) {
+    return CustomerProfileModel(
+      id: id,
+      name: name ?? this.name,
+      mobile: mobile ?? this.mobile,
+      whatsapp: whatsapp ?? this.whatsapp,
+      city: city ?? this.city,
+      type: type ?? this.type,
+      createdAt: createdAt,
+      creditLimit: creditLimit ?? this.creditLimit,
+      outstanding: outstanding,
+      bills: bills,
+      loans: loans,
+      advanceOrders: advanceOrders ?? this.advanceOrders,
+      dues: dues ?? this.dues,
+      initials: initials,
+    );
+  }
+
+  static String buildInitials(String name) {
+    if (name.trim().isEmpty) return "NA";
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.length >= 2) {
+      return "${parts[0][0]}${parts[1][0]}".toUpperCase();
+    }
+    return name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
+  }
+}

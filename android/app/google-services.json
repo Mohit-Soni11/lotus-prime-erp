@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "620763775715",
+    "project_id": "lotuserp-ca87a",
+    "storage_bucket": "lotuserp-ca87a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:620763775715:android:03ad06cc14627d6c843bd6",
+        "android_client_info": {
+          "package_name": "com.example.lotus_erp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjtph3k79l5tRaNczugx_AV5tk-qjQXQM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

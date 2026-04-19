@@ -1,0 +1,78 @@
+name: lotus_erp
+description: "Lotus ERP - Enterprise Resource Planning System (Professional Edition)"
+publish_to: 'none'
+
+version: 1.1.0+1
+
+environment:
+  sdk: '>=3.2.3 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # --- 1. UI & DESIGN SYSTEM ---
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.10
+  fl_chart: ^0.68.0
+  data_table_2: ^2.5.10
+  shimmer: ^3.0.0
+
+  # --- 2. STATE MANAGEMENT & ROUTING ---
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+  go_router: ^14.2.0
+  provider: ^6.1.2
+
+  # --- 3. BACKEND (FIREBASE) ---
+  firebase_core: ^3.1.0
+  firebase_auth: ^5.1.0
+  cloud_firestore: ^5.0.0
+
+  # --- 4. LOCAL DATABASE (DRIFT) ---
+  drift: ^2.19.1
+  sqlite3_flutter_libs: ^0.5.22
+  path: ^1.9.1
+  path_provider: ^2.1.5
+  shared_preferences: ^2.5.4
+
+  # --- 5. MEDIA ENGINE ---
+  image_picker: ^1.1.2
+  image_cropper: ^8.0.0
+  crop_your_image: ^1.0.0
+  file_picker: ^10.3.10
+  permission_handler: ^11.3.1
+
+  # --- 6. UTILITIES ---
+  intl: ^0.19.0
+  uuid: ^4.4.0
+  window_manager: ^0.3.9
+  printing: ^5.14.2
+  pdf: ^3.11.3
+  font_awesome_flutter: ^11.0.0
+  url_launcher: ^6.3.0
+
+  # --- 7. MAPS & LOCATION (UPDATED FOR WINDOWS/MOBILE) ---
+  flutter_map: ^6.1.0        # ✅ Works on Windows & Mobile inside app
+  latlong2: ^0.9.0           # ✅ Coordinates handling
+  geolocator: ^10.1.0        # ✅ GPS Logic
+  sqflite: ^2.4.2
+  sqflite_common_ffi: ^2.3.7+1
+  share_plus: ^12.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.9
+  drift_dev: ^2.19.0
+  riverpod_generator: ^2.4.0
+  custom_lint: ^0.6.4
+  riverpod_lint: ^2.3.10
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
