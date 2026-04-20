@@ -1,35 +1,71 @@
-// -----------------------------------------------------------------------------
+// =============================================================================
 // FILE: customer_list_app_bar.dart
 // MODULE: Customer → Customer List
-// DESCRIPTION: Top app bar matching POS Terminal style.
-//              Dark shell + Gold accent + Radar below title.
-// -----------------------------------------------------------------------------
- 
+// LAYER: UI
+// DESCRIPTION: Dark-shell AppBar — matches Day Book & POS Terminal pattern exactly.
+//              ✅ Gold gradient module icon + radar blink live indicator
+//              ✅ Gold hover back button
+//              ✅ Right-side actions (Add, Refresh, Export) mapped to hover buttons
+//              ✅ Stateful widget setup for radar animation matching DayBook
+// =============================================================================
+
 import 'package:flutter/material.dart';
 import '../../../theme/customer/customer_list/customer_list_theme.dart';
- 
-class CustomerListAppBar extends StatelessWidget implements PreferredSizeWidget {
+// import '../../../logic/customer/customer_list/customer_list_controller.dart'; // Uncomment when ready
+
+class CustomerListAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
   final String shopName;
- 
+  // final CustomerListController ctrl; // Uncomment when controller is linked
+
   const CustomerListAppBar({
     super.key,
     required this.onBack,
     this.shopName = CustomerListStrings.shopName,
+    // required this.ctrl,
   });
- 
+
   @override
-  Size get preferredSize => const Size.fromHeight(CustomerListStyles.appBarHeight);
- 
+  Size get preferredSize =>
+      const Size.fromHeight(CustomerListStyles.appBarHeight);
+
+  @override
+  State<CustomerListAppBar> createState() => _CustomerListAppBarState();
+}
+
+class _CustomerListAppBarState extends State<CustomerListAppBar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _blinkCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    // Animation controller for the Radar blink (Exactly like Day Book)
+    _blinkCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _blinkCtrl.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    // return ListenableBuilder(
+    //   listenable: widget.ctrl,
+    //   builder: (_, __) {
     return Container(
+      width: double.infinity,
       height: CustomerListStyles.appBarHeight,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
       decoration: const BoxDecoration(
         color: CustomerListColors.shellPanelBg,
         border: Border(
-          bottom: BorderSide(color: CustomerListColors.shellBorder, width: 1),
+          bottom: BorderSide(color: CustomerListColors.shellBorder, width: 1.0),
         ),
         boxShadow: [
           BoxShadow(
@@ -43,47 +79,69 @@ class CustomerListAppBar extends StatelessWidget implements PreferredSizeWidget 
         bottom: false,
         child: Row(
           children: [
-            // 1. ANIMATED BACK BUTTON
-            _HoverBackButton(onTap: onBack),
-            const SizedBox(width: 20),
- 
-            // 2. VERTICAL DIVIDER
+            // ── 1. Animated Back Button ──────────────────────────────────────
+            _HoverBackButton(onTap: widget.onBack),
+            const SizedBox(width: 16),
+
+            // ── 2. Vertical Divider ──────────────────────────────────────────
             _buildVerticalDivider(),
-            const SizedBox(width: 20),
- 
-            // 3. TITLE + RADAR (Radar is back below the title)
+            const SizedBox(width: 16),
+
+            // ── 3. Gradient Module Icon + Title + Radar ──────────────────────
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFFFFD700), // Simulated goldGradStart
+                    CustomerListColors.brandGold,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: CustomerListColors.brandGold.withOpacity(0.4),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ],
+              ),
+              child: const Icon(
+                CustomerListIcons.moduleIcon,
+                color: Colors.white,
+                size: 17,
+              ),
+            ),
+            const SizedBox(width: 12),
+
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Main Title Row
-                Row(
-                  children: [
-                    Icon(
-                      CustomerListIcons.moduleIcon, // Replaced yellow dot with icon
-                      color: CustomerListColors.brandGold,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      CustomerListStrings.appBarTitle, // "CLIENT DIRECTORY"
-                      style: CustomerListStyles.appBarTitle,
-                    ),
-                  ],
+                Text(
+                  CustomerListStrings.appBarTitle,
+                  style: CustomerListStyles.appBarTitle,
                 ),
-                const SizedBox(height: 5),
-                // Radar status (Placed exactly where it was before)
-                const _RadarStatusWidget(),
+                const SizedBox(height: 4),
+                _RadarWidget(blinkCtrl: _blinkCtrl),
               ],
             ),
- 
-            const Spacer(), // Pushes everything to the left, badge is removed
+
+            const Spacer(),
+
+            // ── 4. Right Side Actions (Mapped from CustomerListIcons) ────────
+            _buildVerticalDivider(),
+            const SizedBox(width: 12),
+            const _ActionButtons(), // Using available icons instead of PDF/Excel
           ],
         ),
       ),
     );
+    //   },
+    // );
   }
- 
+
   Widget _buildVerticalDivider() {
     return Container(
       width: 1,
@@ -102,21 +160,116 @@ class CustomerListAppBar extends StatelessWidget implements PreferredSizeWidget 
     );
   }
 }
- 
+
 // ─────────────────────────────────────────────────────────────────────────────
-// ANIMATED BACK BUTTON (Gold hover - matches POS)
+// ACTION BUTTONS (Replaces Export buttons from Day Book)
+// ─────────────────────────────────────────────────────────────────────────────
+class _ActionButtons extends StatelessWidget {
+  // final CustomerListController ctrl; // Pass this when ready
+  const _ActionButtons();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _IconBtn(
+          icon: CustomerListIcons.refresh,
+          tooltip: CustomerListStrings.btnRefresh,
+          onTap: () {}, // Link to ctrl.refresh() later
+        ),
+        const SizedBox(width: 6),
+        _IconBtn(
+          icon: CustomerListIcons.export,
+          tooltip:
+              'Export Data', // You can add this string to CustomerListStrings later
+          onTap: () {},
+        ),
+        const SizedBox(width: 6),
+        _IconBtn(
+          icon: CustomerListIcons.addCustomer,
+          tooltip: CustomerListStrings.btnAddNew,
+          onTap: () {},
+        ),
+      ],
+    );
+  }
+}
+
+class _IconBtn extends StatefulWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const _IconBtn({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  State<_IconBtn> createState() => _IconBtnState();
+}
+
+class _IconBtnState extends State<_IconBtn> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: Tooltip(
+        message: widget.tooltip,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: _isHovered
+                  ? CustomerListColors
+                      .brandGoldLight // Found this in your theme!
+                  : CustomerListColors.shellBorder.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _isHovered
+                    ? CustomerListColors.brandGold
+                    : CustomerListColors.shellBorder,
+                width: _isHovered ? 1.5 : 1.0,
+              ),
+            ),
+            child: Icon(
+              widget.icon,
+              color: _isHovered
+                  ? CustomerListColors.brandGold
+                  : CustomerListColors.shellTextMuted,
+              size: 16,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ANIMATED BACK BUTTON (Exact Day Book Pattern)
 // ─────────────────────────────────────────────────────────────────────────────
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
   const _HoverBackButton({required this.onTap});
- 
+
   @override
   State<_HoverBackButton> createState() => _HoverBackButtonState();
 }
- 
+
 class _HoverBackButtonState extends State<_HoverBackButton> {
   bool _isHovered = false;
- 
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -130,14 +283,14 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOutBack,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
+            duration: const Duration(milliseconds: 220),
             width: 42,
             height: 42,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: _isHovered
-                  ? CustomerListColors.bodyPanelBg
-                  : CustomerListColors.shellBg,
+                  ? CustomerListColors.shellBg
+                  : CustomerListColors.shellBorder.withOpacity(0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isHovered
@@ -148,7 +301,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               boxShadow: _isHovered
                   ? [
                       BoxShadow(
-                        color: CustomerListColors.brandGold.withOpacity(0.25),
+                        color: CustomerListColors.brandGold.withOpacity(0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
                       ),
@@ -160,7 +313,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               color: _isHovered
                   ? CustomerListColors.brandGold
                   : CustomerListColors.shellTextTitle,
-              size: 20,
+              size: 18,
             ),
           ),
         ),
@@ -168,36 +321,14 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
     );
   }
 }
- 
+
 // ─────────────────────────────────────────────────────────────────────────────
-// RADAR ANIMATION (Same as POS)
+// RADAR / ONLINE WIDGET (Exact Day Book Pattern)
 // ─────────────────────────────────────────────────────────────────────────────
-class _RadarStatusWidget extends StatefulWidget {
-  const _RadarStatusWidget();
- 
-  @override
-  State<_RadarStatusWidget> createState() => _RadarStatusWidgetState();
-}
- 
-class _RadarStatusWidgetState extends State<_RadarStatusWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
- 
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat();
-  }
- 
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
- 
+class _RadarWidget extends StatelessWidget {
+  final AnimationController blinkCtrl;
+  const _RadarWidget({required this.blinkCtrl});
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -208,17 +339,17 @@ class _RadarStatusWidgetState extends State<_RadarStatusWidget>
           child: Stack(
             alignment: Alignment.center,
             children: [
-              _buildWave(delay: 0.0),
-              _buildWave(delay: 0.5),
+              _buildWave(blinkCtrl, 0.0),
+              _buildWave(blinkCtrl, 0.5),
               Container(
                 width: 6,
                 height: 6,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF10B981),
+                  color: CustomerListColors.onlineGreen,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0xFF10B981),
+                      color: CustomerListColors.onlineGreen,
                       blurRadius: 6,
                       spreadRadius: 1,
                     ),
@@ -232,10 +363,10 @@ class _RadarStatusWidgetState extends State<_RadarStatusWidget>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
-            color: const Color(0xFF10B981).withOpacity(0.08),
+            color: CustomerListColors.onlineGreen.withOpacity(0.08),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: const Color(0xFF10B981).withOpacity(0.2),
+              color: CustomerListColors.onlineGreen.withOpacity(0.25),
             ),
           ),
           child: const Text(
@@ -246,12 +377,12 @@ class _RadarStatusWidgetState extends State<_RadarStatusWidget>
       ],
     );
   }
- 
-  Widget _buildWave({required double delay}) {
+
+  Widget _buildWave(AnimationController ctrl, double delay) {
     return AnimatedBuilder(
-      animation: _ctrl,
+      animation: ctrl,
       builder: (_, __) {
-        final val = (_ctrl.value + delay) % 1.0;
+        final val = (ctrl.value + delay) % 1.0;
         return Opacity(
           opacity: 1.0 - val,
           child: Transform.scale(
@@ -262,7 +393,7 @@ class _RadarStatusWidgetState extends State<_RadarStatusWidget>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: const Color(0xFF10B981).withOpacity(0.5),
+                  color: CustomerListColors.onlineGreen.withOpacity(0.5),
                   width: 1.5,
                 ),
               ),
