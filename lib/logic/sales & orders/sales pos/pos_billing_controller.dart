@@ -5,6 +5,16 @@
 // DESCRIPTION: Zero-lag State Manager.
 //              ✅ MEMORY CRASH FIXED FOR HOLD SYSTEM.
 //              ✅ DELETE HELD BILL FUNCTION ADDED.
+//
+// BUG FIX LOG:
+//   ❌ BUG  — dispose() mein _db.close() tha.
+//             AppDatabase ek singleton hai, isliye isko close karne se
+//             poori app ka database band ho jaata tha. Jab bhi user POS
+//             screen se bahar jaata, app crash ho jaati thi with:
+//             "Can't re-open a database after closing it."
+//   ✅ FIX  — _db.close() line remove kar di. Singleton database app ke
+//             poore lifecycle mein live rehti hai, process exit pe
+//             automatically close hoti hai.
 // ==========================================
 
 import 'package:drift/drift.dart' as drift;
@@ -264,9 +274,6 @@ class PosBillingController extends ChangeNotifier {
       totalSilverAmount +
       totalPlatinumAmount +
       totalDiamondAmount;
-
-// 1. pos_billing_controller.dart
-// In "1. RETAIL ENGINE (B2C)" section, add these 4 new getters just below the total amounts:
 
   double get pureGoldAmount => totalGoldAmount - goldMakingCharge;
   double get pureSilverAmount => totalSilverAmount - silverMakingCharge;
@@ -573,10 +580,9 @@ class PosBillingController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- NEW: CLEAN DELETE FUNCTION FOR UI ---
   void deleteHeldBill(String holdId) {
     heldBills.removeWhere((b) => b.holdId == holdId);
-    notifyListeners(); // Now it's safe and legal to notify from here
+    notifyListeners();
   }
 
   void clearEntirePOS({bool isHolding = false}) {
@@ -619,7 +625,10 @@ class PosBillingController extends ChangeNotifier {
   @override
   void dispose() {
     clearEntirePOS(isHolding: false);
-    _db.close();
+    // ✅ BUG FIX: _db.close() intentionally removed.
+    // AppDatabase is a Dart singleton. Calling close() here was shutting
+    // down the ENTIRE app's database whenever the POS screen was exited.
+    // Singleton databases must never be manually closed mid-session.
     tableScrollCtrl.dispose();
     mobileCtrl.dispose();
     nameCtrl.dispose();

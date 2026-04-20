@@ -2,7 +2,7 @@
 // FILE: pos_invoice_controller.dart
 // TYPE: Business Logic Controller
 // DESCRIPTION: PDF generation, Customization, and Share engine.
-//              ✅ UPGRADED: Smart CRM Folder Management 
+//              ✅ UPGRADED: Smart CRM Folder Management
 //              ✅ CLEANED: Removed Unused Imports (share_plus, path_provider)
 // ==========================================
 
@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import 'package:url_launcher/url_launcher.dart'; 
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 
 // 🚀 SMART FOLDER LOGIC IMPORTS
@@ -21,7 +21,8 @@ import 'package:file_picker/file_picker.dart';
 import '../../../logic/sales & orders/sales pos/pos_billing_controller.dart';
 import '../../../models/sales & orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../models/sales & orders/sales_pos_enums/sales_pos_enums.dart';
-import '../../../repositories/setting/shop_setup/shop_setup_repository.dart'; 
+import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
+import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
 
 class BillSettings {
   bool showHuid = false;
@@ -43,7 +44,7 @@ enum InvoiceGenState { idle, generating, ready, error }
 class PosInvoiceController extends ChangeNotifier {
   final PosBillingController billing;
   final ShopSetupRepository _shopRepo = ShopSetupRepository();
-  
+
   final InvoicePrintConfig printConfig = InvoicePrintConfig();
 
   PosInvoiceController({required this.billing});
@@ -64,13 +65,18 @@ class PosInvoiceController extends ChangeNotifier {
 
   BillSettings getActiveConfig(BillingMode mode, BillType type) {
     if (mode == BillingMode.retail) {
-      return type == BillType.normal ? printConfig.retailNormal : printConfig.retailGst;
+      return type == BillType.normal
+          ? printConfig.retailNormal
+          : printConfig.retailGst;
     } else {
-      return type == BillType.normal ? printConfig.wholesaleNormal : printConfig.wholesaleGst;
+      return type == BillType.normal
+          ? printConfig.wholesaleNormal
+          : printConfig.wholesaleGst;
     }
   }
 
-  Future<void> updatePrintOptions({required int copies, required bool duplicate}) async {
+  Future<void> updatePrintOptions(
+      {required int copies, required bool duplicate}) async {
     printCopies = copies;
     includeDuplicateStamp = duplicate;
     if (invoice != null) {
@@ -79,18 +85,31 @@ class PosInvoiceController extends ChangeNotifier {
     }
   }
 
-  Future<void> toggleCustomization(String key, BillingMode mode, BillType type) async {
+  Future<void> toggleCustomization(
+      String key, BillingMode mode, BillType type) async {
     BillSettings config = getActiveConfig(mode, type);
 
     switch (key) {
-      case 'huid': config.showHuid = !config.showHuid; break;
-      case 'pcs': config.showPcs = !config.showPcs; break;
-      case 'gw': config.showGrossWt = !config.showGrossWt; break;
-      case 'lw': config.showLessWt = !config.showLessWt; break;
-      case 'making': config.showMaking = !config.showMaking; break;
+      case 'huid':
+        config.showHuid = !config.showHuid;
+        break;
+      case 'pcs':
+        config.showPcs = !config.showPcs;
+        break;
+      case 'gw':
+        config.showGrossWt = !config.showGrossWt;
+        break;
+      case 'lw':
+        config.showLessWt = !config.showLessWt;
+        break;
+      case 'making':
+        config.showMaking = !config.showMaking;
+        break;
     }
-    
-    if (invoice != null && invoice!.billingMode == mode && invoice!.billType == type) {
+
+    if (invoice != null &&
+        invoice!.billingMode == mode &&
+        invoice!.billType == type) {
       pdfBytes = await _buildPdf(invoice!, selectedFormat);
     }
     notifyListeners();
@@ -98,32 +117,70 @@ class PosInvoiceController extends ChangeNotifier {
 
   Future<void> _fetchRealShopData() async {
     try {
-      final String activeTenantId = "SHOP_DEFAULT"; 
+      // ✅ FIX: Use permanent tenant ID from ShopSessionManager
+      final String activeTenantId =
+          await ShopSessionManager.getPermanentTenantId();
       final shopData = await _shopRepo.fetchExistingSetup(activeTenantId);
 
       if (shopData != null) {
-        final basicInfo = shopData['basicInfo'];
-        final addressData = shopData['addressData'];
-        final taxGst = shopData['taxGst'];
+        // ✅ FIX: DB keys are snake_case — 'basic_info', 'address', 'tax_compliance'
+        final basicInfo = shopData['basic_info'] as Map<String, dynamic>?;
+        final addressData = shopData['address'] as Map<String, dynamic>?;
+        final taxData = shopData['tax_compliance'] as Map<String, dynamic>?;
 
+        // Shop Name: brand_display_name > display_name > shop_phone fallback
         if (basicInfo != null) {
-          _realShopName = basicInfo['shopName'] ?? billing.shopName;
-          _realShopPhone = basicInfo['primaryPhone'] ?? _realShopPhone;
+          final brandName = basicInfo['brand_display_name']?.toString() ?? '';
+          final displayName = basicInfo['display_name']?.toString() ?? '';
+          _realShopName = brandName.isNotEmpty
+              ? brandName
+              : displayName.isNotEmpty
+                  ? displayName
+                  : "Lotus Jewellers";
+
+          // Phone: shop_phone first, then owner_phone
+          final shopPhone = basicInfo['shop_phone']?.toString() ?? '';
+          final ownerPhone = basicInfo['owner_phone']?.toString() ?? '';
+          _realShopPhone = shopPhone.isNotEmpty
+              ? shopPhone
+              : ownerPhone.isNotEmpty
+                  ? ownerPhone
+                  : "Phone not set";
         }
+
+        // Address: addr1, city, state, pincode
         if (addressData != null) {
-          final addrLine = addressData['addressLine1'] ?? '';
-          final city = addressData['city'] ?? '';
-          final state = addressData['state'] ?? '';
-          _realShopAddress = "$addrLine, $city, $state".replaceAll(RegExp(r'^[\s,]+|[\s,]+$'), '');
+          final addrLine = addressData['addr1']?.toString() ?? '';
+          final city = addressData['city']?.toString() ?? '';
+          final state = addressData['state']?.toString() ?? '';
+          final pincode = addressData['pincode']?.toString() ?? '';
+
+          // Build address — only add non-empty parts
+          final parts = [addrLine, city, state, pincode]
+              .where((p) => p.isNotEmpty)
+              .toList();
+          _realShopAddress =
+              parts.isNotEmpty ? parts.join(', ') : "Address not set";
         }
-        if (taxGst != null && taxGst['isGstRegistered'] == true) {
-          _realShopGstin = taxGst['gstinNumber'] ?? _realShopGstin;
+
+        // GST: gstin from tax_compliance
+        if (taxData != null) {
+          final gstin = taxData['gstin']?.toString() ?? '';
+          _realShopGstin = gstin.isNotEmpty ? gstin : "Not Registered";
         }
+
+        debugPrint(
+            "✅ [INVOICE] Shop data loaded: $_realShopName | $_realShopPhone | $_realShopAddress");
       } else {
-        _realShopName = billing.shopName.isNotEmpty ? billing.shopName : "Lotus Jewellers";
+        debugPrint("⚠️ [INVOICE] No shop profile found in DB. Using defaults.");
+        _realShopName = "Shop Name Not Set";
+        _realShopAddress = "Please complete Shop Setup";
+        _realShopPhone = "Phone not set";
       }
     } catch (e) {
-      _realShopName = billing.shopName.isNotEmpty ? billing.shopName : "Lotus Jewellers";
+      debugPrint("❌ [INVOICE] Error fetching shop data: $e");
+      _realShopName =
+          billing.shopName.isNotEmpty ? billing.shopName : "Lotus Jewellers";
     }
   }
 
@@ -134,8 +191,8 @@ class PosInvoiceController extends ChangeNotifier {
       billType: billing.billType,
       billingMode: billing.billingMode,
       shopName: _realShopName,
-      shopAddress: _realShopAddress, 
-      shopPhone: _realShopPhone, 
+      shopAddress: _realShopAddress,
+      shopPhone: _realShopPhone,
       shopGstin: _realShopGstin,
       customerName: billing.nameCtrl.text,
       customerMobile: billing.mobileCtrl.text,
@@ -168,7 +225,7 @@ class PosInvoiceController extends ChangeNotifier {
       await _fetchRealShopData();
       invoice = _buildInvoiceSnapshot();
       billing.nextSequence++;
-      await Future.delayed(const Duration(milliseconds: 500)); 
+      await Future.delayed(const Duration(milliseconds: 500));
       pdfBytes = await _buildPdf(invoice!, selectedFormat);
       genState = InvoiceGenState.ready;
     } catch (e) {
@@ -183,26 +240,44 @@ class PosInvoiceController extends ChangeNotifier {
     PdfPageFormat pageFormat;
     switch (fmt) {
       case PrintFormat.a4:
-        pageFormat = PdfPageFormat.a4; break;
+        pageFormat = PdfPageFormat.a4;
+        break;
       case PrintFormat.thermal3inch:
-        pageFormat = const PdfPageFormat(80 * PdfPageFormat.mm, 250 * PdfPageFormat.mm, marginAll: 4 * PdfPageFormat.mm); break;
+        pageFormat = const PdfPageFormat(
+            80 * PdfPageFormat.mm, 250 * PdfPageFormat.mm,
+            marginAll: 4 * PdfPageFormat.mm);
+        break;
       case PrintFormat.thermal2inch:
-        pageFormat = const PdfPageFormat(57 * PdfPageFormat.mm, 250 * PdfPageFormat.mm, marginAll: 3 * PdfPageFormat.mm); break;
+        pageFormat = const PdfPageFormat(
+            57 * PdfPageFormat.mm, 250 * PdfPageFormat.mm,
+            marginAll: 3 * PdfPageFormat.mm);
+        break;
     }
 
     for (int i = 0; i < printCopies; i++) {
       doc.addPage(
         pw.Page(
           pageFormat: pageFormat,
-          margin: fmt == PrintFormat.a4 ? const pw.EdgeInsets.all(24) : const pw.EdgeInsets.all(6),
+          margin: fmt == PrintFormat.a4
+              ? const pw.EdgeInsets.all(24)
+              : const pw.EdgeInsets.all(6),
           build: (pw.Context context) {
-            final layout = fmt == PrintFormat.a4 ? _buildA4Layout(inv) : _buildThermalLayout(inv, fmt);
+            final layout = fmt == PrintFormat.a4
+                ? _buildA4Layout(inv)
+                : _buildThermalLayout(inv, fmt);
             if (includeDuplicateStamp) {
               return pw.Stack(
                 alignment: pw.Alignment.center,
                 children: [
-                  pw.Center(child: pw.Transform.rotate(angle: 0.785, child: pw.Text("DUPLICATE", style: pw.TextStyle(color: PdfColors.grey300, fontSize: fmt == PrintFormat.a4 ? 60 : 25, fontWeight: pw.FontWeight.bold)))),
-                  layout, 
+                  pw.Center(
+                      child: pw.Transform.rotate(
+                          angle: 0.785,
+                          child: pw.Text("DUPLICATE",
+                              style: pw.TextStyle(
+                                  color: PdfColors.grey300,
+                                  fontSize: fmt == PrintFormat.a4 ? 60 : 25,
+                                  fontWeight: pw.FontWeight.bold)))),
+                  layout,
                 ],
               );
             }
@@ -238,37 +313,57 @@ class PosInvoiceController extends ChangeNotifier {
       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       children: [
         pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-          pw.Text(inv.shopName, style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
-          pw.Text(inv.shopAddress, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
-          pw.Text("Ph: ${inv.shopPhone}", style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+          pw.Text(inv.shopName,
+              style:
+                  pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+          pw.Text(inv.shopAddress,
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+          pw.Text("Ph: ${inv.shopPhone}",
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
           if (inv.billType == BillType.gst && inv.shopGstin != "Not Registered")
-            pw.Text("GSTIN: ${inv.shopGstin}", style: const pw.TextStyle(fontSize: 9)),
+            pw.Text("GSTIN: ${inv.shopGstin}",
+                style: const pw.TextStyle(fontSize: 9)),
         ]),
         pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
-          pw.Text(
-              inv.billType == BillType.gst ? "TAX INVOICE" : "ESTIMATE",
-              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.amber800)),
+          pw.Text(inv.billType == BillType.gst ? "TAX INVOICE" : "ESTIMATE",
+              style: pw.TextStyle(
+                  fontSize: 14,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.amber800)),
           pw.SizedBox(height: 4),
-          pw.Text("No: ${inv.invoiceNumber}", style: const pw.TextStyle(fontSize: 10)),
-          pw.Text("Date: ${inv.invoiceDate.day}/${inv.invoiceDate.month}/${inv.invoiceDate.year}", style: const pw.TextStyle(fontSize: 10)),
+          pw.Text("No: ${inv.invoiceNumber}",
+              style: const pw.TextStyle(fontSize: 10)),
+          pw.Text(
+              "Date: ${inv.invoiceDate.day}/${inv.invoiceDate.month}/${inv.invoiceDate.year}",
+              style: const pw.TextStyle(fontSize: 10)),
         ]),
       ],
     );
   }
 
   pw.Widget _pdfCustomerBlock(PosInvoiceModel inv) {
-    final name = inv.customerName.isEmpty ? "Walk-in Customer" : inv.customerName;
+    final name =
+        inv.customerName.isEmpty ? "Walk-in Customer" : inv.customerName;
     return pw.Container(
       padding: const pw.EdgeInsets.all(10),
-      decoration: const pw.BoxDecoration(color: PdfColors.grey100, borderRadius: pw.BorderRadius.all(pw.Radius.circular(6))),
+      decoration: const pw.BoxDecoration(
+          color: PdfColors.grey100,
+          borderRadius: pw.BorderRadius.all(pw.Radius.circular(6))),
       child: pw.Row(children: [
-        pw.Expanded(child: pw.Column(
+        pw.Expanded(
+            child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Text("BILL TO", style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+            pw.Text("BILL TO",
+                style:
+                    const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
             pw.SizedBox(height: 3),
-            pw.Text(name, style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
-            if (inv.customerMobile.isNotEmpty) pw.Text(inv.customerMobile, style: const pw.TextStyle(fontSize: 9)),
+            pw.Text(name,
+                style:
+                    pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+            if (inv.customerMobile.isNotEmpty)
+              pw.Text(inv.customerMobile,
+                  style: const pw.TextStyle(fontSize: 9)),
           ],
         )),
       ]),
@@ -279,50 +374,69 @@ class PosInvoiceController extends ChangeNotifier {
     final isWholesale = inv.billingMode == BillingMode.wholesale;
     final activeConfig = getActiveConfig(inv.billingMode, inv.billType);
 
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        if (inv.saleItems.isNotEmpty) ...[
-          pw.Table(
-            border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
-            children: [
-              pw.TableRow(
-                decoration: const pw.BoxDecoration(color: PdfColors.amber50),
-                children: [
-                  _th("#"), _th("Item Description"), _th("Purity"), 
-                  if (activeConfig.showGrossWt) _th("Gross(g)"),
-                  if (activeConfig.showLessWt) _th("Less(g)"),
-                  _th(isWholesale ? "Fine(g)" : "Net(g)"),
-                  _th("Rate"), 
-                  if (activeConfig.showMaking) _th(isWholesale ? "Labour" : "Making"),
-                  _th("Amount"),
-                ],
-              ),
-              ...inv.saleItems.asMap().entries.map((e) {
-                final i = e.value;
-                String desc = i.descCtrl.text.isNotEmpty ? i.descCtrl.text : "${i.metal.name.toUpperCase()} ITEM";
-                if (activeConfig.showHuid && i.huidCtrl.text.isNotEmpty) desc += "\n[HUID: ${i.huidCtrl.text}]";
-                if (activeConfig.showPcs && i.pcs > 1) desc += " (${i.pcs} pcs)";
+    return pw
+        .Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+      if (inv.saleItems.isNotEmpty) ...[
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+          children: [
+            pw.TableRow(
+              decoration: const pw.BoxDecoration(color: PdfColors.amber50),
+              children: [
+                _th("#"),
+                _th("Item Description"),
+                _th("Purity"),
+                if (activeConfig.showGrossWt) _th("Gross(g)"),
+                if (activeConfig.showLessWt) _th("Less(g)"),
+                _th(isWholesale ? "Fine(g)" : "Net(g)"),
+                _th("Rate"),
+                if (activeConfig.showMaking)
+                  _th(isWholesale ? "Labour" : "Making"),
+                _th("Amount"),
+              ],
+            ),
+            ...inv.saleItems.asMap().entries.map((e) {
+              final i = e.value;
+              String desc = i.descCtrl.text.isNotEmpty
+                  ? i.descCtrl.text
+                  : "${i.metal.name.toUpperCase()} ITEM";
+              if (activeConfig.showHuid && i.huidCtrl.text.isNotEmpty)
+                desc += "\n[HUID: ${i.huidCtrl.text}]";
+              if (activeConfig.showPcs && i.pcs > 1) desc += " (${i.pcs} pcs)";
 
-                return pw.TableRow(children: [
-                  _cell("${e.key + 1}"), _cell(desc), _cell("${i.tunch}%"),
-                  if (activeConfig.showGrossWt) _cell(i.grossCtrl.text.isNotEmpty ? i.grossCtrl.text : "0.000"),
-                  if (activeConfig.showLessWt) _cell(i.totalLessWt.toStringAsFixed(3)),
-                  _cell(isWholesale ? i.fineWt.toStringAsFixed(3) : i.netWt.toStringAsFixed(3)),
-                  _cell(i.rate.toStringAsFixed(0)),
-                  if (activeConfig.showMaking) _cell(isWholesale ? i.wholesaleLabourAmt.toStringAsFixed(0) : i.makingAmt.toStringAsFixed(0)),
-                  _cell(i.totalValue.toStringAsFixed(2)),
-                ]);
-              }),
-            ],
-          ),
-        ],
-      ]
-    );
+              return pw.TableRow(children: [
+                _cell("${e.key + 1}"),
+                _cell(desc),
+                _cell("${i.tunch}%"),
+                if (activeConfig.showGrossWt)
+                  _cell(
+                      i.grossCtrl.text.isNotEmpty ? i.grossCtrl.text : "0.000"),
+                if (activeConfig.showLessWt)
+                  _cell(i.totalLessWt.toStringAsFixed(3)),
+                _cell(isWholesale
+                    ? i.fineWt.toStringAsFixed(3)
+                    : i.netWt.toStringAsFixed(3)),
+                _cell(i.rate.toStringAsFixed(0)),
+                if (activeConfig.showMaking)
+                  _cell(isWholesale
+                      ? i.wholesaleLabourAmt.toStringAsFixed(0)
+                      : i.makingAmt.toStringAsFixed(0)),
+                _cell(i.totalValue.toStringAsFixed(2)),
+              ]);
+            }),
+          ],
+        ),
+      ],
+    ]);
   }
 
-  pw.Widget _th(String text) => pw.Padding(padding: const pw.EdgeInsets.all(5), child: pw.Text(text, style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)));
-  pw.Widget _cell(String text) => pw.Padding(padding: const pw.EdgeInsets.all(5), child: pw.Text(text, style: const pw.TextStyle(fontSize: 8)));
+  pw.Widget _th(String text) => pw.Padding(
+      padding: const pw.EdgeInsets.all(5),
+      child: pw.Text(text,
+          style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)));
+  pw.Widget _cell(String text) => pw.Padding(
+      padding: const pw.EdgeInsets.all(5),
+      child: pw.Text(text, style: const pw.TextStyle(fontSize: 8)));
 
   pw.Widget _pdfTotalsBlock(PosInvoiceModel inv) {
     return pw.Row(mainAxisAlignment: pw.MainAxisAlignment.end, children: [
@@ -330,12 +444,15 @@ class PosInvoiceController extends ChangeNotifier {
         width: 220,
         child: pw.Column(children: [
           _totalRow("Gross Amount", inv.grossAmount),
-          if (inv.discountAmount > 0) _totalRow("Discount", -inv.discountAmount, isDeduction: true),
+          if (inv.discountAmount > 0)
+            _totalRow("Discount", -inv.discountAmount, isDeduction: true),
           if (inv.billType == BillType.gst) ...[
             _totalRow("CGST", inv.cgst),
             _totalRow("SGST", inv.sgst),
           ],
-          if (inv.totalOldGoldDeduction > 0) _totalRow("Old Gold Exchange", -inv.totalOldGoldDeduction, isDeduction: true),
+          if (inv.totalOldGoldDeduction > 0)
+            _totalRow("Old Gold Exchange", -inv.totalOldGoldDeduction,
+                isDeduction: true),
           pw.Divider(color: PdfColors.amber800),
           _totalRow("GRAND TOTAL", inv.grandTotal, isBold: true, isGrand: true),
         ]),
@@ -343,30 +460,57 @@ class PosInvoiceController extends ChangeNotifier {
     ]);
   }
 
-  pw.Widget _totalRow(String label, double amount, {bool isBold = false, bool isDeduction = false, bool isGrand = false}) {
+  pw.Widget _totalRow(String label, double amount,
+      {bool isBold = false, bool isDeduction = false, bool isGrand = false}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 2),
-      child: pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
-        pw.Text(label, style: pw.TextStyle(fontSize: isGrand ? 11 : 9, fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal)),
-        pw.Text("${isDeduction ? '- ' : ''}Rs ${amount.abs().toStringAsFixed(2)}", style: pw.TextStyle(fontSize: isGrand ? 12 : 9, fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal)),
-      ]),
+      child: pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Text(label,
+                style: pw.TextStyle(
+                    fontSize: isGrand ? 11 : 9,
+                    fontWeight:
+                        isBold ? pw.FontWeight.bold : pw.FontWeight.normal)),
+            pw.Text(
+                "${isDeduction ? '- ' : ''}Rs ${amount.abs().toStringAsFixed(2)}",
+                style: pw.TextStyle(
+                    fontSize: isGrand ? 12 : 9,
+                    fontWeight:
+                        isBold ? pw.FontWeight.bold : pw.FontWeight.normal)),
+          ]),
     );
   }
 
   pw.Widget _pdfPaymentBlock(PosInvoiceModel inv) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(10),
-      decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey300), borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6))),
-      child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-        pw.Text("PAYMENT DETAILS", style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.grey600)),
+      decoration: pw.BoxDecoration(
+          border: pw.Border.all(color: PdfColors.grey300),
+          borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6))),
+      child:
+          pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+        pw.Text("PAYMENT DETAILS",
+            style: pw.TextStyle(
+                fontSize: 8,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.grey600)),
         pw.SizedBox(height: 6),
         pw.Wrap(spacing: 16, runSpacing: 4, children: [
-          if (inv.cashPaid > 0) pw.Text("Cash: Rs ${inv.cashPaid.toStringAsFixed(2)}", style: const pw.TextStyle(fontSize: 9)),
-          if (inv.upiPaid > 0) pw.Text("UPI: Rs ${inv.upiPaid.toStringAsFixed(2)}", style: const pw.TextStyle(fontSize: 9)),
+          if (inv.cashPaid > 0)
+            pw.Text("Cash: Rs ${inv.cashPaid.toStringAsFixed(2)}",
+                style: const pw.TextStyle(fontSize: 9)),
+          if (inv.upiPaid > 0)
+            pw.Text("UPI: Rs ${inv.upiPaid.toStringAsFixed(2)}",
+                style: const pw.TextStyle(fontSize: 9)),
         ]),
         if (inv.balanceDue > 0.5) ...[
           pw.SizedBox(height: 6),
-          pw.Text("Balance Due: Rs ${inv.balanceDue.toStringAsFixed(2)}", style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.red700)),
+          pw.Text("Balance Due: Rs ${inv.balanceDue.toStringAsFixed(2)}",
+              style: pw.TextStyle(
+                  fontSize: 10,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.red700)),
         ],
       ]),
     );
@@ -377,8 +521,10 @@ class PosInvoiceController extends ChangeNotifier {
       pw.Divider(color: PdfColors.grey300),
       pw.SizedBox(height: 6),
       pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
-        pw.Text("Thank you for shopping with us!", style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
-        pw.Text("${inv.shopName} — E&OE", style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey500)),
+        pw.Text("Thank you for shopping with us!",
+            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+        pw.Text("${inv.shopName} — E&OE",
+            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey500)),
       ]),
     ]);
   }
@@ -388,10 +534,15 @@ class PosInvoiceController extends ChangeNotifier {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
-        pw.Text(inv.shopName, style: pw.TextStyle(fontSize: 12.0, fontWeight: pw.FontWeight.bold)),
-        pw.Text("No: ${inv.invoiceNumber}", style: pw.TextStyle(fontSize: fontSize)),
+        pw.Text(inv.shopName,
+            style:
+                pw.TextStyle(fontSize: 12.0, fontWeight: pw.FontWeight.bold)),
+        pw.Text("No: ${inv.invoiceNumber}",
+            style: pw.TextStyle(fontSize: fontSize)),
         pw.Divider(color: PdfColors.grey400),
-        pw.Text("GRAND TOTAL: Rs ${inv.grandTotal.toStringAsFixed(2)}", style: pw.TextStyle(fontSize: fontSize + 2, fontWeight: pw.FontWeight.bold)),
+        pw.Text("GRAND TOTAL: Rs ${inv.grandTotal.toStringAsFixed(2)}",
+            style: pw.TextStyle(
+                fontSize: fontSize + 2, fontWeight: pw.FontWeight.bold)),
       ],
     );
   }
@@ -408,15 +559,18 @@ class PosInvoiceController extends ChangeNotifier {
 
   Future<void> openDirectWhatsAppChat() async {
     if (invoice == null || invoice!.customerMobile.isEmpty) return;
-    
-    final phone = invoice!.customerMobile.replaceAll(RegExp(r'\D'), '');
-    final cleanPhone = phone.length == 10 ? "91$phone" : phone; 
 
-    final customerName = invoice!.customerName.isNotEmpty ? invoice!.customerName : "Customer";
-    final textMessage = "Dear $customerName,\n\nThank you for shopping at *${invoice!.shopName}*!\n\nHere are your invoice details:\n*Invoice No:* ${invoice!.invoiceNumber}\n*Total Amount:* Rs ${invoice!.grandTotal.toStringAsFixed(2)}\n\nVisit again!";
-    
-    final url = Uri.parse("https://wa.me/$cleanPhone?text=${Uri.encodeComponent(textMessage)}");
-    
+    final phone = invoice!.customerMobile.replaceAll(RegExp(r'\D'), '');
+    final cleanPhone = phone.length == 10 ? "91$phone" : phone;
+
+    final customerName =
+        invoice!.customerName.isNotEmpty ? invoice!.customerName : "Customer";
+    final textMessage =
+        "Dear $customerName,\n\nThank you for shopping at *${invoice!.shopName}*!\n\nHere are your invoice details:\n*Invoice No:* ${invoice!.invoiceNumber}\n*Total Amount:* Rs ${invoice!.grandTotal.toStringAsFixed(2)}\n\nVisit again!";
+
+    final url = Uri.parse(
+        "https://wa.me/$cleanPhone?text=${Uri.encodeComponent(textMessage)}");
+
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     } else {
@@ -427,7 +581,7 @@ class PosInvoiceController extends ChangeNotifier {
   // 🚀 NAYA MASTER LOGIC: Smart CRM Folder Directory Management
   Future<String?> downloadPdf() async {
     if (pdfBytes == null || invoice == null) return null;
-    
+
     try {
       final prefs = await SharedPreferences.getInstance();
       String? baseDirPath = prefs.getString('invoice_base_folder');
@@ -447,7 +601,8 @@ class PosInvoiceController extends ChangeNotifier {
       }
 
       // 2. Customer ke Mobile Number ka Folder banao
-      String mobileFolder = invoice!.customerMobile.replaceAll(RegExp(r'\D'), '');
+      String mobileFolder =
+          invoice!.customerMobile.replaceAll(RegExp(r'\D'), '');
       if (mobileFolder.isEmpty) mobileFolder = "Walk-in_Customers";
 
       final customerDir = Directory('$baseDirPath/$mobileFolder');
@@ -456,16 +611,20 @@ class PosInvoiceController extends ChangeNotifier {
       }
 
       // 3. Customer ke Naam aur Invoice No se file save karo
-      String custName = invoice!.customerName.isNotEmpty ? invoice!.customerName : "Customer";
-      String cleanName = custName.replaceAll(RegExp(r'[^a-zA-Z0-9\s]'), '').replaceAll(' ', '_');
-      String cleanInv = invoice!.invoiceNumber.replaceAll(RegExp(r'[^a-zA-Z0-9\-]'), '_');
-      
+      String custName =
+          invoice!.customerName.isNotEmpty ? invoice!.customerName : "Customer";
+      String cleanName = custName
+          .replaceAll(RegExp(r'[^a-zA-Z0-9\s]'), '')
+          .replaceAll(' ', '_');
+      String cleanInv =
+          invoice!.invoiceNumber.replaceAll(RegExp(r'[^a-zA-Z0-9\-]'), '_');
+
       final fileName = "${cleanName}_$cleanInv.pdf";
       final file = File('${customerDir.path}/$fileName');
-      
+
       await file.writeAsBytes(pdfBytes!);
       debugPrint("File successfully saved at: ${file.path}");
-      
+
       return file.path;
     } catch (e) {
       debugPrint("Error saving file: $e");
@@ -483,9 +642,16 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   void reset() {
-    genState = InvoiceGenState.idle; invoice = null; pdfBytes = null; errorMessage = null; notifyListeners();
+    genState = InvoiceGenState.idle;
+    invoice = null;
+    pdfBytes = null;
+    errorMessage = null;
+    notifyListeners();
   }
 
   @override
-  void dispose() { reset(); super.dispose(); }
+  void dispose() {
+    reset();
+    super.dispose();
+  }
 }
