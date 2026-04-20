@@ -20,6 +20,8 @@
 //          addSupplierRoute  → AddSupplierScreen
 //   v8 — ✅ Expense Entry module wired:
 //          expenseEntryRoute → ExpenseScreen
+//   v9 — ✅ Day Book module wired:
+//          dayBookRoute → DayBookScreen
 // =============================================================================
 
 import 'dart:io';
@@ -61,7 +63,7 @@ import '../purchase & orders/purchase_entry/purchase_entry_screen.dart';
 // FINANCE & LEDGERS
 import '../finance/cash_book/cash_book_screen.dart';
 import '../finance/bank_book/bank_book_screen.dart';
-import '../finance/expense/expense_screen.dart';            // ✅ v8: Expense Entry
+import '../finance/expense/expense_screen.dart'; // ✅ v8: Expense Entry
 
 // KARIGAR MODULE
 import '../karigar/issue_karigar/issue_karigar_screen.dart';
@@ -75,6 +77,9 @@ import '../girvi/girvi_list/girvi_list_screen.dart';
 import '../girvi/interest_calc/interest_calc_screen.dart';
 import '../girvi/notice_auction/notice_auction_screen.dart';
 
+// ✅ v9: REPORTS MODULE
+import '../report/day_book/day_book_screen.dart';
+
 class MainLayoutWrapper extends StatefulWidget {
   const MainLayoutWrapper({super.key});
 
@@ -83,135 +88,143 @@ class MainLayoutWrapper extends StatefulWidget {
 }
 
 class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
-
   String _activePageRouteId = AppRoutes.dashboardRoute;
-  int?   _activeCustomerId;
+  int? _activeCustomerId;
 
   // ── Central Navigation Controller ────────────────────────────────────────
 
   // ✅ NEW: customerId ke saath navigate — Payment Status → Customer Profile
   void _navigateToWithId(String routeId, {int? customerId}) {
     if (routeId == AppRoutes.customerProfileRoute && customerId != null) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => CustomerProfileScreen(
-            customerId: customerId,
-            onBack:    () => Navigator.pop(context),
-            onDeleted: () => Navigator.pop(context),
-            onNewSale: (_) {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const PosMasterSaleScreen()));
-            },
-          )));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => CustomerProfileScreen(
+                    customerId: customerId,
+                    onBack: () => Navigator.pop(context),
+                    onDeleted: () => Navigator.pop(context),
+                    onNewSale: (_) {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const PosMasterSaleScreen()));
+                    },
+                  )));
     } else {
       _navigateTo(routeId);
     }
   }
 
   void _navigateTo(String routeId) {
-
     if (routeId == AppRoutes.newSaleRoute) {
       Navigator.push(context,
           MaterialPageRoute(builder: (_) => const PosMasterSaleScreen()));
-    }
-
-    else if (routeId == AppRoutes.bookingAdvanceRoute) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => BookingAdvanceScreen(
-            onBack: () => Navigator.pop(context),
-          )));
-    }
-
-    else if (routeId == AppRoutes.defaulterListRoute) {
-      Navigator.push(context,
+    } else if (routeId == AppRoutes.bookingAdvanceRoute) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => BookingAdvanceScreen(
+                    onBack: () => Navigator.pop(context),
+                  )));
+    } else if (routeId == AppRoutes.defaulterListRoute) {
+      Navigator.push(
+          context,
           PageRouteBuilder(
             pageBuilder: (_, animation, __) => const DefaulterListScreen(),
-            transitionsBuilder: (_, animation, __, child) =>
-                FadeTransition(
-                  opacity: CurvedAnimation(
-                      parent: animation, curve: Curves.easeOut),
-                  child: child,
-                ),
+            transitionsBuilder: (_, animation, __, child) => FadeTransition(
+              opacity:
+                  CurvedAnimation(parent: animation, curve: Curves.easeOut),
+              child: child,
+            ),
             transitionDuration: const Duration(milliseconds: 300),
           ));
-    }
-
-    else if (routeId == AppRoutes.customerListRoute) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => CustomerListScreen(
-            onBack:       () => Navigator.pop(context),
-            onAddCustomer: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => AddCustomerScreen(
-                    onBack:  () => Navigator.pop(context),
-                    onSaved: () => Navigator.pop(context),
-                  )));
-            },
-            onCustomerTap: (customerId) {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => CustomerProfileScreen(
-                    customerId: customerId,
-                    onBack:     () => Navigator.pop(context),
-                    onDeleted:  () => Navigator.pop(context),
-                    onNewSale:  (_) {
-                      Navigator.push(context,
+    } else if (routeId == AppRoutes.customerListRoute) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => CustomerListScreen(
+                    onBack: () => Navigator.pop(context),
+                    onAddCustomer: () {
+                      Navigator.push(
+                          context,
                           MaterialPageRoute(
-                              builder: (_) => const PosMasterSaleScreen()));
+                              builder: (_) => AddCustomerScreen(
+                                    onBack: () => Navigator.pop(context),
+                                    onSaved: () => Navigator.pop(context),
+                                  )));
+                    },
+                    onCustomerTap: (customerId) {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => CustomerProfileScreen(
+                                    customerId: customerId,
+                                    onBack: () => Navigator.pop(context),
+                                    onDeleted: () => Navigator.pop(context),
+                                    onNewSale: (_) {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const PosMasterSaleScreen()));
+                                    },
+                                  )));
                     },
                   )));
-            },
-          )));
-    }
-
-    else if (routeId == AppRoutes.addCustomerRoute) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => AddCustomerScreen(
-            onBack:  () => Navigator.pop(context),
-            onSaved: () => Navigator.pop(context),
-          )));
+    } else if (routeId == AppRoutes.addCustomerRoute) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => AddCustomerScreen(
+                    onBack: () => Navigator.pop(context),
+                    onSaved: () => Navigator.pop(context),
+                  )));
     }
 
     // ── ✅ v7: SUPPLIER MODULE ─────────────────────────────────────────────────
 
     else if (routeId == AppRoutes.supplierListRoute) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => SupplierListScreen(
-            onBack:        () => Navigator.pop(context),
-            onAddSupplier: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => AddSupplierScreen(
-                    onBack:  () => Navigator.pop(context),
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => SupplierListScreen(
+                    onBack: () => Navigator.pop(context),
+                    onAddSupplier: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => AddSupplierScreen(
+                                    onBack: () => Navigator.pop(context),
+                                    onSaved: () => Navigator.pop(context),
+                                  )));
+                    },
+                    onSupplierTap: (supplierId) {
+                      // TODO: SupplierProfileScreen — coming soon
+                    },
+                  )));
+    } else if (routeId == AppRoutes.addSupplierRoute) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => AddSupplierScreen(
+                    onBack: () => Navigator.pop(context),
                     onSaved: () => Navigator.pop(context),
                   )));
-            },
-            onSupplierTap: (supplierId) {
-              // TODO: SupplierProfileScreen — coming soon
-            },
-          )));
-    }
-
-    else if (routeId == AppRoutes.addSupplierRoute) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => AddSupplierScreen(
-            onBack:  () => Navigator.pop(context),
-            onSaved: () => Navigator.pop(context),
-          )));
     }
 
     // ── STOCK ─────────────────────────────────────────────────────────────────
 
     else if (routeId == AppRoutes.addStockRoute) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => const AddStockScreen()));
-    }
-
-    else if (routeId == AppRoutes.inventoryRoute) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => InventoryScreen(
-            onBack: () => Navigator.pop(context),
-          )));
-    }
-
-    else if (routeId == AppRoutes.purchaseEntryRoute) {
+      Navigator.push(
+          context, MaterialPageRoute(builder: (_) => const AddStockScreen()));
+    } else if (routeId == AppRoutes.inventoryRoute) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => InventoryScreen(
+                    onBack: () => Navigator.pop(context),
+                  )));
+    } else if (routeId == AppRoutes.purchaseEntryRoute) {
       Navigator.push(context,
           MaterialPageRoute(builder: (_) => const PurchaseEntryScreen()));
     }
@@ -219,20 +232,19 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
     // ── FINANCE & LEDGERS ─────────────────────────────────────────────────────
 
     else if (routeId == AppRoutes.cashBookRoute) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => const CashBookScreen()));
-    }
-
-    else if (routeId == AppRoutes.bankBookRoute) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => const BankBookScreen()));
-    }
-
-    else if (routeId == AppRoutes.expenseEntryRoute) {          // ✅ v8
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => ExpenseScreen(
-            onBack: () => Navigator.pop(context),
-          )));
+      Navigator.push(
+          context, MaterialPageRoute(builder: (_) => const CashBookScreen()));
+    } else if (routeId == AppRoutes.bankBookRoute) {
+      Navigator.push(
+          context, MaterialPageRoute(builder: (_) => const BankBookScreen()));
+    } else if (routeId == AppRoutes.expenseEntryRoute) {
+      // ✅ v8
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => ExpenseScreen(
+                    onBack: () => Navigator.pop(context),
+                  )));
     }
 
     // ── KARIGAR MODULE ────────────────────────────────────────────────────────
@@ -240,67 +252,76 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
     else if (routeId == AppRoutes.issueToKarigarRoute) {
       Navigator.push(context,
           MaterialPageRoute(builder: (_) => const IssueKarigarScreen()));
-    }
-
-    else if (routeId == AppRoutes.receiveFromKarigarRoute) {
+    } else if (routeId == AppRoutes.receiveFromKarigarRoute) {
       Navigator.push(context,
           MaterialPageRoute(builder: (_) => const ReceiveKarigarScreen()));
-    }
-
-    else if (routeId == AppRoutes.pendingJobsRoute) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => PendingJobsScreen(
-            onBack: () => Navigator.pop(context),
-            onReceiveGoods: (issueId) {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => ReceiveKarigarScreen(
-                    preSelectedIssueId: issueId,
+    } else if (routeId == AppRoutes.pendingJobsRoute) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => PendingJobsScreen(
+                    onBack: () => Navigator.pop(context),
+                    onReceiveGoods: (issueId) {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => ReceiveKarigarScreen(
+                                    preSelectedIssueId: issueId,
+                                  )));
+                    },
                   )));
-            },
-          )));
-    }
-
-    else if (routeId == AppRoutes.karigarLedgerRoute) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => KarigarHisaabScreen(
-            onBack: () => Navigator.pop(context),
-          )));
+    } else if (routeId == AppRoutes.karigarLedgerRoute) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => KarigarHisaabScreen(
+                    onBack: () => Navigator.pop(context),
+                  )));
     }
 
     // ── ✅ v6: GIRVI MODULE ───────────────────────────────────────────────────
 
     else if (routeId == AppRoutes.newGirviRoute) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => const NewGirviScreen()));
-    }
-
-    else if (routeId == AppRoutes.girviReleaseRoute) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => GirviListScreen(
-            onBack: () => Navigator.pop(context),
-            onNewGirvi: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const NewGirviScreen()));
-            },
-          )));
-    }
-
-    else if (routeId == AppRoutes.interestCalcRoute) {
+      Navigator.push(
+          context, MaterialPageRoute(builder: (_) => const NewGirviScreen()));
+    } else if (routeId == AppRoutes.girviReleaseRoute) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => GirviListScreen(
+                    onBack: () => Navigator.pop(context),
+                    onNewGirvi: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const NewGirviScreen()));
+                    },
+                  )));
+    } else if (routeId == AppRoutes.interestCalcRoute) {
       Navigator.push(context,
           MaterialPageRoute(builder: (_) => const InterestCalcScreen()));
+    } else if (routeId == AppRoutes.noticeAuctionRoute) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => NoticeAuctionScreen(
+                    onBack: () => Navigator.pop(context),
+                  )));
     }
 
-    else if (routeId == AppRoutes.noticeAuctionRoute) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => NoticeAuctionScreen(
-            onBack: () => Navigator.pop(context),
-          )));
-    }
+    // ── ✅ v9: REPORTS MODULE ─────────────────────────────────────────────────
 
-    else {
+    else if (routeId == AppRoutes.dayBookRoute) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => DayBookScreen(
+                    onBack: () => Navigator.pop(context),
+                  )));
+    } else {
       setState(() {
         _activePageRouteId = routeId;
-        _activeCustomerId  = null;
+        _activeCustomerId = null;
       });
     }
   }
@@ -343,42 +364,39 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
                 'LOTUS ERP',
                 style: UV.styles.hero.copyWith(fontSize: 20),
               ),
-              centerTitle:  true,
-              iconTheme:    IconThemeData(color: UV.colors.textPrimary),
-              elevation:    0,
+              centerTitle: true,
+              iconTheme: IconThemeData(color: UV.colors.textPrimary),
+              elevation: 0,
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(1),
                 child: Container(color: UV.colors.glassBorder, height: 1),
               ),
             )
           : null,
-
       body: Row(
         children: [
           if (!isSmallScreen) _buildSidebarLogic(context, isMobile: false),
-
           Expanded(
             child: Container(
               margin: EdgeInsets.zero,
               decoration: BoxDecoration(
                 color: UV.colors.bgSecondary.withOpacity(0.5),
                 border: Border(
-                  left: BorderSide(
-                      color: UV.colors.glassBorder, width: 1),
+                  left: BorderSide(color: UV.colors.glassBorder, width: 1),
                 ),
                 boxShadow: [
                   if (!isSmallScreen)
                     BoxShadow(
-                      color:      Colors.black.withOpacity(0.1),
+                      color: Colors.black.withOpacity(0.1),
                       blurRadius: 10,
-                      offset:     const Offset(-4, 0),
+                      offset: const Offset(-4, 0),
                     ),
                 ],
               ),
               child: ClipRect(
                 child: AnimatedSwitcher(
-                  duration:       const Duration(milliseconds: 300),
-                  switchInCurve:  Curves.easeOutQuart,
+                  duration: const Duration(milliseconds: 300),
+                  switchInCurve: Curves.easeOutQuart,
                   switchOutCurve: Curves.easeInQuart,
                   child: KeyedSubtree(
                     key: ValueKey(
@@ -396,8 +414,7 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
 
   // ── Sidebar ────────────────────────────────────────────────────────────────
 
-  Widget _buildSidebarLogic(BuildContext context,
-      {required bool isMobile}) {
+  Widget _buildSidebarLogic(BuildContext context, {required bool isMobile}) {
     return CustomSidebar(
       activePageRouteId: _activePageRouteId,
       onPageSelected: (routeId) {
@@ -430,7 +447,7 @@ class _ComingSoonWidget extends StatelessWidget {
         children: [
           Icon(
             Icons.construction_rounded,
-            size:  60,
+            size: 60,
             color: UV.colors.textSecondary.withOpacity(0.5),
           ),
           const SizedBox(height: 20),
@@ -440,14 +457,14 @@ class _ComingSoonWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color:        UV.colors.textSecondary.withOpacity(0.1),
+              color: UV.colors.textSecondary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
               pageTitle,
               style: UV.styles.body.copyWith(
-                color:      UV.colors.textPrimary,
-                fontSize:   12,
+                color: UV.colors.textPrimary,
+                fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),
             ),

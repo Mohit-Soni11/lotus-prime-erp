@@ -2,15 +2,26 @@
 // FILE        : day_book_sections.dart
 // MODULE      : Reports & Analytics → Day Book
 // LAYER       : UI
-// DESCRIPTION : All expandable body sections:
-//               • Opening Balance Card
-//               • Anomaly Alert Banner
-//               • Cash Inward Section (GST + Non-GST + others)
-//               • Cash Outward Section
-//               • Payment Mode Breakup
-//               • Metal Inward Section
-//               • Metal Outward Section
-//               • Net Flow / Predicted Closing
+// DESCRIPTION : All expandable body sections.
+//               ✅ FIXED — All field names match NEW models in
+//               lib/models/reports/day_book/day_book_models.dart
+//
+// FIELD MAPPING (old → new):
+//   summary.openingGold.totalGold   → summary.openingGoldGrams
+//   summary.openingSilver           → summary.openingSilverGrams
+//   GstBillSummary.totalGstAmount   → GstBillSummary.finalAmount
+//   GstBillSummary.paymentBreakup   → GstBillSummary.payments
+//   cashIn.dueReceipts              → cashIn.advance
+//   cashIn.bookingAdvances          → cashIn.orderDelivery
+//   cashIn.vendorRefunds            → cashIn.miscIncome
+//   cashIn.girviReceipts            → cashIn.girviReturn
+//   cashOut.expenses                → cashOut.operationalExpenses
+//   cashOut.karigarPayments         → (removed — not in new model)
+//   cashOut.vendorPayments          → cashOut.purchasePayment
+//   cashOut.salesReturns            → cashOut.miscExpense
+//   summary.totalPaymentBreakup     → summary.paymentBreakup
+//   PaymentBreakup.bankTransfer     → PaymentBreakup.bank
+//   MetalInflow.urdScrapPurchase    → MetalInflow.urdPurchase
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -53,21 +64,21 @@ class DayBookOpeningCard extends StatelessWidget {
             color: DayBookColors.brandGold,
           )),
           _vDivider(),
-          // Gold opening
+          // Gold opening — ✅ FIXED: openingGoldGrams (was openingGold.totalGold)
           Expanded(
               child: _OpeningItem(
             icon: DayBookIcons.goldMetal,
             label: DayBookStrings.openingGold,
-            value: _fmtGrams(summary.openingGold.totalGold),
+            value: _fmtGrams(summary.openingGoldGrams),
             color: DayBookColors.metalInAccent,
           )),
           _vDivider(),
-          // Silver opening
+          // Silver opening — ✅ FIXED: openingSilverGrams (was openingSilver)
           Expanded(
               child: _OpeningItem(
             icon: DayBookIcons.silverMetal,
             label: DayBookStrings.openingSilver,
-            value: _fmtGrams(summary.openingSilver),
+            value: _fmtGrams(summary.openingSilverGrams),
             color: DayBookColors.shellMuted,
           )),
           const SizedBox(width: 12),
@@ -368,49 +379,78 @@ class CashInwardSection extends StatelessWidget {
         // ── GST Bills Sub-section ──────────────────────────────────────
         _GstBillSubSection(
           summary: cashIn.gstSales,
-          isExpanded: ctrl.gstSectionExpanded,
-          onToggle: ctrl.toggleGstSection,
+          isExpanded: ctrl.gstSectionExpanded, // ✅ Added to controller
+          onToggle: ctrl.toggleGstSection, // ✅ Added to controller
         ),
 
         // ── Non-GST Bills Sub-section ──────────────────────────────────
         _NonGstBillSubSection(
           summary: cashIn.nonGstSales,
-          isExpanded: ctrl.nonGstSectionExpanded,
-          onToggle: ctrl.toggleNonGstSection,
+          isExpanded: ctrl.nonGstSectionExpanded, // ✅ Added to controller
+          onToggle: ctrl.toggleNonGstSection, // ✅ Added to controller
         ),
 
         // ── Other Cash In ──────────────────────────────────────────────
-        if (cashIn.dueReceipts > 0)
+        // ✅ FIXED: cashIn.advance (was cashIn.dueReceipts)
+        if (cashIn.advance > 0)
           _SubRow(
             icon: DayBookIcons.dueReceipts,
             iconColor: DayBookColors.cashInAccent,
             label: DayBookStrings.dueReceipts,
             subtitle: DayBookStrings.dueReceiptsSub,
-            value: _fmt(cashIn.dueReceipts),
+            value: _fmt(cashIn.advance),
           ),
-        if (cashIn.bookingAdvances > 0)
+        // ✅ FIXED: cashIn.orderDelivery (was cashIn.bookingAdvances)
+        if (cashIn.orderDelivery > 0)
           _SubRow(
             icon: DayBookIcons.bookingAdv,
             iconColor: DayBookColors.cashInAccent,
             label: DayBookStrings.bookingAdv,
             subtitle: DayBookStrings.bookingAdvSub,
-            value: _fmt(cashIn.bookingAdvances),
+            value: _fmt(cashIn.orderDelivery),
           ),
-        if (cashIn.vendorRefunds > 0)
+        // ✅ FIXED: cashIn.miscIncome (was cashIn.vendorRefunds)
+        if (cashIn.miscIncome > 0)
           _SubRow(
             icon: DayBookIcons.vendorRefund,
             iconColor: DayBookColors.cashInAccent,
             label: DayBookStrings.vendorRefund,
             subtitle: DayBookStrings.vendorRefundSub,
-            value: _fmt(cashIn.vendorRefunds),
+            value: _fmt(cashIn.miscIncome),
           ),
-        if (cashIn.girviReceipts > 0)
+        // ✅ FIXED: cashIn.girviReturn (was cashIn.girviReceipts)
+        if (cashIn.girviReturn > 0)
           _SubRow(
             icon: DayBookIcons.girviReceipt,
             iconColor: DayBookColors.cashInAccent,
             label: DayBookStrings.girviReceipt,
             subtitle: DayBookStrings.girviReceiptSub,
-            value: _fmt(cashIn.girviReceipts),
+            value: _fmt(cashIn.girviReturn),
+          ),
+        // Other income rows
+        if (cashIn.loanReceived > 0)
+          _SubRow(
+            icon: DayBookIcons.dueReceipts,
+            iconColor: DayBookColors.cashInAccent,
+            label: 'Loan Received',
+            subtitle: 'Cash loan received',
+            value: _fmt(cashIn.loanReceived),
+          ),
+        if (cashIn.interestRec > 0)
+          _SubRow(
+            icon: DayBookIcons.girviReceipt,
+            iconColor: DayBookColors.cashInAccent,
+            label: 'Interest Received',
+            subtitle: 'Interest income',
+            value: _fmt(cashIn.interestRec),
+          ),
+        if (cashIn.otherIncome > 0)
+          _SubRow(
+            icon: DayBookIcons.vendorRefund,
+            iconColor: DayBookColors.cashInAccent,
+            label: 'Other Income',
+            subtitle: 'Miscellaneous income',
+            value: _fmt(cashIn.otherIncome),
           ),
       ],
     );
@@ -460,7 +500,6 @@ class _GstBillSubSection extends StatelessWidget {
                           style: DayBookStyles.labelBold
                               .copyWith(color: DayBookColors.gstText)),
                       const SizedBox(width: 6),
-                      // Bill count badge
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
@@ -478,7 +517,8 @@ class _GstBillSubSection extends StatelessWidget {
                             color: DayBookColors.gstText.withOpacity(0.6))),
                   ],
                 )),
-                Text(_fmt(summary.totalGstAmount),
+                // ✅ FIXED: summary.finalAmount (was summary.totalGstAmount)
+                Text(_fmt(summary.finalAmount),
                     style: DayBookStyles.amountMedium
                         .copyWith(color: DayBookColors.gstAccent)),
                 const SizedBox(width: 4),
@@ -661,13 +701,14 @@ class CashOutwardSection extends StatelessWidget {
       isExpanded: ctrl.cashOutExpanded,
       onToggle: ctrl.toggleCashOut,
       children: [
-        if (cashOut.expenses > 0)
+        // ✅ FIXED: cashOut.operationalExpenses (was cashOut.expenses)
+        if (cashOut.operationalExpenses > 0)
           _SubRow(
               icon: DayBookIcons.expenses,
               iconColor: DayBookColors.cashOutAccent,
               label: DayBookStrings.expenses,
               subtitle: DayBookStrings.expensesSub,
-              value: _fmt(cashOut.expenses)),
+              value: _fmt(cashOut.operationalExpenses)),
         if (cashOut.girviGiven > 0)
           _SubRow(
               icon: DayBookIcons.girviGiven,
@@ -675,27 +716,29 @@ class CashOutwardSection extends StatelessWidget {
               label: DayBookStrings.girviGiven,
               subtitle: DayBookStrings.girviGivenSub,
               value: _fmt(cashOut.girviGiven)),
-        if (cashOut.karigarPayments > 0)
-          _SubRow(
-              icon: DayBookIcons.karigarPay,
-              iconColor: DayBookColors.cashOutAccent,
-              label: DayBookStrings.karigarPay,
-              subtitle: DayBookStrings.karigarPaySub,
-              value: _fmt(cashOut.karigarPayments)),
-        if (cashOut.vendorPayments > 0)
+        // ✅ FIXED: cashOut.purchasePayment (was cashOut.vendorPayments)
+        if (cashOut.purchasePayment > 0)
           _SubRow(
               icon: DayBookIcons.vendorPay,
               iconColor: DayBookColors.cashOutAccent,
               label: DayBookStrings.vendorPay,
               subtitle: DayBookStrings.vendorPaySub,
-              value: _fmt(cashOut.vendorPayments)),
-        if (cashOut.salesReturns > 0)
+              value: _fmt(cashOut.purchasePayment)),
+        // ✅ FIXED: cashOut.miscExpense (was cashOut.salesReturns)
+        if (cashOut.miscExpense > 0)
           _SubRow(
               icon: DayBookIcons.salesReturn,
               iconColor: DayBookColors.cashOutAccent,
               label: DayBookStrings.salesReturn,
               subtitle: DayBookStrings.salesReturnSub,
-              value: _fmt(cashOut.salesReturns)),
+              value: _fmt(cashOut.miscExpense)),
+        if (cashOut.otherExpense > 0)
+          _SubRow(
+              icon: DayBookIcons.expenses,
+              iconColor: DayBookColors.cashOutAccent,
+              label: 'Other Expense',
+              subtitle: 'Miscellaneous outflow',
+              value: _fmt(cashOut.otherExpense)),
         if (cashOut.total == 0)
           const _EmptyRow(message: 'No outflows recorded today'),
       ],
@@ -712,7 +755,8 @@ class PaymentModeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pm = ctrl.summary!.totalPaymentBreakup;
+    // ✅ FIXED: summary.paymentBreakup (was summary.totalPaymentBreakup)
+    final pm = ctrl.summary!.paymentBreakup;
 
     return _SectionCard(
       headerIcon: DayBookIcons.upiMode,
@@ -743,12 +787,20 @@ class PaymentModeSection extends StatelessWidget {
             value: pm.card,
             color: DayBookColors.cardMode,
             total: pm.total),
+        // ✅ FIXED: pm.bank (was pm.bankTransfer)
         _PaymentModeBar(
             label: DayBookStrings.bankMode,
             icon: DayBookIcons.bankMode,
-            value: pm.bankTransfer,
+            value: pm.bank,
             color: DayBookColors.bankMode,
             total: pm.total),
+        if (pm.cheque > 0)
+          _PaymentModeBar(
+              label: 'Cheque',
+              icon: DayBookIcons.bankMode,
+              value: pm.cheque,
+              color: DayBookColors.shellMuted,
+              total: pm.total),
       ],
     );
   }
@@ -829,16 +881,16 @@ class MetalInwardSection extends StatelessWidget {
       isExpanded: ctrl.metalInExpanded,
       onToggle: ctrl.toggleMetalIn,
       children: [
-        if (mi.urdScrapPurchase.totalGold > 0 ||
-            mi.urdScrapPurchase.totalSilver > 0)
+        // ✅ FIXED: mi.urdPurchase (was mi.urdScrapPurchase)
+        if (mi.urdPurchase.totalGold > 0 || mi.urdPurchase.totalSilver > 0)
           _MetalRow(
               icon: DayBookIcons.urdPurchase,
               color: DayBookColors.metalInAccent,
               label: DayBookStrings.urdPurchase,
               subtitle: DayBookStrings.urdPurchaseSub,
-              gold22: mi.urdScrapPurchase.gold22k,
-              gold18: mi.urdScrapPurchase.gold18k,
-              silver: mi.urdScrapPurchase.silver),
+              gold22: mi.urdPurchase.gold22k,
+              gold18: mi.urdPurchase.gold18k,
+              silver: mi.urdPurchase.silver),
         if (mi.karigarFinishedGoods.totalGold > 0)
           _MetalRow(
               icon: DayBookIcons.karigarFinish,

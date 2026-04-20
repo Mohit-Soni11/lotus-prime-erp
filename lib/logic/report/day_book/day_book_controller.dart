@@ -62,6 +62,9 @@ class DayBookController extends ChangeNotifier {
   bool paymentExpanded = false;
   bool gstExpanded = true;
   bool nonGstExpanded = true;
+  // ✅ Sub-section toggles (used by _GstBillSubSection & _NonGstBillSubSection)
+  bool gstSectionExpanded = true;
+  bool nonGstSectionExpanded = true;
 
   // ── EOD State ─────────────────────────────────────────────────────────────
   DenominationCount denomination = DenominationCount();
@@ -253,6 +256,17 @@ class DayBookController extends ChangeNotifier {
 
   void toggleNonGst() {
     nonGstExpanded = !nonGstExpanded;
+    notifyListeners();
+  }
+
+  // ✅ Sub-section toggles for GST & Non-GST bill cards inside Cash In
+  void toggleGstSection() {
+    gstSectionExpanded = !gstSectionExpanded;
+    notifyListeners();
+  }
+
+  void toggleNonGstSection() {
+    nonGstSectionExpanded = !nonGstSectionExpanded;
     notifyListeners();
   }
 

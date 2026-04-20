@@ -2,6 +2,11 @@
 // FILE        : day_book_repository.dart
 // MODULE      : Reports & Analytics → Day Book
 // LAYER       : Repository / Data Access
+// PATH        : lib/repositories/reports/day_book_repository.dart
+//
+// ✅ THIS IS THE ONLY REPOSITORY — DELETE the old duplicate at:
+//    lib/logic/report/day_book/day_book_repository.dart
+//
 // DESCRIPTION : PRODUCTION GRADE — All Drift queries use EXACT column names
 //               from the actual database tables.
 //
@@ -14,16 +19,22 @@
 //               │ GirviPayments    → Girvi receipts (INTEREST/FULL_RELEASE)│
 //               │ KarigarIssues    → Metal issued to karigar               │
 //               │ KarigarReceipts  → Finished goods + making charge paid   │
-//               │ OrderAdvances    → Booking advance received              │
 //               │ ShopProfiles     → Opening cash balance                  │
 //               └─────────────────────────────────────────────────────────┘
 //
-//               CashTransactions category values (from cash_book_enums.dart):
-//               INCOME:  SALE, ADVANCE, ORDER_DELIVERY, GIRVI_RETURN,
-//                        LOAN_RECEIVED, INTEREST_RECEIVED, MISC_INCOME, OTHER_INCOME
-//               EXPENSE: SHOP_RENT, STAFF_SALARY, ELECTRICITY, PURCHASE_PAYMENT,
-//                        GIRVI_GIVEN, MAINTENANCE, ADVERTISING, TRANSPORT,
-//                        BANK_CHARGES, GOVT_FEES, MISC_EXPENSE, OTHER_EXPENSE
+//               CashTransactions column names (from app_database.dart):
+//               type      → 'INCOME' | 'EXPENSE'
+//               category  → 'ADVANCE' | 'ORDER_DELIVERY' | 'GIRVI_RETURN' |
+//                           'LOAN_RECEIVED' | 'INTEREST_RECEIVED' |
+//                           'MISC_INCOME' | 'OTHER_INCOME' |
+//                           'SHOP_RENT' | 'STAFF_SALARY' | 'ELECTRICITY' |
+//                           'PURCHASE_PAYMENT' | 'GIRVI_GIVEN' |
+//                           'MAINTENANCE' | 'ADVERTISING' | 'TRANSPORT' |
+//                           'BANK_CHARGES' | 'GOVT_FEES' |
+//                           'MISC_EXPENSE' | 'OTHER_EXPENSE'
+//               txnDate   → DateTime of transaction
+//               isVoided  → bool (false = active)
+//               paymentMode → 'CASH' | 'UPI' | 'CARD' | 'BANK' | 'CHEQUE'
 // =============================================================================
 
 import 'package:drift/drift.dart';
@@ -33,7 +44,6 @@ import '../../database/db/app_database.dart';
 import '../../models/reports/day_book/day_book_models.dart';
 
 class DayBookRepository {
-
   final AppDatabase _db;
   DayBookRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
 
@@ -43,63 +53,63 @@ class DayBookRepository {
   // ==========================================================================
   Future<DayBookSummary> fetchDayBook(DateTime date) async {
     final start = DateTime(date.year, date.month, date.day, 0, 0, 0);
-    final end   = DateTime(date.year, date.month, date.day, 23, 59, 59);
+    final end = DateTime(date.year, date.month, date.day, 23, 59, 59);
 
     try {
       // ── Run all queries in parallel ────────────────────────────────────────
       final results = await Future.wait([
-        _fetchGstBills(start, end),          // 0: GstBillSummary
-        _fetchNonGstBills(start, end),       // 1: NonGstBillSummary
-        _fetchIncomeByCategory(start, end),  // 2: Map<String, double>
+        _fetchGstBills(start, end), // 0: GstBillSummary
+        _fetchNonGstBills(start, end), // 1: NonGstBillSummary
+        _fetchIncomeByCategory(start, end), // 2: Map<String, double>
         _fetchExpenseByCategory(start, end), // 3: Map<String, double>
         _fetchKarigarFinishedGoods(start, end), // 4: MetalWeight
         _fetchGirviSecurityDeposit(start, end), // 5: MetalWeight
-        _fetchRetailMetalDispatch(start, end),  // 6: MetalWeight
-        _fetchKarigarIssues(start, end),        // 7: MetalWeight
-        _fetchOpeningCash(),                    // 8: double
-        _fetch7DayExpenseAvg(date),             // 9: double
-        _fetchPaymentBreakup(start, end),       // 10: PaymentBreakup
+        _fetchRetailMetalDispatch(start, end), // 6: MetalWeight
+        _fetchKarigarIssues(start, end), // 7: MetalWeight
+        _fetchOpeningCash(), // 8: double
+        _fetch7DayExpenseAvg(date), // 9: double
+        _fetchPaymentBreakup(start, end), // 10: PaymentBreakup
       ]);
 
-      final gstSales     = results[0] as GstBillSummary;
-      final nonGstSales  = results[1] as NonGstBillSummary;
-      final incomeMap    = results[2] as Map<String, double>;
-      final expenseMap   = results[3] as Map<String, double>;
+      final gstSales = results[0] as GstBillSummary;
+      final nonGstSales = results[1] as NonGstBillSummary;
+      final incomeMap = results[2] as Map<String, double>;
+      final expenseMap = results[3] as Map<String, double>;
       final karigarMetal = results[4] as MetalWeight;
-      final girviMetal   = results[5] as MetalWeight;
-      final retailMetal  = results[6] as MetalWeight;
+      final girviMetal = results[5] as MetalWeight;
+      final retailMetal = results[6] as MetalWeight;
       final karigarIssue = results[7] as MetalWeight;
-      final openingCash  = results[8] as double;
-      final avgExpense   = results[9] as double;
-      final payBreakup   = results[10] as PaymentBreakup;
+      final openingCash = results[8] as double;
+      final avgExpense = results[9] as double;
+      final payBreakup = results[10] as PaymentBreakup;
 
       // ── Build CashInflow ───────────────────────────────────────────────────
       final cashIn = CashInflow(
-        gstSales:    gstSales,
+        gstSales: gstSales,
         nonGstSales: nonGstSales,
-        advance:        incomeMap['ADVANCE']           ?? 0,
-        orderDelivery:  incomeMap['ORDER_DELIVERY']    ?? 0,
-        girviReturn:    incomeMap['GIRVI_RETURN']      ?? 0,
-        loanReceived:   incomeMap['LOAN_RECEIVED']     ?? 0,
-        interestRec:    incomeMap['INTEREST_RECEIVED'] ?? 0,
-        miscIncome:     incomeMap['MISC_INCOME']       ?? 0,
-        otherIncome:    incomeMap['OTHER_INCOME']      ?? 0,
+        advance: incomeMap['ADVANCE'] ?? 0,
+        orderDelivery: incomeMap['ORDER_DELIVERY'] ?? 0,
+        girviReturn: incomeMap['GIRVI_RETURN'] ?? 0,
+        loanReceived: incomeMap['LOAN_RECEIVED'] ?? 0,
+        interestRec: incomeMap['INTEREST_RECEIVED'] ?? 0,
+        miscIncome: incomeMap['MISC_INCOME'] ?? 0,
+        otherIncome: incomeMap['OTHER_INCOME'] ?? 0,
       );
 
       // ── Build CashOutflow ─────────────────────────────────────────────────
       final cashOut = CashOutflow(
-        shopRent:        expenseMap['SHOP_RENT']        ?? 0,
-        staffSalary:     expenseMap['STAFF_SALARY']     ?? 0,
-        electricity:     expenseMap['ELECTRICITY']      ?? 0,
+        shopRent: expenseMap['SHOP_RENT'] ?? 0,
+        staffSalary: expenseMap['STAFF_SALARY'] ?? 0,
+        electricity: expenseMap['ELECTRICITY'] ?? 0,
         purchasePayment: expenseMap['PURCHASE_PAYMENT'] ?? 0,
-        girviGiven:      expenseMap['GIRVI_GIVEN']      ?? 0,
-        maintenance:     expenseMap['MAINTENANCE']      ?? 0,
-        advertising:     expenseMap['ADVERTISING']      ?? 0,
-        transport:       expenseMap['TRANSPORT']        ?? 0,
-        bankCharges:     expenseMap['BANK_CHARGES']     ?? 0,
-        govtFees:        expenseMap['GOVT_FEES']        ?? 0,
-        miscExpense:     expenseMap['MISC_EXPENSE']     ?? 0,
-        otherExpense:    expenseMap['OTHER_EXPENSE']    ?? 0,
+        girviGiven: expenseMap['GIRVI_GIVEN'] ?? 0,
+        maintenance: expenseMap['MAINTENANCE'] ?? 0,
+        advertising: expenseMap['ADVERTISING'] ?? 0,
+        transport: expenseMap['TRANSPORT'] ?? 0,
+        bankCharges: expenseMap['BANK_CHARGES'] ?? 0,
+        govtFees: expenseMap['GOVT_FEES'] ?? 0,
+        miscExpense: expenseMap['MISC_EXPENSE'] ?? 0,
+        otherExpense: expenseMap['OTHER_EXPENSE'] ?? 0,
       );
 
       // ── Build Metal flows ─────────────────────────────────────────────────
@@ -109,7 +119,7 @@ class DayBookRepository {
       );
       final metalOut = MetalOutflow(
         retailDispatch: retailMetal,
-        karigarIssue:   karigarIssue,
+        karigarIssue: karigarIssue,
       );
 
       // ── Anomaly Detection ─────────────────────────────────────────────────
@@ -127,17 +137,16 @@ class DayBookRepository {
       );
 
       return DayBookSummary(
-        date:              date,
-        openingCash:       openingCash,
-        cashIn:            cashIn,
-        cashOut:           cashOut,
-        metalIn:           metalIn,
-        metalOut:          metalOut,
-        paymentBreakup:    payBreakup,
-        anomalies:         anomalies,
-        prediction:        prediction,
+        date: date,
+        openingCash: openingCash,
+        cashIn: cashIn,
+        cashOut: cashOut,
+        metalIn: metalIn,
+        metalOut: metalOut,
+        paymentBreakup: payBreakup,
+        anomalies: anomalies,
+        prediction: prediction,
       );
-
     } catch (e, stack) {
       debugPrint('❌ DayBookRepository.fetchDayBook: $e\n$stack');
       rethrow;
@@ -145,41 +154,39 @@ class DayBookRepository {
   }
 
   // ==========================================================================
-  // 1. GST BILLS
-  // Bills WHERE billNo LIKE 'TAX-%' AND status='ACTIVE' AND date range
+  // 1. GST BILLS — billNo LIKE 'TAX-%' AND status='ACTIVE'
   // ==========================================================================
   Future<GstBillSummary> _fetchGstBills(DateTime start, DateTime end) async {
     try {
       final rows = await (_db.select(_db.bills)
-        ..where((b) =>
-            b.billNo.like('TAX-%') &
-            b.status.equals('ACTIVE') &
-            b.billDate.isBiggerOrEqualValue(start) &
-            b.billDate.isSmallerOrEqualValue(end)))
+            ..where((b) =>
+                b.billNo.like('TAX-%') &
+                b.status.equals('ACTIVE') &
+                b.billDate.isBiggerOrEqualValue(start) &
+                b.billDate.isSmallerOrEqualValue(end)))
           .get();
 
       if (rows.isEmpty) return const GstBillSummary();
 
       double finalTotal = 0;
-      double paidTotal  = 0;
+      double paidTotal = 0;
 
       for (final b in rows) {
         finalTotal += b.finalAmount;
-        paidTotal  += b.paidAmount;
+        paidTotal += b.paidAmount;
       }
 
       // GST = 3% included in finalAmount
-      // taxable = finalAmount / 1.03
       final taxable = finalTotal / 1.03;
-      final gst     = finalTotal - taxable;
+      final gst = finalTotal - taxable;
 
       return GstBillSummary(
-        billCount:     rows.length,
+        billCount: rows.length,
         taxableAmount: taxable,
-        cgst:          gst / 2,
-        sgst:          gst / 2,
-        finalAmount:   finalTotal,
-        payments:      PaymentBreakup(cash: paidTotal),
+        cgst: gst / 2,
+        sgst: gst / 2,
+        finalAmount: finalTotal,
+        payments: PaymentBreakup(cash: paidTotal),
       );
     } catch (e) {
       debugPrint('❌ _fetchGstBills: $e');
@@ -188,32 +195,32 @@ class DayBookRepository {
   }
 
   // ==========================================================================
-  // 2. NON-GST BILLS
-  // Bills WHERE billNo LIKE 'EST-%' AND status='ACTIVE' AND date range
+  // 2. NON-GST BILLS — billNo LIKE 'EST-%' AND status='ACTIVE'
   // ==========================================================================
-  Future<NonGstBillSummary> _fetchNonGstBills(DateTime start, DateTime end) async {
+  Future<NonGstBillSummary> _fetchNonGstBills(
+      DateTime start, DateTime end) async {
     try {
       final rows = await (_db.select(_db.bills)
-        ..where((b) =>
-            b.billNo.like('EST-%') &
-            b.status.equals('ACTIVE') &
-            b.billDate.isBiggerOrEqualValue(start) &
-            b.billDate.isSmallerOrEqualValue(end)))
+            ..where((b) =>
+                b.billNo.like('EST-%') &
+                b.status.equals('ACTIVE') &
+                b.billDate.isBiggerOrEqualValue(start) &
+                b.billDate.isSmallerOrEqualValue(end)))
           .get();
 
       if (rows.isEmpty) return const NonGstBillSummary();
 
       double total = 0;
-      double paid  = 0;
+      double paid = 0;
       for (final b in rows) {
         total += b.finalAmount;
-        paid  += b.paidAmount;
+        paid += b.paidAmount;
       }
 
       return NonGstBillSummary(
-        billCount:   rows.length,
+        billCount: rows.length,
         totalAmount: total,
-        payments:    PaymentBreakup(cash: paid),
+        payments: PaymentBreakup(cash: paid),
       );
     } catch (e) {
       debugPrint('❌ _fetchNonGstBills: $e');
@@ -223,18 +230,17 @@ class DayBookRepository {
 
   // ==========================================================================
   // 3. INCOME by Category
-  // CashTransactions WHERE type='INCOME' AND isVoided=false AND date range
-  // Excludes 'SALE' — that comes from Bills table directly
+  // CashTransactions WHERE type='INCOME' AND isVoided=false
   // ==========================================================================
   Future<Map<String, double>> _fetchIncomeByCategory(
       DateTime start, DateTime end) async {
     try {
       final rows = await (_db.select(_db.cashTransactions)
-        ..where((t) =>
-            t.type.equals('INCOME') &
-            t.isVoided.equals(false) &
-            t.txnDate.isBiggerOrEqualValue(start) &
-            t.txnDate.isSmallerOrEqualValue(end)))
+            ..where((t) =>
+                t.type.equals('INCOME') &
+                t.isVoided.equals(false) &
+                t.txnDate.isBiggerOrEqualValue(start) &
+                t.txnDate.isSmallerOrEqualValue(end)))
           .get();
 
       final map = <String, double>{};
@@ -250,17 +256,17 @@ class DayBookRepository {
 
   // ==========================================================================
   // 4. EXPENSE by Category
-  // CashTransactions WHERE type='EXPENSE' AND isVoided=false AND date range
+  // CashTransactions WHERE type='EXPENSE' AND isVoided=false
   // ==========================================================================
   Future<Map<String, double>> _fetchExpenseByCategory(
       DateTime start, DateTime end) async {
     try {
       final rows = await (_db.select(_db.cashTransactions)
-        ..where((t) =>
-            t.type.equals('EXPENSE') &
-            t.isVoided.equals(false) &
-            t.txnDate.isBiggerOrEqualValue(start) &
-            t.txnDate.isSmallerOrEqualValue(end)))
+            ..where((t) =>
+                t.type.equals('EXPENSE') &
+                t.isVoided.equals(false) &
+                t.txnDate.isBiggerOrEqualValue(start) &
+                t.txnDate.isSmallerOrEqualValue(end)))
           .get();
 
       final map = <String, double>{};
@@ -277,25 +283,23 @@ class DayBookRepository {
   // ==========================================================================
   // 5. METAL IN: Karigar Finished Goods
   // KarigarReceipts WHERE receiptDate in range
-  // Metal = netWeightReceived, grouped by karigarIssue.purity / metalType
   // ==========================================================================
   Future<MetalWeight> _fetchKarigarFinishedGoods(
       DateTime start, DateTime end) async {
     try {
       final receipts = await (_db.select(_db.karigarReceipts)
-        ..where((r) =>
-            r.receiptDate.isBiggerOrEqualValue(start) &
-            r.receiptDate.isSmallerOrEqualValue(end)))
+            ..where((r) =>
+                r.receiptDate.isBiggerOrEqualValue(start) &
+                r.receiptDate.isSmallerOrEqualValue(end)))
           .get();
 
       if (receipts.isEmpty) return const MetalWeight();
 
-      // Get the issue details for each receipt (to know metalType + purity)
       double gold22 = 0, gold18 = 0, silver = 0;
 
       for (final receipt in receipts) {
         final issue = await (_db.select(_db.karigarIssues)
-          ..where((i) => i.id.equals(receipt.issueId)))
+              ..where((i) => i.id.equals(receipt.issueId)))
             .getSingleOrNull();
 
         if (issue == null) continue;
@@ -324,16 +328,15 @@ class DayBookRepository {
   // ==========================================================================
   // 6. METAL IN: Girvi Security Deposit
   // GirviLoans WHERE startDate in range AND status='ACTIVE'
-  // Uses netWeight (gold pledged by customer)
   // ==========================================================================
   Future<MetalWeight> _fetchGirviSecurityDeposit(
       DateTime start, DateTime end) async {
     try {
       final loans = await (_db.select(_db.girviLoans)
-        ..where((l) =>
-            l.startDate.isBiggerOrEqualValue(start) &
-            l.startDate.isSmallerOrEqualValue(end) &
-            l.status.equals('ACTIVE')))
+            ..where((l) =>
+                l.startDate.isBiggerOrEqualValue(start) &
+                l.startDate.isSmallerOrEqualValue(end) &
+                l.status.equals('ACTIVE')))
           .get();
 
       if (loans.isEmpty) return const MetalWeight();
@@ -363,18 +366,16 @@ class DayBookRepository {
 
   // ==========================================================================
   // 7. METAL OUT: Retail Dispatch
-  // BillItems for today's active Bills (TAX- + EST-)
-  // BillItems.netWeight grouped by BillItems.purity
+  // BillItems for today's active Bills
   // ==========================================================================
   Future<MetalWeight> _fetchRetailMetalDispatch(
       DateTime start, DateTime end) async {
     try {
-      // Get today's active bills
       final bills = await (_db.select(_db.bills)
-        ..where((b) =>
-            b.status.equals('ACTIVE') &
-            b.billDate.isBiggerOrEqualValue(start) &
-            b.billDate.isSmallerOrEqualValue(end)))
+            ..where((b) =>
+                b.status.equals('ACTIVE') &
+                b.billDate.isBiggerOrEqualValue(start) &
+                b.billDate.isSmallerOrEqualValue(end)))
           .get();
 
       if (bills.isEmpty) return const MetalWeight();
@@ -383,7 +384,7 @@ class DayBookRepository {
 
       for (final bill in bills) {
         final items = await (_db.select(_db.billItems)
-          ..where((i) => i.billId.equals(bill.id)))
+              ..where((i) => i.billId.equals(bill.id)))
             .get();
 
         for (final item in items) {
@@ -404,7 +405,7 @@ class DayBookRepository {
               silver += wt;
               break;
             default:
-              gold22 += wt; // default
+              gold22 += wt;
           }
         }
       }
@@ -419,16 +420,14 @@ class DayBookRepository {
   // ==========================================================================
   // 8. METAL OUT: Karigar Issue
   // KarigarIssues WHERE issueDate in range AND status != 'Cancelled'
-  // Uses netWeightIssued, grouped by metalType + purity
   // ==========================================================================
-  Future<MetalWeight> _fetchKarigarIssues(
-      DateTime start, DateTime end) async {
+  Future<MetalWeight> _fetchKarigarIssues(DateTime start, DateTime end) async {
     try {
       final issues = await (_db.select(_db.karigarIssues)
-        ..where((i) =>
-            i.issueDate.isBiggerOrEqualValue(start) &
-            i.issueDate.isSmallerOrEqualValue(end) &
-            i.status.isNotIn(['Cancelled'])))
+            ..where((i) =>
+                i.issueDate.isBiggerOrEqualValue(start) &
+                i.issueDate.isSmallerOrEqualValue(end) &
+                i.status.isNotIn(['Cancelled'])))
           .get();
 
       if (issues.isEmpty) return const MetalWeight();
@@ -457,9 +456,7 @@ class DayBookRepository {
   }
 
   // ==========================================================================
-  // 9. OPENING CASH
-  // ShopProfiles.openingCashBalance (set at shop setup)
-  // In production: this will be previous day's closing cash
+  // 9. OPENING CASH — from ShopProfiles.openingCashBalance
   // ==========================================================================
   Future<double> _fetchOpeningCash() async {
     try {
@@ -473,27 +470,26 @@ class DayBookRepository {
 
   // ==========================================================================
   // 10. 7-DAY AVERAGE EXPENSE (for anomaly detection)
-  // CashTransactions WHERE type='EXPENSE' AND isVoided=false
-  // for last 7 days before today
   // ==========================================================================
   Future<double> _fetch7DayExpenseAvg(DateTime today) async {
     try {
       final sevenDaysAgo = today.subtract(const Duration(days: 7));
-      final start = DateTime(sevenDaysAgo.year, sevenDaysAgo.month, sevenDaysAgo.day);
-      final end   = DateTime(today.year, today.month, today.day, 0, 0, 0)
+      final start =
+          DateTime(sevenDaysAgo.year, sevenDaysAgo.month, sevenDaysAgo.day);
+      final end = DateTime(today.year, today.month, today.day, 0, 0, 0)
           .subtract(const Duration(seconds: 1));
 
       final rows = await (_db.select(_db.cashTransactions)
-        ..where((t) =>
-            t.type.equals('EXPENSE') &
-            t.isVoided.equals(false) &
-            t.txnDate.isBiggerOrEqualValue(start) &
-            t.txnDate.isSmallerOrEqualValue(end)))
+            ..where((t) =>
+                t.type.equals('EXPENSE') &
+                t.isVoided.equals(false) &
+                t.txnDate.isBiggerOrEqualValue(start) &
+                t.txnDate.isSmallerOrEqualValue(end)))
           .get();
 
       if (rows.isEmpty) return 0;
       final total = rows.fold(0.0, (sum, r) => sum + r.amount);
-      return total / 7; // Simple 7-day average
+      return total / 7;
     } catch (e) {
       debugPrint('❌ _fetch7DayExpenseAvg: $e');
       return 0;
@@ -502,36 +498,46 @@ class DayBookRepository {
 
   // ==========================================================================
   // 11. PAYMENT MODE BREAKUP
-  // CashTransactions WHERE isVoided=false AND date range
+  // CashTransactions WHERE type='INCOME' AND isVoided=false
   // paymentMode: CASH | UPI | CARD | BANK | CHEQUE
   // ==========================================================================
   Future<PaymentBreakup> _fetchPaymentBreakup(
       DateTime start, DateTime end) async {
     try {
       final rows = await (_db.select(_db.cashTransactions)
-        ..where((t) =>
-            t.type.equals('INCOME') &
-            t.isVoided.equals(false) &
-            t.txnDate.isBiggerOrEqualValue(start) &
-            t.txnDate.isSmallerOrEqualValue(end)))
+            ..where((t) =>
+                t.type.equals('INCOME') &
+                t.isVoided.equals(false) &
+                t.txnDate.isBiggerOrEqualValue(start) &
+                t.txnDate.isSmallerOrEqualValue(end)))
           .get();
 
       double cash = 0, upi = 0, card = 0, bank = 0, cheque = 0;
       for (final r in rows) {
         switch (r.paymentMode.toUpperCase()) {
-          case 'CASH':   cash   += r.amount; break;
-          case 'UPI':    upi    += r.amount; break;
-          case 'CARD':   card   += r.amount; break;
-          case 'BANK':   bank   += r.amount; break;
-          case 'CHEQUE': cheque += r.amount; break;
+          case 'CASH':
+            cash += r.amount;
+            break;
+          case 'UPI':
+            upi += r.amount;
+            break;
+          case 'CARD':
+            card += r.amount;
+            break;
+          case 'BANK':
+            bank += r.amount;
+            break;
+          case 'CHEQUE':
+            cheque += r.amount;
+            break;
         }
       }
 
       return PaymentBreakup(
-        cash:   cash,
-        upi:    upi,
-        card:   card,
-        bank:   bank,
+        cash: cash,
+        upi: upi,
+        card: card,
+        bank: bank,
         cheque: cheque,
       );
     } catch (e) {
@@ -554,7 +560,8 @@ class DayBookRepository {
     if (avgExpense > 0 && todayExpense > avgExpense * (1 + threshold)) {
       final pct = ((todayExpense - avgExpense) / avgExpense * 100);
       alerts.add(AnomalyAlert(
-        message: 'Expenses are ${pct.toStringAsFixed(0)}% above 7-day average (avg: ₹${avgExpense.toStringAsFixed(0)})',
+        message:
+            'Expenses are ${pct.toStringAsFixed(0)}% above 7-day average (avg: ₹${avgExpense.toStringAsFixed(0)})',
         category: 'expense',
         todayValue: todayExpense,
         avgValue: avgExpense,
@@ -574,41 +581,44 @@ class DayBookRepository {
     required double netSoFar,
   }) {
     final now = DateTime.now();
-    if (date.day != now.day || date.month != now.month || date.year != now.year) {
+    if (date.day != now.day ||
+        date.month != now.month ||
+        date.year != now.year) {
       return null; // Only predict for today
     }
 
-    const shopOpenHour  = 10; // 10 AM
+    const shopOpenHour = 10; // 10 AM
     const shopCloseHour = 20; // 8 PM
-    const totalHours    = shopCloseHour - shopOpenHour;
+    const totalHours = shopCloseHour - shopOpenHour;
 
     final elapsedHours = (now.hour - shopOpenHour).clamp(0, totalHours);
     if (elapsedHours <= 0) return null;
 
-    final projectedNet     = (netSoFar / elapsedHours) * totalHours;
-    final predictedClosing = (openingCash + projectedNet).clamp(0, double.infinity);
+    final projectedNet = (netSoFar / elapsedHours) * totalHours;
+    final predictedClosing =
+        (openingCash + projectedNet).clamp(0.0, double.infinity);
 
     return PredictedClosing(
-      predictedCash:   predictedClosing,
-      vsYesterdayPct:  0,
+      predictedCash: predictedClosing,
+      vsYesterdayPct: 0,
       isPositiveTrend: predictedClosing > openingCash,
     );
   }
 
   // ==========================================================================
-  // LIVE STREAM — Real-time Day Book (for today's screen auto-refresh)
-  // Watches CashTransactions table — any change triggers full rebuild
+  // LIVE STREAM — Real-time auto-refresh for today's screen
+  // Watches CashTransactions — any change triggers full rebuild
   // ==========================================================================
   Stream<void> watchTodayChanges() {
-    final now   = DateTime.now();
+    final now = DateTime.now();
     final start = DateTime(now.year, now.month, now.day, 0, 0, 0);
-    final end   = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
     return (_db.select(_db.cashTransactions)
           ..where((t) =>
               t.txnDate.isBiggerOrEqualValue(start) &
               t.txnDate.isSmallerOrEqualValue(end)))
         .watch()
-        .map((_) => null); // Only need the signal, not the data
+        .map((_) => null);
   }
 }
