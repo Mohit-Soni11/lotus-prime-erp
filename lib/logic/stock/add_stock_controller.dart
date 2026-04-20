@@ -24,27 +24,28 @@ import '../../repositories/supplier/supplier_repository.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 
 class StockRowEntry {
-  final String id; 
+  final String id;
 
-  String itemName          = '';
-  StockSubCategory subCategory = StockSubCategory.values.first; // ✅ Safer enum access
-  String huid              = '';
+  String itemName = '';
+  StockSubCategory subCategory =
+      StockSubCategory.values.first; // ✅ Safer enum access
+  String huid = '';
 
-  double grossWeight       = 0.0;
-  double stoneWeight       = 0.0;
-  
-  StoneType stoneType      = StoneType.none;
-  double stoneCarats       = 0.0;
-  int    stonePieces       = 0;
+  double grossWeight = 0.0;
+  double stoneWeight = 0.0;
 
-  double stoneValue        = 0.0;
+  StoneType stoneType = StoneType.none;
+  double stoneCarats = 0.0;
+  int stonePieces = 0;
 
-  double purchaseRate      = 0.0;
-  double makingCharges     = 0.0;
+  double stoneValue = 0.0;
+
+  double purchaseRate = 0.0;
+  double makingCharges = 0.0;
   MakingChargesType makingChargesType = MakingChargesType.perGram;
 
-  int?   supplierId;
-  String supplierName      = '';
+  int? supplierId;
+  String supplierName = '';
 
   StockRowEntry({required this.id});
 
@@ -80,11 +81,11 @@ enum AddStockStep { metal, purity, items }
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AddStockController extends ChangeNotifier {
-  late final AppDatabase        _db;
+  late final AppDatabase _db;
   late final SupplierRepository _supplierRepo;
 
   AddStockController() {
-    _db           = AppDatabase();
+    _db = AppDatabase();
     _supplierRepo = SupplierRepository(_db);
     _loadSuppliers();
     _addRow();
@@ -95,29 +96,31 @@ class AddStockController extends ChangeNotifier {
   AddStockStep get step => _step;
 
   void nextStep() {
-    if (_step == AddStockStep.metal)  _step = AddStockStep.purity;
+    if (_step == AddStockStep.metal)
+      _step = AddStockStep.purity;
     else if (_step == AddStockStep.purity) _step = AddStockStep.items;
     notifyListeners();
   }
 
   void prevStep() {
-    if (_step == AddStockStep.purity) _step = AddStockStep.metal;
+    if (_step == AddStockStep.purity)
+      _step = AddStockStep.metal;
     else if (_step == AddStockStep.items) _step = AddStockStep.purity;
     notifyListeners();
   }
 
   // ── Metal / Purity ────────────────────────────────────────────────────────
-  StockCategory _selectedMetal  = StockCategory.gold;
-  String        _selectedPurity = '22K (916)';
-  bool          _isCustomPurity = false;
-  String        _customPurity   = '';
+  StockCategory _selectedMetal = StockCategory.gold;
+  String _selectedPurity = '22K (916)';
+  bool _isCustomPurity = false;
+  String _customPurity = '';
 
-  StockCategory get selectedMetal   => _selectedMetal;
-  bool          get isCustomPurity  => _isCustomPurity;
-  String        get purityDisplay   => _isCustomPurity ? _customPurity : _selectedPurity;
+  StockCategory get selectedMetal => _selectedMetal;
+  bool get isCustomPurity => _isCustomPurity;
+  String get purityDisplay => _isCustomPurity ? _customPurity : _selectedPurity;
 
   void setMetal(StockCategory metal) {
-    _selectedMetal  = metal;
+    _selectedMetal = metal;
     _isCustomPurity = false;
     final opts = purityOptions;
     _selectedPurity = opts.isNotEmpty ? opts.first : '';
@@ -152,16 +155,16 @@ class AddStockController extends ChangeNotifier {
       !_isCustomPurity || _customPurity.trim().isNotEmpty;
 
   // ── Suppliers ─────────────────────────────────────────────────────────────
-  List<SupplierListItemModel> _suppliers      = [];
-  bool                        _loadingSuppliers = false;
-  bool                        _sameForAll     = true;
-  int?                        _sessionSupplierId;
-  String                      _sessionSupplierName = '';
+  List<SupplierListItemModel> _suppliers = [];
+  bool _loadingSuppliers = false;
+  bool _sameForAll = true;
+  int? _sessionSupplierId;
+  String _sessionSupplierName = '';
 
-  List<SupplierListItemModel> get suppliers           => _suppliers;
-  bool                        get loadingSuppliers    => _loadingSuppliers;
-  bool                        get sameForAll          => _sameForAll;
-  String                      get sessionSupplierName => _sessionSupplierName;
+  List<SupplierListItemModel> get suppliers => _suppliers;
+  bool get loadingSuppliers => _loadingSuppliers;
+  bool get sameForAll => _sameForAll;
+  String get sessionSupplierName => _sessionSupplierName;
 
   Future<void> _loadSuppliers() async {
     _loadingSuppliers = true;
@@ -177,7 +180,7 @@ class AddStockController extends ChangeNotifier {
     _sameForAll = val;
     if (val) {
       for (final r in _rows) {
-        r.supplierId   = _sessionSupplierId;
+        r.supplierId = _sessionSupplierId;
         r.supplierName = _sessionSupplierName;
       }
     }
@@ -185,11 +188,11 @@ class AddStockController extends ChangeNotifier {
   }
 
   void setSessionSupplier(SupplierListItemModel? s) {
-    _sessionSupplierId   = s?.id;
+    _sessionSupplierId = s?.id;
     _sessionSupplierName = s?.businessName ?? '';
     if (_sameForAll) {
       for (final r in _rows) {
-        r.supplierId   = _sessionSupplierId;
+        r.supplierId = _sessionSupplierId;
         r.supplierName = _sessionSupplierName;
       }
     }
@@ -199,14 +202,16 @@ class AddStockController extends ChangeNotifier {
   void setSessionSupplierText(String name) {
     _sessionSupplierName = name;
     if (_sameForAll) {
-      for (final r in _rows) { r.supplierName = name; }
+      for (final r in _rows) {
+        r.supplierName = name;
+      }
     }
     notifyListeners();
   }
 
   void setRowSupplier(String rowId, SupplierListItemModel? s) {
     final r = _rowById(rowId);
-    r.supplierId   = s?.id;
+    r.supplierId = s?.id;
     r.supplierName = s?.businessName ?? '';
     notifyListeners();
   }
@@ -214,13 +219,13 @@ class AddStockController extends ChangeNotifier {
   // ── Rows ──────────────────────────────────────────────────────────────────
   final List<StockRowEntry> _rows = [];
 
-  List<StockRowEntry> get rows     => List.unmodifiable(_rows);
-  int                 get rowCount => _rows.length;
+  List<StockRowEntry> get rows => List.unmodifiable(_rows);
+  int get rowCount => _rows.length;
 
   void _addRow() {
     final r = StockRowEntry(id: 'row_${DateTime.now().microsecondsSinceEpoch}');
     if (_sameForAll) {
-      r.supplierId   = _sessionSupplierId;
+      r.supplierId = _sessionSupplierId;
       r.supplierName = _sessionSupplierName;
     }
     _rows.add(r);
@@ -236,26 +241,74 @@ class AddStockController extends ChangeNotifier {
   }
 
   // ── Row updaters ──────────────────────────────────────────────────────────
-  void updateItemName(String id, String v)     { _rowById(id).itemName = v; notifyListeners(); }
-  void updateSubCategory(String id, StockSubCategory v) { _rowById(id).subCategory = v; notifyListeners(); }
-  void updateHuid(String id, String v)         { _rowById(id).huid = v; notifyListeners(); }
-  void updateGrossWeight(String id, String v)  { _rowById(id).grossWeight = double.tryParse(v) ?? 0; notifyListeners(); }
-  void updateStoneWeight(String id, String v)  { _rowById(id).stoneWeight = double.tryParse(v) ?? 0; notifyListeners(); }
-  void updateStoneValue(String id, String v)   { _rowById(id).stoneValue = double.tryParse(v) ?? 0; notifyListeners(); }
-  void updateStoneType(String id, StoneType v) { _rowById(id).stoneType = v; notifyListeners(); }
-  void updateStoneCarats(String id, String v)  { _rowById(id).stoneCarats = double.tryParse(v) ?? 0; notifyListeners(); }
-  void updateStonePieces(String id, String v)  { _rowById(id).stonePieces = int.tryParse(v) ?? 0; notifyListeners(); }
-  void updatePurchaseRate(String id, String v) { _rowById(id).purchaseRate = double.tryParse(v) ?? 0; notifyListeners(); }
-  void updateMakingCharges(String id, String v){ _rowById(id).makingCharges = double.tryParse(v) ?? 0; notifyListeners(); }
-  void updateMakingType(String id, MakingChargesType v) { _rowById(id).makingChargesType = v; notifyListeners(); }
+  void updateItemName(String id, String v) {
+    _rowById(id).itemName = v;
+    notifyListeners();
+  }
+
+  void updateSubCategory(String id, StockSubCategory v) {
+    _rowById(id).subCategory = v;
+    notifyListeners();
+  }
+
+  void updateHuid(String id, String v) {
+    _rowById(id).huid = v;
+    notifyListeners();
+  }
+
+  void updateGrossWeight(String id, String v) {
+    _rowById(id).grossWeight = double.tryParse(v) ?? 0;
+    notifyListeners();
+  }
+
+  void updateStoneWeight(String id, String v) {
+    _rowById(id).stoneWeight = double.tryParse(v) ?? 0;
+    notifyListeners();
+  }
+
+  void updateStoneValue(String id, String v) {
+    _rowById(id).stoneValue = double.tryParse(v) ?? 0;
+    notifyListeners();
+  }
+
+  void updateStoneType(String id, StoneType v) {
+    _rowById(id).stoneType = v;
+    notifyListeners();
+  }
+
+  void updateStoneCarats(String id, String v) {
+    _rowById(id).stoneCarats = double.tryParse(v) ?? 0;
+    notifyListeners();
+  }
+
+  void updateStonePieces(String id, String v) {
+    _rowById(id).stonePieces = int.tryParse(v) ?? 0;
+    notifyListeners();
+  }
+
+  void updatePurchaseRate(String id, String v) {
+    _rowById(id).purchaseRate = double.tryParse(v) ?? 0;
+    notifyListeners();
+  }
+
+  void updateMakingCharges(String id, String v) {
+    _rowById(id).makingCharges = double.tryParse(v) ?? 0;
+    notifyListeners();
+  }
+
+  void updateMakingType(String id, MakingChargesType v) {
+    _rowById(id).makingChargesType = v;
+    notifyListeners();
+  }
 
   StockRowEntry _rowById(String id) => _rows.firstWhere((r) => r.id == id);
 
   // ── Validation ────────────────────────────────────────────────────────────
   String? validateRow(StockRowEntry r) {
     if (r.itemName.trim().isEmpty) return 'Item name required';
-    if (r.grossWeight <= 0)        return 'Gross weight must be > 0';
-    if (r.stoneWeight > r.grossWeight) return 'Stone weight cannot exceed gross weight';
+    if (r.grossWeight <= 0) return 'Gross weight must be > 0';
+    if (r.stoneWeight > r.grossWeight)
+      return 'Stone weight cannot exceed gross weight';
     return null;
   }
 
@@ -263,27 +316,30 @@ class AddStockController extends ChangeNotifier {
 
   // ── SKU ───────────────────────────────────────────────────────────────────
   String _generateSku() {
-    String cat = _selectedMetal.label.substring(0, _selectedMetal.label.length.clamp(0, 3)).toUpperCase();
-    String pur = purityDisplay.replaceAll(RegExp(r'[^A-Za-z0-9]'), '').toUpperCase();
+    String cat = _selectedMetal.label
+        .substring(0, _selectedMetal.label.length.clamp(0, 3))
+        .toUpperCase();
+    String pur =
+        purityDisplay.replaceAll(RegExp(r'[^A-Za-z0-9]'), '').toUpperCase();
     pur = pur.substring(0, pur.length.clamp(0, 3));
-    
+
     // ✅ FIX: Replaced simple sequence with a microsecond suffix to prevent UNIQUE constraint crashes
     String uniqueId = DateTime.now().microsecondsSinceEpoch.toString();
-    uniqueId = uniqueId.substring(uniqueId.length - 4); 
-    
+    uniqueId = uniqueId.substring(uniqueId.length - 4);
+
     return '$cat-$pur-$uniqueId';
   }
 
   // ── Save ──────────────────────────────────────────────────────────────────
-  bool   _isSaving = false;
+  bool _isSaving = false;
   String? _errorMessage;
   String? _successMessage;
-  int    _savedCount = 0;
+  int _savedCount = 0;
 
-  bool    get isSaving      => _isSaving;
-  String? get errorMessage  => _errorMessage;
-  String? get successMessage=> _successMessage;
-  int     get savedCount    => _savedCount;
+  bool get isSaving => _isSaving;
+  String? get errorMessage => _errorMessage;
+  String? get successMessage => _successMessage;
+  int get savedCount => _savedCount;
 
   Future<bool> saveAll() async {
     if (!allRowsValid) {
@@ -292,8 +348,8 @@ class AddStockController extends ChangeNotifier {
       return false;
     }
 
-    _isSaving       = true;
-    _errorMessage   = null;
+    _isSaving = true;
+    _errorMessage = null;
     _successMessage = null;
     notifyListeners();
 
@@ -301,51 +357,68 @@ class AddStockController extends ChangeNotifier {
     try {
       for (final row in _rows) {
         final sku = _generateSku();
-        
+
         // Slight delay to ensure microseconds generate unique SKUs in rapid loop
-        await Future.delayed(const Duration(milliseconds: 2)); 
+        await Future.delayed(const Duration(milliseconds: 2));
 
         await _db.into(_db.stockItems).insert(StockItemsCompanion.insert(
-          sku:               sku,
-          itemName:          row.itemName.trim(),
-          category:          _selectedMetal.label,
-          subCategory:       row.subCategory.label,
-          metalType:         drift.Value([StockCategory.diamond, StockCategory.antique, StockCategory.other]
-              .contains(_selectedMetal) ? 'None / Other' : _selectedMetal.label),
-          purity:            drift.Value(purityDisplay.isEmpty ? null : purityDisplay),
-          grossWeight:       drift.Value(row.grossWeight),
-          stoneWeight:       drift.Value(row.stoneWeight),
-          netWeight:         drift.Value(row.netWeight),
-          stoneType:         drift.Value(row.stoneType.label),
-          stoneCarats:       drift.Value(row.stoneCarats),
-          stonePieces:       drift.Value(row.stonePieces),
-          stoneValue:        drift.Value(row.stoneValue),
-          makingCharges:     drift.Value(row.makingCharges),
-          makingChargesType: drift.Value(row.makingChargesType.label),
-          purchaseRate:      drift.Value(row.purchaseRate),
-          huid:              drift.Value(row.huid.trim().isEmpty ? null : row.huid.trim()),
-          gstRate:           drift.Value(_selectedMetal == StockCategory.diamond ? 1.5 : 3.0),
-          supplierId:        drift.Value(row.supplierId),
-          supplierName:      drift.Value(row.supplierName.trim().isEmpty ? null : row.supplierName.trim()),
-          status:            const drift.Value('Available'),
-          
-          // ✅ FIX: Added safe defaults for PC 1 missing fields to prevent DB crashes
-          description:       const drift.Value(''),
-          mrp:               const drift.Value(0.0),
-          quantity:          const drift.Value(1),
-          hsnCode:           drift.Value(_selectedMetal == StockCategory.silver ? '7114' : '7113'),
-          rackLocation:      const drift.Value(''),
-        ));
+              sku: sku,
+              itemName: row.itemName.trim(),
+              category: _selectedMetal.label,
+              subCategory: row.subCategory.label,
+              metalType: drift.Value([
+                StockCategory.diamond,
+                StockCategory.antique,
+                StockCategory.other
+              ].contains(_selectedMetal)
+                  ? 'None / Other'
+                  : _selectedMetal.label),
+              purity: drift.Value(purityDisplay.isEmpty ? null : purityDisplay),
+              grossWeight: drift.Value(row.grossWeight),
+              stoneWeight: drift.Value(row.stoneWeight),
+              netWeight: drift.Value(row.netWeight),
+              stoneType: drift.Value(row.stoneType.label),
+              stoneCarats: drift.Value(row.stoneCarats),
+              stonePieces: drift.Value(row.stonePieces),
+              stoneValue: drift.Value(row.stoneValue),
+
+              // ✅ FIXED: yahan naye column names update kar diye hain
+              makingCharge: drift.Value(row.makingCharges),
+              makingChargeType: drift.Value(row.makingChargesType.label),
+              wastage: const drift.Value(0.0), // Naya added tha table mein
+
+              purchaseRate: drift.Value(row.purchaseRate),
+              huid:
+                  drift.Value(row.huid.trim().isEmpty ? null : row.huid.trim()),
+              gstRate: drift.Value(
+                  _selectedMetal == StockCategory.diamond ? 1.5 : 3.0),
+              supplierId: drift.Value(row.supplierId),
+              supplierName: drift.Value(row.supplierName.trim().isEmpty
+                  ? null
+                  : row.supplierName.trim()),
+              status: const drift.Value('Available'),
+
+              isActive: const drift.Value(true), // Naya added tha table mein
+
+              description: const drift.Value(''),
+              mrp: const drift.Value(0.0),
+              quantity: const drift.Value(1),
+              hsnCode: drift.Value(
+                  _selectedMetal == StockCategory.silver ? '7114' : '7113'),
+
+              // ✅ FIXED: rackLocation ko location kar diya
+              location: const drift.Value(''),
+            ));
         saved++;
       }
 
-      _savedCount     = saved;
+      _savedCount = saved;
       _successMessage = '$saved item${saved > 1 ? 's' : ''} added to stock!';
       return true;
-
     } catch (e) {
       debugPrint('AddStockController.saveAll: $e');
-      _errorMessage = 'Error saving items. Database conflict or missing values.';
+      _errorMessage =
+          'Error saving items. Database conflict or missing values.';
       return false;
     } finally {
       _isSaving = false;
@@ -356,25 +429,25 @@ class AddStockController extends ChangeNotifier {
   void resetAllRows() {
     _rows.clear();
     _addRow();
-    _errorMessage   = null;
+    _errorMessage = null;
     _successMessage = null;
     notifyListeners();
   }
 
   void resetForNewBatch() {
-    _step             = AddStockStep.metal;
-    _isCustomPurity   = false;
-    _customPurity     = '';
+    _step = AddStockStep.metal;
+    _isCustomPurity = false;
+    _customPurity = '';
     _rows.clear();
-    _savedCount       = 0;
-    _errorMessage     = null;
-    _successMessage   = null;
+    _savedCount = 0;
+    _errorMessage = null;
+    _successMessage = null;
     _addRow();
     notifyListeners();
   }
 
   void clearMessages() {
-    _errorMessage   = null;
+    _errorMessage = null;
     _successMessage = null;
     notifyListeners();
   }

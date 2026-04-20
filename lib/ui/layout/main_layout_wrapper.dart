@@ -10,18 +10,11 @@
 //   v4 — karigarHisaabRoute renamed to karigarLedgerRoute (route fix)
 //        Finance & Ledgers comment updated (renamed from Accounts & GST)
 //   v5 — bankBookRoute wired to BankBookScreen
-//   v6 — Girvi module all 4 routes wired:
-//          newGirviRoute      → NewGirviScreen
-//          girviReleaseRoute  → GirviListScreen (release happens inside)
-//          interestCalcRoute  → InterestCalcScreen
-//          noticeAuctionRoute → NoticeAuctionScreen
-//   v7 — Supplier module wired:
-//          supplierListRoute → SupplierListScreen
-//          addSupplierRoute  → AddSupplierScreen
-//   v8 — ✅ Expense Entry module wired:
-//          expenseEntryRoute → ExpenseScreen
-//   v9 — ✅ Day Book module wired:
-//          dayBookRoute → DayBookScreen
+//   v6 — Girvi module all 4 routes wired
+//   v7 — Supplier module wired
+//   v8 — ✅ Expense Entry module wired
+//   v9 — ✅ Day Book module wired
+//   v10 — ✅ Delivery Management module wired
 // =============================================================================
 
 import 'dart:io';
@@ -42,6 +35,9 @@ import '../../ui/sales & orders/sales_pos/pos_master_sale_screen.dart';
 
 // BOOKING
 import '../booking_advance/booking_advance_screen.dart';
+
+// ✅ v10: DELIVERY MANAGEMENT
+import '../sales & orders/delivery/delivery_management_screen.dart';
 
 // STOCK
 import '../stock/add_stock/add_stock_screen.dart';
@@ -124,6 +120,15 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
           context,
           MaterialPageRoute(
               builder: (_) => BookingAdvanceScreen(
+                    onBack: () => Navigator.pop(context),
+                  )));
+
+      // ── ✅ v10: DELIVERY MANAGEMENT ────────────────────────────────────────
+    } else if (routeId == AppRoutes.deliveryManagementRoute) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => DeliveryManagementScreen(
                     onBack: () => Navigator.pop(context),
                   )));
     } else if (routeId == AppRoutes.defaulterListRoute) {

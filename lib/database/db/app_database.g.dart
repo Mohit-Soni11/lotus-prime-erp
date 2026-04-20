@@ -7794,6 +7794,14 @@ class $StockItemsTable extends StockItems
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
+  static const VerificationMeta _wastageMeta =
+      const VerificationMeta('wastage');
+  @override
+  late final GeneratedColumn<double> wastage = GeneratedColumn<double>(
+      'wastage', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
   static const VerificationMeta _stoneTypeMeta =
       const VerificationMeta('stoneType');
   @override
@@ -7826,22 +7834,22 @@ class $StockItemsTable extends StockItems
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
-  static const VerificationMeta _makingChargesMeta =
-      const VerificationMeta('makingCharges');
+  static const VerificationMeta _makingChargeMeta =
+      const VerificationMeta('makingCharge');
   @override
-  late final GeneratedColumn<double> makingCharges = GeneratedColumn<double>(
-      'making_charges', aliasedName, false,
+  late final GeneratedColumn<double> makingCharge = GeneratedColumn<double>(
+      'making_charge', aliasedName, false,
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
-  static const VerificationMeta _makingChargesTypeMeta =
-      const VerificationMeta('makingChargesType');
+  static const VerificationMeta _makingChargeTypeMeta =
+      const VerificationMeta('makingChargeType');
   @override
-  late final GeneratedColumn<String> makingChargesType =
-      GeneratedColumn<String>('making_charges_type', aliasedName, false,
-          type: DriftSqlType.string,
-          requiredDuringInsert: false,
-          defaultValue: const Constant('Per Gram (Rs/g)'));
+  late final GeneratedColumn<String> makingChargeType = GeneratedColumn<String>(
+      'making_charge_type', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('Per Gram (Rs/g)'));
   static const VerificationMeta _purchaseRateMeta =
       const VerificationMeta('purchaseRate');
   @override
@@ -7892,11 +7900,11 @@ class $StockItemsTable extends StockItems
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(1));
-  static const VerificationMeta _rackLocationMeta =
-      const VerificationMeta('rackLocation');
+  static const VerificationMeta _locationMeta =
+      const VerificationMeta('location');
   @override
-  late final GeneratedColumn<String> rackLocation = GeneratedColumn<String>(
-      'rack_location', aliasedName, true,
+  late final GeneratedColumn<String> location = GeneratedColumn<String>(
+      'location', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _supplierIdMeta =
       const VerificationMeta('supplierId');
@@ -7920,6 +7928,16 @@ class $StockItemsTable extends StockItems
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant('Available'));
+  static const VerificationMeta _isActiveMeta =
+      const VerificationMeta('isActive');
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+      'is_active', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_active" IN (0, 1))'),
+      defaultValue: const Constant(true));
   static const VerificationMeta _imagePathMeta =
       const VerificationMeta('imagePath');
   @override
@@ -7941,12 +7959,13 @@ class $StockItemsTable extends StockItems
         grossWeight,
         stoneWeight,
         netWeight,
+        wastage,
         stoneType,
         stoneCarats,
         stonePieces,
         stoneValue,
-        makingCharges,
-        makingChargesType,
+        makingCharge,
+        makingChargeType,
         purchaseRate,
         purchasePrice,
         mrp,
@@ -7954,10 +7973,11 @@ class $StockItemsTable extends StockItems
         huid,
         gstRate,
         quantity,
-        rackLocation,
+        location,
         supplierId,
         supplierName,
         status,
+        isActive,
         imagePath
       ];
   @override
@@ -8037,6 +8057,10 @@ class $StockItemsTable extends StockItems
       context.handle(_netWeightMeta,
           netWeight.isAcceptableOrUnknown(data['net_weight']!, _netWeightMeta));
     }
+    if (data.containsKey('wastage')) {
+      context.handle(_wastageMeta,
+          wastage.isAcceptableOrUnknown(data['wastage']!, _wastageMeta));
+    }
     if (data.containsKey('stone_type')) {
       context.handle(_stoneTypeMeta,
           stoneType.isAcceptableOrUnknown(data['stone_type']!, _stoneTypeMeta));
@@ -8059,17 +8083,17 @@ class $StockItemsTable extends StockItems
           stoneValue.isAcceptableOrUnknown(
               data['stone_value']!, _stoneValueMeta));
     }
-    if (data.containsKey('making_charges')) {
+    if (data.containsKey('making_charge')) {
       context.handle(
-          _makingChargesMeta,
-          makingCharges.isAcceptableOrUnknown(
-              data['making_charges']!, _makingChargesMeta));
+          _makingChargeMeta,
+          makingCharge.isAcceptableOrUnknown(
+              data['making_charge']!, _makingChargeMeta));
     }
-    if (data.containsKey('making_charges_type')) {
+    if (data.containsKey('making_charge_type')) {
       context.handle(
-          _makingChargesTypeMeta,
-          makingChargesType.isAcceptableOrUnknown(
-              data['making_charges_type']!, _makingChargesTypeMeta));
+          _makingChargeTypeMeta,
+          makingChargeType.isAcceptableOrUnknown(
+              data['making_charge_type']!, _makingChargeTypeMeta));
     }
     if (data.containsKey('purchase_rate')) {
       context.handle(
@@ -8103,11 +8127,9 @@ class $StockItemsTable extends StockItems
       context.handle(_quantityMeta,
           quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta));
     }
-    if (data.containsKey('rack_location')) {
-      context.handle(
-          _rackLocationMeta,
-          rackLocation.isAcceptableOrUnknown(
-              data['rack_location']!, _rackLocationMeta));
+    if (data.containsKey('location')) {
+      context.handle(_locationMeta,
+          location.isAcceptableOrUnknown(data['location']!, _locationMeta));
     }
     if (data.containsKey('supplier_id')) {
       context.handle(
@@ -8124,6 +8146,10 @@ class $StockItemsTable extends StockItems
     if (data.containsKey('status')) {
       context.handle(_statusMeta,
           status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(_isActiveMeta,
+          isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta));
     }
     if (data.containsKey('image_path')) {
       context.handle(_imagePathMeta,
@@ -8164,6 +8190,8 @@ class $StockItemsTable extends StockItems
           .read(DriftSqlType.double, data['${effectivePrefix}stone_weight'])!,
       netWeight: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}net_weight'])!,
+      wastage: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}wastage'])!,
       stoneType: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}stone_type'])!,
       stoneCarats: attachedDatabase.typeMapping
@@ -8172,10 +8200,10 @@ class $StockItemsTable extends StockItems
           .read(DriftSqlType.int, data['${effectivePrefix}stone_pieces'])!,
       stoneValue: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}stone_value'])!,
-      makingCharges: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}making_charges'])!,
-      makingChargesType: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}making_charges_type'])!,
+      makingCharge: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}making_charge'])!,
+      makingChargeType: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}making_charge_type'])!,
       purchaseRate: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}purchase_rate'])!,
       purchasePrice: attachedDatabase.typeMapping
@@ -8190,14 +8218,16 @@ class $StockItemsTable extends StockItems
           .read(DriftSqlType.double, data['${effectivePrefix}gst_rate'])!,
       quantity: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}quantity'])!,
-      rackLocation: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}rack_location']),
+      location: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}location']),
       supplierId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}supplier_id']),
       supplierName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}supplier_name']),
       status: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
+      isActive: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_active'])!,
       imagePath: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}image_path']),
     );
@@ -8223,12 +8253,13 @@ class StockItem extends DataClass implements Insertable<StockItem> {
   final double grossWeight;
   final double stoneWeight;
   final double netWeight;
+  final double wastage;
   final String stoneType;
   final double stoneCarats;
   final int stonePieces;
   final double stoneValue;
-  final double makingCharges;
-  final String makingChargesType;
+  final double makingCharge;
+  final String makingChargeType;
   final double purchaseRate;
   final double purchasePrice;
   final double mrp;
@@ -8236,10 +8267,11 @@ class StockItem extends DataClass implements Insertable<StockItem> {
   final String? huid;
   final double gstRate;
   final int quantity;
-  final String? rackLocation;
+  final String? location;
   final int? supplierId;
   final String? supplierName;
   final String status;
+  final bool isActive;
   final String? imagePath;
   const StockItem(
       {required this.id,
@@ -8255,12 +8287,13 @@ class StockItem extends DataClass implements Insertable<StockItem> {
       required this.grossWeight,
       required this.stoneWeight,
       required this.netWeight,
+      required this.wastage,
       required this.stoneType,
       required this.stoneCarats,
       required this.stonePieces,
       required this.stoneValue,
-      required this.makingCharges,
-      required this.makingChargesType,
+      required this.makingCharge,
+      required this.makingChargeType,
       required this.purchaseRate,
       required this.purchasePrice,
       required this.mrp,
@@ -8268,10 +8301,11 @@ class StockItem extends DataClass implements Insertable<StockItem> {
       this.huid,
       required this.gstRate,
       required this.quantity,
-      this.rackLocation,
+      this.location,
       this.supplierId,
       this.supplierName,
       required this.status,
+      required this.isActive,
       this.imagePath});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -8295,12 +8329,13 @@ class StockItem extends DataClass implements Insertable<StockItem> {
     map['gross_weight'] = Variable<double>(grossWeight);
     map['stone_weight'] = Variable<double>(stoneWeight);
     map['net_weight'] = Variable<double>(netWeight);
+    map['wastage'] = Variable<double>(wastage);
     map['stone_type'] = Variable<String>(stoneType);
     map['stone_carats'] = Variable<double>(stoneCarats);
     map['stone_pieces'] = Variable<int>(stonePieces);
     map['stone_value'] = Variable<double>(stoneValue);
-    map['making_charges'] = Variable<double>(makingCharges);
-    map['making_charges_type'] = Variable<String>(makingChargesType);
+    map['making_charge'] = Variable<double>(makingCharge);
+    map['making_charge_type'] = Variable<String>(makingChargeType);
     map['purchase_rate'] = Variable<double>(purchaseRate);
     map['purchase_price'] = Variable<double>(purchasePrice);
     map['mrp'] = Variable<double>(mrp);
@@ -8312,8 +8347,8 @@ class StockItem extends DataClass implements Insertable<StockItem> {
     }
     map['gst_rate'] = Variable<double>(gstRate);
     map['quantity'] = Variable<int>(quantity);
-    if (!nullToAbsent || rackLocation != null) {
-      map['rack_location'] = Variable<String>(rackLocation);
+    if (!nullToAbsent || location != null) {
+      map['location'] = Variable<String>(location);
     }
     if (!nullToAbsent || supplierId != null) {
       map['supplier_id'] = Variable<int>(supplierId);
@@ -8322,6 +8357,7 @@ class StockItem extends DataClass implements Insertable<StockItem> {
       map['supplier_name'] = Variable<String>(supplierName);
     }
     map['status'] = Variable<String>(status);
+    map['is_active'] = Variable<bool>(isActive);
     if (!nullToAbsent || imagePath != null) {
       map['image_path'] = Variable<String>(imagePath);
     }
@@ -8348,12 +8384,13 @@ class StockItem extends DataClass implements Insertable<StockItem> {
       grossWeight: Value(grossWeight),
       stoneWeight: Value(stoneWeight),
       netWeight: Value(netWeight),
+      wastage: Value(wastage),
       stoneType: Value(stoneType),
       stoneCarats: Value(stoneCarats),
       stonePieces: Value(stonePieces),
       stoneValue: Value(stoneValue),
-      makingCharges: Value(makingCharges),
-      makingChargesType: Value(makingChargesType),
+      makingCharge: Value(makingCharge),
+      makingChargeType: Value(makingChargeType),
       purchaseRate: Value(purchaseRate),
       purchasePrice: Value(purchasePrice),
       mrp: Value(mrp),
@@ -8363,9 +8400,9 @@ class StockItem extends DataClass implements Insertable<StockItem> {
       huid: huid == null && nullToAbsent ? const Value.absent() : Value(huid),
       gstRate: Value(gstRate),
       quantity: Value(quantity),
-      rackLocation: rackLocation == null && nullToAbsent
+      location: location == null && nullToAbsent
           ? const Value.absent()
-          : Value(rackLocation),
+          : Value(location),
       supplierId: supplierId == null && nullToAbsent
           ? const Value.absent()
           : Value(supplierId),
@@ -8373,6 +8410,7 @@ class StockItem extends DataClass implements Insertable<StockItem> {
           ? const Value.absent()
           : Value(supplierName),
       status: Value(status),
+      isActive: Value(isActive),
       imagePath: imagePath == null && nullToAbsent
           ? const Value.absent()
           : Value(imagePath),
@@ -8396,12 +8434,13 @@ class StockItem extends DataClass implements Insertable<StockItem> {
       grossWeight: serializer.fromJson<double>(json['grossWeight']),
       stoneWeight: serializer.fromJson<double>(json['stoneWeight']),
       netWeight: serializer.fromJson<double>(json['netWeight']),
+      wastage: serializer.fromJson<double>(json['wastage']),
       stoneType: serializer.fromJson<String>(json['stoneType']),
       stoneCarats: serializer.fromJson<double>(json['stoneCarats']),
       stonePieces: serializer.fromJson<int>(json['stonePieces']),
       stoneValue: serializer.fromJson<double>(json['stoneValue']),
-      makingCharges: serializer.fromJson<double>(json['makingCharges']),
-      makingChargesType: serializer.fromJson<String>(json['makingChargesType']),
+      makingCharge: serializer.fromJson<double>(json['makingCharge']),
+      makingChargeType: serializer.fromJson<String>(json['makingChargeType']),
       purchaseRate: serializer.fromJson<double>(json['purchaseRate']),
       purchasePrice: serializer.fromJson<double>(json['purchasePrice']),
       mrp: serializer.fromJson<double>(json['mrp']),
@@ -8409,10 +8448,11 @@ class StockItem extends DataClass implements Insertable<StockItem> {
       huid: serializer.fromJson<String?>(json['huid']),
       gstRate: serializer.fromJson<double>(json['gstRate']),
       quantity: serializer.fromJson<int>(json['quantity']),
-      rackLocation: serializer.fromJson<String?>(json['rackLocation']),
+      location: serializer.fromJson<String?>(json['location']),
       supplierId: serializer.fromJson<int?>(json['supplierId']),
       supplierName: serializer.fromJson<String?>(json['supplierName']),
       status: serializer.fromJson<String>(json['status']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
       imagePath: serializer.fromJson<String?>(json['imagePath']),
     );
   }
@@ -8433,12 +8473,13 @@ class StockItem extends DataClass implements Insertable<StockItem> {
       'grossWeight': serializer.toJson<double>(grossWeight),
       'stoneWeight': serializer.toJson<double>(stoneWeight),
       'netWeight': serializer.toJson<double>(netWeight),
+      'wastage': serializer.toJson<double>(wastage),
       'stoneType': serializer.toJson<String>(stoneType),
       'stoneCarats': serializer.toJson<double>(stoneCarats),
       'stonePieces': serializer.toJson<int>(stonePieces),
       'stoneValue': serializer.toJson<double>(stoneValue),
-      'makingCharges': serializer.toJson<double>(makingCharges),
-      'makingChargesType': serializer.toJson<String>(makingChargesType),
+      'makingCharge': serializer.toJson<double>(makingCharge),
+      'makingChargeType': serializer.toJson<String>(makingChargeType),
       'purchaseRate': serializer.toJson<double>(purchaseRate),
       'purchasePrice': serializer.toJson<double>(purchasePrice),
       'mrp': serializer.toJson<double>(mrp),
@@ -8446,10 +8487,11 @@ class StockItem extends DataClass implements Insertable<StockItem> {
       'huid': serializer.toJson<String?>(huid),
       'gstRate': serializer.toJson<double>(gstRate),
       'quantity': serializer.toJson<int>(quantity),
-      'rackLocation': serializer.toJson<String?>(rackLocation),
+      'location': serializer.toJson<String?>(location),
       'supplierId': serializer.toJson<int?>(supplierId),
       'supplierName': serializer.toJson<String?>(supplierName),
       'status': serializer.toJson<String>(status),
+      'isActive': serializer.toJson<bool>(isActive),
       'imagePath': serializer.toJson<String?>(imagePath),
     };
   }
@@ -8468,12 +8510,13 @@ class StockItem extends DataClass implements Insertable<StockItem> {
           double? grossWeight,
           double? stoneWeight,
           double? netWeight,
+          double? wastage,
           String? stoneType,
           double? stoneCarats,
           int? stonePieces,
           double? stoneValue,
-          double? makingCharges,
-          String? makingChargesType,
+          double? makingCharge,
+          String? makingChargeType,
           double? purchaseRate,
           double? purchasePrice,
           double? mrp,
@@ -8481,10 +8524,11 @@ class StockItem extends DataClass implements Insertable<StockItem> {
           Value<String?> huid = const Value.absent(),
           double? gstRate,
           int? quantity,
-          Value<String?> rackLocation = const Value.absent(),
+          Value<String?> location = const Value.absent(),
           Value<int?> supplierId = const Value.absent(),
           Value<String?> supplierName = const Value.absent(),
           String? status,
+          bool? isActive,
           Value<String?> imagePath = const Value.absent()}) =>
       StockItem(
         id: id ?? this.id,
@@ -8500,12 +8544,13 @@ class StockItem extends DataClass implements Insertable<StockItem> {
         grossWeight: grossWeight ?? this.grossWeight,
         stoneWeight: stoneWeight ?? this.stoneWeight,
         netWeight: netWeight ?? this.netWeight,
+        wastage: wastage ?? this.wastage,
         stoneType: stoneType ?? this.stoneType,
         stoneCarats: stoneCarats ?? this.stoneCarats,
         stonePieces: stonePieces ?? this.stonePieces,
         stoneValue: stoneValue ?? this.stoneValue,
-        makingCharges: makingCharges ?? this.makingCharges,
-        makingChargesType: makingChargesType ?? this.makingChargesType,
+        makingCharge: makingCharge ?? this.makingCharge,
+        makingChargeType: makingChargeType ?? this.makingChargeType,
         purchaseRate: purchaseRate ?? this.purchaseRate,
         purchasePrice: purchasePrice ?? this.purchasePrice,
         mrp: mrp ?? this.mrp,
@@ -8513,12 +8558,12 @@ class StockItem extends DataClass implements Insertable<StockItem> {
         huid: huid.present ? huid.value : this.huid,
         gstRate: gstRate ?? this.gstRate,
         quantity: quantity ?? this.quantity,
-        rackLocation:
-            rackLocation.present ? rackLocation.value : this.rackLocation,
+        location: location.present ? location.value : this.location,
         supplierId: supplierId.present ? supplierId.value : this.supplierId,
         supplierName:
             supplierName.present ? supplierName.value : this.supplierName,
         status: status ?? this.status,
+        isActive: isActive ?? this.isActive,
         imagePath: imagePath.present ? imagePath.value : this.imagePath,
       );
   StockItem copyWithCompanion(StockItemsCompanion data) {
@@ -8540,6 +8585,7 @@ class StockItem extends DataClass implements Insertable<StockItem> {
       stoneWeight:
           data.stoneWeight.present ? data.stoneWeight.value : this.stoneWeight,
       netWeight: data.netWeight.present ? data.netWeight.value : this.netWeight,
+      wastage: data.wastage.present ? data.wastage.value : this.wastage,
       stoneType: data.stoneType.present ? data.stoneType.value : this.stoneType,
       stoneCarats:
           data.stoneCarats.present ? data.stoneCarats.value : this.stoneCarats,
@@ -8547,12 +8593,12 @@ class StockItem extends DataClass implements Insertable<StockItem> {
           data.stonePieces.present ? data.stonePieces.value : this.stonePieces,
       stoneValue:
           data.stoneValue.present ? data.stoneValue.value : this.stoneValue,
-      makingCharges: data.makingCharges.present
-          ? data.makingCharges.value
-          : this.makingCharges,
-      makingChargesType: data.makingChargesType.present
-          ? data.makingChargesType.value
-          : this.makingChargesType,
+      makingCharge: data.makingCharge.present
+          ? data.makingCharge.value
+          : this.makingCharge,
+      makingChargeType: data.makingChargeType.present
+          ? data.makingChargeType.value
+          : this.makingChargeType,
       purchaseRate: data.purchaseRate.present
           ? data.purchaseRate.value
           : this.purchaseRate,
@@ -8564,15 +8610,14 @@ class StockItem extends DataClass implements Insertable<StockItem> {
       huid: data.huid.present ? data.huid.value : this.huid,
       gstRate: data.gstRate.present ? data.gstRate.value : this.gstRate,
       quantity: data.quantity.present ? data.quantity.value : this.quantity,
-      rackLocation: data.rackLocation.present
-          ? data.rackLocation.value
-          : this.rackLocation,
+      location: data.location.present ? data.location.value : this.location,
       supplierId:
           data.supplierId.present ? data.supplierId.value : this.supplierId,
       supplierName: data.supplierName.present
           ? data.supplierName.value
           : this.supplierName,
       status: data.status.present ? data.status.value : this.status,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
       imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
     );
   }
@@ -8593,12 +8638,13 @@ class StockItem extends DataClass implements Insertable<StockItem> {
           ..write('grossWeight: $grossWeight, ')
           ..write('stoneWeight: $stoneWeight, ')
           ..write('netWeight: $netWeight, ')
+          ..write('wastage: $wastage, ')
           ..write('stoneType: $stoneType, ')
           ..write('stoneCarats: $stoneCarats, ')
           ..write('stonePieces: $stonePieces, ')
           ..write('stoneValue: $stoneValue, ')
-          ..write('makingCharges: $makingCharges, ')
-          ..write('makingChargesType: $makingChargesType, ')
+          ..write('makingCharge: $makingCharge, ')
+          ..write('makingChargeType: $makingChargeType, ')
           ..write('purchaseRate: $purchaseRate, ')
           ..write('purchasePrice: $purchasePrice, ')
           ..write('mrp: $mrp, ')
@@ -8606,10 +8652,11 @@ class StockItem extends DataClass implements Insertable<StockItem> {
           ..write('huid: $huid, ')
           ..write('gstRate: $gstRate, ')
           ..write('quantity: $quantity, ')
-          ..write('rackLocation: $rackLocation, ')
+          ..write('location: $location, ')
           ..write('supplierId: $supplierId, ')
           ..write('supplierName: $supplierName, ')
           ..write('status: $status, ')
+          ..write('isActive: $isActive, ')
           ..write('imagePath: $imagePath')
           ..write(')'))
         .toString();
@@ -8630,12 +8677,13 @@ class StockItem extends DataClass implements Insertable<StockItem> {
         grossWeight,
         stoneWeight,
         netWeight,
+        wastage,
         stoneType,
         stoneCarats,
         stonePieces,
         stoneValue,
-        makingCharges,
-        makingChargesType,
+        makingCharge,
+        makingChargeType,
         purchaseRate,
         purchasePrice,
         mrp,
@@ -8643,10 +8691,11 @@ class StockItem extends DataClass implements Insertable<StockItem> {
         huid,
         gstRate,
         quantity,
-        rackLocation,
+        location,
         supplierId,
         supplierName,
         status,
+        isActive,
         imagePath
       ]);
   @override
@@ -8666,12 +8715,13 @@ class StockItem extends DataClass implements Insertable<StockItem> {
           other.grossWeight == this.grossWeight &&
           other.stoneWeight == this.stoneWeight &&
           other.netWeight == this.netWeight &&
+          other.wastage == this.wastage &&
           other.stoneType == this.stoneType &&
           other.stoneCarats == this.stoneCarats &&
           other.stonePieces == this.stonePieces &&
           other.stoneValue == this.stoneValue &&
-          other.makingCharges == this.makingCharges &&
-          other.makingChargesType == this.makingChargesType &&
+          other.makingCharge == this.makingCharge &&
+          other.makingChargeType == this.makingChargeType &&
           other.purchaseRate == this.purchaseRate &&
           other.purchasePrice == this.purchasePrice &&
           other.mrp == this.mrp &&
@@ -8679,10 +8729,11 @@ class StockItem extends DataClass implements Insertable<StockItem> {
           other.huid == this.huid &&
           other.gstRate == this.gstRate &&
           other.quantity == this.quantity &&
-          other.rackLocation == this.rackLocation &&
+          other.location == this.location &&
           other.supplierId == this.supplierId &&
           other.supplierName == this.supplierName &&
           other.status == this.status &&
+          other.isActive == this.isActive &&
           other.imagePath == this.imagePath);
 }
 
@@ -8700,12 +8751,13 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
   final Value<double> grossWeight;
   final Value<double> stoneWeight;
   final Value<double> netWeight;
+  final Value<double> wastage;
   final Value<String> stoneType;
   final Value<double> stoneCarats;
   final Value<int> stonePieces;
   final Value<double> stoneValue;
-  final Value<double> makingCharges;
-  final Value<String> makingChargesType;
+  final Value<double> makingCharge;
+  final Value<String> makingChargeType;
   final Value<double> purchaseRate;
   final Value<double> purchasePrice;
   final Value<double> mrp;
@@ -8713,10 +8765,11 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
   final Value<String?> huid;
   final Value<double> gstRate;
   final Value<int> quantity;
-  final Value<String?> rackLocation;
+  final Value<String?> location;
   final Value<int?> supplierId;
   final Value<String?> supplierName;
   final Value<String> status;
+  final Value<bool> isActive;
   final Value<String?> imagePath;
   const StockItemsCompanion({
     this.id = const Value.absent(),
@@ -8732,12 +8785,13 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
     this.grossWeight = const Value.absent(),
     this.stoneWeight = const Value.absent(),
     this.netWeight = const Value.absent(),
+    this.wastage = const Value.absent(),
     this.stoneType = const Value.absent(),
     this.stoneCarats = const Value.absent(),
     this.stonePieces = const Value.absent(),
     this.stoneValue = const Value.absent(),
-    this.makingCharges = const Value.absent(),
-    this.makingChargesType = const Value.absent(),
+    this.makingCharge = const Value.absent(),
+    this.makingChargeType = const Value.absent(),
     this.purchaseRate = const Value.absent(),
     this.purchasePrice = const Value.absent(),
     this.mrp = const Value.absent(),
@@ -8745,10 +8799,11 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
     this.huid = const Value.absent(),
     this.gstRate = const Value.absent(),
     this.quantity = const Value.absent(),
-    this.rackLocation = const Value.absent(),
+    this.location = const Value.absent(),
     this.supplierId = const Value.absent(),
     this.supplierName = const Value.absent(),
     this.status = const Value.absent(),
+    this.isActive = const Value.absent(),
     this.imagePath = const Value.absent(),
   });
   StockItemsCompanion.insert({
@@ -8765,12 +8820,13 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
     this.grossWeight = const Value.absent(),
     this.stoneWeight = const Value.absent(),
     this.netWeight = const Value.absent(),
+    this.wastage = const Value.absent(),
     this.stoneType = const Value.absent(),
     this.stoneCarats = const Value.absent(),
     this.stonePieces = const Value.absent(),
     this.stoneValue = const Value.absent(),
-    this.makingCharges = const Value.absent(),
-    this.makingChargesType = const Value.absent(),
+    this.makingCharge = const Value.absent(),
+    this.makingChargeType = const Value.absent(),
     this.purchaseRate = const Value.absent(),
     this.purchasePrice = const Value.absent(),
     this.mrp = const Value.absent(),
@@ -8778,10 +8834,11 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
     this.huid = const Value.absent(),
     this.gstRate = const Value.absent(),
     this.quantity = const Value.absent(),
-    this.rackLocation = const Value.absent(),
+    this.location = const Value.absent(),
     this.supplierId = const Value.absent(),
     this.supplierName = const Value.absent(),
     this.status = const Value.absent(),
+    this.isActive = const Value.absent(),
     this.imagePath = const Value.absent(),
   })  : sku = Value(sku),
         itemName = Value(itemName),
@@ -8801,12 +8858,13 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
     Expression<double>? grossWeight,
     Expression<double>? stoneWeight,
     Expression<double>? netWeight,
+    Expression<double>? wastage,
     Expression<String>? stoneType,
     Expression<double>? stoneCarats,
     Expression<int>? stonePieces,
     Expression<double>? stoneValue,
-    Expression<double>? makingCharges,
-    Expression<String>? makingChargesType,
+    Expression<double>? makingCharge,
+    Expression<String>? makingChargeType,
     Expression<double>? purchaseRate,
     Expression<double>? purchasePrice,
     Expression<double>? mrp,
@@ -8814,10 +8872,11 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
     Expression<String>? huid,
     Expression<double>? gstRate,
     Expression<int>? quantity,
-    Expression<String>? rackLocation,
+    Expression<String>? location,
     Expression<int>? supplierId,
     Expression<String>? supplierName,
     Expression<String>? status,
+    Expression<bool>? isActive,
     Expression<String>? imagePath,
   }) {
     return RawValuesInsertable({
@@ -8834,12 +8893,13 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
       if (grossWeight != null) 'gross_weight': grossWeight,
       if (stoneWeight != null) 'stone_weight': stoneWeight,
       if (netWeight != null) 'net_weight': netWeight,
+      if (wastage != null) 'wastage': wastage,
       if (stoneType != null) 'stone_type': stoneType,
       if (stoneCarats != null) 'stone_carats': stoneCarats,
       if (stonePieces != null) 'stone_pieces': stonePieces,
       if (stoneValue != null) 'stone_value': stoneValue,
-      if (makingCharges != null) 'making_charges': makingCharges,
-      if (makingChargesType != null) 'making_charges_type': makingChargesType,
+      if (makingCharge != null) 'making_charge': makingCharge,
+      if (makingChargeType != null) 'making_charge_type': makingChargeType,
       if (purchaseRate != null) 'purchase_rate': purchaseRate,
       if (purchasePrice != null) 'purchase_price': purchasePrice,
       if (mrp != null) 'mrp': mrp,
@@ -8847,10 +8907,11 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
       if (huid != null) 'huid': huid,
       if (gstRate != null) 'gst_rate': gstRate,
       if (quantity != null) 'quantity': quantity,
-      if (rackLocation != null) 'rack_location': rackLocation,
+      if (location != null) 'location': location,
       if (supplierId != null) 'supplier_id': supplierId,
       if (supplierName != null) 'supplier_name': supplierName,
       if (status != null) 'status': status,
+      if (isActive != null) 'is_active': isActive,
       if (imagePath != null) 'image_path': imagePath,
     });
   }
@@ -8869,12 +8930,13 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
       Value<double>? grossWeight,
       Value<double>? stoneWeight,
       Value<double>? netWeight,
+      Value<double>? wastage,
       Value<String>? stoneType,
       Value<double>? stoneCarats,
       Value<int>? stonePieces,
       Value<double>? stoneValue,
-      Value<double>? makingCharges,
-      Value<String>? makingChargesType,
+      Value<double>? makingCharge,
+      Value<String>? makingChargeType,
       Value<double>? purchaseRate,
       Value<double>? purchasePrice,
       Value<double>? mrp,
@@ -8882,10 +8944,11 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
       Value<String?>? huid,
       Value<double>? gstRate,
       Value<int>? quantity,
-      Value<String?>? rackLocation,
+      Value<String?>? location,
       Value<int?>? supplierId,
       Value<String?>? supplierName,
       Value<String>? status,
+      Value<bool>? isActive,
       Value<String?>? imagePath}) {
     return StockItemsCompanion(
       id: id ?? this.id,
@@ -8901,12 +8964,13 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
       grossWeight: grossWeight ?? this.grossWeight,
       stoneWeight: stoneWeight ?? this.stoneWeight,
       netWeight: netWeight ?? this.netWeight,
+      wastage: wastage ?? this.wastage,
       stoneType: stoneType ?? this.stoneType,
       stoneCarats: stoneCarats ?? this.stoneCarats,
       stonePieces: stonePieces ?? this.stonePieces,
       stoneValue: stoneValue ?? this.stoneValue,
-      makingCharges: makingCharges ?? this.makingCharges,
-      makingChargesType: makingChargesType ?? this.makingChargesType,
+      makingCharge: makingCharge ?? this.makingCharge,
+      makingChargeType: makingChargeType ?? this.makingChargeType,
       purchaseRate: purchaseRate ?? this.purchaseRate,
       purchasePrice: purchasePrice ?? this.purchasePrice,
       mrp: mrp ?? this.mrp,
@@ -8914,10 +8978,11 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
       huid: huid ?? this.huid,
       gstRate: gstRate ?? this.gstRate,
       quantity: quantity ?? this.quantity,
-      rackLocation: rackLocation ?? this.rackLocation,
+      location: location ?? this.location,
       supplierId: supplierId ?? this.supplierId,
       supplierName: supplierName ?? this.supplierName,
       status: status ?? this.status,
+      isActive: isActive ?? this.isActive,
       imagePath: imagePath ?? this.imagePath,
     );
   }
@@ -8964,6 +9029,9 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
     if (netWeight.present) {
       map['net_weight'] = Variable<double>(netWeight.value);
     }
+    if (wastage.present) {
+      map['wastage'] = Variable<double>(wastage.value);
+    }
     if (stoneType.present) {
       map['stone_type'] = Variable<String>(stoneType.value);
     }
@@ -8976,11 +9044,11 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
     if (stoneValue.present) {
       map['stone_value'] = Variable<double>(stoneValue.value);
     }
-    if (makingCharges.present) {
-      map['making_charges'] = Variable<double>(makingCharges.value);
+    if (makingCharge.present) {
+      map['making_charge'] = Variable<double>(makingCharge.value);
     }
-    if (makingChargesType.present) {
-      map['making_charges_type'] = Variable<String>(makingChargesType.value);
+    if (makingChargeType.present) {
+      map['making_charge_type'] = Variable<String>(makingChargeType.value);
     }
     if (purchaseRate.present) {
       map['purchase_rate'] = Variable<double>(purchaseRate.value);
@@ -9003,8 +9071,8 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
     if (quantity.present) {
       map['quantity'] = Variable<int>(quantity.value);
     }
-    if (rackLocation.present) {
-      map['rack_location'] = Variable<String>(rackLocation.value);
+    if (location.present) {
+      map['location'] = Variable<String>(location.value);
     }
     if (supplierId.present) {
       map['supplier_id'] = Variable<int>(supplierId.value);
@@ -9014,6 +9082,9 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
     }
     if (status.present) {
       map['status'] = Variable<String>(status.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
     }
     if (imagePath.present) {
       map['image_path'] = Variable<String>(imagePath.value);
@@ -9037,12 +9108,13 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
           ..write('grossWeight: $grossWeight, ')
           ..write('stoneWeight: $stoneWeight, ')
           ..write('netWeight: $netWeight, ')
+          ..write('wastage: $wastage, ')
           ..write('stoneType: $stoneType, ')
           ..write('stoneCarats: $stoneCarats, ')
           ..write('stonePieces: $stonePieces, ')
           ..write('stoneValue: $stoneValue, ')
-          ..write('makingCharges: $makingCharges, ')
-          ..write('makingChargesType: $makingChargesType, ')
+          ..write('makingCharge: $makingCharge, ')
+          ..write('makingChargeType: $makingChargeType, ')
           ..write('purchaseRate: $purchaseRate, ')
           ..write('purchasePrice: $purchasePrice, ')
           ..write('mrp: $mrp, ')
@@ -9050,10 +9122,11 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
           ..write('huid: $huid, ')
           ..write('gstRate: $gstRate, ')
           ..write('quantity: $quantity, ')
-          ..write('rackLocation: $rackLocation, ')
+          ..write('location: $location, ')
           ..write('supplierId: $supplierId, ')
           ..write('supplierName: $supplierName, ')
           ..write('status: $status, ')
+          ..write('isActive: $isActive, ')
           ..write('imagePath: $imagePath')
           ..write(')'))
         .toString();
@@ -17348,6 +17421,1966 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
   }
 }
 
+class $DeliveryOrdersTable extends DeliveryOrders
+    with TableInfo<$DeliveryOrdersTable, DeliveryOrder> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DeliveryOrdersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _deliveryNoMeta =
+      const VerificationMeta('deliveryNo');
+  @override
+  late final GeneratedColumn<String> deliveryNo = GeneratedColumn<String>(
+      'delivery_no', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  static const VerificationMeta _customerIdMeta =
+      const VerificationMeta('customerId');
+  @override
+  late final GeneratedColumn<int> customerId = GeneratedColumn<int>(
+      'customer_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES customers (id) ON DELETE CASCADE'));
+  static const VerificationMeta _sourceOrderIdMeta =
+      const VerificationMeta('sourceOrderId');
+  @override
+  late final GeneratedColumn<int> sourceOrderId = GeneratedColumn<int>(
+      'source_order_id', aliasedName, true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES sales_orders (id) ON DELETE SET NULL'));
+  static const VerificationMeta _customerNameMeta =
+      const VerificationMeta('customerName');
+  @override
+  late final GeneratedColumn<String> customerName = GeneratedColumn<String>(
+      'customer_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _customerMobileMeta =
+      const VerificationMeta('customerMobile');
+  @override
+  late final GeneratedColumn<String> customerMobile = GeneratedColumn<String>(
+      'customer_mobile', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _itemNameMeta =
+      const VerificationMeta('itemName');
+  @override
+  late final GeneratedColumn<String> itemName = GeneratedColumn<String>(
+      'item_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _metalTypeMeta =
+      const VerificationMeta('metalType');
+  @override
+  late final GeneratedColumn<String> metalType = GeneratedColumn<String>(
+      'metal_type', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('GOLD'));
+  static const VerificationMeta _purityMeta = const VerificationMeta('purity');
+  @override
+  late final GeneratedColumn<String> purity = GeneratedColumn<String>(
+      'purity', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('22K'));
+  static const VerificationMeta _approxWeightMeta =
+      const VerificationMeta('approxWeight');
+  @override
+  late final GeneratedColumn<double> approxWeight = GeneratedColumn<double>(
+      'approx_weight', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _lockedRateMeta =
+      const VerificationMeta('lockedRate');
+  @override
+  late final GeneratedColumn<double> lockedRate = GeneratedColumn<double>(
+      'locked_rate', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+      'status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('BOOKED'));
+  static const VerificationMeta _karigarIdMeta =
+      const VerificationMeta('karigarId');
+  @override
+  late final GeneratedColumn<int> karigarId = GeneratedColumn<int>(
+      'karigar_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _karigarNameMeta =
+      const VerificationMeta('karigarName');
+  @override
+  late final GeneratedColumn<String> karigarName = GeneratedColumn<String>(
+      'karigar_name', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _advancePaidMeta =
+      const VerificationMeta('advancePaid');
+  @override
+  late final GeneratedColumn<double> advancePaid = GeneratedColumn<double>(
+      'advance_paid', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _totalAmountMeta =
+      const VerificationMeta('totalAmount');
+  @override
+  late final GeneratedColumn<double> totalAmount = GeneratedColumn<double>(
+      'total_amount', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _dueAmountMeta =
+      const VerificationMeta('dueAmount');
+  @override
+  late final GeneratedColumn<double> dueAmount = GeneratedColumn<double>(
+      'due_amount', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _paymentStatusMeta =
+      const VerificationMeta('paymentStatus');
+  @override
+  late final GeneratedColumn<String> paymentStatus = GeneratedColumn<String>(
+      'payment_status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('UNPAID'));
+  static const VerificationMeta _expectedDeliveryDateMeta =
+      const VerificationMeta('expectedDeliveryDate');
+  @override
+  late final GeneratedColumn<DateTime> expectedDeliveryDate =
+      GeneratedColumn<DateTime>('expected_delivery_date', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _actualDeliveryDateMeta =
+      const VerificationMeta('actualDeliveryDate');
+  @override
+  late final GeneratedColumn<DateTime> actualDeliveryDate =
+      GeneratedColumn<DateTime>('actual_delivery_date', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _imagePathMeta =
+      const VerificationMeta('imagePath');
+  @override
+  late final GeneratedColumn<String> imagePath = GeneratedColumn<String>(
+      'image_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+      'notes', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _linkedBillIdMeta =
+      const VerificationMeta('linkedBillId');
+  @override
+  late final GeneratedColumn<int> linkedBillId = GeneratedColumn<int>(
+      'linked_bill_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _linkedBillNoMeta =
+      const VerificationMeta('linkedBillNo');
+  @override
+  late final GeneratedColumn<String> linkedBillNo = GeneratedColumn<String>(
+      'linked_bill_no', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        deliveryNo,
+        customerId,
+        sourceOrderId,
+        customerName,
+        customerMobile,
+        itemName,
+        metalType,
+        purity,
+        approxWeight,
+        lockedRate,
+        status,
+        karigarId,
+        karigarName,
+        advancePaid,
+        totalAmount,
+        dueAmount,
+        paymentStatus,
+        expectedDeliveryDate,
+        actualDeliveryDate,
+        imagePath,
+        notes,
+        linkedBillId,
+        linkedBillNo
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'delivery_orders';
+  @override
+  VerificationContext validateIntegrity(Insertable<DeliveryOrder> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('delivery_no')) {
+      context.handle(
+          _deliveryNoMeta,
+          deliveryNo.isAcceptableOrUnknown(
+              data['delivery_no']!, _deliveryNoMeta));
+    } else if (isInserting) {
+      context.missing(_deliveryNoMeta);
+    }
+    if (data.containsKey('customer_id')) {
+      context.handle(
+          _customerIdMeta,
+          customerId.isAcceptableOrUnknown(
+              data['customer_id']!, _customerIdMeta));
+    } else if (isInserting) {
+      context.missing(_customerIdMeta);
+    }
+    if (data.containsKey('source_order_id')) {
+      context.handle(
+          _sourceOrderIdMeta,
+          sourceOrderId.isAcceptableOrUnknown(
+              data['source_order_id']!, _sourceOrderIdMeta));
+    }
+    if (data.containsKey('customer_name')) {
+      context.handle(
+          _customerNameMeta,
+          customerName.isAcceptableOrUnknown(
+              data['customer_name']!, _customerNameMeta));
+    } else if (isInserting) {
+      context.missing(_customerNameMeta);
+    }
+    if (data.containsKey('customer_mobile')) {
+      context.handle(
+          _customerMobileMeta,
+          customerMobile.isAcceptableOrUnknown(
+              data['customer_mobile']!, _customerMobileMeta));
+    } else if (isInserting) {
+      context.missing(_customerMobileMeta);
+    }
+    if (data.containsKey('item_name')) {
+      context.handle(_itemNameMeta,
+          itemName.isAcceptableOrUnknown(data['item_name']!, _itemNameMeta));
+    } else if (isInserting) {
+      context.missing(_itemNameMeta);
+    }
+    if (data.containsKey('metal_type')) {
+      context.handle(_metalTypeMeta,
+          metalType.isAcceptableOrUnknown(data['metal_type']!, _metalTypeMeta));
+    }
+    if (data.containsKey('purity')) {
+      context.handle(_purityMeta,
+          purity.isAcceptableOrUnknown(data['purity']!, _purityMeta));
+    }
+    if (data.containsKey('approx_weight')) {
+      context.handle(
+          _approxWeightMeta,
+          approxWeight.isAcceptableOrUnknown(
+              data['approx_weight']!, _approxWeightMeta));
+    }
+    if (data.containsKey('locked_rate')) {
+      context.handle(
+          _lockedRateMeta,
+          lockedRate.isAcceptableOrUnknown(
+              data['locked_rate']!, _lockedRateMeta));
+    }
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    }
+    if (data.containsKey('karigar_id')) {
+      context.handle(_karigarIdMeta,
+          karigarId.isAcceptableOrUnknown(data['karigar_id']!, _karigarIdMeta));
+    }
+    if (data.containsKey('karigar_name')) {
+      context.handle(
+          _karigarNameMeta,
+          karigarName.isAcceptableOrUnknown(
+              data['karigar_name']!, _karigarNameMeta));
+    }
+    if (data.containsKey('advance_paid')) {
+      context.handle(
+          _advancePaidMeta,
+          advancePaid.isAcceptableOrUnknown(
+              data['advance_paid']!, _advancePaidMeta));
+    }
+    if (data.containsKey('total_amount')) {
+      context.handle(
+          _totalAmountMeta,
+          totalAmount.isAcceptableOrUnknown(
+              data['total_amount']!, _totalAmountMeta));
+    }
+    if (data.containsKey('due_amount')) {
+      context.handle(_dueAmountMeta,
+          dueAmount.isAcceptableOrUnknown(data['due_amount']!, _dueAmountMeta));
+    }
+    if (data.containsKey('payment_status')) {
+      context.handle(
+          _paymentStatusMeta,
+          paymentStatus.isAcceptableOrUnknown(
+              data['payment_status']!, _paymentStatusMeta));
+    }
+    if (data.containsKey('expected_delivery_date')) {
+      context.handle(
+          _expectedDeliveryDateMeta,
+          expectedDeliveryDate.isAcceptableOrUnknown(
+              data['expected_delivery_date']!, _expectedDeliveryDateMeta));
+    }
+    if (data.containsKey('actual_delivery_date')) {
+      context.handle(
+          _actualDeliveryDateMeta,
+          actualDeliveryDate.isAcceptableOrUnknown(
+              data['actual_delivery_date']!, _actualDeliveryDateMeta));
+    }
+    if (data.containsKey('image_path')) {
+      context.handle(_imagePathMeta,
+          imagePath.isAcceptableOrUnknown(data['image_path']!, _imagePathMeta));
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+          _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
+    }
+    if (data.containsKey('linked_bill_id')) {
+      context.handle(
+          _linkedBillIdMeta,
+          linkedBillId.isAcceptableOrUnknown(
+              data['linked_bill_id']!, _linkedBillIdMeta));
+    }
+    if (data.containsKey('linked_bill_no')) {
+      context.handle(
+          _linkedBillNoMeta,
+          linkedBillNo.isAcceptableOrUnknown(
+              data['linked_bill_no']!, _linkedBillNoMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DeliveryOrder map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DeliveryOrder(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      deliveryNo: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}delivery_no'])!,
+      customerId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}customer_id'])!,
+      sourceOrderId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}source_order_id']),
+      customerName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}customer_name'])!,
+      customerMobile: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}customer_mobile'])!,
+      itemName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}item_name'])!,
+      metalType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}metal_type'])!,
+      purity: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}purity'])!,
+      approxWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}approx_weight'])!,
+      lockedRate: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}locked_rate'])!,
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
+      karigarId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}karigar_id']),
+      karigarName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}karigar_name']),
+      advancePaid: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}advance_paid'])!,
+      totalAmount: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}total_amount'])!,
+      dueAmount: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}due_amount'])!,
+      paymentStatus: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}payment_status'])!,
+      expectedDeliveryDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime,
+          data['${effectivePrefix}expected_delivery_date']),
+      actualDeliveryDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime,
+          data['${effectivePrefix}actual_delivery_date']),
+      imagePath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}image_path']),
+      notes: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}notes']),
+      linkedBillId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}linked_bill_id']),
+      linkedBillNo: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}linked_bill_no']),
+    );
+  }
+
+  @override
+  $DeliveryOrdersTable createAlias(String alias) {
+    return $DeliveryOrdersTable(attachedDatabase, alias);
+  }
+}
+
+class DeliveryOrder extends DataClass implements Insertable<DeliveryOrder> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final String deliveryNo;
+  final int customerId;
+  final int? sourceOrderId;
+  final String customerName;
+  final String customerMobile;
+  final String itemName;
+  final String metalType;
+  final String purity;
+  final double approxWeight;
+  final double lockedRate;
+  final String status;
+  final int? karigarId;
+  final String? karigarName;
+  final double advancePaid;
+  final double totalAmount;
+  final double dueAmount;
+  final String paymentStatus;
+  final DateTime? expectedDeliveryDate;
+  final DateTime? actualDeliveryDate;
+  final String? imagePath;
+  final String? notes;
+  final int? linkedBillId;
+  final String? linkedBillNo;
+  const DeliveryOrder(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.deliveryNo,
+      required this.customerId,
+      this.sourceOrderId,
+      required this.customerName,
+      required this.customerMobile,
+      required this.itemName,
+      required this.metalType,
+      required this.purity,
+      required this.approxWeight,
+      required this.lockedRate,
+      required this.status,
+      this.karigarId,
+      this.karigarName,
+      required this.advancePaid,
+      required this.totalAmount,
+      required this.dueAmount,
+      required this.paymentStatus,
+      this.expectedDeliveryDate,
+      this.actualDeliveryDate,
+      this.imagePath,
+      this.notes,
+      this.linkedBillId,
+      this.linkedBillNo});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['delivery_no'] = Variable<String>(deliveryNo);
+    map['customer_id'] = Variable<int>(customerId);
+    if (!nullToAbsent || sourceOrderId != null) {
+      map['source_order_id'] = Variable<int>(sourceOrderId);
+    }
+    map['customer_name'] = Variable<String>(customerName);
+    map['customer_mobile'] = Variable<String>(customerMobile);
+    map['item_name'] = Variable<String>(itemName);
+    map['metal_type'] = Variable<String>(metalType);
+    map['purity'] = Variable<String>(purity);
+    map['approx_weight'] = Variable<double>(approxWeight);
+    map['locked_rate'] = Variable<double>(lockedRate);
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || karigarId != null) {
+      map['karigar_id'] = Variable<int>(karigarId);
+    }
+    if (!nullToAbsent || karigarName != null) {
+      map['karigar_name'] = Variable<String>(karigarName);
+    }
+    map['advance_paid'] = Variable<double>(advancePaid);
+    map['total_amount'] = Variable<double>(totalAmount);
+    map['due_amount'] = Variable<double>(dueAmount);
+    map['payment_status'] = Variable<String>(paymentStatus);
+    if (!nullToAbsent || expectedDeliveryDate != null) {
+      map['expected_delivery_date'] = Variable<DateTime>(expectedDeliveryDate);
+    }
+    if (!nullToAbsent || actualDeliveryDate != null) {
+      map['actual_delivery_date'] = Variable<DateTime>(actualDeliveryDate);
+    }
+    if (!nullToAbsent || imagePath != null) {
+      map['image_path'] = Variable<String>(imagePath);
+    }
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    if (!nullToAbsent || linkedBillId != null) {
+      map['linked_bill_id'] = Variable<int>(linkedBillId);
+    }
+    if (!nullToAbsent || linkedBillNo != null) {
+      map['linked_bill_no'] = Variable<String>(linkedBillNo);
+    }
+    return map;
+  }
+
+  DeliveryOrdersCompanion toCompanion(bool nullToAbsent) {
+    return DeliveryOrdersCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      deliveryNo: Value(deliveryNo),
+      customerId: Value(customerId),
+      sourceOrderId: sourceOrderId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceOrderId),
+      customerName: Value(customerName),
+      customerMobile: Value(customerMobile),
+      itemName: Value(itemName),
+      metalType: Value(metalType),
+      purity: Value(purity),
+      approxWeight: Value(approxWeight),
+      lockedRate: Value(lockedRate),
+      status: Value(status),
+      karigarId: karigarId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(karigarId),
+      karigarName: karigarName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(karigarName),
+      advancePaid: Value(advancePaid),
+      totalAmount: Value(totalAmount),
+      dueAmount: Value(dueAmount),
+      paymentStatus: Value(paymentStatus),
+      expectedDeliveryDate: expectedDeliveryDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(expectedDeliveryDate),
+      actualDeliveryDate: actualDeliveryDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(actualDeliveryDate),
+      imagePath: imagePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imagePath),
+      notes:
+          notes == null && nullToAbsent ? const Value.absent() : Value(notes),
+      linkedBillId: linkedBillId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(linkedBillId),
+      linkedBillNo: linkedBillNo == null && nullToAbsent
+          ? const Value.absent()
+          : Value(linkedBillNo),
+    );
+  }
+
+  factory DeliveryOrder.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DeliveryOrder(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      deliveryNo: serializer.fromJson<String>(json['deliveryNo']),
+      customerId: serializer.fromJson<int>(json['customerId']),
+      sourceOrderId: serializer.fromJson<int?>(json['sourceOrderId']),
+      customerName: serializer.fromJson<String>(json['customerName']),
+      customerMobile: serializer.fromJson<String>(json['customerMobile']),
+      itemName: serializer.fromJson<String>(json['itemName']),
+      metalType: serializer.fromJson<String>(json['metalType']),
+      purity: serializer.fromJson<String>(json['purity']),
+      approxWeight: serializer.fromJson<double>(json['approxWeight']),
+      lockedRate: serializer.fromJson<double>(json['lockedRate']),
+      status: serializer.fromJson<String>(json['status']),
+      karigarId: serializer.fromJson<int?>(json['karigarId']),
+      karigarName: serializer.fromJson<String?>(json['karigarName']),
+      advancePaid: serializer.fromJson<double>(json['advancePaid']),
+      totalAmount: serializer.fromJson<double>(json['totalAmount']),
+      dueAmount: serializer.fromJson<double>(json['dueAmount']),
+      paymentStatus: serializer.fromJson<String>(json['paymentStatus']),
+      expectedDeliveryDate:
+          serializer.fromJson<DateTime?>(json['expectedDeliveryDate']),
+      actualDeliveryDate:
+          serializer.fromJson<DateTime?>(json['actualDeliveryDate']),
+      imagePath: serializer.fromJson<String?>(json['imagePath']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      linkedBillId: serializer.fromJson<int?>(json['linkedBillId']),
+      linkedBillNo: serializer.fromJson<String?>(json['linkedBillNo']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'deliveryNo': serializer.toJson<String>(deliveryNo),
+      'customerId': serializer.toJson<int>(customerId),
+      'sourceOrderId': serializer.toJson<int?>(sourceOrderId),
+      'customerName': serializer.toJson<String>(customerName),
+      'customerMobile': serializer.toJson<String>(customerMobile),
+      'itemName': serializer.toJson<String>(itemName),
+      'metalType': serializer.toJson<String>(metalType),
+      'purity': serializer.toJson<String>(purity),
+      'approxWeight': serializer.toJson<double>(approxWeight),
+      'lockedRate': serializer.toJson<double>(lockedRate),
+      'status': serializer.toJson<String>(status),
+      'karigarId': serializer.toJson<int?>(karigarId),
+      'karigarName': serializer.toJson<String?>(karigarName),
+      'advancePaid': serializer.toJson<double>(advancePaid),
+      'totalAmount': serializer.toJson<double>(totalAmount),
+      'dueAmount': serializer.toJson<double>(dueAmount),
+      'paymentStatus': serializer.toJson<String>(paymentStatus),
+      'expectedDeliveryDate':
+          serializer.toJson<DateTime?>(expectedDeliveryDate),
+      'actualDeliveryDate': serializer.toJson<DateTime?>(actualDeliveryDate),
+      'imagePath': serializer.toJson<String?>(imagePath),
+      'notes': serializer.toJson<String?>(notes),
+      'linkedBillId': serializer.toJson<int?>(linkedBillId),
+      'linkedBillNo': serializer.toJson<String?>(linkedBillNo),
+    };
+  }
+
+  DeliveryOrder copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          String? deliveryNo,
+          int? customerId,
+          Value<int?> sourceOrderId = const Value.absent(),
+          String? customerName,
+          String? customerMobile,
+          String? itemName,
+          String? metalType,
+          String? purity,
+          double? approxWeight,
+          double? lockedRate,
+          String? status,
+          Value<int?> karigarId = const Value.absent(),
+          Value<String?> karigarName = const Value.absent(),
+          double? advancePaid,
+          double? totalAmount,
+          double? dueAmount,
+          String? paymentStatus,
+          Value<DateTime?> expectedDeliveryDate = const Value.absent(),
+          Value<DateTime?> actualDeliveryDate = const Value.absent(),
+          Value<String?> imagePath = const Value.absent(),
+          Value<String?> notes = const Value.absent(),
+          Value<int?> linkedBillId = const Value.absent(),
+          Value<String?> linkedBillNo = const Value.absent()}) =>
+      DeliveryOrder(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        deliveryNo: deliveryNo ?? this.deliveryNo,
+        customerId: customerId ?? this.customerId,
+        sourceOrderId:
+            sourceOrderId.present ? sourceOrderId.value : this.sourceOrderId,
+        customerName: customerName ?? this.customerName,
+        customerMobile: customerMobile ?? this.customerMobile,
+        itemName: itemName ?? this.itemName,
+        metalType: metalType ?? this.metalType,
+        purity: purity ?? this.purity,
+        approxWeight: approxWeight ?? this.approxWeight,
+        lockedRate: lockedRate ?? this.lockedRate,
+        status: status ?? this.status,
+        karigarId: karigarId.present ? karigarId.value : this.karigarId,
+        karigarName: karigarName.present ? karigarName.value : this.karigarName,
+        advancePaid: advancePaid ?? this.advancePaid,
+        totalAmount: totalAmount ?? this.totalAmount,
+        dueAmount: dueAmount ?? this.dueAmount,
+        paymentStatus: paymentStatus ?? this.paymentStatus,
+        expectedDeliveryDate: expectedDeliveryDate.present
+            ? expectedDeliveryDate.value
+            : this.expectedDeliveryDate,
+        actualDeliveryDate: actualDeliveryDate.present
+            ? actualDeliveryDate.value
+            : this.actualDeliveryDate,
+        imagePath: imagePath.present ? imagePath.value : this.imagePath,
+        notes: notes.present ? notes.value : this.notes,
+        linkedBillId:
+            linkedBillId.present ? linkedBillId.value : this.linkedBillId,
+        linkedBillNo:
+            linkedBillNo.present ? linkedBillNo.value : this.linkedBillNo,
+      );
+  DeliveryOrder copyWithCompanion(DeliveryOrdersCompanion data) {
+    return DeliveryOrder(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deliveryNo:
+          data.deliveryNo.present ? data.deliveryNo.value : this.deliveryNo,
+      customerId:
+          data.customerId.present ? data.customerId.value : this.customerId,
+      sourceOrderId: data.sourceOrderId.present
+          ? data.sourceOrderId.value
+          : this.sourceOrderId,
+      customerName: data.customerName.present
+          ? data.customerName.value
+          : this.customerName,
+      customerMobile: data.customerMobile.present
+          ? data.customerMobile.value
+          : this.customerMobile,
+      itemName: data.itemName.present ? data.itemName.value : this.itemName,
+      metalType: data.metalType.present ? data.metalType.value : this.metalType,
+      purity: data.purity.present ? data.purity.value : this.purity,
+      approxWeight: data.approxWeight.present
+          ? data.approxWeight.value
+          : this.approxWeight,
+      lockedRate:
+          data.lockedRate.present ? data.lockedRate.value : this.lockedRate,
+      status: data.status.present ? data.status.value : this.status,
+      karigarId: data.karigarId.present ? data.karigarId.value : this.karigarId,
+      karigarName:
+          data.karigarName.present ? data.karigarName.value : this.karigarName,
+      advancePaid:
+          data.advancePaid.present ? data.advancePaid.value : this.advancePaid,
+      totalAmount:
+          data.totalAmount.present ? data.totalAmount.value : this.totalAmount,
+      dueAmount: data.dueAmount.present ? data.dueAmount.value : this.dueAmount,
+      paymentStatus: data.paymentStatus.present
+          ? data.paymentStatus.value
+          : this.paymentStatus,
+      expectedDeliveryDate: data.expectedDeliveryDate.present
+          ? data.expectedDeliveryDate.value
+          : this.expectedDeliveryDate,
+      actualDeliveryDate: data.actualDeliveryDate.present
+          ? data.actualDeliveryDate.value
+          : this.actualDeliveryDate,
+      imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      linkedBillId: data.linkedBillId.present
+          ? data.linkedBillId.value
+          : this.linkedBillId,
+      linkedBillNo: data.linkedBillNo.present
+          ? data.linkedBillNo.value
+          : this.linkedBillNo,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DeliveryOrder(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deliveryNo: $deliveryNo, ')
+          ..write('customerId: $customerId, ')
+          ..write('sourceOrderId: $sourceOrderId, ')
+          ..write('customerName: $customerName, ')
+          ..write('customerMobile: $customerMobile, ')
+          ..write('itemName: $itemName, ')
+          ..write('metalType: $metalType, ')
+          ..write('purity: $purity, ')
+          ..write('approxWeight: $approxWeight, ')
+          ..write('lockedRate: $lockedRate, ')
+          ..write('status: $status, ')
+          ..write('karigarId: $karigarId, ')
+          ..write('karigarName: $karigarName, ')
+          ..write('advancePaid: $advancePaid, ')
+          ..write('totalAmount: $totalAmount, ')
+          ..write('dueAmount: $dueAmount, ')
+          ..write('paymentStatus: $paymentStatus, ')
+          ..write('expectedDeliveryDate: $expectedDeliveryDate, ')
+          ..write('actualDeliveryDate: $actualDeliveryDate, ')
+          ..write('imagePath: $imagePath, ')
+          ..write('notes: $notes, ')
+          ..write('linkedBillId: $linkedBillId, ')
+          ..write('linkedBillNo: $linkedBillNo')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+        id,
+        createdAt,
+        updatedAt,
+        deliveryNo,
+        customerId,
+        sourceOrderId,
+        customerName,
+        customerMobile,
+        itemName,
+        metalType,
+        purity,
+        approxWeight,
+        lockedRate,
+        status,
+        karigarId,
+        karigarName,
+        advancePaid,
+        totalAmount,
+        dueAmount,
+        paymentStatus,
+        expectedDeliveryDate,
+        actualDeliveryDate,
+        imagePath,
+        notes,
+        linkedBillId,
+        linkedBillNo
+      ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DeliveryOrder &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deliveryNo == this.deliveryNo &&
+          other.customerId == this.customerId &&
+          other.sourceOrderId == this.sourceOrderId &&
+          other.customerName == this.customerName &&
+          other.customerMobile == this.customerMobile &&
+          other.itemName == this.itemName &&
+          other.metalType == this.metalType &&
+          other.purity == this.purity &&
+          other.approxWeight == this.approxWeight &&
+          other.lockedRate == this.lockedRate &&
+          other.status == this.status &&
+          other.karigarId == this.karigarId &&
+          other.karigarName == this.karigarName &&
+          other.advancePaid == this.advancePaid &&
+          other.totalAmount == this.totalAmount &&
+          other.dueAmount == this.dueAmount &&
+          other.paymentStatus == this.paymentStatus &&
+          other.expectedDeliveryDate == this.expectedDeliveryDate &&
+          other.actualDeliveryDate == this.actualDeliveryDate &&
+          other.imagePath == this.imagePath &&
+          other.notes == this.notes &&
+          other.linkedBillId == this.linkedBillId &&
+          other.linkedBillNo == this.linkedBillNo);
+}
+
+class DeliveryOrdersCompanion extends UpdateCompanion<DeliveryOrder> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<String> deliveryNo;
+  final Value<int> customerId;
+  final Value<int?> sourceOrderId;
+  final Value<String> customerName;
+  final Value<String> customerMobile;
+  final Value<String> itemName;
+  final Value<String> metalType;
+  final Value<String> purity;
+  final Value<double> approxWeight;
+  final Value<double> lockedRate;
+  final Value<String> status;
+  final Value<int?> karigarId;
+  final Value<String?> karigarName;
+  final Value<double> advancePaid;
+  final Value<double> totalAmount;
+  final Value<double> dueAmount;
+  final Value<String> paymentStatus;
+  final Value<DateTime?> expectedDeliveryDate;
+  final Value<DateTime?> actualDeliveryDate;
+  final Value<String?> imagePath;
+  final Value<String?> notes;
+  final Value<int?> linkedBillId;
+  final Value<String?> linkedBillNo;
+  const DeliveryOrdersCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deliveryNo = const Value.absent(),
+    this.customerId = const Value.absent(),
+    this.sourceOrderId = const Value.absent(),
+    this.customerName = const Value.absent(),
+    this.customerMobile = const Value.absent(),
+    this.itemName = const Value.absent(),
+    this.metalType = const Value.absent(),
+    this.purity = const Value.absent(),
+    this.approxWeight = const Value.absent(),
+    this.lockedRate = const Value.absent(),
+    this.status = const Value.absent(),
+    this.karigarId = const Value.absent(),
+    this.karigarName = const Value.absent(),
+    this.advancePaid = const Value.absent(),
+    this.totalAmount = const Value.absent(),
+    this.dueAmount = const Value.absent(),
+    this.paymentStatus = const Value.absent(),
+    this.expectedDeliveryDate = const Value.absent(),
+    this.actualDeliveryDate = const Value.absent(),
+    this.imagePath = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.linkedBillId = const Value.absent(),
+    this.linkedBillNo = const Value.absent(),
+  });
+  DeliveryOrdersCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required String deliveryNo,
+    required int customerId,
+    this.sourceOrderId = const Value.absent(),
+    required String customerName,
+    required String customerMobile,
+    required String itemName,
+    this.metalType = const Value.absent(),
+    this.purity = const Value.absent(),
+    this.approxWeight = const Value.absent(),
+    this.lockedRate = const Value.absent(),
+    this.status = const Value.absent(),
+    this.karigarId = const Value.absent(),
+    this.karigarName = const Value.absent(),
+    this.advancePaid = const Value.absent(),
+    this.totalAmount = const Value.absent(),
+    this.dueAmount = const Value.absent(),
+    this.paymentStatus = const Value.absent(),
+    this.expectedDeliveryDate = const Value.absent(),
+    this.actualDeliveryDate = const Value.absent(),
+    this.imagePath = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.linkedBillId = const Value.absent(),
+    this.linkedBillNo = const Value.absent(),
+  })  : deliveryNo = Value(deliveryNo),
+        customerId = Value(customerId),
+        customerName = Value(customerName),
+        customerMobile = Value(customerMobile),
+        itemName = Value(itemName);
+  static Insertable<DeliveryOrder> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? deliveryNo,
+    Expression<int>? customerId,
+    Expression<int>? sourceOrderId,
+    Expression<String>? customerName,
+    Expression<String>? customerMobile,
+    Expression<String>? itemName,
+    Expression<String>? metalType,
+    Expression<String>? purity,
+    Expression<double>? approxWeight,
+    Expression<double>? lockedRate,
+    Expression<String>? status,
+    Expression<int>? karigarId,
+    Expression<String>? karigarName,
+    Expression<double>? advancePaid,
+    Expression<double>? totalAmount,
+    Expression<double>? dueAmount,
+    Expression<String>? paymentStatus,
+    Expression<DateTime>? expectedDeliveryDate,
+    Expression<DateTime>? actualDeliveryDate,
+    Expression<String>? imagePath,
+    Expression<String>? notes,
+    Expression<int>? linkedBillId,
+    Expression<String>? linkedBillNo,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deliveryNo != null) 'delivery_no': deliveryNo,
+      if (customerId != null) 'customer_id': customerId,
+      if (sourceOrderId != null) 'source_order_id': sourceOrderId,
+      if (customerName != null) 'customer_name': customerName,
+      if (customerMobile != null) 'customer_mobile': customerMobile,
+      if (itemName != null) 'item_name': itemName,
+      if (metalType != null) 'metal_type': metalType,
+      if (purity != null) 'purity': purity,
+      if (approxWeight != null) 'approx_weight': approxWeight,
+      if (lockedRate != null) 'locked_rate': lockedRate,
+      if (status != null) 'status': status,
+      if (karigarId != null) 'karigar_id': karigarId,
+      if (karigarName != null) 'karigar_name': karigarName,
+      if (advancePaid != null) 'advance_paid': advancePaid,
+      if (totalAmount != null) 'total_amount': totalAmount,
+      if (dueAmount != null) 'due_amount': dueAmount,
+      if (paymentStatus != null) 'payment_status': paymentStatus,
+      if (expectedDeliveryDate != null)
+        'expected_delivery_date': expectedDeliveryDate,
+      if (actualDeliveryDate != null)
+        'actual_delivery_date': actualDeliveryDate,
+      if (imagePath != null) 'image_path': imagePath,
+      if (notes != null) 'notes': notes,
+      if (linkedBillId != null) 'linked_bill_id': linkedBillId,
+      if (linkedBillNo != null) 'linked_bill_no': linkedBillNo,
+    });
+  }
+
+  DeliveryOrdersCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<String>? deliveryNo,
+      Value<int>? customerId,
+      Value<int?>? sourceOrderId,
+      Value<String>? customerName,
+      Value<String>? customerMobile,
+      Value<String>? itemName,
+      Value<String>? metalType,
+      Value<String>? purity,
+      Value<double>? approxWeight,
+      Value<double>? lockedRate,
+      Value<String>? status,
+      Value<int?>? karigarId,
+      Value<String?>? karigarName,
+      Value<double>? advancePaid,
+      Value<double>? totalAmount,
+      Value<double>? dueAmount,
+      Value<String>? paymentStatus,
+      Value<DateTime?>? expectedDeliveryDate,
+      Value<DateTime?>? actualDeliveryDate,
+      Value<String?>? imagePath,
+      Value<String?>? notes,
+      Value<int?>? linkedBillId,
+      Value<String?>? linkedBillNo}) {
+    return DeliveryOrdersCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deliveryNo: deliveryNo ?? this.deliveryNo,
+      customerId: customerId ?? this.customerId,
+      sourceOrderId: sourceOrderId ?? this.sourceOrderId,
+      customerName: customerName ?? this.customerName,
+      customerMobile: customerMobile ?? this.customerMobile,
+      itemName: itemName ?? this.itemName,
+      metalType: metalType ?? this.metalType,
+      purity: purity ?? this.purity,
+      approxWeight: approxWeight ?? this.approxWeight,
+      lockedRate: lockedRate ?? this.lockedRate,
+      status: status ?? this.status,
+      karigarId: karigarId ?? this.karigarId,
+      karigarName: karigarName ?? this.karigarName,
+      advancePaid: advancePaid ?? this.advancePaid,
+      totalAmount: totalAmount ?? this.totalAmount,
+      dueAmount: dueAmount ?? this.dueAmount,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      expectedDeliveryDate: expectedDeliveryDate ?? this.expectedDeliveryDate,
+      actualDeliveryDate: actualDeliveryDate ?? this.actualDeliveryDate,
+      imagePath: imagePath ?? this.imagePath,
+      notes: notes ?? this.notes,
+      linkedBillId: linkedBillId ?? this.linkedBillId,
+      linkedBillNo: linkedBillNo ?? this.linkedBillNo,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deliveryNo.present) {
+      map['delivery_no'] = Variable<String>(deliveryNo.value);
+    }
+    if (customerId.present) {
+      map['customer_id'] = Variable<int>(customerId.value);
+    }
+    if (sourceOrderId.present) {
+      map['source_order_id'] = Variable<int>(sourceOrderId.value);
+    }
+    if (customerName.present) {
+      map['customer_name'] = Variable<String>(customerName.value);
+    }
+    if (customerMobile.present) {
+      map['customer_mobile'] = Variable<String>(customerMobile.value);
+    }
+    if (itemName.present) {
+      map['item_name'] = Variable<String>(itemName.value);
+    }
+    if (metalType.present) {
+      map['metal_type'] = Variable<String>(metalType.value);
+    }
+    if (purity.present) {
+      map['purity'] = Variable<String>(purity.value);
+    }
+    if (approxWeight.present) {
+      map['approx_weight'] = Variable<double>(approxWeight.value);
+    }
+    if (lockedRate.present) {
+      map['locked_rate'] = Variable<double>(lockedRate.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (karigarId.present) {
+      map['karigar_id'] = Variable<int>(karigarId.value);
+    }
+    if (karigarName.present) {
+      map['karigar_name'] = Variable<String>(karigarName.value);
+    }
+    if (advancePaid.present) {
+      map['advance_paid'] = Variable<double>(advancePaid.value);
+    }
+    if (totalAmount.present) {
+      map['total_amount'] = Variable<double>(totalAmount.value);
+    }
+    if (dueAmount.present) {
+      map['due_amount'] = Variable<double>(dueAmount.value);
+    }
+    if (paymentStatus.present) {
+      map['payment_status'] = Variable<String>(paymentStatus.value);
+    }
+    if (expectedDeliveryDate.present) {
+      map['expected_delivery_date'] =
+          Variable<DateTime>(expectedDeliveryDate.value);
+    }
+    if (actualDeliveryDate.present) {
+      map['actual_delivery_date'] =
+          Variable<DateTime>(actualDeliveryDate.value);
+    }
+    if (imagePath.present) {
+      map['image_path'] = Variable<String>(imagePath.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (linkedBillId.present) {
+      map['linked_bill_id'] = Variable<int>(linkedBillId.value);
+    }
+    if (linkedBillNo.present) {
+      map['linked_bill_no'] = Variable<String>(linkedBillNo.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DeliveryOrdersCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deliveryNo: $deliveryNo, ')
+          ..write('customerId: $customerId, ')
+          ..write('sourceOrderId: $sourceOrderId, ')
+          ..write('customerName: $customerName, ')
+          ..write('customerMobile: $customerMobile, ')
+          ..write('itemName: $itemName, ')
+          ..write('metalType: $metalType, ')
+          ..write('purity: $purity, ')
+          ..write('approxWeight: $approxWeight, ')
+          ..write('lockedRate: $lockedRate, ')
+          ..write('status: $status, ')
+          ..write('karigarId: $karigarId, ')
+          ..write('karigarName: $karigarName, ')
+          ..write('advancePaid: $advancePaid, ')
+          ..write('totalAmount: $totalAmount, ')
+          ..write('dueAmount: $dueAmount, ')
+          ..write('paymentStatus: $paymentStatus, ')
+          ..write('expectedDeliveryDate: $expectedDeliveryDate, ')
+          ..write('actualDeliveryDate: $actualDeliveryDate, ')
+          ..write('imagePath: $imagePath, ')
+          ..write('notes: $notes, ')
+          ..write('linkedBillId: $linkedBillId, ')
+          ..write('linkedBillNo: $linkedBillNo')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DeliveryItemsTable extends DeliveryItems
+    with TableInfo<$DeliveryItemsTable, DeliveryItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DeliveryItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _deliveryOrderIdMeta =
+      const VerificationMeta('deliveryOrderId');
+  @override
+  late final GeneratedColumn<int> deliveryOrderId = GeneratedColumn<int>(
+      'delivery_order_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES delivery_orders (id) ON DELETE CASCADE'));
+  static const VerificationMeta _itemNameMeta =
+      const VerificationMeta('itemName');
+  @override
+  late final GeneratedColumn<String> itemName = GeneratedColumn<String>(
+      'item_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _metalTypeMeta =
+      const VerificationMeta('metalType');
+  @override
+  late final GeneratedColumn<String> metalType = GeneratedColumn<String>(
+      'metal_type', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('GOLD'));
+  static const VerificationMeta _purityMeta = const VerificationMeta('purity');
+  @override
+  late final GeneratedColumn<String> purity = GeneratedColumn<String>(
+      'purity', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('22K'));
+  static const VerificationMeta _approxWeightMeta =
+      const VerificationMeta('approxWeight');
+  @override
+  late final GeneratedColumn<double> approxWeight = GeneratedColumn<double>(
+      'approx_weight', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _finalWeightMeta =
+      const VerificationMeta('finalWeight');
+  @override
+  late final GeneratedColumn<double> finalWeight = GeneratedColumn<double>(
+      'final_weight', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _quantityMeta =
+      const VerificationMeta('quantity');
+  @override
+  late final GeneratedColumn<int> quantity = GeneratedColumn<int>(
+      'quantity', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  static const VerificationMeta _imagePathMeta =
+      const VerificationMeta('imagePath');
+  @override
+  late final GeneratedColumn<String> imagePath = GeneratedColumn<String>(
+      'image_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+      'notes', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _itemStatusMeta =
+      const VerificationMeta('itemStatus');
+  @override
+  late final GeneratedColumn<String> itemStatus = GeneratedColumn<String>(
+      'item_status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('PENDING'));
+  static const VerificationMeta _karigarIdMeta =
+      const VerificationMeta('karigarId');
+  @override
+  late final GeneratedColumn<int> karigarId = GeneratedColumn<int>(
+      'karigar_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _karigarNameMeta =
+      const VerificationMeta('karigarName');
+  @override
+  late final GeneratedColumn<String> karigarName = GeneratedColumn<String>(
+      'karigar_name', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _deliveredAtMeta =
+      const VerificationMeta('deliveredAt');
+  @override
+  late final GeneratedColumn<DateTime> deliveredAt = GeneratedColumn<DateTime>(
+      'delivered_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        deliveryOrderId,
+        itemName,
+        metalType,
+        purity,
+        approxWeight,
+        finalWeight,
+        quantity,
+        imagePath,
+        notes,
+        itemStatus,
+        karigarId,
+        karigarName,
+        deliveredAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'delivery_items';
+  @override
+  VerificationContext validateIntegrity(Insertable<DeliveryItem> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('delivery_order_id')) {
+      context.handle(
+          _deliveryOrderIdMeta,
+          deliveryOrderId.isAcceptableOrUnknown(
+              data['delivery_order_id']!, _deliveryOrderIdMeta));
+    } else if (isInserting) {
+      context.missing(_deliveryOrderIdMeta);
+    }
+    if (data.containsKey('item_name')) {
+      context.handle(_itemNameMeta,
+          itemName.isAcceptableOrUnknown(data['item_name']!, _itemNameMeta));
+    } else if (isInserting) {
+      context.missing(_itemNameMeta);
+    }
+    if (data.containsKey('metal_type')) {
+      context.handle(_metalTypeMeta,
+          metalType.isAcceptableOrUnknown(data['metal_type']!, _metalTypeMeta));
+    }
+    if (data.containsKey('purity')) {
+      context.handle(_purityMeta,
+          purity.isAcceptableOrUnknown(data['purity']!, _purityMeta));
+    }
+    if (data.containsKey('approx_weight')) {
+      context.handle(
+          _approxWeightMeta,
+          approxWeight.isAcceptableOrUnknown(
+              data['approx_weight']!, _approxWeightMeta));
+    }
+    if (data.containsKey('final_weight')) {
+      context.handle(
+          _finalWeightMeta,
+          finalWeight.isAcceptableOrUnknown(
+              data['final_weight']!, _finalWeightMeta));
+    }
+    if (data.containsKey('quantity')) {
+      context.handle(_quantityMeta,
+          quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta));
+    }
+    if (data.containsKey('image_path')) {
+      context.handle(_imagePathMeta,
+          imagePath.isAcceptableOrUnknown(data['image_path']!, _imagePathMeta));
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+          _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
+    }
+    if (data.containsKey('item_status')) {
+      context.handle(
+          _itemStatusMeta,
+          itemStatus.isAcceptableOrUnknown(
+              data['item_status']!, _itemStatusMeta));
+    }
+    if (data.containsKey('karigar_id')) {
+      context.handle(_karigarIdMeta,
+          karigarId.isAcceptableOrUnknown(data['karigar_id']!, _karigarIdMeta));
+    }
+    if (data.containsKey('karigar_name')) {
+      context.handle(
+          _karigarNameMeta,
+          karigarName.isAcceptableOrUnknown(
+              data['karigar_name']!, _karigarNameMeta));
+    }
+    if (data.containsKey('delivered_at')) {
+      context.handle(
+          _deliveredAtMeta,
+          deliveredAt.isAcceptableOrUnknown(
+              data['delivered_at']!, _deliveredAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DeliveryItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DeliveryItem(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      deliveryOrderId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}delivery_order_id'])!,
+      itemName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}item_name'])!,
+      metalType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}metal_type'])!,
+      purity: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}purity'])!,
+      approxWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}approx_weight'])!,
+      finalWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}final_weight'])!,
+      quantity: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}quantity'])!,
+      imagePath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}image_path']),
+      notes: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}notes']),
+      itemStatus: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}item_status'])!,
+      karigarId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}karigar_id']),
+      karigarName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}karigar_name']),
+      deliveredAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}delivered_at']),
+    );
+  }
+
+  @override
+  $DeliveryItemsTable createAlias(String alias) {
+    return $DeliveryItemsTable(attachedDatabase, alias);
+  }
+}
+
+class DeliveryItem extends DataClass implements Insertable<DeliveryItem> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final int deliveryOrderId;
+  final String itemName;
+  final String metalType;
+  final String purity;
+  final double approxWeight;
+  final double finalWeight;
+  final int quantity;
+  final String? imagePath;
+  final String? notes;
+  final String itemStatus;
+  final int? karigarId;
+  final String? karigarName;
+  final DateTime? deliveredAt;
+  const DeliveryItem(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.deliveryOrderId,
+      required this.itemName,
+      required this.metalType,
+      required this.purity,
+      required this.approxWeight,
+      required this.finalWeight,
+      required this.quantity,
+      this.imagePath,
+      this.notes,
+      required this.itemStatus,
+      this.karigarId,
+      this.karigarName,
+      this.deliveredAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['delivery_order_id'] = Variable<int>(deliveryOrderId);
+    map['item_name'] = Variable<String>(itemName);
+    map['metal_type'] = Variable<String>(metalType);
+    map['purity'] = Variable<String>(purity);
+    map['approx_weight'] = Variable<double>(approxWeight);
+    map['final_weight'] = Variable<double>(finalWeight);
+    map['quantity'] = Variable<int>(quantity);
+    if (!nullToAbsent || imagePath != null) {
+      map['image_path'] = Variable<String>(imagePath);
+    }
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['item_status'] = Variable<String>(itemStatus);
+    if (!nullToAbsent || karigarId != null) {
+      map['karigar_id'] = Variable<int>(karigarId);
+    }
+    if (!nullToAbsent || karigarName != null) {
+      map['karigar_name'] = Variable<String>(karigarName);
+    }
+    if (!nullToAbsent || deliveredAt != null) {
+      map['delivered_at'] = Variable<DateTime>(deliveredAt);
+    }
+    return map;
+  }
+
+  DeliveryItemsCompanion toCompanion(bool nullToAbsent) {
+    return DeliveryItemsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      deliveryOrderId: Value(deliveryOrderId),
+      itemName: Value(itemName),
+      metalType: Value(metalType),
+      purity: Value(purity),
+      approxWeight: Value(approxWeight),
+      finalWeight: Value(finalWeight),
+      quantity: Value(quantity),
+      imagePath: imagePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imagePath),
+      notes:
+          notes == null && nullToAbsent ? const Value.absent() : Value(notes),
+      itemStatus: Value(itemStatus),
+      karigarId: karigarId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(karigarId),
+      karigarName: karigarName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(karigarName),
+      deliveredAt: deliveredAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deliveredAt),
+    );
+  }
+
+  factory DeliveryItem.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DeliveryItem(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      deliveryOrderId: serializer.fromJson<int>(json['deliveryOrderId']),
+      itemName: serializer.fromJson<String>(json['itemName']),
+      metalType: serializer.fromJson<String>(json['metalType']),
+      purity: serializer.fromJson<String>(json['purity']),
+      approxWeight: serializer.fromJson<double>(json['approxWeight']),
+      finalWeight: serializer.fromJson<double>(json['finalWeight']),
+      quantity: serializer.fromJson<int>(json['quantity']),
+      imagePath: serializer.fromJson<String?>(json['imagePath']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      itemStatus: serializer.fromJson<String>(json['itemStatus']),
+      karigarId: serializer.fromJson<int?>(json['karigarId']),
+      karigarName: serializer.fromJson<String?>(json['karigarName']),
+      deliveredAt: serializer.fromJson<DateTime?>(json['deliveredAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'deliveryOrderId': serializer.toJson<int>(deliveryOrderId),
+      'itemName': serializer.toJson<String>(itemName),
+      'metalType': serializer.toJson<String>(metalType),
+      'purity': serializer.toJson<String>(purity),
+      'approxWeight': serializer.toJson<double>(approxWeight),
+      'finalWeight': serializer.toJson<double>(finalWeight),
+      'quantity': serializer.toJson<int>(quantity),
+      'imagePath': serializer.toJson<String?>(imagePath),
+      'notes': serializer.toJson<String?>(notes),
+      'itemStatus': serializer.toJson<String>(itemStatus),
+      'karigarId': serializer.toJson<int?>(karigarId),
+      'karigarName': serializer.toJson<String?>(karigarName),
+      'deliveredAt': serializer.toJson<DateTime?>(deliveredAt),
+    };
+  }
+
+  DeliveryItem copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          int? deliveryOrderId,
+          String? itemName,
+          String? metalType,
+          String? purity,
+          double? approxWeight,
+          double? finalWeight,
+          int? quantity,
+          Value<String?> imagePath = const Value.absent(),
+          Value<String?> notes = const Value.absent(),
+          String? itemStatus,
+          Value<int?> karigarId = const Value.absent(),
+          Value<String?> karigarName = const Value.absent(),
+          Value<DateTime?> deliveredAt = const Value.absent()}) =>
+      DeliveryItem(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        deliveryOrderId: deliveryOrderId ?? this.deliveryOrderId,
+        itemName: itemName ?? this.itemName,
+        metalType: metalType ?? this.metalType,
+        purity: purity ?? this.purity,
+        approxWeight: approxWeight ?? this.approxWeight,
+        finalWeight: finalWeight ?? this.finalWeight,
+        quantity: quantity ?? this.quantity,
+        imagePath: imagePath.present ? imagePath.value : this.imagePath,
+        notes: notes.present ? notes.value : this.notes,
+        itemStatus: itemStatus ?? this.itemStatus,
+        karigarId: karigarId.present ? karigarId.value : this.karigarId,
+        karigarName: karigarName.present ? karigarName.value : this.karigarName,
+        deliveredAt: deliveredAt.present ? deliveredAt.value : this.deliveredAt,
+      );
+  DeliveryItem copyWithCompanion(DeliveryItemsCompanion data) {
+    return DeliveryItem(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deliveryOrderId: data.deliveryOrderId.present
+          ? data.deliveryOrderId.value
+          : this.deliveryOrderId,
+      itemName: data.itemName.present ? data.itemName.value : this.itemName,
+      metalType: data.metalType.present ? data.metalType.value : this.metalType,
+      purity: data.purity.present ? data.purity.value : this.purity,
+      approxWeight: data.approxWeight.present
+          ? data.approxWeight.value
+          : this.approxWeight,
+      finalWeight:
+          data.finalWeight.present ? data.finalWeight.value : this.finalWeight,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      itemStatus:
+          data.itemStatus.present ? data.itemStatus.value : this.itemStatus,
+      karigarId: data.karigarId.present ? data.karigarId.value : this.karigarId,
+      karigarName:
+          data.karigarName.present ? data.karigarName.value : this.karigarName,
+      deliveredAt:
+          data.deliveredAt.present ? data.deliveredAt.value : this.deliveredAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DeliveryItem(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deliveryOrderId: $deliveryOrderId, ')
+          ..write('itemName: $itemName, ')
+          ..write('metalType: $metalType, ')
+          ..write('purity: $purity, ')
+          ..write('approxWeight: $approxWeight, ')
+          ..write('finalWeight: $finalWeight, ')
+          ..write('quantity: $quantity, ')
+          ..write('imagePath: $imagePath, ')
+          ..write('notes: $notes, ')
+          ..write('itemStatus: $itemStatus, ')
+          ..write('karigarId: $karigarId, ')
+          ..write('karigarName: $karigarName, ')
+          ..write('deliveredAt: $deliveredAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      createdAt,
+      updatedAt,
+      deliveryOrderId,
+      itemName,
+      metalType,
+      purity,
+      approxWeight,
+      finalWeight,
+      quantity,
+      imagePath,
+      notes,
+      itemStatus,
+      karigarId,
+      karigarName,
+      deliveredAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DeliveryItem &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deliveryOrderId == this.deliveryOrderId &&
+          other.itemName == this.itemName &&
+          other.metalType == this.metalType &&
+          other.purity == this.purity &&
+          other.approxWeight == this.approxWeight &&
+          other.finalWeight == this.finalWeight &&
+          other.quantity == this.quantity &&
+          other.imagePath == this.imagePath &&
+          other.notes == this.notes &&
+          other.itemStatus == this.itemStatus &&
+          other.karigarId == this.karigarId &&
+          other.karigarName == this.karigarName &&
+          other.deliveredAt == this.deliveredAt);
+}
+
+class DeliveryItemsCompanion extends UpdateCompanion<DeliveryItem> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<int> deliveryOrderId;
+  final Value<String> itemName;
+  final Value<String> metalType;
+  final Value<String> purity;
+  final Value<double> approxWeight;
+  final Value<double> finalWeight;
+  final Value<int> quantity;
+  final Value<String?> imagePath;
+  final Value<String?> notes;
+  final Value<String> itemStatus;
+  final Value<int?> karigarId;
+  final Value<String?> karigarName;
+  final Value<DateTime?> deliveredAt;
+  const DeliveryItemsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deliveryOrderId = const Value.absent(),
+    this.itemName = const Value.absent(),
+    this.metalType = const Value.absent(),
+    this.purity = const Value.absent(),
+    this.approxWeight = const Value.absent(),
+    this.finalWeight = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.imagePath = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.itemStatus = const Value.absent(),
+    this.karigarId = const Value.absent(),
+    this.karigarName = const Value.absent(),
+    this.deliveredAt = const Value.absent(),
+  });
+  DeliveryItemsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required int deliveryOrderId,
+    required String itemName,
+    this.metalType = const Value.absent(),
+    this.purity = const Value.absent(),
+    this.approxWeight = const Value.absent(),
+    this.finalWeight = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.imagePath = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.itemStatus = const Value.absent(),
+    this.karigarId = const Value.absent(),
+    this.karigarName = const Value.absent(),
+    this.deliveredAt = const Value.absent(),
+  })  : deliveryOrderId = Value(deliveryOrderId),
+        itemName = Value(itemName);
+  static Insertable<DeliveryItem> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? deliveryOrderId,
+    Expression<String>? itemName,
+    Expression<String>? metalType,
+    Expression<String>? purity,
+    Expression<double>? approxWeight,
+    Expression<double>? finalWeight,
+    Expression<int>? quantity,
+    Expression<String>? imagePath,
+    Expression<String>? notes,
+    Expression<String>? itemStatus,
+    Expression<int>? karigarId,
+    Expression<String>? karigarName,
+    Expression<DateTime>? deliveredAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deliveryOrderId != null) 'delivery_order_id': deliveryOrderId,
+      if (itemName != null) 'item_name': itemName,
+      if (metalType != null) 'metal_type': metalType,
+      if (purity != null) 'purity': purity,
+      if (approxWeight != null) 'approx_weight': approxWeight,
+      if (finalWeight != null) 'final_weight': finalWeight,
+      if (quantity != null) 'quantity': quantity,
+      if (imagePath != null) 'image_path': imagePath,
+      if (notes != null) 'notes': notes,
+      if (itemStatus != null) 'item_status': itemStatus,
+      if (karigarId != null) 'karigar_id': karigarId,
+      if (karigarName != null) 'karigar_name': karigarName,
+      if (deliveredAt != null) 'delivered_at': deliveredAt,
+    });
+  }
+
+  DeliveryItemsCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<int>? deliveryOrderId,
+      Value<String>? itemName,
+      Value<String>? metalType,
+      Value<String>? purity,
+      Value<double>? approxWeight,
+      Value<double>? finalWeight,
+      Value<int>? quantity,
+      Value<String?>? imagePath,
+      Value<String?>? notes,
+      Value<String>? itemStatus,
+      Value<int?>? karigarId,
+      Value<String?>? karigarName,
+      Value<DateTime?>? deliveredAt}) {
+    return DeliveryItemsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deliveryOrderId: deliveryOrderId ?? this.deliveryOrderId,
+      itemName: itemName ?? this.itemName,
+      metalType: metalType ?? this.metalType,
+      purity: purity ?? this.purity,
+      approxWeight: approxWeight ?? this.approxWeight,
+      finalWeight: finalWeight ?? this.finalWeight,
+      quantity: quantity ?? this.quantity,
+      imagePath: imagePath ?? this.imagePath,
+      notes: notes ?? this.notes,
+      itemStatus: itemStatus ?? this.itemStatus,
+      karigarId: karigarId ?? this.karigarId,
+      karigarName: karigarName ?? this.karigarName,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deliveryOrderId.present) {
+      map['delivery_order_id'] = Variable<int>(deliveryOrderId.value);
+    }
+    if (itemName.present) {
+      map['item_name'] = Variable<String>(itemName.value);
+    }
+    if (metalType.present) {
+      map['metal_type'] = Variable<String>(metalType.value);
+    }
+    if (purity.present) {
+      map['purity'] = Variable<String>(purity.value);
+    }
+    if (approxWeight.present) {
+      map['approx_weight'] = Variable<double>(approxWeight.value);
+    }
+    if (finalWeight.present) {
+      map['final_weight'] = Variable<double>(finalWeight.value);
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<int>(quantity.value);
+    }
+    if (imagePath.present) {
+      map['image_path'] = Variable<String>(imagePath.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (itemStatus.present) {
+      map['item_status'] = Variable<String>(itemStatus.value);
+    }
+    if (karigarId.present) {
+      map['karigar_id'] = Variable<int>(karigarId.value);
+    }
+    if (karigarName.present) {
+      map['karigar_name'] = Variable<String>(karigarName.value);
+    }
+    if (deliveredAt.present) {
+      map['delivered_at'] = Variable<DateTime>(deliveredAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DeliveryItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deliveryOrderId: $deliveryOrderId, ')
+          ..write('itemName: $itemName, ')
+          ..write('metalType: $metalType, ')
+          ..write('purity: $purity, ')
+          ..write('approxWeight: $approxWeight, ')
+          ..write('finalWeight: $finalWeight, ')
+          ..write('quantity: $quantity, ')
+          ..write('imagePath: $imagePath, ')
+          ..write('notes: $notes, ')
+          ..write('itemStatus: $itemStatus, ')
+          ..write('karigarId: $karigarId, ')
+          ..write('karigarName: $karigarName, ')
+          ..write('deliveredAt: $deliveredAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -17373,6 +19406,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $KarigarReceiptsTable(this);
   late final $GirviLoansTable girviLoans = $GirviLoansTable(this);
   late final $GirviPaymentsTable girviPayments = $GirviPaymentsTable(this);
+  late final $DeliveryOrdersTable deliveryOrders = $DeliveryOrdersTable(this);
+  late final $DeliveryItemsTable deliveryItems = $DeliveryItemsTable(this);
   late final Index idxCustomersName = Index('idx_customers_name',
       'CREATE INDEX idx_customers_name ON customers (name)');
   late final Index idxCustomersMobile = Index('idx_customers_mobile',
@@ -17471,6 +19506,16 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       'CREATE INDEX idx_girvi_pay_date ON girvi_payments (payment_date)');
   late final Index idxGirviPayType = Index('idx_girvi_pay_type',
       'CREATE INDEX idx_girvi_pay_type ON girvi_payments (payment_type)');
+  late final Index idxDeliveryStatus = Index('idx_delivery_status',
+      'CREATE INDEX idx_delivery_status ON delivery_orders (status)');
+  late final Index idxDeliveryCustomer = Index('idx_delivery_customer',
+      'CREATE INDEX idx_delivery_customer ON delivery_orders (customer_id)');
+  late final Index idxDeliveryDate = Index('idx_delivery_date',
+      'CREATE INDEX idx_delivery_date ON delivery_orders (expected_delivery_date)');
+  late final Index idxDitemOrder = Index('idx_ditem_order',
+      'CREATE INDEX idx_ditem_order ON delivery_items (delivery_order_id)');
+  late final Index idxDitemStatus = Index('idx_ditem_status',
+      'CREATE INDEX idx_ditem_status ON delivery_items (item_status)');
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -17495,6 +19540,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         karigarReceipts,
         girviLoans,
         girviPayments,
+        deliveryOrders,
+        deliveryItems,
         idxCustomersName,
         idxCustomersMobile,
         idxCustomersTier,
@@ -17543,7 +19590,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         idxGirviStartdate,
         idxGirviPayGirvi,
         idxGirviPayDate,
-        idxGirviPayType
+        idxGirviPayType,
+        idxDeliveryStatus,
+        idxDeliveryCustomer,
+        idxDeliveryDate,
+        idxDitemOrder,
+        idxDitemStatus
       ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules(
@@ -17588,6 +19640,27 @@ abstract class _$AppDatabase extends GeneratedDatabase {
                 limitUpdateKind: UpdateKind.delete),
             result: [
               TableUpdate('girvi_payments', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('customers',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('delivery_orders', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('sales_orders',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('delivery_orders', kind: UpdateKind.update),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('delivery_orders',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('delivery_items', kind: UpdateKind.delete),
             ],
           ),
         ],
@@ -17735,6 +19808,21 @@ final class $$CustomersTableReferences
         .filter((f) => f.customerId.id($_item.id));
 
     final cache = $_typedResult.readTableOrNull(_girviLoansRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$DeliveryOrdersTable, List<DeliveryOrder>>
+      _deliveryOrdersRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.deliveryOrders,
+              aliasName: $_aliasNameGenerator(
+                  db.customers.id, db.deliveryOrders.customerId));
+
+  $$DeliveryOrdersTableProcessedTableManager get deliveryOrdersRefs {
+    final manager = $$DeliveryOrdersTableTableManager($_db, $_db.deliveryOrders)
+        .filter((f) => f.customerId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_deliveryOrdersRefsTable($_db));
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
@@ -17947,6 +20035,27 @@ class $$CustomersTableFilterComposer
             $$GirviLoansTableFilterComposer(
               $db: $db,
               $table: $db.girviLoans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> deliveryOrdersRefs(
+      Expression<bool> Function($$DeliveryOrdersTableFilterComposer f) f) {
+    final $$DeliveryOrdersTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.deliveryOrders,
+        getReferencedColumn: (t) => t.customerId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$DeliveryOrdersTableFilterComposer(
+              $db: $db,
+              $table: $db.deliveryOrders,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -18299,6 +20408,27 @@ class $$CustomersTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> deliveryOrdersRefs<T extends Object>(
+      Expression<T> Function($$DeliveryOrdersTableAnnotationComposer a) f) {
+    final $$DeliveryOrdersTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.deliveryOrders,
+        getReferencedColumn: (t) => t.customerId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$DeliveryOrdersTableAnnotationComposer(
+              $db: $db,
+              $table: $db.deliveryOrders,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$CustomersTableTableManager extends RootTableManager<
@@ -18316,7 +20446,8 @@ class $$CustomersTableTableManager extends RootTableManager<
         {bool billsRefs,
         bool salesOrdersRefs,
         bool loansRefs,
-        bool girviLoansRefs})> {
+        bool girviLoansRefs,
+        bool deliveryOrdersRefs})> {
   $$CustomersTableTableManager(_$AppDatabase db, $CustomersTable table)
       : super(TableManagerState(
           db: db,
@@ -18497,14 +20628,16 @@ class $$CustomersTableTableManager extends RootTableManager<
               {billsRefs = false,
               salesOrdersRefs = false,
               loansRefs = false,
-              girviLoansRefs = false}) {
+              girviLoansRefs = false,
+              deliveryOrdersRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
                 if (billsRefs) db.bills,
                 if (salesOrdersRefs) db.salesOrders,
                 if (loansRefs) db.loans,
-                if (girviLoansRefs) db.girviLoans
+                if (girviLoansRefs) db.girviLoans,
+                if (deliveryOrdersRefs) db.deliveryOrders
               ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
@@ -18554,6 +20687,18 @@ class $$CustomersTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem:
                             (item, referencedItems) => referencedItems
                                 .where((e) => e.customerId == item.id),
+                        typedResults: items),
+                  if (deliveryOrdersRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$CustomersTableReferences
+                            ._deliveryOrdersRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$CustomersTableReferences(db, table, p0)
+                                .deliveryOrdersRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.customerId == item.id),
                         typedResults: items)
                 ];
               },
@@ -18577,7 +20722,8 @@ typedef $$CustomersTableProcessedTableManager = ProcessedTableManager<
         {bool billsRefs,
         bool salesOrdersRefs,
         bool loansRefs,
-        bool girviLoansRefs})>;
+        bool girviLoansRefs,
+        bool deliveryOrdersRefs})>;
 typedef $$SuppliersTableCreateCompanionBuilder = SuppliersCompanion Function({
   Value<int> id,
   Value<DateTime> createdAt,
@@ -20683,6 +22829,21 @@ final class $$SalesOrdersTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$DeliveryOrdersTable, List<DeliveryOrder>>
+      _deliveryOrdersRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.deliveryOrders,
+              aliasName: $_aliasNameGenerator(
+                  db.salesOrders.id, db.deliveryOrders.sourceOrderId));
+
+  $$DeliveryOrdersTableProcessedTableManager get deliveryOrdersRefs {
+    final manager = $$DeliveryOrdersTableTableManager($_db, $_db.deliveryOrders)
+        .filter((f) => f.sourceOrderId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_deliveryOrdersRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$SalesOrdersTableFilterComposer
@@ -20766,6 +22927,27 @@ class $$SalesOrdersTableFilterComposer
             $$OrderAdvancesTableFilterComposer(
               $db: $db,
               $table: $db.orderAdvances,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> deliveryOrdersRefs(
+      Expression<bool> Function($$DeliveryOrdersTableFilterComposer f) f) {
+    final $$DeliveryOrdersTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.deliveryOrders,
+        getReferencedColumn: (t) => t.sourceOrderId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$DeliveryOrdersTableFilterComposer(
+              $db: $db,
+              $table: $db.deliveryOrders,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -20934,6 +23116,27 @@ class $$SalesOrdersTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> deliveryOrdersRefs<T extends Object>(
+      Expression<T> Function($$DeliveryOrdersTableAnnotationComposer a) f) {
+    final $$DeliveryOrdersTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.deliveryOrders,
+        getReferencedColumn: (t) => t.sourceOrderId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$DeliveryOrdersTableAnnotationComposer(
+              $db: $db,
+              $table: $db.deliveryOrders,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$SalesOrdersTableTableManager extends RootTableManager<
@@ -20947,7 +23150,8 @@ class $$SalesOrdersTableTableManager extends RootTableManager<
     $$SalesOrdersTableUpdateCompanionBuilder,
     (SalesOrder, $$SalesOrdersTableReferences),
     SalesOrder,
-    PrefetchHooks Function({bool customerId, bool orderAdvancesRefs})> {
+    PrefetchHooks Function(
+        {bool customerId, bool orderAdvancesRefs, bool deliveryOrdersRefs})> {
   $$SalesOrdersTableTableManager(_$AppDatabase db, $SalesOrdersTable table)
       : super(TableManagerState(
           db: db,
@@ -21029,11 +23233,14 @@ class $$SalesOrdersTableTableManager extends RootTableManager<
                   ))
               .toList(),
           prefetchHooksCallback: (
-              {customerId = false, orderAdvancesRefs = false}) {
+              {customerId = false,
+              orderAdvancesRefs = false,
+              deliveryOrdersRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
-                if (orderAdvancesRefs) db.orderAdvances
+                if (orderAdvancesRefs) db.orderAdvances,
+                if (deliveryOrdersRefs) db.deliveryOrders
               ],
               addJoins: <
                   T extends TableManagerState<
@@ -21074,6 +23281,18 @@ class $$SalesOrdersTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem: (item,
                                 referencedItems) =>
                             referencedItems.where((e) => e.orderId == item.id),
+                        typedResults: items),
+                  if (deliveryOrdersRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$SalesOrdersTableReferences
+                            ._deliveryOrdersRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$SalesOrdersTableReferences(db, table, p0)
+                                .deliveryOrdersRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.sourceOrderId == item.id),
                         typedResults: items)
                 ];
               },
@@ -21093,7 +23312,8 @@ typedef $$SalesOrdersTableProcessedTableManager = ProcessedTableManager<
     $$SalesOrdersTableUpdateCompanionBuilder,
     (SalesOrder, $$SalesOrdersTableReferences),
     SalesOrder,
-    PrefetchHooks Function({bool customerId, bool orderAdvancesRefs})>;
+    PrefetchHooks Function(
+        {bool customerId, bool orderAdvancesRefs, bool deliveryOrdersRefs})>;
 typedef $$OrderAdvancesTableCreateCompanionBuilder = OrderAdvancesCompanion
     Function({
   Value<int> id,
@@ -21972,12 +24192,13 @@ typedef $$StockItemsTableCreateCompanionBuilder = StockItemsCompanion Function({
   Value<double> grossWeight,
   Value<double> stoneWeight,
   Value<double> netWeight,
+  Value<double> wastage,
   Value<String> stoneType,
   Value<double> stoneCarats,
   Value<int> stonePieces,
   Value<double> stoneValue,
-  Value<double> makingCharges,
-  Value<String> makingChargesType,
+  Value<double> makingCharge,
+  Value<String> makingChargeType,
   Value<double> purchaseRate,
   Value<double> purchasePrice,
   Value<double> mrp,
@@ -21985,10 +24206,11 @@ typedef $$StockItemsTableCreateCompanionBuilder = StockItemsCompanion Function({
   Value<String?> huid,
   Value<double> gstRate,
   Value<int> quantity,
-  Value<String?> rackLocation,
+  Value<String?> location,
   Value<int?> supplierId,
   Value<String?> supplierName,
   Value<String> status,
+  Value<bool> isActive,
   Value<String?> imagePath,
 });
 typedef $$StockItemsTableUpdateCompanionBuilder = StockItemsCompanion Function({
@@ -22005,12 +24227,13 @@ typedef $$StockItemsTableUpdateCompanionBuilder = StockItemsCompanion Function({
   Value<double> grossWeight,
   Value<double> stoneWeight,
   Value<double> netWeight,
+  Value<double> wastage,
   Value<String> stoneType,
   Value<double> stoneCarats,
   Value<int> stonePieces,
   Value<double> stoneValue,
-  Value<double> makingCharges,
-  Value<String> makingChargesType,
+  Value<double> makingCharge,
+  Value<String> makingChargeType,
   Value<double> purchaseRate,
   Value<double> purchasePrice,
   Value<double> mrp,
@@ -22018,10 +24241,11 @@ typedef $$StockItemsTableUpdateCompanionBuilder = StockItemsCompanion Function({
   Value<String?> huid,
   Value<double> gstRate,
   Value<int> quantity,
-  Value<String?> rackLocation,
+  Value<String?> location,
   Value<int?> supplierId,
   Value<String?> supplierName,
   Value<String> status,
+  Value<bool> isActive,
   Value<String?> imagePath,
 });
 
@@ -22092,6 +24316,9 @@ class $$StockItemsTableFilterComposer
   ColumnFilters<double> get netWeight => $composableBuilder(
       column: $table.netWeight, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<double> get wastage => $composableBuilder(
+      column: $table.wastage, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<String> get stoneType => $composableBuilder(
       column: $table.stoneType, builder: (column) => ColumnFilters(column));
 
@@ -22104,11 +24331,11 @@ class $$StockItemsTableFilterComposer
   ColumnFilters<double> get stoneValue => $composableBuilder(
       column: $table.stoneValue, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<double> get makingCharges => $composableBuilder(
-      column: $table.makingCharges, builder: (column) => ColumnFilters(column));
+  ColumnFilters<double> get makingCharge => $composableBuilder(
+      column: $table.makingCharge, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get makingChargesType => $composableBuilder(
-      column: $table.makingChargesType,
+  ColumnFilters<String> get makingChargeType => $composableBuilder(
+      column: $table.makingChargeType,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get purchaseRate => $composableBuilder(
@@ -22132,14 +24359,17 @@ class $$StockItemsTableFilterComposer
   ColumnFilters<int> get quantity => $composableBuilder(
       column: $table.quantity, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get rackLocation => $composableBuilder(
-      column: $table.rackLocation, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get location => $composableBuilder(
+      column: $table.location, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get supplierName => $composableBuilder(
       column: $table.supplierName, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get status => $composableBuilder(
       column: $table.status, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+      column: $table.isActive, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get imagePath => $composableBuilder(
       column: $table.imagePath, builder: (column) => ColumnFilters(column));
@@ -22213,6 +24443,9 @@ class $$StockItemsTableOrderingComposer
   ColumnOrderings<double> get netWeight => $composableBuilder(
       column: $table.netWeight, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<double> get wastage => $composableBuilder(
+      column: $table.wastage, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get stoneType => $composableBuilder(
       column: $table.stoneType, builder: (column) => ColumnOrderings(column));
 
@@ -22225,12 +24458,12 @@ class $$StockItemsTableOrderingComposer
   ColumnOrderings<double> get stoneValue => $composableBuilder(
       column: $table.stoneValue, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<double> get makingCharges => $composableBuilder(
-      column: $table.makingCharges,
+  ColumnOrderings<double> get makingCharge => $composableBuilder(
+      column: $table.makingCharge,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get makingChargesType => $composableBuilder(
-      column: $table.makingChargesType,
+  ColumnOrderings<String> get makingChargeType => $composableBuilder(
+      column: $table.makingChargeType,
       builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get purchaseRate => $composableBuilder(
@@ -22256,9 +24489,8 @@ class $$StockItemsTableOrderingComposer
   ColumnOrderings<int> get quantity => $composableBuilder(
       column: $table.quantity, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get rackLocation => $composableBuilder(
-      column: $table.rackLocation,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get location => $composableBuilder(
+      column: $table.location, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get supplierName => $composableBuilder(
       column: $table.supplierName,
@@ -22266,6 +24498,9 @@ class $$StockItemsTableOrderingComposer
 
   ColumnOrderings<String> get status => $composableBuilder(
       column: $table.status, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+      column: $table.isActive, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get imagePath => $composableBuilder(
       column: $table.imagePath, builder: (column) => ColumnOrderings(column));
@@ -22339,6 +24574,9 @@ class $$StockItemsTableAnnotationComposer
   GeneratedColumn<double> get netWeight =>
       $composableBuilder(column: $table.netWeight, builder: (column) => column);
 
+  GeneratedColumn<double> get wastage =>
+      $composableBuilder(column: $table.wastage, builder: (column) => column);
+
   GeneratedColumn<String> get stoneType =>
       $composableBuilder(column: $table.stoneType, builder: (column) => column);
 
@@ -22351,11 +24589,11 @@ class $$StockItemsTableAnnotationComposer
   GeneratedColumn<double> get stoneValue => $composableBuilder(
       column: $table.stoneValue, builder: (column) => column);
 
-  GeneratedColumn<double> get makingCharges => $composableBuilder(
-      column: $table.makingCharges, builder: (column) => column);
+  GeneratedColumn<double> get makingCharge => $composableBuilder(
+      column: $table.makingCharge, builder: (column) => column);
 
-  GeneratedColumn<String> get makingChargesType => $composableBuilder(
-      column: $table.makingChargesType, builder: (column) => column);
+  GeneratedColumn<String> get makingChargeType => $composableBuilder(
+      column: $table.makingChargeType, builder: (column) => column);
 
   GeneratedColumn<double> get purchaseRate => $composableBuilder(
       column: $table.purchaseRate, builder: (column) => column);
@@ -22378,14 +24616,17 @@ class $$StockItemsTableAnnotationComposer
   GeneratedColumn<int> get quantity =>
       $composableBuilder(column: $table.quantity, builder: (column) => column);
 
-  GeneratedColumn<String> get rackLocation => $composableBuilder(
-      column: $table.rackLocation, builder: (column) => column);
+  GeneratedColumn<String> get location =>
+      $composableBuilder(column: $table.location, builder: (column) => column);
 
   GeneratedColumn<String> get supplierName => $composableBuilder(
       column: $table.supplierName, builder: (column) => column);
 
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
 
   GeneratedColumn<String> get imagePath =>
       $composableBuilder(column: $table.imagePath, builder: (column) => column);
@@ -22447,12 +24688,13 @@ class $$StockItemsTableTableManager extends RootTableManager<
             Value<double> grossWeight = const Value.absent(),
             Value<double> stoneWeight = const Value.absent(),
             Value<double> netWeight = const Value.absent(),
+            Value<double> wastage = const Value.absent(),
             Value<String> stoneType = const Value.absent(),
             Value<double> stoneCarats = const Value.absent(),
             Value<int> stonePieces = const Value.absent(),
             Value<double> stoneValue = const Value.absent(),
-            Value<double> makingCharges = const Value.absent(),
-            Value<String> makingChargesType = const Value.absent(),
+            Value<double> makingCharge = const Value.absent(),
+            Value<String> makingChargeType = const Value.absent(),
             Value<double> purchaseRate = const Value.absent(),
             Value<double> purchasePrice = const Value.absent(),
             Value<double> mrp = const Value.absent(),
@@ -22460,10 +24702,11 @@ class $$StockItemsTableTableManager extends RootTableManager<
             Value<String?> huid = const Value.absent(),
             Value<double> gstRate = const Value.absent(),
             Value<int> quantity = const Value.absent(),
-            Value<String?> rackLocation = const Value.absent(),
+            Value<String?> location = const Value.absent(),
             Value<int?> supplierId = const Value.absent(),
             Value<String?> supplierName = const Value.absent(),
             Value<String> status = const Value.absent(),
+            Value<bool> isActive = const Value.absent(),
             Value<String?> imagePath = const Value.absent(),
           }) =>
               StockItemsCompanion(
@@ -22480,12 +24723,13 @@ class $$StockItemsTableTableManager extends RootTableManager<
             grossWeight: grossWeight,
             stoneWeight: stoneWeight,
             netWeight: netWeight,
+            wastage: wastage,
             stoneType: stoneType,
             stoneCarats: stoneCarats,
             stonePieces: stonePieces,
             stoneValue: stoneValue,
-            makingCharges: makingCharges,
-            makingChargesType: makingChargesType,
+            makingCharge: makingCharge,
+            makingChargeType: makingChargeType,
             purchaseRate: purchaseRate,
             purchasePrice: purchasePrice,
             mrp: mrp,
@@ -22493,10 +24737,11 @@ class $$StockItemsTableTableManager extends RootTableManager<
             huid: huid,
             gstRate: gstRate,
             quantity: quantity,
-            rackLocation: rackLocation,
+            location: location,
             supplierId: supplierId,
             supplierName: supplierName,
             status: status,
+            isActive: isActive,
             imagePath: imagePath,
           ),
           createCompanionCallback: ({
@@ -22513,12 +24758,13 @@ class $$StockItemsTableTableManager extends RootTableManager<
             Value<double> grossWeight = const Value.absent(),
             Value<double> stoneWeight = const Value.absent(),
             Value<double> netWeight = const Value.absent(),
+            Value<double> wastage = const Value.absent(),
             Value<String> stoneType = const Value.absent(),
             Value<double> stoneCarats = const Value.absent(),
             Value<int> stonePieces = const Value.absent(),
             Value<double> stoneValue = const Value.absent(),
-            Value<double> makingCharges = const Value.absent(),
-            Value<String> makingChargesType = const Value.absent(),
+            Value<double> makingCharge = const Value.absent(),
+            Value<String> makingChargeType = const Value.absent(),
             Value<double> purchaseRate = const Value.absent(),
             Value<double> purchasePrice = const Value.absent(),
             Value<double> mrp = const Value.absent(),
@@ -22526,10 +24772,11 @@ class $$StockItemsTableTableManager extends RootTableManager<
             Value<String?> huid = const Value.absent(),
             Value<double> gstRate = const Value.absent(),
             Value<int> quantity = const Value.absent(),
-            Value<String?> rackLocation = const Value.absent(),
+            Value<String?> location = const Value.absent(),
             Value<int?> supplierId = const Value.absent(),
             Value<String?> supplierName = const Value.absent(),
             Value<String> status = const Value.absent(),
+            Value<bool> isActive = const Value.absent(),
             Value<String?> imagePath = const Value.absent(),
           }) =>
               StockItemsCompanion.insert(
@@ -22546,12 +24793,13 @@ class $$StockItemsTableTableManager extends RootTableManager<
             grossWeight: grossWeight,
             stoneWeight: stoneWeight,
             netWeight: netWeight,
+            wastage: wastage,
             stoneType: stoneType,
             stoneCarats: stoneCarats,
             stonePieces: stonePieces,
             stoneValue: stoneValue,
-            makingCharges: makingCharges,
-            makingChargesType: makingChargesType,
+            makingCharge: makingCharge,
+            makingChargeType: makingChargeType,
             purchaseRate: purchaseRate,
             purchasePrice: purchasePrice,
             mrp: mrp,
@@ -22559,10 +24807,11 @@ class $$StockItemsTableTableManager extends RootTableManager<
             huid: huid,
             gstRate: gstRate,
             quantity: quantity,
-            rackLocation: rackLocation,
+            location: location,
             supplierId: supplierId,
             supplierName: supplierName,
             status: status,
+            isActive: isActive,
             imagePath: imagePath,
           ),
           withReferenceMapper: (p0) => p0
@@ -27071,6 +29320,1191 @@ typedef $$GirviPaymentsTableProcessedTableManager = ProcessedTableManager<
     (GirviPayment, $$GirviPaymentsTableReferences),
     GirviPayment,
     PrefetchHooks Function({bool girviId})>;
+typedef $$DeliveryOrdersTableCreateCompanionBuilder = DeliveryOrdersCompanion
+    Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required String deliveryNo,
+  required int customerId,
+  Value<int?> sourceOrderId,
+  required String customerName,
+  required String customerMobile,
+  required String itemName,
+  Value<String> metalType,
+  Value<String> purity,
+  Value<double> approxWeight,
+  Value<double> lockedRate,
+  Value<String> status,
+  Value<int?> karigarId,
+  Value<String?> karigarName,
+  Value<double> advancePaid,
+  Value<double> totalAmount,
+  Value<double> dueAmount,
+  Value<String> paymentStatus,
+  Value<DateTime?> expectedDeliveryDate,
+  Value<DateTime?> actualDeliveryDate,
+  Value<String?> imagePath,
+  Value<String?> notes,
+  Value<int?> linkedBillId,
+  Value<String?> linkedBillNo,
+});
+typedef $$DeliveryOrdersTableUpdateCompanionBuilder = DeliveryOrdersCompanion
+    Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<String> deliveryNo,
+  Value<int> customerId,
+  Value<int?> sourceOrderId,
+  Value<String> customerName,
+  Value<String> customerMobile,
+  Value<String> itemName,
+  Value<String> metalType,
+  Value<String> purity,
+  Value<double> approxWeight,
+  Value<double> lockedRate,
+  Value<String> status,
+  Value<int?> karigarId,
+  Value<String?> karigarName,
+  Value<double> advancePaid,
+  Value<double> totalAmount,
+  Value<double> dueAmount,
+  Value<String> paymentStatus,
+  Value<DateTime?> expectedDeliveryDate,
+  Value<DateTime?> actualDeliveryDate,
+  Value<String?> imagePath,
+  Value<String?> notes,
+  Value<int?> linkedBillId,
+  Value<String?> linkedBillNo,
+});
+
+final class $$DeliveryOrdersTableReferences
+    extends BaseReferences<_$AppDatabase, $DeliveryOrdersTable, DeliveryOrder> {
+  $$DeliveryOrdersTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $CustomersTable _customerIdTable(_$AppDatabase db) =>
+      db.customers.createAlias(
+          $_aliasNameGenerator(db.deliveryOrders.customerId, db.customers.id));
+
+  $$CustomersTableProcessedTableManager? get customerId {
+    if ($_item.customerId == null) return null;
+    final manager = $$CustomersTableTableManager($_db, $_db.customers)
+        .filter((f) => f.id($_item.customerId!));
+    final item = $_typedResult.readTableOrNull(_customerIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static $SalesOrdersTable _sourceOrderIdTable(_$AppDatabase db) =>
+      db.salesOrders.createAlias($_aliasNameGenerator(
+          db.deliveryOrders.sourceOrderId, db.salesOrders.id));
+
+  $$SalesOrdersTableProcessedTableManager? get sourceOrderId {
+    if ($_item.sourceOrderId == null) return null;
+    final manager = $$SalesOrdersTableTableManager($_db, $_db.salesOrders)
+        .filter((f) => f.id($_item.sourceOrderId!));
+    final item = $_typedResult.readTableOrNull(_sourceOrderIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static MultiTypedResultKey<$DeliveryItemsTable, List<DeliveryItem>>
+      _deliveryItemsRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.deliveryItems,
+              aliasName: $_aliasNameGenerator(
+                  db.deliveryOrders.id, db.deliveryItems.deliveryOrderId));
+
+  $$DeliveryItemsTableProcessedTableManager get deliveryItemsRefs {
+    final manager = $$DeliveryItemsTableTableManager($_db, $_db.deliveryItems)
+        .filter((f) => f.deliveryOrderId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_deliveryItemsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$DeliveryOrdersTableFilterComposer
+    extends Composer<_$AppDatabase, $DeliveryOrdersTable> {
+  $$DeliveryOrdersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get deliveryNo => $composableBuilder(
+      column: $table.deliveryNo, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get customerName => $composableBuilder(
+      column: $table.customerName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get customerMobile => $composableBuilder(
+      column: $table.customerMobile,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get itemName => $composableBuilder(
+      column: $table.itemName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get metalType => $composableBuilder(
+      column: $table.metalType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get purity => $composableBuilder(
+      column: $table.purity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get approxWeight => $composableBuilder(
+      column: $table.approxWeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get lockedRate => $composableBuilder(
+      column: $table.lockedRate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get karigarId => $composableBuilder(
+      column: $table.karigarId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get karigarName => $composableBuilder(
+      column: $table.karigarName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get advancePaid => $composableBuilder(
+      column: $table.advancePaid, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get totalAmount => $composableBuilder(
+      column: $table.totalAmount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get dueAmount => $composableBuilder(
+      column: $table.dueAmount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get paymentStatus => $composableBuilder(
+      column: $table.paymentStatus, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get expectedDeliveryDate => $composableBuilder(
+      column: $table.expectedDeliveryDate,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get actualDeliveryDate => $composableBuilder(
+      column: $table.actualDeliveryDate,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get imagePath => $composableBuilder(
+      column: $table.imagePath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get notes => $composableBuilder(
+      column: $table.notes, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get linkedBillId => $composableBuilder(
+      column: $table.linkedBillId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get linkedBillNo => $composableBuilder(
+      column: $table.linkedBillNo, builder: (column) => ColumnFilters(column));
+
+  $$CustomersTableFilterComposer get customerId {
+    final $$CustomersTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.customerId,
+        referencedTable: $db.customers,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$CustomersTableFilterComposer(
+              $db: $db,
+              $table: $db.customers,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$SalesOrdersTableFilterComposer get sourceOrderId {
+    final $$SalesOrdersTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.sourceOrderId,
+        referencedTable: $db.salesOrders,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SalesOrdersTableFilterComposer(
+              $db: $db,
+              $table: $db.salesOrders,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  Expression<bool> deliveryItemsRefs(
+      Expression<bool> Function($$DeliveryItemsTableFilterComposer f) f) {
+    final $$DeliveryItemsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.deliveryItems,
+        getReferencedColumn: (t) => t.deliveryOrderId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$DeliveryItemsTableFilterComposer(
+              $db: $db,
+              $table: $db.deliveryItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$DeliveryOrdersTableOrderingComposer
+    extends Composer<_$AppDatabase, $DeliveryOrdersTable> {
+  $$DeliveryOrdersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get deliveryNo => $composableBuilder(
+      column: $table.deliveryNo, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get customerName => $composableBuilder(
+      column: $table.customerName,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get customerMobile => $composableBuilder(
+      column: $table.customerMobile,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get itemName => $composableBuilder(
+      column: $table.itemName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get metalType => $composableBuilder(
+      column: $table.metalType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get purity => $composableBuilder(
+      column: $table.purity, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get approxWeight => $composableBuilder(
+      column: $table.approxWeight,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get lockedRate => $composableBuilder(
+      column: $table.lockedRate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get karigarId => $composableBuilder(
+      column: $table.karigarId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get karigarName => $composableBuilder(
+      column: $table.karigarName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get advancePaid => $composableBuilder(
+      column: $table.advancePaid, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get totalAmount => $composableBuilder(
+      column: $table.totalAmount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get dueAmount => $composableBuilder(
+      column: $table.dueAmount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get paymentStatus => $composableBuilder(
+      column: $table.paymentStatus,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get expectedDeliveryDate => $composableBuilder(
+      column: $table.expectedDeliveryDate,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get actualDeliveryDate => $composableBuilder(
+      column: $table.actualDeliveryDate,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get imagePath => $composableBuilder(
+      column: $table.imagePath, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+      column: $table.notes, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get linkedBillId => $composableBuilder(
+      column: $table.linkedBillId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get linkedBillNo => $composableBuilder(
+      column: $table.linkedBillNo,
+      builder: (column) => ColumnOrderings(column));
+
+  $$CustomersTableOrderingComposer get customerId {
+    final $$CustomersTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.customerId,
+        referencedTable: $db.customers,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$CustomersTableOrderingComposer(
+              $db: $db,
+              $table: $db.customers,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$SalesOrdersTableOrderingComposer get sourceOrderId {
+    final $$SalesOrdersTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.sourceOrderId,
+        referencedTable: $db.salesOrders,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SalesOrdersTableOrderingComposer(
+              $db: $db,
+              $table: $db.salesOrders,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$DeliveryOrdersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DeliveryOrdersTable> {
+  $$DeliveryOrdersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get deliveryNo => $composableBuilder(
+      column: $table.deliveryNo, builder: (column) => column);
+
+  GeneratedColumn<String> get customerName => $composableBuilder(
+      column: $table.customerName, builder: (column) => column);
+
+  GeneratedColumn<String> get customerMobile => $composableBuilder(
+      column: $table.customerMobile, builder: (column) => column);
+
+  GeneratedColumn<String> get itemName =>
+      $composableBuilder(column: $table.itemName, builder: (column) => column);
+
+  GeneratedColumn<String> get metalType =>
+      $composableBuilder(column: $table.metalType, builder: (column) => column);
+
+  GeneratedColumn<String> get purity =>
+      $composableBuilder(column: $table.purity, builder: (column) => column);
+
+  GeneratedColumn<double> get approxWeight => $composableBuilder(
+      column: $table.approxWeight, builder: (column) => column);
+
+  GeneratedColumn<double> get lockedRate => $composableBuilder(
+      column: $table.lockedRate, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<int> get karigarId =>
+      $composableBuilder(column: $table.karigarId, builder: (column) => column);
+
+  GeneratedColumn<String> get karigarName => $composableBuilder(
+      column: $table.karigarName, builder: (column) => column);
+
+  GeneratedColumn<double> get advancePaid => $composableBuilder(
+      column: $table.advancePaid, builder: (column) => column);
+
+  GeneratedColumn<double> get totalAmount => $composableBuilder(
+      column: $table.totalAmount, builder: (column) => column);
+
+  GeneratedColumn<double> get dueAmount =>
+      $composableBuilder(column: $table.dueAmount, builder: (column) => column);
+
+  GeneratedColumn<String> get paymentStatus => $composableBuilder(
+      column: $table.paymentStatus, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get expectedDeliveryDate => $composableBuilder(
+      column: $table.expectedDeliveryDate, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get actualDeliveryDate => $composableBuilder(
+      column: $table.actualDeliveryDate, builder: (column) => column);
+
+  GeneratedColumn<String> get imagePath =>
+      $composableBuilder(column: $table.imagePath, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<int> get linkedBillId => $composableBuilder(
+      column: $table.linkedBillId, builder: (column) => column);
+
+  GeneratedColumn<String> get linkedBillNo => $composableBuilder(
+      column: $table.linkedBillNo, builder: (column) => column);
+
+  $$CustomersTableAnnotationComposer get customerId {
+    final $$CustomersTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.customerId,
+        referencedTable: $db.customers,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$CustomersTableAnnotationComposer(
+              $db: $db,
+              $table: $db.customers,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$SalesOrdersTableAnnotationComposer get sourceOrderId {
+    final $$SalesOrdersTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.sourceOrderId,
+        referencedTable: $db.salesOrders,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SalesOrdersTableAnnotationComposer(
+              $db: $db,
+              $table: $db.salesOrders,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  Expression<T> deliveryItemsRefs<T extends Object>(
+      Expression<T> Function($$DeliveryItemsTableAnnotationComposer a) f) {
+    final $$DeliveryItemsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.deliveryItems,
+        getReferencedColumn: (t) => t.deliveryOrderId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$DeliveryItemsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.deliveryItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$DeliveryOrdersTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $DeliveryOrdersTable,
+    DeliveryOrder,
+    $$DeliveryOrdersTableFilterComposer,
+    $$DeliveryOrdersTableOrderingComposer,
+    $$DeliveryOrdersTableAnnotationComposer,
+    $$DeliveryOrdersTableCreateCompanionBuilder,
+    $$DeliveryOrdersTableUpdateCompanionBuilder,
+    (DeliveryOrder, $$DeliveryOrdersTableReferences),
+    DeliveryOrder,
+    PrefetchHooks Function(
+        {bool customerId, bool sourceOrderId, bool deliveryItemsRefs})> {
+  $$DeliveryOrdersTableTableManager(
+      _$AppDatabase db, $DeliveryOrdersTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DeliveryOrdersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DeliveryOrdersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DeliveryOrdersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<String> deliveryNo = const Value.absent(),
+            Value<int> customerId = const Value.absent(),
+            Value<int?> sourceOrderId = const Value.absent(),
+            Value<String> customerName = const Value.absent(),
+            Value<String> customerMobile = const Value.absent(),
+            Value<String> itemName = const Value.absent(),
+            Value<String> metalType = const Value.absent(),
+            Value<String> purity = const Value.absent(),
+            Value<double> approxWeight = const Value.absent(),
+            Value<double> lockedRate = const Value.absent(),
+            Value<String> status = const Value.absent(),
+            Value<int?> karigarId = const Value.absent(),
+            Value<String?> karigarName = const Value.absent(),
+            Value<double> advancePaid = const Value.absent(),
+            Value<double> totalAmount = const Value.absent(),
+            Value<double> dueAmount = const Value.absent(),
+            Value<String> paymentStatus = const Value.absent(),
+            Value<DateTime?> expectedDeliveryDate = const Value.absent(),
+            Value<DateTime?> actualDeliveryDate = const Value.absent(),
+            Value<String?> imagePath = const Value.absent(),
+            Value<String?> notes = const Value.absent(),
+            Value<int?> linkedBillId = const Value.absent(),
+            Value<String?> linkedBillNo = const Value.absent(),
+          }) =>
+              DeliveryOrdersCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            deliveryNo: deliveryNo,
+            customerId: customerId,
+            sourceOrderId: sourceOrderId,
+            customerName: customerName,
+            customerMobile: customerMobile,
+            itemName: itemName,
+            metalType: metalType,
+            purity: purity,
+            approxWeight: approxWeight,
+            lockedRate: lockedRate,
+            status: status,
+            karigarId: karigarId,
+            karigarName: karigarName,
+            advancePaid: advancePaid,
+            totalAmount: totalAmount,
+            dueAmount: dueAmount,
+            paymentStatus: paymentStatus,
+            expectedDeliveryDate: expectedDeliveryDate,
+            actualDeliveryDate: actualDeliveryDate,
+            imagePath: imagePath,
+            notes: notes,
+            linkedBillId: linkedBillId,
+            linkedBillNo: linkedBillNo,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required String deliveryNo,
+            required int customerId,
+            Value<int?> sourceOrderId = const Value.absent(),
+            required String customerName,
+            required String customerMobile,
+            required String itemName,
+            Value<String> metalType = const Value.absent(),
+            Value<String> purity = const Value.absent(),
+            Value<double> approxWeight = const Value.absent(),
+            Value<double> lockedRate = const Value.absent(),
+            Value<String> status = const Value.absent(),
+            Value<int?> karigarId = const Value.absent(),
+            Value<String?> karigarName = const Value.absent(),
+            Value<double> advancePaid = const Value.absent(),
+            Value<double> totalAmount = const Value.absent(),
+            Value<double> dueAmount = const Value.absent(),
+            Value<String> paymentStatus = const Value.absent(),
+            Value<DateTime?> expectedDeliveryDate = const Value.absent(),
+            Value<DateTime?> actualDeliveryDate = const Value.absent(),
+            Value<String?> imagePath = const Value.absent(),
+            Value<String?> notes = const Value.absent(),
+            Value<int?> linkedBillId = const Value.absent(),
+            Value<String?> linkedBillNo = const Value.absent(),
+          }) =>
+              DeliveryOrdersCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            deliveryNo: deliveryNo,
+            customerId: customerId,
+            sourceOrderId: sourceOrderId,
+            customerName: customerName,
+            customerMobile: customerMobile,
+            itemName: itemName,
+            metalType: metalType,
+            purity: purity,
+            approxWeight: approxWeight,
+            lockedRate: lockedRate,
+            status: status,
+            karigarId: karigarId,
+            karigarName: karigarName,
+            advancePaid: advancePaid,
+            totalAmount: totalAmount,
+            dueAmount: dueAmount,
+            paymentStatus: paymentStatus,
+            expectedDeliveryDate: expectedDeliveryDate,
+            actualDeliveryDate: actualDeliveryDate,
+            imagePath: imagePath,
+            notes: notes,
+            linkedBillId: linkedBillId,
+            linkedBillNo: linkedBillNo,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$DeliveryOrdersTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: (
+              {customerId = false,
+              sourceOrderId = false,
+              deliveryItemsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (deliveryItemsRefs) db.deliveryItems
+              ],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (customerId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.customerId,
+                    referencedTable:
+                        $$DeliveryOrdersTableReferences._customerIdTable(db),
+                    referencedColumn:
+                        $$DeliveryOrdersTableReferences._customerIdTable(db).id,
+                  ) as T;
+                }
+                if (sourceOrderId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.sourceOrderId,
+                    referencedTable:
+                        $$DeliveryOrdersTableReferences._sourceOrderIdTable(db),
+                    referencedColumn: $$DeliveryOrdersTableReferences
+                        ._sourceOrderIdTable(db)
+                        .id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (deliveryItemsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$DeliveryOrdersTableReferences
+                            ._deliveryItemsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$DeliveryOrdersTableReferences(db, table, p0)
+                                .deliveryItemsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.deliveryOrderId == item.id),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$DeliveryOrdersTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $DeliveryOrdersTable,
+    DeliveryOrder,
+    $$DeliveryOrdersTableFilterComposer,
+    $$DeliveryOrdersTableOrderingComposer,
+    $$DeliveryOrdersTableAnnotationComposer,
+    $$DeliveryOrdersTableCreateCompanionBuilder,
+    $$DeliveryOrdersTableUpdateCompanionBuilder,
+    (DeliveryOrder, $$DeliveryOrdersTableReferences),
+    DeliveryOrder,
+    PrefetchHooks Function(
+        {bool customerId, bool sourceOrderId, bool deliveryItemsRefs})>;
+typedef $$DeliveryItemsTableCreateCompanionBuilder = DeliveryItemsCompanion
+    Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required int deliveryOrderId,
+  required String itemName,
+  Value<String> metalType,
+  Value<String> purity,
+  Value<double> approxWeight,
+  Value<double> finalWeight,
+  Value<int> quantity,
+  Value<String?> imagePath,
+  Value<String?> notes,
+  Value<String> itemStatus,
+  Value<int?> karigarId,
+  Value<String?> karigarName,
+  Value<DateTime?> deliveredAt,
+});
+typedef $$DeliveryItemsTableUpdateCompanionBuilder = DeliveryItemsCompanion
+    Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<int> deliveryOrderId,
+  Value<String> itemName,
+  Value<String> metalType,
+  Value<String> purity,
+  Value<double> approxWeight,
+  Value<double> finalWeight,
+  Value<int> quantity,
+  Value<String?> imagePath,
+  Value<String?> notes,
+  Value<String> itemStatus,
+  Value<int?> karigarId,
+  Value<String?> karigarName,
+  Value<DateTime?> deliveredAt,
+});
+
+final class $$DeliveryItemsTableReferences
+    extends BaseReferences<_$AppDatabase, $DeliveryItemsTable, DeliveryItem> {
+  $$DeliveryItemsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $DeliveryOrdersTable _deliveryOrderIdTable(_$AppDatabase db) =>
+      db.deliveryOrders.createAlias($_aliasNameGenerator(
+          db.deliveryItems.deliveryOrderId, db.deliveryOrders.id));
+
+  $$DeliveryOrdersTableProcessedTableManager? get deliveryOrderId {
+    if ($_item.deliveryOrderId == null) return null;
+    final manager = $$DeliveryOrdersTableTableManager($_db, $_db.deliveryOrders)
+        .filter((f) => f.id($_item.deliveryOrderId!));
+    final item = $_typedResult.readTableOrNull(_deliveryOrderIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$DeliveryItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $DeliveryItemsTable> {
+  $$DeliveryItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get itemName => $composableBuilder(
+      column: $table.itemName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get metalType => $composableBuilder(
+      column: $table.metalType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get purity => $composableBuilder(
+      column: $table.purity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get approxWeight => $composableBuilder(
+      column: $table.approxWeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get finalWeight => $composableBuilder(
+      column: $table.finalWeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get imagePath => $composableBuilder(
+      column: $table.imagePath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get notes => $composableBuilder(
+      column: $table.notes, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get itemStatus => $composableBuilder(
+      column: $table.itemStatus, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get karigarId => $composableBuilder(
+      column: $table.karigarId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get karigarName => $composableBuilder(
+      column: $table.karigarName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get deliveredAt => $composableBuilder(
+      column: $table.deliveredAt, builder: (column) => ColumnFilters(column));
+
+  $$DeliveryOrdersTableFilterComposer get deliveryOrderId {
+    final $$DeliveryOrdersTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.deliveryOrderId,
+        referencedTable: $db.deliveryOrders,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$DeliveryOrdersTableFilterComposer(
+              $db: $db,
+              $table: $db.deliveryOrders,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$DeliveryItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $DeliveryItemsTable> {
+  $$DeliveryItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get itemName => $composableBuilder(
+      column: $table.itemName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get metalType => $composableBuilder(
+      column: $table.metalType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get purity => $composableBuilder(
+      column: $table.purity, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get approxWeight => $composableBuilder(
+      column: $table.approxWeight,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get finalWeight => $composableBuilder(
+      column: $table.finalWeight, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get imagePath => $composableBuilder(
+      column: $table.imagePath, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+      column: $table.notes, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get itemStatus => $composableBuilder(
+      column: $table.itemStatus, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get karigarId => $composableBuilder(
+      column: $table.karigarId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get karigarName => $composableBuilder(
+      column: $table.karigarName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get deliveredAt => $composableBuilder(
+      column: $table.deliveredAt, builder: (column) => ColumnOrderings(column));
+
+  $$DeliveryOrdersTableOrderingComposer get deliveryOrderId {
+    final $$DeliveryOrdersTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.deliveryOrderId,
+        referencedTable: $db.deliveryOrders,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$DeliveryOrdersTableOrderingComposer(
+              $db: $db,
+              $table: $db.deliveryOrders,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$DeliveryItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DeliveryItemsTable> {
+  $$DeliveryItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get itemName =>
+      $composableBuilder(column: $table.itemName, builder: (column) => column);
+
+  GeneratedColumn<String> get metalType =>
+      $composableBuilder(column: $table.metalType, builder: (column) => column);
+
+  GeneratedColumn<String> get purity =>
+      $composableBuilder(column: $table.purity, builder: (column) => column);
+
+  GeneratedColumn<double> get approxWeight => $composableBuilder(
+      column: $table.approxWeight, builder: (column) => column);
+
+  GeneratedColumn<double> get finalWeight => $composableBuilder(
+      column: $table.finalWeight, builder: (column) => column);
+
+  GeneratedColumn<int> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+
+  GeneratedColumn<String> get imagePath =>
+      $composableBuilder(column: $table.imagePath, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get itemStatus => $composableBuilder(
+      column: $table.itemStatus, builder: (column) => column);
+
+  GeneratedColumn<int> get karigarId =>
+      $composableBuilder(column: $table.karigarId, builder: (column) => column);
+
+  GeneratedColumn<String> get karigarName => $composableBuilder(
+      column: $table.karigarName, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deliveredAt => $composableBuilder(
+      column: $table.deliveredAt, builder: (column) => column);
+
+  $$DeliveryOrdersTableAnnotationComposer get deliveryOrderId {
+    final $$DeliveryOrdersTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.deliveryOrderId,
+        referencedTable: $db.deliveryOrders,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$DeliveryOrdersTableAnnotationComposer(
+              $db: $db,
+              $table: $db.deliveryOrders,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$DeliveryItemsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $DeliveryItemsTable,
+    DeliveryItem,
+    $$DeliveryItemsTableFilterComposer,
+    $$DeliveryItemsTableOrderingComposer,
+    $$DeliveryItemsTableAnnotationComposer,
+    $$DeliveryItemsTableCreateCompanionBuilder,
+    $$DeliveryItemsTableUpdateCompanionBuilder,
+    (DeliveryItem, $$DeliveryItemsTableReferences),
+    DeliveryItem,
+    PrefetchHooks Function({bool deliveryOrderId})> {
+  $$DeliveryItemsTableTableManager(_$AppDatabase db, $DeliveryItemsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DeliveryItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DeliveryItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DeliveryItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<int> deliveryOrderId = const Value.absent(),
+            Value<String> itemName = const Value.absent(),
+            Value<String> metalType = const Value.absent(),
+            Value<String> purity = const Value.absent(),
+            Value<double> approxWeight = const Value.absent(),
+            Value<double> finalWeight = const Value.absent(),
+            Value<int> quantity = const Value.absent(),
+            Value<String?> imagePath = const Value.absent(),
+            Value<String?> notes = const Value.absent(),
+            Value<String> itemStatus = const Value.absent(),
+            Value<int?> karigarId = const Value.absent(),
+            Value<String?> karigarName = const Value.absent(),
+            Value<DateTime?> deliveredAt = const Value.absent(),
+          }) =>
+              DeliveryItemsCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            deliveryOrderId: deliveryOrderId,
+            itemName: itemName,
+            metalType: metalType,
+            purity: purity,
+            approxWeight: approxWeight,
+            finalWeight: finalWeight,
+            quantity: quantity,
+            imagePath: imagePath,
+            notes: notes,
+            itemStatus: itemStatus,
+            karigarId: karigarId,
+            karigarName: karigarName,
+            deliveredAt: deliveredAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required int deliveryOrderId,
+            required String itemName,
+            Value<String> metalType = const Value.absent(),
+            Value<String> purity = const Value.absent(),
+            Value<double> approxWeight = const Value.absent(),
+            Value<double> finalWeight = const Value.absent(),
+            Value<int> quantity = const Value.absent(),
+            Value<String?> imagePath = const Value.absent(),
+            Value<String?> notes = const Value.absent(),
+            Value<String> itemStatus = const Value.absent(),
+            Value<int?> karigarId = const Value.absent(),
+            Value<String?> karigarName = const Value.absent(),
+            Value<DateTime?> deliveredAt = const Value.absent(),
+          }) =>
+              DeliveryItemsCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            deliveryOrderId: deliveryOrderId,
+            itemName: itemName,
+            metalType: metalType,
+            purity: purity,
+            approxWeight: approxWeight,
+            finalWeight: finalWeight,
+            quantity: quantity,
+            imagePath: imagePath,
+            notes: notes,
+            itemStatus: itemStatus,
+            karigarId: karigarId,
+            karigarName: karigarName,
+            deliveredAt: deliveredAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$DeliveryItemsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({deliveryOrderId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (deliveryOrderId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.deliveryOrderId,
+                    referencedTable: $$DeliveryItemsTableReferences
+                        ._deliveryOrderIdTable(db),
+                    referencedColumn: $$DeliveryItemsTableReferences
+                        ._deliveryOrderIdTable(db)
+                        .id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$DeliveryItemsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $DeliveryItemsTable,
+    DeliveryItem,
+    $$DeliveryItemsTableFilterComposer,
+    $$DeliveryItemsTableOrderingComposer,
+    $$DeliveryItemsTableAnnotationComposer,
+    $$DeliveryItemsTableCreateCompanionBuilder,
+    $$DeliveryItemsTableUpdateCompanionBuilder,
+    (DeliveryItem, $$DeliveryItemsTableReferences),
+    DeliveryItem,
+    PrefetchHooks Function({bool deliveryOrderId})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -27113,4 +30547,8 @@ class $AppDatabaseManager {
       $$GirviLoansTableTableManager(_db, _db.girviLoans);
   $$GirviPaymentsTableTableManager get girviPayments =>
       $$GirviPaymentsTableTableManager(_db, _db.girviPayments);
+  $$DeliveryOrdersTableTableManager get deliveryOrders =>
+      $$DeliveryOrdersTableTableManager(_db, _db.deliveryOrders);
+  $$DeliveryItemsTableTableManager get deliveryItems =>
+      $$DeliveryItemsTableTableManager(_db, _db.deliveryItems);
 }
