@@ -1,8 +1,9 @@
 // ==========================================
 // FILE: pos_customer_details_panel.dart
-// TYPE: Smart UI Component (UPGRADED)
-// AUTHOR: Senior System Architect
-// DESCRIPTION: Premium customer entry form connected to Master Theme.
+// TYPE: Smart UI Component (UPGRADED v2)
+// DESCRIPTION: Premium customer entry form.
+//              ✅ Customer name suggestions from DB
+//              ✅ "New Customer" redirects to add customer screen
 //              ✅ Zero hardcoded colors, icons, or styles.
 // ==========================================
 
@@ -10,6 +11,7 @@ import 'package:flutter/material.dart';
 
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../logic/sales & orders/sales pos/pos_billing_controller.dart';
+import '../../customer/add_customer/add_customer_screen.dart';
 
 class PosCustomerDetailsPanel extends StatefulWidget {
   final PosBillingController ctrl;
@@ -20,39 +22,107 @@ class PosCustomerDetailsPanel extends StatefulWidget {
   });
 
   @override
-  State<PosCustomerDetailsPanel> createState() => _PosCustomerDetailsPanelState();
+  State<PosCustomerDetailsPanel> createState() =>
+      _PosCustomerDetailsPanelState();
 }
 
 class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
     with SingleTickerProviderStateMixin {
-
   late final AnimationController _animCtrl;
-  late final Animation<double>    _fadeAnim;
-  late final Animation<Offset>    _slideAnim;
+  late final Animation<double> _fadeAnim;
+  late final Animation<Offset> _slideAnim;
+
+  final LayerLink _nameSuggestionLink = LayerLink();
+  OverlayEntry? _nameSuggestionOverlay;
 
   @override
   void initState() {
     super.initState();
     _animCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600), 
+      duration: const Duration(milliseconds: 600),
     );
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeInOut);
     _slideAnim = Tween<Offset>(
-      begin: const Offset(0, 0.15), 
-      end:   Offset.zero,
+      begin: const Offset(0, 0.15),
+      end: Offset.zero,
     ).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic));
 
     Future.delayed(const Duration(milliseconds: 50), () {
       if (mounted) _animCtrl.forward();
     });
+
+    widget.ctrl.nameCtrl.addListener(_onNameChanged);
+    widget.ctrl.mobileCtrl.addListener(_onMobileChanged);
+    widget.ctrl.addListener(_onControllerChanged);
   }
 
   @override
   void dispose() {
     _animCtrl.dispose();
+    _removeSuggestionOverlay();
+    widget.ctrl.nameCtrl.removeListener(_onNameChanged);
+    widget.ctrl.mobileCtrl.removeListener(_onMobileChanged);
+    widget.ctrl.removeListener(_onControllerChanged);
     super.dispose();
   }
+
+  void _onNameChanged() {
+    widget.ctrl.searchCustomersByName(widget.ctrl.nameCtrl.text);
+  }
+
+  void _onMobileChanged() {
+    final mobile = widget.ctrl.mobileCtrl.text.trim();
+    if (mobile.length >= 2) {
+      widget.ctrl.searchCustomersByName(mobile);
+    } else {
+      widget.ctrl.clearCustomerSuggestions();
+    }
+  }
+
+  void _onControllerChanged() {
+    if (!mounted) return;
+    final suggestions = widget.ctrl.customerSuggestions;
+    if (suggestions.isEmpty) {
+      _removeSuggestionOverlay();
+    } else {
+      _showSuggestionOverlay();
+    }
+  }
+
+  void _removeSuggestionOverlay() {
+    _nameSuggestionOverlay?.remove();
+    _nameSuggestionOverlay = null;
+  }
+
+  void _showSuggestionOverlay() {
+    if (!mounted) return;
+    _removeSuggestionOverlay();
+    final overlay = Overlay.of(context);
+    _nameSuggestionOverlay = OverlayEntry(
+      builder: (ctx) => Positioned(
+        width: 320,
+        child: CompositedTransformFollower(
+          link: _nameSuggestionLink,
+          showWhenUnlinked: false,
+          offset: const Offset(0, 52),
+          child: Material(
+            color: Colors.transparent,
+            child: _CustomerSuggestionDropdown(
+              ctrl: widget.ctrl,
+              onSelected: () => _removeSuggestionOverlay(),
+            ),
+          ),
+        ),
+      ),
+    );
+    overlay.insert(_nameSuggestionOverlay!);
+  }
+
+  bool get _noCustomerFound =>
+      widget.ctrl.nameCtrl.text.length >= 2 &&
+      widget.ctrl.customerSuggestions.isEmpty &&
+      widget.ctrl.selectedCustomer == null;
 
   @override
   Widget build(BuildContext context) {
@@ -61,13 +131,13 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
       child: SlideTransition(
         position: _slideAnim,
         child: Container(
-          padding: const EdgeInsets.all(20), 
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: SalesPosColors.customerCardBg, 
+            color: SalesPosColors.customerCardBg,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: SalesPosColors.brandGold.withOpacity(0.12), 
+                color: SalesPosColors.brandGold.withOpacity(0.12),
                 blurRadius: 20,
                 spreadRadius: 2,
                 offset: const Offset(0, 4),
@@ -80,13 +150,13 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
               ),
             ],
             border: Border.all(
-              color: SalesPosColors.brandGold.withOpacity(0.3), 
+              color: SalesPosColors.brandGold.withOpacity(0.3),
               width: 1.5,
             ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min, 
+            mainAxisSize: MainAxisSize.min,
             children: [
               // --- HEADER ---
               Row(
@@ -97,8 +167,8 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [
-                          SalesPosColors.goldGradientStart, 
-                          SalesPosColors.brandGold, 
+                          SalesPosColors.goldGradientStart,
+                          SalesPosColors.brandGold,
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -113,7 +183,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                       ],
                     ),
                     child: const Icon(
-                      SalesPosIcons.profile, 
+                      SalesPosIcons.profile,
                       color: Colors.white,
                       size: 20,
                     ),
@@ -138,38 +208,95 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
 
                   const Spacer(),
 
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: SalesPosColors.brandGold.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: SalesPosColors.brandGold.withOpacity(0.4),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: SalesPosColors.brandGold,
-                            shape: BoxShape.circle,
+                  // ── "NEW CUSTOMER" BANNER IF NOT FOUND ──
+                  ListenableBuilder(
+                    listenable: widget.ctrl,
+                    builder: (context, _) {
+                      if (!_noCustomerFound) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: SalesPosColors.brandGold.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: SalesPosColors.brandGold.withOpacity(0.4),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: SalesPosColors.brandGold,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Text(
+                                "POS Session",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: SalesPosColors.goldHoverDark,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AddCustomerScreen(
+                              onBack: () => Navigator.pop(context),
+                              onSaved: () => Navigator.pop(context),
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        const Text(
-                          "POS Session",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: SalesPosColors.goldHoverDark, 
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                SalesPosColors.goldGradientStart,
+                                SalesPosColors.brandGold,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    SalesPosColors.brandGold.withOpacity(0.4),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(SalesPosIcons.newCustomerAdd,
+                                  color: Colors.white, size: 16),
+                              SizedBox(width: 6),
+                              Text(
+                                "Create New Customer",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -179,7 +306,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
               // --- DIVIDER ---
               Container(
                 height: 1.5,
-                width: double.infinity, 
+                width: double.infinity,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -197,23 +324,28 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  // ── MOBILE FIELD WITH SUGGESTIONS ──
                   Expanded(
                     flex: 2,
-                    child: _buildInput(
-                      label: "MOBILE",
-                      hint: "10-digit",
-                      controller: widget.ctrl.mobileCtrl,
-                      isNumber: true,
-                      icon: SalesPosIcons.mobilePhone,
+                    child: CompositedTransformTarget(
+                      link: _nameSuggestionLink,
+                      child: _buildInput(
+                        label: "MOBILE",
+                        hint: "10-digit",
+                        controller: widget.ctrl.mobileCtrl,
+                        isNumber: true,
+                        icon: SalesPosIcons.mobilePhone,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
 
+                  // ── NAME FIELD ──
                   Expanded(
                     flex: 3,
                     child: _buildInput(
                       label: "CUSTOMER NAME",
-                      hint: "Enter full name", 
+                      hint: "Enter full name",
                       controller: widget.ctrl.nameCtrl,
                       icon: SalesPosIcons.customerName,
                     ),
@@ -223,8 +355,8 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                   Expanded(
                     flex: 2,
                     child: _buildInput(
-                      label: "CITY / AREA", 
-                      hint: "Enter city", 
+                      label: "CITY / AREA",
+                      hint: "Enter city",
                       controller: widget.ctrl.cityCtrl,
                       icon: SalesPosIcons.cityLocation,
                     ),
@@ -243,7 +375,6 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                   ),
                   const SizedBox(width: 12),
 
-                  // 🚀 GST FIELD
                   Expanded(
                     flex: 2,
                     child: _buildInput(
@@ -256,7 +387,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                   ),
                   const SizedBox(width: 16),
 
-                  // ANIMATED BUTTONS IN COLUMN
+                  // ANIMATED BUTTONS
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -264,14 +395,26 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                         title: "Search",
                         icon: SalesPosIcons.searchItem,
                         isPrimary: false,
-                        onTap: () => debugPrint("Search Clicked"),
+                        onTap: () => widget.ctrl.searchCustomersByName(
+                          widget.ctrl.mobileCtrl.text.isNotEmpty
+                              ? widget.ctrl.mobileCtrl.text
+                              : widget.ctrl.nameCtrl.text,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       _HoverAnimatedButton(
                         title: "New Customer",
                         icon: SalesPosIcons.newCustomerAdd,
                         isPrimary: true,
-                        onTap: () => debugPrint("New Customer Clicked"),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AddCustomerScreen(
+                              onBack: () => Navigator.pop(context),
+                              onSaved: () => Navigator.pop(context),
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -284,7 +427,6 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
     );
   }
 
-  // --- INPUT FIELD ---
   Widget _buildInput({
     required String label,
     required String hint,
@@ -299,7 +441,8 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
         Row(
           children: [
             Container(
-              width: 5, height: 5,
+              width: 5,
+              height: 5,
               decoration: const BoxDecoration(
                 color: SalesPosColors.brandGold,
                 shape: BoxShape.circle,
@@ -311,9 +454,9 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                 label,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  color: SalesPosColors.textDark, 
-                  fontSize: 13, 
-                  fontWeight: FontWeight.bold, 
+                  color: SalesPosColors.textDark,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -321,12 +464,13 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
         ),
         const SizedBox(height: 8),
         SizedBox(
-          height: 44, 
+          height: 44,
           child: TextField(
             controller: controller,
             keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-            textCapitalization:
-                isCaps ? TextCapitalization.characters : TextCapitalization.none,
+            textCapitalization: isCaps
+                ? TextCapitalization.characters
+                : TextCapitalization.none,
             style: SalesPosStyles.inputText,
             decoration: InputDecoration(
               hintText: hint,
@@ -339,8 +483,9 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                   ? Icon(icon, size: 18, color: SalesPosColors.bodyTextMuted)
                   : null,
               filled: true,
-              fillColor: SalesPosColors.formInputBg, 
-              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+              fillColor: SalesPosColors.formInputBg,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
               border: OutlineInputBorder(
                 borderSide: const BorderSide(color: SalesPosColors.bodyBorder),
                 borderRadius: BorderRadius.circular(8),
@@ -351,7 +496,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
               ),
               focusedBorder: OutlineInputBorder(
                 borderSide: const BorderSide(
-                  color: SalesPosColors.brandGold, 
+                  color: SalesPosColors.brandGold,
                   width: 2,
                 ),
                 borderRadius: BorderRadius.circular(8),
@@ -360,6 +505,117 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
           ),
         ),
       ],
+    );
+  }
+}
+
+// ==========================================
+// CUSTOMER SUGGESTION DROPDOWN
+// ==========================================
+class _CustomerSuggestionDropdown extends StatelessWidget {
+  final PosBillingController ctrl;
+  final VoidCallback onSelected;
+
+  const _CustomerSuggestionDropdown({
+    required this.ctrl,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: ctrl,
+      builder: (context, _) {
+        final suggestions = ctrl.customerSuggestions;
+        if (suggestions.isEmpty) return const SizedBox.shrink();
+        return Material(
+          elevation: 12,
+          borderRadius: BorderRadius.circular(12),
+          color: SalesPosColors.bodyPanelBg,
+          child: Container(
+            constraints: const BoxConstraints(maxHeight: 240),
+            decoration: BoxDecoration(
+              border:
+                  Border.all(color: SalesPosColors.brandGold.withOpacity(0.3)),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              shrinkWrap: true,
+              itemCount: suggestions.length,
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 1, indent: 12, endIndent: 12),
+              itemBuilder: (context, i) {
+                final c = suggestions[i];
+                return InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () {
+                    ctrl.selectCustomer(c);
+                    onSelected();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: SalesPosColors.brandGold.withOpacity(0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            c.initials,
+                            style: const TextStyle(
+                              color: SalesPosColors.brandGold,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                c.name,
+                                style: const TextStyle(
+                                  color: SalesPosColors.textDark,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              if (c.mobile.isNotEmpty)
+                                Text(
+                                  c.mobile,
+                                  style: TextStyle(
+                                    color: SalesPosColors.bodyTextMuted,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        if (c.city.isNotEmpty)
+                          Text(
+                            c.city,
+                            style: TextStyle(
+                              color: SalesPosColors.bodyTextMuted,
+                              fontSize: 12,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -402,33 +658,42 @@ class _HoverAnimatedButtonState extends State<_HoverAnimatedButton> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOut,
-            height: 42, 
+            height: 42,
             width: 140,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               gradient: widget.isPrimary
                   ? LinearGradient(
                       colors: [
-                        _isHovered ? SalesPosColors.goldGradientStart : SalesPosColors.brandGold,
-                        _isHovered ? SalesPosColors.brandGold : SalesPosColors.goldHoverDark,
+                        _isHovered
+                            ? SalesPosColors.goldGradientStart
+                            : SalesPosColors.brandGold,
+                        _isHovered
+                            ? SalesPosColors.brandGold
+                            : SalesPosColors.goldHoverDark,
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     )
                   : null,
-              color: widget.isPrimary 
-                  ? null 
-                  : (_isHovered ? SalesPosColors.bodyPanelBg : SalesPosColors.formInputBg),
+              color: widget.isPrimary
+                  ? null
+                  : (_isHovered
+                      ? SalesPosColors.bodyPanelBg
+                      : SalesPosColors.formInputBg),
               border: widget.isPrimary
                   ? null
                   : Border.all(
-                      color: _isHovered ? SalesPosColors.brandGold : SalesPosColors.bodyBorder, 
+                      color: _isHovered
+                          ? SalesPosColors.brandGold
+                          : SalesPosColors.bodyBorder,
                       width: _isHovered ? 1.5 : 1.0,
                     ),
               boxShadow: [
                 if (widget.isPrimary)
                   BoxShadow(
-                    color: SalesPosColors.brandGold.withOpacity(_isHovered ? 0.6 : 0.4),
+                    color: SalesPosColors.brandGold
+                        .withOpacity(_isHovered ? 0.6 : 0.4),
                     blurRadius: _isHovered ? 16 : 10,
                     offset: const Offset(0, 4),
                   )
@@ -444,11 +709,13 @@ class _HoverAnimatedButtonState extends State<_HoverAnimatedButton> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  widget.icon, 
-                  size: 16, 
+                  widget.icon,
+                  size: 16,
                   color: widget.isPrimary
                       ? Colors.white
-                      : (_isHovered ? SalesPosColors.goldHoverDark : SalesPosColors.textDark), 
+                      : (_isHovered
+                          ? SalesPosColors.goldHoverDark
+                          : SalesPosColors.textDark),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -456,8 +723,10 @@ class _HoverAnimatedButtonState extends State<_HoverAnimatedButton> {
                   style: TextStyle(
                     color: widget.isPrimary
                         ? Colors.white
-                        : (_isHovered ? SalesPosColors.goldHoverDark : SalesPosColors.textDark), 
-                    fontSize: 14, 
+                        : (_isHovered
+                            ? SalesPosColors.goldHoverDark
+                            : SalesPosColors.textDark),
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

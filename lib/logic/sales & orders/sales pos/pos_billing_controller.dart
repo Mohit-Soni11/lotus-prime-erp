@@ -7,17 +7,125 @@
 //              ✅ DELETE HELD BILL FUNCTION ADDED.
 // ==========================================
 
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 
 import '../../../models/sales & orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales & orders/sales_pos_models/sales_pos_models.dart';
-import '../../../models/sales & orders/sales_pos_models/pos_hold_bill_model.dart'; 
+import '../../../models/sales & orders/sales_pos_models/pos_hold_bill_model.dart';
+import '../../../database/db/app_database.dart';
+import '../../../models/customer/customer_list/customer_list_ui_model.dart';
+import '../../../models/customer/customer_enums/customer_list_enums.dart';
 
 class PosBillingController extends ChangeNotifier {
   // --- GLOBAL CONFIG ---
   final String shopName = "Lotus Jewellers";
   final String currentFinancialYear = "2526";
   int nextSequence = 1;
+
+  // --- DATABASE ---
+  final AppDatabase _db = AppDatabase();
+
+  // ==========================================
+  // CUSTOMER SEARCH FEATURE
+  // ==========================================
+  List<CustomerListItemModel> customerSuggestions = [];
+  bool isSearchingCustomer = false;
+  CustomerListItemModel? selectedCustomer;
+
+  Future<void> searchCustomersByName(String query) async {
+    final term = query.toLowerCase().trim();
+    if (term.length < 2) {
+      customerSuggestions = [];
+      notifyListeners();
+      return;
+    }
+    try {
+      final rows = await (_db.select(_db.customers)
+            ..where(
+                (tbl) => tbl.name.contains(term) | tbl.mobile.contains(term))
+            ..orderBy([(t) => drift.OrderingTerm(expression: t.name)])
+            ..limit(8))
+          .get();
+
+      customerSuggestions = rows.map((row) {
+        final name = row.name;
+        return CustomerListItemModel(
+          id: row.id,
+          name: name,
+          mobile: row.mobile,
+          city: row.city ?? '',
+          type: CustomerType.fromString(row.type),
+          billCount: 0,
+          createdAt: row.createdAt,
+          initials: CustomerListItemModel.buildInitials(name),
+        );
+      }).toList();
+    } catch (e) {
+      customerSuggestions = [];
+    }
+    notifyListeners();
+  }
+
+  void selectCustomer(CustomerListItemModel customer) {
+    selectedCustomer = customer;
+    nameCtrl.text = customer.name;
+    mobileCtrl.text = customer.mobile;
+    cityCtrl.text = customer.city;
+    customerSuggestions = [];
+    notifyListeners();
+  }
+
+  void clearCustomerSuggestions() {
+    customerSuggestions = [];
+    notifyListeners();
+  }
+
+  // ==========================================
+  // ITEM DESCRIPTION SUGGESTIONS FEATURE
+  // Per-row: sirf active row mein suggestions dikhti hain
+  // ==========================================
+  List<String> descriptionSuggestions = [];
+  int _descSuggestionRowIndex = -1; // kis row ke liye suggestions hain
+
+  Future<void> searchDescriptions(String query, int rowIndex) async {
+    final term = query.toLowerCase().trim();
+    if (term.length < 2) {
+      descriptionSuggestions = [];
+      _descSuggestionRowIndex = -1;
+      notifyListeners();
+      return;
+    }
+    try {
+      final rows = await (_db.select(_db.stockItems)
+            ..where((tbl) =>
+                tbl.itemName.contains(term) | tbl.description.contains(term))
+            ..orderBy([(t) => drift.OrderingTerm(expression: t.itemName)])
+            ..limit(8))
+          .get();
+
+      final seen = <String>{};
+      descriptionSuggestions =
+          rows.map((r) => r.itemName).where((name) => seen.add(name)).toList();
+      _descSuggestionRowIndex = rowIndex;
+    } catch (e) {
+      descriptionSuggestions = [];
+      _descSuggestionRowIndex = -1;
+    }
+    notifyListeners();
+  }
+
+  // Sirf us row ke liye suggestions return karo
+  List<String> getDescSuggestionsForRow(int rowIndex) {
+    if (_descSuggestionRowIndex == rowIndex) return descriptionSuggestions;
+    return [];
+  }
+
+  void clearDescriptionSuggestions() {
+    descriptionSuggestions = [];
+    _descSuggestionRowIndex = -1;
+    notifyListeners();
+  }
 
   // --- CORE STATES ---
   BillingMode billingMode = BillingMode.retail;
@@ -31,7 +139,7 @@ class PosBillingController extends ChangeNotifier {
 
   // --- UI CONTROLLERS ---
   final ScrollController tableScrollCtrl = ScrollController();
-  int activeRowIndex = -1; 
+  int activeRowIndex = -1;
 
   // --- CUSTOMER CONTROLLERS ---
   final TextEditingController mobileCtrl = TextEditingController();
@@ -66,16 +174,43 @@ class PosBillingController extends ChangeNotifier {
   double _diaBhawInput = 0.0;
 
   PosBillingController() {
-    discountCtrl.addListener(() { _discountInput = _parseSafeNumber(discountCtrl.text); notifyListeners(); });
-    cashCtrl.addListener(() { _cashInput = _parseSafeNumber(cashCtrl.text); notifyListeners(); });
-    upiCtrl.addListener(() { _upiInput = _parseSafeNumber(upiCtrl.text); notifyListeners(); });
-    cardCtrl.addListener(() { _cardInput = _parseSafeNumber(cardCtrl.text); notifyListeners(); });
-    advCtrl.addListener(() { _advInput = _parseSafeNumber(advCtrl.text); notifyListeners(); });
+    discountCtrl.addListener(() {
+      _discountInput = _parseSafeNumber(discountCtrl.text);
+      notifyListeners();
+    });
+    cashCtrl.addListener(() {
+      _cashInput = _parseSafeNumber(cashCtrl.text);
+      notifyListeners();
+    });
+    upiCtrl.addListener(() {
+      _upiInput = _parseSafeNumber(upiCtrl.text);
+      notifyListeners();
+    });
+    cardCtrl.addListener(() {
+      _cardInput = _parseSafeNumber(cardCtrl.text);
+      notifyListeners();
+    });
+    advCtrl.addListener(() {
+      _advInput = _parseSafeNumber(advCtrl.text);
+      notifyListeners();
+    });
 
-    goldBhawCtrl.addListener(() { _goldBhawInput = _parseSafeNumber(goldBhawCtrl.text); notifyListeners(); });
-    silverBhawCtrl.addListener(() { _silverBhawInput = _parseSafeNumber(silverBhawCtrl.text); notifyListeners(); });
-    platBhawCtrl.addListener(() { _platBhawInput = _parseSafeNumber(platBhawCtrl.text); notifyListeners(); });
-    diaBhawCtrl.addListener(() { _diaBhawInput = _parseSafeNumber(diaBhawCtrl.text); notifyListeners(); });
+    goldBhawCtrl.addListener(() {
+      _goldBhawInput = _parseSafeNumber(goldBhawCtrl.text);
+      notifyListeners();
+    });
+    silverBhawCtrl.addListener(() {
+      _silverBhawInput = _parseSafeNumber(silverBhawCtrl.text);
+      notifyListeners();
+    });
+    platBhawCtrl.addListener(() {
+      _platBhawInput = _parseSafeNumber(platBhawCtrl.text);
+      notifyListeners();
+    });
+    diaBhawCtrl.addListener(() {
+      _diaBhawInput = _parseSafeNumber(diaBhawCtrl.text);
+      notifyListeners();
+    });
   }
 
   double _parseSafeNumber(String text) {
@@ -84,53 +219,93 @@ class PosBillingController extends ChangeNotifier {
     return double.tryParse(cleanText) ?? 0.0;
   }
 
-  String get shopInitials => shopName.split(' ').map((e) => e[0]).join('').toUpperCase();
+  String get shopInitials =>
+      shopName.split(' ').map((e) => e[0]).join('').toUpperCase();
   String get invoicePrefix => billType == BillType.gst ? "TAX" : "EST";
-  String get formattedInvoice => "$invoicePrefix-$shopInitials-$currentFinancialYear-${nextSequence.toString().padLeft(4, '0')}";
+  String get formattedInvoice =>
+      "$invoicePrefix-$shopInitials-$currentFinancialYear-${nextSequence.toString().padLeft(4, '0')}";
 
   // ==========================================
   // 1. RETAIL ENGINE (B2C)
   // ==========================================
-  double get totalGoldWt => saleItems.where((i) => i.metal == MetalType.gold).fold(0, (sum, i) => sum + i.netWt);
-  double get totalSilverWt => saleItems.where((i) => i.metal == MetalType.silver).fold(0, (sum, i) => sum + i.netWt);
-  double get totalPlatinumWt => saleItems.where((i) => i.metal == MetalType.platinum).fold(0, (sum, i) => sum + i.netWt);
-  double get totalDiamondWt => saleItems.where((i) => i.metal == MetalType.diamond).fold(0, (sum, i) => sum + i.netWt);
+  double get totalGoldWt => saleItems
+      .where((i) => i.metal == MetalType.gold)
+      .fold(0, (sum, i) => sum + i.netWt);
+  double get totalSilverWt => saleItems
+      .where((i) => i.metal == MetalType.silver)
+      .fold(0, (sum, i) => sum + i.netWt);
+  double get totalPlatinumWt => saleItems
+      .where((i) => i.metal == MetalType.platinum)
+      .fold(0, (sum, i) => sum + i.netWt);
+  double get totalDiamondWt => saleItems
+      .where((i) => i.metal == MetalType.diamond)
+      .fold(0, (sum, i) => sum + i.netWt);
 
-  double get totalGoldAmount => saleItems.where((i) => i.metal == MetalType.gold).fold(0, (sum, i) => sum + i.totalValue);
-  double get totalSilverAmount => saleItems.where((i) => i.metal == MetalType.silver).fold(0, (sum, i) => sum + i.totalValue);
-  double get totalPlatinumAmount => saleItems.where((i) => i.metal == MetalType.platinum).fold(0, (sum, i) => sum + i.totalValue);
-  double get totalDiamondAmount => saleItems.where((i) => i.metal == MetalType.diamond).fold(0, (sum, i) => sum + i.totalValue);
+  double get totalGoldAmount => saleItems
+      .where((i) => i.metal == MetalType.gold)
+      .fold(0, (sum, i) => sum + i.totalValue);
+  double get totalSilverAmount => saleItems
+      .where((i) => i.metal == MetalType.silver)
+      .fold(0, (sum, i) => sum + i.totalValue);
+  double get totalPlatinumAmount => saleItems
+      .where((i) => i.metal == MetalType.platinum)
+      .fold(0, (sum, i) => sum + i.totalValue);
+  double get totalDiamondAmount => saleItems
+      .where((i) => i.metal == MetalType.diamond)
+      .fold(0, (sum, i) => sum + i.totalValue);
 
-  double get totalOldGoldAmount => oldGoldItems.fold(0, (sum, i) => sum + i.totalValue);
-  double get oldGoldCashDeduction => oldGoldMode == OldGoldAdjustMode.cashAdjust ? totalOldGoldAmount : 0.0;
+  double get totalOldGoldAmount =>
+      oldGoldItems.fold(0, (sum, i) => sum + i.totalValue);
+  double get oldGoldCashDeduction =>
+      oldGoldMode == OldGoldAdjustMode.cashAdjust ? totalOldGoldAmount : 0.0;
 
-  double get _retailGrossAmount => totalGoldAmount + totalSilverAmount + totalPlatinumAmount + totalDiamondAmount;
+  double get _retailGrossAmount =>
+      totalGoldAmount +
+      totalSilverAmount +
+      totalPlatinumAmount +
+      totalDiamondAmount;
 
 // 1. pos_billing_controller.dart
 // In "1. RETAIL ENGINE (B2C)" section, add these 4 new getters just below the total amounts:
 
-double get pureGoldAmount => totalGoldAmount - goldMakingCharge;
-double get pureSilverAmount => totalSilverAmount - silverMakingCharge;
-double get purePlatinumAmount => totalPlatinumAmount - platinumMakingCharge;
-double get pureDiamondAmount => totalDiamondAmount - diamondMakingCharge;
-  
+  double get pureGoldAmount => totalGoldAmount - goldMakingCharge;
+  double get pureSilverAmount => totalSilverAmount - silverMakingCharge;
+  double get purePlatinumAmount => totalPlatinumAmount - platinumMakingCharge;
+  double get pureDiamondAmount => totalDiamondAmount - diamondMakingCharge;
+
   // ==========================================
   // 2. WHOLESALE ENGINE (B2B)
   // ==========================================
   double get _goldBhawPerGram => _goldBhawInput / 10.0;
   double get _platBhawPerGram => _platBhawInput / 10.0;
   double get _silverBhawPerGram => _silverBhawInput / 1000.0;
-  double get _diaBhawPerCarat => _diaBhawInput; 
+  double get _diaBhawPerCarat => _diaBhawInput;
 
-  double get goldSoldFine => saleItems.where((i) => i.metal == MetalType.gold).fold(0, (sum, i) => sum + i.fineWt);
-  double get silverSoldFine => saleItems.where((i) => i.metal == MetalType.silver).fold(0, (sum, i) => sum + i.fineWt);
-  double get platSoldFine => saleItems.where((i) => i.metal == MetalType.platinum).fold(0, (sum, i) => sum + i.fineWt);
-  double get diaSoldFine => saleItems.where((i) => i.metal == MetalType.diamond).fold(0, (sum, i) => sum + i.fineWt);
+  double get goldSoldFine => saleItems
+      .where((i) => i.metal == MetalType.gold)
+      .fold(0, (sum, i) => sum + i.fineWt);
+  double get silverSoldFine => saleItems
+      .where((i) => i.metal == MetalType.silver)
+      .fold(0, (sum, i) => sum + i.fineWt);
+  double get platSoldFine => saleItems
+      .where((i) => i.metal == MetalType.platinum)
+      .fold(0, (sum, i) => sum + i.fineWt);
+  double get diaSoldFine => saleItems
+      .where((i) => i.metal == MetalType.diamond)
+      .fold(0, (sum, i) => sum + i.fineWt);
 
-  double get goldJamaFine => oldGoldItems.where((i) => i.metal == MetalType.gold).fold(0, (sum, i) => sum + i.fineWt);
-  double get silverJamaFine => oldGoldItems.where((i) => i.metal == MetalType.silver).fold(0, (sum, i) => sum + i.fineWt);
-  double get platJamaFine => oldGoldItems.where((i) => i.metal == MetalType.platinum).fold(0, (sum, i) => sum + i.fineWt);
-  double get diaJamaFine => oldGoldItems.where((i) => i.metal == MetalType.diamond).fold(0, (sum, i) => sum + i.fineWt);
+  double get goldJamaFine => oldGoldItems
+      .where((i) => i.metal == MetalType.gold)
+      .fold(0, (sum, i) => sum + i.fineWt);
+  double get silverJamaFine => oldGoldItems
+      .where((i) => i.metal == MetalType.silver)
+      .fold(0, (sum, i) => sum + i.fineWt);
+  double get platJamaFine => oldGoldItems
+      .where((i) => i.metal == MetalType.platinum)
+      .fold(0, (sum, i) => sum + i.fineWt);
+  double get diaJamaFine => oldGoldItems
+      .where((i) => i.metal == MetalType.diamond)
+      .fold(0, (sum, i) => sum + i.fineWt);
 
   double get goldNetFine => goldSoldFine - goldJamaFine;
   double get silverNetFine => silverSoldFine - silverJamaFine;
@@ -142,71 +317,124 @@ double get pureDiamondAmount => totalDiamondAmount - diamondMakingCharge;
   double get platBhawAmt => platNetFine * _platBhawPerGram;
   double get diaBhawAmt => diaNetFine * _diaBhawPerCarat;
 
-  double get _wholesaleTotalMetalAmount => goldBhawAmt + silverBhawAmt + platBhawAmt + diaBhawAmt;
+  double get _wholesaleTotalMetalAmount =>
+      goldBhawAmt + silverBhawAmt + platBhawAmt + diaBhawAmt;
 
-  double get goldMakingCharge => saleItems.where((i) => i.metal == MetalType.gold).fold(0, (sum, i) => sum + (billingMode == BillingMode.wholesale ? i.wholesaleLabourAmt : i.makingAmt));
-  double get silverMakingCharge => saleItems.where((i) => i.metal == MetalType.silver).fold(0, (sum, i) => sum + (billingMode == BillingMode.wholesale ? i.wholesaleLabourAmt : i.makingAmt));
-  double get platinumMakingCharge => saleItems.where((i) => i.metal == MetalType.platinum).fold(0, (sum, i) => sum + (billingMode == BillingMode.wholesale ? i.wholesaleLabourAmt : i.makingAmt));
-  double get diamondMakingCharge => saleItems.where((i) => i.metal == MetalType.diamond).fold(0, (sum, i) => sum + (billingMode == BillingMode.wholesale ? i.wholesaleLabourAmt : i.makingAmt));
-  
-  double get totalMakingCharge => goldMakingCharge + silverMakingCharge + platinumMakingCharge + diamondMakingCharge;
+  double get goldMakingCharge =>
+      saleItems.where((i) => i.metal == MetalType.gold).fold(
+          0,
+          (sum, i) =>
+              sum +
+              (billingMode == BillingMode.wholesale
+                  ? i.wholesaleLabourAmt
+                  : i.makingAmt));
+  double get silverMakingCharge =>
+      saleItems.where((i) => i.metal == MetalType.silver).fold(
+          0,
+          (sum, i) =>
+              sum +
+              (billingMode == BillingMode.wholesale
+                  ? i.wholesaleLabourAmt
+                  : i.makingAmt));
+  double get platinumMakingCharge =>
+      saleItems.where((i) => i.metal == MetalType.platinum).fold(
+          0,
+          (sum, i) =>
+              sum +
+              (billingMode == BillingMode.wholesale
+                  ? i.wholesaleLabourAmt
+                  : i.makingAmt));
+  double get diamondMakingCharge =>
+      saleItems.where((i) => i.metal == MetalType.diamond).fold(
+          0,
+          (sum, i) =>
+              sum +
+              (billingMode == BillingMode.wholesale
+                  ? i.wholesaleLabourAmt
+                  : i.makingAmt));
 
-  double get _wholesaleGrossAmount => _wholesaleTotalMetalAmount + totalMakingCharge;
+  double get totalMakingCharge =>
+      goldMakingCharge +
+      silverMakingCharge +
+      platinumMakingCharge +
+      diamondMakingCharge;
+
+  double get _wholesaleGrossAmount =>
+      _wholesaleTotalMetalAmount + totalMakingCharge;
 
   // ==========================================
   // 3. FACADE ROUTER & MATH ENGINE
   // ==========================================
-  double get grossAmount => billingMode == BillingMode.wholesale ? _wholesaleGrossAmount : _retailGrossAmount;
+  double get grossAmount => billingMode == BillingMode.wholesale
+      ? _wholesaleGrossAmount
+      : _retailGrossAmount;
 
-  double get discountAmount => discountType == DiscountType.percentage 
-      ? (grossAmount * _discountInput / 100) 
+  double get discountAmount => discountType == DiscountType.percentage
+      ? (grossAmount * _discountInput / 100)
       : _discountInput;
 
   double get taxableAmount => grossAmount - discountAmount;
 
-  double _proportionalRatio(double partAmount) => grossAmount == 0 ? 0 : (partAmount / grossAmount);
+  double _proportionalRatio(double partAmount) =>
+      grossAmount == 0 ? 0 : (partAmount / grossAmount);
 
   double get goldGst {
     if (billType != BillType.gst) return 0.0;
     if (billingMode == BillingMode.wholesale) {
-      double metalTaxable = goldBhawAmt - (discountAmount * _proportionalRatio(_wholesaleTotalMetalAmount));
-      double labourTaxable = goldMakingCharge - (discountAmount * _proportionalRatio(totalMakingCharge));
-      return (metalTaxable > 0 ? metalTaxable * 0.03 : 0) + (labourTaxable > 0 ? labourTaxable * 0.05 : 0);
+      double metalTaxable = goldBhawAmt -
+          (discountAmount * _proportionalRatio(_wholesaleTotalMetalAmount));
+      double labourTaxable = goldMakingCharge -
+          (discountAmount * _proportionalRatio(totalMakingCharge));
+      return (metalTaxable > 0 ? metalTaxable * 0.03 : 0) +
+          (labourTaxable > 0 ? labourTaxable * 0.05 : 0);
     }
-    double retailTaxable = totalGoldAmount - (discountAmount * _proportionalRatio(totalGoldAmount));
+    double retailTaxable = totalGoldAmount -
+        (discountAmount * _proportionalRatio(totalGoldAmount));
     return retailTaxable > 0 ? retailTaxable * 0.03 : 0.0;
   }
 
   double get silverGst {
     if (billType != BillType.gst) return 0.0;
     if (billingMode == BillingMode.wholesale) {
-      double metalTaxable = silverBhawAmt - (discountAmount * _proportionalRatio(_wholesaleTotalMetalAmount));
-      double labourTaxable = silverMakingCharge - (discountAmount * _proportionalRatio(totalMakingCharge));
-      return (metalTaxable > 0 ? metalTaxable * 0.03 : 0) + (labourTaxable > 0 ? labourTaxable * 0.05 : 0);
+      double metalTaxable = silverBhawAmt -
+          (discountAmount * _proportionalRatio(_wholesaleTotalMetalAmount));
+      double labourTaxable = silverMakingCharge -
+          (discountAmount * _proportionalRatio(totalMakingCharge));
+      return (metalTaxable > 0 ? metalTaxable * 0.03 : 0) +
+          (labourTaxable > 0 ? labourTaxable * 0.05 : 0);
     }
-    double retailTaxable = totalSilverAmount - (discountAmount * _proportionalRatio(totalSilverAmount));
+    double retailTaxable = totalSilverAmount -
+        (discountAmount * _proportionalRatio(totalSilverAmount));
     return retailTaxable > 0 ? retailTaxable * 0.03 : 0.0;
   }
 
   double get platinumGst {
     if (billType != BillType.gst) return 0.0;
     if (billingMode == BillingMode.wholesale) {
-      double metalTaxable = platBhawAmt - (discountAmount * _proportionalRatio(_wholesaleTotalMetalAmount));
-      double labourTaxable = platinumMakingCharge - (discountAmount * _proportionalRatio(totalMakingCharge));
-      return (metalTaxable > 0 ? metalTaxable * 0.03 : 0) + (labourTaxable > 0 ? labourTaxable * 0.05 : 0);
+      double metalTaxable = platBhawAmt -
+          (discountAmount * _proportionalRatio(_wholesaleTotalMetalAmount));
+      double labourTaxable = platinumMakingCharge -
+          (discountAmount * _proportionalRatio(totalMakingCharge));
+      return (metalTaxable > 0 ? metalTaxable * 0.03 : 0) +
+          (labourTaxable > 0 ? labourTaxable * 0.05 : 0);
     }
-    double retailTaxable = totalPlatinumAmount - (discountAmount * _proportionalRatio(totalPlatinumAmount));
+    double retailTaxable = totalPlatinumAmount -
+        (discountAmount * _proportionalRatio(totalPlatinumAmount));
     return retailTaxable > 0 ? retailTaxable * 0.03 : 0.0;
   }
 
   double get diamondGst {
     if (billType != BillType.gst) return 0.0;
     if (billingMode == BillingMode.wholesale) {
-      double metalTaxable = diaBhawAmt - (discountAmount * _proportionalRatio(_wholesaleTotalMetalAmount));
-      double labourTaxable = diamondMakingCharge - (discountAmount * _proportionalRatio(totalMakingCharge));
-      return (metalTaxable > 0 ? metalTaxable * 0.03 : 0) + (labourTaxable > 0 ? labourTaxable * 0.05 : 0);
+      double metalTaxable = diaBhawAmt -
+          (discountAmount * _proportionalRatio(_wholesaleTotalMetalAmount));
+      double labourTaxable = diamondMakingCharge -
+          (discountAmount * _proportionalRatio(totalMakingCharge));
+      return (metalTaxable > 0 ? metalTaxable * 0.03 : 0) +
+          (labourTaxable > 0 ? labourTaxable * 0.05 : 0);
     }
-    double retailTaxable = totalDiamondAmount - (discountAmount * _proportionalRatio(totalDiamondAmount));
+    double retailTaxable = totalDiamondAmount -
+        (discountAmount * _proportionalRatio(totalDiamondAmount));
     return retailTaxable > 0 ? retailTaxable * 0.03 : 0.0;
   }
 
@@ -219,35 +447,38 @@ double get pureDiamondAmount => totalDiamondAmount - diamondMakingCharge;
 
   double get balanceDue {
     if (billingMode == BillingMode.wholesale) {
-      return grandTotal - totalPaid; 
+      return grandTotal - totalPaid;
     }
-    return grandTotal - oldGoldCashDeduction - totalPaid; 
+    return grandTotal - oldGoldCashDeduction - totalPaid;
   }
 
   // ==========================================
   // UI ACTIONS & MEMORY SAFE LISTENERS
   // ==========================================
-  void _onChildItemChanged() => notifyListeners(); 
+  void _onChildItemChanged() => notifyListeners();
 
   void addNewSaleItem() {
     var newItem = SaleItemModel();
-    newItem.addListener(_onChildItemChanged); 
+    newItem.addListener(_onChildItemChanged);
     saleItems.add(newItem);
     activeRowIndex = saleItems.length - 1;
     notifyListeners();
 
     Future.delayed(const Duration(milliseconds: 100), () {
-      if (tableScrollCtrl.hasClients) tableScrollCtrl.animateTo(tableScrollCtrl.position.maxScrollExtent, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
-      newItem.firstFieldFocus.requestFocus(); 
+      if (tableScrollCtrl.hasClients)
+        tableScrollCtrl.animateTo(tableScrollCtrl.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+      newItem.firstFieldFocus.requestFocus();
     });
   }
 
   void removeSaleItem(int index) {
     if (index < 0 || index >= saleItems.length) return;
-    saleItems[index].removeListener(_onChildItemChanged); 
+    saleItems[index].removeListener(_onChildItemChanged);
     saleItems[index].dispose();
     saleItems.removeAt(index);
-    if (activeRowIndex >= saleItems.length) activeRowIndex = saleItems.length - 1;
+    if (activeRowIndex >= saleItems.length)
+      activeRowIndex = saleItems.length - 1;
     notifyListeners();
   }
 
@@ -274,16 +505,31 @@ double get pureDiamondAmount => totalDiamondAmount - diamondMakingCharge;
 
   void removeOldGoldItem(int index) {
     if (index < 0 || index >= oldGoldItems.length) return;
-    oldGoldItems[index].removeListener(_onChildItemChanged); 
+    oldGoldItems[index].removeListener(_onChildItemChanged);
     oldGoldItems[index].dispose();
     oldGoldItems.removeAt(index);
     notifyListeners();
   }
 
-  void toggleOldGoldMode(OldGoldAdjustMode mode) { oldGoldMode = mode; notifyListeners(); }
-  void toggleBillingMode(BillingMode mode) { billingMode = mode; notifyListeners(); }
-  void toggleBillType(BillType type) { billType = type; notifyListeners(); }
-  void toggleDiscountType(DiscountType type) { discountType = type; notifyListeners(); }
+  void toggleOldGoldMode(OldGoldAdjustMode mode) {
+    oldGoldMode = mode;
+    notifyListeners();
+  }
+
+  void toggleBillingMode(BillingMode mode) {
+    billingMode = mode;
+    notifyListeners();
+  }
+
+  void toggleBillType(BillType type) {
+    billType = type;
+    notifyListeners();
+  }
+
+  void toggleDiscountType(DiscountType type) {
+    discountType = type;
+    notifyListeners();
+  }
 
   // ==========================================
   // 4. HOLD INVOICE SYSTEM LOGIC
@@ -305,12 +551,12 @@ double get pureDiamondAmount => totalDiamondAmount - diamondMakingCharge;
     );
 
     heldBills.add(newHold);
-    clearEntirePOS(isHolding: true); 
+    clearEntirePOS(isHolding: true);
     notifyListeners();
   }
 
   void resumeBill(String holdId) {
-    clearEntirePOS(isHolding: false); 
+    clearEntirePOS(isHolding: false);
 
     final targetBillIndex = heldBills.indexWhere((b) => b.holdId == holdId);
     if (targetBillIndex == -1) return;
@@ -319,7 +565,7 @@ double get pureDiamondAmount => totalDiamondAmount - diamondMakingCharge;
 
     nameCtrl.text = targetBill.customerName;
     mobileCtrl.text = targetBill.customerMobile;
-    
+
     saleItems.addAll(targetBill.savedSaleItems);
     oldGoldItems.addAll(targetBill.savedOldGoldItems);
 
@@ -334,12 +580,15 @@ double get pureDiamondAmount => totalDiamondAmount - diamondMakingCharge;
   }
 
   void clearEntirePOS({bool isHolding = false}) {
+    selectedCustomer = null;
+    customerSuggestions = [];
+    descriptionSuggestions = [];
     nameCtrl.clear();
     mobileCtrl.clear();
     cityCtrl.clear();
     panCtrl.clear();
     gstCtrl.clear();
-    
+
     discountCtrl.clear();
     cashCtrl.clear();
     upiCtrl.clear();
@@ -361,7 +610,7 @@ double get pureDiamondAmount => totalDiamondAmount - diamondMakingCharge;
         item.dispose();
       }
     }
-    
+
     saleItems.clear();
     oldGoldItems.clear();
     activeRowIndex = -1;
@@ -369,11 +618,23 @@ double get pureDiamondAmount => totalDiamondAmount - diamondMakingCharge;
 
   @override
   void dispose() {
-    clearEntirePOS(isHolding: false); 
+    clearEntirePOS(isHolding: false);
+    _db.close();
     tableScrollCtrl.dispose();
-    mobileCtrl.dispose(); nameCtrl.dispose(); cityCtrl.dispose(); panCtrl.dispose(); gstCtrl.dispose();
-    discountCtrl.dispose(); cashCtrl.dispose(); upiCtrl.dispose(); cardCtrl.dispose(); advCtrl.dispose();
-    goldBhawCtrl.dispose(); silverBhawCtrl.dispose(); platBhawCtrl.dispose(); diaBhawCtrl.dispose();
+    mobileCtrl.dispose();
+    nameCtrl.dispose();
+    cityCtrl.dispose();
+    panCtrl.dispose();
+    gstCtrl.dispose();
+    discountCtrl.dispose();
+    cashCtrl.dispose();
+    upiCtrl.dispose();
+    cardCtrl.dispose();
+    advCtrl.dispose();
+    goldBhawCtrl.dispose();
+    silverBhawCtrl.dispose();
+    platBhawCtrl.dispose();
+    diaBhawCtrl.dispose();
     super.dispose();
   }
 }

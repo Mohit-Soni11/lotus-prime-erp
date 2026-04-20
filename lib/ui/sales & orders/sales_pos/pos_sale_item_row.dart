@@ -18,12 +18,17 @@ import 'shared_pos_components.dart';
 class _PurityData {
   static List<String> forMetal(MetalType metal) {
     switch (metal) {
-      case MetalType.gold: return ['24KT', '22KT', '18KT', '14KT', '9KT'];
-      case MetalType.silver: return ['999', '925', '800'];
-      case MetalType.platinum: return ['950PT', '900PT', '850PT'];
-      case MetalType.diamond: return ['VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2'];
+      case MetalType.gold:
+        return ['24KT', '22KT', '18KT', '14KT', '9KT'];
+      case MetalType.silver:
+        return ['999', '925', '800'];
+      case MetalType.platinum:
+        return ['950PT', '900PT', '850PT'];
+      case MetalType.diamond:
+        return ['VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2'];
     }
   }
+
   static String defaultFor(MetalType metal) => forMetal(metal).first;
 }
 
@@ -54,8 +59,10 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
     _lastMetal = widget.item.metal;
     final existing = widget.item.purityCtrl.text.trim();
     final options = _PurityData.forMetal(_lastMetal);
-    _selectedPurity = options.contains(existing) ? existing : _PurityData.defaultFor(_lastMetal);
-    
+    _selectedPurity = options.contains(existing)
+        ? existing
+        : _PurityData.defaultFor(_lastMetal);
+
     if (widget.ctrl.billingMode == BillingMode.retail && existing.isEmpty) {
       widget.item.purityCtrl.text = _selectedPurity;
     }
@@ -84,10 +91,14 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
 
   Color _metalColor(MetalType metal) {
     switch (metal) {
-      case MetalType.gold: return SalesPosColors.brandGold;
-      case MetalType.silver: return SalesPosColors.brandSilver;
-      case MetalType.platinum: return SalesPosColors.brandPlatinum;
-      case MetalType.diamond: return SalesPosColors.brandDiamond;
+      case MetalType.gold:
+        return SalesPosColors.brandGold;
+      case MetalType.silver:
+        return SalesPosColors.brandSilver;
+      case MetalType.platinum:
+        return SalesPosColors.brandPlatinum;
+      case MetalType.diamond:
+        return SalesPosColors.brandDiamond;
     }
   }
 
@@ -110,18 +121,20 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
           final isEven = widget.index % 2 == 0;
           final isWholesale = widget.ctrl.billingMode == BillingMode.wholesale;
 
-          if (isWholesale && widget.item.makingChargeType == MakingChargeType.percentage) {
+          if (isWholesale &&
+              widget.item.makingChargeType == MakingChargeType.percentage) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               widget.item.toggleMakingChargeType(isWholesale: true);
             });
           }
-          if (!isWholesale && widget.item.makingChargeType == MakingChargeType.perKg) {
-             WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!isWholesale &&
+              widget.item.makingChargeType == MakingChargeType.perKg) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
               widget.item.toggleMakingChargeType(isWholesale: false);
             });
           }
           if (!isWholesale && widget.item.isLessPerPiece) {
-             WidgetsBinding.instance.addPostFrameCallback((_) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
               widget.item.toggleLessWeightType();
             });
           }
@@ -134,28 +147,37 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
               curve: Curves.easeOut,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: _isHovered ? SalesPosColors.cardHoverBg : (isEven ? SalesPosColors.bodyPanelBg : SalesPosColors.bodyBg),
-                border: const Border(bottom: BorderSide(color: SalesPosColors.bodyBorder, width: 1)),
+                color: _isHovered
+                    ? SalesPosColors.cardHoverBg
+                    : (isEven
+                        ? SalesPosColors.bodyPanelBg
+                        : SalesPosColors.bodyBg),
+                border: const Border(
+                    bottom:
+                        BorderSide(color: SalesPosColors.bodyBorder, width: 1)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Expanded(flex: 1, child: _buildSNo(widget.index + 1, metalColor)), const SizedBox(width: 6),
-                  Expanded(flex: 3, child: _buildMetalDropdown(metalColor)), const SizedBox(width: 6),
-                  
-                  // 🚀 Description size strictly 4
                   Expanded(
-                    flex: 4, 
-                    child: PosAtomicTextField(
-                      controller: widget.item.descCtrl,
-                      hint: "Description",
-                      focusNode: widget.item.firstFieldFocus,
+                      flex: 1, child: _buildSNo(widget.index + 1, metalColor)),
+                  const SizedBox(width: 6),
+                  Expanded(flex: 3, child: _buildMetalDropdown(metalColor)),
+                  const SizedBox(width: 6),
+
+                  // 🚀 Description with autocomplete suggestions
+                  Expanded(
+                    flex: 4,
+                    child: _DescriptionWithSuggestions(
+                      item: widget.item,
+                      ctrl: widget.ctrl,
+                      rowIndex: widget.index,
                     ),
                   ),
                   const SizedBox(width: 6),
                   Expanded(flex: 1, child: _buildPcsField()),
                   const SizedBox(width: 6),
-                  
+
                   if (!isWholesale) ...[
                     Expanded(
                       flex: 2,
@@ -168,7 +190,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                     Expanded(flex: 2, child: _buildPurityDropdown(metalColor)),
                     const SizedBox(width: 6),
                   ],
-                  
+
                   Expanded(
                     flex: 2,
                     child: PosAtomicTextField(
@@ -178,11 +200,11 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  
+
                   Expanded(
                     flex: 2,
-                    child: isWholesale 
-                        ? _buildLessField() 
+                    child: isWholesale
+                        ? _buildLessField()
                         : PosAtomicTextField(
                             controller: widget.item.lessCtrl,
                             hint: "0.000",
@@ -190,7 +212,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                           ),
                   ),
                   const SizedBox(width: 6),
-                  
+
                   Expanded(
                     flex: 2,
                     child: _buildAutoCell(
@@ -200,7 +222,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  
+
                   if (isWholesale) ...[
                     Expanded(
                       flex: 2,
@@ -225,7 +247,8 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                     Expanded(
                       flex: 3,
                       child: _buildAutoCell(
-                        value: "₹${widget.item.wholesaleLabourAmt.toStringAsFixed(2)}", 
+                        value:
+                            "₹${widget.item.wholesaleLabourAmt.toStringAsFixed(2)}",
                         color: SalesPosColors.bodyTextMain,
                         align: TextAlign.right,
                         isBold: true,
@@ -255,7 +278,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                     ),
                     const SizedBox(width: 6),
                   ],
-                  
+
                   Expanded(flex: 1, child: _buildDeleteBtn()),
                 ],
               ),
@@ -269,7 +292,8 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
   Widget _buildSNo(int number, Color metalColor) {
     return Center(
       child: Container(
-        width: 32, height: 32,
+        width: 32,
+        height: 32,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: metalColor.withOpacity(0.12),
@@ -278,7 +302,11 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
         ),
         child: Text(
           '$number',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: metalColor, fontFeatures: const [FontFeature.tabularFigures()]),
+          style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: metalColor,
+              fontFeatures: const [FontFeature.tabularFigures()]),
         ),
       ),
     );
@@ -298,10 +326,16 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
           value: widget.item.metal,
           isExpanded: true,
           icon: Icon(SalesPosIcons.dropdownArrow, color: metalColor, size: 22),
-          style: SalesPosStyles.inputText.copyWith(color: metalColor, fontSize: 14),
+          style: SalesPosStyles.inputText
+              .copyWith(color: metalColor, fontSize: 14),
           dropdownColor: SalesPosColors.bodyPanelBg,
-          items: MetalType.values.map((type) => DropdownMenuItem<MetalType>(value: type, child: Text(type.displayName))).toList(),
-          onChanged: (val) { if (val != null) _onMetalChanged(val); },
+          items: MetalType.values
+              .map((type) => DropdownMenuItem<MetalType>(
+                  value: type, child: Text(type.displayName)))
+              .toList(),
+          onChanged: (val) {
+            if (val != null) _onMetalChanged(val);
+          },
         ),
       ),
     );
@@ -320,17 +354,21 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
         ),
         decoration: InputDecoration(
           hintText: '1',
-          hintStyle: SalesPosStyles.subTitleMuted.copyWith(color: SalesPosColors.bodyTextMain.withOpacity(0.40)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+          hintStyle: SalesPosStyles.subTitleMuted
+              .copyWith(color: SalesPosColors.bodyTextMain.withOpacity(0.40)),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
           filled: true,
           fillColor: SalesPosColors.bodyBg,
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: SalesPosColors.bodyBorder, width: 1.5),
+            borderSide:
+                const BorderSide(color: SalesPosColors.bodyBorder, width: 1.5),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: SalesPosColors.brandGold, width: 2.0),
+            borderSide:
+                const BorderSide(color: SalesPosColors.brandGold, width: 2.0),
           ),
         ),
       ),
@@ -357,16 +395,21 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOut,
-              width: 36, height: 38, 
+              width: 36,
+              height: 38,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: SalesPosColors.brandGold.withOpacity(0.12),
-                border: Border.all(color: SalesPosColors.brandGold.withOpacity(0.40)),
+                border: Border.all(
+                    color: SalesPosColors.brandGold.withOpacity(0.40)),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
                 widget.item.isLessPerPiece ? "/pc" : "Tot",
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: SalesPosColors.brandGold),
+                style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                    color: SalesPosColors.brandGold),
               ),
             ),
           ),
@@ -394,9 +437,12 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
         decoration: InputDecoration(
           border: InputBorder.none,
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(vertical: 11), 
-          hintText: "Tunch", 
-          hintStyle: TextStyle(color: metalColor.withOpacity(0.50), fontSize: 13, fontWeight: FontWeight.w800),
+          contentPadding: const EdgeInsets.symmetric(vertical: 11),
+          hintText: "Tunch",
+          hintStyle: TextStyle(
+              color: metalColor.withOpacity(0.50),
+              fontSize: 13,
+              fontWeight: FontWeight.w800),
         ),
       ),
     );
@@ -425,13 +471,14 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
               decoration: const InputDecoration(
                 border: InputBorder.none,
                 isDense: true,
-                contentPadding: EdgeInsets.only(left: 8, bottom: 2), 
+                contentPadding: EdgeInsets.only(left: 8, bottom: 2),
               ),
               onChanged: _onPurityChanged,
             ),
           ),
           PopupMenuButton<String>(
-            icon: Icon(SalesPosIcons.dropdownArrow, color: metalColor, size: 20),
+            icon:
+                Icon(SalesPosIcons.dropdownArrow, color: metalColor, size: 20),
             color: SalesPosColors.bodyPanelBg,
             position: PopupMenuPosition.under,
             padding: EdgeInsets.zero,
@@ -443,27 +490,39 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
               setState(() {
                 _selectedPurity = val;
                 widget.item.purityCtrl.text = val;
-                widget.item.purityCtrl.selection = TextSelection.fromPosition(TextPosition(offset: val.length));
+                widget.item.purityCtrl.selection = TextSelection.fromPosition(
+                    TextPosition(offset: val.length));
               });
             },
-            itemBuilder: (context) => purities.map((choice) => PopupMenuItem<String>(
-              value: choice,
-              height: 38,
-              child: Center(
-                child: Text(choice, style: TextStyle(color: metalColor, fontWeight: FontWeight.w900, fontSize: 14)),
-              ),
-            )).toList(),
+            itemBuilder: (context) => purities
+                .map((choice) => PopupMenuItem<String>(
+                      value: choice,
+                      height: 38,
+                      child: Center(
+                        child: Text(choice,
+                            style: TextStyle(
+                                color: metalColor,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 14)),
+                      ),
+                    ))
+                .toList(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAutoCell({required String value, required Color color, required TextAlign align, bool isBold = false}) {
+  Widget _buildAutoCell(
+      {required String value,
+      required Color color,
+      required TextAlign align,
+      bool isBold = false}) {
     return Container(
       height: 38,
       padding: const EdgeInsets.symmetric(horizontal: 10),
-      alignment: align == TextAlign.center ? Alignment.center : Alignment.centerRight,
+      alignment:
+          align == TextAlign.center ? Alignment.center : Alignment.centerRight,
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(8),
@@ -472,7 +531,11 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
       child: Text(
         value,
         textAlign: align,
-        style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: isBold ? 16 : 15, fontFeatures: const [FontFeature.tabularFigures()]),
+        style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w900,
+            fontSize: isBold ? 16 : 15,
+            fontFeatures: const [FontFeature.tabularFigures()]),
       ),
     );
   }
@@ -488,7 +551,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
     } else if (widget.item.makingChargeType == MakingChargeType.perPiece) {
       symbol = "/pc";
       hintText = "Rate/pc";
-    } else if (widget.item.makingChargeType == MakingChargeType.perKg) { 
+    } else if (widget.item.makingChargeType == MakingChargeType.perKg) {
       symbol = "/kg";
       hintText = "Rate/kg";
     } else {
@@ -508,24 +571,31 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
         ),
         const SizedBox(width: 4),
         Tooltip(
-          message: isWholesale ? "Toggle: /g ➔ /kg ➔ /pc" : "Toggle: Rate ➔ /pc ➔ %",
+          message:
+              isWholesale ? "Toggle: /g ➔ /kg ➔ /pc" : "Toggle: Rate ➔ /pc ➔ %",
           waitDuration: const Duration(milliseconds: 400),
           child: InkWell(
-            onTap: () => widget.item.toggleMakingChargeType(isWholesale: isWholesale),
+            onTap: () =>
+                widget.item.toggleMakingChargeType(isWholesale: isWholesale),
             borderRadius: BorderRadius.circular(8),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOut,
-              width: 38, height: 38,
+              width: 38,
+              height: 38,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: SalesPosColors.brandGold.withOpacity(0.12),
-                border: Border.all(color: SalesPosColors.brandGold.withOpacity(0.40)),
+                border: Border.all(
+                    color: SalesPosColors.brandGold.withOpacity(0.40)),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 symbol,
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: SalesPosColors.brandGold),
+                style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                    color: SalesPosColors.brandGold),
               ),
             ),
           ),
@@ -543,16 +613,193 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
           onTap: () => widget.ctrl.removeActiveItem(),
           borderRadius: BorderRadius.circular(8),
           child: Container(
-            width: 32, height: 32,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               color: SalesPosColors.danger.withOpacity(0.12),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: SalesPosColors.danger.withOpacity(0.35)),
+              border:
+                  Border.all(color: SalesPosColors.danger.withOpacity(0.35)),
             ),
-            child: const Icon(SalesPosIcons.deleteItem, color: SalesPosColors.danger, size: 20),
+            child: const Icon(SalesPosIcons.deleteItem,
+                color: SalesPosColors.danger, size: 20),
           ),
         ),
       ),
+    );
+  }
+}
+
+// ==========================================
+// DESCRIPTION AUTOCOMPLETE WIDGET
+// ==========================================
+class _DescriptionWithSuggestions extends StatefulWidget {
+  final SaleItemModel item;
+  final PosBillingController ctrl;
+  final int rowIndex;
+
+  const _DescriptionWithSuggestions({
+    required this.item,
+    required this.ctrl,
+    required this.rowIndex,
+  });
+
+  @override
+  State<_DescriptionWithSuggestions> createState() =>
+      _DescriptionWithSuggestionsState();
+}
+
+class _DescriptionWithSuggestionsState
+    extends State<_DescriptionWithSuggestions> {
+  final LayerLink _link = LayerLink();
+  OverlayEntry? _overlay;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.item.descCtrl.addListener(_onDescChanged);
+    widget.ctrl.addListener(_onCtrlChanged);
+  }
+
+  @override
+  void dispose() {
+    _removeOverlay();
+    widget.item.descCtrl.removeListener(_onDescChanged);
+    widget.ctrl.removeListener(_onCtrlChanged);
+    super.dispose();
+  }
+
+  void _onDescChanged() {
+    widget.ctrl.searchDescriptions(widget.item.descCtrl.text, widget.rowIndex);
+  }
+
+  void _onCtrlChanged() {
+    if (!mounted) return;
+    final suggestions = widget.ctrl.getDescSuggestionsForRow(widget.rowIndex);
+    if (suggestions.isEmpty) {
+      _removeOverlay();
+    } else {
+      _showOverlay();
+    }
+  }
+
+  void _removeOverlay() {
+    _overlay?.remove();
+    _overlay = null;
+  }
+
+  void _showOverlay() {
+    if (!mounted) return;
+    _removeOverlay();
+    final overlay = Overlay.of(context);
+    _overlay = OverlayEntry(
+      builder: (ctx) => Positioned(
+        width: 260,
+        child: CompositedTransformFollower(
+          link: _link,
+          showWhenUnlinked: false,
+          offset: const Offset(0, 42),
+          child: Material(
+            color: Colors.transparent,
+            child: _DescSuggestionDropdown(
+              ctrl: widget.ctrl,
+              rowIndex: widget.rowIndex,
+              onSelected: (desc) {
+                widget.item.descCtrl.text = desc;
+                widget.item.descCtrl.selection = TextSelection.fromPosition(
+                  TextPosition(offset: desc.length),
+                );
+                widget.ctrl.clearDescriptionSuggestions();
+                _removeOverlay();
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    overlay.insert(_overlay!);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CompositedTransformTarget(
+      link: _link,
+      child: PosAtomicTextField(
+        controller: widget.item.descCtrl,
+        hint: "Description",
+        focusNode: widget.item.firstFieldFocus,
+      ),
+    );
+  }
+}
+
+class _DescSuggestionDropdown extends StatelessWidget {
+  final PosBillingController ctrl;
+  final int rowIndex;
+  final ValueChanged<String> onSelected;
+
+  const _DescSuggestionDropdown({
+    required this.ctrl,
+    required this.rowIndex,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: ctrl,
+      builder: (context, _) {
+        final suggestions = ctrl.getDescSuggestionsForRow(rowIndex);
+        if (suggestions.isEmpty) return const SizedBox.shrink();
+        return Material(
+          elevation: 12,
+          borderRadius: BorderRadius.circular(10),
+          color: SalesPosColors.bodyPanelBg,
+          child: Container(
+            constraints: const BoxConstraints(maxHeight: 200),
+            decoration: BoxDecoration(
+              border:
+                  Border.all(color: SalesPosColors.brandGold.withOpacity(0.3)),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              shrinkWrap: true,
+              itemCount: suggestions.length,
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 1, indent: 10, endIndent: 10),
+              itemBuilder: (context, i) {
+                final desc = suggestions[i];
+                return InkWell(
+                  onTap: () => onSelected(desc),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.inventory_2_outlined,
+                            size: 16, color: SalesPosColors.brandGold),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            desc,
+                            style: const TextStyle(
+                              color: SalesPosColors.textDark,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 }
