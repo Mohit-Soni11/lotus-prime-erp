@@ -5,6 +5,7 @@
 // DESCRIPTION: Zero-lag State Manager.
 //              ✅ MEMORY CRASH FIXED FOR HOLD SYSTEM.
 //              ✅ DELETE HELD BILL FUNCTION ADDED.
+//              ✅ FUZZY SEARCH ADDED (Google-style typo tolerance).
 //
 // BUG FIX LOG:
 //   ❌ BUG  — dispose() mein _db.close() tha.
@@ -17,7 +18,6 @@
 //             automatically close hoti hai.
 // ==========================================
 
-import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 
 import '../../../models/sales & orders/sales_pos_enums/sales_pos_enums.dart';
@@ -26,6 +26,9 @@ import '../../../models/sales & orders/sales_pos_models/pos_hold_bill_model.dart
 import '../../../database/db/app_database.dart';
 import '../../../models/customer/customer_list/customer_list_ui_model.dart';
 import '../../../models/customer/customer_enums/customer_list_enums.dart';
+
+// ✅ NAYA IMPORT — Fuzzy Search Engine
+import '../../../helpers/search/fuzzy_search_helper.dart';
 
 class PosBillingController extends ChangeNotifier {
   // --- GLOBAL CONFIG ---
@@ -38,6 +41,7 @@ class PosBillingController extends ChangeNotifier {
 
   // ==========================================
   // CUSTOMER SEARCH FEATURE
+  // ✅ UPGRADED: Google-style Fuzzy Search
   // ==========================================
   List<CustomerListItemModel> customerSuggestions = [];
   bool isSearchingCustomer = false;
@@ -51,14 +55,19 @@ class PosBillingController extends ChangeNotifier {
       return;
     }
     try {
-      final rows = await (_db.select(_db.customers)
-            ..where(
-                (tbl) => tbl.name.contains(term) | tbl.mobile.contains(term))
-            ..orderBy([(t) => drift.OrderingTerm(expression: t.name)])
-            ..limit(8))
-          .get();
+      // Pehle DB se saare customers load karo
+      final rows = await _db.select(_db.customers).get();
 
-      customerSuggestions = rows.map((row) {
+      // Phir Fuzzy Search se filter karo (name + mobile dono mein)
+      final matched = FuzzySearchHelper.searchObjects(
+        items: rows,
+        query: term,
+        getSearchText: (row) => '${row.name} ${row.mobile}',
+        maxResults: 8,
+        threshold: 0.30,
+      );
+
+      customerSuggestions = matched.map((row) {
         final name = row.name;
         return CustomerListItemModel(
           id: row.id,
@@ -93,10 +102,11 @@ class PosBillingController extends ChangeNotifier {
 
   // ==========================================
   // ITEM DESCRIPTION SUGGESTIONS FEATURE
+  // ✅ UPGRADED: Google-style Fuzzy Search
   // Per-row: sirf active row mein suggestions dikhti hain
   // ==========================================
   List<String> descriptionSuggestions = [];
-  int _descSuggestionRowIndex = -1; // kis row ke liye suggestions hain
+  int _descSuggestionRowIndex = -1;
 
   Future<void> searchDescriptions(String query, int rowIndex) async {
     final term = query.toLowerCase().trim();
@@ -107,16 +117,24 @@ class PosBillingController extends ChangeNotifier {
       return;
     }
     try {
-      final rows = await (_db.select(_db.stockItems)
-            ..where((tbl) =>
-                tbl.itemName.contains(term) | tbl.description.contains(term))
-            ..orderBy([(t) => drift.OrderingTerm(expression: t.itemName)])
-            ..limit(8))
-          .get();
+      // Pehle DB se saare stock items load karo
+      final rows = await _db.select(_db.stockItems).get();
+
+      // Phir Fuzzy Search se filter karo (itemName + description dono mein)
+      final matched = FuzzySearchHelper.searchObjects(
+        items: rows,
+        query: term,
+        getSearchText: (row) => '${row.itemName} ${row.description ?? ""}',
+        maxResults: 8,
+        threshold: 0.30,
+      );
 
       final seen = <String>{};
-      descriptionSuggestions =
-          rows.map((r) => r.itemName).where((name) => seen.add(name)).toList();
+      descriptionSuggestions = matched
+          .map((r) => r.itemName as String)
+          .where((name) => seen.add(name))
+          .toList();
+
       _descSuggestionRowIndex = rowIndex;
     } catch (e) {
       descriptionSuggestions = [];

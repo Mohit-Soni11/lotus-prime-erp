@@ -1,10 +1,19 @@
 // ==========================================
 // FILE: pos_customer_details_panel.dart
-// TYPE: Smart UI Component (UPGRADED v2)
+// TYPE: Smart UI Component (UPGRADED v3)
 // DESCRIPTION: Premium customer entry form.
 //              ✅ Customer name suggestions from DB
+//              ✅ Fuzzy search — name field + mobile field dono pe
+//              ✅ Overlay sahi field ke neeche dikhta hai
 //              ✅ "New Customer" redirects to add customer screen
 //              ✅ Zero hardcoded colors, icons, or styles.
+//
+// BUG FIX v3:
+//   ❌ BUG — CompositedTransformTarget sirf Mobile field pe tha.
+//            Name field mein type karne pe overlay galat jagah
+//            ya bilkul nahi dikhta tha.
+//   ✅ FIX — Alag-alag LayerLink banaya Name aur Mobile ke liye.
+//            Jo field active ho, overlay usi ke neeche dikhe.
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -32,8 +41,14 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
 
+  // ✅ FIX: Dono fields ke liye alag-alag LayerLink
+  final LayerLink _mobileSuggestionLink = LayerLink();
   final LayerLink _nameSuggestionLink = LayerLink();
-  OverlayEntry? _nameSuggestionOverlay;
+
+  OverlayEntry? _suggestionOverlay;
+
+  // Kaunsa field active hai — mobile ya name?
+  bool _isMobileActive = false;
 
   @override
   void initState() {
@@ -68,10 +83,12 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
   }
 
   void _onNameChanged() {
+    _isMobileActive = false; // Name field active hai
     widget.ctrl.searchCustomersByName(widget.ctrl.nameCtrl.text);
   }
 
   void _onMobileChanged() {
+    _isMobileActive = true; // Mobile field active hai
     final mobile = widget.ctrl.mobileCtrl.text.trim();
     if (mobile.length >= 2) {
       widget.ctrl.searchCustomersByName(mobile);
@@ -91,19 +108,24 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
   }
 
   void _removeSuggestionOverlay() {
-    _nameSuggestionOverlay?.remove();
-    _nameSuggestionOverlay = null;
+    _suggestionOverlay?.remove();
+    _suggestionOverlay = null;
   }
 
   void _showSuggestionOverlay() {
     if (!mounted) return;
     _removeSuggestionOverlay();
+
+    // ✅ FIX: Jo field active hai, usi ka LayerLink use karo
+    final activeLink =
+        _isMobileActive ? _mobileSuggestionLink : _nameSuggestionLink;
+
     final overlay = Overlay.of(context);
-    _nameSuggestionOverlay = OverlayEntry(
+    _suggestionOverlay = OverlayEntry(
       builder: (ctx) => Positioned(
         width: 320,
         child: CompositedTransformFollower(
-          link: _nameSuggestionLink,
+          link: activeLink,
           showWhenUnlinked: false,
           offset: const Offset(0, 52),
           child: Material(
@@ -116,7 +138,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
         ),
       ),
     );
-    overlay.insert(_nameSuggestionOverlay!);
+    overlay.insert(_suggestionOverlay!);
   }
 
   bool get _noCustomerFound =>
@@ -324,11 +346,11 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  // ── MOBILE FIELD WITH SUGGESTIONS ──
+                  // ── MOBILE FIELD — apna LayerLink ──
                   Expanded(
                     flex: 2,
                     child: CompositedTransformTarget(
-                      link: _nameSuggestionLink,
+                      link: _mobileSuggestionLink,
                       child: _buildInput(
                         label: "MOBILE",
                         hint: "10-digit",
@@ -340,14 +362,17 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                   ),
                   const SizedBox(width: 12),
 
-                  // ── NAME FIELD ──
+                  // ── NAME FIELD — apna LayerLink ✅ ──
                   Expanded(
                     flex: 3,
-                    child: _buildInput(
-                      label: "CUSTOMER NAME",
-                      hint: "Enter full name",
-                      controller: widget.ctrl.nameCtrl,
-                      icon: SalesPosIcons.customerName,
+                    child: CompositedTransformTarget(
+                      link: _nameSuggestionLink,
+                      child: _buildInput(
+                        label: "CUSTOMER NAME",
+                        hint: "Enter full name",
+                        controller: widget.ctrl.nameCtrl,
+                        icon: SalesPosIcons.customerName,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -621,7 +646,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
 }
 
 // ==========================================
-// NEW CUSTOM HOVER BUTTON COMPONENT
+// HOVER ANIMATED BUTTON COMPONENT
 // ==========================================
 class _HoverAnimatedButton extends StatefulWidget {
   final String title;
