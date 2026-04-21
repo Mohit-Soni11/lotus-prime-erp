@@ -83,14 +83,27 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
   }
 
   void _onNameChanged() {
-    _isMobileActive = false; // Name field active hai
+    _isMobileActive = false;
+    // ✅ FIX: selectedCustomer ho aur name match kare to search mat karo
+    if (widget.ctrl.selectedCustomer != null) {
+      if (widget.ctrl.nameCtrl.text == widget.ctrl.selectedCustomer!.name)
+        return;
+      widget.ctrl.selectedCustomer = null; // Customer deselect hua
+    }
     widget.ctrl.searchCustomersByName(widget.ctrl.nameCtrl.text);
   }
 
   void _onMobileChanged() {
-    _isMobileActive = true; // Mobile field active hai
+    _isMobileActive = true;
+    // ✅ FIX: selectedCustomer ho aur mobile match kare to search mat karo
+    if (widget.ctrl.selectedCustomer != null) {
+      if (widget.ctrl.mobileCtrl.text == widget.ctrl.selectedCustomer!.mobile)
+        return;
+      widget.ctrl.selectedCustomer = null; // Customer deselect hua
+    }
     final mobile = widget.ctrl.mobileCtrl.text.trim();
-    if (mobile.length >= 2) {
+    // ✅ FIX: 1 character se hi search
+    if (mobile.length >= 1) {
       widget.ctrl.searchCustomersByName(mobile);
     } else {
       widget.ctrl.clearCustomerSuggestions();
@@ -100,7 +113,9 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
   void _onControllerChanged() {
     if (!mounted) return;
     final suggestions = widget.ctrl.customerSuggestions;
-    if (suggestions.isEmpty) {
+    final notFound = widget.ctrl.customerNotFound;
+
+    if (suggestions.isEmpty && !notFound) {
       _removeSuggestionOverlay();
     } else {
       _showSuggestionOverlay();
@@ -412,7 +427,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                   ),
                   const SizedBox(width: 16),
 
-                  // ANIMATED BUTTONS
+                  // ── BUTTONS ──
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -552,70 +567,139 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
       listenable: ctrl,
       builder: (context, _) {
         final suggestions = ctrl.customerSuggestions;
-        if (suggestions.isEmpty) return const SizedBox.shrink();
+        final notFound = ctrl.customerNotFound;
+
+        // Kuch nahi dikhana
+        if (suggestions.isEmpty && !notFound) return const SizedBox.shrink();
+
         return Material(
           elevation: 12,
           borderRadius: BorderRadius.circular(12),
           color: SalesPosColors.bodyPanelBg,
           child: Container(
-            constraints: const BoxConstraints(maxHeight: 240),
+            constraints: const BoxConstraints(maxHeight: 260),
             decoration: BoxDecoration(
-              border:
-                  Border.all(color: SalesPosColors.brandGold.withOpacity(0.3)),
+              border: Border.all(
+                color: notFound && suggestions.isEmpty
+                    ? Colors.red.withOpacity(0.35)
+                    : SalesPosColors.brandGold.withOpacity(0.3),
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              shrinkWrap: true,
-              itemCount: suggestions.length,
-              separatorBuilder: (_, __) =>
-                  const Divider(height: 1, indent: 12, endIndent: 12),
-              itemBuilder: (context, i) {
-                final c = suggestions[i];
-                return InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () {
-                    ctrl.selectCustomer(c);
-                    onSelected();
-                  },
-                  child: Padding(
+            child: notFound && suggestions.isEmpty
+                // ─── CUSTOMER NOT FOUND STATE ───
+                ? Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
+                        horizontal: 16, vertical: 14),
                     child: Row(
                       children: [
                         Container(
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: SalesPosColors.brandGold.withOpacity(0.15),
+                            color: Colors.red.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
                           alignment: Alignment.center,
-                          child: Text(
-                            c.initials,
-                            style: const TextStyle(
-                              color: SalesPosColors.brandGold,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
+                          child: const Icon(
+                            Icons.person_off_outlined,
+                            color: Colors.red,
+                            size: 18,
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                c.name,
-                                style: const TextStyle(
-                                  color: SalesPosColors.textDark,
+                              const Text(
+                                "Customer Not Found",
+                                style: TextStyle(
+                                  color: Colors.red,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                                  fontSize: 13,
                                 ),
                               ),
-                              if (c.mobile.isNotEmpty)
+                              const SizedBox(height: 2),
+                              Text(
+                                "Not Registered — Click 'New Customer' to add",
+                                style: TextStyle(
+                                  color: SalesPosColors.bodyTextMuted,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                // ─── SUGGESTIONS LIST ───
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    shrinkWrap: true,
+                    itemCount: suggestions.length,
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 1, indent: 12, endIndent: 12),
+                    itemBuilder: (context, i) {
+                      final c = suggestions[i];
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () {
+                          ctrl.selectCustomer(c);
+                          onSelected();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: SalesPosColors.brandGold
+                                      .withOpacity(0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  c.initials,
+                                  style: const TextStyle(
+                                    color: SalesPosColors.brandGold,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      c.name,
+                                      style: const TextStyle(
+                                        color: SalesPosColors.textDark,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    if (c.mobile.isNotEmpty)
+                                      Text(
+                                        c.mobile,
+                                        style: TextStyle(
+                                          color: SalesPosColors.bodyTextMuted,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              if (c.city.isNotEmpty)
                                 Text(
-                                  c.mobile,
+                                  c.city,
                                   style: TextStyle(
                                     color: SalesPosColors.bodyTextMuted,
                                     fontSize: 12,
@@ -624,20 +708,9 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                             ],
                           ),
                         ),
-                        if (c.city.isNotEmpty)
-                          Text(
-                            c.city,
-                            style: TextStyle(
-                              color: SalesPosColors.bodyTextMuted,
-                              fontSize: 12,
-                            ),
-                          ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         );
       },

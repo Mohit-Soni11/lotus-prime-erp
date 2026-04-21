@@ -45,27 +45,48 @@ class PosBillingController extends ChangeNotifier {
   // ==========================================
   List<CustomerListItemModel> customerSuggestions = [];
   bool isSearchingCustomer = false;
+  bool customerNotFound = false; // ✅ NEW: "Not Found" state
   CustomerListItemModel? selectedCustomer;
 
   Future<void> searchCustomersByName(String query) async {
     final term = query.toLowerCase().trim();
-    if (term.length < 2) {
+
+    // ✅ FIX: 1 character se hi search shuru ho
+    if (term.length < 1) {
       customerSuggestions = [];
+      customerNotFound = false;
       notifyListeners();
       return;
     }
+
+    // Agar customer already select ho chuka hai to search mat karo
+    if (selectedCustomer != null) return;
+
     try {
       // Pehle DB se saare customers load karo
       final rows = await _db.select(_db.customers).get();
 
-      // Phir Fuzzy Search se filter karo (name + mobile dono mein)
-      final matched = FuzzySearchHelper.searchObjects(
-        items: rows,
-        query: term,
-        getSearchText: (row) => '${row.name} ${row.mobile}',
-        maxResults: 8,
-        threshold: 0.30,
-      );
+      // Mobile field se search: exact prefix match pehle try karo
+      // Name field se search: fuzzy match
+      final bool isNumeric = RegExp(r'^\d+$').hasMatch(term);
+
+      List matched;
+
+      if (isNumeric) {
+        // ✅ Mobile number search: jo bhi number se start kare ya contain kare
+        matched = rows
+            .where((row) => row.mobile.toLowerCase().contains(term))
+            .toList();
+      } else {
+        // ✅ Name search: fuzzy search
+        matched = FuzzySearchHelper.searchObjects(
+          items: rows,
+          query: term,
+          getSearchText: (row) => '${row.name} ${row.mobile}',
+          maxResults: 8,
+          threshold: 0.30,
+        );
+      }
 
       customerSuggestions = matched.map((row) {
         final name = row.name;
@@ -80,8 +101,12 @@ class PosBillingController extends ChangeNotifier {
           initials: CustomerListItemModel.buildInitials(name),
         );
       }).toList();
+
+      // ✅ NEW: Agar koi result nahi mila to notFound = true
+      customerNotFound = customerSuggestions.isEmpty;
     } catch (e) {
       customerSuggestions = [];
+      customerNotFound = false;
     }
     notifyListeners();
   }
@@ -92,11 +117,13 @@ class PosBillingController extends ChangeNotifier {
     mobileCtrl.text = customer.mobile;
     cityCtrl.text = customer.city;
     customerSuggestions = [];
+    customerNotFound = false; // ✅ Reset
     notifyListeners();
   }
 
   void clearCustomerSuggestions() {
     customerSuggestions = [];
+    customerNotFound = false; // ✅ Reset
     notifyListeners();
   }
 
@@ -606,6 +633,7 @@ class PosBillingController extends ChangeNotifier {
   void clearEntirePOS({bool isHolding = false}) {
     selectedCustomer = null;
     customerSuggestions = [];
+    customerNotFound = false; // ✅ Reset
     descriptionSuggestions = [];
     nameCtrl.clear();
     mobileCtrl.clear();
