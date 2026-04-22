@@ -29,15 +29,42 @@ import '../../../models/customer/customer_enums/customer_list_enums.dart';
 
 // ✅ NAYA IMPORT — Fuzzy Search Engine
 import '../../../helpers/search/fuzzy_search_helper.dart';
+import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
+import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
 
 class PosBillingController extends ChangeNotifier {
   // --- GLOBAL CONFIG ---
-  final String shopName = "Lotus Jewellers";
-  final String currentFinancialYear = "2526";
+  // ✅ FIX: Shop name dynamically loaded from DB on init
+  String shopName = "Lotus Jewellers"; // default, overridden in initShopData()
+
+  // ✅ FIX: Financial year — current year se dynamically nikalo
+  String get currentFinancialYear => DateTime.now().year.toString();
   int nextSequence = 1;
 
   // --- DATABASE ---
   final AppDatabase _db = AppDatabase();
+  final ShopSetupRepository _shopRepo = ShopSetupRepository();
+
+  Future<void> _initShopName() async {
+    try {
+      final tenantId = await ShopSessionManager.getPermanentTenantId();
+      final shopData = await _shopRepo.fetchExistingSetup(tenantId);
+      if (shopData != null) {
+        final basicInfo = shopData['basic_info'] as Map<String, dynamic>?;
+        if (basicInfo != null) {
+          final brand = basicInfo['brand_display_name']?.toString() ?? '';
+          final display = basicInfo['display_name']?.toString() ?? '';
+          final name = brand.isNotEmpty ? brand : display;
+          if (name.isNotEmpty) {
+            shopName = name.trim(); // ✅ Extra spaces hata do
+            notifyListeners();
+          }
+        }
+      }
+    } catch (_) {
+      // fallback: default name rehega
+    }
+  }
 
   // ==========================================
   // CUSTOMER SEARCH FEATURE
@@ -229,6 +256,8 @@ class PosBillingController extends ChangeNotifier {
   double _diaBhawInput = 0.0;
 
   PosBillingController() {
+    // ✅ FIX: Real shop name DB se load karo
+    _initShopName();
     discountCtrl.addListener(() {
       _discountInput = _parseSafeNumber(discountCtrl.text);
       notifyListeners();
@@ -274,9 +303,14 @@ class PosBillingController extends ChangeNotifier {
     return double.tryParse(cleanText) ?? 0.0;
   }
 
-  String get shopInitials =>
-      shopName.split(' ').map((e) => e[0]).join('').toUpperCase();
-  String get invoicePrefix => billType == BillType.gst ? "TAX" : "EST";
+  String get shopInitials {
+    final words =
+        shopName.trim().split(' ').where((e) => e.isNotEmpty).toList();
+    if (words.isEmpty) return 'SH'; // Safe fallback
+    return words.map((e) => e[0]).join('').toUpperCase();
+  }
+
+  String get invoicePrefix => billType == BillType.gst ? "TAX" : "INV";
   String get formattedInvoice =>
       "$invoicePrefix-$shopInitials-$currentFinancialYear-${nextSequence.toString().padLeft(4, '0')}";
 

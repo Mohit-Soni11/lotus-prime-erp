@@ -20,6 +20,7 @@ import 'package:file_picker/file_picker.dart';
 
 import '../../../logic/sales & orders/sales pos/pos_billing_controller.dart';
 import '../../../models/sales & orders/sales_pos_models/pos_invoice_model.dart';
+import '../../../models/sales & orders/sales_pos_models/sales_pos_models.dart';
 import '../../../models/sales & orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
 import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
@@ -325,11 +326,12 @@ class PosInvoiceController extends ChangeNotifier {
                 style: const pw.TextStyle(fontSize: 9)),
         ]),
         pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
-          pw.Text(inv.billType == BillType.gst ? "TAX INVOICE" : "ESTIMATE",
-              style: pw.TextStyle(
-                  fontSize: 14,
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfColors.amber800)),
+          if (inv.billType == BillType.gst)
+            pw.Text("TAX INVOICE",
+                style: pw.TextStyle(
+                    fontSize: 14,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.amber800)),
           pw.SizedBox(height: 4),
           pw.Text("No: ${inv.invoiceNumber}",
               style: const pw.TextStyle(fontSize: 10)),
@@ -407,7 +409,7 @@ class PosInvoiceController extends ChangeNotifier {
               return pw.TableRow(children: [
                 _cell("${e.key + 1}"),
                 _cell(desc),
-                _cell("${i.tunch}%"),
+                _cell(_formatPurity(i)),
                 if (activeConfig.showGrossWt)
                   _cell(
                       i.grossCtrl.text.isNotEmpty ? i.grossCtrl.text : "0.000"),
@@ -438,6 +440,87 @@ class PosInvoiceController extends ChangeNotifier {
       padding: const pw.EdgeInsets.all(5),
       child: pw.Text(text, style: const pw.TextStyle(fontSize: 8)));
 
+  // ✅ FIX: Purity display — metal type ke hisaab se format
+  //
+  // GOLD    → "18KT (75.0%)", "22KT (91.60%)", "24KT (99.99%)" etc.
+  // SILVER  → "35%", "92.5%" — sirf percentage
+  // PLAT    → "95.0%" ya jo text likha hai
+  // DIAMOND → jo text likha hai (ct / % / grade)
+  String _formatPurity(SaleItemModel item) {
+    final text = item.purityCtrl.text.trim();
+    final tunch = item.tunch;
+
+    switch (item.metal) {
+      // ─────────────── GOLD ───────────────
+      case MetalType.gold:
+        // KT number nikalo — "18KT", "18kt", "18K", ya sirf "18"
+        final match = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(text);
+        final ktVal = match != null
+            ? double.tryParse(match.group(1)!)
+            : (tunch > 0 ? tunch : null);
+
+        if (ktVal != null && ktVal > 0) {
+          final pct = _ktToPercent(ktVal);
+          return '${ktVal % 1 == 0 ? ktVal.toInt() : ktVal}KT ($pct%)';
+        }
+        return text.isNotEmpty ? text : '-';
+
+      // ─────────────── SILVER ───────────────
+      case MetalType.silver:
+        // Sirf % dikhao — jo number likha hai woh
+        if (tunch > 0) {
+          final clean = tunch % 1 == 0
+              ? tunch.toInt().toString()
+              : tunch.toStringAsFixed(1);
+          return '$clean%';
+        }
+        if (text.isNotEmpty) return '$text%';
+        return '-';
+
+      // ─────────────── PLATINUM ───────────────
+      case MetalType.platinum:
+        if (tunch > 0) return '${tunch.toStringAsFixed(1)}%';
+        if (text.isNotEmpty) return text;
+        return '-';
+
+      // ─────────────── DIAMOND ───────────────
+      case MetalType.diamond:
+        // Diamond ka purity text as-is dikhao (ct, grade, clarity)
+        if (text.isNotEmpty) return text;
+        if (tunch > 0) return '${tunch.toStringAsFixed(2)}ct';
+        return '-';
+    }
+  }
+
+  // KT → exact % conversion — standard industry values
+  String _ktToPercent(double kt) {
+    switch (kt.round()) {
+      case 9:
+        return '37.5';
+      case 10:
+        return '41.7';
+      case 12:
+        return '50.0';
+      case 14:
+        return '58.5';
+      case 18:
+        return '75.0';
+      case 20:
+        return '83.3';
+      case 21:
+        return '87.5';
+      case 22:
+        return '91.60';
+      case 23:
+        return '95.8';
+      case 24:
+        return '99.99';
+      default:
+        final pct = (kt / 24) * 100;
+        return pct.toStringAsFixed(1);
+    }
+  }
+
   pw.Widget _pdfTotalsBlock(PosInvoiceModel inv) {
     return pw.Row(mainAxisAlignment: pw.MainAxisAlignment.end, children: [
       pw.SizedBox(
@@ -450,9 +533,47 @@ class PosInvoiceController extends ChangeNotifier {
             _totalRow("CGST", inv.cgst),
             _totalRow("SGST", inv.sgst),
           ],
-          if (inv.totalOldGoldDeduction > 0)
-            _totalRow("Old Gold Exchange", -inv.totalOldGoldDeduction,
-                isDeduction: true),
+          // ✅ FIX: Gold aur Silver exchange alag-alag lines mein dikhao
+          if (inv.totalOldGoldDeduction > 0) ...[
+            () {
+              final goldExchange = inv.oldGoldItems
+                  .where((i) => i.metal == MetalType.gold)
+                  .fold(0.0, (sum, i) => sum + i.totalValue);
+              final silverExchange = inv.oldGoldItems
+                  .where((i) => i.metal == MetalType.silver)
+                  .fold(0.0, (sum, i) => sum + i.totalValue);
+              final platinumExchange = inv.oldGoldItems
+                  .where((i) => i.metal == MetalType.platinum)
+                  .fold(0.0, (sum, i) => sum + i.totalValue);
+
+              // Agar sirf ek type hai ya dono same type, toh generic label
+              final hasMultipleTypes = [
+                    goldExchange,
+                    silverExchange,
+                    platinumExchange
+                  ].where((v) => v > 0).length >
+                  1;
+
+              if (!hasMultipleTypes) {
+                // Sirf ek metal type — generic label use karo
+                return _totalRow(
+                    "Exchange / Old Metal", -inv.totalOldGoldDeduction,
+                    isDeduction: true);
+              }
+
+              // Multiple metal types — alag-alag lines
+              return pw.Column(children: [
+                if (goldExchange > 0)
+                  _totalRow("Gold Exchange", -goldExchange, isDeduction: true),
+                if (silverExchange > 0)
+                  _totalRow("Silver Exchange", -silverExchange,
+                      isDeduction: true),
+                if (platinumExchange > 0)
+                  _totalRow("Platinum Exchange", -platinumExchange,
+                      isDeduction: true),
+              ]);
+            }(),
+          ],
           pw.Divider(color: PdfColors.amber800),
           _totalRow("GRAND TOTAL", inv.grandTotal, isBold: true, isGrand: true),
         ]),
