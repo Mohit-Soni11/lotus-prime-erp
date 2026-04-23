@@ -18,6 +18,10 @@ import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
 
+// ✅ DB SAVE IMPORTS
+import 'package:drift/drift.dart' show Value;
+import '../../../database/db/app_database.dart';
+
 import '../../../logic/sales & orders/sales pos/pos_billing_controller.dart';
 import '../../../models/sales & orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../models/sales & orders/sales_pos_models/sales_pos_models.dart';
@@ -57,6 +61,11 @@ class PosInvoiceController extends ChangeNotifier {
   PosInvoiceModel? invoice;
   Uint8List? pdfBytes;
   String? errorMessage;
+
+  // ✅ DB SAVE STATE
+  bool isSavedToDb = false;
+  int? savedBillDbId;
+  final AppDatabase _db = AppDatabase();
 
   PrintFormat selectedFormat = PrintFormat.a4;
   int printCopies = 1;
@@ -229,16 +238,91 @@ class PosInvoiceController extends ChangeNotifier {
     );
   }
 
+  // ==========================================
+  // ✅ STEP 1: DB se next sequence number lo
+  // App restart hone par bhi sahi number milega
+  // ==========================================
+  Future<void> _initSequenceFromDb() async {
+    try {
+      final allBills = await _db.select(_db.bills).get();
+      billing.nextSequence = allBills.length + 1;
+    } catch (_) {
+      // fallback: jo bhi memory mein hai wo chalega
+    }
+  }
+
+  // ==========================================
+  // ✅ STEP 2: Bill + Items ko DB mein save karo
+  // Bills table mein master record +
+  // BillItems table mein har item ki entry
+  // ==========================================
+  Future<void> _saveBillToDatabase(PosInvoiceModel inv) async {
+    // --- BILLS TABLE mein master record insert karo ---
+    final billId = await _db.into(_db.bills).insert(
+          BillsCompanion(
+            billNo: Value(inv.invoiceNumber),
+            customerId: Value(billing.selectedCustomer?.id),
+            customerName:
+                Value(inv.customerName.isNotEmpty ? inv.customerName : null),
+            mobile: Value(
+                inv.customerMobile.isNotEmpty ? inv.customerMobile : null),
+            totalAmount: Value(inv.grossAmount),
+            discount: Value(inv.discountAmount),
+            finalAmount: Value(inv.grandTotal),
+            paidAmount: Value(
+                inv.cashPaid + inv.upiPaid + inv.cardPaid + inv.advancePaid),
+            billDate: Value(inv.invoiceDate),
+            status: const Value('ACTIVE'),
+          ),
+        );
+    savedBillDbId = billId;
+
+    // --- BILL_ITEMS TABLE mein har sale item insert karo ---
+    for (final item in billing.saleItems) {
+      final grossWt = double.tryParse(item.grossCtrl.text) ?? 0.0;
+      final itemName = item.descCtrl.text.isNotEmpty
+          ? item.descCtrl.text
+          : item.metal.displayName;
+
+      await _db.into(_db.billItems).insert(
+            BillItemsCompanion(
+              billId: Value(billId),
+              itemName: Value(itemName),
+              huid: Value(
+                  item.huidCtrl.text.isNotEmpty ? item.huidCtrl.text : null),
+              purity: Value(
+                  item.purityCtrl.text.isNotEmpty ? item.purityCtrl.text : '—'),
+              grossWeight: Value(grossWt),
+              netWeight: Value(item.netWt),
+              rate: Value(item.rate),
+              makingCharge: Value(item.makingAmt),
+              itemTotal: Value(item.totalValue),
+            ),
+          );
+    }
+
+    isSavedToDb = true;
+  }
+
   Future<void> generateInvoice() async {
     genState = InvoiceGenState.generating;
+    isSavedToDb = false;
+    savedBillDbId = null;
     notifyListeners();
     try {
-      await _fetchRealShopData();
-      // ✅ FIX: billing controller ka promiseDate leke aao
+      // ✅ Shop data + DB sequence dono fetch karo
+      await Future.wait([
+        _fetchRealShopData(),
+        _initSequenceFromDb(),
+      ]);
+
       dueDate = billing.promiseDate;
       invoice = _buildInvoiceSnapshot();
+
+      // ✅ DB mein save karo PEHLE (sequence badho baad mein)
+      await _saveBillToDatabase(invoice!);
       billing.nextSequence++;
-      await Future.delayed(const Duration(milliseconds: 500));
+
       pdfBytes = await _buildPdf(invoice!, selectedFormat);
       genState = InvoiceGenState.ready;
     } catch (e) {
@@ -955,6 +1039,8 @@ class PosInvoiceController extends ChangeNotifier {
     invoice = null;
     pdfBytes = null;
     errorMessage = null;
+    isSavedToDb = false;
+    savedBillDbId = null;
     notifyListeners();
   }
 

@@ -745,7 +745,54 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10))),
             ),
-          )
+          ),
+
+          // ✅ DONE BUTTON — Sale confirm, POS saaf karo
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: isReady
+                  ? () {
+                      // POS screen bilkul saaf karo
+                      widget.billingCtrl.clearEntirePOS();
+                      // Preview screen band karo
+                      Navigator.of(context).pop();
+                      // Success message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "✅ Sale complete! POS ready for next customer.",
+                          ),
+                          backgroundColor: SalesPosColors.success,
+                          behavior: SnackBarBehavior.floating,
+                          duration: Duration(seconds: 3),
+                        ),
+                      );
+                    }
+                  : null,
+              icon: const Icon(Icons.check_circle_outline_rounded, size: 20),
+              label: const Text(
+                "DONE — NEW SALE",
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: SalesPosColors.success,
+                side: const BorderSide(
+                  color: SalesPosColors.success,
+                  width: 2,
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
