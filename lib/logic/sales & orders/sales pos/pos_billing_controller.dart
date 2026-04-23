@@ -32,6 +32,10 @@ import '../../../helpers/search/fuzzy_search_helper.dart';
 import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
 import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
 
+// ✅ NAYA IMPORT — Customer History in POS
+import '../../../repositories/customer/customer_profile_repository.dart';
+import '../../../models/customer/customer_profile/customer_profile_model.dart';
+
 class PosBillingController extends ChangeNotifier {
   // --- GLOBAL CONFIG ---
   // ✅ FIX: Shop name dynamically loaded from DB on init
@@ -74,6 +78,11 @@ class PosBillingController extends ChangeNotifier {
   bool isSearchingCustomer = false;
   bool customerNotFound = false; // ✅ NEW: "Not Found" state
   CustomerListItemModel? selectedCustomer;
+
+  // ✅ NAYA: Customer POS History — select hone ke baad dikhega
+  CustomerProfileModel? customerHistory;
+  bool isLoadingHistory = false;
+  final CustomerProfileRepository _profileRepo = CustomerProfileRepository();
 
   Future<void> searchCustomersByName(String query) async {
     final term = query.toLowerCase().trim();
@@ -145,6 +154,24 @@ class PosBillingController extends ChangeNotifier {
     cityCtrl.text = customer.city;
     customerSuggestions = [];
     customerNotFound = false; // ✅ Reset
+    customerHistory = null; // ✅ Pehle purani history clear karo
+    notifyListeners();
+
+    // ✅ NAYA: Background mein history fetch karo
+    _fetchCustomerHistory(customer.id);
+  }
+
+  // ✅ NAYA FUNCTION: Customer ka bill history, due, last visit fetch karo
+  Future<void> _fetchCustomerHistory(int customerId) async {
+    isLoadingHistory = true;
+    notifyListeners();
+    try {
+      final profile = await _profileRepo.fetchProfile(customerId);
+      customerHistory = profile;
+    } catch (_) {
+      customerHistory = null;
+    }
+    isLoadingHistory = false;
     notifyListeners();
   }
 
@@ -681,6 +708,8 @@ class PosBillingController extends ChangeNotifier {
     selectedCustomer = null;
     customerSuggestions = [];
     customerNotFound = false; // ✅ Reset
+    customerHistory = null; // ✅ NAYA: History bhi clear karo
+    isLoadingHistory = false;
     descriptionSuggestions = [];
     promiseDate = null; // ✅ Reset promise date
     nameCtrl.clear();
