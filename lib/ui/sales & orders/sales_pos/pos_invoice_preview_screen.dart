@@ -108,6 +108,8 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                           const SizedBox(height: 24),
                           _buildCategorizedCustomization(),
                           const SizedBox(height: 24),
+                          // ✅ NEW: Due Date section (balance due hone par)
+                          _buildDueDateSection(),
                           _buildPrintOptions(),
                         ],
                       ),
@@ -282,7 +284,6 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.2)),
         const SizedBox(height: 10),
-
         Container(
           decoration: BoxDecoration(
               color: SalesPosColors.shellPanelBg,
@@ -339,35 +340,18 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                   activeSettings.showMaking,
                   () => _invCtrl.toggleCustomization(
                       'making', _configMode, _configType)),
+              const Divider(color: SalesPosColors.shellBorder, height: 1),
+              // ✅ NEW: Exchange Breakdown toggle
+              _buildToggleRow(
+                "Exchange Breakdown",
+                "ON: Gold/Silver alag  •  OFF: Combined total",
+                activeSettings.showExchangeBreakdown,
+                () => _invCtrl.toggleCustomization(
+                    'exchange', _configMode, _configType),
+              ),
             ],
           ),
         ),
-
-        // ✅ NAYA SECTION: Exchange Display Settings
-        // (Sirf tab dikhao jab exchange items hon)
-        if ((_invCtrl.invoice?.totalOldGoldDeduction ?? 0) > 0) ...[
-          const SizedBox(height: 24),
-          const Text("EXCHANGE SETTINGS",
-              style: TextStyle(
-                  color: SalesPosColors.shellTextMuted,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2)),
-          const SizedBox(height: 10),
-          Container(
-            decoration: BoxDecoration(
-              color: SalesPosColors.shellPanelBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: SalesPosColors.shellBorder),
-            ),
-            child: _buildToggleRow(
-              "Show Exchange Breakdown",
-              "ON: Gold/Silver alag • OFF: Combined total",
-              _invCtrl.showExchangeBreakdown,
-              () => _invCtrl.toggleExchangeBreakdown(),
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -434,6 +418,112 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
         inactiveTrackColor: SalesPosColors.shellBg,
       ),
       onTap: onTap,
+    );
+  }
+
+  // ✅ NEW: Due Date picker — balance due hone par show karo
+  Widget _buildDueDateSection() {
+    final hasDue = (_invCtrl.invoice?.balanceDue ?? 0) > 0.5;
+    if (!hasDue) return const SizedBox();
+
+    final dueDate = _invCtrl.dueDate;
+    final String dueDateLabel = dueDate != null
+        ? "${dueDate.day.toString().padLeft(2, '0')}/${dueDate.month.toString().padLeft(2, '0')}/${dueDate.year}"
+        : "Date select karo";
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("DUE DATE",
+            style: TextStyle(
+                color: SalesPosColors.shellTextMuted,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2)),
+        const SizedBox(height: 10),
+        GestureDetector(
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate:
+                  dueDate ?? DateTime.now().add(const Duration(days: 7)),
+              firstDate: DateTime.now(),
+              lastDate: DateTime.now().add(const Duration(days: 365)),
+              builder: (context, child) => Theme(
+                data: Theme.of(context).copyWith(
+                  colorScheme: const ColorScheme.dark(
+                    primary: SalesPosColors.brandGold,
+                    onPrimary: Colors.black,
+                    surface: SalesPosColors.shellPanelBg,
+                    onSurface: SalesPosColors.shellTextTitle,
+                  ),
+                ),
+                child: child!,
+              ),
+            );
+            if (picked != null) {
+              await _invCtrl.setDueDate(picked);
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: SalesPosColors.shellPanelBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: dueDate != null
+                    ? SalesPosColors.brandGold
+                    : SalesPosColors.shellBorder,
+                width: dueDate != null ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_rounded,
+                  color: dueDate != null
+                      ? SalesPosColors.brandGold
+                      : SalesPosColors.shellTextMuted,
+                  size: 18,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Payment Due By",
+                        style: TextStyle(
+                          color: SalesPosColors.shellTextMuted,
+                          fontSize: 10,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        dueDateLabel,
+                        style: TextStyle(
+                          color: dueDate != null
+                              ? SalesPosColors.brandGold
+                              : SalesPosColors.shellTextTitle,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (dueDate != null)
+                  GestureDetector(
+                    onTap: () => _invCtrl.setDueDate(null),
+                    child: const Icon(Icons.close_rounded,
+                        color: SalesPosColors.shellTextMuted, size: 18),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
     );
   }
 

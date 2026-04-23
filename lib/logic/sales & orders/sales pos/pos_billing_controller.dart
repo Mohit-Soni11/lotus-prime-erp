@@ -455,9 +455,16 @@ class PosBillingController extends ChangeNotifier {
       ? _wholesaleGrossAmount
       : _retailGrossAmount;
 
-  double get discountAmount => discountType == DiscountType.percentage
-      ? (grossAmount * _discountInput / 100)
-      : _discountInput;
+  double get discountAmount {
+    if (discountType == DiscountType.percentage) {
+      // ✅ FIX: % 100 se zyada nahi ho sakta
+      final clampedPct = _discountInput.clamp(0.0, 100.0);
+      return grossAmount * clampedPct / 100;
+    } else {
+      // ✅ FIX: Flat discount grossAmount se zyada nahi ho sakta
+      return _discountInput.clamp(0.0, grossAmount);
+    }
+  }
 
   double get taxableAmount => grossAmount - discountAmount;
 
@@ -617,10 +624,16 @@ class PosBillingController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ==========================================
-  // 4. HOLD INVOICE SYSTEM LOGIC
-  // ==========================================
+  // --- HOLD INVOICE SYSTEM LOGIC ---
   final List<PosHoldBillModel> heldBills = [];
+
+  // ✅ Promise Date — billing panel se invoice tak carry hoga
+  DateTime? promiseDate;
+
+  void setPromiseDate(DateTime? date) {
+    promiseDate = date;
+    notifyListeners();
+  }
 
   void holdCurrentBill() {
     if (saleItems.isEmpty && oldGoldItems.isEmpty) return;
@@ -669,6 +682,7 @@ class PosBillingController extends ChangeNotifier {
     customerSuggestions = [];
     customerNotFound = false; // ✅ Reset
     descriptionSuggestions = [];
+    promiseDate = null; // ✅ Reset promise date
     nameCtrl.clear();
     mobileCtrl.clear();
     cityCtrl.clear();

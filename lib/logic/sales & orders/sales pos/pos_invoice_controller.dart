@@ -31,6 +31,9 @@ class BillSettings {
   bool showGrossWt = true;
   bool showLessWt = true;
   bool showMaking = true;
+  // ✅ NEW: Exchange breakdown toggle
+  // false = combined single line, true = har metal alag line
+  bool showExchangeBreakdown = false;
 }
 
 class InvoicePrintConfig {
@@ -59,10 +62,8 @@ class PosInvoiceController extends ChangeNotifier {
   int printCopies = 1;
   bool includeDuplicateStamp = false;
 
-  // ✅ NAYA: Exchange breakdown toggle
-  // ON  = Gold Exchange, Silver Exchange alag-alag lines mein dikhao
-  // OFF = Sab exchange ek combined line mein dikhao
-  bool showExchangeBreakdown = true;
+  // ✅ NEW: Due date for Balance Due — user set karega
+  DateTime? dueDate;
 
   String _realShopName = "Lotus Jewellers";
   String _realShopAddress = "Address not set";
@@ -111,20 +112,14 @@ class PosInvoiceController extends ChangeNotifier {
       case 'making':
         config.showMaking = !config.showMaking;
         break;
+      case 'exchange':
+        config.showExchangeBreakdown = !config.showExchangeBreakdown;
+        break;
     }
 
     if (invoice != null &&
         invoice!.billingMode == mode &&
         invoice!.billType == type) {
-      pdfBytes = await _buildPdf(invoice!, selectedFormat);
-    }
-    notifyListeners();
-  }
-
-  // ✅ NAYA: Exchange breakdown toggle karne ka method
-  Future<void> toggleExchangeBreakdown() async {
-    showExchangeBreakdown = !showExchangeBreakdown;
-    if (invoice != null) {
       pdfBytes = await _buildPdf(invoice!, selectedFormat);
     }
     notifyListeners();
@@ -230,6 +225,7 @@ class PosInvoiceController extends ChangeNotifier {
       cardPaid: double.tryParse(billing.cardCtrl.text) ?? 0,
       advancePaid: double.tryParse(billing.advCtrl.text) ?? 0,
       balanceDue: billing.balanceDue,
+      promiseDate: dueDate,
     );
   }
 
@@ -238,6 +234,8 @@ class PosInvoiceController extends ChangeNotifier {
     notifyListeners();
     try {
       await _fetchRealShopData();
+      // ✅ FIX: billing controller ka promiseDate leke aao
+      dueDate = billing.promiseDate;
       invoice = _buildInvoiceSnapshot();
       billing.nextSequence++;
       await Future.delayed(const Duration(milliseconds: 500));
@@ -536,9 +534,13 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   pw.Widget _pdfTotalsBlock(PosInvoiceModel inv) {
+    final activeConfig = getActiveConfig(inv.billingMode, inv.billType);
+    // ✅ Professional: Net Payable = Grand Total - Exchange deduction
+    final double netPayable = inv.grandTotal - inv.totalOldGoldDeduction;
+
     return pw.Row(mainAxisAlignment: pw.MainAxisAlignment.end, children: [
       pw.SizedBox(
-        width: 220,
+        width: 240,
         child: pw.Column(children: [
           _totalRow("Gross Amount", inv.grossAmount),
           if (inv.discountAmount > 0)
@@ -547,19 +549,9 @@ class PosInvoiceController extends ChangeNotifier {
             _totalRow("CGST", inv.cgst),
             _totalRow("SGST", inv.sgst),
           ],
-          // ✅ UPGRADED: Exchange Display — Toggle-aware
-          // showExchangeBreakdown = true  → Gold/Silver/Platinum alag-alag
-          // showExchangeBreakdown = false → Sab ek combined "Exchange" line
+          // Exchange deduction lines
           if (inv.totalOldGoldDeduction > 0) ...[
             () {
-              // Toggle OFF → Combined ek line
-              if (!showExchangeBreakdown) {
-                return _totalRow(
-                    "Exchange / Old Metal", -inv.totalOldGoldDeduction,
-                    isDeduction: true);
-              }
-
-              // Toggle ON → Metal-wise breakdown
               final goldExchange = inv.oldGoldItems
                   .where((i) => i.metal == MetalType.gold)
                   .fold(0.0, (sum, i) => sum + i.totalValue);
@@ -570,33 +562,35 @@ class PosInvoiceController extends ChangeNotifier {
                   .where((i) => i.metal == MetalType.platinum)
                   .fold(0.0, (sum, i) => sum + i.totalValue);
 
-              final hasMultipleTypes = [
-                    goldExchange,
-                    silverExchange,
-                    platinumExchange
-                  ].where((v) => v > 0).length >
-                  1;
-
-              if (!hasMultipleTypes) {
+              if (!activeConfig.showExchangeBreakdown) {
                 return _totalRow(
-                    "Exchange / Old Metal", -inv.totalOldGoldDeduction,
-                    isDeduction: true);
+                  "Less: Old Metal Exchange",
+                  -inv.totalOldGoldDeduction,
+                  isDeduction: true,
+                );
               }
-
               return pw.Column(children: [
                 if (goldExchange > 0)
-                  _totalRow("Gold Exchange", -goldExchange, isDeduction: true),
+                  _totalRow("Less: Gold Exchange", -goldExchange,
+                      isDeduction: true),
                 if (silverExchange > 0)
-                  _totalRow("Silver Exchange", -silverExchange,
+                  _totalRow("Less: Silver Exchange", -silverExchange,
                       isDeduction: true),
                 if (platinumExchange > 0)
-                  _totalRow("Platinum Exchange", -platinumExchange,
+                  _totalRow("Less: Platinum Exchange", -platinumExchange,
+                      isDeduction: true),
+                if (goldExchange == 0 &&
+                    silverExchange == 0 &&
+                    platinumExchange == 0)
+                  _totalRow(
+                      "Less: Old Metal Exchange", -inv.totalOldGoldDeduction,
                       isDeduction: true),
               ]);
             }(),
           ],
           pw.Divider(color: PdfColors.amber800),
-          _totalRow("GRAND TOTAL", inv.grandTotal, isBold: true, isGrand: true),
+          // ✅ Grand Total = netPayable (exchange already deducted)
+          _totalRow("GRAND TOTAL", netPayable, isBold: true, isGrand: true),
         ]),
       ),
     ]);
@@ -625,83 +619,165 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   pw.Widget _pdfPaymentBlock(PosInvoiceModel inv) {
-    // ✅ UPGRADED: Proper payment rows + Due Date support
+    // ✅ PROFESSIONAL STYLE (Tanishq / Malabar Gold standard)
+    // Exchange pehle se Totals Block mein "Less:" ke roop mein deduct ho chuka hai
+    // Payment Details mein sirf actual cash payment modes dikhenge
+    final double netPayable = inv.grandTotal - inv.totalOldGoldDeduction;
+    final double totalCashPaid =
+        inv.cashPaid + inv.upiPaid + inv.cardPaid + inv.advancePaid;
+
+    final List<Map<String, dynamic>> payments = [
+      if (inv.cashPaid > 0) {'label': 'Cash', 'amount': inv.cashPaid},
+      if (inv.upiPaid > 0)
+        {'label': 'UPI / Bank Transfer', 'amount': inv.upiPaid},
+      if (inv.cardPaid > 0) {'label': 'Card', 'amount': inv.cardPaid},
+      if (inv.advancePaid > 0) {'label': 'Advance', 'amount': inv.advancePaid},
+    ];
+
+    final bool hasDue = inv.balanceDue > 0.5;
+    final bool isPaid = !hasDue;
+
     return pw.Container(
-      padding: const pw.EdgeInsets.all(12),
+      padding: const pw.EdgeInsets.all(14),
       decoration: pw.BoxDecoration(
-          border: pw.Border.all(color: PdfColors.grey300),
-          borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6))),
-      child:
-          pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-        pw.Text("PAYMENT DETAILS",
-            style: pw.TextStyle(
-                fontSize: 8,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.grey600,
-                letterSpacing: 1.0)),
-        pw.SizedBox(height: 8),
-
-        // ── Payment Method Rows ──
-        if (inv.cashPaid > 0) _paymentRow("Cash", inv.cashPaid),
-        if (inv.upiPaid > 0) _paymentRow("UPI / Online", inv.upiPaid),
-        if (inv.cardPaid > 0) _paymentRow("Card", inv.cardPaid),
-        if (inv.advancePaid > 0) _paymentRow("Advance", inv.advancePaid),
-
-        // ── Balance Due Section ──
-        if (inv.balanceDue > 0.5) ...[
-          pw.SizedBox(height: 6),
-          pw.Divider(color: PdfColors.grey300, height: 1),
-          pw.SizedBox(height: 6),
+        border: pw.Border.all(color: PdfColors.grey300),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          // ── Header ──────────────────────────────────────────────────────
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              pw.Text("Balance Due",
-                  style: pw.TextStyle(
-                      fontSize: 10,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.red700)),
-              pw.Text("Rs ${inv.balanceDue.toStringAsFixed(2)}",
-                  style: pw.TextStyle(
-                      fontSize: 10,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.red700)),
+              pw.Text(
+                "PAYMENT RECEIVED",
+                style: pw.TextStyle(
+                    fontSize: 8,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.grey600),
+              ),
+              if (isPaid)
+                pw.Container(
+                  padding:
+                      const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: const pw.BoxDecoration(
+                    color: PdfColors.green100,
+                    borderRadius: pw.BorderRadius.all(pw.Radius.circular(4)),
+                  ),
+                  child: pw.Text("✓ FULLY PAID",
+                      style: pw.TextStyle(
+                          fontSize: 7,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.green800)),
+                ),
             ],
           ),
-          // ── Due Date (agar promise date set hai) ──
-          if (inv.promiseDate != null) ...[
+          pw.SizedBox(height: 8),
+
+          // ── Payment Mode Chips ──────────────────────────────────────────
+          if (payments.isNotEmpty) ...[
+            pw.Wrap(
+              spacing: 12,
+              runSpacing: 6,
+              children: payments.map((p) {
+                return pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 5),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.grey50,
+                    borderRadius:
+                        const pw.BorderRadius.all(pw.Radius.circular(4)),
+                    border: pw.Border.all(color: PdfColors.grey200, width: 0.5),
+                  ),
+                  child: pw.RichText(
+                    text: pw.TextSpan(children: [
+                      pw.TextSpan(
+                        text: "${p['label']}:  ",
+                        style:
+                            pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+                      ),
+                      pw.TextSpan(
+                        text:
+                            "Rs ${(p['amount'] as double).toStringAsFixed(2)}",
+                        style: pw.TextStyle(
+                            fontSize: 9,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.black),
+                      ),
+                    ]),
+                  ),
+                );
+              }).toList(),
+            ),
+            pw.SizedBox(height: 10),
+          ],
+
+          // ── Total Paid row ───────────────────────────────────────────────
+          if (payments.length > 1) ...[
+            pw.Divider(color: PdfColors.grey200, thickness: 0.5),
             pw.SizedBox(height: 4),
             pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Text("Due Date: ",
-                    style: const pw.TextStyle(
-                        fontSize: 8, color: PdfColors.grey600)),
-                pw.Text(
-                    "${inv.promiseDate!.day.toString().padLeft(2, '0')}/"
-                    "${inv.promiseDate!.month.toString().padLeft(2, '0')}/"
-                    "${inv.promiseDate!.year}",
+                pw.Text("Total Paid",
+                    style: pw.TextStyle(fontSize: 9, color: PdfColors.grey600)),
+                pw.Text("Rs ${totalCashPaid.toStringAsFixed(2)}",
                     style: pw.TextStyle(
-                        fontSize: 8,
+                        fontSize: 9, fontWeight: pw.FontWeight.bold)),
+              ],
+            ),
+            pw.SizedBox(height: 6),
+          ],
+
+          // ── Balance Due / Paid stamp ─────────────────────────────────────
+          pw.Divider(color: PdfColors.grey300, thickness: 0.8),
+          pw.SizedBox(height: 6),
+          if (hasDue) ...[
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text("Balance Outstanding",
+                        style: pw.TextStyle(
+                            fontSize: 9,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.red700)),
+                    if (inv.promiseDate != null)
+                      pw.Text(
+                        "Pay by: ${inv.promiseDate!.day.toString().padLeft(2, '0')}/${inv.promiseDate!.month.toString().padLeft(2, '0')}/${inv.promiseDate!.year}",
+                        style: pw.TextStyle(
+                            fontSize: 8,
+                            color: PdfColors.orange700,
+                            fontStyle: pw.FontStyle.italic),
+                      ),
+                  ],
+                ),
+                pw.Text(
+                  "Rs ${inv.balanceDue.toStringAsFixed(2)}",
+                  style: pw.TextStyle(
+                      fontSize: 12,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.red700),
+                ),
+              ],
+            ),
+          ] else ...[
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text("Balance Outstanding",
+                    style: pw.TextStyle(fontSize: 9, color: PdfColors.grey600)),
+                pw.Text("Nil",
+                    style: pw.TextStyle(
+                        fontSize: 9,
                         fontWeight: pw.FontWeight.bold,
-                        color: PdfColors.red700)),
+                        color: PdfColors.green700)),
               ],
             ),
           ],
-        ],
-      ]),
-    );
-  }
-
-  // ✅ NAYA HELPER: Clean payment row widget
-  pw.Widget _paymentRow(String method, double amount) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(vertical: 2),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        children: [
-          pw.Text(method,
-              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
-          pw.Text("Rs ${amount.toStringAsFixed(2)}",
-              style: const pw.TextStyle(fontSize: 9)),
         ],
       ),
     );
@@ -830,6 +906,48 @@ class PosInvoiceController extends ChangeNotifier {
       pdfBytes = await _buildPdf(invoice!, fmt);
       notifyListeners();
     }
+  }
+
+  // ✅ NEW: Due date set karo — PDF regenerate hoga
+  Future<void> setDueDate(DateTime? date) async {
+    dueDate = date;
+    if (invoice != null) {
+      // Invoice snapshot mein dueDate update karo
+      invoice = PosInvoiceModel(
+        invoiceNumber: invoice!.invoiceNumber,
+        invoiceDate: invoice!.invoiceDate,
+        billType: invoice!.billType,
+        billingMode: invoice!.billingMode,
+        shopName: invoice!.shopName,
+        shopAddress: invoice!.shopAddress,
+        shopPhone: invoice!.shopPhone,
+        shopGstin: invoice!.shopGstin,
+        customerName: invoice!.customerName,
+        customerMobile: invoice!.customerMobile,
+        customerCity: invoice!.customerCity,
+        customerPan: invoice!.customerPan,
+        customerGstin: invoice!.customerGstin,
+        saleItems: invoice!.saleItems,
+        oldGoldItems: invoice!.oldGoldItems,
+        grossAmount: invoice!.grossAmount,
+        discountAmount: invoice!.discountAmount,
+        taxableAmount: invoice!.taxableAmount,
+        cgst: invoice!.cgst,
+        sgst: invoice!.sgst,
+        totalGst: invoice!.totalGst,
+        totalOldGoldDeduction: invoice!.totalOldGoldDeduction,
+        grandTotal: invoice!.grandTotal,
+        cashPaid: invoice!.cashPaid,
+        upiPaid: invoice!.upiPaid,
+        cardPaid: invoice!.cardPaid,
+        advancePaid: invoice!.advancePaid,
+        balanceDue: invoice!.balanceDue,
+        totalMakingCharge: invoice!.totalMakingCharge,
+        promiseDate: dueDate,
+      );
+      pdfBytes = await _buildPdf(invoice!, selectedFormat);
+    }
+    notifyListeners();
   }
 
   void reset() {
