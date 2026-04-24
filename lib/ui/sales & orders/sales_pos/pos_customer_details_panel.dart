@@ -112,6 +112,13 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
 
   void _onControllerChanged() {
     if (!mounted) return;
+
+    // ✅ FIX: setState zaroori hai — jab selectedCustomer change ho
+    //         (select ya deselect), widget rebuild ho aur history card
+    //         dikhe ya chhuppe. Bina setState ke build() mein
+    //         selectedCustomer != null check kaam nahi karta.
+    setState(() {});
+
     final suggestions = widget.ctrl.customerSuggestions;
     final notFound = widget.ctrl.customerNotFound;
 
@@ -858,22 +865,36 @@ class _HoverAnimatedButtonState extends State<_HoverAnimatedButton> {
 //   • Last visit date + kitne months pehle
 //   • Customer type badge
 // ==========================================
+// ==========================================
+// ✅ UPGRADED v4: POS Customer History Card
+//
+// CHANGES:
+//   • Due section zyada prominent — bada amount + "X bills mein"
+//   • Saari due bills ki list (scrollable agar zyada ho)
+//   • 2 Action Buttons: "Clear Due" aur "New Bill"
+//   • _ClearDueDialog — har bill ke against payment collect karne ke liye
+// ==========================================
 class _PosCustomerHistoryCard extends StatelessWidget {
   final PosBillingController ctrl;
   const _PosCustomerHistoryCard({required this.ctrl});
 
+  // ── FORMATTER ──────────────────────────────────────────────────────────
+  String _fmt(double v) {
+    if (v >= 100000) return '₹${(v / 100000).toStringAsFixed(2)}L';
+    if (v >= 1000) return '₹${(v / 1000).toStringAsFixed(1)}K';
+    return '₹${v.toStringAsFixed(0)}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Loading state
+    // ── LOADING STATE ───────────────────────────────────────────────────
     if (ctrl.isLoadingHistory) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: SalesPosColors.customerCardBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: SalesPosColors.brandGold.withOpacity(0.2),
-          ),
+          border: Border.all(color: SalesPosColors.brandGold.withOpacity(0.2)),
         ),
         child: Row(
           children: [
@@ -881,17 +902,13 @@ class _PosCustomerHistoryCard extends StatelessWidget {
               width: 14,
               height: 14,
               child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: SalesPosColors.brandGold,
-              ),
+                  strokeWidth: 2, color: SalesPosColors.brandGold),
             ),
             const SizedBox(width: 10),
             Text(
               'Customer history load ho rahi hai...',
-              style: TextStyle(
-                color: SalesPosColors.bodyTextMuted,
-                fontSize: 12,
-              ),
+              style:
+                  TextStyle(color: SalesPosColors.bodyTextMuted, fontSize: 12),
             ),
           ],
         ),
@@ -900,16 +917,14 @@ class _PosCustomerHistoryCard extends StatelessWidget {
 
     final history = ctrl.customerHistory;
 
-    // Agar history null ho (new customer / no data)
+    // ── NEW CUSTOMER — NO HISTORY ───────────────────────────────────────
     if (history == null) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: SalesPosColors.customerCardBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: SalesPosColors.bodyBorder,
-          ),
+          border: Border.all(color: SalesPosColors.bodyBorder),
         ),
         child: Row(
           children: [
@@ -918,44 +933,38 @@ class _PosCustomerHistoryCard extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               'Naya customer — koi purana record nahi mila',
-              style: TextStyle(
-                color: SalesPosColors.bodyTextMuted,
-                fontSize: 12,
-              ),
+              style:
+                  TextStyle(color: SalesPosColors.bodyTextMuted, fontSize: 12),
             ),
           ],
         ),
       );
     }
 
-    // --- Data calculate karo ---
+    // ── DATA ────────────────────────────────────────────────────────────
     final totalBills = history.bills.length;
     final outstanding = history.outstanding;
     final hasDue = outstanding > 0;
     final dueBills = history.dues;
+    final dueBillCount = dueBills.length;
 
-    // Last visit
+    // Last visit text
     String lastVisitText = 'Pehli baar aa rahe hain';
     if (history.bills.isNotEmpty) {
-      final lastDate = history.bills.first.billDate;
-      final now = DateTime.now();
-      final diff = now.difference(lastDate);
-      final days = diff.inDays;
+      final days =
+          DateTime.now().difference(history.bills.first.billDate).inDays;
       if (days == 0) {
         lastVisitText = 'Aaj aaye hain';
       } else if (days == 1) {
         lastVisitText = 'Kal aaye the';
       } else if (days < 30) {
-        lastVisitText = '$days din pehle aaye the';
+        lastVisitText = '$days din pehle';
       } else if (days < 365) {
-        final months = (days / 30).floor();
-        lastVisitText = '$months mahine pehle aaye the';
+        lastVisitText = '${(days / 30).floor()} mahine pehle';
       } else {
-        final years = (days / 365).floor();
-        final remainMonths = ((days % 365) / 30).floor();
-        lastVisitText = remainMonths > 0
-            ? '$years saal $remainMonths mahine pehle'
-            : '$years saal pehle aaye the';
+        final y = (days / 365).floor();
+        final m = ((days % 365) / 30).floor();
+        lastVisitText = m > 0 ? '$y saal $m mahine pehle' : '$y saal pehle';
       }
     }
 
@@ -964,13 +973,12 @@ class _PosCustomerHistoryCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: hasDue
-            ? SalesPosColors.danger
-                .withOpacity(0.04) // Due ho toh subtle red tint
+            ? SalesPosColors.danger.withOpacity(0.04)
             : SalesPosColors.customerCardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: hasDue
-              ? SalesPosColors.danger.withOpacity(0.4)
+              ? SalesPosColors.danger.withOpacity(0.45)
               : SalesPosColors.brandGold.withOpacity(0.25),
           width: 1.5,
         ),
@@ -978,14 +986,11 @@ class _PosCustomerHistoryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- Header Row ---
+          // ── HEADER ────────────────────────────────────────────────────
           Row(
             children: [
-              Icon(
-                Icons.history_rounded,
-                size: 15,
-                color: SalesPosColors.brandGold,
-              ),
+              Icon(Icons.history_rounded,
+                  size: 15, color: SalesPosColors.brandGold),
               const SizedBox(width: 6),
               Text(
                 'CUSTOMER HISTORY',
@@ -997,7 +1002,6 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              // Customer type badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
@@ -1019,10 +1023,9 @@ class _PosCustomerHistoryCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
 
-          // --- Stats Row ---
+          // ── STATS: Total Bills + Last Visit ───────────────────────────
           Row(
             children: [
-              // Total Bills
               _HistoryStat(
                 icon: Icons.receipt_long_rounded,
                 label: 'Total Bills',
@@ -1030,8 +1033,6 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                 valueColor: SalesPosColors.textDark,
               ),
               const SizedBox(width: 16),
-
-              // Last Visit
               _HistoryStat(
                 icon: Icons.access_time_rounded,
                 label: 'Last Visit',
@@ -1041,94 +1042,230 @@ class _PosCustomerHistoryCard extends StatelessWidget {
             ],
           ),
 
-          // --- Due Alert (agar due ho) ---
+          // ── DUE SECTION ───────────────────────────────────────────────
           if (hasDue) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
+
+            // ── BIG DUE BANNER ────────────────────────────────────────
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: SalesPosColors.danger.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(8),
-                border:
-                    Border.all(color: SalesPosColors.danger.withOpacity(0.25)),
+                color: SalesPosColors.danger.withOpacity(0.08),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(10)),
+                border: Border.all(
+                    color: SalesPosColors.danger.withOpacity(0.35), width: 1.5),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Row(
+                  // Warning icon circle
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: SalesPosColors.danger.withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.warning_amber_rounded,
+                        size: 20, color: SalesPosColors.danger),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Label + bill count
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.warning_amber_rounded,
-                          size: 15, color: SalesPosColors.danger),
-                      const SizedBox(width: 6),
                       Text(
-                        'BAKAYA / DUE',
+                        'TOTAL BAKAYA (DUE)',
                         style: TextStyle(
-                          color: SalesPosColors.danger,
-                          fontSize: 11,
+                          color: SalesPosColors.danger.withOpacity(0.85),
+                          fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          letterSpacing: 1.0,
+                          letterSpacing: 1.2,
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(height: 2),
                       Text(
-                        '₹ ${_fmt(outstanding)}',
+                        dueBillCount == 1
+                            ? '1 bill mein pending hai'
+                            : '$dueBillCount bills mein pending hai',
                         style: TextStyle(
-                          color: SalesPosColors.danger,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
+                          color: SalesPosColors.bodyTextMuted,
+                          fontSize: 11,
                         ),
                       ),
                     ],
                   ),
-                  if (dueBills.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    // Due bills list (max 3 dikhao)
-                    ...dueBills.take(3).map((due) => Padding(
-                          padding: const EdgeInsets.only(top: 3),
+
+                  const Spacer(),
+
+                  // BIG AMOUNT
+                  Text(
+                    _fmt(outstanding),
+                    style: const TextStyle(
+                      color: SalesPosColors.danger,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── DUE BILLS BREAKDOWN ───────────────────────────────────
+            if (dueBills.isNotEmpty)
+              Container(
+                decoration: BoxDecoration(
+                  color: SalesPosColors.danger.withOpacity(0.03),
+                  border: Border(
+                    left: BorderSide(
+                        color: SalesPosColors.danger.withOpacity(0.35),
+                        width: 1.5),
+                    right: BorderSide(
+                        color: SalesPosColors.danger.withOpacity(0.35),
+                        width: 1.5),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    ...dueBills.map((due) => Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 7),
                           child: Row(
                             children: [
-                              Icon(Icons.subdirectory_arrow_right_rounded,
+                              Icon(Icons.receipt_outlined,
                                   size: 13,
                                   color:
-                                      SalesPosColors.danger.withOpacity(0.5)),
-                              const SizedBox(width: 4),
+                                      SalesPosColors.danger.withOpacity(0.55)),
+                              const SizedBox(width: 6),
                               Text(
                                 due.billNo,
                                 style: TextStyle(
                                   color: SalesPosColors.bodyTextMuted,
-                                  fontSize: 11,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                due.formattedDate,
+                                style: TextStyle(
+                                  color: SalesPosColors.bodyTextMuted
+                                      .withOpacity(0.6),
+                                  fontSize: 10,
                                 ),
                               ),
                               const Spacer(),
                               Text(
-                                '₹ ${_fmt(due.dueAmount)}',
+                                _fmt(due.dueAmount),
                                 style: TextStyle(
                                   color: SalesPosColors.danger,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
                             ],
                           ),
                         )),
-                    if (dueBills.length > 3)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          '+ ${dueBills.length - 3} aur bills mein due hai',
-                          style: TextStyle(
-                            color: SalesPosColors.bodyTextMuted,
-                            fontSize: 10,
+                  ],
+                ),
+              ),
+
+            // ── ACTION BUTTONS ────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: SalesPosColors.danger.withOpacity(0.05),
+                borderRadius:
+                    const BorderRadius.vertical(bottom: Radius.circular(10)),
+                border: Border.all(
+                    color: SalesPosColors.danger.withOpacity(0.35), width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  // ── CLEAR DUE ───────────────────────────────────────
+                  Expanded(
+                    child: SizedBox(
+                      height: 42,
+                      child: OutlinedButton.icon(
+                        onPressed: () => showDialog(
+                          context: context,
+                          builder: (_) => _ClearDueDialog(
+                            customerName: history.name,
+                            dueBills: dueBills,
+                            totalOutstanding: outstanding,
                           ),
                         ),
+                        icon: const Icon(Icons.payments_outlined, size: 16),
+                        label: const Text(
+                          'Clear Due',
+                          style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w800),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: SalesPosColors.danger,
+                          side: BorderSide(
+                              color: SalesPosColors.danger.withOpacity(0.7),
+                              width: 1.5),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
                       ),
-                  ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+
+                  // ── NEW BILL ────────────────────────────────────────
+                  Expanded(
+                    child: SizedBox(
+                      height: 42,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          // History card collapse karo aur billing continue karo
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  const Icon(Icons.receipt_long,
+                                      color: Colors.white, size: 16),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                      'Naya bill — items add karein (due baad mein le sakte hain)'),
+                                ],
+                              ),
+                              backgroundColor: SalesPosColors.success,
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 3),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.add_circle_outline,
+                            size: 16, color: Colors.white),
+                        label: const Text(
+                          'New Bill',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: SalesPosColors.success,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
           ],
 
-          // --- All Clear ---
+          // ── ALL CLEAR ─────────────────────────────────────────────────
           if (!hasDue && totalBills > 0) ...[
             const SizedBox(height: 8),
             Row(
@@ -1138,10 +1275,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   'Koi bakaya nahi — account bilkul saaf hai',
-                  style: TextStyle(
-                    color: SalesPosColors.success,
-                    fontSize: 11,
-                  ),
+                  style: TextStyle(color: SalesPosColors.success, fontSize: 11),
                 ),
               ],
             ),
@@ -1150,11 +1284,406 @@ class _PosCustomerHistoryCard extends StatelessWidget {
       ),
     );
   }
+}
+
+// ==========================================
+// ✅ NAYA: Clear Due Dialog
+// Customer ke unpaid bills ki list + total
+// collect karne ka option
+// ==========================================
+class _ClearDueDialog extends StatefulWidget {
+  final String customerName;
+  final List<dynamic> dueBills; // CustomerDueModel list
+  final double totalOutstanding;
+
+  const _ClearDueDialog({
+    required this.customerName,
+    required this.dueBills,
+    required this.totalOutstanding,
+  });
+
+  @override
+  State<_ClearDueDialog> createState() => _ClearDueDialogState();
+}
+
+class _ClearDueDialogState extends State<_ClearDueDialog> {
+  final TextEditingController _amountCtrl = TextEditingController();
+  String _selectedMode = 'CASH';
+  bool _payFull = false;
+
+  @override
+  void dispose() {
+    _amountCtrl.dispose();
+    super.dispose();
+  }
 
   String _fmt(double v) {
-    if (v >= 100000) return '${(v / 100000).toStringAsFixed(1)}L';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
-    return v.toStringAsFixed(0);
+    if (v >= 100000) return '₹${(v / 100000).toStringAsFixed(2)}L';
+    if (v >= 1000) return '₹${(v / 1000).toStringAsFixed(1)}K';
+    return '₹${v.toStringAsFixed(0)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: SalesPosColors.bodyPanelBg,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        width: 440,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── HEADER ──────────────────────────────────────────────
+            Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: SalesPosColors.danger.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.payments_outlined,
+                      color: SalesPosColors.danger, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'DUE COLLECTION',
+                      style: TextStyle(
+                        color: SalesPosColors.textDark,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    Text(
+                      widget.customerName,
+                      style: TextStyle(
+                          color: SalesPosColors.bodyTextMuted, fontSize: 12),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close,
+                      size: 20, color: SalesPosColors.bodyTextMuted),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+            Divider(color: SalesPosColors.bodyBorder),
+            const SizedBox(height: 12),
+
+            // ── TOTAL DUE BOX ────────────────────────────────────────
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: SalesPosColors.danger.withOpacity(0.07),
+                borderRadius: BorderRadius.circular(8),
+                border:
+                    Border.all(color: SalesPosColors.danger.withOpacity(0.3)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Total Bakaya (${widget.dueBills.length} bills)',
+                    style: TextStyle(
+                        color: SalesPosColors.danger,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700),
+                  ),
+                  Text(
+                    _fmt(widget.totalOutstanding),
+                    style: const TextStyle(
+                      color: SalesPosColors.danger,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            // ── BILL BREAKDOWN ───────────────────────────────────────
+            const Text(
+              'BILL-WISE BREAKDOWN',
+              style: TextStyle(
+                color: SalesPosColors.bodyTextMuted,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 150),
+              decoration: BoxDecoration(
+                color: SalesPosColors.bodyBg,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: SalesPosColors.bodyBorder),
+              ),
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                itemCount: widget.dueBills.length,
+                separatorBuilder: (_, __) =>
+                    Divider(height: 1, color: SalesPosColors.bodyBorder),
+                itemBuilder: (_, i) {
+                  final due = widget.dueBills[i];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.receipt_outlined,
+                            size: 13, color: SalesPosColors.bodyTextMuted),
+                        const SizedBox(width: 6),
+                        Text(due.billNo,
+                            style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: SalesPosColors.textDark)),
+                        const SizedBox(width: 8),
+                        Text(due.formattedDate,
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: SalesPosColors.bodyTextMuted)),
+                        const Spacer(),
+                        Text(
+                          _fmt(due.dueAmount),
+                          style: const TextStyle(
+                            color: SalesPosColors.danger,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // ── PAYMENT MODE ─────────────────────────────────────────
+            const Text(
+              'PAYMENT MODE',
+              style: TextStyle(
+                color: SalesPosColors.bodyTextMuted,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: ['CASH', 'UPI', 'CARD'].map((mode) {
+                final selected = _selectedMode == mode;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedMode = mode),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? SalesPosColors.brandGold.withOpacity(0.15)
+                            : SalesPosColors.bodyBg,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: selected
+                              ? SalesPosColors.brandGold
+                              : SalesPosColors.bodyBorder,
+                          width: selected ? 1.5 : 1.0,
+                        ),
+                      ),
+                      child: Text(
+                        mode,
+                        style: TextStyle(
+                          color: selected
+                              ? SalesPosColors.goldHoverDark
+                              : SalesPosColors.bodyTextMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+
+            const SizedBox(height: 14),
+
+            // ── AMOUNT INPUT ─────────────────────────────────────────
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'AMOUNT RECEIVED',
+                        style: TextStyle(
+                          color: SalesPosColors.bodyTextMuted,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        height: 44,
+                        child: TextField(
+                          controller: _amountCtrl,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          style: const TextStyle(
+                            color: SalesPosColors.textDark,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: '0.00',
+                            prefixText: '₹  ',
+                            hintStyle: TextStyle(
+                                color: SalesPosColors.bodyTextMuted,
+                                fontSize: 14),
+                            filled: true,
+                            fillColor: SalesPosColors.formInputBg,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 0),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(
+                                  color: SalesPosColors.bodyBorder),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(
+                                  color: SalesPosColors.brandGold, width: 2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Full Pay toggle
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _payFull = !_payFull;
+                      if (_payFull) {
+                        _amountCtrl.text =
+                            widget.totalOutstanding.toStringAsFixed(2);
+                      } else {
+                        _amountCtrl.clear();
+                      }
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: _payFull
+                          ? SalesPosColors.success.withOpacity(0.12)
+                          : SalesPosColors.bodyBg,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: _payFull
+                            ? SalesPosColors.success
+                            : SalesPosColors.bodyBorder,
+                        width: _payFull ? 1.5 : 1.0,
+                      ),
+                    ),
+                    child: Text(
+                      'Full Pay',
+                      style: TextStyle(
+                        color: _payFull
+                            ? SalesPosColors.success
+                            : SalesPosColors.bodyTextMuted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // ── CONFIRM BUTTON ───────────────────────────────────────
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  final amount =
+                      double.tryParse(_amountCtrl.text.trim()) ?? 0.0;
+                  if (amount <= 0) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Amount enter karein'),
+                        backgroundColor: SalesPosColors.danger,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    return;
+                  }
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                          '₹${amount.toStringAsFixed(0)} collected via $_selectedMode — bill update pending'),
+                      backgroundColor: SalesPosColors.success,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.check_circle_outline,
+                    color: Colors.white, size: 20),
+                label: const Text(
+                  'CONFIRM COLLECTION',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: SalesPosColors.success,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
