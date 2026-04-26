@@ -1,6 +1,6 @@
 // =============================================================================
 // FILE : lib/ui/settings/settings_dashboard/settings_screen.dart
-// DESIGN: Dark Premium — Animated live dot — Category groups — Top brand look
+// SIZING: Larger header, bigger category labels, taller grid cards
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -37,17 +37,11 @@ class SettingsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── HEADER ─────────────────────────────────────────────────
               const _Header(),
-              const SizedBox(height: 32),
+              const SizedBox(height: 36),
               Divider(
-                color: SettingsColors.cardBorder,
-                thickness: 1,
-                height: 1,
-              ),
-              const SizedBox(height: 32),
-
-              // ── CATEGORY SECTIONS ──────────────────────────────────────
+                  color: SettingsColors.cardBorder, thickness: 1, height: 1),
+              const SizedBox(height: 36),
               ...SettingsCategory.values.map((cat) {
                 final items = SettingsData.getByCategory(cat);
                 if (items.isEmpty) return const SizedBox.shrink();
@@ -75,41 +69,37 @@ class _Header extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Icon box
         Container(
-          padding: const EdgeInsets.all(13),
+          padding: const EdgeInsets.all(15),
           decoration: SettingsStyles.headerIconBox,
           child: const Icon(
             SettingsIcons.headerIcon,
             color: SettingsColors.accentGold,
-            size: 26,
+            size: 28,
           ),
         ),
-        const SizedBox(width: 18),
-
+        const SizedBox(width: 20),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text('Settings', style: SettingsStyles.headerTitle),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Row(
                 children: [
-                  // 🟢 Animated live dot
                   const _LiveDot(),
-                  const SizedBox(width: 7),
+                  const SizedBox(width: 8),
                   const Text('System Online',
                       style: SettingsStyles.headerSubtitle),
-                  const SizedBox(width: 12),
-                  // Options count pill
+                  const SizedBox(width: 14),
                   Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: SettingsStyles.optionsPill,
                     child: Text(
-                      '${SettingsData.items.length} options',
+                      '${SettingsData.items.length} Options',
                       style: const TextStyle(
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: SettingsColors.accentGold,
                       ),
@@ -125,7 +115,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-// ── ANIMATED LIVE GREEN DOT ───────────────────────────────────────────────────
+// ── ANIMATED LIVE DOT ─────────────────────────────────────────────────────────
 class _LiveDot extends StatefulWidget {
   const _LiveDot();
 
@@ -145,10 +135,8 @@ class _LiveDotState extends State<_LiveDot>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
-
-    _pulse = Tween<double>(begin: 0.2, end: 1.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _pulse = Tween<double>(begin: 0.2, end: 1.0)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -160,17 +148,16 @@ class _LiveDotState extends State<_LiveDot>
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 18,
-      height: 18,
+      width: 20,
+      height: 20,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Outer pulsing ring
           AnimatedBuilder(
             animation: _pulse,
             builder: (_, __) => Container(
-              width: 14,
-              height: 14,
+              width: 16,
+              height: 16,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color:
@@ -178,18 +165,17 @@ class _LiveDotState extends State<_LiveDot>
               ),
             ),
           ),
-          // Inner solid dot
           Container(
-            width: 8,
-            height: 8,
+            width: 9,
+            height: 9,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: SettingsColors.onlineGreen,
               boxShadow: [
                 BoxShadow(
                   color: SettingsColors.onlineGlow,
-                  blurRadius: 6,
-                  spreadRadius: 1,
+                  blurRadius: 8,
+                  spreadRadius: 2,
                 ),
               ],
             ),
@@ -215,33 +201,33 @@ class _CategorySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 36),
+      padding: const EdgeInsets.only(bottom: 40),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Category header row
+          // Category header
           Row(
             children: [
               Container(
-                width: 3,
-                height: 18,
+                width: 4,
+                height: 20,
                 decoration: BoxDecoration(
                   color: meta.color,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(width: 10),
-              Icon(meta.icon, color: meta.color, size: 15),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
+              Icon(meta.icon, color: meta.color, size: 16),
+              const SizedBox(width: 9),
               Text(
                 meta.label,
                 style: SettingsStyles.categoryLabel.copyWith(color: meta.color),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
-          // Cards grid
+          // Cards grid — childAspectRatio 1.55 so cards are taller & readable
           LayoutBuilder(
             builder: (context, constraints) {
               final w = constraints.maxWidth;
@@ -258,9 +244,9 @@ class _CategorySection extends StatelessWidget {
                 itemCount: items.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: cols,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 1.65,
+                  crossAxisSpacing: 18,
+                  mainAxisSpacing: 18,
+                  childAspectRatio: 1.55, // taller than before (was 1.65)
                 ),
                 itemBuilder: (_, i) => SettingsCard(
                   item: items[i],

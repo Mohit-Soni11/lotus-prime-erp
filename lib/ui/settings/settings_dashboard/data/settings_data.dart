@@ -1,6 +1,5 @@
 // =============================================================================
 // FILE : lib/ui/settings/settings_dashboard/data/settings_data.dart
-// 10 cards — 4 categories — jewellery ERP ke liye top-brand complete set
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -16,14 +15,13 @@ class CategoryMeta {
 }
 
 class SettingsData {
-  // ── ALL ITEMS ─────────────────────────────────────────────────────────────
   static const List<SettingsModel> items = [
-    // ── BUSINESS ──────────────────────────────────────────────────
+    // ── BUSINESS ──────────────────────────────────────────────────────────
     SettingsModel(
       id: 'shop_profile',
       icon: SettingsIcons.shopProfile,
       title: 'Shop Profile',
-      subtitle: 'Store naam, logo, address aur contact info',
+      subtitle: 'Configure store name, logo, address & contact details',
       category: SettingsCategory.business,
       accentColor: Color(0xFFD4AF37),
     ),
@@ -31,7 +29,7 @@ class SettingsData {
       id: 'account_profile',
       icon: SettingsIcons.ownerDetails,
       title: 'Account & Profile',
-      subtitle: 'Owner ka photo, naam aur password',
+      subtitle: 'Update owner name, profile photo & login credentials',
       category: SettingsCategory.business,
       accentColor: Color(0xFF7C6AE8),
     ),
@@ -39,7 +37,7 @@ class SettingsData {
       id: 'billing_setup',
       icon: SettingsIcons.billing,
       title: 'Billing Setup',
-      subtitle: 'Invoice terms, footer text, printer config',
+      subtitle: 'Customize invoice layout, terms & printer preferences',
       category: SettingsCategory.business,
       accentColor: Color(0xFF0EA5E9),
     ),
@@ -47,17 +45,17 @@ class SettingsData {
       id: 'print_templates',
       icon: SettingsIcons.printTemplates,
       title: 'Print Templates',
-      subtitle: 'Invoice, receipt aur girvi note design',
+      subtitle: 'Design invoice, receipt & girvi note print formats',
       category: SettingsCategory.business,
       accentColor: Color(0xFFE06B3F),
     ),
 
-    // ── FINANCE ───────────────────────────────────────────────────
+    // ── FINANCE ───────────────────────────────────────────────────────────
     SettingsModel(
       id: 'gst_config',
       icon: SettingsIcons.taxGst,
       title: 'Tax & GST',
-      subtitle: 'GSTIN, PAN number aur tax slabs setup',
+      subtitle: 'Configure GSTIN, PAN number & applicable tax slabs',
       category: SettingsCategory.finance,
       accentColor: Color(0xFF16A34A),
     ),
@@ -65,27 +63,27 @@ class SettingsData {
       id: 'gold_rate_settings',
       icon: SettingsIcons.goldRate,
       title: 'Gold Rate Settings',
-      subtitle: 'Default rates, IBJA sync aur rate rounding',
+      subtitle: 'Set default rates, IBJA sync & rate rounding rules',
       category: SettingsCategory.finance,
       accentColor: Color(0xFFD97706),
     ),
 
-    // ── SECURITY ──────────────────────────────────────────────────
+    // ── SECURITY ──────────────────────────────────────────────────────────
     SettingsModel(
       id: 'security',
       icon: SettingsIcons.security,
       title: 'Security & Access',
-      subtitle: 'PIN lock, staff roles aur permissions',
+      subtitle: 'Manage PIN lock, staff roles & module permissions',
       category: SettingsCategory.security,
       accentColor: Color(0xFFDC2626),
     ),
 
-    // ── SYSTEM ────────────────────────────────────────────────────
+    // ── SYSTEM ────────────────────────────────────────────────────────────
     SettingsModel(
       id: 'notifications',
       icon: SettingsIcons.notifications,
       title: 'Notifications',
-      subtitle: 'EMI due, girvi expiry aur stock alerts',
+      subtitle: 'Configure alerts for EMI dues, girvi expiry & low stock',
       category: SettingsCategory.system,
       accentColor: Color(0xFF2563EB),
     ),
@@ -93,7 +91,7 @@ class SettingsData {
       id: 'app_preferences',
       icon: SettingsIcons.appPrefs,
       title: 'App Preferences',
-      subtitle: 'Language, date format aur display settings',
+      subtitle: 'Set language, date format & regional display options',
       category: SettingsCategory.system,
       accentColor: Color(0xFF0891B2),
     ),
@@ -101,7 +99,7 @@ class SettingsData {
       id: 'backup',
       icon: SettingsIcons.backup,
       title: 'Backup & Restore',
-      subtitle: 'Database backup download ya restore karo',
+      subtitle: 'Download a complete database backup or restore data',
       category: SettingsCategory.system,
       accentColor: Color(0xFF4ADE80),
     ),
@@ -131,7 +129,6 @@ class SettingsData {
     ),
   };
 
-  // ── HELPERS ──────────────────────────────────────────────────────────────
   static List<SettingsModel> getByCategory(SettingsCategory cat) =>
       items.where((i) => i.category == cat).toList();
 }
