@@ -2,7 +2,7 @@
 // FILE: sales_pos_models.dart
 // TYPE: Core Data Models (UPGRADED)
 // AUTHOR: Senior System Architect
-// DESCRIPTION: Zero-Lag Data Models. Implements Value-Equality checks 
+// DESCRIPTION: Zero-Lag Data Models. Implements Value-Equality checks
 //              to prevent UI rebuild spam on non-value keystrokes.
 // ==========================================
 
@@ -12,18 +12,46 @@ import '../sales_pos_enums/sales_pos_enums.dart';
 // 🚀 ARCHITECTURE FIX: Optimized Parser
 double _parseSafeNumber(String text) {
   if (text.isEmpty) return 0.0;
-  // Regex parsing is expensive. Only strip if absolutely necessary.
   String cleanText = text.replaceAll(RegExp(r'[^0-9.]'), '');
   return double.tryParse(cleanText) ?? 0.0;
+}
+
+// ✅ BUG FIX: Purity label → actual fine percentage
+// "22KT" → 91.67%, "925" → 92.5%, "75.5" → 75.5% (custom input)
+double _purityLabelToPercent(String label) {
+  const map = <String, double>{
+    '24KT': 99.9,
+    '22KT': 91.67,
+    '18KT': 75.0,
+    '14KT': 58.3,
+    '9KT': 37.5,
+    '999': 99.9,
+    '925': 92.5,
+    '800': 80.0,
+    '950PT': 95.0,
+    '900PT': 90.0,
+    '850PT': 85.0,
+    'VVS1': 100.0,
+    'VVS2': 100.0,
+    'VS1': 100.0,
+    'VS2': 100.0,
+    'SI1': 100.0,
+    'SI2': 100.0,
+  };
+  final cleaned = label.trim().toUpperCase();
+  if (map.containsKey(cleaned)) return map[cleaned]!;
+  // User typed raw percentage (e.g. "91.67" or "75")
+  final raw = _parseSafeNumber(label);
+  return raw.clamp(0.0, 100.0);
 }
 
 class SaleItemModel extends ChangeNotifier {
   MetalType _metal;
   MakingChargeType _makingChargeType;
-  bool _isLessPerPiece; 
-  
+  bool _isLessPerPiece;
+
   final TextEditingController descCtrl = TextEditingController();
-  final TextEditingController pcsCtrl = TextEditingController(text: '1'); 
+  final TextEditingController pcsCtrl = TextEditingController(text: '1');
   final TextEditingController huidCtrl = TextEditingController();
   final TextEditingController purityCtrl = TextEditingController();
   final TextEditingController grossCtrl = TextEditingController();
@@ -31,53 +59,81 @@ class SaleItemModel extends ChangeNotifier {
   final TextEditingController rateCtrl = TextEditingController();
   final TextEditingController makingCtrl = TextEditingController();
 
-  final FocusNode firstFieldFocus = FocusNode();
+  final FocusNode firstFieldFocus = FocusNode(); // description
+  // ✅ FIX: FocusNode for every field — proper Tab/Enter navigation
+  final FocusNode pcsFocus = FocusNode();
+  final FocusNode huidFocus = FocusNode();
+  final FocusNode purityFocus = FocusNode();
+  final FocusNode grossFocus = FocusNode();
+  final FocusNode lessFocus = FocusNode();
+  final FocusNode rateFocus = FocusNode();
+  final FocusNode makingFocus = FocusNode();
 
   // --- CACHED NUMERIC STATES (For Zero-Lag Equality Checks) ---
   int _pcs = 1;
-  double _grossWt = 0.0; 
-  double _lessWt = 0.0;  
+  double _grossWt = 0.0;
+  double _lessWt = 0.0;
   double _rate = 0.0;
   double _makingInput = 0.0;
-  double _tunch = 0.0;
+  // ✅ FIX: Track purity as label string ("22KT","925") not stripped number
+  String _tunchLabel = '';
 
   SaleItemModel({
     MetalType metal = MetalType.gold,
     MakingChargeType makingChargeType = MakingChargeType.perGram,
     bool isLessPerPiece = false,
-  }) : _metal = metal,
-       _makingChargeType = makingChargeType,
-       _isLessPerPiece = isLessPerPiece {
-       
+  })  : _metal = metal,
+        _makingChargeType = makingChargeType,
+        _isLessPerPiece = isLessPerPiece {
     // 🚀 STRICT VALUE-EQUALITY LISTENERS
     pcsCtrl.addListener(() {
-      final val = int.tryParse(pcsCtrl.text) ?? 1;
-      if (_pcs != val) { _pcs = val; notifyListeners(); }
+      // ✅ FIX: pcs min=1, integers only — 0 or negative makes no sense
+      final val = (int.tryParse(pcsCtrl.text) ?? 1).clamp(1, 9999);
+      if (_pcs != val) {
+        _pcs = val;
+        notifyListeners();
+      }
     });
-    
+
     grossCtrl.addListener(() {
       final val = _parseSafeNumber(grossCtrl.text);
-      if (_grossWt != val) { _grossWt = val; notifyListeners(); }
+      if (_grossWt != val) {
+        _grossWt = val;
+        notifyListeners();
+      }
     });
-    
+
     lessCtrl.addListener(() {
       final val = _parseSafeNumber(lessCtrl.text);
-      if (_lessWt != val) { _lessWt = val; notifyListeners(); }
+      if (_lessWt != val) {
+        _lessWt = val;
+        notifyListeners();
+      }
     });
-    
+
     rateCtrl.addListener(() {
       final val = _parseSafeNumber(rateCtrl.text);
-      if (_rate != val) { _rate = val; notifyListeners(); }
+      if (_rate != val) {
+        _rate = val;
+        notifyListeners();
+      }
     });
-    
+
     makingCtrl.addListener(() {
       final val = _parseSafeNumber(makingCtrl.text);
-      if (_makingInput != val) { _makingInput = val; notifyListeners(); }
+      if (_makingInput != val) {
+        _makingInput = val;
+        notifyListeners();
+      }
     });
-    
+
+    // ✅ FIX: Track label string ("22KT","925") not stripped number
     purityCtrl.addListener(() {
-      final val = _parseSafeNumber(purityCtrl.text);
-      if (_tunch != val) { _tunch = val; notifyListeners(); }
+      final label = purityCtrl.text;
+      if (_tunchLabel != label) {
+        _tunchLabel = label;
+        notifyListeners();
+      }
     });
   }
 
@@ -89,10 +145,12 @@ class SaleItemModel extends ChangeNotifier {
   // --- CORE WEIGHT LOGIC ---
   int get pcs => _pcs;
   double get totalLessWt => _isLessPerPiece ? (_lessWt * _pcs) : _lessWt;
-  double get netWt => _grossWt - totalLessWt;
+  // ✅ FIX: netWt cannot go below zero (less > gross scenario)
+  double get netWt => (_grossWt - totalLessWt).clamp(0.0, double.infinity);
   double get rate => _rate;
-  double get tunch => _tunch;
-  double get fineWt => netWt * (_tunch / 100);
+  // ✅ FIX: Use proper fine% from label — "22KT"=91.67%, "925"=92.5%
+  double get tunch => _purityLabelToPercent(_tunchLabel);
+  double get fineWt => netWt * (tunch / 100);
 
   // --- RETAIL LOGIC ---
   double get makingAmt {
@@ -100,9 +158,9 @@ class SaleItemModel extends ChangeNotifier {
       case MakingChargeType.percentage:
         return (netWt * _rate) * (_makingInput / 100);
       case MakingChargeType.perKg:
-        return _makingInput * (netWt / 1000); 
+        return _makingInput * (netWt / 1000);
       case MakingChargeType.perGram:
-        return _makingInput * netWt; 
+        return _makingInput * netWt;
       case MakingChargeType.perPiece:
         return _makingInput * _pcs;
     }
@@ -170,51 +228,71 @@ class SaleItemModel extends ChangeNotifier {
     rateCtrl.dispose();
     makingCtrl.dispose();
     firstFieldFocus.dispose();
+    // ✅ FIX: Dispose all field FocusNodes
+    pcsFocus.dispose();
+    huidFocus.dispose();
+    purityFocus.dispose();
+    grossFocus.dispose();
+    lessFocus.dispose();
+    rateFocus.dispose();
+    makingFocus.dispose();
     super.dispose();
   }
 }
 
 class OldGoldItemModel extends ChangeNotifier {
-  MetalType _metal; 
+  MetalType _metal;
 
   final TextEditingController descCtrl = TextEditingController();
   final TextEditingController grossCtrl = TextEditingController();
   final TextEditingController lessCtrl = TextEditingController();
-  final TextEditingController purityCtrl = TextEditingController(); 
+  final TextEditingController purityCtrl = TextEditingController();
   final TextEditingController rateCtrl = TextEditingController();
-  
+
   final FocusNode firstFieldFocus = FocusNode();
 
   // --- CACHED NUMERIC STATES ---
   double _grossWt = 0.0;
   double _lessWt = 0.0;
-  double _purity = 100.0; 
+  double _purity = 100.0;
   double _rate = 0.0;
 
   OldGoldItemModel({
     MetalType metal = MetalType.gold,
   }) : _metal = metal {
-    purityCtrl.text = "100"; 
-    
+    purityCtrl.text = "100";
+
     // 🚀 STRICT VALUE-EQUALITY LISTENERS
-    grossCtrl.addListener(() { 
+    grossCtrl.addListener(() {
       final val = _parseSafeNumber(grossCtrl.text);
-      if (_grossWt != val) { _grossWt = val; notifyListeners(); }
+      if (_grossWt != val) {
+        _grossWt = val;
+        notifyListeners();
+      }
     });
-    
-    lessCtrl.addListener(() { 
+
+    lessCtrl.addListener(() {
       final val = _parseSafeNumber(lessCtrl.text);
-      if (_lessWt != val) { _lessWt = val; notifyListeners(); }
+      if (_lessWt != val) {
+        _lessWt = val;
+        notifyListeners();
+      }
     });
-    
-    purityCtrl.addListener(() { 
+
+    purityCtrl.addListener(() {
       final val = _parseSafeNumber(purityCtrl.text);
-      if (_purity != val) { _purity = val; notifyListeners(); }
+      if (_purity != val) {
+        _purity = val;
+        notifyListeners();
+      }
     });
-    
-    rateCtrl.addListener(() { 
+
+    rateCtrl.addListener(() {
       final val = _parseSafeNumber(rateCtrl.text);
-      if (_rate != val) { _rate = val; notifyListeners(); }
+      if (_rate != val) {
+        _rate = val;
+        notifyListeners();
+      }
     });
   }
 
@@ -224,14 +302,14 @@ class OldGoldItemModel extends ChangeNotifier {
 
   double get fineWt {
     if (_metal == MetalType.silver && purityCtrl.text.isEmpty) {
-      return netWt; 
+      return netWt;
     }
     return netWt * (_purity / 100);
   }
 
   double get totalValue {
     if (_metal == MetalType.silver && purityCtrl.text.isEmpty) {
-      return netWt * _rate; 
+      return netWt * _rate;
     }
     return fineWt * _rate;
   }
@@ -239,12 +317,12 @@ class OldGoldItemModel extends ChangeNotifier {
   void updateMetal(MetalType newMetal) {
     if (_metal != newMetal) {
       _metal = newMetal;
-      
+
       // Smart Auto-fill for UX
       if (newMetal == MetalType.silver) {
-         purityCtrl.clear();
+        purityCtrl.clear();
       } else if (purityCtrl.text.isEmpty) {
-         purityCtrl.text = "100";
+        purityCtrl.text = "100";
       }
       notifyListeners();
     }

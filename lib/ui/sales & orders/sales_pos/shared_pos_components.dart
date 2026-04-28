@@ -49,6 +49,8 @@ class PosAtomicTextField extends StatelessWidget {
   final FocusNode? focusNode;
   final Function(String)? onSubmitted;
   final Color focusBorderColor;
+  // ✅ FIX: Explicit textInputAction — caller decides next/done
+  final TextInputAction? textInputAction;
 
   const PosAtomicTextField({
     super.key,
@@ -57,42 +59,45 @@ class PosAtomicTextField extends StatelessWidget {
     this.isNumber = false,
     this.focusNode,
     this.onSubmitted,
-    this.focusBorderColor = SalesPosColors.brandGold, 
+    this.focusBorderColor = SalesPosColors.brandGold,
+    this.textInputAction,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Default: 'done' only when onSubmitted adds new item (last field), else 'next'
+    final action = textInputAction ??
+        (onSubmitted != null ? TextInputAction.done : TextInputAction.next);
+
     return SizedBox(
       height: 36,
       child: TextField(
         controller: controller,
         focusNode: focusNode,
-        keyboardType: isNumber 
-            ? const TextInputType.numberWithOptions(decimal: true) 
+        keyboardType: isNumber
+            ? const TextInputType.numberWithOptions(decimal: true)
             : TextInputType.text,
-        inputFormatters: isNumber 
-            ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))] 
+        inputFormatters: isNumber
+            ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))]
             : null,
-        textInputAction: onSubmitted != null ? TextInputAction.done : TextInputAction.next,
+        textInputAction: action,
         style: SalesPosStyles.standardRowText,
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: SalesPosStyles.subTitleMuted.copyWith(fontSize: 13),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
           filled: true,
           fillColor: SalesPosColors.bodyPanelBg,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6), 
-            borderSide: const BorderSide(color: SalesPosColors.bodyBorder)
-          ),
+              borderRadius: BorderRadius.circular(6),
+              borderSide: const BorderSide(color: SalesPosColors.bodyBorder)),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6), 
-            borderSide: const BorderSide(color: SalesPosColors.bodyBorder)
-          ),
+              borderRadius: BorderRadius.circular(6),
+              borderSide: const BorderSide(color: SalesPosColors.bodyBorder)),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6), 
-            borderSide: BorderSide(color: focusBorderColor, width: 1.5) 
-          ),
+              borderRadius: BorderRadius.circular(6),
+              borderSide: BorderSide(color: focusBorderColor, width: 1.5)),
         ),
         onSubmitted: onSubmitted,
       ),

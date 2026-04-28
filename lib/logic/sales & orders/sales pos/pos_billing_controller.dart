@@ -19,6 +19,7 @@
 // ==========================================
 
 import 'package:flutter/material.dart';
+import 'dart:async'; // ✅ FIX: Timer for debounce
 
 import '../../../models/sales & orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales & orders/sales_pos_models/sales_pos_models.dart';
@@ -188,8 +189,11 @@ class PosBillingController extends ChangeNotifier {
   // ==========================================
   List<String> descriptionSuggestions = [];
   int _descSuggestionRowIndex = -1;
+  // ✅ FIX: Debounce timer — DB query only after user stops typing
+  Timer? _descSearchTimer;
 
   Future<void> searchDescriptions(String query, int rowIndex) async {
+    _descSearchTimer?.cancel();
     final term = query.toLowerCase().trim();
     if (term.length < 2) {
       descriptionSuggestions = [];
@@ -197,31 +201,29 @@ class PosBillingController extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    try {
-      // Pehle DB se saare stock items load karo
-      final rows = await _db.select(_db.stockItems).get();
-
-      // Phir Fuzzy Search se filter karo (itemName + description dono mein)
-      final matched = FuzzySearchHelper.searchObjects(
-        items: rows,
-        query: term,
-        getSearchText: (row) => '${row.itemName} ${row.description ?? ""}',
-        maxResults: 8,
-        threshold: 0.30,
-      );
-
-      final seen = <String>{};
-      descriptionSuggestions = matched
-          .map((r) => r.itemName as String)
-          .where((name) => seen.add(name))
-          .toList();
-
-      _descSuggestionRowIndex = rowIndex;
-    } catch (e) {
-      descriptionSuggestions = [];
-      _descSuggestionRowIndex = -1;
-    }
-    notifyListeners();
+    // ✅ Wait 300ms after last keystroke before hitting DB
+    _descSearchTimer = Timer(const Duration(milliseconds: 300), () async {
+      try {
+        final rows = await _db.select(_db.stockItems).get();
+        final matched = FuzzySearchHelper.searchObjects(
+          items: rows,
+          query: term,
+          getSearchText: (row) => '${row.itemName} ${row.description ?? ""}',
+          maxResults: 8,
+          threshold: 0.30,
+        );
+        final seen = <String>{};
+        descriptionSuggestions = matched
+            .map((r) => r.itemName as String)
+            .where((name) => seen.add(name))
+            .toList();
+        _descSuggestionRowIndex = rowIndex;
+      } catch (e) {
+        descriptionSuggestions = [];
+        _descSuggestionRowIndex = -1;
+      }
+      notifyListeners();
+    });
   }
 
   // Sirf us row ke liye suggestions return karo
@@ -695,6 +697,14 @@ class PosBillingController extends ChangeNotifier {
     saleItems.addAll(targetBill.savedSaleItems);
     oldGoldItems.addAll(targetBill.savedOldGoldItems);
 
+    // ✅ FIX: Re-attach listeners — held items lose their listener on hold
+    for (var item in saleItems) {
+      item.addListener(_onChildItemChanged);
+    }
+    for (var item in oldGoldItems) {
+      item.addListener(_onChildItemChanged);
+    }
+
     heldBills.removeAt(targetBillIndex);
     notifyListeners();
   }
@@ -747,6 +757,7 @@ class PosBillingController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _descSearchTimer?.cancel(); // ✅ FIX: Cancel any pending debounce
     clearEntirePOS(isHolding: false);
     // ✅ BUG FIX: _db.close() intentionally removed.
     // AppDatabase is a Dart singleton. Calling close() here was shutting

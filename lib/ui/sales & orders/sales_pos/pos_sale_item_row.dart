@@ -7,6 +7,7 @@
 // ==========================================
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // ✅ FIX: For FilteringTextInputFormatter (pcs field)
 import 'dart:ui';
 
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
@@ -51,12 +52,15 @@ class PosSaleItemRow extends StatefulWidget {
 class _PosSaleItemRowState extends State<PosSaleItemRow> {
   late String _selectedPurity;
   late MetalType _lastMetal;
+  // ✅ FIX: Track billing mode to sync only when it actually changes
+  late BillingMode _lastBillingMode;
   bool _isHovered = false;
 
   @override
   void initState() {
     super.initState();
     _lastMetal = widget.item.metal;
+    _lastBillingMode = widget.ctrl.billingMode;
     final existing = widget.item.purityCtrl.text.trim();
     final options = _PurityData.forMetal(_lastMetal);
     _selectedPurity = options.contains(existing)
@@ -66,6 +70,42 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
     if (widget.ctrl.billingMode == BillingMode.retail && existing.isEmpty) {
       widget.item.purityCtrl.text = _selectedPurity;
     }
+    // ✅ FIX: Listen to ctrl for billing mode changes (replaces addPostFrameCallback in build)
+    widget.ctrl.addListener(_onCtrlChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.ctrl.removeListener(_onCtrlChanged);
+    super.dispose();
+  }
+
+  // ✅ FIX: Sync mode state only when billing mode actually changes
+  void _onCtrlChanged() {
+    if (!mounted) return;
+    final newMode = widget.ctrl.billingMode;
+    if (_lastBillingMode != newMode) {
+      _lastBillingMode = newMode;
+      _syncModeState(newMode);
+    }
+  }
+
+  void _syncModeState(BillingMode mode) {
+    final isWholesale = mode == BillingMode.wholesale;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (isWholesale &&
+          widget.item.makingChargeType == MakingChargeType.percentage) {
+        widget.item.toggleMakingChargeType(isWholesale: true);
+      }
+      if (!isWholesale &&
+          widget.item.makingChargeType == MakingChargeType.perKg) {
+        widget.item.toggleMakingChargeType(isWholesale: false);
+      }
+      if (!isWholesale && widget.item.isLessPerPiece) {
+        widget.item.toggleLessWeightType();
+      }
+    });
   }
 
   void _onMetalChanged(MetalType newMetal) {
@@ -81,12 +121,13 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
     }
   }
 
-  void _onPurityChanged(String? newPurity) {
-    if (newPurity == null) return;
-    setState(() {
-      _selectedPurity = newPurity;
-      widget.item.purityCtrl.text = newPurity;
-    });
+  void _onPurityChanged(String value) {
+    // ✅ FIX: Do NOT set purityCtrl.text here!
+    // Flutter already updated the controller BEFORE calling onChanged.
+    // Setting controller.text inside onChanged resets cursor → text disappears.
+    if (_selectedPurity != value) {
+      setState(() => _selectedPurity = value);
+    }
   }
 
   Color _metalColor(MetalType metal) {
@@ -121,24 +162,6 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
           final isEven = widget.index % 2 == 0;
           final isWholesale = widget.ctrl.billingMode == BillingMode.wholesale;
 
-          if (isWholesale &&
-              widget.item.makingChargeType == MakingChargeType.percentage) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              widget.item.toggleMakingChargeType(isWholesale: true);
-            });
-          }
-          if (!isWholesale &&
-              widget.item.makingChargeType == MakingChargeType.perKg) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              widget.item.toggleMakingChargeType(isWholesale: false);
-            });
-          }
-          if (!isWholesale && widget.item.isLessPerPiece) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              widget.item.toggleLessWeightType();
-            });
-          }
-
           return MouseRegion(
             onEnter: (_) => setState(() => _isHovered = true),
             onExit: (_) => setState(() => _isHovered = false),
@@ -172,10 +195,12 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                       item: widget.item,
                       ctrl: widget.ctrl,
                       rowIndex: widget.index,
+                      // ✅ Tab: desc → pcs
+                      onSubmitted: (_) => widget.item.pcsFocus.requestFocus(),
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Expanded(flex: 1, child: _buildPcsField()),
+                  Expanded(flex: 1, child: _buildPcsField(isWholesale)),
                   const SizedBox(width: 6),
 
                   if (!isWholesale) ...[
@@ -184,6 +209,11 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                       child: PosAtomicTextField(
                         controller: widget.item.huidCtrl,
                         hint: "HUID",
+                        // ✅ Tab: huid → purity
+                        focusNode: widget.item.huidFocus,
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (_) =>
+                            widget.item.purityFocus.requestFocus(),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -197,6 +227,10 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                       controller: widget.item.grossCtrl,
                       hint: "0.000",
                       isNumber: true,
+                      // ✅ Tab: gross → less
+                      focusNode: widget.item.grossFocus,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) => widget.item.lessFocus.requestFocus(),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -209,6 +243,11 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                             controller: widget.item.lessCtrl,
                             hint: "0.000",
                             isNumber: true,
+                            // ✅ Tab: less → rate (retail)
+                            focusNode: widget.item.lessFocus,
+                            textInputAction: TextInputAction.next,
+                            onSubmitted: (_) =>
+                                widget.item.rateFocus.requestFocus(),
                           ),
                   ),
                   const SizedBox(width: 6),
@@ -262,6 +301,11 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                         controller: widget.item.rateCtrl,
                         hint: "Rate",
                         isNumber: true,
+                        // ✅ Tab: rate → making
+                        focusNode: widget.item.rateFocus,
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (_) =>
+                            widget.item.makingFocus.requestFocus(),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -341,12 +385,20 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
     );
   }
 
-  Widget _buildPcsField() {
+  Widget _buildPcsField(bool isWholesale) {
     return SizedBox(
       height: 38,
       child: TextFormField(
         controller: widget.item.pcsCtrl,
+        focusNode: widget.item.pcsFocus,
         keyboardType: TextInputType.number,
+        // ✅ FIX: Digits only — no decimals for piece count
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        textInputAction: TextInputAction.next,
+        // ✅ Tab: pcs → huid (retail) or gross (wholesale)
+        onFieldSubmitted: (_) => isWholesale
+            ? widget.item.grossFocus.requestFocus()
+            : widget.item.huidFocus.requestFocus(),
         textAlign: TextAlign.center,
         style: SalesPosStyles.inputText.copyWith(
           color: SalesPosColors.bodyTextMain,
@@ -463,6 +515,10 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
           Expanded(
             child: TextFormField(
               controller: widget.item.purityCtrl,
+              focusNode: widget.item.purityFocus,
+              textInputAction: TextInputAction.next,
+              // ✅ Tab: purity → gross weight
+              onFieldSubmitted: (_) => widget.item.grossFocus.requestFocus(),
               textAlign: TextAlign.center,
               style: SalesPosStyles.inputText.copyWith(
                 color: metalColor,
@@ -566,6 +622,8 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
             controller: widget.item.makingCtrl,
             hint: hintText,
             isNumber: true,
+            // ✅ Tab: making → add new item (last field in row)
+            focusNode: widget.item.makingFocus,
             onSubmitted: (_) => widget.ctrl.addNewSaleItem(),
           ),
         ),
@@ -610,7 +668,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
         message: "Remove item",
         waitDuration: const Duration(milliseconds: 400),
         child: InkWell(
-          onTap: () => widget.ctrl.removeActiveItem(),
+          onTap: () => widget.ctrl.removeSaleItem(widget.index),
           borderRadius: BorderRadius.circular(8),
           child: Container(
             width: 32,
@@ -637,11 +695,14 @@ class _DescriptionWithSuggestions extends StatefulWidget {
   final SaleItemModel item;
   final PosBillingController ctrl;
   final int rowIndex;
+  // ✅ FIX: Tab from description → next field
+  final Function(String)? onSubmitted;
 
   const _DescriptionWithSuggestions({
     required this.item,
     required this.ctrl,
     required this.rowIndex,
+    this.onSubmitted,
   });
 
   @override
@@ -728,6 +789,8 @@ class _DescriptionWithSuggestionsState
         controller: widget.item.descCtrl,
         hint: "Description",
         focusNode: widget.item.firstFieldFocus,
+        textInputAction: TextInputAction.next,
+        onSubmitted: widget.onSubmitted,
       ),
     );
   }
