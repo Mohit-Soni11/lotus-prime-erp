@@ -1,19 +1,12 @@
 // -----------------------------------------------------------------------------
 // FILE: customer_profile_model.dart
-// MODULE: Customer → Customer Profile
-// CHANGE LOG:
-//   - Added: AdvanceOrderModel — maps to SalesOrders + OrderAdvances tables
-//   - Added: CustomerDueModel  — maps to unpaid Bills
-//   - Updated: CustomerProfileModel — advanceOrders, dues fields added
-//   - Updated: copyWith — includes new fields
+// MODULE: Customer -> Customer Profile
 // -----------------------------------------------------------------------------
 
 import 'package:flutter/foundation.dart';
 
-// ── GENDER ────────────────────────────────────────────────────────────────
 enum CustomerGender { male, female }
 
-// ── CREDIT STATUS ─────────────────────────────────────────────────────────
 enum CreditStatus {
   clear,
   due,
@@ -21,9 +14,12 @@ enum CreditStatus {
 
   String get label {
     switch (this) {
-      case CreditStatus.clear:     return "CLEAR";
-      case CreditStatus.due:       return "DUE";
-      case CreditStatus.defaulter: return "DEFAULTER";
+      case CreditStatus.clear:
+        return "CLEAR";
+      case CreditStatus.due:
+        return "DUE";
+      case CreditStatus.defaulter:
+        return "DEFAULTER";
     }
   }
 
@@ -37,7 +33,6 @@ enum CreditStatus {
   }
 }
 
-// ── ADVANCE ORDER STATUS ──────────────────────────────────────────────────
 enum AdvanceOrderStatus {
   pending,
   ready,
@@ -46,26 +41,35 @@ enum AdvanceOrderStatus {
 
   String get label {
     switch (this) {
-      case AdvanceOrderStatus.pending:   return "PENDING";
-      case AdvanceOrderStatus.ready:     return "READY";
-      case AdvanceOrderStatus.delivered: return "DELIVERED";
-      case AdvanceOrderStatus.cancelled: return "CANCELLED";
+      case AdvanceOrderStatus.pending:
+        return "PENDING";
+      case AdvanceOrderStatus.ready:
+        return "READY";
+      case AdvanceOrderStatus.delivered:
+        return "DELIVERED";
+      case AdvanceOrderStatus.cancelled:
+        return "CANCELLED";
     }
   }
 
   static AdvanceOrderStatus fromString(String val) {
     switch (val.toUpperCase()) {
-      case 'READY':     return AdvanceOrderStatus.ready;
-      case 'DELIVERED': return AdvanceOrderStatus.delivered;
-      case 'CANCELLED': return AdvanceOrderStatus.cancelled;
-      default:          return AdvanceOrderStatus.pending;
+      case 'READY':
+        return AdvanceOrderStatus.ready;
+      case 'DELIVERED':
+        return AdvanceOrderStatus.delivered;
+      case 'CANCELLED':
+        return AdvanceOrderStatus.cancelled;
+      default:
+        return AdvanceOrderStatus.pending;
     }
   }
 }
 
-// ── BILL MODEL ────────────────────────────────────────────────────────────
 @immutable
 class CustomerBillModel {
+  static const double _kPaymentTolerance = 0.01;
+
   final int id;
   final String billNo;
   final double totalAmount;
@@ -82,22 +86,92 @@ class CustomerBillModel {
     this.paidAmount = 0.0,
   });
 
-  bool get isPaid => status.toUpperCase() == 'PAID';
+  bool get isPaid {
+    final normalized = status.trim().toUpperCase();
+    if (normalized == 'PAID' ||
+        normalized == 'COMPLETE' ||
+        normalized == 'COMPLETED') {
+      return true;
+    }
+    return dueAmount <= _kPaymentTolerance;
+  }
+
+  bool get isPartial => !isPaid && paidAmount > _kPaymentTolerance;
+  bool get isUnpaid => !isPaid && !isPartial;
   bool get isActive => status.toUpperCase() == 'ACTIVE';
 
-  double get dueAmount => (totalAmount - paidAmount).clamp(0.0, double.infinity);
+  double get dueAmount =>
+      (totalAmount - paidAmount).clamp(0.0, double.infinity);
 
-  String get formattedAmount => "₹ ${totalAmount.toStringAsFixed(2)}";
+  String get paymentLabel => isPaid
+      ? "COMPLETE"
+      : isPartial
+          ? "PARTIAL"
+          : "UNPAID";
+
+  String get formattedAmount => "\u20B9 ${totalAmount.toStringAsFixed(2)}";
+  String get formattedPaidAmount => "\u20B9 ${paidAmount.toStringAsFixed(2)}";
+  String get formattedDueAmount => "\u20B9 ${dueAmount.toStringAsFixed(2)}";
 
   String get formattedDate {
-    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return "${billDate.day.toString().padLeft(2, '0')} "
         "${months[billDate.month]} ${billDate.year}";
   }
 }
 
-// ── LOAN MODEL ────────────────────────────────────────────────────────────
+@immutable
+class CustomerBillLineItemModel {
+  final String itemName;
+  final String? huid;
+  final String? purity;
+  final double grossWeight;
+  final double netWeight;
+  final double rate;
+  final double makingCharge;
+  final double itemTotal;
+
+  const CustomerBillLineItemModel({
+    required this.itemName,
+    required this.grossWeight,
+    required this.netWeight,
+    required this.rate,
+    required this.makingCharge,
+    required this.itemTotal,
+    this.huid,
+    this.purity,
+  });
+}
+
+@immutable
+class CustomerBillDetailModel {
+  final CustomerBillModel bill;
+  final String customerName;
+  final String customerMobile;
+  final List<CustomerBillLineItemModel> items;
+
+  const CustomerBillDetailModel({
+    required this.bill,
+    required this.customerName,
+    required this.customerMobile,
+    required this.items,
+  });
+}
+
 @immutable
 class CustomerLoanModel {
   final int id;
@@ -129,8 +203,21 @@ class CustomerLoanModel {
   }
 
   String get formattedDate {
-    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return "${startDate.day.toString().padLeft(2, '0')} "
         "${months[startDate.month]} ${startDate.year}";
   }
@@ -138,7 +225,6 @@ class CustomerLoanModel {
   int get daysActive => DateTime.now().difference(startDate).inDays;
 }
 
-// ── ADVANCE ORDER MODEL ──────────────────────────────────────────────────  ✅ NEW
 @immutable
 class CustomerAdvanceOrderModel {
   final int id;
@@ -152,8 +238,8 @@ class CustomerAdvanceOrderModel {
   final AdvanceOrderStatus status;
   final DateTime? deliveryDate;
   final String? notes;
-  final double totalAdvancePaid;  // Sum of all advance payments
-  final double estimatedTotal;    // approxWeight * lockedRate (approx)
+  final double totalAdvancePaid;
+  final double estimatedTotal;
   final DateTime createdAt;
 
   const CustomerAdvanceOrderModel({
@@ -173,8 +259,8 @@ class CustomerAdvanceOrderModel {
     this.notes,
   });
 
-  bool get isPending   => status == AdvanceOrderStatus.pending;
-  bool get isReady     => status == AdvanceOrderStatus.ready;
+  bool get isPending => status == AdvanceOrderStatus.pending;
+  bool get isReady => status == AdvanceOrderStatus.ready;
   bool get isDelivered => status == AdvanceOrderStatus.delivered;
   bool get isCancelled => status == AdvanceOrderStatus.cancelled;
 
@@ -182,22 +268,47 @@ class CustomerAdvanceOrderModel {
       (estimatedTotal - totalAdvancePaid).clamp(0.0, double.infinity);
 
   String get formattedDate {
-    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return "${createdAt.day.toString().padLeft(2, '0')} "
         "${months[createdAt.month]} ${createdAt.year}";
   }
 
   String get formattedDelivery {
     if (deliveryDate == null) return "No date set";
-    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return "${deliveryDate!.day.toString().padLeft(2, '0')} "
         "${months[deliveryDate!.month]} ${deliveryDate!.year}";
   }
 }
 
-// ── DUES MODEL ───────────────────────────────────────────────────────────  ✅ NEW
 @immutable
 class CustomerDueModel {
   final int billId;
@@ -217,17 +328,29 @@ class CustomerDueModel {
   double get dueAmount =>
       (totalAmount - paidAmount).clamp(0.0, double.infinity);
 
-  String get formattedDue => "₹${dueAmount.toStringAsFixed(0)}";
+  String get formattedDue => "\u20B9 ${dueAmount.toStringAsFixed(0)}";
 
   String get formattedDate {
-    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return "${billDate.day.toString().padLeft(2, '0')} "
         "${months[billDate.month]} ${billDate.year}";
   }
 }
 
-// ── FULL PROFILE MODEL ────────────────────────────────────────────────────
 @immutable
 class CustomerProfileModel {
   final int id;
@@ -241,28 +364,27 @@ class CustomerProfileModel {
   final double outstanding;
   final List<CustomerBillModel> bills;
   final List<CustomerLoanModel> loans;
-  final List<CustomerAdvanceOrderModel> advanceOrders; // ✅ NEW
-  final List<CustomerDueModel> dues;                   // ✅ NEW
+  final List<CustomerAdvanceOrderModel> advanceOrders;
+  final List<CustomerDueModel> dues;
   final String initials;
 
   const CustomerProfileModel({
     required this.id,
     required this.name,
     required this.mobile,
-    this.whatsapp    = "",
-    this.city        = "",
-    this.type        = "Regular",
+    this.whatsapp = "",
+    this.city = "",
+    this.type = "Regular",
     required this.createdAt,
     this.creditLimit = 50000.0,
     this.outstanding = 0.0,
-    this.bills       = const [],
-    this.loans       = const [],
-    this.advanceOrders = const [], // ✅ NEW
-    this.dues          = const [], // ✅ NEW
+    this.bills = const [],
+    this.loans = const [],
+    this.advanceOrders = const [],
+    this.dues = const [],
     required this.initials,
   });
 
-  // ── GENDER DETECTION ───────────────────────────────────────────────────
   CustomerGender get gender {
     final nameLower = name.toLowerCase().trim();
     final parts = nameLower.split(RegExp(r'\s+'));
@@ -270,26 +392,101 @@ class CustomerProfileModel {
     final firstName = parts.first;
 
     const femaleEndwords = [
-      'devi', 'kumari', 'bai', 'rani', 'mata', 'ben', 'bhen',
-      'priya', 'lata', 'prabha', 'bala', 'mala', 'kala',
-      'rekha', 'radha', 'sita', 'geeta', 'meeta', 'neeta',
-      'anita', 'sunita', 'kavita', 'savita', 'lalita', 'mamta',
-      'shanti', 'tara', 'usha', 'asha', 'nisha', 'misha',
-      'komal', 'kamal', 'deepa', 'rupa', 'sarla', 'sudha',
-      'vidya', 'divya', 'pooja', 'puja', 'jyoti', 'kiran',
-      'seema', 'reema', 'neha', 'sneha', 'ankita', 'namita',
-      'archana', 'kanchan', 'vandana', 'preeti', 'swati',
-      'ritu', 'mitu', 'pintu', 'rinku', 'anjali', 'manali',
-      'shruti', 'smriti', 'aditi', 'kriti', 'arti', 'bharti',
-      'shobha', 'prabha', 'subha', 'abha', 'vibha', 'shikha',
-      'rekha', 'leela', 'sheela', 'meela', 'kamla', 'vimla',
-      'nirmala', 'urmila', 'sushila', 'shushila', 'pushpa',
-      'champa', 'chameli', 'gulabi', 'hemlata', 'shakuntalaa',
+      'devi',
+      'kumari',
+      'bai',
+      'rani',
+      'mata',
+      'ben',
+      'bhen',
+      'priya',
+      'lata',
+      'prabha',
+      'bala',
+      'mala',
+      'kala',
+      'rekha',
+      'radha',
+      'sita',
+      'geeta',
+      'meeta',
+      'neeta',
+      'anita',
+      'sunita',
+      'kavita',
+      'savita',
+      'lalita',
+      'mamta',
+      'shanti',
+      'tara',
+      'usha',
+      'asha',
+      'nisha',
+      'misha',
+      'komal',
+      'kamal',
+      'deepa',
+      'rupa',
+      'sarla',
+      'sudha',
+      'vidya',
+      'divya',
+      'pooja',
+      'puja',
+      'jyoti',
+      'kiran',
+      'seema',
+      'reema',
+      'neha',
+      'sneha',
+      'ankita',
+      'namita',
+      'archana',
+      'kanchan',
+      'vandana',
+      'preeti',
+      'swati',
+      'ritu',
+      'mitu',
+      'pintu',
+      'rinku',
+      'anjali',
+      'manali',
+      'shruti',
+      'smriti',
+      'aditi',
+      'kriti',
+      'arti',
+      'bharti',
+      'shobha',
+      'prabha',
+      'subha',
+      'abha',
+      'vibha',
+      'shikha',
+      'rekha',
+      'leela',
+      'sheela',
+      'meela',
+      'kamla',
+      'vimla',
+      'nirmala',
+      'urmila',
+      'sushila',
+      'shushila',
+      'pushpa',
+      'champa',
+      'chameli',
+      'gulabi',
+      'hemlata',
+      'shakuntalaa',
     ];
 
     for (final word in femaleEndwords) {
-      if (lastName == word || firstName == word ||
-          nameLower.contains(' $word') || nameLower.endsWith(word)) {
+      if (lastName == word ||
+          firstName == word ||
+          nameLower.contains(' $word') ||
+          nameLower.endsWith(word)) {
         return CustomerGender.female;
       }
     }
@@ -299,65 +496,71 @@ class CustomerProfileModel {
   bool get isFemale => gender == CustomerGender.female;
   bool get isVip => type.toLowerCase() == 'vip';
 
-  // ── CREDIT STATS ───────────────────────────────────────────────────────
   CreditStatus get creditStatus => CreditStatus.calculate(
-    outstanding: outstanding,
-    creditLimit: creditLimit,
-  );
+        outstanding: outstanding,
+        creditLimit: creditLimit,
+      );
 
   double get availableCredit =>
       (creditLimit - outstanding).clamp(0, double.infinity);
 
-  double get usedPercent => creditLimit > 0
-      ? (outstanding / creditLimit * 100).clamp(0, 100)
-      : 0;
+  double get usedPercent =>
+      creditLimit > 0 ? (outstanding / creditLimit * 100).clamp(0, 100) : 0;
 
-  // ── BILL STATS ─────────────────────────────────────────────────────────
   int get totalBills => bills.length;
   double get totalBillAmount =>
-      bills.fold(0.0, (sum, b) => sum + b.totalAmount);
+      bills.fold(0.0, (sum, bill) => sum + bill.totalAmount);
   double get totalPaidAmount =>
-      bills.where((b) => b.isPaid).fold(0.0, (sum, b) => sum + b.totalAmount);
-  int get paidBillsCount => bills.where((b) => b.isPaid).length;
-  int get unpaidBillsCount => bills.where((b) => !b.isPaid).length;
+      bills.fold(0.0, (sum, bill) => sum + bill.paidAmount);
+  int get paidBillsCount => bills.where((bill) => bill.isPaid).length;
+  int get unpaidBillsCount => bills.where((bill) => !bill.isPaid).length;
 
-  // ── LOAN (GIRVI) STATS ─────────────────────────────────────────────────
   int get totalLoans => loans.length;
-  int get activeLoans => loans.where((l) => l.isActive).length;
-  int get completedLoans => loans.where((l) => l.isReleased).length;
+  int get activeLoans => loans.where((loan) => loan.isActive).length;
+  int get completedLoans => loans.where((loan) => loan.isReleased).length;
 
   double get totalActiveLoanAmount => loans
-      .where((l) => l.isActive)
-      .fold(0.0, (sum, l) => sum + l.loanAmount);
+      .where((loan) => loan.isActive)
+      .fold(0.0, (sum, loan) => sum + loan.loanAmount);
 
   double get totalInterestAccrued => loans
-      .where((l) => l.isActive)
-      .fold(0.0, (sum, l) => sum + l.accruedInterest);
+      .where((loan) => loan.isActive)
+      .fold(0.0, (sum, loan) => sum + loan.accruedInterest);
 
   double get totalLoanAmount =>
-      loans.fold(0.0, (sum, l) => sum + l.loanAmount);
+      loans.fold(0.0, (sum, loan) => sum + loan.loanAmount);
 
-  // ── ADVANCE STATS ──────────────────────────────────────────────────────  ✅ NEW
   int get activeAdvanceCount =>
-      advanceOrders.where((a) => a.isPending || a.isReady).length;
+      advanceOrders.where((order) => order.isPending || order.isReady).length;
 
   double get totalAdvancePaid =>
-      advanceOrders.fold(0.0, (sum, a) => sum + a.totalAdvancePaid);
+      advanceOrders.fold(0.0, (sum, order) => sum + order.totalAdvancePaid);
 
-  double get totalAdvanceRemaining =>
-      advanceOrders.where((a) => !a.isDelivered && !a.isCancelled)
-          .fold(0.0, (sum, a) => sum + a.remainingBalance);
+  double get totalAdvanceRemaining => advanceOrders
+      .where((order) => !order.isDelivered && !order.isCancelled)
+      .fold(0.0, (sum, order) => sum + order.remainingBalance);
 
-  // ── DUES STATS ─────────────────────────────────────────────────────────  ✅ NEW
   double get totalDueAmount =>
-      dues.fold(0.0, (sum, d) => sum + d.dueAmount);
+      dues.fold(0.0, (sum, due) => sum + due.dueAmount);
 
   bool get hasDues => dues.isNotEmpty && totalDueAmount > 0;
 
-  // ── FORMATTERS ─────────────────────────────────────────────────────────
   String get formattedMemberSince {
-    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return "${months[createdAt.month]} ${createdAt.year}";
   }
 

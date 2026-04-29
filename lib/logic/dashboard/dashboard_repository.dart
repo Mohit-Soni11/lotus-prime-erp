@@ -1,22 +1,23 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:drift/drift.dart'; 
+import 'package:drift/drift.dart';
 import '../../database/db/app_database.dart';
 import '../../models/dashboard/user_profile.dart';
 import '../../models/dashboard/shop_profile_model.dart'; // Import for Shop Card
 import '../../models/dashboard/search_result.dart';
 import '../../models/dashboard/notification_item.dart';
-import '../../models/dashboard/customer_stats_model.dart'; 
+import '../../models/dashboard/customer_stats_model.dart';
 import '../../constants/enums.dart';
 
 class DashboardRepository {
-  
-  final AppDatabase _db = AppDatabase(); 
+  final AppDatabase _db = AppDatabase();
 
   // Stream Controller for Notifications
-  final _notificationController = StreamController<List<NotificationItem>>.broadcast();
+  final _notificationController =
+      StreamController<List<NotificationItem>>.broadcast();
 
-  Stream<List<NotificationItem>> get notificationsStream => _notificationController.stream;
+  Stream<List<NotificationItem>> get notificationsStream =>
+      _notificationController.stream;
 
   // ==========================================
   // 1. FETCH USER PROFILE (Short Info)
@@ -68,19 +69,19 @@ class DashboardRepository {
       if (rows.isNotEmpty) {
         final row = rows.first;
         return ShopProfileModel(
-          displayName:  row.read<String?>('shop_name')      ?? 'My Shop',
-          ownerName:    row.read<String?>('owner_name')     ?? '--',
-          city:         row.read<String?>('city')           ?? '',
-          state:        row.read<String?>('state')          ?? '',
-          mobile:       row.read<String?>('contact_number') ?? '',
-          email:        row.read<String?>('email')          ?? '',
-          website:      row.read<String?>('website')        ?? '',
-          gstin:        row.read<String?>('gstin')          ?? '',
-          bisLicense:   row.read<String?>('bis_license')    ?? '',
-          huidNo:       row.read<String?>('huid_no')        ?? '',
-          showMobile:   (row.read<int?>('show_mobile')  ?? 1) == 1,
-          showEmail:    (row.read<int?>('show_email')   ?? 1) == 1,
-          showGst:      (row.read<int?>('show_gst')     ?? 1) == 1,
+          displayName: row.read<String?>('shop_name') ?? 'My Shop',
+          ownerName: row.read<String?>('owner_name') ?? '--',
+          city: row.read<String?>('city') ?? '',
+          state: row.read<String?>('state') ?? '',
+          mobile: row.read<String?>('contact_number') ?? '',
+          email: row.read<String?>('email') ?? '',
+          website: row.read<String?>('website') ?? '',
+          gstin: row.read<String?>('gstin') ?? '',
+          bisLicense: row.read<String?>('bis_license') ?? '',
+          huidNo: row.read<String?>('huid_no') ?? '',
+          showMobile: (row.read<int?>('show_mobile') ?? 1) == 1,
+          showEmail: (row.read<int?>('show_email') ?? 1) == 1,
+          showGst: (row.read<int?>('show_gst') ?? 1) == 1,
         );
       }
       return ShopProfileModel.empty();
@@ -96,19 +97,22 @@ class DashboardRepository {
   void loadNotifications(String role) async {
     try {
       final query = _db.select(_db.notifications)
-        ..where((tbl) => tbl.role.equals(role) | tbl.role.equals('all')) 
-        ..orderBy([(t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc)]);
+        ..where((tbl) => tbl.role.equals(role) | tbl.role.equals('all'))
+        ..orderBy(
+            [(t) => OrderingTerm(expression: t.id, mode: OrderingMode.desc)]);
 
       final dbList = await query.get();
 
-      final uiList = dbList.map((row) => NotificationItem(
-        id: row.id,
-        type: row.type,
-        title: row.title,
-        desc: row.desc,
-        targetRole: row.role,
-        isRead: row.isRead,
-      )).toList();
+      final uiList = dbList
+          .map((row) => NotificationItem(
+                id: row.id,
+                type: row.type,
+                title: row.title,
+                desc: row.desc,
+                targetRole: row.role,
+                isRead: row.isRead,
+              ))
+          .toList();
 
       _notificationController.add(uiList);
     } catch (e) {
@@ -122,8 +126,8 @@ class DashboardRepository {
   // ==========================================
   Future<void> markAllRead(String role) async {
     await (_db.update(_db.notifications)
-      ..where((tbl) => tbl.role.equals(role) | tbl.role.equals('all'))) 
-      .write(const NotificationsCompanion(isRead: Value(true)));
+          ..where((tbl) => tbl.role.equals(role) | tbl.role.equals('all')))
+        .write(const NotificationsCompanion(isRead: Value(true)));
 
     loadNotifications(role);
   }
@@ -138,18 +142,19 @@ class DashboardRepository {
 
       // Query: Count customers created today
       final count = await (_db.select(_db.customers)
-        ..where((tbl) => tbl.createdAt.isBiggerOrEqualValue(startOfDay)))
-        .get()
-        .then((list) => list.length);
+            ..where((tbl) => tbl.createdAt.isBiggerOrEqualValue(startOfDay)))
+          .get()
+          .then((list) => list.length);
 
       // Logic: High Growth Rule (> 5)
       final bool isHighGrowth = count > 5;
       final String status = isHighGrowth ? "High Growth 🚀" : "Stable";
 
-      final String formattedTime = "${today.hour.toString().padLeft(2, '0')}:${today.minute.toString().padLeft(2, '0')}";
+      final String formattedTime =
+          "${today.hour.toString().padLeft(2, '0')}:${today.minute.toString().padLeft(2, '0')}";
 
       return CustomerStatsModel(
-        count: count.toString().padLeft(2, '0'), 
+        count: count.toString().padLeft(2, '0'),
         status: status,
         isHighGrowth: isHighGrowth,
         syncTime: formattedTime,
@@ -163,55 +168,56 @@ class DashboardRepository {
   // ==========================================
   // 6. SEARCH LOGIC
   // ==========================================
-  Future<List<SearchResult>> searchUniversal(String query, SearchScope scope, {int limit = 10}) async {
+  Future<List<SearchResult>> searchUniversal(String query, SearchScope scope,
+      {int limit = 10}) async {
     if (query.trim().isEmpty) return [];
-    
+
     String term = query.toLowerCase();
     List<SearchResult> results = [];
 
     // 1. Customer Search
-    if ([SearchScope.all, SearchScope.customer, SearchScope.mobile].contains(scope)) {
+    if ([SearchScope.all, SearchScope.customer, SearchScope.mobile]
+        .contains(scope)) {
       final customers = await (_db.select(_db.customers)
-        ..where((tbl) => tbl.name.contains(term) | tbl.mobile.contains(term))
-        ..limit(5)
-      ).get();
+            ..where(
+                (tbl) => tbl.name.contains(term) | tbl.mobile.contains(term))
+            ..limit(5))
+          .get();
 
       results.addAll(customers.map((c) => SearchResult(
-        id: c.id.toString(),
-        title: c.name,
-        subtitle: c.mobile,
-        type: "Customer"
-      )));
+          id: c.id.toString(),
+          title: c.name,
+          subtitle: c.mobile,
+          type: "Customer")));
     }
 
     // 2. Invoice Search
     if ([SearchScope.all, SearchScope.invoice].contains(scope)) {
       final bills = await (_db.select(_db.bills)
-        ..where((tbl) => tbl.billNo.contains(term))
-        ..limit(5)
-      ).get();
+            ..where((tbl) => tbl.billNo.contains(term))
+            ..limit(5))
+          .get();
 
       results.addAll(bills.map((b) => SearchResult(
-        id: b.id.toString(),
-        title: b.billNo,
-        subtitle: "Amt: ₹${b.totalAmount.toStringAsFixed(2)}",
-        type: "Invoice"
-      )));
+          id: b.id.toString(),
+          title: b.billNo,
+          subtitle: "Amt: ₹${b.finalAmount.toStringAsFixed(2)}",
+          type: "Invoice")));
     }
 
     // 3. Loan Search
     if ([SearchScope.all, SearchScope.loan].contains(scope)) {
       final loans = await (_db.select(_db.loans)
-        ..where((tbl) => tbl.loanNo.contains(term) | tbl.itemDesc.contains(term))
-        ..limit(5)
-      ).get();
+            ..where((tbl) =>
+                tbl.loanNo.contains(term) | tbl.itemDesc.contains(term))
+            ..limit(5))
+          .get();
 
       results.addAll(loans.map((l) => SearchResult(
-        id: l.id.toString(),
-        title: l.loanNo,
-        subtitle: "${l.itemDesc} (${l.grossWeight}g)",
-        type: "Loan"
-      )));
+          id: l.id.toString(),
+          title: l.loanNo,
+          subtitle: "${l.itemDesc} (${l.grossWeight}g)",
+          type: "Loan")));
     }
 
     if (results.length > limit) {

@@ -30,33 +30,33 @@ class CustomerProfileLogic extends ChangeNotifier {
   }
 
   // ── STATE ─────────────────────────────────────────────────────────────
-  ProfileState _state           = ProfileState.loading;
+  ProfileState _state = ProfileState.loading;
   CustomerProfileModel? _profile;
   String? _error;
 
   // Credit limit edit
-  bool _editingCreditLimit      = false;
-  bool _savingCreditLimit       = false;
+  bool _editingCreditLimit = false;
+  bool _savingCreditLimit = false;
 
   // Edit mode
-  bool _editMode                = false;
-  bool _savingEdit              = false;
+  bool _editMode = false;
+  bool _savingEdit = false;
   String? _editError;
 
   // Active tab for stats
-  int _activeTab                = 0;
+  int _activeTab = 0;
 
   // ── GETTERS ──────────────────────────────────────────────────────────
-  ProfileState get state              => _state;
-  CustomerProfileModel? get profile   => _profile;
-  String? get error                   => _error;
-  bool get isLoading                  => _state == ProfileState.loading;
-  bool get editingCreditLimit         => _editingCreditLimit;
-  bool get savingCreditLimit          => _savingCreditLimit;
-  bool get editMode                   => _editMode;
-  bool get savingEdit                 => _savingEdit;
-  String? get editError               => _editError;
-  int get activeTab                   => _activeTab;
+  ProfileState get state => _state;
+  CustomerProfileModel? get profile => _profile;
+  String? get error => _error;
+  bool get isLoading => _state == ProfileState.loading;
+  bool get editingCreditLimit => _editingCreditLimit;
+  bool get savingCreditLimit => _savingCreditLimit;
+  bool get editMode => _editMode;
+  bool get savingEdit => _savingEdit;
+  String? get editError => _editError;
+  int get activeTab => _activeTab;
 
   // ── LOAD ─────────────────────────────────────────────────────────────
   Future<void> _load() async {
@@ -75,6 +75,10 @@ class CustomerProfileLogic extends ChangeNotifier {
   }
 
   Future<void> refresh() => _load();
+
+  Future<CustomerBillDetailModel?> fetchBillDetails(int billId) {
+    return _repo.fetchBillDetails(customerId: customerId, billId: billId);
+  }
 
   // ── TAB NAVIGATION ────────────────────────────────────────────────────
   void setTab(int index) {
@@ -101,11 +105,11 @@ class CustomerProfileLogic extends ChangeNotifier {
     required String mobile,
     required String city,
     required String type,
-    String whatsapp    = "",
-    String email       = "",
-    String address     = "",
-    String state       = "",
-    String pincode     = "",
+    String whatsapp = "",
+    String email = "",
+    String address = "",
+    String state = "",
+    String pincode = "",
   }) async {
     if (_profile == null) return false;
 
@@ -126,16 +130,16 @@ class CustomerProfileLogic extends ChangeNotifier {
     notifyListeners();
 
     final ok = await _repo.updateCustomer(
-      customerId:   customerId,
-      name:         name,
-      mobile:       mobile,
-      city:         city,
-      type:         type,
-      whatsapp:     whatsapp,
-      email:        email,
+      customerId: customerId,
+      name: name,
+      mobile: mobile,
+      city: city,
+      type: type,
+      whatsapp: whatsapp,
+      email: email,
       addressLine1: address,
-      state:        state,
-      pincode:      pincode,
+      state: state,
+      pincode: pincode,
     );
 
     if (ok) {

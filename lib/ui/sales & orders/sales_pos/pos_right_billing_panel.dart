@@ -31,13 +31,13 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
   // ✅ promiseDate ab ctrl mein hai (PosBillingController.promiseDate)
 
   String? _refundMethod;
-  double _lastGrandTotal = 0.0;
+  double _lastPayableAmount = 0.0;
   double _lastTotalPaid = 0.0;
 
   @override
   void initState() {
     super.initState();
-    _lastGrandTotal = widget.ctrl.grandTotal;
+    _lastPayableAmount = widget.ctrl.finalPayableAmount;
     _lastTotalPaid = widget.ctrl.totalPaid;
     widget.ctrl.addListener(_onCtrlChanged);
   }
@@ -45,8 +45,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
   void _onCtrlChanged() {
     bool shouldReset = false;
 
-    if (_lastGrandTotal != widget.ctrl.grandTotal) {
-      _lastGrandTotal = widget.ctrl.grandTotal;
+    if (_lastPayableAmount != widget.ctrl.finalPayableAmount) {
+      _lastPayableAmount = widget.ctrl.finalPayableAmount;
       shouldReset = true;
     }
     if (_lastTotalPaid != widget.ctrl.totalPaid) {
@@ -1065,7 +1065,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
   }
 
   Widget _buildPaymentHub() {
-    final isEmptyCart = widget.ctrl.grandTotal == 0.0;
+    final isEmptyCart =
+        widget.ctrl.saleItems.isEmpty && widget.ctrl.oldGoldItems.isEmpty;
     final isDue = widget.ctrl.balanceDue > 0.005;
     final isReturn = widget.ctrl.balanceDue < -0.005;
     final isPaid = !isDue && !isReturn && !isEmptyCart;
@@ -1326,7 +1327,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
   // FINAL ACTION BUTTONS & HOLD LOGIC
   // ==========================================
   Widget _buildActionButtons() {
-    bool isCredit = widget.ctrl.grandTotal < 0;
+    final payableAmount = widget.ctrl.finalPayableAmount;
+    bool isCredit = payableAmount < 0;
     Color boxColor =
         isCredit ? SalesPosColors.success : SalesPosColors.brandGold;
     String topLabel = isCredit ? "PAYABLE TO CUSTOMER" : "FINAL CASH AMOUNT";
@@ -1361,7 +1363,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                             letterSpacing: 1.5)),
                     const SizedBox(height: 6),
                     Text(
-                        "${isCredit ? '- ' : ''}₹ ${widget.ctrl.grandTotal.abs().toStringAsFixed(2)}",
+                        "${isCredit ? '- ' : ''}₹ ${payableAmount.abs().toStringAsFixed(2)}",
                         style: SalesPosStyles.grandTotalText
                             .copyWith(color: boxColor)),
                   ],

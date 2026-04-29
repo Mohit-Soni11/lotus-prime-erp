@@ -3,84 +3,99 @@
 // TYPE: Data Model
 // DESCRIPTION: Complete snapshot of a finalized invoice.
 // ==========================================
- 
+
 import 'package:flutter/material.dart';
-import '../../../models/sales & orders/sales_pos_models/sales_pos_models.dart';
+
 import '../../../models/sales & orders/sales_pos_enums/sales_pos_enums.dart';
- 
+import '../../../models/sales & orders/sales_pos_models/sales_pos_models.dart';
+
 enum PrintFormat {
   a4,
   thermal3inch,
   thermal2inch,
 }
- 
+
 extension PrintFormatExt on PrintFormat {
   String get label {
     switch (this) {
-      case PrintFormat.a4: return "A4 Size";
-      case PrintFormat.thermal3inch: return "3-Inch Thermal";
-      case PrintFormat.thermal2inch: return "2-Inch Thermal";
+      case PrintFormat.a4:
+        return "A4 Size";
+      case PrintFormat.thermal3inch:
+        return "3-Inch Thermal";
+      case PrintFormat.thermal2inch:
+        return "2-Inch Thermal";
     }
   }
- 
+
   String get subtitle {
     switch (this) {
-      case PrintFormat.a4: return "210 × 297 mm — Full detail invoice";
-      case PrintFormat.thermal3inch: return "80 mm roll — Standard POS printer";
-      case PrintFormat.thermal2inch: return "57 mm roll — Compact receipt";
+      case PrintFormat.a4:
+        return "210 x 297 mm - Full detail invoice";
+      case PrintFormat.thermal3inch:
+        return "80 mm roll - Standard POS printer";
+      case PrintFormat.thermal2inch:
+        return "57 mm roll - Compact receipt";
     }
   }
- 
+
   IconData get icon {
     switch (this) {
-      case PrintFormat.a4: return Icons.description_outlined;
-      case PrintFormat.thermal3inch: return Icons.receipt_long_outlined;
-      case PrintFormat.thermal2inch: return Icons.receipt_outlined;
+      case PrintFormat.a4:
+        return Icons.description_outlined;
+      case PrintFormat.thermal3inch:
+        return Icons.receipt_long_outlined;
+      case PrintFormat.thermal2inch:
+        return Icons.receipt_outlined;
     }
   }
- 
+
   double get previewWidth {
     switch (this) {
-      case PrintFormat.a4: return 420;
-      case PrintFormat.thermal3inch: return 240;
-      case PrintFormat.thermal2inch: return 180;
+      case PrintFormat.a4:
+        return 420;
+      case PrintFormat.thermal3inch:
+        return 240;
+      case PrintFormat.thermal2inch:
+        return 180;
     }
   }
 }
- 
-// 🚀 FIX: Renamed from InvoiceStatus to PaymentStatus to avoid clash
+
 enum PaymentStatus { paid, due, credit }
- 
+
 extension PaymentStatusExt on PaymentStatus {
   String get label {
     switch (this) {
-      case PaymentStatus.paid: return "PAID";
-      case PaymentStatus.due: return "DUE";
-      case PaymentStatus.credit: return "CREDIT";
+      case PaymentStatus.paid:
+        return "PAID";
+      case PaymentStatus.due:
+        return "DUE";
+      case PaymentStatus.credit:
+        return "CREDIT";
     }
   }
 }
- 
+
 class PosInvoiceModel {
   final String invoiceNumber;
   final DateTime invoiceDate;
   final BillType billType;
   final BillingMode billingMode;
- 
+
   final String shopName;
   final String shopAddress;
   final String shopPhone;
   final String shopGstin;
- 
+
   final String customerName;
   final String customerMobile;
   final String customerCity;
   final String customerPan;
   final String customerGstin;
- 
+
   final List<SaleItemModel> saleItems;
   final List<OldGoldItemModel> oldGoldItems;
- 
+
   final double grossAmount;
   final double discountAmount;
   final double taxableAmount;
@@ -89,23 +104,28 @@ class PosInvoiceModel {
   final double totalGst;
   final double totalOldGoldDeduction;
   final double grandTotal;
- 
+
   final double cashPaid;
   final double upiPaid;
   final double cardPaid;
   final double advancePaid;
   final double balanceDue;
- 
+
   final DateTime? promiseDate;
   final double totalMakingCharge;
- 
-  // 🚀 FIX: Return PaymentStatus instead of InvoiceStatus
+
+  double get totalPaid => cashPaid + upiPaid + cardPaid + advancePaid;
+
+  double get netPayable => billingMode == BillingMode.wholesale
+      ? grandTotal
+      : grandTotal - totalOldGoldDeduction;
+
   PaymentStatus get paymentStatus {
-    if (grandTotal < 0) return PaymentStatus.credit;
+    if (netPayable < 0) return PaymentStatus.credit;
     if (balanceDue > 0.5) return PaymentStatus.due;
     return PaymentStatus.paid;
   }
- 
+
   const PosInvoiceModel({
     required this.invoiceNumber,
     required this.invoiceDate,

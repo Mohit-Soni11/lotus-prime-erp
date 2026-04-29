@@ -268,9 +268,8 @@ class PosInvoiceController extends ChangeNotifier {
                 inv.customerMobile.isNotEmpty ? inv.customerMobile : null),
             totalAmount: Value(inv.grossAmount),
             discount: Value(inv.discountAmount),
-            finalAmount: Value(inv.grandTotal),
-            paidAmount: Value(
-                inv.cashPaid + inv.upiPaid + inv.cardPaid + inv.advancePaid),
+            finalAmount: Value(inv.netPayable),
+            paidAmount: Value(inv.totalPaid),
             billDate: Value(inv.invoiceDate),
             status: const Value('ACTIVE'),
           ),
@@ -620,7 +619,7 @@ class PosInvoiceController extends ChangeNotifier {
   pw.Widget _pdfTotalsBlock(PosInvoiceModel inv) {
     final activeConfig = getActiveConfig(inv.billingMode, inv.billType);
     // ✅ Professional: Net Payable = Grand Total - Exchange deduction
-    final double netPayable = inv.grandTotal - inv.totalOldGoldDeduction;
+    final double netPayable = inv.netPayable;
 
     return pw.Row(mainAxisAlignment: pw.MainAxisAlignment.end, children: [
       pw.SizedBox(
@@ -706,9 +705,8 @@ class PosInvoiceController extends ChangeNotifier {
     // ✅ PROFESSIONAL STYLE (Tanishq / Malabar Gold standard)
     // Exchange pehle se Totals Block mein "Less:" ke roop mein deduct ho chuka hai
     // Payment Details mein sirf actual cash payment modes dikhenge
-    final double netPayable = inv.grandTotal - inv.totalOldGoldDeduction;
-    final double totalCashPaid =
-        inv.cashPaid + inv.upiPaid + inv.cardPaid + inv.advancePaid;
+    final double netPayable = inv.netPayable;
+    final double totalCashPaid = inv.totalPaid;
 
     final List<Map<String, dynamic>> payments = [
       if (inv.cashPaid > 0) {'label': 'Cash', 'amount': inv.cashPaid},
@@ -891,7 +889,7 @@ class PosInvoiceController extends ChangeNotifier {
         pw.Text("No: ${inv.invoiceNumber}",
             style: pw.TextStyle(fontSize: fontSize)),
         pw.Divider(color: PdfColors.grey400),
-        pw.Text("GRAND TOTAL: Rs ${inv.grandTotal.toStringAsFixed(2)}",
+        pw.Text("GRAND TOTAL: Rs ${inv.netPayable.toStringAsFixed(2)}",
             style: pw.TextStyle(
                 fontSize: fontSize + 2, fontWeight: pw.FontWeight.bold)),
       ],
@@ -917,7 +915,7 @@ class PosInvoiceController extends ChangeNotifier {
     final customerName =
         invoice!.customerName.isNotEmpty ? invoice!.customerName : "Customer";
     final textMessage =
-        "Dear $customerName,\n\nThank you for shopping at *${invoice!.shopName}*!\n\nHere are your invoice details:\n*Invoice No:* ${invoice!.invoiceNumber}\n*Total Amount:* Rs ${invoice!.grandTotal.toStringAsFixed(2)}\n\nVisit again!";
+        "Dear $customerName,\n\nThank you for shopping at *${invoice!.shopName}*!\n\nHere are your invoice details:\n*Invoice No:* ${invoice!.invoiceNumber}\n*Total Amount:* Rs ${invoice!.netPayable.toStringAsFixed(2)}\n\nVisit again!";
 
     final url = Uri.parse(
         "https://wa.me/$cleanPhone?text=${Uri.encodeComponent(textMessage)}");

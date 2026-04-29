@@ -38,8 +38,7 @@ class CustomerProfileScreen extends StatefulWidget {
   });
 
   @override
-  State<CustomerProfileScreen> createState() =>
-      _CustomerProfileScreenState();
+  State<CustomerProfileScreen> createState() => _CustomerProfileScreenState();
 }
 
 class _CustomerProfileScreenState extends State<CustomerProfileScreen>
@@ -55,14 +54,14 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
   final TextEditingController _creditCtrl = TextEditingController();
 
   // Controllers for improved edit dialog
-  final TextEditingController _editNameCtrl     = TextEditingController();
-  final TextEditingController _editMobileCtrl   = TextEditingController();
+  final TextEditingController _editNameCtrl = TextEditingController();
+  final TextEditingController _editMobileCtrl = TextEditingController();
   final TextEditingController _editWhatsappCtrl = TextEditingController();
-  final TextEditingController _editEmailCtrl    = TextEditingController();
-  final TextEditingController _editCityCtrl     = TextEditingController();
-  final TextEditingController _editAddressCtrl  = TextEditingController();
-  final TextEditingController _editStateCtrl    = TextEditingController();
-  final TextEditingController _editPincodeCtrl  = TextEditingController();
+  final TextEditingController _editEmailCtrl = TextEditingController();
+  final TextEditingController _editCityCtrl = TextEditingController();
+  final TextEditingController _editAddressCtrl = TextEditingController();
+  final TextEditingController _editStateCtrl = TextEditingController();
+  final TextEditingController _editPincodeCtrl = TextEditingController();
   String _editTypeValue = "Regular";
 
   final ScrollController _scrollCtrl = ScrollController();
@@ -255,19 +254,15 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                 Row(
                   children: [
                     const Icon(CustomerProfileIcons.phone,
-                        size: 13,
-                        color: CustomerProfileColors.bodyTextMuted),
+                        size: 13, color: CustomerProfileColors.bodyTextMuted),
                     const SizedBox(width: 4),
-                    Text(p.mobile,
-                        style: CustomerProfileStyles.customerMobile),
+                    Text(p.mobile, style: CustomerProfileStyles.customerMobile),
                     const SizedBox(width: 12),
                     if (p.city.isNotEmpty) ...[
                       const Icon(CustomerProfileIcons.city,
-                          size: 13,
-                          color: CustomerProfileColors.bodyTextMuted),
+                          size: 13, color: CustomerProfileColors.bodyTextMuted),
                       const SizedBox(width: 4),
-                      Text(p.city,
-                          style: CustomerProfileStyles.customerMobile),
+                      Text(p.city, style: CustomerProfileStyles.customerMobile),
                     ],
                   ],
                 ),
@@ -473,10 +468,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
           Row(
             children: [
               Expanded(
-                child: _infoRow(
-                    CustomerProfileIcons.phone,
-                    CustomerProfileStrings.lblMobile,
-                    p.mobile),
+                child: _infoRow(CustomerProfileIcons.phone,
+                    CustomerProfileStrings.lblMobile, p.mobile),
               ),
               Expanded(
                 child: _infoRow(
@@ -490,16 +483,12 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
           Row(
             children: [
               Expanded(
-                child: _infoRow(
-                    CustomerProfileIcons.calendar,
-                    CustomerProfileStrings.lblSince,
-                    p.formattedMemberSince),
+                child: _infoRow(CustomerProfileIcons.calendar,
+                    CustomerProfileStrings.lblSince, p.formattedMemberSince),
               ),
               Expanded(
-                child: _infoRow(
-                    CustomerProfileIcons.type,
-                    CustomerProfileStrings.lblType,
-                    p.type),
+                child: _infoRow(CustomerProfileIcons.type,
+                    CustomerProfileStrings.lblType, p.type),
               ),
             ],
           ),
@@ -539,8 +528,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                     ? _logic.cancelEditCreditLimit
                     : _logic.startEditCreditLimit,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: CustomerProfileColors.brandGoldBg,
                     borderRadius: BorderRadius.circular(8),
@@ -675,13 +664,12 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                 const Spacer(),
                 // Total due badge
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: CustomerProfileColors.dueTotalBg,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                        color: CustomerProfileColors.dueBorder),
+                    border: Border.all(color: CustomerProfileColors.dueBorder),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -722,85 +710,97 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
   }
 
   Widget _buildDueRow(CustomerDueModel due) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: CustomerProfileColors.dueRowBg,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        border:
-            Border.all(color: CustomerProfileColors.dueRowBorder),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: CustomerProfileColors.dueBg,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              CustomerProfileIcons.dueBill,
-              color: CustomerProfileColors.dueIcon,
-              size: 18,
-            ),
+        onTap: () => _showBillDetails(due.billId),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: CustomerProfileColors.dueRowBg,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: CustomerProfileColors.dueRowBorder),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  due.billNo,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                    color: CustomerProfileColors.duesBillNo,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  due.formattedDate,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: CustomerProfileColors.bodyTextMuted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          child: Row(
             children: [
-              Text(
-                due.formattedDue,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: CustomerProfileColors.duesAmount,
-                ),
-              ),
-              const SizedBox(height: 3),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: CustomerProfileColors.dueBg,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  "PENDING",
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: CustomerProfileColors.dueText,
+                child: const Icon(
+                  CustomerProfileIcons.dueBill,
+                  color: CustomerProfileColors.dueIcon,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      due.billNo,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: CustomerProfileColors.duesBillNo,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "${due.formattedDate}  •  Tap to open",
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: CustomerProfileColors.bodyTextMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    due.formattedDue,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: CustomerProfileColors.duesAmount,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 3),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: CustomerProfileColors.dueBg,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      "PENDING",
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: CustomerProfileColors.dueText,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 6),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: CustomerProfileColors.bodyTextMuted,
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -896,76 +896,105 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
 
   Widget _buildBillRow(CustomerBillModel bill) {
     final bool paid = bill.isPaid;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: CustomerProfileColors.bodyBg,
+    final bool partial = bill.isPartial;
+    final Color statusBg = paid
+        ? CustomerProfileColors.paidBg
+        : partial
+            ? CustomerProfileColors.dueBg
+            : CustomerProfileColors.unpaidBg;
+    final Color statusText = paid
+        ? CustomerProfileColors.paidText
+        : partial
+            ? CustomerProfileColors.dueText
+            : CustomerProfileColors.unpaidText;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: CustomerProfileColors.bodyBorder),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: paid
-                  ? CustomerProfileColors.paidBg
-                  : CustomerProfileColors.unpaidBg,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              CustomerProfileIcons.invoice,
-              color: paid
-                  ? CustomerProfileColors.paidText
-                  : CustomerProfileColors.unpaidText,
-              size: 18,
-            ),
+        onTap: () => _showBillDetails(bill.id),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: CustomerProfileColors.bodyBg,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: CustomerProfileColors.bodyBorder),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(bill.billNo, style: CustomerProfileStyles.billNo),
-                const SizedBox(height: 2),
-                Text(bill.formattedDate,
-                    style: CustomerProfileStyles.billDate),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          child: Row(
             children: [
-              Text(bill.formattedAmount,
-                  style: CustomerProfileStyles.billAmount),
-              const SizedBox(height: 3),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 2),
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  color: paid
-                      ? CustomerProfileColors.paidBg
-                      : CustomerProfileColors.unpaidBg,
-                  borderRadius: BorderRadius.circular(10),
+                  color: statusBg,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  paid
-                      ? CustomerProfileStrings.paid
-                      : CustomerProfileStrings.unpaid,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: paid
-                        ? CustomerProfileColors.paidText
-                        : CustomerProfileColors.unpaidText,
+                child: Icon(
+                  CustomerProfileIcons.invoice,
+                  color: statusText,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(bill.billNo, style: CustomerProfileStyles.billNo),
+                    const SizedBox(height: 2),
+                    Text(
+                      bill.formattedDate,
+                      style: CustomerProfileStyles.billDate,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Paid: ${bill.formattedPaidAmount}  •  Due: ${bill.formattedDueAmount}",
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: CustomerProfileColors.bodyTextMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    bill.formattedAmount,
+                    style: CustomerProfileStyles.billAmount,
                   ),
-                ),
+                  const SizedBox(height: 3),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: statusBg,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      bill.paymentLabel,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: statusText,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 6),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: CustomerProfileColors.bodyTextMuted,
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1018,9 +1047,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
-                  active
-                      ? Icons.lock_rounded
-                      : Icons.lock_open_rounded,
+                  active ? Icons.lock_rounded : Icons.lock_open_rounded,
                   color: statusColor,
                   size: 18,
                 ),
@@ -1045,8 +1072,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: statusBg,
                   borderRadius: BorderRadius.circular(20),
@@ -1063,23 +1089,25 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(
-              height: 1, color: CustomerProfileColors.divider),
+          const Divider(height: 1, color: CustomerProfileColors.divider),
           const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
-                child: _girviDetail("Loan Amount",
+                child: _girviDetail(
+                    "Loan Amount",
                     "₹${loan.loanAmount.toStringAsFixed(0)}",
                     const Color(0xFF7C3AED)),
               ),
               Expanded(
-                child: _girviDetail("Weight",
+                child: _girviDetail(
+                    "Weight",
                     "${loan.grossWeight.toStringAsFixed(2)}g",
                     CustomerProfileColors.brandGold),
               ),
               Expanded(
-                child: _girviDetail("Interest @",
+                child: _girviDetail(
+                    "Interest @",
                     "${loan.interestRate.toStringAsFixed(0)}%/mo",
                     const Color(0xFFEA580C)),
               ),
@@ -1140,32 +1168,31 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     IconData statusIcon;
     switch (order.status) {
       case AdvanceOrderStatus.ready:
-        statusBg   = CustomerProfileColors.advanceReadyBg;
+        statusBg = CustomerProfileColors.advanceReadyBg;
         statusText = CustomerProfileColors.advanceReadyText;
-        statusBdr  = CustomerProfileColors.advanceReadyBdr;
+        statusBdr = CustomerProfileColors.advanceReadyBdr;
         statusIcon = CustomerProfileIcons.advanceReady;
         break;
       case AdvanceOrderStatus.delivered:
-        statusBg   = CustomerProfileColors.paidBg;
+        statusBg = CustomerProfileColors.paidBg;
         statusText = CustomerProfileColors.paidText;
-        statusBdr  = CustomerProfileColors.clearBorder;
+        statusBdr = CustomerProfileColors.clearBorder;
         statusIcon = CustomerProfileIcons.clear;
         break;
       case AdvanceOrderStatus.cancelled:
-        statusBg   = CustomerProfileColors.defaulterBg;
+        statusBg = CustomerProfileColors.defaulterBg;
         statusText = CustomerProfileColors.defaulterText;
-        statusBdr  = CustomerProfileColors.defaulterBorder;
+        statusBdr = CustomerProfileColors.defaulterBorder;
         statusIcon = Icons.cancel_outlined;
         break;
       default: // pending
-        statusBg   = CustomerProfileColors.advancePendingBg;
+        statusBg = CustomerProfileColors.advancePendingBg;
         statusText = CustomerProfileColors.advancePendingText;
-        statusBdr  = CustomerProfileColors.advancePendingBdr;
+        statusBdr = CustomerProfileColors.advancePendingBdr;
         statusIcon = CustomerProfileIcons.advancePending;
     }
 
-    final bool canConvert =
-        order.isPending || order.isReady;
+    final bool canConvert = order.isPending || order.isReady;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -1225,8 +1252,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                 ),
                 // Status badge
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusBg,
                     borderRadius: BorderRadius.circular(20),
@@ -1285,13 +1312,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
 
           // ── DELIVERY + BOOKING DATE ROW ──────────────────────────────
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               children: [
                 Icon(CustomerProfileIcons.calendar,
-                    size: 12,
-                    color: CustomerProfileColors.bodyTextMuted),
+                    size: 12, color: CustomerProfileColors.bodyTextMuted),
                 const SizedBox(width: 4),
                 Text(
                   "Booked: ${order.formattedDate}",
@@ -1302,8 +1327,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                 ),
                 const SizedBox(width: 16),
                 Icon(CustomerProfileIcons.deliveryDate,
-                    size: 12,
-                    color: CustomerProfileColors.bodyTextMuted),
+                    size: 12, color: CustomerProfileColors.bodyTextMuted),
                 const SizedBox(width: 4),
                 Text(
                   "Delivery: ${order.formattedDelivery}",
@@ -1323,8 +1347,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             Padding(
               padding: const EdgeInsets.all(12),
               child: _ConvertToSaleButton(
-                onTap: () =>
-                    _logic.triggerConvertAdvanceToSale(order.id),
+                onTap: () => _logic.triggerConvertAdvanceToSale(order.id),
               ),
             ),
           ],
@@ -1382,18 +1405,426 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
   // ─────────────────────────────────────────────────────────────────────────
   // IMPROVED EDIT DIALOG ✅ UPDATED — Full form with more fields
   // ─────────────────────────────────────────────────────────────────────────
+  void _showBillDetails(int billId) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: FutureBuilder<CustomerBillDetailModel?>(
+            future: _logic.fetchBillDetails(billId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: Container(
+                    padding: const EdgeInsets.all(28),
+                    decoration: BoxDecoration(
+                      color: CustomerProfileColors.bodyPanelBg,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(
+                          color: CustomerProfileColors.brandGold,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          "Opening bill details...",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: CustomerProfileColors.bodyTextMain,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              if (!snapshot.hasData || snapshot.data == null) {
+                return ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: Container(
+                    padding: const EdgeInsets.all(28),
+                    decoration: BoxDecoration(
+                      color: CustomerProfileColors.bodyPanelBg,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.receipt_long_outlined,
+                          size: 42,
+                          color: CustomerProfileColors.bodyTextMuted,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          "Bill details not found",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: CustomerProfileColors.bodyTextMain,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          "This bill could not be loaded from saved records.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: CustomerProfileColors.bodyTextMuted,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogContext),
+                          child: const Text("Close"),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              final detail = snapshot.data!;
+              final bill = detail.bill;
+              final bool paid = bill.isPaid;
+              final bool partial = bill.isPartial;
+              final Color statusBg = paid
+                  ? CustomerProfileColors.paidBg
+                  : partial
+                      ? CustomerProfileColors.dueBg
+                      : CustomerProfileColors.unpaidBg;
+              final Color statusText = paid
+                  ? CustomerProfileColors.paidText
+                  : partial
+                      ? CustomerProfileColors.dueText
+                      : CustomerProfileColors.unpaidText;
+
+              return ConstrainedBox(
+                constraints:
+                    const BoxConstraints(maxWidth: 820, maxHeight: 700),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: CustomerProfileColors.bodyPanelBg,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: CustomerProfileColors.shadowLight,
+                        blurRadius: 24,
+                        offset: Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(22, 18, 14, 18),
+                        decoration: const BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: CustomerProfileColors.bodyBorder,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: statusBg,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                CustomerProfileIcons.invoice,
+                                color: statusText,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    bill.billNo,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                      color: CustomerProfileColors.bodyTextMain,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "${detail.customerName}  •  ${bill.formattedDate}",
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color:
+                                          CustomerProfileColors.bodyTextMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: statusBg,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                bill.paymentLabel,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  color: statusText,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(dialogContext),
+                              icon: const Icon(Icons.close_rounded),
+                              color: CustomerProfileColors.bodyTextMuted,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Flexible(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(22),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: [
+                                  _buildBillInfoChip(
+                                    title: "Bill Amount",
+                                    value: bill.formattedAmount,
+                                    valueColor:
+                                        CustomerProfileColors.bodyTextMain,
+                                  ),
+                                  _buildBillInfoChip(
+                                    title: "Paid",
+                                    value: bill.formattedPaidAmount,
+                                    valueColor: CustomerProfileColors.paidText,
+                                  ),
+                                  _buildBillInfoChip(
+                                    title: "Due",
+                                    value: bill.formattedDueAmount,
+                                    valueColor: bill.dueAmount > 0
+                                        ? CustomerProfileColors.unpaidText
+                                        : CustomerProfileColors.paidText,
+                                  ),
+                                  _buildBillInfoChip(
+                                    title: "Mobile",
+                                    value: detail.customerMobile.isEmpty
+                                        ? "N/A"
+                                        : detail.customerMobile,
+                                    valueColor:
+                                        CustomerProfileColors.bodyTextMain,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              const Text(
+                                "Line Items",
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w900,
+                                  color: CustomerProfileColors.bodyTextMain,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              if (detail.items.isEmpty)
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(18),
+                                  decoration: BoxDecoration(
+                                    color: CustomerProfileColors.bodyBg,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: CustomerProfileColors.bodyBorder,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    "No saved line items found for this bill.",
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color:
+                                          CustomerProfileColors.bodyTextMuted,
+                                    ),
+                                  ),
+                                )
+                              else
+                                ...detail.items.map(_buildBillItemRow),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBillInfoChip({
+    required String title,
+    required String value,
+    required Color valueColor,
+  }) {
+    return Container(
+      width: 170,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: CustomerProfileColors.bodyBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: CustomerProfileColors.bodyBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: CustomerProfileColors.bodyTextMuted,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: valueColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBillItemRow(CustomerBillLineItemModel item) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: CustomerProfileColors.bodyBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: CustomerProfileColors.bodyBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  item.itemName,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: CustomerProfileColors.bodyTextMain,
+                  ),
+                ),
+              ),
+              Text(
+                "\u20B9 ${item.itemTotal.toStringAsFixed(2)}",
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: CustomerProfileColors.bodyTextMain,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 14,
+            runSpacing: 8,
+            children: [
+              Text(
+                "Purity: ${item.purity?.isNotEmpty == true ? item.purity : 'N/A'}",
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: CustomerProfileColors.bodyTextMuted,
+                ),
+              ),
+              Text(
+                "Gross: ${item.grossWeight.toStringAsFixed(3)} g",
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: CustomerProfileColors.bodyTextMuted,
+                ),
+              ),
+              Text(
+                "Net: ${item.netWeight.toStringAsFixed(3)} g",
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: CustomerProfileColors.bodyTextMuted,
+                ),
+              ),
+              Text(
+                "Rate: \u20B9 ${item.rate.toStringAsFixed(2)}",
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: CustomerProfileColors.bodyTextMuted,
+                ),
+              ),
+              Text(
+                "Making: \u20B9 ${item.makingCharge.toStringAsFixed(2)}",
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: CustomerProfileColors.bodyTextMuted,
+                ),
+              ),
+              if (item.huid?.isNotEmpty == true)
+                Text(
+                  "HUID: ${item.huid}",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: CustomerProfileColors.bodyTextMuted,
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showEditDialog(CustomerProfileModel p) {
     // Pre-fill all controllers
-    _editNameCtrl.text     = p.name;
-    _editMobileCtrl.text   = p.mobile;
+    _editNameCtrl.text = p.name;
+    _editMobileCtrl.text = p.mobile;
     _editWhatsappCtrl.text = p.whatsapp;
-    _editCityCtrl.text     = p.city;
-    _editTypeValue         = p.type;
+    _editCityCtrl.text = p.city;
+    _editTypeValue = p.type;
     // Other fields default empty (not in model currently)
-    _editEmailCtrl.text    = "";
-    _editAddressCtrl.text  = "";
-    _editStateCtrl.text    = "";
-    _editPincodeCtrl.text  = "";
+    _editEmailCtrl.text = "";
+    _editAddressCtrl.text = "";
+    _editStateCtrl.text = "";
+    _editPincodeCtrl.text = "";
 
     showDialog(
       context: context,
@@ -1402,8 +1833,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
         builder: (ctx, setDialogState) {
           return AlertDialog(
             backgroundColor: CustomerProfileColors.bodyPanelBg,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Row(
               children: [
                 Container(
@@ -1582,22 +2013,21 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                     ? null
                     : () async {
                         final ok = await _logic.saveEdit(
-                          name:      _editNameCtrl.text,
-                          mobile:    _editMobileCtrl.text,
-                          city:      _editCityCtrl.text,
-                          type:      _editTypeValue,
-                          whatsapp:  _editWhatsappCtrl.text,
-                          email:     _editEmailCtrl.text,
-                          address:   _editAddressCtrl.text,
-                          state:     _editStateCtrl.text,
-                          pincode:   _editPincodeCtrl.text,
+                          name: _editNameCtrl.text,
+                          mobile: _editMobileCtrl.text,
+                          city: _editCityCtrl.text,
+                          type: _editTypeValue,
+                          whatsapp: _editWhatsappCtrl.text,
+                          email: _editEmailCtrl.text,
+                          address: _editAddressCtrl.text,
+                          state: _editStateCtrl.text,
+                          pincode: _editPincodeCtrl.text,
                         );
                         if (ok && mounted) {
                           Navigator.pop(ctx);
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content:
-                                  Text(CustomerProfileStrings.editSuccess),
+                              content: Text(CustomerProfileStrings.editSuccess),
                               backgroundColor: Color(0xFF10B981),
                               behavior: SnackBarBehavior.floating,
                             ),
@@ -1609,8 +2039,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: CustomerProfileColors.brandGold,
                   foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                   elevation: 0,
@@ -1657,13 +2087,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
       decoration: BoxDecoration(
         color: CustomerProfileColors.bodyBg,
         borderRadius: BorderRadius.circular(10),
-        border:
-            Border.all(color: CustomerProfileColors.bodyBorder),
+        border: Border.all(color: CustomerProfileColors.bodyBorder),
       ),
       child: TextField(
         controller: ctrl,
-        keyboardType:
-            isNumber ? TextInputType.number : TextInputType.text,
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         inputFormatters: isNumber
             ? [
                 FilteringTextInputFormatter.digitsOnly,
@@ -1682,12 +2110,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             color: CustomerProfileColors.bodyTextMuted,
             fontSize: 13,
           ),
-          prefixIcon: Icon(icon,
-              size: 18,
-              color: CustomerProfileColors.bodyTextMuted),
+          prefixIcon:
+              Icon(icon, size: 18, color: CustomerProfileColors.bodyTextMuted),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12, vertical: 14),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         ),
       ),
     );
@@ -1711,9 +2138,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             child: TextField(
               controller: _creditCtrl,
               keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly
-              ],
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 15,
@@ -1721,11 +2146,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
               ),
               decoration: InputDecoration(
                 border: InputBorder.none,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 14),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14),
                 hintText: CustomerProfileStrings.hintCreditLimit,
-                hintStyle: const TextStyle(
-                    color: CustomerProfileColors.bodyTextMuted),
+                hintStyle:
+                    const TextStyle(color: CustomerProfileColors.bodyTextMuted),
                 prefixIcon: const Icon(CustomerProfileIcons.amount,
                     color: CustomerProfileColors.brandGold, size: 18),
               ),
@@ -1779,8 +2203,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: CustomerProfileColors.bodyPanelBg,
         icon: Container(
           width: 56,
@@ -1815,10 +2238,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               foregroundColor: CustomerProfileColors.bodyTextMuted,
-              side: const BorderSide(
-                  color: CustomerProfileColors.bodyBorder),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 24, vertical: 12),
+              side: const BorderSide(color: CustomerProfileColors.bodyBorder),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
             ),
@@ -1833,8 +2254,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
               if (!ok && mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content:
-                        Text(CustomerProfileStrings.deleteError),
+                    content: Text(CustomerProfileStrings.deleteError),
                     backgroundColor: CustomerProfileColors.deleteText,
                     behavior: SnackBarBehavior.floating,
                   ),
@@ -1844,8 +2264,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: CustomerProfileColors.deleteText,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 24, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
               elevation: 0,
@@ -1893,8 +2312,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
           const SizedBox(height: 12),
           Text(
             _logic.error ?? "Something went wrong",
-            style: const TextStyle(
-                color: CustomerProfileColors.bodyTextMuted),
+            style: const TextStyle(color: CustomerProfileColors.bodyTextMuted),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -1938,9 +2356,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
-          Icon(icon,
-              size: 14,
-              color: CustomerProfileColors.bodyTextMuted),
+          Icon(icon, size: 14, color: CustomerProfileColors.bodyTextMuted),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1974,8 +2390,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
           const SizedBox(height: 8),
           Text(
             value,
-            style: CustomerProfileStyles.creditAmount
-                .copyWith(color: color),
+            style: CustomerProfileStyles.creditAmount.copyWith(color: color),
           ),
           const SizedBox(height: 2),
           Text(label, style: CustomerProfileStyles.creditLabel),
@@ -1986,8 +2401,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
 
   Widget _buildTypeBadge(CustomerProfileModel p) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: p.isVip
             ? CustomerProfileColors.vipBg
@@ -2003,9 +2417,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            p.isVip
-                ? CustomerProfileIcons.vip
-                : Icons.person_rounded,
+            p.isVip ? CustomerProfileIcons.vip : Icons.person_rounded,
             size: 11,
             color: p.isVip
                 ? CustomerProfileColors.vipText
@@ -2050,8 +2462,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             : CustomerProfileIcons.defaulter;
 
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),
@@ -2231,8 +2642,7 @@ class _ActionBtnState extends State<_ActionBtn> {
               color: widget.bg,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                  color: widget.border,
-                  width: widget.filled ? 0 : 1.5),
+                  color: widget.border, width: widget.filled ? 0 : 1.5),
               boxShadow: _hovered
                   ? [
                       BoxShadow(
@@ -2288,8 +2698,7 @@ class _TypeToggle extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             margin: const EdgeInsets.only(right: 8),
-            padding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               color: active
                   ? (type == "VIP"
@@ -2298,9 +2707,7 @@ class _TypeToggle extends StatelessWidget {
                   : CustomerProfileColors.bodyBg,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: active
-                    ? color
-                    : CustomerProfileColors.bodyBorder,
+                color: active ? color : CustomerProfileColors.bodyBorder,
                 width: active ? 1.5 : 1,
               ),
             ),
@@ -2309,9 +2716,7 @@ class _TypeToggle extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: active
-                    ? color
-                    : CustomerProfileColors.bodyTextMuted,
+                color: active ? color : CustomerProfileColors.bodyTextMuted,
               ),
             ),
           ),

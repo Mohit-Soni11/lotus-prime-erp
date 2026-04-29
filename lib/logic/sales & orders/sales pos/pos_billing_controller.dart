@@ -565,14 +565,11 @@ class PosBillingController extends ChangeNotifier {
   double get sgst => totalGst / 2;
 
   double get grandTotal => taxableAmount + totalGst;
+  double get finalPayableAmount => billingMode == BillingMode.wholesale
+      ? grandTotal
+      : grandTotal - oldGoldCashDeduction;
   double get totalPaid => _cashInput + _upiInput + _cardInput + _advInput;
-
-  double get balanceDue {
-    if (billingMode == BillingMode.wholesale) {
-      return grandTotal - totalPaid;
-    }
-    return grandTotal - oldGoldCashDeduction - totalPaid;
-  }
+  double get balanceDue => finalPayableAmount - totalPaid;
 
   // ==========================================
   // UI ACTIONS & MEMORY SAFE LISTENERS
@@ -673,7 +670,7 @@ class PosBillingController extends ChangeNotifier {
       customerName: nameCtrl.text,
       customerMobile: mobileCtrl.text,
       totalItems: saleItems.length + oldGoldItems.length,
-      grandTotal: grandTotal,
+      grandTotal: finalPayableAmount,
       savedSaleItems: List.from(saleItems),
       savedOldGoldItems: List.from(oldGoldItems),
     );
