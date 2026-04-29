@@ -24,21 +24,21 @@ class PurchaseEntryController extends ChangeNotifier {
 
   // ── Source & Tax ────────────────────────────────────────────────────────────
   PurchaseSource purchaseSource = PurchaseSource.fromCustomer;
-  PurchaseTaxType taxType       = PurchaseTaxType.normal; // No GST by default
+  PurchaseTaxType taxType = PurchaseTaxType.normal; // No GST by default
 
   // ── Customer / Supplier Fields ──────────────────────────────────────────────
   final TextEditingController mobileCtrl = TextEditingController();
-  final TextEditingController nameCtrl   = TextEditingController();
-  final TextEditingController cityCtrl   = TextEditingController();
-  final TextEditingController panCtrl    = TextEditingController();
-  final TextEditingController gstCtrl    = TextEditingController();
+  final TextEditingController nameCtrl = TextEditingController();
+  final TextEditingController cityCtrl = TextEditingController();
+  final TextEditingController panCtrl = TextEditingController();
+  final TextEditingController gstCtrl = TextEditingController();
 
   // ── Purchase Items ──────────────────────────────────────────────────────────
   final List<PurchaseItemModel> items = [];
 
   // ── Payment Controllers ─────────────────────────────────────────────────────
   final TextEditingController cashCtrl = TextEditingController();
-  final TextEditingController upiCtrl  = TextEditingController();
+  final TextEditingController upiCtrl = TextEditingController();
   final TextEditingController cardCtrl = TextEditingController();
 
   // ── Discount ────────────────────────────────────────────────────────────────
@@ -120,15 +120,15 @@ class PurchaseEntryController extends ChangeNotifier {
   }
 
   // ── Computed: Totals by metal ─────────────────────────────────────────────
-  double get totalGoldValue     => _sumByMetal(PurchaseMetalType.gold);
-  double get totalSilverValue   => _sumByMetal(PurchaseMetalType.silver);
+  double get totalGoldValue => _sumByMetal(PurchaseMetalType.gold);
+  double get totalSilverValue => _sumByMetal(PurchaseMetalType.silver);
   double get totalPlatinumValue => _sumByMetal(PurchaseMetalType.platinum);
-  double get totalDiamondValue  => _sumByMetal(PurchaseMetalType.diamond);
+  double get totalDiamondValue => _sumByMetal(PurchaseMetalType.diamond);
 
-  double get totalGoldFine     => _fineByMetal(PurchaseMetalType.gold);
-  double get totalSilverFine   => _fineByMetal(PurchaseMetalType.silver);
+  double get totalGoldFine => _fineByMetal(PurchaseMetalType.gold);
+  double get totalSilverFine => _fineByMetal(PurchaseMetalType.silver);
   double get totalPlatinumFine => _fineByMetal(PurchaseMetalType.platinum);
-  double get totalDiamondFine  => _fineByMetal(PurchaseMetalType.diamond);
+  double get totalDiamondFine => _fineByMetal(PurchaseMetalType.diamond);
 
   double _sumByMetal(PurchaseMetalType m) =>
       items.where((i) => i.metal == m).fold(0.0, (s, i) => s + i.totalValue);
@@ -149,15 +149,16 @@ class PurchaseEntryController extends ChangeNotifier {
   double get taxableAmount => grossPurchaseAmount - discountAmount;
 
   // GST on purchase (3% for jewellery)
-  double get totalGst  => taxType == PurchaseTaxType.gst ? taxableAmount * 0.03 : 0.0;
-  double get cgst      => totalGst / 2.0;
-  double get sgst      => totalGst / 2.0;
+  double get totalGst =>
+      taxType == PurchaseTaxType.gst ? taxableAmount * 0.03 : 0.0;
+  double get cgst => totalGst / 2.0;
+  double get sgst => totalGst / 2.0;
 
   double get grandTotal => taxableAmount + totalGst;
 
   // ── Payments ──────────────────────────────────────────────────────────────
   double get cashPaid => double.tryParse(cashCtrl.text) ?? 0.0;
-  double get upiPaid  => double.tryParse(upiCtrl.text)  ?? 0.0;
+  double get upiPaid => double.tryParse(upiCtrl.text) ?? 0.0;
   double get cardPaid => double.tryParse(cardCtrl.text) ?? 0.0;
   double get totalPaid => cashPaid + upiPaid + cardPaid;
 
@@ -168,33 +169,45 @@ class PurchaseEntryController extends ChangeNotifier {
   Future<bool> savePurchase() async {
     try {
       final db = AppDatabase();
-      for (final item in items) {
-        if (item.netWt <= 0 || item.rate <= 0) continue;
+      final validItems =
+          items.where((item) => item.netWt > 0 && item.rate > 0).toList();
+      if (validItems.isEmpty) return false;
 
-        // Auto-generate SKU
-        final sku =
-            'PUR-${item.metal.name.toUpperCase()}-${DateTime.now().millisecondsSinceEpoch}';
+      final batchTimestamp = DateTime.now().millisecondsSinceEpoch;
+      final counterpartName = nameCtrl.text.trim().isNotEmpty
+          ? nameCtrl.text.trim()
+          : purchaseSource == PurchaseSource.fromSupplier
+              ? 'Unassigned Supplier'
+              : 'Walk-in Seller';
 
-        await db.into(db.stockItems).insert(
-          StockItemsCompanion(
-            sku:             drift.Value(sku),
-            itemName:        drift.Value(item.descCtrl.text.isNotEmpty
-                ? item.descCtrl.text
-                : '${item.metal.displayName} Purchase'),
-            category:        drift.Value(item.metal.displayName),
-            subCategory:     drift.Value('Purchase Inward'),
-            metalType:       drift.Value(item.metal.displayName),
-            purity:          drift.Value(item.purityCtrl.text),
-            grossWeight:     drift.Value(item.grossWt),
-            stoneWeight:     drift.Value(item.lessWt),
-            netWeight:       drift.Value(item.netWt),
-            purchasePrice:   drift.Value(item.totalValue),
-            supplierName:    drift.Value(nameCtrl.text),
-            quantity:        const drift.Value(1),
-            status:          drift.Value('Available'),
-          ),
-        );
-      }
+      await db.transaction(() async {
+        for (int index = 0; index < validItems.length; index++) {
+          final item = validItems[index];
+          final sku =
+              'PUR-${item.metal.name.toUpperCase()}-$batchTimestamp-${index + 1}';
+
+          await db.into(db.stockItems).insert(
+                StockItemsCompanion(
+                  sku: drift.Value(sku),
+                  itemName: drift.Value(item.descCtrl.text.isNotEmpty
+                      ? item.descCtrl.text
+                      : '${item.metal.displayName} Purchase'),
+                  category: drift.Value(item.metal.displayName),
+                  subCategory: drift.Value('Purchase Inward'),
+                  metalType: drift.Value(item.metal.displayName),
+                  purity: drift.Value(item.purityCtrl.text),
+                  grossWeight: drift.Value(item.grossWt),
+                  stoneWeight: drift.Value(item.lessWt),
+                  netWeight: drift.Value(item.netWt),
+                  purchasePrice: drift.Value(item.totalValue),
+                  supplierName: drift.Value(counterpartName),
+                  quantity: const drift.Value(1),
+                  status: drift.Value('Available'),
+                ),
+              );
+        }
+      });
+
       _purchaseNo++;
       _resetForm();
       notifyListeners();

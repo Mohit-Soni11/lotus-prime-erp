@@ -43,19 +43,18 @@ class InventoryScreen extends StatefulWidget {
 
 class _InventoryScreenState extends State<InventoryScreen>
     with TickerProviderStateMixin {
-
   late final InventoryController _ctrl;
   final AppDatabase _db = AppDatabase();
 
   // ── Section entry animations ────────────────────────────────
   static const int _sectionCount = 5;
   late final List<AnimationController> _sectionAnim;
-  late final List<Animation<double>>   _sectionFade;
-  late final List<Animation<Offset>>   _sectionSlide;
+  late final List<Animation<double>> _sectionFade;
+  late final List<Animation<Offset>> _sectionSlide;
 
   // ── Currency formatter ───────────────────────────────────────
   final _rupee = NumberFormat('₹##,##,##0', 'en_IN');
-  final _wt    = NumberFormat('##0.00', 'en_IN');
+  final _wt = NumberFormat('##0.00', 'en_IN');
 
   @override
   void initState() {
@@ -64,14 +63,19 @@ class _InventoryScreenState extends State<InventoryScreen>
     _ctrl.addListener(_rebuild);
 
     // Staggered entry animations
-    _sectionAnim = List.generate(_sectionCount, (i) =>
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 500)),
+    _sectionAnim = List.generate(
+      _sectionCount,
+      (i) => AnimationController(
+          vsync: this, duration: const Duration(milliseconds: 500)),
     );
-    _sectionFade = _sectionAnim.map((ac) =>
-      CurvedAnimation(parent: ac, curve: Curves.easeInOut)).toList();
-    _sectionSlide = _sectionAnim.map((ac) =>
-      Tween<Offset>(begin: const Offset(0, 0.10), end: Offset.zero)
-          .animate(CurvedAnimation(parent: ac, curve: Curves.easeOutCubic))).toList();
+    _sectionFade = _sectionAnim
+        .map((ac) => CurvedAnimation(parent: ac, curve: Curves.easeInOut))
+        .toList();
+    _sectionSlide = _sectionAnim
+        .map((ac) => Tween<Offset>(
+                begin: const Offset(0, 0.10), end: Offset.zero)
+            .animate(CurvedAnimation(parent: ac, curve: Curves.easeOutCubic)))
+        .toList();
 
     for (int i = 0; i < _sectionCount; i++) {
       Future.delayed(Duration(milliseconds: 60 + i * 90), () {
@@ -82,7 +86,9 @@ class _InventoryScreenState extends State<InventoryScreen>
     _ctrl.loadStats();
   }
 
-  void _rebuild() { if (mounted) setState(() {}); }
+  void _rebuild() {
+    if (mounted) setState(() {});
+  }
 
   @override
   void dispose() {
@@ -130,7 +136,7 @@ class _InventoryScreenState extends State<InventoryScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            'Stock data load ho raha hai...',
+            'Loading inventory data...',
             style: InvStyles.pageSubtitle,
           ),
         ],
@@ -148,7 +154,6 @@ class _InventoryScreenState extends State<InventoryScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 // ── Page Header ──────────────────────────────────
                 _animated(0, _buildPageHeader()),
                 const SizedBox(height: 24),
@@ -310,10 +315,9 @@ class _InventoryScreenState extends State<InventoryScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(InvStrings.cardMetal,
-                    style: InvStyles.sectionTitle.copyWith(
-                        color: InvColors.textDark)),
-                Text(InvStrings.cardMetalNote,
-                    style: InvStyles.cardNote),
+                    style: InvStyles.sectionTitle
+                        .copyWith(color: InvColors.textDark)),
+                Text(InvStrings.cardMetalNote, style: InvStyles.cardNote),
               ],
             ),
           ]),
@@ -383,10 +387,12 @@ class _InventoryScreenState extends State<InventoryScreen>
                   showValue: false,
                 ),
               // Empty state
-              if (s.goldCount == 0 && s.silverCount == 0 &&
-                  s.diamondCount == 0 && s.platinumCount == 0)
+              if (s.goldCount == 0 &&
+                  s.silverCount == 0 &&
+                  s.diamondCount == 0 &&
+                  s.platinumCount == 0)
                 Text(
-                  'Koi metal holding nahi hai abhi.',
+                  'No metal holdings are available yet.',
                   style: InvStyles.cardNote,
                 ),
             ],
@@ -447,7 +453,9 @@ class _InventoryScreenState extends State<InventoryScreen>
               alignment: Alignment.center,
               child: Text(
                 cat,
-                style: isActive ? InvStyles.chipActiveText : InvStyles.chipInactiveText,
+                style: isActive
+                    ? InvStyles.chipActiveText
+                    : InvStyles.chipInactiveText,
               ),
             ),
           );
@@ -489,8 +497,9 @@ class _InventoryScreenState extends State<InventoryScreen>
 
   Widget _buildListLoading() {
     return Column(
-      children: List.generate(3, (i) =>
-        Container(
+      children: List.generate(
+        3,
+        (i) => Container(
           margin: const EdgeInsets.only(bottom: 12),
           height: 90,
           decoration: InvStyles.cardDecoration.copyWith(
@@ -544,18 +553,18 @@ class _InventoryScreenState extends State<InventoryScreen>
 
 class _SummaryCard extends StatelessWidget {
   final IconData icon;
-  final String   label;
-  final String   note;
-  final Color    accentColor;
-  final Color    bgColor;
-  final Color    borderColor;
-  final String   bigNumber;
-  final String   bigUnit;
-  final String   row1Label;
-  final String   row1Value;
-  final String   row2Label;
-  final String   row2Value;
-  final Widget?  deltaWidget;
+  final String label;
+  final String note;
+  final Color accentColor;
+  final Color bgColor;
+  final Color borderColor;
+  final String bigNumber;
+  final String bigUnit;
+  final String row1Label;
+  final String row1Value;
+  final String row2Label;
+  final String row2Value;
+  final Widget? deltaWidget;
 
   const _SummaryCard({
     required this.icon,
@@ -597,10 +606,11 @@ class _SummaryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                    style: InvStyles.cardLabel.copyWith(
-                        color: accentColor, fontWeight: FontWeight.w700)),
-                  Text(note, style: InvStyles.cardNote,
-                    overflow: TextOverflow.ellipsis),
+                      style: InvStyles.cardLabel.copyWith(
+                          color: accentColor, fontWeight: FontWeight.w700)),
+                  Text(note,
+                      style: InvStyles.cardNote,
+                      overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
@@ -610,13 +620,13 @@ class _SummaryCard extends StatelessWidget {
           // Big number
           Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
             Text(bigNumber,
-              style: InvStyles.cardBigNumber.copyWith(color: accentColor)),
+                style: InvStyles.cardBigNumber.copyWith(color: accentColor)),
             const SizedBox(width: 4),
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: Text(bigUnit,
-                style: InvStyles.cardNote.copyWith(
-                    fontWeight: FontWeight.w600)),
+                  style:
+                      InvStyles.cardNote.copyWith(fontWeight: FontWeight.w600)),
             ),
           ]),
           const SizedBox(height: 10),
@@ -648,7 +658,8 @@ class _StatRow extends StatelessWidget {
       children: [
         Text(label, style: InvStyles.cardNote),
         Text(value,
-          style: InvStyles.cardSubValue.copyWith(fontWeight: FontWeight.w700)),
+            style:
+                InvStyles.cardSubValue.copyWith(fontWeight: FontWeight.w700)),
       ],
     );
   }
@@ -668,28 +679,29 @@ class _MovementChip extends StatelessWidget {
     if (added == 0 && sold == 0) return const SizedBox.shrink();
     return Row(mainAxisSize: MainAxisSize.min, children: [
       if (added > 0)
-        _chip('+$added aaj', InvColors.success, InvColors.successBg),
+        _chip('+$added added today', InvColors.success, InvColors.successBg),
       if (added > 0 && sold > 0) const SizedBox(width: 6),
       if (sold > 0)
-        _chip('-$sold becha', InvColors.danger, InvColors.dangerBg),
+        _chip('-$sold sold today', InvColors.danger, InvColors.dangerBg),
     ]);
   }
 
   Widget _chip(String text, Color color, Color bg) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-    decoration: BoxDecoration(
-      color: bg,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: color.withOpacity(0.3)),
-    ),
-    child: Text(text,
-      style: GoogleFonts.inter(
-        fontSize: 10,
-        fontWeight: FontWeight.w700,
-        color: color,
-      ),
-    ),
-  );
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Text(
+          text,
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      );
 }
 
 // =============================================================================
@@ -697,19 +709,19 @@ class _MovementChip extends StatelessWidget {
 // =============================================================================
 
 class _MetalHoldingChip extends StatelessWidget {
-  final IconData    icon;
-  final Color       iconColor;
-  final String      label;
-  final int         count;
-  final double      weight;
-  final double      value;
-  final Color       bg;
-  final Color       textColor;
-  final Color       border;
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final int count;
+  final double weight;
+  final double value;
+  final Color bg;
+  final Color textColor;
+  final Color border;
   final NumberFormat rupeeFormat;
   final NumberFormat wtFormat;
-  final bool        showWeight;
-  final bool        showValue;
+  final bool showWeight;
+  final bool showValue;
 
   const _MetalHoldingChip({
     required this.icon,
@@ -724,7 +736,7 @@ class _MetalHoldingChip extends StatelessWidget {
     required this.rupeeFormat,
     required this.wtFormat,
     this.showWeight = true,
-    this.showValue  = true,
+    this.showValue = true,
   });
 
   @override
@@ -739,7 +751,8 @@ class _MetalHoldingChip extends StatelessWidget {
             Icon(icon, size: 10, color: iconColor),
             const SizedBox(width: 5),
             Text(label,
-              style: InvStyles.metalChipText(textColor).copyWith(fontSize: 12)),
+                style:
+                    InvStyles.metalChipText(textColor).copyWith(fontSize: 12)),
           ]),
           const SizedBox(height: 4),
           Text(
@@ -752,12 +765,12 @@ class _MetalHoldingChip extends StatelessWidget {
           ),
           if (showWeight && weight > 0)
             Text('${wtFormat.format(weight)} g',
-              style: InvStyles.metalChipText(textColor)
-                  .copyWith(fontWeight: FontWeight.w500, fontSize: 11)),
+                style: InvStyles.metalChipText(textColor)
+                    .copyWith(fontWeight: FontWeight.w500, fontSize: 11)),
           if (showValue && value > 0)
             Text(rupeeFormat.format(value),
-              style: InvStyles.metalChipText(textColor)
-                  .copyWith(fontWeight: FontWeight.w600, fontSize: 11)),
+                style: InvStyles.metalChipText(textColor)
+                    .copyWith(fontWeight: FontWeight.w600, fontSize: 11)),
         ],
       ),
     );
@@ -769,7 +782,7 @@ class _MetalHoldingChip extends StatelessWidget {
 // =============================================================================
 
 class _StockItemCard extends StatefulWidget {
-  final StockItem    item;
+  final StockItem item;
   final NumberFormat rupeeFormat;
   final NumberFormat wtFormat;
   const _StockItemCard({
@@ -787,18 +800,34 @@ class _StockItemCardState extends State<_StockItemCard> {
 
   (Color, Color, Color) _statusColors(String status) {
     if (status == StockStatus.available.label)
-      return (InvColors.statusAvailBg,   InvColors.statusAvailText,   InvColors.closingAccent);
+      return (
+        InvColors.statusAvailBg,
+        InvColors.statusAvailText,
+        InvColors.closingAccent
+      );
     if (status == StockStatus.sold.label)
-      return (InvColors.statusSoldBg,    InvColors.statusSoldText,    InvColors.danger);
+      return (
+        InvColors.statusSoldBg,
+        InvColors.statusSoldText,
+        InvColors.danger
+      );
     if (status == StockStatus.onOrder.label)
-      return (InvColors.statusOrderBg,   InvColors.statusOrderText,   InvColors.warning);
-    return (InvColors.statusKarigarBg,  InvColors.statusKarigarText, InvColors.openingAccent);
+      return (
+        InvColors.statusOrderBg,
+        InvColors.statusOrderText,
+        InvColors.warning
+      );
+    return (
+      InvColors.statusKarigarBg,
+      InvColors.statusKarigarText,
+      InvColors.openingAccent
+    );
   }
 
   Color _categoryAccent(String cat) {
-    if (cat == StockCategory.gold.label)     return InvColors.brandGold;
-    if (cat == StockCategory.silver.label)   return const Color(0xFF94A3B8);
-    if (cat == StockCategory.diamond.label)  return const Color(0xFF3B82F6);
+    if (cat == StockCategory.gold.label) return InvColors.brandGold;
+    if (cat == StockCategory.silver.label) return const Color(0xFF94A3B8);
+    if (cat == StockCategory.diamond.label) return const Color(0xFF3B82F6);
     if (cat == StockCategory.platinum.label) return const Color(0xFF8B5CF6);
     return InvColors.textMuted;
   }
@@ -811,7 +840,7 @@ class _StockItemCardState extends State<_StockItemCard> {
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
+      onExit: (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         decoration: BoxDecoration(
@@ -823,9 +852,8 @@ class _StockItemCardState extends State<_StockItemCard> {
           ),
           boxShadow: [
             BoxShadow(
-              color: _hovered
-                  ? accent.withOpacity(0.10)
-                  : InvColors.shadowLight,
+              color:
+                  _hovered ? accent.withOpacity(0.10) : InvColors.shadowLight,
               blurRadius: _hovered ? 20 : 8,
               offset: const Offset(0, 4),
             ),
@@ -838,14 +866,15 @@ class _StockItemCardState extends State<_StockItemCard> {
             children: [
               // Category icon
               Container(
-                width: 44, height: 44,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: accent.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: accent.withOpacity(0.2)),
                 ),
-                child: Icon(_categoryIcon(item.category),
-                    color: accent, size: 20),
+                child:
+                    Icon(_categoryIcon(item.category), color: accent, size: 20),
               ),
               const SizedBox(width: 14),
 
@@ -860,9 +889,9 @@ class _StockItemCardState extends State<_StockItemCard> {
                       children: [
                         Expanded(
                           child: Text(item.itemName,
-                            style: InvStyles.itemName,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis),
+                              style: InvStyles.itemName,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis),
                         ),
                         const SizedBox(width: 8),
                         _StatusBadge(
@@ -886,22 +915,26 @@ class _StockItemCardState extends State<_StockItemCard> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(item.category,
-                          style: InvStyles.itemSku.copyWith(
-                              color: accent, fontWeight: FontWeight.w700)),
+                            style: InvStyles.itemSku.copyWith(
+                                color: accent, fontWeight: FontWeight.w700)),
                       ),
                       if (item.purity != null &&
                           (item.purity ?? '').isNotEmpty) ...[
                         const SizedBox(width: 6),
-                        Text('• ${item.purity}',
-                            style: InvStyles.itemSku),
+                        Text('• ${item.purity}', style: InvStyles.itemSku),
                       ],
                     ]),
                     const SizedBox(height: 10),
                     // Stats row
                     Row(children: [
-                      _StatChip(label: 'Gross', value: '${widget.wtFormat.format(item.grossWeight)}g'),
+                      _StatChip(
+                          label: 'Gross',
+                          value:
+                              '${widget.wtFormat.format(item.grossWeight)}g'),
                       const SizedBox(width: 8),
-                      _StatChip(label: 'Net', value: '${widget.wtFormat.format(item.netWeight)}g'),
+                      _StatChip(
+                          label: 'Net',
+                          value: '${widget.wtFormat.format(item.netWeight)}g'),
                       const SizedBox(width: 8),
                       _StatChip(label: 'Qty', value: '${item.quantity} pcs'),
                       const Spacer(),
@@ -926,11 +959,11 @@ class _StockItemCardState extends State<_StockItemCard> {
   }
 
   IconData _categoryIcon(String cat) {
-    if (cat == StockCategory.gold.label)     return Icons.circle_rounded;
-    if (cat == StockCategory.silver.label)   return Icons.circle_outlined;
-    if (cat == StockCategory.diamond.label)  return Icons.diamond_outlined;
+    if (cat == StockCategory.gold.label) return Icons.circle_rounded;
+    if (cat == StockCategory.silver.label) return Icons.circle_outlined;
+    if (cat == StockCategory.diamond.label) return Icons.diamond_outlined;
     if (cat == StockCategory.platinum.label) return Icons.stars_rounded;
-    if (cat == StockCategory.antique.label)  return Icons.auto_awesome_outlined;
+    if (cat == StockCategory.antique.label) return Icons.auto_awesome_outlined;
     return Icons.category_outlined;
   }
 }
@@ -954,8 +987,8 @@ class _StatChip extends StatelessWidget {
 
 class _StatusBadge extends StatelessWidget {
   final String label;
-  final Color  bg;
-  final Color  textColor;
+  final Color bg;
+  final Color textColor;
   const _StatusBadge({
     required this.label,
     required this.bg,
@@ -979,7 +1012,7 @@ class _StatusBadge extends StatelessWidget {
 class _InventoryAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
   final VoidCallback onRefresh;
-  final bool         isRefreshing;
+  final bool isRefreshing;
 
   const _InventoryAppBar({
     required this.onBack,
@@ -1011,14 +1044,17 @@ class _InventoryAppBar extends StatelessWidget implements PreferredSizeWidget {
             children: [
               Row(children: [
                 Container(
-                  width: 5, height: 5,
+                  width: 5,
+                  height: 5,
                   decoration: BoxDecoration(
                     color: InvColors.brandGold,
                     shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(
-                      color: InvColors.brandGold.withOpacity(0.6),
-                      blurRadius: 6,
-                    )],
+                    boxShadow: [
+                      BoxShadow(
+                        color: InvColors.brandGold.withOpacity(0.6),
+                        blurRadius: 6,
+                      )
+                    ],
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1055,13 +1091,14 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (_) => setState(() => _h = true),
-      onExit:  (_) => setState(() => _h = false),
+      onExit: (_) => setState(() => _h = false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
-          width: 42, height: 42,
+          width: 42,
+          height: 42,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: InvColors.shellBg,
@@ -1094,7 +1131,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
 
 class _RefreshButton extends StatefulWidget {
   final VoidCallback onTap;
-  final bool         isLoading;
+  final bool isLoading;
   const _RefreshButton({required this.onTap, required this.isLoading});
   @override
   State<_RefreshButton> createState() => _RefreshButtonState();
@@ -1106,18 +1143,18 @@ class _RefreshButtonState extends State<_RefreshButton> {
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (_) => setState(() => _h = true),
-      onExit:  (_) => setState(() => _h = false),
+      onExit: (_) => setState(() => _h = false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.isLoading ? null : widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
-          width: 38, height: 38,
+          width: 38,
+          height: 38,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: _h
-                ? InvColors.brandGold.withOpacity(0.15)
-                : Colors.transparent,
+            color:
+                _h ? InvColors.brandGold.withOpacity(0.15) : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: _h ? InvColors.brandGold : InvColors.shellBorder,
@@ -1125,7 +1162,8 @@ class _RefreshButtonState extends State<_RefreshButton> {
           ),
           child: widget.isLoading
               ? const SizedBox(
-                  width: 16, height: 16,
+                  width: 16,
+                  height: 16,
                   child: CircularProgressIndicator(
                     color: InvColors.brandGold,
                     strokeWidth: 1.8,
@@ -1156,8 +1194,7 @@ class _RadarStatusBadgeState extends State<_RadarStatusBadge>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _ac = AnimationController(
-        vsync: this, duration: const Duration(seconds: 2))
+    _ac = AnimationController(vsync: this, duration: const Duration(seconds: 2))
       ..repeat();
   }
 
@@ -1178,45 +1215,49 @@ class _RadarStatusBadgeState extends State<_RadarStatusBadge>
   }
 
   Widget _wave(double delay, double size) => AnimatedBuilder(
-    animation: _ac,
-    builder: (_, __) {
-      final v = (_ac.value + delay) % 1.0;
-      return Opacity(
-        opacity: 1.0 - v,
-        child: Transform.scale(
-          scale: 1.0 + v * 1.5,
-          child: Container(
-            width: size, height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: InvColors.onlineGreen.withOpacity(0.5),
-                width: 1.5,
+        animation: _ac,
+        builder: (_, __) {
+          final v = (_ac.value + delay) % 1.0;
+          return Opacity(
+            opacity: 1.0 - v,
+            child: Transform.scale(
+              scale: 1.0 + v * 1.5,
+              child: Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: InvColors.onlineGreen.withOpacity(0.5),
+                    width: 1.5,
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       );
-    },
-  );
 
   @override
   Widget build(BuildContext context) {
     return Row(children: [
       SizedBox(
-        width: 14, height: 14,
+        width: 14,
+        height: 14,
         child: Stack(alignment: Alignment.center, children: [
           _wave(0.0, 14),
           _wave(0.5, 14),
           Container(
-            width: 6, height: 6,
+            width: 6,
+            height: 6,
             decoration: BoxDecoration(
               color: InvColors.onlineGreen,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
                   color: InvColors.onlineGreen,
-                  blurRadius: 6, spreadRadius: 1,
+                  blurRadius: 6,
+                  spreadRadius: 1,
                 ),
               ],
             ),

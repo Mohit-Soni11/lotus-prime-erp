@@ -56,17 +56,16 @@ class PaymentStatusCard extends StatefulWidget {
 
 class _PaymentStatusCardState extends State<PaymentStatusCard>
     with TickerProviderStateMixin {
-
   late final PaymentStatusLogic _logic;
 
   // Staggered entry for bill rows
   final List<AnimationController> _rowCtrl = [];
-  final List<Animation<double>>   _rowSlide = [];
-  final List<Animation<double>>   _rowFade  = [];
+  final List<Animation<double>> _rowSlide = [];
+  final List<Animation<double>> _rowFade = [];
 
   // Header entry animation
   late final AnimationController _headerCtrl;
-  late final Animation<double>   _headerFade;
+  late final Animation<double> _headerFade;
 
   // Row press states
   final Set<int> _pressedRows = {};
@@ -78,9 +77,9 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
     _logic.addListener(_onDataChanged);
 
     _headerCtrl = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 500));
-    _headerFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _headerCtrl, curve: Curves.easeOut));
+        vsync: this, duration: const Duration(milliseconds: 500));
+    _headerFade = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(CurvedAnimation(parent: _headerCtrl, curve: Curves.easeOut));
     _headerCtrl.forward();
   }
 
@@ -101,12 +100,12 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
     // Naye banao
     for (int i = 0; i < count; i++) {
       final ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 400));
+          vsync: this, duration: const Duration(milliseconds: 400));
       _rowCtrl.add(ctrl);
-      _rowSlide.add(Tween<double>(begin: 15.0, end: 0.0).animate(
-        CurvedAnimation(parent: ctrl, curve: Curves.easeOutCubic)));
-      _rowFade.add(Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: ctrl, curve: Curves.easeOut)));
+      _rowSlide.add(Tween<double>(begin: 15.0, end: 0.0)
+          .animate(CurvedAnimation(parent: ctrl, curve: Curves.easeOutCubic)));
+      _rowFade.add(Tween<double>(begin: 0.0, end: 1.0)
+          .animate(CurvedAnimation(parent: ctrl, curve: Curves.easeOut)));
     }
 
     // Staggered play
@@ -134,7 +133,8 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
     return Container(
       decoration: PaymentStatusStyles.cardDecoration,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(PaymentStatusStyles.cardBorderRadius),
+        borderRadius:
+            BorderRadius.circular(PaymentStatusStyles.cardBorderRadius),
         child: Stack(children: [
           // BG ambient glow
           const Positioned.fill(child: _AmbientGlows()),
@@ -176,19 +176,20 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
       children: [
         // Gold icon
         Container(
-          width: 36, height: 36,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
             color: PaymentStatusColors.accentGold.withOpacity(0.12),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: PaymentStatusColors.accentGold.withOpacity(0.2)),
+                color: PaymentStatusColors.accentGold.withOpacity(0.2)),
           ),
           child: Center(
             child: ShaderMask(
               shaderCallback: (b) =>
                   PaymentStatusColors.goldGradient.createShader(b),
               child: const Icon(PaymentStatusIcons.header,
-                size: 18, color: Colors.white),
+                  size: 18, color: Colors.white),
             ),
           ),
         ),
@@ -199,29 +200,34 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
           shaderCallback: (b) =>
               PaymentStatusColors.goldGradient.createShader(b),
           child: const Text('PAYMENT STATUS',
-            style: PaymentStatusStyles.headerStyle),
+              style: PaymentStatusStyles.headerStyle),
         ),
 
         const Spacer(),
 
         // Live dot
         Container(
-          width: 6, height: 6,
+          width: 6,
+          height: 6,
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
             color: PaymentStatusColors.paidAccent,
-            boxShadow: [BoxShadow(
-              color: PaymentStatusColors.paidAccent,
-              blurRadius: 6, spreadRadius: 1)],
+            boxShadow: [
+              BoxShadow(
+                  color: PaymentStatusColors.paidAccent,
+                  blurRadius: 6,
+                  spreadRadius: 1)
+            ],
           ),
         ),
         const SizedBox(width: 5),
-        const Text('LIVE', style: TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.w700,
-          color: PaymentStatusColors.paidAccent,
-          letterSpacing: 0.8,
-        )),
+        const Text('LIVE',
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: PaymentStatusColors.paidAccent,
+              letterSpacing: 0.8,
+            )),
       ],
     );
   }
@@ -255,7 +261,8 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
     ]);
   }
 
-  Widget _statChip({required String value, required String label, required Color color}) {
+  Widget _statChip(
+      {required String value, required String label, required Color color}) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
@@ -267,8 +274,9 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(value, style: PaymentStatusStyles.statValueStyle.copyWith(
-              color: color)),
+            Text(value,
+                style:
+                    PaymentStatusStyles.statValueStyle.copyWith(color: color)),
             const SizedBox(height: 2),
             Text(label, style: PaymentStatusStyles.statLabelStyle),
           ],
@@ -278,27 +286,31 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
   }
 
   Widget _buildSummaryShimmer() {
-    return Row(children: List.generate(3, (i) => [
-      Expanded(child: Shimmer.fromColors(
-        baseColor: PaymentStatusColors.shimmerBase,
-        highlightColor: PaymentStatusColors.shimmerHighlight,
-        child: Container(
-          height: 54,
-          decoration: BoxDecoration(
-            color: PaymentStatusColors.shimmerBase,
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      )),
-      if (i < 2) const SizedBox(width: 8),
-    ]).expand((e) => e).toList());
+    return Row(
+        children: List.generate(
+            3,
+            (i) => [
+                  Expanded(
+                      child: Shimmer.fromColors(
+                    baseColor: PaymentStatusColors.shimmerBase,
+                    highlightColor: PaymentStatusColors.shimmerHighlight,
+                    child: Container(
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: PaymentStatusColors.shimmerBase,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  )),
+                  if (i < 2) const SizedBox(width: 8),
+                ]).expand((e) => e).toList());
   }
 
   // ── FILTER TABS ──────────────────────────────────────────────────────────
   Widget _buildFilterTabs() {
     final tabs = [
-      (PaymentFilterTab.all,  'ALL'),
-      (PaymentFilterTab.due,  'DUE'),
+      (PaymentFilterTab.all, 'ALL'),
+      (PaymentFilterTab.due, 'DUE'),
       (PaymentFilterTab.paid, 'PAID'),
     ];
 
@@ -400,12 +412,11 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             padding: PaymentStatusStyles.rowPadding,
-            decoration: PaymentStatusStyles.rowDecoration(
-              bill.status, isPressed: isPressed),
+            decoration: PaymentStatusStyles.rowDecoration(bill.status,
+                isPressed: isPressed),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 // ── TOP ROW: Avatar + Name + Amount + Date ─────────────────
                 Row(
                   children: [
@@ -413,7 +424,8 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
                     Container(
                       width: PaymentStatusStyles.avatarSize,
                       height: PaymentStatusStyles.avatarSize,
-                      decoration: PaymentStatusStyles.avatarDecoration(bill.status),
+                      decoration:
+                          PaymentStatusStyles.avatarDecoration(bill.status),
                       child: Center(
                         child: Text(
                           bill.customerInitials,
@@ -471,7 +483,7 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
                   children: [
                     // Paid
                     const Text('Paid: ',
-                      style: PaymentStatusStyles.amountLabelStyle),
+                        style: PaymentStatusStyles.amountLabelStyle),
                     Text(
                       PaymentStatusLogic.formatAmountFull(bill.paidAmount),
                       style: PaymentStatusStyles.paidAmountStyle,
@@ -481,7 +493,7 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
 
                     // Due
                     const Text('Due: ',
-                      style: PaymentStatusStyles.amountLabelStyle),
+                        style: PaymentStatusStyles.amountLabelStyle),
                     Text(
                       PaymentStatusLogic.formatAmountFull(bill.dueAmount),
                       style: PaymentStatusStyles.dueAmountStyle(bill.dueAmount),
@@ -493,20 +505,23 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
-                      decoration: PaymentStatusStyles.badgeDecoration(bill.status),
+                      decoration:
+                          PaymentStatusStyles.badgeDecoration(bill.status),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             PaymentStatusIcons.forStatus(bill.status),
                             size: 9,
-                            color: PaymentStatusColors.badgeTextFor(bill.status),
+                            color:
+                                PaymentStatusColors.badgeTextFor(bill.status),
                           ),
                           const SizedBox(width: 3),
                           Text(
                             PaymentStatusColors.badgeLabelFor(bill.status),
                             style: PaymentStatusStyles.badgeStyle.copyWith(
-                              color: PaymentStatusColors.badgeTextFor(bill.status),
+                              color:
+                                  PaymentStatusColors.badgeTextFor(bill.status),
                             ),
                           ),
                         ],
@@ -533,15 +548,13 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
           color: PaymentStatusColors.accentGold.withOpacity(0.06),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: PaymentStatusColors.accentGold.withOpacity(0.2)),
+              color: PaymentStatusColors.accentGold.withOpacity(0.2)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              _logic.isExpanded
-                  ? 'Show Less'
-                  : 'Show $remaining More',
+              _logic.isExpanded ? 'Show Less' : 'Show $remaining More',
               style: PaymentStatusStyles.showMoreStyle,
             ),
             const SizedBox(width: 4),
@@ -564,7 +577,7 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
   Widget _buildEmptyState() {
     final tab = _logic.data.activeTab;
     final msg = tab == PaymentFilterTab.paid
-        ? 'Koi paid bill nahi hai abhi'
+        ? 'No paid invoices are available yet.'
         : tab == PaymentFilterTab.due
             ? 'Koi due payment nahi! 🎉'
             : 'Aaj koi bill nahi bana';
@@ -573,8 +586,8 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
       padding: const EdgeInsets.symmetric(vertical: 28),
       child: Center(
         child: Column(children: [
-          Icon(PaymentStatusIcons.header, size: 32,
-            color: PaymentStatusColors.textMuted),
+          Icon(PaymentStatusIcons.header,
+              size: 32, color: PaymentStatusColors.textMuted),
           const SizedBox(height: 8),
           Text(msg, style: PaymentStatusStyles.emptyStyle),
         ]),
@@ -585,21 +598,23 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
   // ── SHIMMER ──────────────────────────────────────────────────────────────
   Widget _buildListShimmer() {
     return Column(
-      children: List.generate(3, (i) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Shimmer.fromColors(
-          baseColor: PaymentStatusColors.shimmerBase,
-          highlightColor: PaymentStatusColors.shimmerHighlight,
-          child: Container(
-            height: 88,
-            decoration: BoxDecoration(
-              color: PaymentStatusColors.shimmerBase,
-              borderRadius: BorderRadius.circular(
-                PaymentStatusStyles.rowBorderRadius),
-            ),
-          ),
-        ),
-      )),
+      children: List.generate(
+          3,
+          (i) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Shimmer.fromColors(
+                  baseColor: PaymentStatusColors.shimmerBase,
+                  highlightColor: PaymentStatusColors.shimmerHighlight,
+                  child: Container(
+                    height: 88,
+                    decoration: BoxDecoration(
+                      color: PaymentStatusColors.shimmerBase,
+                      borderRadius: BorderRadius.circular(
+                          PaymentStatusStyles.rowBorderRadius),
+                    ),
+                  ),
+                ),
+              )),
     );
   }
 }
@@ -613,28 +628,38 @@ class _AmbientGlows extends StatelessWidget {
     return RepaintBoundary(
       child: Stack(children: [
         Positioned(
-          top: -50, right: -40,
+          top: -50,
+          right: -40,
           child: Container(
-            width: 160, height: 160,
+            width: 160,
+            height: 160,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: PaymentStatusColors.accentGold.withOpacity(0.04),
-              boxShadow: [BoxShadow(
-                color: PaymentStatusColors.accentGold.withOpacity(0.06),
-                blurRadius: 80, spreadRadius: 10)],
+              boxShadow: [
+                BoxShadow(
+                    color: PaymentStatusColors.accentGold.withOpacity(0.06),
+                    blurRadius: 80,
+                    spreadRadius: 10)
+              ],
             ),
           ),
         ),
         Positioned(
-          bottom: -30, left: -20,
+          bottom: -30,
+          left: -20,
           child: Container(
-            width: 100, height: 100,
+            width: 100,
+            height: 100,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: PaymentStatusColors.accentGold.withOpacity(0.03),
-              boxShadow: [BoxShadow(
-                color: PaymentStatusColors.accentGold.withOpacity(0.04),
-                blurRadius: 50, spreadRadius: 5)],
+              boxShadow: [
+                BoxShadow(
+                    color: PaymentStatusColors.accentGold.withOpacity(0.04),
+                    blurRadius: 50,
+                    spreadRadius: 5)
+              ],
             ),
           ),
         ),

@@ -45,6 +45,7 @@ class PosBillingController extends ChangeNotifier {
   // ✅ FIX: Financial year — current year se dynamically nikalo
   String get currentFinancialYear => DateTime.now().year.toString();
   int nextSequence = 1;
+  String? _committedInvoiceNumber;
 
   // --- DATABASE ---
   final AppDatabase _db = AppDatabase();
@@ -341,7 +342,14 @@ class PosBillingController extends ChangeNotifier {
 
   String get invoicePrefix => billType == BillType.gst ? "TAX" : "INV";
   String get formattedInvoice =>
+      _committedInvoiceNumber ??
       "$invoicePrefix-$shopInitials-$currentFinancialYear-${nextSequence.toString().padLeft(4, '0')}";
+  bool get isCurrentSaleCommitted => _committedInvoiceNumber != null;
+
+  void markCurrentSaleCommitted(String invoiceNumber) {
+    _committedInvoiceNumber ??= invoiceNumber;
+    notifyListeners();
+  }
 
   // ==========================================
   // 1. RETAIL ENGINE (B2C)
@@ -712,6 +720,7 @@ class PosBillingController extends ChangeNotifier {
   }
 
   void clearEntirePOS({bool isHolding = false}) {
+    _committedInvoiceNumber = null;
     selectedCustomer = null;
     customerSuggestions = [];
     customerNotFound = false; // ✅ Reset

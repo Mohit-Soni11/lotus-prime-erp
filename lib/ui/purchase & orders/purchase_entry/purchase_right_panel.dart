@@ -39,14 +39,14 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
             ),
             boxShadow: const [
               BoxShadow(
-                color:      PurchaseEntryColors.shadowLight,
+                color: PurchaseEntryColors.shadowLight,
                 blurRadius: 8,
-                offset:     Offset(0, 2),
+                offset: Offset(0, 2),
               ),
               BoxShadow(
-                color:      PurchaseEntryColors.shadowDark,
+                color: PurchaseEntryColors.shadowDark,
                 blurRadius: 24,
-                offset:     Offset(0, 8),
+                offset: Offset(0, 8),
               ),
             ],
           ),
@@ -132,14 +132,15 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color:  PurchaseEntryColors.bodyBg,
+              color: PurchaseEntryColors.bodyBg,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: PurchaseEntryColors.bodyBorder,
                 width: 1.5,
               ),
             ),
-            child: _pillarRow('Gross Purchase', widget.ctrl.grossPurchaseAmount),
+            child:
+                _pillarRow('Gross Purchase', widget.ctrl.grossPurchaseAmount),
           ),
 
           const SizedBox(height: 12),
@@ -238,7 +239,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color:  PurchaseEntryColors.bodyBg,
+        color: PurchaseEntryColors.bodyBg,
         border: Border.all(
           color: PurchaseEntryColors.bodyBorder,
           width: 1.5,
@@ -261,8 +262,8 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
 
   // ── Payment Hub ─────────────────────────────────────────────────────────────
   Widget _buildPaymentHub() {
-    final isEmpty   = widget.ctrl.grandTotal == 0.0;
-    final isDue     = widget.ctrl.balanceDue > 0.005;
+    final isEmpty = widget.ctrl.grandTotal == 0.0;
+    final isDue = widget.ctrl.balanceDue > 0.005;
     final isOverpaid = widget.ctrl.balanceDue < -0.005;
     final isSettled = !isDue && !isOverpaid && !isEmpty;
 
@@ -280,21 +281,21 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
             title: PurchaseEntryStrings.paymentDisburse,
             subtitle: 'Seller ko diye gaye payments',
           ),
-
-          _paymentInput('Cash Paid',       widget.ctrl.cashCtrl, PurchaseEntryIcons.cashPay),
+          _paymentInput(
+              'Cash Paid', widget.ctrl.cashCtrl, PurchaseEntryIcons.cashPay),
           const SizedBox(height: 12),
-          _paymentInput('UPI / Bank',      widget.ctrl.upiCtrl,  PurchaseEntryIcons.upiPay),
+          _paymentInput(
+              'UPI / Bank', widget.ctrl.upiCtrl, PurchaseEntryIcons.upiPay),
           const SizedBox(height: 12),
-          _paymentInput('Card / Cheque',   widget.ctrl.cardCtrl, PurchaseEntryIcons.cardPay),
-
+          _paymentInput('Card / Cheque', widget.ctrl.cardCtrl,
+              PurchaseEntryIcons.cardPay),
           const SizedBox(height: 18),
-
           if (isEmpty)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color:  PurchaseEntryColors.bodyBg,
+                color: PurchaseEntryColors.bodyBg,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: PurchaseEntryColors.bodyBorder,
@@ -303,7 +304,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
               ),
               child: const Center(
                 child: Text(
-                  'KOI ITEM ADD NAHI KIYA',
+                  'NO ITEMS ADDED',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
@@ -319,7 +320,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
               curve: Curves.easeOut,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color:  balColor.withOpacity(0.10),
+                color: balColor.withOpacity(0.10),
                 border: Border.all(
                   color: balColor.withOpacity(0.60),
                   width: 2.0,
@@ -386,7 +387,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color:  boxColor.withOpacity(0.10),
+              color: boxColor.withOpacity(0.10),
               border: Border.all(
                 color: boxColor.withOpacity(0.50),
                 width: 2.0,
@@ -428,7 +429,16 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                 child: SizedBox(
                   height: 54,
                   child: OutlinedButton.icon(
-                    onPressed: () => debugPrint('Print tapped'),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Purchase voucher printing will be added in the next update.',
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
                     icon: const Icon(PurchaseEntryIcons.printVoucher, size: 18),
                     label: const Text(
                       'PRINT',
@@ -441,7 +451,8 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: PurchaseEntryColors.purchaseAccent,
                       side: BorderSide(
-                        color: PurchaseEntryColors.purchaseAccent.withOpacity(0.80),
+                        color: PurchaseEntryColors.purchaseAccent
+                            .withOpacity(0.80),
                         width: 2.0,
                       ),
                       shape: RoundedRectangleBorder(
@@ -459,8 +470,21 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       if (widget.ctrl.items.isEmpty) return;
-                      // TODO: get context for SnackBar from parent
-                      await widget.ctrl.savePurchase();
+                      final saved = await widget.ctrl.savePurchase();
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            saved
+                                ? 'Purchase saved successfully.'
+                                : 'Unable to save the purchase. Check the item data and try again.',
+                          ),
+                          backgroundColor: saved
+                              ? PurchaseEntryColors.success
+                              : PurchaseEntryColors.danger,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
                     },
                     icon: const Icon(
                       PurchaseEntryIcons.saveVoucher,
@@ -504,7 +528,8 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
       child: Row(
         children: [
           Container(
-            width: 42, height: 42,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
               color: PurchaseEntryColors.purchaseAccent.withOpacity(0.12),
               borderRadius: BorderRadius.circular(10),
@@ -513,7 +538,8 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                 width: 1.5,
               ),
             ),
-            child: Icon(icon, color: PurchaseEntryColors.purchaseAccent, size: 20),
+            child:
+                Icon(icon, color: PurchaseEntryColors.purchaseAccent, size: 20),
           ),
           const SizedBox(width: 14),
           Column(
@@ -589,7 +615,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
   }
 
   Widget _discountRow() {
-    final discAmt   = widget.ctrl.discountAmount;
+    final discAmt = widget.ctrl.discountAmount;
     final isPercent =
         widget.ctrl.discountType == PurchaseDiscountType.percentage;
 
@@ -614,9 +640,10 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                     ? PurchaseDiscountType.flatAmount
                     : PurchaseDiscountType.percentage),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color:  PurchaseEntryColors.bodyBg,
+                    color: PurchaseEntryColors.bodyBg,
                     border: Border.all(
                       color: PurchaseEntryColors.bodyBorder,
                       width: 1.5,
@@ -628,8 +655,8 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                       Text(
                         widget.ctrl.discountType.symbol,
                         style: const TextStyle(
-                          color:      PurchaseEntryColors.purchaseAccent,
-                          fontSize:   13,
+                          color: PurchaseEntryColors.purchaseAccent,
+                          fontSize: 13,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -653,28 +680,30 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                   child: Text(
                     '- ₹ ${discAmt.toStringAsFixed(2)}',
                     style: const TextStyle(
-                      fontSize:   14,
+                      fontSize: 14,
                       fontWeight: FontWeight.w900,
-                      color:      PurchaseEntryColors.danger,
+                      color: PurchaseEntryColors.danger,
                     ),
                   ),
                 ),
               SizedBox(
-                width: 85, height: 34,
+                width: 85,
+                height: 34,
                 child: TextField(
-                  controller:  widget.ctrl.discountCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  textAlign:   TextAlign.right,
+                  controller: widget.ctrl.discountCtrl,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  textAlign: TextAlign.right,
                   style: const TextStyle(
-                    color:      PurchaseEntryColors.danger,
-                    fontSize:   14,
+                    color: PurchaseEntryColors.danger,
+                    fontSize: 14,
                     fontWeight: FontWeight.w900,
                   ),
                   decoration: InputDecoration(
-                    hintText:   '0',
+                    hintText: '0',
                     hintStyle: TextStyle(color: PurchaseEntryColors.textMuted),
-                    filled:     true,
-                    fillColor:  PurchaseEntryColors.bodyBg,
+                    filled: true,
+                    fillColor: PurchaseEntryColors.bodyBg,
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                     enabledBorder: OutlineInputBorder(
@@ -717,9 +746,9 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
               Text(
                 label,
                 style: const TextStyle(
-                  fontSize:   13,
+                  fontSize: 13,
                   fontWeight: FontWeight.w900,
-                  color:      PurchaseEntryColors.textMain,
+                  color: PurchaseEntryColors.textMain,
                 ),
               ),
             ],
@@ -730,21 +759,22 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
           child: SizedBox(
             height: 40,
             child: TextField(
-              controller:  tCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              textAlign:   TextAlign.right,
+              controller: tCtrl,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              textAlign: TextAlign.right,
               style: const TextStyle(
-                color:      PurchaseEntryColors.textMain,
-                fontSize:   15,
+                color: PurchaseEntryColors.textMain,
+                fontSize: 15,
                 fontWeight: FontWeight.w900,
               ),
               decoration: InputDecoration(
-                hintText:  '0.00',
+                hintText: '0.00',
                 hintStyle: TextStyle(
                   color: PurchaseEntryColors.textMuted,
                   fontSize: 14,
                 ),
-                filled:    true,
+                filled: true,
                 fillColor: PurchaseEntryColors.bodyBg,
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 0),

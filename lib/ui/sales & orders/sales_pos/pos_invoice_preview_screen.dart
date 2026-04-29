@@ -429,7 +429,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
     final dueDate = _invCtrl.dueDate;
     final String dueDateLabel = dueDate != null
         ? "${dueDate.day.toString().padLeft(2, '0')}/${dueDate.month.toString().padLeft(2, '0')}/${dueDate.year}"
-        : "Date select karo";
+        : "Select a due date";
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -636,7 +636,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                       ? _invCtrl.openDirectWhatsAppChat
                       : null,
                   icon: const Icon(Icons.chat_bubble_rounded, size: 16),
-                  label: const Text("WA Chat",
+                  label: const Text("WHATSAPP",
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   style: ElevatedButton.styleFrom(
@@ -753,8 +753,9 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: isReady
-                  ? () {
-                      // POS screen bilkul saaf karo
+                  ? () async {
+                      await _invCtrl.finalizeInvoiceIfNeeded();
+                      if (!mounted) return;
                       widget.billingCtrl.clearEntirePOS();
                       // Preview screen band karo
                       Navigator.of(context).pop();

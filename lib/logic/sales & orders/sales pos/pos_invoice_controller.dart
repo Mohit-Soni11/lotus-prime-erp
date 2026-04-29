@@ -4,6 +4,7 @@
 // DESCRIPTION: PDF generation, Customization, and Share engine.
 //              ✅ UPGRADED: Smart CRM Folder Management
 //              ✅ CLEANED: Removed Unused Imports (share_plus, path_provider)
+//              ✅ FIXED: count() error + unused netPayable variable
 // ==========================================
 
 import 'dart:typed_data';
@@ -35,8 +36,6 @@ class BillSettings {
   bool showGrossWt = true;
   bool showLessWt = true;
   bool showMaking = true;
-  // ✅ NEW: Exchange breakdown toggle
-  // false = combined single line, true = har metal alag line
   bool showExchangeBreakdown = false;
 }
 
@@ -71,7 +70,6 @@ class PosInvoiceController extends ChangeNotifier {
   int printCopies = 1;
   bool includeDuplicateStamp = false;
 
-  // ✅ NEW: Due date for Balance Due — user set karega
   DateTime? dueDate;
 
   String _realShopName = "Lotus Jewellers";
@@ -136,18 +134,15 @@ class PosInvoiceController extends ChangeNotifier {
 
   Future<void> _fetchRealShopData() async {
     try {
-      // ✅ FIX: Use permanent tenant ID from ShopSessionManager
       final String activeTenantId =
           await ShopSessionManager.getPermanentTenantId();
       final shopData = await _shopRepo.fetchExistingSetup(activeTenantId);
 
       if (shopData != null) {
-        // ✅ FIX: DB keys are snake_case — 'basic_info', 'address', 'tax_compliance'
         final basicInfo = shopData['basic_info'] as Map<String, dynamic>?;
         final addressData = shopData['address'] as Map<String, dynamic>?;
         final taxData = shopData['tax_compliance'] as Map<String, dynamic>?;
 
-        // Shop Name: brand_display_name > display_name > shop_phone fallback
         if (basicInfo != null) {
           final brandName = basicInfo['brand_display_name']?.toString() ?? '';
           final displayName = basicInfo['display_name']?.toString() ?? '';
@@ -157,7 +152,6 @@ class PosInvoiceController extends ChangeNotifier {
                   ? displayName
                   : "Lotus Jewellers";
 
-          // Phone: shop_phone first, then owner_phone
           final shopPhone = basicInfo['shop_phone']?.toString() ?? '';
           final ownerPhone = basicInfo['owner_phone']?.toString() ?? '';
           _realShopPhone = shopPhone.isNotEmpty
@@ -167,14 +161,12 @@ class PosInvoiceController extends ChangeNotifier {
                   : "Phone not set";
         }
 
-        // Address: addr1, city, state, pincode
         if (addressData != null) {
           final addrLine = addressData['addr1']?.toString() ?? '';
           final city = addressData['city']?.toString() ?? '';
           final state = addressData['state']?.toString() ?? '';
           final pincode = addressData['pincode']?.toString() ?? '';
 
-          // Build address — only add non-empty parts
           final parts = [addrLine, city, state, pincode]
               .where((p) => p.isNotEmpty)
               .toList();
@@ -182,7 +174,6 @@ class PosInvoiceController extends ChangeNotifier {
               parts.isNotEmpty ? parts.join(', ') : "Address not set";
         }
 
-        // GST: gstin from tax_compliance
         if (taxData != null) {
           final gstin = taxData['gstin']?.toString() ?? '';
           _realShopGstin = gstin.isNotEmpty ? gstin : "Not Registered";
@@ -240,12 +231,13 @@ class PosInvoiceController extends ChangeNotifier {
 
   // ==========================================
   // ✅ STEP 1: DB se next sequence number lo
-  // App restart hone par bhi sahi number milega
+  // ✅ FIX: .count() nahi hota table pe —
+  //         select().get() se list lo, .length lo
   // ==========================================
   Future<void> _initSequenceFromDb() async {
     try {
-      final allBills = await _db.select(_db.bills).get();
-      billing.nextSequence = allBills.length + 1;
+      final bills = await _db.select(_db.bills).get();
+      billing.nextSequence = bills.length + 1;
     } catch (_) {
       // fallback: jo bhi memory mein hai wo chalega
     }
@@ -253,10 +245,19 @@ class PosInvoiceController extends ChangeNotifier {
 
   // ==========================================
   // ✅ STEP 2: Bill + Items ko DB mein save karo
-  // Bills table mein master record +
-  // BillItems table mein har item ki entry
   // ==========================================
   Future<void> _saveBillToDatabase(PosInvoiceModel inv) async {
+    if (isSavedToDb) return;
+
+    if (billing.isCurrentSaleCommitted) {
+      final existingBill = await (_db.select(_db.bills)
+            ..where((tbl) => tbl.billNo.equals(inv.invoiceNumber)))
+          .getSingleOrNull();
+      savedBillDbId = existingBill?.id;
+      isSavedToDb = true;
+      return;
+    }
+
     // --- BILLS TABLE mein master record insert karo ---
     final billId = await _db.into(_db.bills).insert(
           BillsCompanion(
@@ -300,7 +301,17 @@ class PosInvoiceController extends ChangeNotifier {
           );
     }
 
+    billing.markCurrentSaleCommitted(inv.invoiceNumber);
+    billing.nextSequence++;
     isSavedToDb = true;
+  }
+
+  Future<void> finalizeInvoiceIfNeeded() async {
+    if (invoice == null) {
+      await generateInvoice();
+    }
+    if (invoice == null) return;
+    await _saveBillToDatabase(invoice!);
   }
 
   Future<void> generateInvoice() async {
@@ -309,7 +320,6 @@ class PosInvoiceController extends ChangeNotifier {
     savedBillDbId = null;
     notifyListeners();
     try {
-      // ✅ Shop data + DB sequence dono fetch karo
       await Future.wait([
         _fetchRealShopData(),
         _initSequenceFromDb(),
@@ -317,10 +327,6 @@ class PosInvoiceController extends ChangeNotifier {
 
       dueDate = billing.promiseDate;
       invoice = _buildInvoiceSnapshot();
-
-      // ✅ DB mein save karo PEHLE (sequence badho baad mein)
-      await _saveBillToDatabase(invoice!);
-      billing.nextSequence++;
 
       pdfBytes = await _buildPdf(invoice!, selectedFormat);
       genState = InvoiceGenState.ready;
@@ -531,24 +537,17 @@ class PosInvoiceController extends ChangeNotifier {
       padding: const pw.EdgeInsets.all(5),
       child: pw.Text(text,
           style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)));
+
   pw.Widget _cell(String text) => pw.Padding(
       padding: const pw.EdgeInsets.all(5),
       child: pw.Text(text, style: const pw.TextStyle(fontSize: 8)));
 
-  // ✅ FIX: Purity display — metal type ke hisaab se format
-  //
-  // GOLD    → "18KT (75.0%)", "22KT (91.60%)", "24KT (99.99%)" etc.
-  // SILVER  → "35%", "92.5%" — sirf percentage
-  // PLAT    → "95.0%" ya jo text likha hai
-  // DIAMOND → jo text likha hai (ct / % / grade)
   String _formatPurity(SaleItemModel item) {
     final text = item.purityCtrl.text.trim();
     final tunch = item.tunch;
 
     switch (item.metal) {
-      // ─────────────── GOLD ───────────────
       case MetalType.gold:
-        // KT number nikalo — "18KT", "18kt", "18K", ya sirf "18"
         final match = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(text);
         final ktVal = match != null
             ? double.tryParse(match.group(1)!)
@@ -560,9 +559,7 @@ class PosInvoiceController extends ChangeNotifier {
         }
         return text.isNotEmpty ? text : '-';
 
-      // ─────────────── SILVER ───────────────
       case MetalType.silver:
-        // Sirf % dikhao — jo number likha hai woh
         if (tunch > 0) {
           final clean = tunch % 1 == 0
               ? tunch.toInt().toString()
@@ -572,22 +569,18 @@ class PosInvoiceController extends ChangeNotifier {
         if (text.isNotEmpty) return '$text%';
         return '-';
 
-      // ─────────────── PLATINUM ───────────────
       case MetalType.platinum:
         if (tunch > 0) return '${tunch.toStringAsFixed(1)}%';
         if (text.isNotEmpty) return text;
         return '-';
 
-      // ─────────────── DIAMOND ───────────────
       case MetalType.diamond:
-        // Diamond ka purity text as-is dikhao (ct, grade, clarity)
         if (text.isNotEmpty) return text;
         if (tunch > 0) return '${tunch.toStringAsFixed(2)}ct';
         return '-';
     }
   }
 
-  // KT → exact % conversion — standard industry values
   String _ktToPercent(double kt) {
     switch (kt.round()) {
       case 9:
@@ -618,9 +611,7 @@ class PosInvoiceController extends ChangeNotifier {
 
   pw.Widget _pdfTotalsBlock(PosInvoiceModel inv) {
     final activeConfig = getActiveConfig(inv.billingMode, inv.billType);
-    // ✅ Professional: Net Payable = Grand Total - Exchange deduction
-    final double netPayable = inv.netPayable;
-
+    // ✅ FIX: Local variable hataya — directly inv.netPayable use karo
     return pw.Row(mainAxisAlignment: pw.MainAxisAlignment.end, children: [
       pw.SizedBox(
         width: 240,
@@ -632,7 +623,6 @@ class PosInvoiceController extends ChangeNotifier {
             _totalRow("CGST", inv.cgst),
             _totalRow("SGST", inv.sgst),
           ],
-          // Exchange deduction lines
           if (inv.totalOldGoldDeduction > 0) ...[
             () {
               final goldExchange = inv.oldGoldItems
@@ -672,8 +662,8 @@ class PosInvoiceController extends ChangeNotifier {
             }(),
           ],
           pw.Divider(color: PdfColors.amber800),
-          // ✅ Grand Total = netPayable (exchange already deducted)
-          _totalRow("GRAND TOTAL", netPayable, isBold: true, isGrand: true),
+          // ✅ FIX: Seedha inv.netPayable use karo
+          _totalRow("GRAND TOTAL", inv.netPayable, isBold: true, isGrand: true),
         ]),
       ),
     ]);
@@ -702,10 +692,6 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   pw.Widget _pdfPaymentBlock(PosInvoiceModel inv) {
-    // ✅ PROFESSIONAL STYLE (Tanishq / Malabar Gold standard)
-    // Exchange pehle se Totals Block mein "Less:" ke roop mein deduct ho chuka hai
-    // Payment Details mein sirf actual cash payment modes dikhenge
-    final double netPayable = inv.netPayable;
     final double totalCashPaid = inv.totalPaid;
 
     final List<Map<String, dynamic>> payments = [
@@ -728,7 +714,6 @@ class PosInvoiceController extends ChangeNotifier {
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          // ── Header ──────────────────────────────────────────────────────
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
@@ -756,8 +741,6 @@ class PosInvoiceController extends ChangeNotifier {
             ],
           ),
           pw.SizedBox(height: 8),
-
-          // ── Payment Mode Chips ──────────────────────────────────────────
           if (payments.isNotEmpty) ...[
             pw.Wrap(
               spacing: 12,
@@ -794,8 +777,6 @@ class PosInvoiceController extends ChangeNotifier {
             ),
             pw.SizedBox(height: 10),
           ],
-
-          // ── Total Paid row ───────────────────────────────────────────────
           if (payments.length > 1) ...[
             pw.Divider(color: PdfColors.grey200, thickness: 0.5),
             pw.SizedBox(height: 4),
@@ -811,8 +792,6 @@ class PosInvoiceController extends ChangeNotifier {
             ),
             pw.SizedBox(height: 6),
           ],
-
-          // ── Balance Due / Paid stamp ─────────────────────────────────────
           pw.Divider(color: PdfColors.grey300, thickness: 0.8),
           pw.SizedBox(height: 6),
           if (hasDue) ...[
@@ -897,6 +876,7 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   Future<void> printInvoice(PrintFormat format) async {
+    await finalizeInvoiceIfNeeded();
     if (pdfBytes == null) return;
     if (format != selectedFormat) {
       selectedFormat = format;
@@ -907,6 +887,7 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   Future<void> openDirectWhatsAppChat() async {
+    await finalizeInvoiceIfNeeded();
     if (invoice == null || invoice!.customerMobile.isEmpty) return;
 
     final phone = invoice!.customerMobile.replaceAll(RegExp(r'\D'), '');
@@ -929,13 +910,13 @@ class PosInvoiceController extends ChangeNotifier {
 
   // 🚀 NAYA MASTER LOGIC: Smart CRM Folder Directory Management
   Future<String?> downloadPdf() async {
+    await finalizeInvoiceIfNeeded();
     if (pdfBytes == null || invoice == null) return null;
 
     try {
       final prefs = await SharedPreferences.getInstance();
       String? baseDirPath = prefs.getString('invoice_base_folder');
 
-      // 1. Agar pehle se folder set nahi hai, toh owner se select karwao
       if (baseDirPath == null || !await Directory(baseDirPath).exists()) {
         baseDirPath = await FilePicker.platform.getDirectoryPath(
           dialogTitle: "Select Folder to Save All Bills",
@@ -943,13 +924,11 @@ class PosInvoiceController extends ChangeNotifier {
 
         if (baseDirPath == null) {
           debugPrint("Folder selection cancelled by user");
-          return null; // Return if cancelled
+          return null;
         }
-        // Save karke rakh lo taaki baar baar na puche
         await prefs.setString('invoice_base_folder', baseDirPath);
       }
 
-      // 2. Customer ke Mobile Number ka Folder banao
       String mobileFolder =
           invoice!.customerMobile.replaceAll(RegExp(r'\D'), '');
       if (mobileFolder.isEmpty) mobileFolder = "Walk-in_Customers";
@@ -959,7 +938,6 @@ class PosInvoiceController extends ChangeNotifier {
         await customerDir.create(recursive: true);
       }
 
-      // 3. Customer ke Naam aur Invoice No se file save karo
       String custName =
           invoice!.customerName.isNotEmpty ? invoice!.customerName : "Customer";
       String cleanName = custName
@@ -990,11 +968,9 @@ class PosInvoiceController extends ChangeNotifier {
     }
   }
 
-  // ✅ NEW: Due date set karo — PDF regenerate hoga
   Future<void> setDueDate(DateTime? date) async {
     dueDate = date;
     if (invoice != null) {
-      // Invoice snapshot mein dueDate update karo
       invoice = PosInvoiceModel(
         invoiceNumber: invoice!.invoiceNumber,
         invoiceDate: invoice!.invoiceDate,

@@ -23,8 +23,8 @@ class PurchaseCustomerPanel extends StatefulWidget {
 class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animCtrl;
-  late final Animation<double>   _fadeAnim;
-  late final Animation<Offset>   _slideAnim;
+  late final Animation<double> _fadeAnim;
+  late final Animation<Offset> _slideAnim;
 
   @override
   void initState() {
@@ -33,10 +33,10 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _fadeAnim  = CurvedAnimation(parent: _animCtrl, curve: Curves.easeInOut);
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeInOut);
     _slideAnim = Tween<Offset>(
       begin: const Offset(0, 0.15),
-      end:   Offset.zero,
+      end: Offset.zero,
     ).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic));
 
     Future.delayed(const Duration(milliseconds: 50), () {
@@ -69,15 +69,15 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color:      PurchaseEntryColors.purchaseAccent.withOpacity(0.10),
+                    color: PurchaseEntryColors.purchaseAccent.withOpacity(0.10),
                     blurRadius: 20,
                     spreadRadius: 2,
-                    offset:     const Offset(0, 4),
+                    offset: const Offset(0, 4),
                   ),
                   const BoxShadow(
-                    color:      PurchaseEntryColors.shadowDark,
+                    color: PurchaseEntryColors.shadowDark,
                     blurRadius: 10,
-                    offset:     Offset(0, 2),
+                    offset: Offset(0, 2),
                   ),
                 ],
                 border: Border.all(
@@ -93,7 +93,8 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
                   Row(
                     children: [
                       Container(
-                        width: 40, height: 40,
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             colors: [
@@ -101,14 +102,15 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
                               PurchaseEntryColors.purchaseAccentMid,
                             ],
                             begin: Alignment.topLeft,
-                            end:   Alignment.bottomRight,
+                            end: Alignment.bottomRight,
                           ),
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
-                              color:      PurchaseEntryColors.purchaseAccent.withOpacity(0.4),
+                              color: PurchaseEntryColors.purchaseAccent
+                                  .withOpacity(0.4),
                               blurRadius: 10,
-                              offset:     const Offset(0, 3),
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
@@ -159,7 +161,8 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              width: 8, height: 8,
+                              width: 8,
+                              height: 8,
                               decoration: const BoxDecoration(
                                 color: PurchaseEntryColors.purchaseAccent,
                                 shape: BoxShape.circle,
@@ -264,14 +267,32 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
                             title: 'Search',
                             icon: PurchaseEntryIcons.searchItem,
                             isPrimary: false,
-                            onTap: () => debugPrint('Search tapped'),
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Seller search will be wired into this panel in the next update.',
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 8),
                           _HoverButton(
                             title: isCustomer ? 'New Customer' : 'New Supplier',
                             icon: PurchaseEntryIcons.newSupplier,
                             isPrimary: true,
-                            onTap: () => debugPrint('New seller tapped'),
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Inline seller creation is planned for a follow-up update.',
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -300,7 +321,8 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
         Row(
           children: [
             Container(
-              width: 5, height: 5,
+              width: 5,
+              height: 5,
               decoration: const BoxDecoration(
                 color: PurchaseEntryColors.purchaseAccent,
                 shape: BoxShape.circle,
@@ -325,8 +347,7 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
           height: 44,
           child: TextField(
             controller: controller,
-            keyboardType:
-                isNumber ? TextInputType.number : TextInputType.text,
+            keyboardType: isNumber ? TextInputType.number : TextInputType.text,
             textCapitalization: isCaps
                 ? TextCapitalization.characters
                 : TextCapitalization.none,
@@ -372,9 +393,9 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
 
 // ── Hover Button ──────────────────────────────────────────────────────────────
 class _HoverButton extends StatefulWidget {
-  final String   title;
+  final String title;
   final IconData icon;
-  final bool     isPrimary;
+  final bool isPrimary;
   final VoidCallback onTap;
 
   const _HoverButton({
@@ -395,23 +416,26 @@ class _HoverButtonState extends State<_HoverButton> {
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
-      onExit:  (_) => setState(() => _isHovered = false),
-      cursor:  SystemMouseCursors.click,
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedScale(
-          scale:    _isHovered ? 1.04 : 1.0,
+          scale: _isHovered ? 1.04 : 1.0,
           duration: const Duration(milliseconds: 200),
-          curve:    Curves.easeOutBack,
+          curve: Curves.easeOutBack,
           child: AnimatedContainer(
-            duration:  const Duration(milliseconds: 250),
-            curve:     Curves.easeOut,
-            height: 42, width: 140,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+            height: 42,
+            width: 140,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              color: widget.isPrimary ? null : (_isHovered
-                  ? PurchaseEntryColors.bodyPanel
-                  : PurchaseEntryColors.formInputBg),
+              color: widget.isPrimary
+                  ? null
+                  : (_isHovered
+                      ? PurchaseEntryColors.bodyPanel
+                      : PurchaseEntryColors.formInputBg),
               gradient: widget.isPrimary
                   ? LinearGradient(
                       colors: [
@@ -421,7 +445,7 @@ class _HoverButtonState extends State<_HoverButton> {
                         PurchaseEntryColors.purchaseAccentMid,
                       ],
                       begin: Alignment.topLeft,
-                      end:   Alignment.bottomRight,
+                      end: Alignment.bottomRight,
                     )
                   : null,
               border: widget.isPrimary

@@ -928,7 +928,7 @@ class _NoSelectionState extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Text(
-              'Koi order select karein',
+              'Select an order',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -937,7 +937,7 @@ class _NoSelectionState extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Order par tap karein details dekhne ke liye',
+              'Choose an order from the list to view its details.',
               style: TextStyle(
                 fontSize: 12,
                 color: DeliveryColors.bodyTextMuted.withOpacity(0.4),
