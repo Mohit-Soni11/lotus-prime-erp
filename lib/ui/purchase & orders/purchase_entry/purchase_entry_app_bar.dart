@@ -15,7 +15,8 @@ import 'package:lotus_erp/repositories/setting/shop_setup/shop_session_manager.d
 import 'package:lotus_erp/repositories/setting/shop_setup/shop_setup_repository.dart';
 import 'package:lotus_erp/ui/sales%20%26%20orders/sales_pos/system_login_badge.dart';
 
-class PurchaseEntryAppBar extends StatefulWidget implements PreferredSizeWidget {
+class PurchaseEntryAppBar extends StatefulWidget
+    implements PreferredSizeWidget {
   final VoidCallback onBack;
 
   const PurchaseEntryAppBar({super.key, required this.onBack});
@@ -39,8 +40,8 @@ class _PurchaseEntryAppBarState extends State<PurchaseEntryAppBar> {
   Future<void> _fetchShopName() async {
     try {
       final tenantId = await ShopSessionManager.getPermanentTenantId();
-      final repo     = ShopSetupRepository();
-      final data     = await repo.fetchExistingSetup(tenantId);
+      final repo = ShopSetupRepository();
+      final data = await repo.fetchExistingSetup(tenantId);
       if (data != null && data['basic_info'] != null && mounted) {
         setState(() {
           _shopName = data['basic_info']['display_name']?.toString() ?? '';
@@ -78,7 +79,6 @@ class _PurchaseEntryAppBarState extends State<PurchaseEntryAppBar> {
             const SizedBox(width: 20),
             _verticalDivider(),
             const SizedBox(width: 20),
-
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,13 +87,15 @@ class _PurchaseEntryAppBarState extends State<PurchaseEntryAppBar> {
                   children: [
                     // Purchase accent dot (sky blue — different from gold Sales dot)
                     Container(
-                      width: 5, height: 5,
+                      width: 5,
+                      height: 5,
                       decoration: BoxDecoration(
                         color: PurchaseEntryColors.purchaseAccent,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: PurchaseEntryColors.purchaseAccent.withOpacity(0.6),
+                            color: PurchaseEntryColors.purchaseAccent
+                                .withOpacity(0.6),
                             blurRadius: 6,
                           ),
                         ],
@@ -106,14 +108,15 @@ class _PurchaseEntryAppBarState extends State<PurchaseEntryAppBar> {
                         _shopName.toUpperCase(),
                         style: PurchaseEntryStyles.headerTitle.copyWith(
                           fontSize: 13,
-                          color: PurchaseEntryStyles.headerTitle.color?.withOpacity(0.7),
+                          color: PurchaseEntryStyles.headerTitle.color
+                              ?.withOpacity(0.7),
                           letterSpacing: 0.8,
                         ),
                       ),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 10.0),
                         child: Text(
-                          '•',
+                          '|',
                           style: TextStyle(
                             color: PurchaseEntryColors.brandGold,
                             fontSize: 18,
@@ -135,9 +138,7 @@ class _PurchaseEntryAppBarState extends State<PurchaseEntryAppBar> {
                 const _RadarStatusWidget(),
               ],
             ),
-
             const Spacer(),
-
             SystemLoginBadge(
               userName: 'System Admin',
               userRole: 'Owner',
@@ -180,22 +181,23 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
-      onExit:  (_) => setState(() => _isHovered = false),
-      cursor:  SystemMouseCursors.click,
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedScale(
-          scale:    _isHovered ? 1.05 : 1.0,
+          scale: _isHovered ? 1.05 : 1.0,
           duration: const Duration(milliseconds: 200),
-          curve:    Curves.easeOutBack,
+          curve: Curves.easeOutBack,
           child: AnimatedContainer(
-            duration:  const Duration(milliseconds: 250),
-            curve:     Curves.easeOut,
-            width: 42, height: 42,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+            width: 42,
+            height: 42,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color:         PurchaseEntryColors.bodyPanel,
-              borderRadius:  BorderRadius.circular(10),
+              color: PurchaseEntryColors.bodyPanel,
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isHovered
                     ? PurchaseEntryColors.brandGold
@@ -205,9 +207,9 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               boxShadow: [
                 if (_isHovered)
                   BoxShadow(
-                    color:      PurchaseEntryColors.brandGold.withOpacity(0.25),
+                    color: PurchaseEntryColors.brandGold.withOpacity(0.25),
                     blurRadius: 12,
-                    offset:     const Offset(0, 3),
+                    offset: const Offset(0, 3),
                   ),
               ],
             ),
@@ -268,14 +270,16 @@ class _RadarStatusWidgetState extends State<_RadarStatusWidget>
     return Row(
       children: [
         SizedBox(
-          width: 14, height: 14,
+          width: 14,
+          height: 14,
           child: Stack(
             alignment: Alignment.center,
             children: [
               _wave(0.0),
               _wave(0.5),
               Container(
-                width: 6, height: 6,
+                width: 6,
+                height: 6,
                 decoration: const BoxDecoration(
                   color: PurchaseEntryColors.success,
                   shape: BoxShape.circle,
@@ -325,7 +329,8 @@ class _RadarStatusWidgetState extends State<_RadarStatusWidget>
           child: Transform.scale(
             scale: 1.0 + v * 1.5,
             child: Container(
-              width: 14, height: 14,
+              width: 14,
+              height: 14,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(

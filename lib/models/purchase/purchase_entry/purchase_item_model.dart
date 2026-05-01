@@ -1,25 +1,16 @@
-// =============================================================================
-// FILE        : purchase_item_model.dart
-// MODULE      : Purchase Entry
-// LAYER       : Models
-// DESCRIPTION : Single purchased item row. ChangeNotifier for zero-lag UI.
-// =============================================================================
-
 import 'package:flutter/material.dart';
+
 import '../purchase_enums/purchase_enums.dart';
 
 class PurchaseItemModel extends ChangeNotifier {
-  // Controllers
-  final TextEditingController descCtrl       = TextEditingController();
-  final TextEditingController grossCtrl      = TextEditingController();
-  final TextEditingController lessCtrl       = TextEditingController();
-  final TextEditingController purityCtrl     = TextEditingController();
-  final TextEditingController rateCtrl       = TextEditingController();
+  final TextEditingController descCtrl = TextEditingController();
+  final TextEditingController grossCtrl = TextEditingController();
+  final TextEditingController lessCtrl = TextEditingController();
+  final TextEditingController purityCtrl = TextEditingController();
+  final TextEditingController rateCtrl = TextEditingController();
 
-  // Focus nodes
   final FocusNode firstFieldFocus = FocusNode();
 
-  // State
   PurchaseMetalType metal;
 
   PurchaseItemModel({this.metal = PurchaseMetalType.gold}) {
@@ -41,16 +32,26 @@ class PurchaseItemModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Computed values ───────────────────────────────────────────
-  double get grossWt   => double.tryParse(grossCtrl.text) ?? 0.0;
-  double get lessWt    => double.tryParse(lessCtrl.text)  ?? 0.0;
-  double get netWt     => (grossWt - lessWt).clamp(0.0, double.infinity);
-  double get purity    => double.tryParse(purityCtrl.text) ?? 0.0;
-  double get fineWt    => metal == PurchaseMetalType.diamond
-      ? netWt * (purity / 100.0)
-      : netWt * (purity / 100.0);
-  double get rate      => double.tryParse(rateCtrl.text) ?? 0.0;
+  double get grossWt => _parseNumeric(grossCtrl.text);
+  double get lessWt => _parseNumeric(lessCtrl.text);
+  double get netWt => (grossWt - lessWt).clamp(0.0, double.infinity);
+  double get purity => _parseNumeric(purityCtrl.text);
+  double get fineWt => netWt * (purity / 100.0);
+  double get rate => _parseNumeric(rateCtrl.text);
   double get totalValue => fineWt * rate;
+
+  bool get hasContent =>
+      descCtrl.text.trim().isNotEmpty ||
+      grossCtrl.text.trim().isNotEmpty ||
+      lessCtrl.text.trim().isNotEmpty ||
+      rateCtrl.text.trim().isNotEmpty;
+
+  bool get isValidEntry => netWt > 0 && rate > 0;
+
+  double _parseNumeric(String value) {
+    final normalized = value.replaceAll(RegExp(r'[^0-9.]'), '');
+    return double.tryParse(normalized) ?? 0.0;
+  }
 
   @override
   void dispose() {

@@ -1,16 +1,10 @@
-// =============================================================================
-// FILE        : purchase_right_panel.dart
-// MODULE      : Purchase Entry
-// LAYER       : UI
-// DESCRIPTION : Right billing panel for Purchase Entry.
-//               Shows purchase summary + payment disbursement to seller.
-//               "We are paying the seller" — balance logic reversed from Sales.
-// =============================================================================
-
 import 'package:flutter/material.dart';
-import '../../../theme/purchase/purchase_entry/purchase_entry_theme.dart';
+import 'package:flutter/services.dart';
+
 import '../../../logic/purchase/purchase_entry_controller.dart';
+import '../../../logic/purchase/purchase_voucher_print_service.dart';
 import '../../../models/purchase/purchase_enums/purchase_enums.dart';
+import '../../../theme/purchase/purchase_entry/purchase_entry_theme.dart';
 
 class PurchaseRightPanel extends StatefulWidget {
   final PurchaseEntryController ctrl;
@@ -23,6 +17,8 @@ class PurchaseRightPanel extends StatefulWidget {
 
 class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
   bool _gstExpanded = false;
+
+  String _currency(double amount) => 'Rs. ${amount.toStringAsFixed(2)}';
 
   @override
   Widget build(BuildContext context) {
@@ -77,17 +73,18 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
   }
 
   Widget _panelDivider() => Container(
-        height: 2.0,
+        height: 2,
         decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [
-            PurchaseEntryColors.purchaseAccent.withOpacity(0.05),
-            PurchaseEntryColors.bodyBorder,
-            PurchaseEntryColors.purchaseAccent.withOpacity(0.05),
-          ]),
+          gradient: LinearGradient(
+            colors: [
+              PurchaseEntryColors.purchaseAccent.withOpacity(0.05),
+              PurchaseEntryColors.bodyBorder,
+              PurchaseEntryColors.purchaseAccent.withOpacity(0.05),
+            ],
+          ),
         ),
       );
 
-  // ── Summary Board ───────────────────────────────────────────────────────────
   Widget _buildSummaryBoard() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
@@ -97,10 +94,8 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
           _sectionHead(
             icon: PurchaseEntryIcons.invoiceOutline,
             title: PurchaseEntryStrings.purchaseSummary,
-            subtitle: 'Kharidi gayi cheez ka breakdown',
+            subtitle: 'Review valuation, discount, and tax before saving',
           ),
-
-          // Metal rows
           if (widget.ctrl.totalGoldValue > 0)
             _subtleRow(
               'Gold (${widget.ctrl.totalGoldFine.toStringAsFixed(3)} g)',
@@ -125,10 +120,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
               widget.ctrl.totalDiamondValue,
               color: PurchaseEntryColors.metalDiamond,
             ),
-
           const SizedBox(height: 12),
-
-          // Gross total
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
@@ -142,13 +134,9 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
             child:
                 _pillarRow('Gross Purchase', widget.ctrl.grossPurchaseAmount),
           ),
-
           const SizedBox(height: 12),
-
-          // Discount row
-          _discountRow(),
-
-          const SizedBox(height: 8),
+          _discountCard(),
+          const SizedBox(height: 12),
           _pillarRow(
             widget.ctrl.taxType == PurchaseTaxType.gst
                 ? 'Taxable Value'
@@ -157,13 +145,147 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
             isMid: true,
           ),
           const SizedBox(height: 10),
-
-          // GST
           if (widget.ctrl.taxType == PurchaseTaxType.gst)
             _buildGstSection()
           else
             _buildNoGstBadge(),
         ],
+      ),
+    );
+  }
+
+  Widget _discountCard() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: PurchaseEntryColors.bodyBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: PurchaseEntryColors.bodyBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Discount',
+            style: TextStyle(
+              color: PurchaseEntryColors.textMain,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _discountToggle(
+                  title: 'Flat',
+                  active: widget.ctrl.discountType ==
+                      PurchaseDiscountType.flatAmount,
+                  onTap: () => widget.ctrl
+                      .toggleDiscountType(PurchaseDiscountType.flatAmount),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _discountToggle(
+                  title: 'Percent',
+                  active: widget.ctrl.discountType ==
+                      PurchaseDiscountType.percentage,
+                  onTap: () => widget.ctrl
+                      .toggleDiscountType(PurchaseDiscountType.percentage),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 44,
+            child: TextField(
+              controller: widget.ctrl.discountCtrl,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+              ],
+              style: PurchaseEntryStyles.inputText.copyWith(fontSize: 14),
+              decoration: InputDecoration(
+                prefixText:
+                    widget.ctrl.discountType == PurchaseDiscountType.flatAmount
+                        ? 'Rs. '
+                        : null,
+                suffixText:
+                    widget.ctrl.discountType == PurchaseDiscountType.percentage
+                        ? '%'
+                        : null,
+                hintText:
+                    widget.ctrl.discountType == PurchaseDiscountType.flatAmount
+                        ? 'Enter discount amount'
+                        : 'Enter discount percentage',
+                hintStyle: PurchaseEntryStyles.subTitleMuted.copyWith(
+                  fontSize: 13,
+                ),
+                filled: true,
+                fillColor: PurchaseEntryColors.bodyPanel,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide:
+                      const BorderSide(color: PurchaseEntryColors.bodyBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide:
+                      const BorderSide(color: PurchaseEntryColors.bodyBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: PurchaseEntryColors.purchaseAccent,
+                    width: 2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _subtleRow('Discount Applied', widget.ctrl.discountAmount),
+        ],
+      ),
+    );
+  }
+
+  Widget _discountToggle({
+    required String title,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        height: 38,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: active
+              ? PurchaseEntryColors.purchaseAccent.withOpacity(0.12)
+              : PurchaseEntryColors.bodyPanel,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: active
+                ? PurchaseEntryColors.purchaseAccent
+                : PurchaseEntryColors.bodyBorder,
+          ),
+        ),
+        child: Text(
+          title,
+          style: TextStyle(
+            color: active
+                ? PurchaseEntryColors.purchaseAccent
+                : PurchaseEntryColors.textMain,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
       ),
     );
   }
@@ -180,7 +302,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Total GST (3% on Purchase)',
+                  'GST (3%)',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
@@ -190,7 +312,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                 Row(
                   children: [
                     Text(
-                      '₹ ${widget.ctrl.totalGst.toStringAsFixed(2)}',
+                      _currency(widget.ctrl.totalGst),
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w900,
@@ -248,7 +370,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
       ),
       child: const Center(
         child: Text(
-          'NORMAL PURCHASE  ·  NO GST APPLIED',
+          'STANDARD PURCHASE - NO GST APPLIED',
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w900,
@@ -260,14 +382,13 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
     );
   }
 
-  // ── Payment Hub ─────────────────────────────────────────────────────────────
   Widget _buildPaymentHub() {
     final isEmpty = widget.ctrl.grandTotal == 0.0;
     final isDue = widget.ctrl.balanceDue > 0.005;
     final isOverpaid = widget.ctrl.balanceDue < -0.005;
     final isSettled = !isDue && !isOverpaid && !isEmpty;
 
-    final balColor = isSettled || isOverpaid
+    final balanceColor = isSettled || isOverpaid
         ? PurchaseEntryColors.success
         : PurchaseEntryColors.purchaseAccent;
 
@@ -279,16 +400,16 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
           _sectionHead(
             icon: PurchaseEntryIcons.cashPay,
             title: PurchaseEntryStrings.paymentDisburse,
-            subtitle: 'Seller ko diye gaye payments',
+            subtitle: 'Record how the payout is being settled',
           ),
           _paymentInput(
               'Cash Paid', widget.ctrl.cashCtrl, PurchaseEntryIcons.cashPay),
           const SizedBox(height: 12),
-          _paymentInput(
-              'UPI / Bank', widget.ctrl.upiCtrl, PurchaseEntryIcons.upiPay),
+          _paymentInput('UPI / Bank Paid', widget.ctrl.upiCtrl,
+              PurchaseEntryIcons.upiPay),
           const SizedBox(height: 12),
-          _paymentInput('Card / Cheque', widget.ctrl.cardCtrl,
-              PurchaseEntryIcons.cardPay),
+          _paymentInput(
+              'Card Paid', widget.ctrl.cardCtrl, PurchaseEntryIcons.cardPay),
           const SizedBox(height: 18),
           if (isEmpty)
             Container(
@@ -304,7 +425,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
               ),
               child: const Center(
                 child: Text(
-                  'NO ITEMS ADDED',
+                  'NO PURCHASE LINES ADDED',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
@@ -320,9 +441,9 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
               curve: Curves.easeOut,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: balColor.withOpacity(0.10),
+                color: balanceColor.withOpacity(0.10),
                 border: Border.all(
-                  color: balColor.withOpacity(0.60),
+                  color: balanceColor.withOpacity(0.60),
                   width: 2.0,
                 ),
                 borderRadius: BorderRadius.circular(12),
@@ -335,24 +456,24 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                     children: [
                       Text(
                         isOverpaid
-                            ? 'OVERPAID (WAPAS LO)'
+                            ? 'OVERPAID'
                             : isSettled
                                 ? 'PAYMENT COMPLETE'
-                                : 'BAAKI DENA HAI',
+                                : 'BALANCE TO SETTLE',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.2,
-                          color: balColor,
+                          color: balanceColor,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '₹ ${widget.ctrl.balanceDue.abs().toStringAsFixed(2)}',
+                        _currency(widget.ctrl.balanceDue.abs()),
                         style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w900,
-                          color: balColor,
+                          color: balanceColor,
                         ),
                       ),
                     ],
@@ -361,7 +482,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                     isSettled || isOverpaid
                         ? PurchaseEntryIcons.settledVerified
                         : PurchaseEntryIcons.dueWarning,
-                    color: balColor,
+                    color: balanceColor,
                     size: 32,
                   ),
                 ],
@@ -372,24 +493,23 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
     );
   }
 
-  // ── Action Buttons ──────────────────────────────────────────────────────────
   Widget _buildActionButtons() {
     final isCredit = widget.ctrl.grandTotal < 0;
-    final boxColor = PurchaseEntryColors.purchaseAccent;
+    final totalColor = PurchaseEntryColors.purchaseAccent;
+    final canPrint = widget.ctrl.items.any((item) => item.hasContent);
 
     return Padding(
       padding: const EdgeInsets.all(18),
       child: Column(
         children: [
-          // Grand total box
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: boxColor.withOpacity(0.10),
+              color: totalColor.withOpacity(0.10),
               border: Border.all(
-                color: boxColor.withOpacity(0.50),
+                color: totalColor.withOpacity(0.50),
                 width: 2.0,
               ),
               borderRadius: BorderRadius.circular(12),
@@ -403,7 +523,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                   children: [
                     Text(
                       isCredit ? 'CREDIT NOTE' : 'TOTAL PAYABLE',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
                         color: PurchaseEntryColors.textMain,
@@ -412,7 +532,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '${isCredit ? '- ' : ''}₹ ${widget.ctrl.grandTotal.abs().toStringAsFixed(2)}',
+                      '${isCredit ? '- ' : ''}${_currency(widget.ctrl.grandTotal.abs())}',
                       style: PurchaseEntryStyles.grandTotalText,
                     ),
                   ],
@@ -420,25 +540,37 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
               ],
             ),
           ),
-
-          // Save + Print buttons
+          if (widget.ctrl.saveErrorMessage != null) ...[
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: PurchaseEntryColors.danger.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: PurchaseEntryColors.danger.withOpacity(0.20),
+                ),
+              ),
+              child: Text(
+                widget.ctrl.saveErrorMessage!,
+                style: const TextStyle(
+                  color: PurchaseEntryColors.danger,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
           Row(
             children: [
               Expanded(
-                flex: 1,
                 child: SizedBox(
                   height: 54,
                   child: OutlinedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Purchase voucher printing will be added in the next update.',
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
+                    onPressed: canPrint
+                        ? () =>
+                            PurchaseVoucherPrintService.printDraft(widget.ctrl)
+                        : null,
                     icon: const Icon(PurchaseEntryIcons.printVoucher, size: 18),
                     label: const Text(
                       'PRINT',
@@ -468,32 +600,47 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                 child: SizedBox(
                   height: 54,
                   child: ElevatedButton.icon(
-                    onPressed: () async {
-                      if (widget.ctrl.items.isEmpty) return;
-                      final saved = await widget.ctrl.savePurchase();
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            saved
-                                ? 'Purchase saved successfully.'
-                                : 'Unable to save the purchase. Check the item data and try again.',
+                    onPressed: widget.ctrl.isSaving
+                        ? null
+                        : () async {
+                            final saved = await widget.ctrl.savePurchase();
+                            if (!context.mounted) {
+                              return;
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  saved
+                                      ? 'Purchase voucher saved successfully.'
+                                      : widget.ctrl.saveErrorMessage ??
+                                          'The purchase could not be saved. Review the details and try again.',
+                                ),
+                                backgroundColor: saved
+                                    ? PurchaseEntryColors.success
+                                    : PurchaseEntryColors.danger,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                    icon: widget.ctrl.isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(
+                            PurchaseEntryIcons.saveVoucher,
+                            color: Colors.white,
+                            size: 20,
                           ),
-                          backgroundColor: saved
-                              ? PurchaseEntryColors.success
-                              : PurchaseEntryColors.danger,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                    icon: const Icon(
-                      PurchaseEntryIcons.saveVoucher,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    label: const Text(
-                      PurchaseEntryStrings.saveBtn,
-                      style: TextStyle(
+                    label: Text(
+                      widget.ctrl.isSaving
+                          ? 'SAVING...'
+                          : PurchaseEntryStrings.saveBtn,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
                         fontSize: 14,
@@ -502,6 +649,8 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: PurchaseEntryColors.success,
+                      disabledBackgroundColor:
+                          PurchaseEntryColors.success.withOpacity(0.55),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -517,7 +666,6 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
     );
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────────
   Widget _sectionHead({
     required IconData icon,
     required String title,
@@ -538,25 +686,30 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                 width: 1.5,
               ),
             ),
-            child:
-                Icon(icon, color: PurchaseEntryColors.purchaseAccent, size: 20),
+            child: Icon(
+              icon,
+              color: PurchaseEntryColors.purchaseAccent,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  letterSpacing: 1.2,
-                  color: PurchaseEntryColors.textMain,
-                  fontWeight: FontWeight.w900,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    letterSpacing: 1.2,
+                    color: PurchaseEntryColors.textMain,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(subtitle, style: PurchaseEntryStyles.subTitleMuted),
-            ],
+                const SizedBox(height: 2),
+                Text(subtitle, style: PurchaseEntryStyles.subTitleMuted),
+              ],
+            ),
           ),
         ],
       ),
@@ -578,7 +731,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
             ),
           ),
           Text(
-            '₹ ${amount.toStringAsFixed(2)}',
+            _currency(amount),
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w900,
@@ -597,15 +750,15 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
         Text(
           label,
           style: TextStyle(
-            fontSize: isMid ? 14 : 15,
-            fontWeight: FontWeight.w900,
+            fontSize: isMid ? 13 : 14,
+            fontWeight: FontWeight.w800,
             color: PurchaseEntryColors.textMain,
           ),
         ),
         Text(
-          '₹ ${amount.toStringAsFixed(2)}',
+          _currency(amount),
           style: TextStyle(
-            fontSize: isMid ? 16 : 17,
+            fontSize: isMid ? 15 : 16,
             fontWeight: FontWeight.w900,
             color: PurchaseEntryColors.textMain,
           ),
@@ -614,183 +767,62 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
     );
   }
 
-  Widget _discountRow() {
-    final discAmt = widget.ctrl.discountAmount;
-    final isPercent =
-        widget.ctrl.discountType == PurchaseDiscountType.percentage;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              const Text(
-                'Discount / Deduction',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  color: PurchaseEntryColors.textMain,
-                ),
-              ),
-              const SizedBox(width: 10),
-              InkWell(
-                onTap: () => widget.ctrl.toggleDiscountType(isPercent
-                    ? PurchaseDiscountType.flatAmount
-                    : PurchaseDiscountType.percentage),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: PurchaseEntryColors.bodyBg,
-                    border: Border.all(
-                      color: PurchaseEntryColors.bodyBorder,
-                      width: 1.5,
-                    ),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        widget.ctrl.discountType.symbol,
-                        style: const TextStyle(
-                          color: PurchaseEntryColors.purchaseAccent,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        PurchaseEntryIcons.arrowDown,
-                        color: PurchaseEntryColors.textMain,
-                        size: 16,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              if (discAmt > 0)
-                Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: Text(
-                    '- ₹ ${discAmt.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                      color: PurchaseEntryColors.danger,
-                    ),
-                  ),
-                ),
-              SizedBox(
-                width: 85,
-                height: 34,
-                child: TextField(
-                  controller: widget.ctrl.discountCtrl,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                    color: PurchaseEntryColors.danger,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: '0',
-                    hintStyle: TextStyle(color: PurchaseEntryColors.textMuted),
-                    filled: true,
-                    fillColor: PurchaseEntryColors.bodyBg,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                        color: PurchaseEntryColors.bodyBorder,
-                        width: 1.5,
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                        color: PurchaseEntryColors.danger,
-                        width: 2.0,
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _paymentInput(
     String label,
-    TextEditingController tCtrl,
+    TextEditingController controller,
     IconData icon,
   ) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          flex: 5,
-          child: Row(
-            children: [
-              Icon(icon, color: PurchaseEntryColors.textMain, size: 18),
-              const SizedBox(width: 10),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  color: PurchaseEntryColors.textMain,
-                ),
-              ),
-            ],
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: PurchaseEntryColors.textMain,
+            letterSpacing: 0.4,
           ),
         ),
-        Expanded(
-          flex: 5,
-          child: SizedBox(
-            height: 40,
-            child: TextField(
-              controller: tCtrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                color: PurchaseEntryColors.textMain,
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 44,
+          child: TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+            ],
+            style: PurchaseEntryStyles.inputText.copyWith(fontSize: 14),
+            decoration: InputDecoration(
+              hintText: '0.00',
+              prefixText: 'Rs. ',
+              prefixIcon: Icon(
+                icon,
+                size: 18,
+                color: PurchaseEntryColors.textMuted,
               ),
-              decoration: InputDecoration(
-                hintText: '0.00',
-                hintStyle: TextStyle(
-                  color: PurchaseEntryColors.textMuted,
-                  fontSize: 14,
-                ),
-                filled: true,
-                fillColor: PurchaseEntryColors.bodyBg,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(
-                    color: PurchaseEntryColors.bodyBorder,
-                    width: 1.5,
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(
-                    color: PurchaseEntryColors.purchaseAccent,
-                    width: 2.0,
-                  ),
-                  borderRadius: BorderRadius.circular(8),
+              hintStyle:
+                  PurchaseEntryStyles.subTitleMuted.copyWith(fontSize: 13),
+              filled: true,
+              fillColor: PurchaseEntryColors.formInputBg,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide:
+                    const BorderSide(color: PurchaseEntryColors.bodyBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide:
+                    const BorderSide(color: PurchaseEntryColors.bodyBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: PurchaseEntryColors.purchaseAccent,
+                  width: 2,
                 ),
               ),
             ),

@@ -1,36 +1,71 @@
 // =============================================================================
-// FILE : lib/ui/settings/settings_dashboard/settings_screen.dart
-// SIZING: Larger header, bigger category labels, taller grid cards
+// FILE        : lib/ui/settings/settings_dashboard/settings_screen.dart
+// DESCRIPTION : Settings hub screen. v12 — billingSetup navigation wired.
+//               FIXED: Uses original SettingsColors/SettingsData/CategoryMeta
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 import '../../../theme/settings/settings_dashboard/settings_theme.dart';
 import 'data/settings_data.dart';
 import '../settings_dashboard/settings_ui/settings_card.dart';
+import '../../../models/setting/settings_model.dart';
+
 import '../shop_setup/shop_setup_wizard.dart';
 import '../account_profile/account_profile_screen.dart';
-import '../../../models/setting/settings_model.dart';
+
+// ✅ v12: Billing Setup
+import '../billing_setup/billing_setup_hub_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   final Function(String routeId) onNavigate;
   const SettingsScreen({super.key, required this.onNavigate});
 
   void _handleTap(BuildContext context, SettingsModel item) {
-    if (item.id == 'shop_profile') {
-      Navigator.push(
-          context, MaterialPageRoute(builder: (_) => const ShopSetupWizard()));
-    } else if (item.id == 'account_profile') {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => const AccountProfileScreen()));
-    } else {
-      onNavigate(item.id);
+    switch (item.id) {
+      case 'shop_profile':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ShopSetupWizard()),
+        );
+        break;
+
+      case 'account_profile':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AccountProfileScreen()),
+        );
+        break;
+
+      // ✅ v12: Billing Setup — fade transition
+      case 'billing_setup':
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (_, animation, __) => const BillingSetupHubScreen(),
+            transitionsBuilder: (_, animation, __, child) => FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              ),
+              child: child,
+            ),
+            transitionDuration: const Duration(milliseconds: 260),
+          ),
+        );
+        break;
+
+      default:
+        onNavigate(item.id);
+        break;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: SettingsColors.pageBackground,
+      backgroundColor: SettingsColors.pageBackground, // ✅ original naam
       body: SafeArea(
         child: SingleChildScrollView(
           padding: SettingsStyles.pagePadding,
@@ -42,6 +77,7 @@ class SettingsScreen extends StatelessWidget {
               Divider(
                   color: SettingsColors.cardBorder, thickness: 1, height: 1),
               const SizedBox(height: 36),
+              // ✅ Original SettingsCategory loop — SettingsGroup nahi
               ...SettingsCategory.values.map((cat) {
                 final items = SettingsData.getByCategory(cat);
                 if (items.isEmpty) return const SizedBox.shrink();
@@ -83,6 +119,7 @@ class _Header extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ✅ SettingsStyles.headerTitle — original style
               const Text('Settings', style: SettingsStyles.headerTitle),
               const SizedBox(height: 8),
               Row(
@@ -188,7 +225,7 @@ class _LiveDotState extends State<_LiveDot>
 
 // ── CATEGORY SECTION ──────────────────────────────────────────────────────────
 class _CategorySection extends StatelessWidget {
-  final CategoryMeta meta;
+  final CategoryMeta meta; // ✅ original — SettingsGroup nahi
   final List<SettingsModel> items;
   final void Function(SettingsModel) onTap;
 
@@ -221,13 +258,15 @@ class _CategorySection extends StatelessWidget {
               const SizedBox(width: 9),
               Text(
                 meta.label,
-                style: SettingsStyles.categoryLabel.copyWith(color: meta.color),
+                style: SettingsStyles.categoryLabel.copyWith(
+                  color: meta.color,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 18),
 
-          // Cards grid — childAspectRatio 1.55 so cards are taller & readable
+          // ✅ Original responsive GridView
           LayoutBuilder(
             builder: (context, constraints) {
               final w = constraints.maxWidth;
@@ -246,7 +285,7 @@ class _CategorySection extends StatelessWidget {
                   crossAxisCount: cols,
                   crossAxisSpacing: 18,
                   mainAxisSpacing: 18,
-                  childAspectRatio: 1.55, // taller than before (was 1.65)
+                  childAspectRatio: 1.55,
                 ),
                 itemBuilder: (_, i) => SettingsCard(
                   item: items[i],

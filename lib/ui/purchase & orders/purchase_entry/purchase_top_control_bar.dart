@@ -22,8 +22,9 @@ class PurchaseTopControlBar extends StatelessWidget {
     return ListenableBuilder(
       listenable: ctrl,
       builder: (context, _) {
-        final bool isCustomer = ctrl.purchaseSource == PurchaseSource.fromCustomer;
-        final bool isGstOn    = ctrl.taxType == PurchaseTaxType.gst;
+        final bool isCustomer =
+            ctrl.purchaseSource == PurchaseSource.fromCustomer;
+        final bool isGstOn = ctrl.taxType == PurchaseTaxType.gst;
 
         return Align(
           alignment: Alignment.centerLeft,
@@ -51,7 +52,6 @@ class PurchaseTopControlBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-
                   // ── HEADING ROW ───────────────────────────────────────────
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -91,7 +91,7 @@ class PurchaseTopControlBar extends StatelessWidget {
                                       : PurchaseEntryColors.textMuted,
                                 ),
                                 child: Text(
-                                  '${isCustomer ? 'From Customer' : 'From Supplier'}  ·  '
+                                  '${isCustomer ? 'From Seller' : 'From Supplier'}  |  '
                                   '${isGstOn ? 'GST Purchase' : 'Normal Purchase'}',
                                 ),
                               ),
@@ -123,7 +123,8 @@ class PurchaseTopControlBar extends StatelessWidget {
                           children: [
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 260),
-                              width: 6, height: 6,
+                              width: 6,
+                              height: 6,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: isGstOn
@@ -162,7 +163,6 @@ class PurchaseTopControlBar extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-
                       // SOURCE SEGMENT
                       Container(
                         height: 52,
@@ -170,7 +170,8 @@ class PurchaseTopControlBar extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: PurchaseEntryColors.bodyBg,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: PurchaseEntryColors.bodyBorder),
+                          border:
+                              Border.all(color: PurchaseEntryColors.bodyBorder),
                           boxShadow: const [
                             BoxShadow(
                               color: PurchaseEntryColors.shadowLight,
@@ -183,14 +184,16 @@ class PurchaseTopControlBar extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             _sourceTab(
-                              title: 'CUSTOMER',
+                              title: 'SELLER',
                               isActive: isCustomer,
-                              onTap: () => ctrl.toggleSource(PurchaseSource.fromCustomer),
+                              onTap: () => ctrl
+                                  .toggleSource(PurchaseSource.fromCustomer),
                             ),
                             _sourceTab(
                               title: 'SUPPLIER',
                               isActive: !isCustomer,
-                              onTap: () => ctrl.toggleSource(PurchaseSource.fromSupplier),
+                              onTap: () => ctrl
+                                  .toggleSource(PurchaseSource.fromSupplier),
                             ),
                           ],
                         ),
@@ -201,7 +204,9 @@ class PurchaseTopControlBar extends StatelessWidget {
                       // GST TOGGLE
                       InkWell(
                         onTap: () => ctrl.toggleTaxType(
-                          isGstOn ? PurchaseTaxType.normal : PurchaseTaxType.gst,
+                          isGstOn
+                              ? PurchaseTaxType.normal
+                              : PurchaseTaxType.gst,
                         ),
                         borderRadius: BorderRadius.circular(10),
                         child: AnimatedContainer(
@@ -215,7 +220,8 @@ class PurchaseTopControlBar extends StatelessWidget {
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: isGstOn
-                                  ? PurchaseEntryColors.success.withOpacity(0.40)
+                                  ? PurchaseEntryColors.success
+                                      .withOpacity(0.40)
                                   : PurchaseEntryColors.bodyBorder,
                               width: isGstOn ? 1.5 : 1.0,
                             ),
@@ -314,7 +320,8 @@ class PurchaseTopControlBar extends StatelessWidget {
   }
 
   Widget _accentLine(double width, double opacity) => Container(
-        width: width, height: 3,
+        width: width,
+        height: 3,
         decoration: BoxDecoration(
           color: PurchaseEntryColors.purchaseAccent.withOpacity(opacity),
           borderRadius: BorderRadius.circular(2),
@@ -368,11 +375,8 @@ class PurchaseTopControlBar extends StatelessWidget {
               Text(
                 title,
                 style: TextStyle(
-                  color: isActive
-                      ? Colors.white
-                      : PurchaseEntryColors.textDark,
-                  fontWeight:
-                      isActive ? FontWeight.w900 : FontWeight.w700,
+                  color: isActive ? Colors.white : PurchaseEntryColors.textDark,
+                  fontWeight: isActive ? FontWeight.w900 : FontWeight.w700,
                   fontSize: 13,
                   letterSpacing: 0.8,
                 ),

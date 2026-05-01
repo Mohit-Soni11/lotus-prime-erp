@@ -1,15 +1,8 @@
-// =============================================================================
-// FILE        : purchase_items_table.dart
-// MODULE      : Purchase Entry
-// LAYER       : UI
-// DESCRIPTION : Purchase items table container with header, rows, summary.
-//               Based on POS Old Gold Table design pattern.
-// =============================================================================
-
 import 'package:flutter/material.dart';
-import '../../../theme/purchase/purchase_entry/purchase_entry_theme.dart';
+
 import '../../../logic/purchase/purchase_entry_controller.dart';
 import '../../../models/purchase/purchase_enums/purchase_enums.dart';
+import '../../../theme/purchase/purchase_entry/purchase_entry_theme.dart';
 import 'purchase_item_row.dart';
 
 class PurchaseItemsTable extends StatelessWidget {
@@ -17,54 +10,78 @@ class PurchaseItemsTable extends StatelessWidget {
 
   const PurchaseItemsTable({super.key, required this.ctrl});
 
+  static const double _tableWidth = 1180;
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: ctrl,
       builder: (context, _) {
-        return Container(
-          decoration: BoxDecoration(
-            color:  PurchaseEntryColors.bodyPanel,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: PurchaseEntryColors.bodyBorder,
-              width: 1.5,
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color:      PurchaseEntryColors.shadowLight,
-                blurRadius: 10,
-                offset:     Offset(0, 4),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final needsHorizontalScroll = constraints.maxWidth < _tableWidth;
+
+            return Container(
+              decoration: BoxDecoration(
+                color: PurchaseEntryColors.bodyPanel,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: PurchaseEntryColors.bodyBorder,
+                  width: 1.5,
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: PurchaseEntryColors.shadowLight,
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              _buildColumnHeaders(),
-              ctrl.items.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: ctrl.items.length,
-                      itemBuilder: (context, index) => PurchaseItemRow(
-                        index: index,
-                        item:  ctrl.items[index],
-                        ctrl:  ctrl,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(needsHorizontalScroll),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: needsHorizontalScroll
+                        ? const BouncingScrollPhysics()
+                        : const NeverScrollableScrollPhysics(),
+                    child: SizedBox(
+                      width: _tableWidth,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildColumnHeaders(),
+                          ctrl.items.isEmpty
+                              ? _buildEmptyState()
+                              : ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: ctrl.items.length,
+                                  itemBuilder: (context, index) =>
+                                      PurchaseItemRow(
+                                    index: index,
+                                    item: ctrl.items[index],
+                                    ctrl: ctrl,
+                                  ),
+                                ),
+                        ],
                       ),
                     ),
-              _buildBottomSummary(),
-            ],
-          ),
+                  ),
+                  _buildBottomSummary(),
+                ],
+              ),
+            );
+          },
         );
       },
     );
   }
 
-  // ── Table Header ────────────────────────────────────────────────────────────
-  Widget _buildHeader() {
+  Widget _buildHeader(bool needsHorizontalScroll) {
+    final isCustomer = ctrl.purchaseSource == PurchaseSource.fromCustomer;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
@@ -78,7 +95,8 @@ class PurchaseItemsTable extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 40, height: 40,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: PurchaseEntryColors.purchaseAccent.withOpacity(0.12),
               borderRadius: BorderRadius.circular(10),
@@ -93,34 +111,44 @@ class PurchaseItemsTable extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                ctrl.purchaseSource == PurchaseSource.fromCustomer
-                    ? 'PURCHASED ITEMS (FROM CUSTOMER)'
-                    : 'PURCHASED ITEMS (FROM SUPPLIER)',
-                style: PurchaseEntryStyles.highVisHeader.copyWith(
-                  color: PurchaseEntryColors.purchaseAccent,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isCustomer
+                      ? 'PURCHASE LINES FROM SELLER'
+                      : 'PURCHASE LINES FROM SUPPLIER',
+                  style: PurchaseEntryStyles.highVisHeader.copyWith(
+                    color: PurchaseEntryColors.purchaseAccent,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                ctrl.purchaseSource == PurchaseSource.fromCustomer
-                    ? 'Customer ka sona/zewar jo hum khared rahe hain'
-                    : 'Supplier se aane wala maal',
-                style: PurchaseEntryStyles.subTitleMuted,
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  isCustomer
+                      ? 'Capture each inward item with precise weight, purity, and payout value'
+                      : 'Capture each inward stock line with purchase valuation and metal detail',
+                  style: PurchaseEntryStyles.subTitleMuted,
+                ),
+                if (needsHorizontalScroll) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'Scroll horizontally to review all purchase columns.',
+                    style: PurchaseEntryStyles.subTitleMuted.copyWith(
+                      color: PurchaseEntryColors.purchaseAccentMid,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-          const Spacer(),
-
-          // Item count badge
+          const SizedBox(width: 14),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color:  PurchaseEntryColors.bodyBg,
+              color: PurchaseEntryColors.bodyBg,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: PurchaseEntryColors.bodyBorder,
@@ -137,7 +165,7 @@ class PurchaseItemsTable extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'ITEMS : ${ctrl.items.length}',
+                  'LINES : ${ctrl.items.length}',
                   style: const TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 14,
@@ -153,7 +181,6 @@ class PurchaseItemsTable extends StatelessWidget {
     );
   }
 
-  // ── Column Headers ──────────────────────────────────────────────────────────
   Widget _buildColumnHeaders() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -165,28 +192,42 @@ class PurchaseItemsTable extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _h('S.NO',  flex: 1, center: true), const SizedBox(width: 6),
-          _h('METAL', flex: 3),               const SizedBox(width: 6),
-          _h('ITEM DESCRIPTION', flex: 4),   const SizedBox(width: 6),
-          _h('GROSS', flex: 2),               const SizedBox(width: 6),
-          _h('LESS',  flex: 2),               const SizedBox(width: 6),
-          _h('NET WT', flex: 2),              const SizedBox(width: 6),
-          _h('PURITY', flex: 2),              const SizedBox(width: 6),
-          _h('FINE WT', flex: 2),             const SizedBox(width: 6),
-          _h('RATE',   flex: 3),              const SizedBox(width: 6),
-          _h('VALUE',  flex: 3, right: true), const SizedBox(width: 6),
-          _h('ACT',    flex: 1, center: true),
+          _header('S.NO', flex: 1, center: true),
+          const SizedBox(width: 6),
+          _header('METAL', flex: 3),
+          const SizedBox(width: 6),
+          _header('ITEM DESCRIPTION', flex: 4),
+          const SizedBox(width: 6),
+          _header('GROSS', flex: 2),
+          const SizedBox(width: 6),
+          _header('LESS', flex: 2),
+          const SizedBox(width: 6),
+          _header('NET WT', flex: 2),
+          const SizedBox(width: 6),
+          _header('PURITY', flex: 2),
+          const SizedBox(width: 6),
+          _header('FINE WT', flex: 2),
+          const SizedBox(width: 6),
+          _header('RATE', flex: 3),
+          const SizedBox(width: 6),
+          _header('VALUE', flex: 3, right: true),
+          const SizedBox(width: 6),
+          _header('ACT', flex: 1, center: true),
         ],
       ),
     );
   }
 
-  Widget _h(String t,
-      {required int flex, bool right = false, bool center = false}) {
+  Widget _header(
+    String title, {
+    required int flex,
+    bool right = false,
+    bool center = false,
+  }) {
     return Expanded(
       flex: flex,
       child: Text(
-        t,
+        title,
         textAlign: right
             ? TextAlign.right
             : (center ? TextAlign.center : TextAlign.left),
@@ -195,7 +236,6 @@ class PurchaseItemsTable extends StatelessWidget {
     );
   }
 
-  // ── Empty State ─────────────────────────────────────────────────────────────
   Widget _buildEmptyState() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 40),
@@ -204,9 +244,10 @@ class PurchaseItemsTable extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 72, height: 72,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
-                color:  PurchaseEntryColors.bodyBg,
+                color: PurchaseEntryColors.bodyBg,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
                   color: PurchaseEntryColors.bodyBorder,
@@ -226,12 +267,12 @@ class PurchaseItemsTable extends StatelessWidget {
                 color: PurchaseEntryColors.textMain,
                 fontSize: 17,
                 fontWeight: FontWeight.w900,
-                letterSpacing: 1.5,
+                letterSpacing: 1.2,
               ),
             ),
             const SizedBox(height: 6),
             const Text(
-              PurchaseEntryStrings.noItemsSub,
+              'Add a purchase line to start this voucher.',
               style: TextStyle(
                 color: PurchaseEntryColors.textMuted,
                 fontSize: 13,
@@ -243,7 +284,6 @@ class PurchaseItemsTable extends StatelessWidget {
     );
   }
 
-  // ── Bottom Summary ──────────────────────────────────────────────────────────
   Widget _buildBottomSummary() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
@@ -254,73 +294,121 @@ class PurchaseItemsTable extends StatelessWidget {
         ),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Add item button
-          InkWell(
-            onTap: ctrl.addItem,
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color:  PurchaseEntryColors.purchaseAccent.withOpacity(0.08),
-                border: Border.all(
-                  color: PurchaseEntryColors.purchaseAccent.withOpacity(0.35),
-                  width: 1.5,
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    PurchaseEntryIcons.addItem,
-                    color: PurchaseEntryColors.purchaseAccent,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    PurchaseEntryStrings.addItemBtn,
-                    style: TextStyle(
-                      color:      PurchaseEntryColors.purchaseAccent,
-                      fontSize:   14,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final stackContent = constraints.maxWidth < 820;
+          final summaryWrap = _buildMetalSummaryWrap();
 
-          // Metal totals
-          if (ctrl.items.isNotEmpty)
-            Expanded(
-              child: Wrap(
-                alignment: WrapAlignment.end,
-                spacing: 12,
-                runSpacing: 10,
-                children: [
-                  if (ctrl.totalGoldValue > 0)
-                    _metalBox('GOLD', ctrl.totalGoldFine,
-                        ctrl.totalGoldValue, PurchaseEntryColors.metalGold),
-                  if (ctrl.totalSilverValue > 0)
-                    _metalBox('SILVER', ctrl.totalSilverFine,
-                        ctrl.totalSilverValue, PurchaseEntryColors.metalSilver),
-                  if (ctrl.totalPlatinumValue > 0)
-                    _metalBox('PLATINUM', ctrl.totalPlatinumFine,
-                        ctrl.totalPlatinumValue, PurchaseEntryColors.metalPlatinum),
-                  if (ctrl.totalDiamondValue > 0)
-                    _metalBox('DIAMOND', ctrl.totalDiamondFine,
-                        ctrl.totalDiamondValue, PurchaseEntryColors.metalDiamond,
-                        isGrams: false),
+          if (stackContent) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildAddLineButton(),
+                if (summaryWrap != null) ...[
+                  const SizedBox(height: 14),
+                  summaryWrap,
                 ],
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildAddLineButton(),
+              const SizedBox(width: 16),
+              if (summaryWrap != null)
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: summaryWrap,
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAddLineButton() {
+    return InkWell(
+      onTap: ctrl.addItem,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: PurchaseEntryColors.purchaseAccent.withOpacity(0.08),
+          border: Border.all(
+            color: PurchaseEntryColors.purchaseAccent.withOpacity(0.35),
+            width: 1.5,
+          ),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              PurchaseEntryIcons.addItem,
+              color: PurchaseEntryColors.purchaseAccent,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'ADD PURCHASE LINE',
+              style: TextStyle(
+                color: PurchaseEntryColors.purchaseAccent,
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.8,
               ),
             ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget? _buildMetalSummaryWrap() {
+    if (ctrl.items.isEmpty) {
+      return null;
+    }
+
+    return Wrap(
+      alignment: WrapAlignment.end,
+      spacing: 12,
+      runSpacing: 10,
+      children: [
+        if (ctrl.totalGoldValue > 0)
+          _metalBox(
+            'GOLD',
+            ctrl.totalGoldFine,
+            ctrl.totalGoldValue,
+            PurchaseEntryColors.metalGold,
+          ),
+        if (ctrl.totalSilverValue > 0)
+          _metalBox(
+            'SILVER',
+            ctrl.totalSilverFine,
+            ctrl.totalSilverValue,
+            PurchaseEntryColors.metalSilver,
+          ),
+        if (ctrl.totalPlatinumValue > 0)
+          _metalBox(
+            'PLATINUM',
+            ctrl.totalPlatinumFine,
+            ctrl.totalPlatinumValue,
+            PurchaseEntryColors.metalPlatinum,
+          ),
+        if (ctrl.totalDiamondValue > 0)
+          _metalBox(
+            'DIAMOND',
+            ctrl.totalDiamondFine,
+            ctrl.totalDiamondValue,
+            PurchaseEntryColors.metalDiamond,
+            isGrams: false,
+          ),
+      ],
     );
   }
 
@@ -335,7 +423,7 @@ class PurchaseItemsTable extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color:  color.withOpacity(0.10),
+        color: color.withOpacity(0.10),
         border: Border.all(color: color.withOpacity(0.3), width: 1.5),
         borderRadius: BorderRadius.circular(8),
       ),
@@ -343,7 +431,7 @@ class PurchaseItemsTable extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            '$name PURCHASE',
+            '$name VALUE',
             style: TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 11,
@@ -365,7 +453,7 @@ class PurchaseItemsTable extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                '₹ ${value.toStringAsFixed(2)}',
+                'Rs. ${value.toStringAsFixed(2)}',
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 16,
