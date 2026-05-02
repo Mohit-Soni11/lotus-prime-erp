@@ -1,9 +1,9 @@
 // =============================================================================
 // FILE        : lib/ui/settings/billing_setup/billing_setup_hub_screen.dart
 // MODULE      : Billing Setup
-// LAYER       : Presentation / UI
-// DESCRIPTION : Hub screen — 4 animated cards. Each navigates to its
-//               own billing config tab screen. Dark AppBar + warm body.
+// DESCRIPTION : Hub screen — 2 cards only: Sales & Purchase.
+//               Each navigates to its Metal Hub (4 metal cards inside).
+// REPLACES    : Old 4-card hub (Sales, Purchase, Girvi, Return)
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -11,70 +11,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../theme/settings/billing_setup/billing_setup_theme.dart';
 import 'billing_setup_app_bar.dart';
-import 'sales_billing_tab.dart';
-import 'purchase_billing_tab.dart';
-import 'girvi_billing_tab.dart';
-import 'return_billing_tab.dart';
+import 'sales_metal_hub.dart';
+import 'purchase_metal_hub.dart';
 
-// ── Card meta data model ──────────────────────────────────────────────────────
-class _CardMeta {
-  final IconData icon;
-  final Color accent;
-  final String title;
-  final String subtitle;
-  final String count;
-  final Widget screen;
-
-  const _CardMeta({
-    required this.icon,
-    required this.accent,
-    required this.title,
-    required this.subtitle,
-    required this.count,
-    required this.screen,
-  });
-}
-
-// ═════════════════════════════════════════════════════════════════════════════
-// HUB SCREEN
-// ═════════════════════════════════════════════════════════════════════════════
 class BillingSetupHubScreen extends StatelessWidget {
   const BillingSetupHubScreen({super.key});
-
-  static final List<_CardMeta> _cards = [
-    _CardMeta(
-      icon: BillingSetupIcons.salesCard,
-      accent: BillingSetupColors.salesBrand,
-      title: BillingSetupStrings.cardSalesTitle,
-      subtitle: BillingSetupStrings.cardSalesSub,
-      count: BillingSetupStrings.cardSalesCount,
-      screen: const SalesBillingTab(),
-    ),
-    _CardMeta(
-      icon: BillingSetupIcons.purchaseCard,
-      accent: BillingSetupColors.purchaseBrand,
-      title: BillingSetupStrings.cardPurchaseTitle,
-      subtitle: BillingSetupStrings.cardPurchaseSub,
-      count: BillingSetupStrings.cardPurchaseCount,
-      screen: const PurchaseBillingTab(),
-    ),
-    _CardMeta(
-      icon: BillingSetupIcons.girviCard,
-      accent: BillingSetupColors.girviBrand,
-      title: BillingSetupStrings.cardGirviTitle,
-      subtitle: BillingSetupStrings.cardGirviSub,
-      count: BillingSetupStrings.cardGirviCount,
-      screen: const GirviBillingTab(),
-    ),
-    _CardMeta(
-      icon: BillingSetupIcons.returnCard,
-      accent: BillingSetupColors.returnBrand,
-      title: BillingSetupStrings.cardReturnTitle,
-      subtitle: BillingSetupStrings.cardReturnSub,
-      count: BillingSetupStrings.cardReturnCount,
-      screen: const ReturnBillingTab(),
-    ),
-  ];
 
   void _navigate(BuildContext context, Widget screen) {
     Navigator.push(
@@ -82,13 +23,10 @@ class BillingSetupHubScreen extends StatelessWidget {
       PageRouteBuilder(
         pageBuilder: (_, animation, __) => screen,
         transitionsBuilder: (_, animation, __, child) => FadeTransition(
-          opacity: CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOut,
-          ),
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
           child: child,
         ),
-        transitionDuration: const Duration(milliseconds: 260),
+        transitionDuration: const Duration(milliseconds: 240),
       ),
     );
   }
@@ -98,141 +36,159 @@ class BillingSetupHubScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: BillingSetupColors.bodyBg,
       appBar: BillingSetupAppBar(
-        screenTitle: BillingSetupStrings.hubTitle,
-        screenSubtitle: BillingSetupStrings.hubSub,
+        screenTitle: 'Billing Setup',
+        screenSubtitle: 'Configure invoice rules per metal type',
         onBack: () => Navigator.maybePop(context),
       ),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
-          padding: BillingSetupStyles.pagePadding,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 28),
-              _buildSectionLabel(),
+              Text(
+                'SELECT MODULE',
+                style: BillingSetupStyles.sectionLabel,
+              ),
               const SizedBox(height: 16),
-              _buildGrid(context),
+              // ── Two cards side by side ────────────────────────────────────
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWide = constraints.maxWidth > 500;
+                  if (isWide) {
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: _ModuleCard(
+                            icon: Icons.point_of_sale_rounded,
+                            title: 'Sales Billing',
+                            subtitle:
+                                'Invoice display, return policy & terms\nper metal type',
+                            accent: BillingSetupColors.salesBrand,
+                            tag: 'Gold · Silver · Diamond · Platinum',
+                            onTap: () =>
+                                _navigate(context, const SalesMetalHubScreen()),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _ModuleCard(
+                            icon: Icons.shopping_bag_outlined,
+                            title: 'Purchase Billing',
+                            subtitle:
+                                'Voucher display, return policy & terms\nper metal type',
+                            accent: BillingSetupColors.purchaseBrand,
+                            tag: 'Gold · Silver · Diamond · Platinum',
+                            onTap: () => _navigate(
+                                context, const PurchaseMetalHubScreen()),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                  return Column(
+                    children: [
+                      _ModuleCard(
+                        icon: Icons.point_of_sale_rounded,
+                        title: 'Sales Billing',
+                        subtitle:
+                            'Invoice display, return policy & terms per metal type',
+                        accent: BillingSetupColors.salesBrand,
+                        tag: 'Gold · Silver · Diamond · Platinum',
+                        onTap: () =>
+                            _navigate(context, const SalesMetalHubScreen()),
+                      ),
+                      const SizedBox(height: 16),
+                      _ModuleCard(
+                        icon: Icons.shopping_bag_outlined,
+                        title: 'Purchase Billing',
+                        subtitle:
+                            'Voucher display, return policy & terms per metal type',
+                        accent: BillingSetupColors.purchaseBrand,
+                        tag: 'Gold · Silver · Diamond · Platinum',
+                        onTap: () =>
+                            _navigate(context, const PurchaseMetalHubScreen()),
+                      ),
+                    ],
+                  );
+                },
+              ),
               const SizedBox(height: 28),
-              _buildInfoBanner(),
-              const SizedBox(height: 40),
+              // ── Info banner ───────────────────────────────────────────────
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: BillingSetupColors.salesBrand.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: BillingSetupColors.salesBrand.withOpacity(0.2),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline_rounded,
+                        size: 16, color: BillingSetupColors.salesBrand),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Each metal type has its own invoice display rules, '
+                        'return policy and terms. Changes apply to new bills only.',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: BillingSetupColors.textBody,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
   }
-
-  Widget _buildSectionLabel() {
-    return Text(
-      'SELECT A MODULE TO CONFIGURE',
-      style: BillingSetupStyles.sectionLabel,
-    );
-  }
-
-  Widget _buildGrid(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final bool isWide = constraints.maxWidth > 700;
-        if (isWide) {
-          return Row(
-            children: _cards
-                .map((card) => Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: _HubCard(
-                          card: card,
-                          onTap: () => _navigate(context, card.screen),
-                        ),
-                      ),
-                    ))
-                .toList(),
-          );
-        }
-        return GridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 14,
-          mainAxisSpacing: 14,
-          childAspectRatio: 1.05,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          children: _cards
-              .map((card) => _HubCard(
-                    card: card,
-                    onTap: () => _navigate(context, card.screen),
-                  ))
-              .toList(),
-        );
-      },
-    );
-  }
-
-  Widget _buildInfoBanner() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: BillingSetupColors.salesBrand.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(BillingSetupStyles.rCard),
-        border: Border.all(
-          color: BillingSetupColors.salesBrand.withOpacity(0.2),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            BillingSetupIcons.infoIcon,
-            size: 18,
-            color: BillingSetupColors.salesBrand,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Each module has its own invoice number series, payment rules '
-              'and terms & conditions. Changes apply to new bills only — '
-              'existing records are not affected.',
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: BillingSetupColors.textBody,
-                height: 1.5,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// HUB CARD — Animated hover card
-// ═════════════════════════════════════════════════════════════════════════════
-class _HubCard extends StatefulWidget {
-  final _CardMeta card;
+// =============================================================================
+// MODULE CARD
+// =============================================================================
+class _ModuleCard extends StatefulWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color accent;
+  final String tag;
   final VoidCallback onTap;
-  const _HubCard({required this.card, required this.onTap});
+
+  const _ModuleCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.accent,
+    required this.tag,
+    required this.onTap,
+  });
 
   @override
-  State<_HubCard> createState() => _HubCardState();
+  State<_ModuleCard> createState() => _ModuleCardState();
 }
 
-class _HubCardState extends State<_HubCard>
+class _ModuleCardState extends State<_ModuleCard>
     with SingleTickerProviderStateMixin {
   bool _hovered = false;
   late final AnimationController _ctrl;
   late final Animation<double> _scale;
-  late final Animation<double> _arrow;
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 180),
-    );
-    _scale = Tween<double>(begin: 1.0, end: 1.025)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
-    _arrow = Tween<double>(begin: 0.0, end: 1.0)
+        vsync: this, duration: const Duration(milliseconds: 160));
+    _scale = Tween<double>(begin: 1.0, end: 1.02)
         .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
   }
 
@@ -242,129 +198,114 @@ class _HubCardState extends State<_HubCard>
     super.dispose();
   }
 
-  void _onEnter(_) {
-    setState(() => _hovered = true);
-    _ctrl.forward();
-  }
-
-  void _onExit(_) {
-    setState(() => _hovered = false);
-    _ctrl.reverse();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final color = widget.card.accent;
     return MouseRegion(
-      onEnter: _onEnter,
-      onExit: _onExit,
+      onEnter: (_) {
+        setState(() => _hovered = true);
+        _ctrl.forward();
+      },
+      onExit: (_) {
+        setState(() => _hovered = false);
+        _ctrl.reverse();
+      },
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
         child: ScaleTransition(
           scale: _scale,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(18),
-            decoration: BillingSetupStyles.hubCard(
-              accent: color,
-              hovered: _hovered,
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: _hovered
+                    ? widget.accent.withOpacity(0.5)
+                    : Colors.grey.shade200,
+                width: _hovered ? 1.5 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: _hovered
+                      ? widget.accent.withOpacity(0.12)
+                      : Colors.black.withOpacity(0.04),
+                  blurRadius: _hovered ? 20 : 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // ── Top: icon + count badge ──
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(_hovered ? 0.18 : 0.10),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: color.withOpacity(_hovered ? 0.4 : 0.2),
-                        ),
-                      ),
-                      child: Icon(widget.card.icon, size: 22, color: color),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.10),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: color.withOpacity(0.2),
-                        ),
-                      ),
-                      child: Text(
-                        widget.card.count,
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: color,
-                        ),
-                      ),
-                    ),
-                  ],
+                // ── Icon ─────────────────────────────────────────────────
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: widget.accent.withOpacity(_hovered ? 0.15 : 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(widget.icon, size: 24, color: widget.accent),
+                ),
+                const SizedBox(height: 16),
+                // ── Title ─────────────────────────────────────────────────
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 150),
+                  style: GoogleFonts.manrope(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color:
+                        _hovered ? widget.accent : BillingSetupColors.textDark,
+                  ),
+                  child: Text(widget.title),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  widget.subtitle,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: BillingSetupColors.textMuted,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 14),
-
-                // ── Bottom: title + subtitle + configure arrow ──
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // ── Metal tag ─────────────────────────────────────────────
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: widget.accent.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: widget.accent.withOpacity(0.2)),
+                  ),
+                  child: Text(
+                    widget.tag,
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: widget.accent,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // ── Configure arrow ───────────────────────────────────────
+                Row(
                   children: [
-                    AnimatedDefaultTextStyle(
-                      duration: const Duration(milliseconds: 150),
-                      style: GoogleFonts.manrope(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: _hovered ? color : BillingSetupColors.textDark,
-                      ),
-                      child: Text(widget.card.title, maxLines: 1),
-                    ),
-                    const SizedBox(height: 4),
                     Text(
-                      widget.card.subtitle,
+                      'Configure',
                       style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: BillingSetupColors.textMuted,
-                        height: 1.3,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: widget.accent.withOpacity(_hovered ? 1 : 0.5),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 10),
-                    AnimatedBuilder(
-                      animation: _arrow,
-                      builder: (_, __) => Row(
-                        children: [
-                          Opacity(
-                            opacity: 0.4 + (_arrow.value * 0.6),
-                            child: Text(
-                              BillingSetupStrings.configure,
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: color,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Transform.translate(
-                            offset: Offset((-1 + _arrow.value) * 4, 0),
-                            child: Icon(
-                              BillingSetupIcons.navArrow,
-                              size: 11,
-                              color: color,
-                            ),
-                          ),
-                        ],
-                      ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 12,
+                      color: widget.accent.withOpacity(_hovered ? 1 : 0.5),
                     ),
                   ],
                 ),

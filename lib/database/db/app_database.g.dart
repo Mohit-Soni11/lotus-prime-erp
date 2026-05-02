@@ -19381,12 +19381,12 @@ class DeliveryItemsCompanion extends UpdateCompanion<DeliveryItem> {
   }
 }
 
-class $BillingSettingsTable extends BillingSettings
-    with TableInfo<$BillingSettingsTable, BillingSetting> {
+class $SalesBillingSettingsTable extends SalesBillingSettings
+    with TableInfo<$SalesBillingSettingsTable, SalesBillingSetting> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $BillingSettingsTable(this.attachedDatabase, [this._alias]);
+  $SalesBillingSettingsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -19410,329 +19410,231 @@ class $BillingSettingsTable extends BillingSettings
   late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
       'updated_at', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _salesInvoicePrefixMeta =
-      const VerificationMeta('salesInvoicePrefix');
+  static const VerificationMeta _metalMeta = const VerificationMeta('metal');
   @override
-  late final GeneratedColumn<String> salesInvoicePrefix =
-      GeneratedColumn<String>('sales_invoice_prefix', aliasedName, false,
-          type: DriftSqlType.string,
-          requiredDuringInsert: false,
-          defaultValue: const Constant('INV-'));
-  static const VerificationMeta _salesStartingNumberMeta =
-      const VerificationMeta('salesStartingNumber');
+  late final GeneratedColumn<String> metal = GeneratedColumn<String>(
+      'metal', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _showPiecesMeta =
+      const VerificationMeta('showPieces');
   @override
-  late final GeneratedColumn<int> salesStartingNumber = GeneratedColumn<int>(
-      'sales_starting_number', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(1));
-  static const VerificationMeta _salesYearlyResetMeta =
-      const VerificationMeta('salesYearlyReset');
-  @override
-  late final GeneratedColumn<bool> salesYearlyReset = GeneratedColumn<bool>(
-      'sales_yearly_reset', aliasedName, false,
+  late final GeneratedColumn<bool> showPieces = GeneratedColumn<bool>(
+      'show_pieces', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("sales_yearly_reset" IN (0, 1))'),
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("show_pieces" IN (0, 1))'),
       defaultValue: const Constant(true));
-  static const VerificationMeta _estimatePrefixMeta =
-      const VerificationMeta('estimatePrefix');
+  static const VerificationMeta _showGrossWeightMeta =
+      const VerificationMeta('showGrossWeight');
   @override
-  late final GeneratedColumn<String> estimatePrefix = GeneratedColumn<String>(
-      'estimate_prefix', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('EST-'));
-  static const VerificationMeta _estimateValidityDaysMeta =
-      const VerificationMeta('estimateValidityDays');
-  @override
-  late final GeneratedColumn<int> estimateValidityDays = GeneratedColumn<int>(
-      'estimate_validity_days', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(7));
-  static const VerificationMeta _salesDefaultPaymentModeMeta =
-      const VerificationMeta('salesDefaultPaymentMode');
-  @override
-  late final GeneratedColumn<String> salesDefaultPaymentMode =
-      GeneratedColumn<String>('sales_default_payment_mode', aliasedName, false,
-          type: DriftSqlType.string,
-          requiredDuringInsert: false,
-          defaultValue: const Constant('Cash'));
-  static const VerificationMeta _salesUpiIdMeta =
-      const VerificationMeta('salesUpiId');
-  @override
-  late final GeneratedColumn<String> salesUpiId = GeneratedColumn<String>(
-      'sales_upi_id', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(''));
-  static const VerificationMeta _salesDefaultCreditDaysMeta =
-      const VerificationMeta('salesDefaultCreditDays');
-  @override
-  late final GeneratedColumn<int> salesDefaultCreditDays = GeneratedColumn<int>(
-      'sales_default_credit_days', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(30));
-  static const VerificationMeta _salesMinAdvancePercentMeta =
-      const VerificationMeta('salesMinAdvancePercent');
-  @override
-  late final GeneratedColumn<int> salesMinAdvancePercent = GeneratedColumn<int>(
-      'sales_min_advance_percent', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(30));
-  static const VerificationMeta _salesAllowDiscountMeta =
-      const VerificationMeta('salesAllowDiscount');
-  @override
-  late final GeneratedColumn<bool> salesAllowDiscount = GeneratedColumn<bool>(
-      'sales_allow_discount', aliasedName, false,
+  late final GeneratedColumn<bool> showGrossWeight = GeneratedColumn<bool>(
+      'show_gross_weight', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("sales_allow_discount" IN (0, 1))'),
+          'CHECK ("show_gross_weight" IN (0, 1))'),
       defaultValue: const Constant(true));
-  static const VerificationMeta _salesMaxDiscountPercentMeta =
-      const VerificationMeta('salesMaxDiscountPercent');
+  static const VerificationMeta _showLessWeightMeta =
+      const VerificationMeta('showLessWeight');
   @override
-  late final GeneratedColumn<double> salesMaxDiscountPercent =
-      GeneratedColumn<double>('sales_max_discount_percent', aliasedName, false,
-          type: DriftSqlType.double,
-          requiredDuringInsert: false,
-          defaultValue: const Constant(5.0));
-  static const VerificationMeta _salesRoundingRuleMeta =
-      const VerificationMeta('salesRoundingRule');
-  @override
-  late final GeneratedColumn<String> salesRoundingRule =
-      GeneratedColumn<String>('sales_rounding_rule', aliasedName, false,
-          type: DriftSqlType.string,
-          requiredDuringInsert: false,
-          defaultValue: const Constant('Nearest ₹1'));
-  static const VerificationMeta _salesShowMakingChargesMeta =
-      const VerificationMeta('salesShowMakingCharges');
-  @override
-  late final GeneratedColumn<bool> salesShowMakingCharges =
-      GeneratedColumn<bool>('sales_show_making_charges', aliasedName, false,
-          type: DriftSqlType.bool,
-          requiredDuringInsert: false,
-          defaultConstraints: GeneratedColumn.constraintIsAlways(
-              'CHECK ("sales_show_making_charges" IN (0, 1))'),
-          defaultValue: const Constant(true));
-  static const VerificationMeta _salesShowHuidMeta =
-      const VerificationMeta('salesShowHuid');
-  @override
-  late final GeneratedColumn<bool> salesShowHuid = GeneratedColumn<bool>(
-      'sales_show_huid', aliasedName, false,
+  late final GeneratedColumn<bool> showLessWeight = GeneratedColumn<bool>(
+      'show_less_weight', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("sales_show_huid" IN (0, 1))'),
+          'CHECK ("show_less_weight" IN (0, 1))'),
       defaultValue: const Constant(true));
-  static const VerificationMeta _salesShowOldGoldLineMeta =
-      const VerificationMeta('salesShowOldGoldLine');
+  static const VerificationMeta _showNetWeightMeta =
+      const VerificationMeta('showNetWeight');
   @override
-  late final GeneratedColumn<bool> salesShowOldGoldLine = GeneratedColumn<bool>(
-      'sales_show_old_gold_line', aliasedName, false,
+  late final GeneratedColumn<bool> showNetWeight = GeneratedColumn<bool>(
+      'show_net_weight', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("sales_show_old_gold_line" IN (0, 1))'),
+          'CHECK ("show_net_weight" IN (0, 1))'),
       defaultValue: const Constant(true));
-  static const VerificationMeta _salesTermsMeta =
-      const VerificationMeta('salesTerms');
+  static const VerificationMeta _showPurityMeta =
+      const VerificationMeta('showPurity');
   @override
-  late final GeneratedColumn<String> salesTerms = GeneratedColumn<String>(
-      'sales_terms', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(
-          'Items once sold will not be taken back or exchanged.\n'
-          'Guarantee is provided as per BIS standards.\n'
-          'Original bill is mandatory for any service claim.'));
-  static const VerificationMeta _salesFooterMsgMeta =
-      const VerificationMeta('salesFooterMsg');
-  @override
-  late final GeneratedColumn<String> salesFooterMsg = GeneratedColumn<String>(
-      'sales_footer_msg', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue:
-          const Constant('Thank you for shopping with us! Visit us again.'));
-  static const VerificationMeta _purchaseInvoicePrefixMeta =
-      const VerificationMeta('purchaseInvoicePrefix');
-  @override
-  late final GeneratedColumn<String> purchaseInvoicePrefix =
-      GeneratedColumn<String>('purchase_invoice_prefix', aliasedName, false,
-          type: DriftSqlType.string,
-          requiredDuringInsert: false,
-          defaultValue: const Constant('PUR-'));
-  static const VerificationMeta _purchaseStartingNumberMeta =
-      const VerificationMeta('purchaseStartingNumber');
-  @override
-  late final GeneratedColumn<int> purchaseStartingNumber = GeneratedColumn<int>(
-      'purchase_starting_number', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(1));
-  static const VerificationMeta _purchaseYearlyResetMeta =
-      const VerificationMeta('purchaseYearlyReset');
-  @override
-  late final GeneratedColumn<bool> purchaseYearlyReset = GeneratedColumn<bool>(
-      'purchase_yearly_reset', aliasedName, false,
+  late final GeneratedColumn<bool> showPurity = GeneratedColumn<bool>(
+      'show_purity', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("purchase_yearly_reset" IN (0, 1))'),
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("show_purity" IN (0, 1))'),
       defaultValue: const Constant(true));
-  static const VerificationMeta _purchaseDefaultPaymentDaysMeta =
-      const VerificationMeta('purchaseDefaultPaymentDays');
+  static const VerificationMeta _showRateMeta =
+      const VerificationMeta('showRate');
   @override
-  late final GeneratedColumn<int> purchaseDefaultPaymentDays =
-      GeneratedColumn<int>('purchase_default_payment_days', aliasedName, false,
-          type: DriftSqlType.int,
-          requiredDuringInsert: false,
-          defaultValue: const Constant(30));
-  static const VerificationMeta _purchaseAdvancePercentMeta =
-      const VerificationMeta('purchaseAdvancePercent');
-  @override
-  late final GeneratedColumn<int> purchaseAdvancePercent = GeneratedColumn<int>(
-      'purchase_advance_percent', aliasedName, false,
-      type: DriftSqlType.int,
+  late final GeneratedColumn<bool> showRate = GeneratedColumn<bool>(
+      'show_rate', aliasedName, false,
+      type: DriftSqlType.bool,
       requiredDuringInsert: false,
-      defaultValue: const Constant(20));
-  static const VerificationMeta _purchaseDefaultPaymentModeMeta =
-      const VerificationMeta('purchaseDefaultPaymentMode');
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("show_rate" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showMakingChargesMeta =
+      const VerificationMeta('showMakingCharges');
   @override
-  late final GeneratedColumn<String> purchaseDefaultPaymentMode =
-      GeneratedColumn<String>(
-          'purchase_default_payment_mode', aliasedName, false,
-          type: DriftSqlType.string,
-          requiredDuringInsert: false,
-          defaultValue: const Constant('Bank Transfer'));
-  static const VerificationMeta _purchaseWeightTolerancePercentMeta =
-      const VerificationMeta('purchaseWeightTolerancePercent');
-  @override
-  late final GeneratedColumn<double> purchaseWeightTolerancePercent =
-      GeneratedColumn<double>(
-          'purchase_weight_tolerance_percent', aliasedName, false,
-          type: DriftSqlType.double,
-          requiredDuringInsert: false,
-          defaultValue: const Constant(0.5));
-  static const VerificationMeta _purchaseDefaultKaratMeta =
-      const VerificationMeta('purchaseDefaultKarat');
-  @override
-  late final GeneratedColumn<String> purchaseDefaultKarat =
-      GeneratedColumn<String>('purchase_default_karat', aliasedName, false,
-          type: DriftSqlType.string,
-          requiredDuringInsert: false,
-          defaultValue: const Constant('22K'));
-  static const VerificationMeta _purchaseTermsMeta =
-      const VerificationMeta('purchaseTerms');
-  @override
-  late final GeneratedColumn<String> purchaseTerms = GeneratedColumn<String>(
-      'purchase_terms', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('Quality will be checked on delivery.\n'
-          'Short delivery or defective goods must be reported within 24 hours.\n'
-          'Payment as per agreed terms only.'));
-  static const VerificationMeta _purchaseAutoPrintMeta =
-      const VerificationMeta('purchaseAutoPrint');
-  @override
-  late final GeneratedColumn<bool> purchaseAutoPrint = GeneratedColumn<bool>(
-      'purchase_auto_print', aliasedName, false,
+  late final GeneratedColumn<bool> showMakingCharges = GeneratedColumn<bool>(
+      'show_making_charges', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("purchase_auto_print" IN (0, 1))'),
+          'CHECK ("show_making_charges" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showMakingChargeTypeMeta =
+      const VerificationMeta('showMakingChargeType');
+  @override
+  late final GeneratedColumn<bool> showMakingChargeType = GeneratedColumn<bool>(
+      'show_making_charge_type', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_making_charge_type" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showStoneDetailsMeta =
+      const VerificationMeta('showStoneDetails');
+  @override
+  late final GeneratedColumn<bool> showStoneDetails = GeneratedColumn<bool>(
+      'show_stone_details', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_stone_details" IN (0, 1))'),
       defaultValue: const Constant(false));
-  static const VerificationMeta _girviPrefixMeta =
-      const VerificationMeta('girviPrefix');
+  static const VerificationMeta _showStoneValueMeta =
+      const VerificationMeta('showStoneValue');
   @override
-  late final GeneratedColumn<String> girviPrefix = GeneratedColumn<String>(
-      'girvi_prefix', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('GRV-'));
-  static const VerificationMeta _girviStartingNumberMeta =
-      const VerificationMeta('girviStartingNumber');
-  @override
-  late final GeneratedColumn<int> girviStartingNumber = GeneratedColumn<int>(
-      'girvi_starting_number', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(1));
-  static const VerificationMeta _girviDefaultInterestRateMeta =
-      const VerificationMeta('girviDefaultInterestRate');
-  @override
-  late final GeneratedColumn<double> girviDefaultInterestRate =
-      GeneratedColumn<double>('girvi_default_interest_rate', aliasedName, false,
-          type: DriftSqlType.double,
-          requiredDuringInsert: false,
-          defaultValue: const Constant(1.5));
-  static const VerificationMeta _girviInterestTypeMeta =
-      const VerificationMeta('girviInterestType');
-  @override
-  late final GeneratedColumn<String> girviInterestType =
-      GeneratedColumn<String>('girvi_interest_type', aliasedName, false,
-          type: DriftSqlType.string,
-          requiredDuringInsert: false,
-          defaultValue: const Constant('Simple'));
-  static const VerificationMeta _girviGracePeriodDaysMeta =
-      const VerificationMeta('girviGracePeriodDays');
-  @override
-  late final GeneratedColumn<int> girviGracePeriodDays = GeneratedColumn<int>(
-      'girvi_grace_period_days', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(3));
-  static const VerificationMeta _girviDefaultDurationMeta =
-      const VerificationMeta('girviDefaultDuration');
-  @override
-  late final GeneratedColumn<String> girviDefaultDuration =
-      GeneratedColumn<String>('girvi_default_duration', aliasedName, false,
-          type: DriftSqlType.string,
-          requiredDuringInsert: false,
-          defaultValue: const Constant('6 Months'));
-  static const VerificationMeta _girviReminderDaysMeta =
-      const VerificationMeta('girviReminderDays');
-  @override
-  late final GeneratedColumn<int> girviReminderDays = GeneratedColumn<int>(
-      'girvi_reminder_days', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(15));
-  static const VerificationMeta _girviNoticeDaysMeta =
-      const VerificationMeta('girviNoticeDays');
-  @override
-  late final GeneratedColumn<int> girviNoticeDays = GeneratedColumn<int>(
-      'girvi_notice_days', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(30));
-  static const VerificationMeta _girviTermsMeta =
-      const VerificationMeta('girviTerms');
-  @override
-  late final GeneratedColumn<String> girviTerms = GeneratedColumn<String>(
-      'girvi_terms', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(
-          'Interest will be charged per month on the loan amount.\n'
-          'Unclaimed ornaments after notice period will be auctioned as per law.\n'
-          'Customer is responsible for timely repayment.'));
-  static const VerificationMeta _girviAutoPrintMeta =
-      const VerificationMeta('girviAutoPrint');
-  @override
-  late final GeneratedColumn<bool> girviAutoPrint = GeneratedColumn<bool>(
-      'girvi_auto_print', aliasedName, false,
+  late final GeneratedColumn<bool> showStoneValue = GeneratedColumn<bool>(
+      'show_stone_value', aliasedName, false,
       type: DriftSqlType.bool,
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("girvi_auto_print" IN (0, 1))'),
+          'CHECK ("show_stone_value" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _showTotalValueMeta =
+      const VerificationMeta('showTotalValue');
+  @override
+  late final GeneratedColumn<bool> showTotalValue = GeneratedColumn<bool>(
+      'show_total_value', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_total_value" IN (0, 1))'),
       defaultValue: const Constant(true));
+  static const VerificationMeta _showHuidMeta =
+      const VerificationMeta('showHuid');
+  @override
+  late final GeneratedColumn<bool> showHuid = GeneratedColumn<bool>(
+      'show_huid', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("show_huid" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _showWastageMeta =
+      const VerificationMeta('showWastage');
+  @override
+  late final GeneratedColumn<bool> showWastage = GeneratedColumn<bool>(
+      'show_wastage', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_wastage" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _showOldGoldLineMeta =
+      const VerificationMeta('showOldGoldLine');
+  @override
+  late final GeneratedColumn<bool> showOldGoldLine = GeneratedColumn<bool>(
+      'show_old_gold_line', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_old_gold_line" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showDiamondClarityMeta =
+      const VerificationMeta('showDiamondClarity');
+  @override
+  late final GeneratedColumn<bool> showDiamondClarity = GeneratedColumn<bool>(
+      'show_diamond_clarity', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_diamond_clarity" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showCertificationNoMeta =
+      const VerificationMeta('showCertificationNo');
+  @override
+  late final GeneratedColumn<bool> showCertificationNo = GeneratedColumn<bool>(
+      'show_certification_no', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_certification_no" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _showDiamondCaratsMeta =
+      const VerificationMeta('showDiamondCarats');
+  @override
+  late final GeneratedColumn<bool> showDiamondCarats = GeneratedColumn<bool>(
+      'show_diamond_carats', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_diamond_carats" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showDiamondPiecesMeta =
+      const VerificationMeta('showDiamondPieces');
+  @override
+  late final GeneratedColumn<bool> showDiamondPieces = GeneratedColumn<bool>(
+      'show_diamond_pieces', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_diamond_pieces" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showMetalWeightMeta =
+      const VerificationMeta('showMetalWeight');
+  @override
+  late final GeneratedColumn<bool> showMetalWeight = GeneratedColumn<bool>(
+      'show_metal_weight', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_metal_weight" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showFineWeightMeta =
+      const VerificationMeta('showFineWeight');
+  @override
+  late final GeneratedColumn<bool> showFineWeight = GeneratedColumn<bool>(
+      'show_fine_weight', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_fine_weight" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _showGstBreakupMeta =
+      const VerificationMeta('showGstBreakup');
+  @override
+  late final GeneratedColumn<bool> showGstBreakup = GeneratedColumn<bool>(
+      'show_gst_breakup', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_gst_breakup" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _showHsnCodeMeta =
+      const VerificationMeta('showHsnCode');
+  @override
+  late final GeneratedColumn<bool> showHsnCode = GeneratedColumn<bool>(
+      'show_hsn_code', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_hsn_code" IN (0, 1))'),
+      defaultValue: const Constant(false));
   static const VerificationMeta _returnWindowDaysMeta =
       const VerificationMeta('returnWindowDays');
   @override
@@ -19741,15 +19643,6 @@ class $BillingSettingsTable extends BillingSettings
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(7));
-  static const VerificationMeta _returnHandlingChargePercentMeta =
-      const VerificationMeta('returnHandlingChargePercent');
-  @override
-  late final GeneratedColumn<double> returnHandlingChargePercent =
-      GeneratedColumn<double>(
-          'return_handling_charge_percent', aliasedName, false,
-          type: DriftSqlType.double,
-          requiredDuringInsert: false,
-          defaultValue: const Constant(0.0));
   static const VerificationMeta _returnModeMeta =
       const VerificationMeta('returnMode');
   @override
@@ -19758,14 +19651,14 @@ class $BillingSettingsTable extends BillingSettings
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant('Exchange Only'));
-  static const VerificationMeta _returnVoucherPrefixMeta =
-      const VerificationMeta('returnVoucherPrefix');
+  static const VerificationMeta _handlingChargePercentMeta =
+      const VerificationMeta('handlingChargePercent');
   @override
-  late final GeneratedColumn<String> returnVoucherPrefix =
-      GeneratedColumn<String>('return_voucher_prefix', aliasedName, false,
-          type: DriftSqlType.string,
+  late final GeneratedColumn<double> handlingChargePercent =
+      GeneratedColumn<double>('handling_charge_percent', aliasedName, false,
+          type: DriftSqlType.double,
           requiredDuringInsert: false,
-          defaultValue: const Constant('RET-'));
+          defaultValue: const Constant(0.0));
   static const VerificationMeta _buybackRatePercentMeta =
       const VerificationMeta('buybackRatePercent');
   @override
@@ -19783,83 +19676,79 @@ class $BillingSettingsTable extends BillingSettings
           type: DriftSqlType.double,
           requiredDuringInsert: false,
           defaultValue: const Constant(2.0));
-  static const VerificationMeta _buybackDefaultKaratMeta =
-      const VerificationMeta('buybackDefaultKarat');
+  static const VerificationMeta _termsAndConditionsMeta =
+      const VerificationMeta('termsAndConditions');
   @override
-  late final GeneratedColumn<String> buybackDefaultKarat =
-      GeneratedColumn<String>('buyback_default_karat', aliasedName, false,
+  late final GeneratedColumn<String> termsAndConditions =
+      GeneratedColumn<String>('terms_and_conditions', aliasedName, false,
           type: DriftSqlType.string,
           requiredDuringInsert: false,
-          defaultValue: const Constant('22K'));
-  static const VerificationMeta _returnTermsMeta =
-      const VerificationMeta('returnTerms');
+          defaultValue: const Constant(
+              'Items once sold will not be taken back or exchanged.\n'
+              'Guarantee is provided as per BIS standards.\n'
+              'Original bill is mandatory for any service claim.'));
+  static const VerificationMeta _footerMessageMeta =
+      const VerificationMeta('footerMessage');
   @override
-  late final GeneratedColumn<String> returnTerms = GeneratedColumn<String>(
-      'return_terms', aliasedName, false,
+  late final GeneratedColumn<String> footerMessage = GeneratedColumn<String>(
+      'footer_message', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: false,
-      defaultValue: const Constant(
-          'Returns accepted within the specified window with original bill only.\n'
-          'Exchange is subject to stock availability.\n'
-          'Buyback rate is calculated on the day\'s market rate.'));
+      defaultValue:
+          const Constant('Thank you for shopping with us! Visit us again.'));
+  static const VerificationMeta _selectedTemplateMeta =
+      const VerificationMeta('selectedTemplate');
+  @override
+  late final GeneratedColumn<String> selectedTemplate = GeneratedColumn<String>(
+      'selected_template', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('default'));
   @override
   List<GeneratedColumn> get $columns => [
         id,
         createdAt,
         updatedAt,
-        salesInvoicePrefix,
-        salesStartingNumber,
-        salesYearlyReset,
-        estimatePrefix,
-        estimateValidityDays,
-        salesDefaultPaymentMode,
-        salesUpiId,
-        salesDefaultCreditDays,
-        salesMinAdvancePercent,
-        salesAllowDiscount,
-        salesMaxDiscountPercent,
-        salesRoundingRule,
-        salesShowMakingCharges,
-        salesShowHuid,
-        salesShowOldGoldLine,
-        salesTerms,
-        salesFooterMsg,
-        purchaseInvoicePrefix,
-        purchaseStartingNumber,
-        purchaseYearlyReset,
-        purchaseDefaultPaymentDays,
-        purchaseAdvancePercent,
-        purchaseDefaultPaymentMode,
-        purchaseWeightTolerancePercent,
-        purchaseDefaultKarat,
-        purchaseTerms,
-        purchaseAutoPrint,
-        girviPrefix,
-        girviStartingNumber,
-        girviDefaultInterestRate,
-        girviInterestType,
-        girviGracePeriodDays,
-        girviDefaultDuration,
-        girviReminderDays,
-        girviNoticeDays,
-        girviTerms,
-        girviAutoPrint,
+        metal,
+        showPieces,
+        showGrossWeight,
+        showLessWeight,
+        showNetWeight,
+        showPurity,
+        showRate,
+        showMakingCharges,
+        showMakingChargeType,
+        showStoneDetails,
+        showStoneValue,
+        showTotalValue,
+        showHuid,
+        showWastage,
+        showOldGoldLine,
+        showDiamondClarity,
+        showCertificationNo,
+        showDiamondCarats,
+        showDiamondPieces,
+        showMetalWeight,
+        showFineWeight,
+        showGstBreakup,
+        showHsnCode,
         returnWindowDays,
-        returnHandlingChargePercent,
         returnMode,
-        returnVoucherPrefix,
+        handlingChargePercent,
         buybackRatePercent,
         buybackPurityDeductPercent,
-        buybackDefaultKarat,
-        returnTerms
+        termsAndConditions,
+        footerMessage,
+        selectedTemplate
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'billing_settings';
+  static const String $name = 'sales_billing_settings';
   @override
-  VerificationContext validateIntegrity(Insertable<BillingSetting> instance,
+  VerificationContext validateIntegrity(
+      Insertable<SalesBillingSetting> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -19874,233 +19763,139 @@ class $BillingSettingsTable extends BillingSettings
       context.handle(_updatedAtMeta,
           updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
     }
-    if (data.containsKey('sales_invoice_prefix')) {
+    if (data.containsKey('metal')) {
       context.handle(
-          _salesInvoicePrefixMeta,
-          salesInvoicePrefix.isAcceptableOrUnknown(
-              data['sales_invoice_prefix']!, _salesInvoicePrefixMeta));
+          _metalMeta, metal.isAcceptableOrUnknown(data['metal']!, _metalMeta));
+    } else if (isInserting) {
+      context.missing(_metalMeta);
     }
-    if (data.containsKey('sales_starting_number')) {
+    if (data.containsKey('show_pieces')) {
       context.handle(
-          _salesStartingNumberMeta,
-          salesStartingNumber.isAcceptableOrUnknown(
-              data['sales_starting_number']!, _salesStartingNumberMeta));
+          _showPiecesMeta,
+          showPieces.isAcceptableOrUnknown(
+              data['show_pieces']!, _showPiecesMeta));
     }
-    if (data.containsKey('sales_yearly_reset')) {
+    if (data.containsKey('show_gross_weight')) {
       context.handle(
-          _salesYearlyResetMeta,
-          salesYearlyReset.isAcceptableOrUnknown(
-              data['sales_yearly_reset']!, _salesYearlyResetMeta));
+          _showGrossWeightMeta,
+          showGrossWeight.isAcceptableOrUnknown(
+              data['show_gross_weight']!, _showGrossWeightMeta));
     }
-    if (data.containsKey('estimate_prefix')) {
+    if (data.containsKey('show_less_weight')) {
       context.handle(
-          _estimatePrefixMeta,
-          estimatePrefix.isAcceptableOrUnknown(
-              data['estimate_prefix']!, _estimatePrefixMeta));
+          _showLessWeightMeta,
+          showLessWeight.isAcceptableOrUnknown(
+              data['show_less_weight']!, _showLessWeightMeta));
     }
-    if (data.containsKey('estimate_validity_days')) {
+    if (data.containsKey('show_net_weight')) {
       context.handle(
-          _estimateValidityDaysMeta,
-          estimateValidityDays.isAcceptableOrUnknown(
-              data['estimate_validity_days']!, _estimateValidityDaysMeta));
+          _showNetWeightMeta,
+          showNetWeight.isAcceptableOrUnknown(
+              data['show_net_weight']!, _showNetWeightMeta));
     }
-    if (data.containsKey('sales_default_payment_mode')) {
+    if (data.containsKey('show_purity')) {
       context.handle(
-          _salesDefaultPaymentModeMeta,
-          salesDefaultPaymentMode.isAcceptableOrUnknown(
-              data['sales_default_payment_mode']!,
-              _salesDefaultPaymentModeMeta));
+          _showPurityMeta,
+          showPurity.isAcceptableOrUnknown(
+              data['show_purity']!, _showPurityMeta));
     }
-    if (data.containsKey('sales_upi_id')) {
-      context.handle(
-          _salesUpiIdMeta,
-          salesUpiId.isAcceptableOrUnknown(
-              data['sales_upi_id']!, _salesUpiIdMeta));
+    if (data.containsKey('show_rate')) {
+      context.handle(_showRateMeta,
+          showRate.isAcceptableOrUnknown(data['show_rate']!, _showRateMeta));
     }
-    if (data.containsKey('sales_default_credit_days')) {
+    if (data.containsKey('show_making_charges')) {
       context.handle(
-          _salesDefaultCreditDaysMeta,
-          salesDefaultCreditDays.isAcceptableOrUnknown(
-              data['sales_default_credit_days']!, _salesDefaultCreditDaysMeta));
+          _showMakingChargesMeta,
+          showMakingCharges.isAcceptableOrUnknown(
+              data['show_making_charges']!, _showMakingChargesMeta));
     }
-    if (data.containsKey('sales_min_advance_percent')) {
+    if (data.containsKey('show_making_charge_type')) {
       context.handle(
-          _salesMinAdvancePercentMeta,
-          salesMinAdvancePercent.isAcceptableOrUnknown(
-              data['sales_min_advance_percent']!, _salesMinAdvancePercentMeta));
+          _showMakingChargeTypeMeta,
+          showMakingChargeType.isAcceptableOrUnknown(
+              data['show_making_charge_type']!, _showMakingChargeTypeMeta));
     }
-    if (data.containsKey('sales_allow_discount')) {
+    if (data.containsKey('show_stone_details')) {
       context.handle(
-          _salesAllowDiscountMeta,
-          salesAllowDiscount.isAcceptableOrUnknown(
-              data['sales_allow_discount']!, _salesAllowDiscountMeta));
+          _showStoneDetailsMeta,
+          showStoneDetails.isAcceptableOrUnknown(
+              data['show_stone_details']!, _showStoneDetailsMeta));
     }
-    if (data.containsKey('sales_max_discount_percent')) {
+    if (data.containsKey('show_stone_value')) {
       context.handle(
-          _salesMaxDiscountPercentMeta,
-          salesMaxDiscountPercent.isAcceptableOrUnknown(
-              data['sales_max_discount_percent']!,
-              _salesMaxDiscountPercentMeta));
+          _showStoneValueMeta,
+          showStoneValue.isAcceptableOrUnknown(
+              data['show_stone_value']!, _showStoneValueMeta));
     }
-    if (data.containsKey('sales_rounding_rule')) {
+    if (data.containsKey('show_total_value')) {
       context.handle(
-          _salesRoundingRuleMeta,
-          salesRoundingRule.isAcceptableOrUnknown(
-              data['sales_rounding_rule']!, _salesRoundingRuleMeta));
+          _showTotalValueMeta,
+          showTotalValue.isAcceptableOrUnknown(
+              data['show_total_value']!, _showTotalValueMeta));
     }
-    if (data.containsKey('sales_show_making_charges')) {
-      context.handle(
-          _salesShowMakingChargesMeta,
-          salesShowMakingCharges.isAcceptableOrUnknown(
-              data['sales_show_making_charges']!, _salesShowMakingChargesMeta));
+    if (data.containsKey('show_huid')) {
+      context.handle(_showHuidMeta,
+          showHuid.isAcceptableOrUnknown(data['show_huid']!, _showHuidMeta));
     }
-    if (data.containsKey('sales_show_huid')) {
+    if (data.containsKey('show_wastage')) {
       context.handle(
-          _salesShowHuidMeta,
-          salesShowHuid.isAcceptableOrUnknown(
-              data['sales_show_huid']!, _salesShowHuidMeta));
+          _showWastageMeta,
+          showWastage.isAcceptableOrUnknown(
+              data['show_wastage']!, _showWastageMeta));
     }
-    if (data.containsKey('sales_show_old_gold_line')) {
+    if (data.containsKey('show_old_gold_line')) {
       context.handle(
-          _salesShowOldGoldLineMeta,
-          salesShowOldGoldLine.isAcceptableOrUnknown(
-              data['sales_show_old_gold_line']!, _salesShowOldGoldLineMeta));
+          _showOldGoldLineMeta,
+          showOldGoldLine.isAcceptableOrUnknown(
+              data['show_old_gold_line']!, _showOldGoldLineMeta));
     }
-    if (data.containsKey('sales_terms')) {
+    if (data.containsKey('show_diamond_clarity')) {
       context.handle(
-          _salesTermsMeta,
-          salesTerms.isAcceptableOrUnknown(
-              data['sales_terms']!, _salesTermsMeta));
+          _showDiamondClarityMeta,
+          showDiamondClarity.isAcceptableOrUnknown(
+              data['show_diamond_clarity']!, _showDiamondClarityMeta));
     }
-    if (data.containsKey('sales_footer_msg')) {
+    if (data.containsKey('show_certification_no')) {
       context.handle(
-          _salesFooterMsgMeta,
-          salesFooterMsg.isAcceptableOrUnknown(
-              data['sales_footer_msg']!, _salesFooterMsgMeta));
+          _showCertificationNoMeta,
+          showCertificationNo.isAcceptableOrUnknown(
+              data['show_certification_no']!, _showCertificationNoMeta));
     }
-    if (data.containsKey('purchase_invoice_prefix')) {
+    if (data.containsKey('show_diamond_carats')) {
       context.handle(
-          _purchaseInvoicePrefixMeta,
-          purchaseInvoicePrefix.isAcceptableOrUnknown(
-              data['purchase_invoice_prefix']!, _purchaseInvoicePrefixMeta));
+          _showDiamondCaratsMeta,
+          showDiamondCarats.isAcceptableOrUnknown(
+              data['show_diamond_carats']!, _showDiamondCaratsMeta));
     }
-    if (data.containsKey('purchase_starting_number')) {
+    if (data.containsKey('show_diamond_pieces')) {
       context.handle(
-          _purchaseStartingNumberMeta,
-          purchaseStartingNumber.isAcceptableOrUnknown(
-              data['purchase_starting_number']!, _purchaseStartingNumberMeta));
+          _showDiamondPiecesMeta,
+          showDiamondPieces.isAcceptableOrUnknown(
+              data['show_diamond_pieces']!, _showDiamondPiecesMeta));
     }
-    if (data.containsKey('purchase_yearly_reset')) {
+    if (data.containsKey('show_metal_weight')) {
       context.handle(
-          _purchaseYearlyResetMeta,
-          purchaseYearlyReset.isAcceptableOrUnknown(
-              data['purchase_yearly_reset']!, _purchaseYearlyResetMeta));
+          _showMetalWeightMeta,
+          showMetalWeight.isAcceptableOrUnknown(
+              data['show_metal_weight']!, _showMetalWeightMeta));
     }
-    if (data.containsKey('purchase_default_payment_days')) {
+    if (data.containsKey('show_fine_weight')) {
       context.handle(
-          _purchaseDefaultPaymentDaysMeta,
-          purchaseDefaultPaymentDays.isAcceptableOrUnknown(
-              data['purchase_default_payment_days']!,
-              _purchaseDefaultPaymentDaysMeta));
+          _showFineWeightMeta,
+          showFineWeight.isAcceptableOrUnknown(
+              data['show_fine_weight']!, _showFineWeightMeta));
     }
-    if (data.containsKey('purchase_advance_percent')) {
+    if (data.containsKey('show_gst_breakup')) {
       context.handle(
-          _purchaseAdvancePercentMeta,
-          purchaseAdvancePercent.isAcceptableOrUnknown(
-              data['purchase_advance_percent']!, _purchaseAdvancePercentMeta));
+          _showGstBreakupMeta,
+          showGstBreakup.isAcceptableOrUnknown(
+              data['show_gst_breakup']!, _showGstBreakupMeta));
     }
-    if (data.containsKey('purchase_default_payment_mode')) {
+    if (data.containsKey('show_hsn_code')) {
       context.handle(
-          _purchaseDefaultPaymentModeMeta,
-          purchaseDefaultPaymentMode.isAcceptableOrUnknown(
-              data['purchase_default_payment_mode']!,
-              _purchaseDefaultPaymentModeMeta));
-    }
-    if (data.containsKey('purchase_weight_tolerance_percent')) {
-      context.handle(
-          _purchaseWeightTolerancePercentMeta,
-          purchaseWeightTolerancePercent.isAcceptableOrUnknown(
-              data['purchase_weight_tolerance_percent']!,
-              _purchaseWeightTolerancePercentMeta));
-    }
-    if (data.containsKey('purchase_default_karat')) {
-      context.handle(
-          _purchaseDefaultKaratMeta,
-          purchaseDefaultKarat.isAcceptableOrUnknown(
-              data['purchase_default_karat']!, _purchaseDefaultKaratMeta));
-    }
-    if (data.containsKey('purchase_terms')) {
-      context.handle(
-          _purchaseTermsMeta,
-          purchaseTerms.isAcceptableOrUnknown(
-              data['purchase_terms']!, _purchaseTermsMeta));
-    }
-    if (data.containsKey('purchase_auto_print')) {
-      context.handle(
-          _purchaseAutoPrintMeta,
-          purchaseAutoPrint.isAcceptableOrUnknown(
-              data['purchase_auto_print']!, _purchaseAutoPrintMeta));
-    }
-    if (data.containsKey('girvi_prefix')) {
-      context.handle(
-          _girviPrefixMeta,
-          girviPrefix.isAcceptableOrUnknown(
-              data['girvi_prefix']!, _girviPrefixMeta));
-    }
-    if (data.containsKey('girvi_starting_number')) {
-      context.handle(
-          _girviStartingNumberMeta,
-          girviStartingNumber.isAcceptableOrUnknown(
-              data['girvi_starting_number']!, _girviStartingNumberMeta));
-    }
-    if (data.containsKey('girvi_default_interest_rate')) {
-      context.handle(
-          _girviDefaultInterestRateMeta,
-          girviDefaultInterestRate.isAcceptableOrUnknown(
-              data['girvi_default_interest_rate']!,
-              _girviDefaultInterestRateMeta));
-    }
-    if (data.containsKey('girvi_interest_type')) {
-      context.handle(
-          _girviInterestTypeMeta,
-          girviInterestType.isAcceptableOrUnknown(
-              data['girvi_interest_type']!, _girviInterestTypeMeta));
-    }
-    if (data.containsKey('girvi_grace_period_days')) {
-      context.handle(
-          _girviGracePeriodDaysMeta,
-          girviGracePeriodDays.isAcceptableOrUnknown(
-              data['girvi_grace_period_days']!, _girviGracePeriodDaysMeta));
-    }
-    if (data.containsKey('girvi_default_duration')) {
-      context.handle(
-          _girviDefaultDurationMeta,
-          girviDefaultDuration.isAcceptableOrUnknown(
-              data['girvi_default_duration']!, _girviDefaultDurationMeta));
-    }
-    if (data.containsKey('girvi_reminder_days')) {
-      context.handle(
-          _girviReminderDaysMeta,
-          girviReminderDays.isAcceptableOrUnknown(
-              data['girvi_reminder_days']!, _girviReminderDaysMeta));
-    }
-    if (data.containsKey('girvi_notice_days')) {
-      context.handle(
-          _girviNoticeDaysMeta,
-          girviNoticeDays.isAcceptableOrUnknown(
-              data['girvi_notice_days']!, _girviNoticeDaysMeta));
-    }
-    if (data.containsKey('girvi_terms')) {
-      context.handle(
-          _girviTermsMeta,
-          girviTerms.isAcceptableOrUnknown(
-              data['girvi_terms']!, _girviTermsMeta));
-    }
-    if (data.containsKey('girvi_auto_print')) {
-      context.handle(
-          _girviAutoPrintMeta,
-          girviAutoPrint.isAcceptableOrUnknown(
-              data['girvi_auto_print']!, _girviAutoPrintMeta));
+          _showHsnCodeMeta,
+          showHsnCode.isAcceptableOrUnknown(
+              data['show_hsn_code']!, _showHsnCodeMeta));
     }
     if (data.containsKey('return_window_days')) {
       context.handle(
@@ -20108,24 +19903,17 @@ class $BillingSettingsTable extends BillingSettings
           returnWindowDays.isAcceptableOrUnknown(
               data['return_window_days']!, _returnWindowDaysMeta));
     }
-    if (data.containsKey('return_handling_charge_percent')) {
-      context.handle(
-          _returnHandlingChargePercentMeta,
-          returnHandlingChargePercent.isAcceptableOrUnknown(
-              data['return_handling_charge_percent']!,
-              _returnHandlingChargePercentMeta));
-    }
     if (data.containsKey('return_mode')) {
       context.handle(
           _returnModeMeta,
           returnMode.isAcceptableOrUnknown(
               data['return_mode']!, _returnModeMeta));
     }
-    if (data.containsKey('return_voucher_prefix')) {
+    if (data.containsKey('handling_charge_percent')) {
       context.handle(
-          _returnVoucherPrefixMeta,
-          returnVoucherPrefix.isAcceptableOrUnknown(
-              data['return_voucher_prefix']!, _returnVoucherPrefixMeta));
+          _handlingChargePercentMeta,
+          handlingChargePercent.isAcceptableOrUnknown(
+              data['handling_charge_percent']!, _handlingChargePercentMeta));
     }
     if (data.containsKey('buyback_rate_percent')) {
       context.handle(
@@ -20140,17 +19928,23 @@ class $BillingSettingsTable extends BillingSettings
               data['buyback_purity_deduct_percent']!,
               _buybackPurityDeductPercentMeta));
     }
-    if (data.containsKey('buyback_default_karat')) {
+    if (data.containsKey('terms_and_conditions')) {
       context.handle(
-          _buybackDefaultKaratMeta,
-          buybackDefaultKarat.isAcceptableOrUnknown(
-              data['buyback_default_karat']!, _buybackDefaultKaratMeta));
+          _termsAndConditionsMeta,
+          termsAndConditions.isAcceptableOrUnknown(
+              data['terms_and_conditions']!, _termsAndConditionsMeta));
     }
-    if (data.containsKey('return_terms')) {
+    if (data.containsKey('footer_message')) {
       context.handle(
-          _returnTermsMeta,
-          returnTerms.isAcceptableOrUnknown(
-              data['return_terms']!, _returnTermsMeta));
+          _footerMessageMeta,
+          footerMessage.isAcceptableOrUnknown(
+              data['footer_message']!, _footerMessageMeta));
+    }
+    if (data.containsKey('selected_template')) {
+      context.handle(
+          _selectedTemplateMeta,
+          selectedTemplate.isAcceptableOrUnknown(
+              data['selected_template']!, _selectedTemplateMeta));
     }
     return context;
   }
@@ -20158,230 +19952,159 @@ class $BillingSettingsTable extends BillingSettings
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  BillingSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
+  SalesBillingSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return BillingSetting(
+    return SalesBillingSetting(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
-      salesInvoicePrefix: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}sales_invoice_prefix'])!,
-      salesStartingNumber: attachedDatabase.typeMapping.read(
-          DriftSqlType.int, data['${effectivePrefix}sales_starting_number'])!,
-      salesYearlyReset: attachedDatabase.typeMapping.read(
-          DriftSqlType.bool, data['${effectivePrefix}sales_yearly_reset'])!,
-      estimatePrefix: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}estimate_prefix'])!,
-      estimateValidityDays: attachedDatabase.typeMapping.read(
-          DriftSqlType.int, data['${effectivePrefix}estimate_validity_days'])!,
-      salesDefaultPaymentMode: attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}sales_default_payment_mode'])!,
-      salesUpiId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}sales_upi_id'])!,
-      salesDefaultCreditDays: attachedDatabase.typeMapping.read(
-          DriftSqlType.int,
-          data['${effectivePrefix}sales_default_credit_days'])!,
-      salesMinAdvancePercent: attachedDatabase.typeMapping.read(
-          DriftSqlType.int,
-          data['${effectivePrefix}sales_min_advance_percent'])!,
-      salesAllowDiscount: attachedDatabase.typeMapping.read(
-          DriftSqlType.bool, data['${effectivePrefix}sales_allow_discount'])!,
-      salesMaxDiscountPercent: attachedDatabase.typeMapping.read(
-          DriftSqlType.double,
-          data['${effectivePrefix}sales_max_discount_percent'])!,
-      salesRoundingRule: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}sales_rounding_rule'])!,
-      salesShowMakingCharges: attachedDatabase.typeMapping.read(
-          DriftSqlType.bool,
-          data['${effectivePrefix}sales_show_making_charges'])!,
-      salesShowHuid: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}sales_show_huid'])!,
-      salesShowOldGoldLine: attachedDatabase.typeMapping.read(DriftSqlType.bool,
-          data['${effectivePrefix}sales_show_old_gold_line'])!,
-      salesTerms: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}sales_terms'])!,
-      salesFooterMsg: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}sales_footer_msg'])!,
-      purchaseInvoicePrefix: attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}purchase_invoice_prefix'])!,
-      purchaseStartingNumber: attachedDatabase.typeMapping.read(
-          DriftSqlType.int,
-          data['${effectivePrefix}purchase_starting_number'])!,
-      purchaseYearlyReset: attachedDatabase.typeMapping.read(
-          DriftSqlType.bool, data['${effectivePrefix}purchase_yearly_reset'])!,
-      purchaseDefaultPaymentDays: attachedDatabase.typeMapping.read(
-          DriftSqlType.int,
-          data['${effectivePrefix}purchase_default_payment_days'])!,
-      purchaseAdvancePercent: attachedDatabase.typeMapping.read(
-          DriftSqlType.int,
-          data['${effectivePrefix}purchase_advance_percent'])!,
-      purchaseDefaultPaymentMode: attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}purchase_default_payment_mode'])!,
-      purchaseWeightTolerancePercent: attachedDatabase.typeMapping.read(
-          DriftSqlType.double,
-          data['${effectivePrefix}purchase_weight_tolerance_percent'])!,
-      purchaseDefaultKarat: attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}purchase_default_karat'])!,
-      purchaseTerms: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}purchase_terms'])!,
-      purchaseAutoPrint: attachedDatabase.typeMapping.read(
-          DriftSqlType.bool, data['${effectivePrefix}purchase_auto_print'])!,
-      girviPrefix: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}girvi_prefix'])!,
-      girviStartingNumber: attachedDatabase.typeMapping.read(
-          DriftSqlType.int, data['${effectivePrefix}girvi_starting_number'])!,
-      girviDefaultInterestRate: attachedDatabase.typeMapping.read(
-          DriftSqlType.double,
-          data['${effectivePrefix}girvi_default_interest_rate'])!,
-      girviInterestType: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}girvi_interest_type'])!,
-      girviGracePeriodDays: attachedDatabase.typeMapping.read(
-          DriftSqlType.int, data['${effectivePrefix}girvi_grace_period_days'])!,
-      girviDefaultDuration: attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}girvi_default_duration'])!,
-      girviReminderDays: attachedDatabase.typeMapping.read(
-          DriftSqlType.int, data['${effectivePrefix}girvi_reminder_days'])!,
-      girviNoticeDays: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}girvi_notice_days'])!,
-      girviTerms: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}girvi_terms'])!,
-      girviAutoPrint: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}girvi_auto_print'])!,
+      metal: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}metal'])!,
+      showPieces: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_pieces'])!,
+      showGrossWeight: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}show_gross_weight'])!,
+      showLessWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_less_weight'])!,
+      showNetWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_net_weight'])!,
+      showPurity: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_purity'])!,
+      showRate: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_rate'])!,
+      showMakingCharges: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}show_making_charges'])!,
+      showMakingChargeType: attachedDatabase.typeMapping.read(DriftSqlType.bool,
+          data['${effectivePrefix}show_making_charge_type'])!,
+      showStoneDetails: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}show_stone_details'])!,
+      showStoneValue: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_stone_value'])!,
+      showTotalValue: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_total_value'])!,
+      showHuid: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_huid'])!,
+      showWastage: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_wastage'])!,
+      showOldGoldLine: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}show_old_gold_line'])!,
+      showDiamondClarity: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}show_diamond_clarity'])!,
+      showCertificationNo: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}show_certification_no'])!,
+      showDiamondCarats: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}show_diamond_carats'])!,
+      showDiamondPieces: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}show_diamond_pieces'])!,
+      showMetalWeight: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}show_metal_weight'])!,
+      showFineWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_fine_weight'])!,
+      showGstBreakup: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_gst_breakup'])!,
+      showHsnCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_hsn_code'])!,
       returnWindowDays: attachedDatabase.typeMapping.read(
           DriftSqlType.int, data['${effectivePrefix}return_window_days'])!,
-      returnHandlingChargePercent: attachedDatabase.typeMapping.read(
-          DriftSqlType.double,
-          data['${effectivePrefix}return_handling_charge_percent'])!,
       returnMode: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}return_mode'])!,
-      returnVoucherPrefix: attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}return_voucher_prefix'])!,
+      handlingChargePercent: attachedDatabase.typeMapping.read(
+          DriftSqlType.double,
+          data['${effectivePrefix}handling_charge_percent'])!,
       buybackRatePercent: attachedDatabase.typeMapping.read(
           DriftSqlType.double, data['${effectivePrefix}buyback_rate_percent'])!,
       buybackPurityDeductPercent: attachedDatabase.typeMapping.read(
           DriftSqlType.double,
           data['${effectivePrefix}buyback_purity_deduct_percent'])!,
-      buybackDefaultKarat: attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}buyback_default_karat'])!,
-      returnTerms: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}return_terms'])!,
+      termsAndConditions: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}terms_and_conditions'])!,
+      footerMessage: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}footer_message'])!,
+      selectedTemplate: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}selected_template'])!,
     );
   }
 
   @override
-  $BillingSettingsTable createAlias(String alias) {
-    return $BillingSettingsTable(attachedDatabase, alias);
+  $SalesBillingSettingsTable createAlias(String alias) {
+    return $SalesBillingSettingsTable(attachedDatabase, alias);
   }
 }
 
-class BillingSetting extends DataClass implements Insertable<BillingSetting> {
+class SalesBillingSetting extends DataClass
+    implements Insertable<SalesBillingSetting> {
   final int id;
   final DateTime createdAt;
   final DateTime? updatedAt;
-  final String salesInvoicePrefix;
-  final int salesStartingNumber;
-  final bool salesYearlyReset;
-  final String estimatePrefix;
-  final int estimateValidityDays;
-  final String salesDefaultPaymentMode;
-  final String salesUpiId;
-  final int salesDefaultCreditDays;
-  final int salesMinAdvancePercent;
-  final bool salesAllowDiscount;
-  final double salesMaxDiscountPercent;
-  final String salesRoundingRule;
-  final bool salesShowMakingCharges;
-  final bool salesShowHuid;
-  final bool salesShowOldGoldLine;
-  final String salesTerms;
-  final String salesFooterMsg;
-  final String purchaseInvoicePrefix;
-  final int purchaseStartingNumber;
-  final bool purchaseYearlyReset;
-  final int purchaseDefaultPaymentDays;
-  final int purchaseAdvancePercent;
-  final String purchaseDefaultPaymentMode;
-  final double purchaseWeightTolerancePercent;
-  final String purchaseDefaultKarat;
-  final String purchaseTerms;
-  final bool purchaseAutoPrint;
-  final String girviPrefix;
-  final int girviStartingNumber;
-  final double girviDefaultInterestRate;
-  final String girviInterestType;
-  final int girviGracePeriodDays;
-  final String girviDefaultDuration;
-  final int girviReminderDays;
-  final int girviNoticeDays;
-  final String girviTerms;
-  final bool girviAutoPrint;
+  final String metal;
+  final bool showPieces;
+  final bool showGrossWeight;
+  final bool showLessWeight;
+  final bool showNetWeight;
+  final bool showPurity;
+  final bool showRate;
+  final bool showMakingCharges;
+  final bool showMakingChargeType;
+  final bool showStoneDetails;
+  final bool showStoneValue;
+  final bool showTotalValue;
+  final bool showHuid;
+  final bool showWastage;
+  final bool showOldGoldLine;
+  final bool showDiamondClarity;
+  final bool showCertificationNo;
+  final bool showDiamondCarats;
+  final bool showDiamondPieces;
+  final bool showMetalWeight;
+  final bool showFineWeight;
+  final bool showGstBreakup;
+  final bool showHsnCode;
   final int returnWindowDays;
-  final double returnHandlingChargePercent;
   final String returnMode;
-  final String returnVoucherPrefix;
+  final double handlingChargePercent;
   final double buybackRatePercent;
   final double buybackPurityDeductPercent;
-  final String buybackDefaultKarat;
-  final String returnTerms;
-  const BillingSetting(
+  final String termsAndConditions;
+  final String footerMessage;
+  final String selectedTemplate;
+  const SalesBillingSetting(
       {required this.id,
       required this.createdAt,
       this.updatedAt,
-      required this.salesInvoicePrefix,
-      required this.salesStartingNumber,
-      required this.salesYearlyReset,
-      required this.estimatePrefix,
-      required this.estimateValidityDays,
-      required this.salesDefaultPaymentMode,
-      required this.salesUpiId,
-      required this.salesDefaultCreditDays,
-      required this.salesMinAdvancePercent,
-      required this.salesAllowDiscount,
-      required this.salesMaxDiscountPercent,
-      required this.salesRoundingRule,
-      required this.salesShowMakingCharges,
-      required this.salesShowHuid,
-      required this.salesShowOldGoldLine,
-      required this.salesTerms,
-      required this.salesFooterMsg,
-      required this.purchaseInvoicePrefix,
-      required this.purchaseStartingNumber,
-      required this.purchaseYearlyReset,
-      required this.purchaseDefaultPaymentDays,
-      required this.purchaseAdvancePercent,
-      required this.purchaseDefaultPaymentMode,
-      required this.purchaseWeightTolerancePercent,
-      required this.purchaseDefaultKarat,
-      required this.purchaseTerms,
-      required this.purchaseAutoPrint,
-      required this.girviPrefix,
-      required this.girviStartingNumber,
-      required this.girviDefaultInterestRate,
-      required this.girviInterestType,
-      required this.girviGracePeriodDays,
-      required this.girviDefaultDuration,
-      required this.girviReminderDays,
-      required this.girviNoticeDays,
-      required this.girviTerms,
-      required this.girviAutoPrint,
+      required this.metal,
+      required this.showPieces,
+      required this.showGrossWeight,
+      required this.showLessWeight,
+      required this.showNetWeight,
+      required this.showPurity,
+      required this.showRate,
+      required this.showMakingCharges,
+      required this.showMakingChargeType,
+      required this.showStoneDetails,
+      required this.showStoneValue,
+      required this.showTotalValue,
+      required this.showHuid,
+      required this.showWastage,
+      required this.showOldGoldLine,
+      required this.showDiamondClarity,
+      required this.showCertificationNo,
+      required this.showDiamondCarats,
+      required this.showDiamondPieces,
+      required this.showMetalWeight,
+      required this.showFineWeight,
+      required this.showGstBreakup,
+      required this.showHsnCode,
       required this.returnWindowDays,
-      required this.returnHandlingChargePercent,
       required this.returnMode,
-      required this.returnVoucherPrefix,
+      required this.handlingChargePercent,
       required this.buybackRatePercent,
       required this.buybackPurityDeductPercent,
-      required this.buybackDefaultKarat,
-      required this.returnTerms});
+      required this.termsAndConditions,
+      required this.footerMessage,
+      required this.selectedTemplate});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -20390,195 +20113,126 @@ class BillingSetting extends DataClass implements Insertable<BillingSetting> {
     if (!nullToAbsent || updatedAt != null) {
       map['updated_at'] = Variable<DateTime>(updatedAt);
     }
-    map['sales_invoice_prefix'] = Variable<String>(salesInvoicePrefix);
-    map['sales_starting_number'] = Variable<int>(salesStartingNumber);
-    map['sales_yearly_reset'] = Variable<bool>(salesYearlyReset);
-    map['estimate_prefix'] = Variable<String>(estimatePrefix);
-    map['estimate_validity_days'] = Variable<int>(estimateValidityDays);
-    map['sales_default_payment_mode'] =
-        Variable<String>(salesDefaultPaymentMode);
-    map['sales_upi_id'] = Variable<String>(salesUpiId);
-    map['sales_default_credit_days'] = Variable<int>(salesDefaultCreditDays);
-    map['sales_min_advance_percent'] = Variable<int>(salesMinAdvancePercent);
-    map['sales_allow_discount'] = Variable<bool>(salesAllowDiscount);
-    map['sales_max_discount_percent'] =
-        Variable<double>(salesMaxDiscountPercent);
-    map['sales_rounding_rule'] = Variable<String>(salesRoundingRule);
-    map['sales_show_making_charges'] = Variable<bool>(salesShowMakingCharges);
-    map['sales_show_huid'] = Variable<bool>(salesShowHuid);
-    map['sales_show_old_gold_line'] = Variable<bool>(salesShowOldGoldLine);
-    map['sales_terms'] = Variable<String>(salesTerms);
-    map['sales_footer_msg'] = Variable<String>(salesFooterMsg);
-    map['purchase_invoice_prefix'] = Variable<String>(purchaseInvoicePrefix);
-    map['purchase_starting_number'] = Variable<int>(purchaseStartingNumber);
-    map['purchase_yearly_reset'] = Variable<bool>(purchaseYearlyReset);
-    map['purchase_default_payment_days'] =
-        Variable<int>(purchaseDefaultPaymentDays);
-    map['purchase_advance_percent'] = Variable<int>(purchaseAdvancePercent);
-    map['purchase_default_payment_mode'] =
-        Variable<String>(purchaseDefaultPaymentMode);
-    map['purchase_weight_tolerance_percent'] =
-        Variable<double>(purchaseWeightTolerancePercent);
-    map['purchase_default_karat'] = Variable<String>(purchaseDefaultKarat);
-    map['purchase_terms'] = Variable<String>(purchaseTerms);
-    map['purchase_auto_print'] = Variable<bool>(purchaseAutoPrint);
-    map['girvi_prefix'] = Variable<String>(girviPrefix);
-    map['girvi_starting_number'] = Variable<int>(girviStartingNumber);
-    map['girvi_default_interest_rate'] =
-        Variable<double>(girviDefaultInterestRate);
-    map['girvi_interest_type'] = Variable<String>(girviInterestType);
-    map['girvi_grace_period_days'] = Variable<int>(girviGracePeriodDays);
-    map['girvi_default_duration'] = Variable<String>(girviDefaultDuration);
-    map['girvi_reminder_days'] = Variable<int>(girviReminderDays);
-    map['girvi_notice_days'] = Variable<int>(girviNoticeDays);
-    map['girvi_terms'] = Variable<String>(girviTerms);
-    map['girvi_auto_print'] = Variable<bool>(girviAutoPrint);
+    map['metal'] = Variable<String>(metal);
+    map['show_pieces'] = Variable<bool>(showPieces);
+    map['show_gross_weight'] = Variable<bool>(showGrossWeight);
+    map['show_less_weight'] = Variable<bool>(showLessWeight);
+    map['show_net_weight'] = Variable<bool>(showNetWeight);
+    map['show_purity'] = Variable<bool>(showPurity);
+    map['show_rate'] = Variable<bool>(showRate);
+    map['show_making_charges'] = Variable<bool>(showMakingCharges);
+    map['show_making_charge_type'] = Variable<bool>(showMakingChargeType);
+    map['show_stone_details'] = Variable<bool>(showStoneDetails);
+    map['show_stone_value'] = Variable<bool>(showStoneValue);
+    map['show_total_value'] = Variable<bool>(showTotalValue);
+    map['show_huid'] = Variable<bool>(showHuid);
+    map['show_wastage'] = Variable<bool>(showWastage);
+    map['show_old_gold_line'] = Variable<bool>(showOldGoldLine);
+    map['show_diamond_clarity'] = Variable<bool>(showDiamondClarity);
+    map['show_certification_no'] = Variable<bool>(showCertificationNo);
+    map['show_diamond_carats'] = Variable<bool>(showDiamondCarats);
+    map['show_diamond_pieces'] = Variable<bool>(showDiamondPieces);
+    map['show_metal_weight'] = Variable<bool>(showMetalWeight);
+    map['show_fine_weight'] = Variable<bool>(showFineWeight);
+    map['show_gst_breakup'] = Variable<bool>(showGstBreakup);
+    map['show_hsn_code'] = Variable<bool>(showHsnCode);
     map['return_window_days'] = Variable<int>(returnWindowDays);
-    map['return_handling_charge_percent'] =
-        Variable<double>(returnHandlingChargePercent);
     map['return_mode'] = Variable<String>(returnMode);
-    map['return_voucher_prefix'] = Variable<String>(returnVoucherPrefix);
+    map['handling_charge_percent'] = Variable<double>(handlingChargePercent);
     map['buyback_rate_percent'] = Variable<double>(buybackRatePercent);
     map['buyback_purity_deduct_percent'] =
         Variable<double>(buybackPurityDeductPercent);
-    map['buyback_default_karat'] = Variable<String>(buybackDefaultKarat);
-    map['return_terms'] = Variable<String>(returnTerms);
+    map['terms_and_conditions'] = Variable<String>(termsAndConditions);
+    map['footer_message'] = Variable<String>(footerMessage);
+    map['selected_template'] = Variable<String>(selectedTemplate);
     return map;
   }
 
-  BillingSettingsCompanion toCompanion(bool nullToAbsent) {
-    return BillingSettingsCompanion(
+  SalesBillingSettingsCompanion toCompanion(bool nullToAbsent) {
+    return SalesBillingSettingsCompanion(
       id: Value(id),
       createdAt: Value(createdAt),
       updatedAt: updatedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(updatedAt),
-      salesInvoicePrefix: Value(salesInvoicePrefix),
-      salesStartingNumber: Value(salesStartingNumber),
-      salesYearlyReset: Value(salesYearlyReset),
-      estimatePrefix: Value(estimatePrefix),
-      estimateValidityDays: Value(estimateValidityDays),
-      salesDefaultPaymentMode: Value(salesDefaultPaymentMode),
-      salesUpiId: Value(salesUpiId),
-      salesDefaultCreditDays: Value(salesDefaultCreditDays),
-      salesMinAdvancePercent: Value(salesMinAdvancePercent),
-      salesAllowDiscount: Value(salesAllowDiscount),
-      salesMaxDiscountPercent: Value(salesMaxDiscountPercent),
-      salesRoundingRule: Value(salesRoundingRule),
-      salesShowMakingCharges: Value(salesShowMakingCharges),
-      salesShowHuid: Value(salesShowHuid),
-      salesShowOldGoldLine: Value(salesShowOldGoldLine),
-      salesTerms: Value(salesTerms),
-      salesFooterMsg: Value(salesFooterMsg),
-      purchaseInvoicePrefix: Value(purchaseInvoicePrefix),
-      purchaseStartingNumber: Value(purchaseStartingNumber),
-      purchaseYearlyReset: Value(purchaseYearlyReset),
-      purchaseDefaultPaymentDays: Value(purchaseDefaultPaymentDays),
-      purchaseAdvancePercent: Value(purchaseAdvancePercent),
-      purchaseDefaultPaymentMode: Value(purchaseDefaultPaymentMode),
-      purchaseWeightTolerancePercent: Value(purchaseWeightTolerancePercent),
-      purchaseDefaultKarat: Value(purchaseDefaultKarat),
-      purchaseTerms: Value(purchaseTerms),
-      purchaseAutoPrint: Value(purchaseAutoPrint),
-      girviPrefix: Value(girviPrefix),
-      girviStartingNumber: Value(girviStartingNumber),
-      girviDefaultInterestRate: Value(girviDefaultInterestRate),
-      girviInterestType: Value(girviInterestType),
-      girviGracePeriodDays: Value(girviGracePeriodDays),
-      girviDefaultDuration: Value(girviDefaultDuration),
-      girviReminderDays: Value(girviReminderDays),
-      girviNoticeDays: Value(girviNoticeDays),
-      girviTerms: Value(girviTerms),
-      girviAutoPrint: Value(girviAutoPrint),
+      metal: Value(metal),
+      showPieces: Value(showPieces),
+      showGrossWeight: Value(showGrossWeight),
+      showLessWeight: Value(showLessWeight),
+      showNetWeight: Value(showNetWeight),
+      showPurity: Value(showPurity),
+      showRate: Value(showRate),
+      showMakingCharges: Value(showMakingCharges),
+      showMakingChargeType: Value(showMakingChargeType),
+      showStoneDetails: Value(showStoneDetails),
+      showStoneValue: Value(showStoneValue),
+      showTotalValue: Value(showTotalValue),
+      showHuid: Value(showHuid),
+      showWastage: Value(showWastage),
+      showOldGoldLine: Value(showOldGoldLine),
+      showDiamondClarity: Value(showDiamondClarity),
+      showCertificationNo: Value(showCertificationNo),
+      showDiamondCarats: Value(showDiamondCarats),
+      showDiamondPieces: Value(showDiamondPieces),
+      showMetalWeight: Value(showMetalWeight),
+      showFineWeight: Value(showFineWeight),
+      showGstBreakup: Value(showGstBreakup),
+      showHsnCode: Value(showHsnCode),
       returnWindowDays: Value(returnWindowDays),
-      returnHandlingChargePercent: Value(returnHandlingChargePercent),
       returnMode: Value(returnMode),
-      returnVoucherPrefix: Value(returnVoucherPrefix),
+      handlingChargePercent: Value(handlingChargePercent),
       buybackRatePercent: Value(buybackRatePercent),
       buybackPurityDeductPercent: Value(buybackPurityDeductPercent),
-      buybackDefaultKarat: Value(buybackDefaultKarat),
-      returnTerms: Value(returnTerms),
+      termsAndConditions: Value(termsAndConditions),
+      footerMessage: Value(footerMessage),
+      selectedTemplate: Value(selectedTemplate),
     );
   }
 
-  factory BillingSetting.fromJson(Map<String, dynamic> json,
+  factory SalesBillingSetting.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return BillingSetting(
+    return SalesBillingSetting(
       id: serializer.fromJson<int>(json['id']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
-      salesInvoicePrefix:
-          serializer.fromJson<String>(json['salesInvoicePrefix']),
-      salesStartingNumber:
-          serializer.fromJson<int>(json['salesStartingNumber']),
-      salesYearlyReset: serializer.fromJson<bool>(json['salesYearlyReset']),
-      estimatePrefix: serializer.fromJson<String>(json['estimatePrefix']),
-      estimateValidityDays:
-          serializer.fromJson<int>(json['estimateValidityDays']),
-      salesDefaultPaymentMode:
-          serializer.fromJson<String>(json['salesDefaultPaymentMode']),
-      salesUpiId: serializer.fromJson<String>(json['salesUpiId']),
-      salesDefaultCreditDays:
-          serializer.fromJson<int>(json['salesDefaultCreditDays']),
-      salesMinAdvancePercent:
-          serializer.fromJson<int>(json['salesMinAdvancePercent']),
-      salesAllowDiscount: serializer.fromJson<bool>(json['salesAllowDiscount']),
-      salesMaxDiscountPercent:
-          serializer.fromJson<double>(json['salesMaxDiscountPercent']),
-      salesRoundingRule: serializer.fromJson<String>(json['salesRoundingRule']),
-      salesShowMakingCharges:
-          serializer.fromJson<bool>(json['salesShowMakingCharges']),
-      salesShowHuid: serializer.fromJson<bool>(json['salesShowHuid']),
-      salesShowOldGoldLine:
-          serializer.fromJson<bool>(json['salesShowOldGoldLine']),
-      salesTerms: serializer.fromJson<String>(json['salesTerms']),
-      salesFooterMsg: serializer.fromJson<String>(json['salesFooterMsg']),
-      purchaseInvoicePrefix:
-          serializer.fromJson<String>(json['purchaseInvoicePrefix']),
-      purchaseStartingNumber:
-          serializer.fromJson<int>(json['purchaseStartingNumber']),
-      purchaseYearlyReset:
-          serializer.fromJson<bool>(json['purchaseYearlyReset']),
-      purchaseDefaultPaymentDays:
-          serializer.fromJson<int>(json['purchaseDefaultPaymentDays']),
-      purchaseAdvancePercent:
-          serializer.fromJson<int>(json['purchaseAdvancePercent']),
-      purchaseDefaultPaymentMode:
-          serializer.fromJson<String>(json['purchaseDefaultPaymentMode']),
-      purchaseWeightTolerancePercent:
-          serializer.fromJson<double>(json['purchaseWeightTolerancePercent']),
-      purchaseDefaultKarat:
-          serializer.fromJson<String>(json['purchaseDefaultKarat']),
-      purchaseTerms: serializer.fromJson<String>(json['purchaseTerms']),
-      purchaseAutoPrint: serializer.fromJson<bool>(json['purchaseAutoPrint']),
-      girviPrefix: serializer.fromJson<String>(json['girviPrefix']),
-      girviStartingNumber:
-          serializer.fromJson<int>(json['girviStartingNumber']),
-      girviDefaultInterestRate:
-          serializer.fromJson<double>(json['girviDefaultInterestRate']),
-      girviInterestType: serializer.fromJson<String>(json['girviInterestType']),
-      girviGracePeriodDays:
-          serializer.fromJson<int>(json['girviGracePeriodDays']),
-      girviDefaultDuration:
-          serializer.fromJson<String>(json['girviDefaultDuration']),
-      girviReminderDays: serializer.fromJson<int>(json['girviReminderDays']),
-      girviNoticeDays: serializer.fromJson<int>(json['girviNoticeDays']),
-      girviTerms: serializer.fromJson<String>(json['girviTerms']),
-      girviAutoPrint: serializer.fromJson<bool>(json['girviAutoPrint']),
+      metal: serializer.fromJson<String>(json['metal']),
+      showPieces: serializer.fromJson<bool>(json['showPieces']),
+      showGrossWeight: serializer.fromJson<bool>(json['showGrossWeight']),
+      showLessWeight: serializer.fromJson<bool>(json['showLessWeight']),
+      showNetWeight: serializer.fromJson<bool>(json['showNetWeight']),
+      showPurity: serializer.fromJson<bool>(json['showPurity']),
+      showRate: serializer.fromJson<bool>(json['showRate']),
+      showMakingCharges: serializer.fromJson<bool>(json['showMakingCharges']),
+      showMakingChargeType:
+          serializer.fromJson<bool>(json['showMakingChargeType']),
+      showStoneDetails: serializer.fromJson<bool>(json['showStoneDetails']),
+      showStoneValue: serializer.fromJson<bool>(json['showStoneValue']),
+      showTotalValue: serializer.fromJson<bool>(json['showTotalValue']),
+      showHuid: serializer.fromJson<bool>(json['showHuid']),
+      showWastage: serializer.fromJson<bool>(json['showWastage']),
+      showOldGoldLine: serializer.fromJson<bool>(json['showOldGoldLine']),
+      showDiamondClarity: serializer.fromJson<bool>(json['showDiamondClarity']),
+      showCertificationNo:
+          serializer.fromJson<bool>(json['showCertificationNo']),
+      showDiamondCarats: serializer.fromJson<bool>(json['showDiamondCarats']),
+      showDiamondPieces: serializer.fromJson<bool>(json['showDiamondPieces']),
+      showMetalWeight: serializer.fromJson<bool>(json['showMetalWeight']),
+      showFineWeight: serializer.fromJson<bool>(json['showFineWeight']),
+      showGstBreakup: serializer.fromJson<bool>(json['showGstBreakup']),
+      showHsnCode: serializer.fromJson<bool>(json['showHsnCode']),
       returnWindowDays: serializer.fromJson<int>(json['returnWindowDays']),
-      returnHandlingChargePercent:
-          serializer.fromJson<double>(json['returnHandlingChargePercent']),
       returnMode: serializer.fromJson<String>(json['returnMode']),
-      returnVoucherPrefix:
-          serializer.fromJson<String>(json['returnVoucherPrefix']),
+      handlingChargePercent:
+          serializer.fromJson<double>(json['handlingChargePercent']),
       buybackRatePercent:
           serializer.fromJson<double>(json['buybackRatePercent']),
       buybackPurityDeductPercent:
           serializer.fromJson<double>(json['buybackPurityDeductPercent']),
-      buybackDefaultKarat:
-          serializer.fromJson<String>(json['buybackDefaultKarat']),
-      returnTerms: serializer.fromJson<String>(json['returnTerms']),
+      termsAndConditions:
+          serializer.fromJson<String>(json['termsAndConditions']),
+      footerMessage: serializer.fromJson<String>(json['footerMessage']),
+      selectedTemplate: serializer.fromJson<String>(json['selectedTemplate']),
     );
   }
   @override
@@ -20588,365 +20242,241 @@ class BillingSetting extends DataClass implements Insertable<BillingSetting> {
       'id': serializer.toJson<int>(id),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
-      'salesInvoicePrefix': serializer.toJson<String>(salesInvoicePrefix),
-      'salesStartingNumber': serializer.toJson<int>(salesStartingNumber),
-      'salesYearlyReset': serializer.toJson<bool>(salesYearlyReset),
-      'estimatePrefix': serializer.toJson<String>(estimatePrefix),
-      'estimateValidityDays': serializer.toJson<int>(estimateValidityDays),
-      'salesDefaultPaymentMode':
-          serializer.toJson<String>(salesDefaultPaymentMode),
-      'salesUpiId': serializer.toJson<String>(salesUpiId),
-      'salesDefaultCreditDays': serializer.toJson<int>(salesDefaultCreditDays),
-      'salesMinAdvancePercent': serializer.toJson<int>(salesMinAdvancePercent),
-      'salesAllowDiscount': serializer.toJson<bool>(salesAllowDiscount),
-      'salesMaxDiscountPercent':
-          serializer.toJson<double>(salesMaxDiscountPercent),
-      'salesRoundingRule': serializer.toJson<String>(salesRoundingRule),
-      'salesShowMakingCharges': serializer.toJson<bool>(salesShowMakingCharges),
-      'salesShowHuid': serializer.toJson<bool>(salesShowHuid),
-      'salesShowOldGoldLine': serializer.toJson<bool>(salesShowOldGoldLine),
-      'salesTerms': serializer.toJson<String>(salesTerms),
-      'salesFooterMsg': serializer.toJson<String>(salesFooterMsg),
-      'purchaseInvoicePrefix': serializer.toJson<String>(purchaseInvoicePrefix),
-      'purchaseStartingNumber': serializer.toJson<int>(purchaseStartingNumber),
-      'purchaseYearlyReset': serializer.toJson<bool>(purchaseYearlyReset),
-      'purchaseDefaultPaymentDays':
-          serializer.toJson<int>(purchaseDefaultPaymentDays),
-      'purchaseAdvancePercent': serializer.toJson<int>(purchaseAdvancePercent),
-      'purchaseDefaultPaymentMode':
-          serializer.toJson<String>(purchaseDefaultPaymentMode),
-      'purchaseWeightTolerancePercent':
-          serializer.toJson<double>(purchaseWeightTolerancePercent),
-      'purchaseDefaultKarat': serializer.toJson<String>(purchaseDefaultKarat),
-      'purchaseTerms': serializer.toJson<String>(purchaseTerms),
-      'purchaseAutoPrint': serializer.toJson<bool>(purchaseAutoPrint),
-      'girviPrefix': serializer.toJson<String>(girviPrefix),
-      'girviStartingNumber': serializer.toJson<int>(girviStartingNumber),
-      'girviDefaultInterestRate':
-          serializer.toJson<double>(girviDefaultInterestRate),
-      'girviInterestType': serializer.toJson<String>(girviInterestType),
-      'girviGracePeriodDays': serializer.toJson<int>(girviGracePeriodDays),
-      'girviDefaultDuration': serializer.toJson<String>(girviDefaultDuration),
-      'girviReminderDays': serializer.toJson<int>(girviReminderDays),
-      'girviNoticeDays': serializer.toJson<int>(girviNoticeDays),
-      'girviTerms': serializer.toJson<String>(girviTerms),
-      'girviAutoPrint': serializer.toJson<bool>(girviAutoPrint),
+      'metal': serializer.toJson<String>(metal),
+      'showPieces': serializer.toJson<bool>(showPieces),
+      'showGrossWeight': serializer.toJson<bool>(showGrossWeight),
+      'showLessWeight': serializer.toJson<bool>(showLessWeight),
+      'showNetWeight': serializer.toJson<bool>(showNetWeight),
+      'showPurity': serializer.toJson<bool>(showPurity),
+      'showRate': serializer.toJson<bool>(showRate),
+      'showMakingCharges': serializer.toJson<bool>(showMakingCharges),
+      'showMakingChargeType': serializer.toJson<bool>(showMakingChargeType),
+      'showStoneDetails': serializer.toJson<bool>(showStoneDetails),
+      'showStoneValue': serializer.toJson<bool>(showStoneValue),
+      'showTotalValue': serializer.toJson<bool>(showTotalValue),
+      'showHuid': serializer.toJson<bool>(showHuid),
+      'showWastage': serializer.toJson<bool>(showWastage),
+      'showOldGoldLine': serializer.toJson<bool>(showOldGoldLine),
+      'showDiamondClarity': serializer.toJson<bool>(showDiamondClarity),
+      'showCertificationNo': serializer.toJson<bool>(showCertificationNo),
+      'showDiamondCarats': serializer.toJson<bool>(showDiamondCarats),
+      'showDiamondPieces': serializer.toJson<bool>(showDiamondPieces),
+      'showMetalWeight': serializer.toJson<bool>(showMetalWeight),
+      'showFineWeight': serializer.toJson<bool>(showFineWeight),
+      'showGstBreakup': serializer.toJson<bool>(showGstBreakup),
+      'showHsnCode': serializer.toJson<bool>(showHsnCode),
       'returnWindowDays': serializer.toJson<int>(returnWindowDays),
-      'returnHandlingChargePercent':
-          serializer.toJson<double>(returnHandlingChargePercent),
       'returnMode': serializer.toJson<String>(returnMode),
-      'returnVoucherPrefix': serializer.toJson<String>(returnVoucherPrefix),
+      'handlingChargePercent': serializer.toJson<double>(handlingChargePercent),
       'buybackRatePercent': serializer.toJson<double>(buybackRatePercent),
       'buybackPurityDeductPercent':
           serializer.toJson<double>(buybackPurityDeductPercent),
-      'buybackDefaultKarat': serializer.toJson<String>(buybackDefaultKarat),
-      'returnTerms': serializer.toJson<String>(returnTerms),
+      'termsAndConditions': serializer.toJson<String>(termsAndConditions),
+      'footerMessage': serializer.toJson<String>(footerMessage),
+      'selectedTemplate': serializer.toJson<String>(selectedTemplate),
     };
   }
 
-  BillingSetting copyWith(
+  SalesBillingSetting copyWith(
           {int? id,
           DateTime? createdAt,
           Value<DateTime?> updatedAt = const Value.absent(),
-          String? salesInvoicePrefix,
-          int? salesStartingNumber,
-          bool? salesYearlyReset,
-          String? estimatePrefix,
-          int? estimateValidityDays,
-          String? salesDefaultPaymentMode,
-          String? salesUpiId,
-          int? salesDefaultCreditDays,
-          int? salesMinAdvancePercent,
-          bool? salesAllowDiscount,
-          double? salesMaxDiscountPercent,
-          String? salesRoundingRule,
-          bool? salesShowMakingCharges,
-          bool? salesShowHuid,
-          bool? salesShowOldGoldLine,
-          String? salesTerms,
-          String? salesFooterMsg,
-          String? purchaseInvoicePrefix,
-          int? purchaseStartingNumber,
-          bool? purchaseYearlyReset,
-          int? purchaseDefaultPaymentDays,
-          int? purchaseAdvancePercent,
-          String? purchaseDefaultPaymentMode,
-          double? purchaseWeightTolerancePercent,
-          String? purchaseDefaultKarat,
-          String? purchaseTerms,
-          bool? purchaseAutoPrint,
-          String? girviPrefix,
-          int? girviStartingNumber,
-          double? girviDefaultInterestRate,
-          String? girviInterestType,
-          int? girviGracePeriodDays,
-          String? girviDefaultDuration,
-          int? girviReminderDays,
-          int? girviNoticeDays,
-          String? girviTerms,
-          bool? girviAutoPrint,
+          String? metal,
+          bool? showPieces,
+          bool? showGrossWeight,
+          bool? showLessWeight,
+          bool? showNetWeight,
+          bool? showPurity,
+          bool? showRate,
+          bool? showMakingCharges,
+          bool? showMakingChargeType,
+          bool? showStoneDetails,
+          bool? showStoneValue,
+          bool? showTotalValue,
+          bool? showHuid,
+          bool? showWastage,
+          bool? showOldGoldLine,
+          bool? showDiamondClarity,
+          bool? showCertificationNo,
+          bool? showDiamondCarats,
+          bool? showDiamondPieces,
+          bool? showMetalWeight,
+          bool? showFineWeight,
+          bool? showGstBreakup,
+          bool? showHsnCode,
           int? returnWindowDays,
-          double? returnHandlingChargePercent,
           String? returnMode,
-          String? returnVoucherPrefix,
+          double? handlingChargePercent,
           double? buybackRatePercent,
           double? buybackPurityDeductPercent,
-          String? buybackDefaultKarat,
-          String? returnTerms}) =>
-      BillingSetting(
+          String? termsAndConditions,
+          String? footerMessage,
+          String? selectedTemplate}) =>
+      SalesBillingSetting(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
-        salesInvoicePrefix: salesInvoicePrefix ?? this.salesInvoicePrefix,
-        salesStartingNumber: salesStartingNumber ?? this.salesStartingNumber,
-        salesYearlyReset: salesYearlyReset ?? this.salesYearlyReset,
-        estimatePrefix: estimatePrefix ?? this.estimatePrefix,
-        estimateValidityDays: estimateValidityDays ?? this.estimateValidityDays,
-        salesDefaultPaymentMode:
-            salesDefaultPaymentMode ?? this.salesDefaultPaymentMode,
-        salesUpiId: salesUpiId ?? this.salesUpiId,
-        salesDefaultCreditDays:
-            salesDefaultCreditDays ?? this.salesDefaultCreditDays,
-        salesMinAdvancePercent:
-            salesMinAdvancePercent ?? this.salesMinAdvancePercent,
-        salesAllowDiscount: salesAllowDiscount ?? this.salesAllowDiscount,
-        salesMaxDiscountPercent:
-            salesMaxDiscountPercent ?? this.salesMaxDiscountPercent,
-        salesRoundingRule: salesRoundingRule ?? this.salesRoundingRule,
-        salesShowMakingCharges:
-            salesShowMakingCharges ?? this.salesShowMakingCharges,
-        salesShowHuid: salesShowHuid ?? this.salesShowHuid,
-        salesShowOldGoldLine: salesShowOldGoldLine ?? this.salesShowOldGoldLine,
-        salesTerms: salesTerms ?? this.salesTerms,
-        salesFooterMsg: salesFooterMsg ?? this.salesFooterMsg,
-        purchaseInvoicePrefix:
-            purchaseInvoicePrefix ?? this.purchaseInvoicePrefix,
-        purchaseStartingNumber:
-            purchaseStartingNumber ?? this.purchaseStartingNumber,
-        purchaseYearlyReset: purchaseYearlyReset ?? this.purchaseYearlyReset,
-        purchaseDefaultPaymentDays:
-            purchaseDefaultPaymentDays ?? this.purchaseDefaultPaymentDays,
-        purchaseAdvancePercent:
-            purchaseAdvancePercent ?? this.purchaseAdvancePercent,
-        purchaseDefaultPaymentMode:
-            purchaseDefaultPaymentMode ?? this.purchaseDefaultPaymentMode,
-        purchaseWeightTolerancePercent: purchaseWeightTolerancePercent ??
-            this.purchaseWeightTolerancePercent,
-        purchaseDefaultKarat: purchaseDefaultKarat ?? this.purchaseDefaultKarat,
-        purchaseTerms: purchaseTerms ?? this.purchaseTerms,
-        purchaseAutoPrint: purchaseAutoPrint ?? this.purchaseAutoPrint,
-        girviPrefix: girviPrefix ?? this.girviPrefix,
-        girviStartingNumber: girviStartingNumber ?? this.girviStartingNumber,
-        girviDefaultInterestRate:
-            girviDefaultInterestRate ?? this.girviDefaultInterestRate,
-        girviInterestType: girviInterestType ?? this.girviInterestType,
-        girviGracePeriodDays: girviGracePeriodDays ?? this.girviGracePeriodDays,
-        girviDefaultDuration: girviDefaultDuration ?? this.girviDefaultDuration,
-        girviReminderDays: girviReminderDays ?? this.girviReminderDays,
-        girviNoticeDays: girviNoticeDays ?? this.girviNoticeDays,
-        girviTerms: girviTerms ?? this.girviTerms,
-        girviAutoPrint: girviAutoPrint ?? this.girviAutoPrint,
+        metal: metal ?? this.metal,
+        showPieces: showPieces ?? this.showPieces,
+        showGrossWeight: showGrossWeight ?? this.showGrossWeight,
+        showLessWeight: showLessWeight ?? this.showLessWeight,
+        showNetWeight: showNetWeight ?? this.showNetWeight,
+        showPurity: showPurity ?? this.showPurity,
+        showRate: showRate ?? this.showRate,
+        showMakingCharges: showMakingCharges ?? this.showMakingCharges,
+        showMakingChargeType: showMakingChargeType ?? this.showMakingChargeType,
+        showStoneDetails: showStoneDetails ?? this.showStoneDetails,
+        showStoneValue: showStoneValue ?? this.showStoneValue,
+        showTotalValue: showTotalValue ?? this.showTotalValue,
+        showHuid: showHuid ?? this.showHuid,
+        showWastage: showWastage ?? this.showWastage,
+        showOldGoldLine: showOldGoldLine ?? this.showOldGoldLine,
+        showDiamondClarity: showDiamondClarity ?? this.showDiamondClarity,
+        showCertificationNo: showCertificationNo ?? this.showCertificationNo,
+        showDiamondCarats: showDiamondCarats ?? this.showDiamondCarats,
+        showDiamondPieces: showDiamondPieces ?? this.showDiamondPieces,
+        showMetalWeight: showMetalWeight ?? this.showMetalWeight,
+        showFineWeight: showFineWeight ?? this.showFineWeight,
+        showGstBreakup: showGstBreakup ?? this.showGstBreakup,
+        showHsnCode: showHsnCode ?? this.showHsnCode,
         returnWindowDays: returnWindowDays ?? this.returnWindowDays,
-        returnHandlingChargePercent:
-            returnHandlingChargePercent ?? this.returnHandlingChargePercent,
         returnMode: returnMode ?? this.returnMode,
-        returnVoucherPrefix: returnVoucherPrefix ?? this.returnVoucherPrefix,
+        handlingChargePercent:
+            handlingChargePercent ?? this.handlingChargePercent,
         buybackRatePercent: buybackRatePercent ?? this.buybackRatePercent,
         buybackPurityDeductPercent:
             buybackPurityDeductPercent ?? this.buybackPurityDeductPercent,
-        buybackDefaultKarat: buybackDefaultKarat ?? this.buybackDefaultKarat,
-        returnTerms: returnTerms ?? this.returnTerms,
+        termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+        footerMessage: footerMessage ?? this.footerMessage,
+        selectedTemplate: selectedTemplate ?? this.selectedTemplate,
       );
-  BillingSetting copyWithCompanion(BillingSettingsCompanion data) {
-    return BillingSetting(
+  SalesBillingSetting copyWithCompanion(SalesBillingSettingsCompanion data) {
+    return SalesBillingSetting(
       id: data.id.present ? data.id.value : this.id,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      salesInvoicePrefix: data.salesInvoicePrefix.present
-          ? data.salesInvoicePrefix.value
-          : this.salesInvoicePrefix,
-      salesStartingNumber: data.salesStartingNumber.present
-          ? data.salesStartingNumber.value
-          : this.salesStartingNumber,
-      salesYearlyReset: data.salesYearlyReset.present
-          ? data.salesYearlyReset.value
-          : this.salesYearlyReset,
-      estimatePrefix: data.estimatePrefix.present
-          ? data.estimatePrefix.value
-          : this.estimatePrefix,
-      estimateValidityDays: data.estimateValidityDays.present
-          ? data.estimateValidityDays.value
-          : this.estimateValidityDays,
-      salesDefaultPaymentMode: data.salesDefaultPaymentMode.present
-          ? data.salesDefaultPaymentMode.value
-          : this.salesDefaultPaymentMode,
-      salesUpiId:
-          data.salesUpiId.present ? data.salesUpiId.value : this.salesUpiId,
-      salesDefaultCreditDays: data.salesDefaultCreditDays.present
-          ? data.salesDefaultCreditDays.value
-          : this.salesDefaultCreditDays,
-      salesMinAdvancePercent: data.salesMinAdvancePercent.present
-          ? data.salesMinAdvancePercent.value
-          : this.salesMinAdvancePercent,
-      salesAllowDiscount: data.salesAllowDiscount.present
-          ? data.salesAllowDiscount.value
-          : this.salesAllowDiscount,
-      salesMaxDiscountPercent: data.salesMaxDiscountPercent.present
-          ? data.salesMaxDiscountPercent.value
-          : this.salesMaxDiscountPercent,
-      salesRoundingRule: data.salesRoundingRule.present
-          ? data.salesRoundingRule.value
-          : this.salesRoundingRule,
-      salesShowMakingCharges: data.salesShowMakingCharges.present
-          ? data.salesShowMakingCharges.value
-          : this.salesShowMakingCharges,
-      salesShowHuid: data.salesShowHuid.present
-          ? data.salesShowHuid.value
-          : this.salesShowHuid,
-      salesShowOldGoldLine: data.salesShowOldGoldLine.present
-          ? data.salesShowOldGoldLine.value
-          : this.salesShowOldGoldLine,
-      salesTerms:
-          data.salesTerms.present ? data.salesTerms.value : this.salesTerms,
-      salesFooterMsg: data.salesFooterMsg.present
-          ? data.salesFooterMsg.value
-          : this.salesFooterMsg,
-      purchaseInvoicePrefix: data.purchaseInvoicePrefix.present
-          ? data.purchaseInvoicePrefix.value
-          : this.purchaseInvoicePrefix,
-      purchaseStartingNumber: data.purchaseStartingNumber.present
-          ? data.purchaseStartingNumber.value
-          : this.purchaseStartingNumber,
-      purchaseYearlyReset: data.purchaseYearlyReset.present
-          ? data.purchaseYearlyReset.value
-          : this.purchaseYearlyReset,
-      purchaseDefaultPaymentDays: data.purchaseDefaultPaymentDays.present
-          ? data.purchaseDefaultPaymentDays.value
-          : this.purchaseDefaultPaymentDays,
-      purchaseAdvancePercent: data.purchaseAdvancePercent.present
-          ? data.purchaseAdvancePercent.value
-          : this.purchaseAdvancePercent,
-      purchaseDefaultPaymentMode: data.purchaseDefaultPaymentMode.present
-          ? data.purchaseDefaultPaymentMode.value
-          : this.purchaseDefaultPaymentMode,
-      purchaseWeightTolerancePercent:
-          data.purchaseWeightTolerancePercent.present
-              ? data.purchaseWeightTolerancePercent.value
-              : this.purchaseWeightTolerancePercent,
-      purchaseDefaultKarat: data.purchaseDefaultKarat.present
-          ? data.purchaseDefaultKarat.value
-          : this.purchaseDefaultKarat,
-      purchaseTerms: data.purchaseTerms.present
-          ? data.purchaseTerms.value
-          : this.purchaseTerms,
-      purchaseAutoPrint: data.purchaseAutoPrint.present
-          ? data.purchaseAutoPrint.value
-          : this.purchaseAutoPrint,
-      girviPrefix:
-          data.girviPrefix.present ? data.girviPrefix.value : this.girviPrefix,
-      girviStartingNumber: data.girviStartingNumber.present
-          ? data.girviStartingNumber.value
-          : this.girviStartingNumber,
-      girviDefaultInterestRate: data.girviDefaultInterestRate.present
-          ? data.girviDefaultInterestRate.value
-          : this.girviDefaultInterestRate,
-      girviInterestType: data.girviInterestType.present
-          ? data.girviInterestType.value
-          : this.girviInterestType,
-      girviGracePeriodDays: data.girviGracePeriodDays.present
-          ? data.girviGracePeriodDays.value
-          : this.girviGracePeriodDays,
-      girviDefaultDuration: data.girviDefaultDuration.present
-          ? data.girviDefaultDuration.value
-          : this.girviDefaultDuration,
-      girviReminderDays: data.girviReminderDays.present
-          ? data.girviReminderDays.value
-          : this.girviReminderDays,
-      girviNoticeDays: data.girviNoticeDays.present
-          ? data.girviNoticeDays.value
-          : this.girviNoticeDays,
-      girviTerms:
-          data.girviTerms.present ? data.girviTerms.value : this.girviTerms,
-      girviAutoPrint: data.girviAutoPrint.present
-          ? data.girviAutoPrint.value
-          : this.girviAutoPrint,
+      metal: data.metal.present ? data.metal.value : this.metal,
+      showPieces:
+          data.showPieces.present ? data.showPieces.value : this.showPieces,
+      showGrossWeight: data.showGrossWeight.present
+          ? data.showGrossWeight.value
+          : this.showGrossWeight,
+      showLessWeight: data.showLessWeight.present
+          ? data.showLessWeight.value
+          : this.showLessWeight,
+      showNetWeight: data.showNetWeight.present
+          ? data.showNetWeight.value
+          : this.showNetWeight,
+      showPurity:
+          data.showPurity.present ? data.showPurity.value : this.showPurity,
+      showRate: data.showRate.present ? data.showRate.value : this.showRate,
+      showMakingCharges: data.showMakingCharges.present
+          ? data.showMakingCharges.value
+          : this.showMakingCharges,
+      showMakingChargeType: data.showMakingChargeType.present
+          ? data.showMakingChargeType.value
+          : this.showMakingChargeType,
+      showStoneDetails: data.showStoneDetails.present
+          ? data.showStoneDetails.value
+          : this.showStoneDetails,
+      showStoneValue: data.showStoneValue.present
+          ? data.showStoneValue.value
+          : this.showStoneValue,
+      showTotalValue: data.showTotalValue.present
+          ? data.showTotalValue.value
+          : this.showTotalValue,
+      showHuid: data.showHuid.present ? data.showHuid.value : this.showHuid,
+      showWastage:
+          data.showWastage.present ? data.showWastage.value : this.showWastage,
+      showOldGoldLine: data.showOldGoldLine.present
+          ? data.showOldGoldLine.value
+          : this.showOldGoldLine,
+      showDiamondClarity: data.showDiamondClarity.present
+          ? data.showDiamondClarity.value
+          : this.showDiamondClarity,
+      showCertificationNo: data.showCertificationNo.present
+          ? data.showCertificationNo.value
+          : this.showCertificationNo,
+      showDiamondCarats: data.showDiamondCarats.present
+          ? data.showDiamondCarats.value
+          : this.showDiamondCarats,
+      showDiamondPieces: data.showDiamondPieces.present
+          ? data.showDiamondPieces.value
+          : this.showDiamondPieces,
+      showMetalWeight: data.showMetalWeight.present
+          ? data.showMetalWeight.value
+          : this.showMetalWeight,
+      showFineWeight: data.showFineWeight.present
+          ? data.showFineWeight.value
+          : this.showFineWeight,
+      showGstBreakup: data.showGstBreakup.present
+          ? data.showGstBreakup.value
+          : this.showGstBreakup,
+      showHsnCode:
+          data.showHsnCode.present ? data.showHsnCode.value : this.showHsnCode,
       returnWindowDays: data.returnWindowDays.present
           ? data.returnWindowDays.value
           : this.returnWindowDays,
-      returnHandlingChargePercent: data.returnHandlingChargePercent.present
-          ? data.returnHandlingChargePercent.value
-          : this.returnHandlingChargePercent,
       returnMode:
           data.returnMode.present ? data.returnMode.value : this.returnMode,
-      returnVoucherPrefix: data.returnVoucherPrefix.present
-          ? data.returnVoucherPrefix.value
-          : this.returnVoucherPrefix,
+      handlingChargePercent: data.handlingChargePercent.present
+          ? data.handlingChargePercent.value
+          : this.handlingChargePercent,
       buybackRatePercent: data.buybackRatePercent.present
           ? data.buybackRatePercent.value
           : this.buybackRatePercent,
       buybackPurityDeductPercent: data.buybackPurityDeductPercent.present
           ? data.buybackPurityDeductPercent.value
           : this.buybackPurityDeductPercent,
-      buybackDefaultKarat: data.buybackDefaultKarat.present
-          ? data.buybackDefaultKarat.value
-          : this.buybackDefaultKarat,
-      returnTerms:
-          data.returnTerms.present ? data.returnTerms.value : this.returnTerms,
+      termsAndConditions: data.termsAndConditions.present
+          ? data.termsAndConditions.value
+          : this.termsAndConditions,
+      footerMessage: data.footerMessage.present
+          ? data.footerMessage.value
+          : this.footerMessage,
+      selectedTemplate: data.selectedTemplate.present
+          ? data.selectedTemplate.value
+          : this.selectedTemplate,
     );
   }
 
   @override
   String toString() {
-    return (StringBuffer('BillingSetting(')
+    return (StringBuffer('SalesBillingSetting(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('salesInvoicePrefix: $salesInvoicePrefix, ')
-          ..write('salesStartingNumber: $salesStartingNumber, ')
-          ..write('salesYearlyReset: $salesYearlyReset, ')
-          ..write('estimatePrefix: $estimatePrefix, ')
-          ..write('estimateValidityDays: $estimateValidityDays, ')
-          ..write('salesDefaultPaymentMode: $salesDefaultPaymentMode, ')
-          ..write('salesUpiId: $salesUpiId, ')
-          ..write('salesDefaultCreditDays: $salesDefaultCreditDays, ')
-          ..write('salesMinAdvancePercent: $salesMinAdvancePercent, ')
-          ..write('salesAllowDiscount: $salesAllowDiscount, ')
-          ..write('salesMaxDiscountPercent: $salesMaxDiscountPercent, ')
-          ..write('salesRoundingRule: $salesRoundingRule, ')
-          ..write('salesShowMakingCharges: $salesShowMakingCharges, ')
-          ..write('salesShowHuid: $salesShowHuid, ')
-          ..write('salesShowOldGoldLine: $salesShowOldGoldLine, ')
-          ..write('salesTerms: $salesTerms, ')
-          ..write('salesFooterMsg: $salesFooterMsg, ')
-          ..write('purchaseInvoicePrefix: $purchaseInvoicePrefix, ')
-          ..write('purchaseStartingNumber: $purchaseStartingNumber, ')
-          ..write('purchaseYearlyReset: $purchaseYearlyReset, ')
-          ..write('purchaseDefaultPaymentDays: $purchaseDefaultPaymentDays, ')
-          ..write('purchaseAdvancePercent: $purchaseAdvancePercent, ')
-          ..write('purchaseDefaultPaymentMode: $purchaseDefaultPaymentMode, ')
-          ..write(
-              'purchaseWeightTolerancePercent: $purchaseWeightTolerancePercent, ')
-          ..write('purchaseDefaultKarat: $purchaseDefaultKarat, ')
-          ..write('purchaseTerms: $purchaseTerms, ')
-          ..write('purchaseAutoPrint: $purchaseAutoPrint, ')
-          ..write('girviPrefix: $girviPrefix, ')
-          ..write('girviStartingNumber: $girviStartingNumber, ')
-          ..write('girviDefaultInterestRate: $girviDefaultInterestRate, ')
-          ..write('girviInterestType: $girviInterestType, ')
-          ..write('girviGracePeriodDays: $girviGracePeriodDays, ')
-          ..write('girviDefaultDuration: $girviDefaultDuration, ')
-          ..write('girviReminderDays: $girviReminderDays, ')
-          ..write('girviNoticeDays: $girviNoticeDays, ')
-          ..write('girviTerms: $girviTerms, ')
-          ..write('girviAutoPrint: $girviAutoPrint, ')
+          ..write('metal: $metal, ')
+          ..write('showPieces: $showPieces, ')
+          ..write('showGrossWeight: $showGrossWeight, ')
+          ..write('showLessWeight: $showLessWeight, ')
+          ..write('showNetWeight: $showNetWeight, ')
+          ..write('showPurity: $showPurity, ')
+          ..write('showRate: $showRate, ')
+          ..write('showMakingCharges: $showMakingCharges, ')
+          ..write('showMakingChargeType: $showMakingChargeType, ')
+          ..write('showStoneDetails: $showStoneDetails, ')
+          ..write('showStoneValue: $showStoneValue, ')
+          ..write('showTotalValue: $showTotalValue, ')
+          ..write('showHuid: $showHuid, ')
+          ..write('showWastage: $showWastage, ')
+          ..write('showOldGoldLine: $showOldGoldLine, ')
+          ..write('showDiamondClarity: $showDiamondClarity, ')
+          ..write('showCertificationNo: $showCertificationNo, ')
+          ..write('showDiamondCarats: $showDiamondCarats, ')
+          ..write('showDiamondPieces: $showDiamondPieces, ')
+          ..write('showMetalWeight: $showMetalWeight, ')
+          ..write('showFineWeight: $showFineWeight, ')
+          ..write('showGstBreakup: $showGstBreakup, ')
+          ..write('showHsnCode: $showHsnCode, ')
           ..write('returnWindowDays: $returnWindowDays, ')
-          ..write('returnHandlingChargePercent: $returnHandlingChargePercent, ')
           ..write('returnMode: $returnMode, ')
-          ..write('returnVoucherPrefix: $returnVoucherPrefix, ')
+          ..write('handlingChargePercent: $handlingChargePercent, ')
           ..write('buybackRatePercent: $buybackRatePercent, ')
           ..write('buybackPurityDeductPercent: $buybackPurityDeductPercent, ')
-          ..write('buybackDefaultKarat: $buybackDefaultKarat, ')
-          ..write('returnTerms: $returnTerms')
+          ..write('termsAndConditions: $termsAndConditions, ')
+          ..write('footerMessage: $footerMessage, ')
+          ..write('selectedTemplate: $selectedTemplate')
           ..write(')'))
         .toString();
   }
@@ -20956,498 +20486,339 @@ class BillingSetting extends DataClass implements Insertable<BillingSetting> {
         id,
         createdAt,
         updatedAt,
-        salesInvoicePrefix,
-        salesStartingNumber,
-        salesYearlyReset,
-        estimatePrefix,
-        estimateValidityDays,
-        salesDefaultPaymentMode,
-        salesUpiId,
-        salesDefaultCreditDays,
-        salesMinAdvancePercent,
-        salesAllowDiscount,
-        salesMaxDiscountPercent,
-        salesRoundingRule,
-        salesShowMakingCharges,
-        salesShowHuid,
-        salesShowOldGoldLine,
-        salesTerms,
-        salesFooterMsg,
-        purchaseInvoicePrefix,
-        purchaseStartingNumber,
-        purchaseYearlyReset,
-        purchaseDefaultPaymentDays,
-        purchaseAdvancePercent,
-        purchaseDefaultPaymentMode,
-        purchaseWeightTolerancePercent,
-        purchaseDefaultKarat,
-        purchaseTerms,
-        purchaseAutoPrint,
-        girviPrefix,
-        girviStartingNumber,
-        girviDefaultInterestRate,
-        girviInterestType,
-        girviGracePeriodDays,
-        girviDefaultDuration,
-        girviReminderDays,
-        girviNoticeDays,
-        girviTerms,
-        girviAutoPrint,
+        metal,
+        showPieces,
+        showGrossWeight,
+        showLessWeight,
+        showNetWeight,
+        showPurity,
+        showRate,
+        showMakingCharges,
+        showMakingChargeType,
+        showStoneDetails,
+        showStoneValue,
+        showTotalValue,
+        showHuid,
+        showWastage,
+        showOldGoldLine,
+        showDiamondClarity,
+        showCertificationNo,
+        showDiamondCarats,
+        showDiamondPieces,
+        showMetalWeight,
+        showFineWeight,
+        showGstBreakup,
+        showHsnCode,
         returnWindowDays,
-        returnHandlingChargePercent,
         returnMode,
-        returnVoucherPrefix,
+        handlingChargePercent,
         buybackRatePercent,
         buybackPurityDeductPercent,
-        buybackDefaultKarat,
-        returnTerms
+        termsAndConditions,
+        footerMessage,
+        selectedTemplate
       ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is BillingSetting &&
+      (other is SalesBillingSetting &&
           other.id == this.id &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
-          other.salesInvoicePrefix == this.salesInvoicePrefix &&
-          other.salesStartingNumber == this.salesStartingNumber &&
-          other.salesYearlyReset == this.salesYearlyReset &&
-          other.estimatePrefix == this.estimatePrefix &&
-          other.estimateValidityDays == this.estimateValidityDays &&
-          other.salesDefaultPaymentMode == this.salesDefaultPaymentMode &&
-          other.salesUpiId == this.salesUpiId &&
-          other.salesDefaultCreditDays == this.salesDefaultCreditDays &&
-          other.salesMinAdvancePercent == this.salesMinAdvancePercent &&
-          other.salesAllowDiscount == this.salesAllowDiscount &&
-          other.salesMaxDiscountPercent == this.salesMaxDiscountPercent &&
-          other.salesRoundingRule == this.salesRoundingRule &&
-          other.salesShowMakingCharges == this.salesShowMakingCharges &&
-          other.salesShowHuid == this.salesShowHuid &&
-          other.salesShowOldGoldLine == this.salesShowOldGoldLine &&
-          other.salesTerms == this.salesTerms &&
-          other.salesFooterMsg == this.salesFooterMsg &&
-          other.purchaseInvoicePrefix == this.purchaseInvoicePrefix &&
-          other.purchaseStartingNumber == this.purchaseStartingNumber &&
-          other.purchaseYearlyReset == this.purchaseYearlyReset &&
-          other.purchaseDefaultPaymentDays == this.purchaseDefaultPaymentDays &&
-          other.purchaseAdvancePercent == this.purchaseAdvancePercent &&
-          other.purchaseDefaultPaymentMode == this.purchaseDefaultPaymentMode &&
-          other.purchaseWeightTolerancePercent ==
-              this.purchaseWeightTolerancePercent &&
-          other.purchaseDefaultKarat == this.purchaseDefaultKarat &&
-          other.purchaseTerms == this.purchaseTerms &&
-          other.purchaseAutoPrint == this.purchaseAutoPrint &&
-          other.girviPrefix == this.girviPrefix &&
-          other.girviStartingNumber == this.girviStartingNumber &&
-          other.girviDefaultInterestRate == this.girviDefaultInterestRate &&
-          other.girviInterestType == this.girviInterestType &&
-          other.girviGracePeriodDays == this.girviGracePeriodDays &&
-          other.girviDefaultDuration == this.girviDefaultDuration &&
-          other.girviReminderDays == this.girviReminderDays &&
-          other.girviNoticeDays == this.girviNoticeDays &&
-          other.girviTerms == this.girviTerms &&
-          other.girviAutoPrint == this.girviAutoPrint &&
+          other.metal == this.metal &&
+          other.showPieces == this.showPieces &&
+          other.showGrossWeight == this.showGrossWeight &&
+          other.showLessWeight == this.showLessWeight &&
+          other.showNetWeight == this.showNetWeight &&
+          other.showPurity == this.showPurity &&
+          other.showRate == this.showRate &&
+          other.showMakingCharges == this.showMakingCharges &&
+          other.showMakingChargeType == this.showMakingChargeType &&
+          other.showStoneDetails == this.showStoneDetails &&
+          other.showStoneValue == this.showStoneValue &&
+          other.showTotalValue == this.showTotalValue &&
+          other.showHuid == this.showHuid &&
+          other.showWastage == this.showWastage &&
+          other.showOldGoldLine == this.showOldGoldLine &&
+          other.showDiamondClarity == this.showDiamondClarity &&
+          other.showCertificationNo == this.showCertificationNo &&
+          other.showDiamondCarats == this.showDiamondCarats &&
+          other.showDiamondPieces == this.showDiamondPieces &&
+          other.showMetalWeight == this.showMetalWeight &&
+          other.showFineWeight == this.showFineWeight &&
+          other.showGstBreakup == this.showGstBreakup &&
+          other.showHsnCode == this.showHsnCode &&
           other.returnWindowDays == this.returnWindowDays &&
-          other.returnHandlingChargePercent ==
-              this.returnHandlingChargePercent &&
           other.returnMode == this.returnMode &&
-          other.returnVoucherPrefix == this.returnVoucherPrefix &&
+          other.handlingChargePercent == this.handlingChargePercent &&
           other.buybackRatePercent == this.buybackRatePercent &&
           other.buybackPurityDeductPercent == this.buybackPurityDeductPercent &&
-          other.buybackDefaultKarat == this.buybackDefaultKarat &&
-          other.returnTerms == this.returnTerms);
+          other.termsAndConditions == this.termsAndConditions &&
+          other.footerMessage == this.footerMessage &&
+          other.selectedTemplate == this.selectedTemplate);
 }
 
-class BillingSettingsCompanion extends UpdateCompanion<BillingSetting> {
+class SalesBillingSettingsCompanion
+    extends UpdateCompanion<SalesBillingSetting> {
   final Value<int> id;
   final Value<DateTime> createdAt;
   final Value<DateTime?> updatedAt;
-  final Value<String> salesInvoicePrefix;
-  final Value<int> salesStartingNumber;
-  final Value<bool> salesYearlyReset;
-  final Value<String> estimatePrefix;
-  final Value<int> estimateValidityDays;
-  final Value<String> salesDefaultPaymentMode;
-  final Value<String> salesUpiId;
-  final Value<int> salesDefaultCreditDays;
-  final Value<int> salesMinAdvancePercent;
-  final Value<bool> salesAllowDiscount;
-  final Value<double> salesMaxDiscountPercent;
-  final Value<String> salesRoundingRule;
-  final Value<bool> salesShowMakingCharges;
-  final Value<bool> salesShowHuid;
-  final Value<bool> salesShowOldGoldLine;
-  final Value<String> salesTerms;
-  final Value<String> salesFooterMsg;
-  final Value<String> purchaseInvoicePrefix;
-  final Value<int> purchaseStartingNumber;
-  final Value<bool> purchaseYearlyReset;
-  final Value<int> purchaseDefaultPaymentDays;
-  final Value<int> purchaseAdvancePercent;
-  final Value<String> purchaseDefaultPaymentMode;
-  final Value<double> purchaseWeightTolerancePercent;
-  final Value<String> purchaseDefaultKarat;
-  final Value<String> purchaseTerms;
-  final Value<bool> purchaseAutoPrint;
-  final Value<String> girviPrefix;
-  final Value<int> girviStartingNumber;
-  final Value<double> girviDefaultInterestRate;
-  final Value<String> girviInterestType;
-  final Value<int> girviGracePeriodDays;
-  final Value<String> girviDefaultDuration;
-  final Value<int> girviReminderDays;
-  final Value<int> girviNoticeDays;
-  final Value<String> girviTerms;
-  final Value<bool> girviAutoPrint;
+  final Value<String> metal;
+  final Value<bool> showPieces;
+  final Value<bool> showGrossWeight;
+  final Value<bool> showLessWeight;
+  final Value<bool> showNetWeight;
+  final Value<bool> showPurity;
+  final Value<bool> showRate;
+  final Value<bool> showMakingCharges;
+  final Value<bool> showMakingChargeType;
+  final Value<bool> showStoneDetails;
+  final Value<bool> showStoneValue;
+  final Value<bool> showTotalValue;
+  final Value<bool> showHuid;
+  final Value<bool> showWastage;
+  final Value<bool> showOldGoldLine;
+  final Value<bool> showDiamondClarity;
+  final Value<bool> showCertificationNo;
+  final Value<bool> showDiamondCarats;
+  final Value<bool> showDiamondPieces;
+  final Value<bool> showMetalWeight;
+  final Value<bool> showFineWeight;
+  final Value<bool> showGstBreakup;
+  final Value<bool> showHsnCode;
   final Value<int> returnWindowDays;
-  final Value<double> returnHandlingChargePercent;
   final Value<String> returnMode;
-  final Value<String> returnVoucherPrefix;
+  final Value<double> handlingChargePercent;
   final Value<double> buybackRatePercent;
   final Value<double> buybackPurityDeductPercent;
-  final Value<String> buybackDefaultKarat;
-  final Value<String> returnTerms;
-  const BillingSettingsCompanion({
+  final Value<String> termsAndConditions;
+  final Value<String> footerMessage;
+  final Value<String> selectedTemplate;
+  const SalesBillingSettingsCompanion({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
-    this.salesInvoicePrefix = const Value.absent(),
-    this.salesStartingNumber = const Value.absent(),
-    this.salesYearlyReset = const Value.absent(),
-    this.estimatePrefix = const Value.absent(),
-    this.estimateValidityDays = const Value.absent(),
-    this.salesDefaultPaymentMode = const Value.absent(),
-    this.salesUpiId = const Value.absent(),
-    this.salesDefaultCreditDays = const Value.absent(),
-    this.salesMinAdvancePercent = const Value.absent(),
-    this.salesAllowDiscount = const Value.absent(),
-    this.salesMaxDiscountPercent = const Value.absent(),
-    this.salesRoundingRule = const Value.absent(),
-    this.salesShowMakingCharges = const Value.absent(),
-    this.salesShowHuid = const Value.absent(),
-    this.salesShowOldGoldLine = const Value.absent(),
-    this.salesTerms = const Value.absent(),
-    this.salesFooterMsg = const Value.absent(),
-    this.purchaseInvoicePrefix = const Value.absent(),
-    this.purchaseStartingNumber = const Value.absent(),
-    this.purchaseYearlyReset = const Value.absent(),
-    this.purchaseDefaultPaymentDays = const Value.absent(),
-    this.purchaseAdvancePercent = const Value.absent(),
-    this.purchaseDefaultPaymentMode = const Value.absent(),
-    this.purchaseWeightTolerancePercent = const Value.absent(),
-    this.purchaseDefaultKarat = const Value.absent(),
-    this.purchaseTerms = const Value.absent(),
-    this.purchaseAutoPrint = const Value.absent(),
-    this.girviPrefix = const Value.absent(),
-    this.girviStartingNumber = const Value.absent(),
-    this.girviDefaultInterestRate = const Value.absent(),
-    this.girviInterestType = const Value.absent(),
-    this.girviGracePeriodDays = const Value.absent(),
-    this.girviDefaultDuration = const Value.absent(),
-    this.girviReminderDays = const Value.absent(),
-    this.girviNoticeDays = const Value.absent(),
-    this.girviTerms = const Value.absent(),
-    this.girviAutoPrint = const Value.absent(),
+    this.metal = const Value.absent(),
+    this.showPieces = const Value.absent(),
+    this.showGrossWeight = const Value.absent(),
+    this.showLessWeight = const Value.absent(),
+    this.showNetWeight = const Value.absent(),
+    this.showPurity = const Value.absent(),
+    this.showRate = const Value.absent(),
+    this.showMakingCharges = const Value.absent(),
+    this.showMakingChargeType = const Value.absent(),
+    this.showStoneDetails = const Value.absent(),
+    this.showStoneValue = const Value.absent(),
+    this.showTotalValue = const Value.absent(),
+    this.showHuid = const Value.absent(),
+    this.showWastage = const Value.absent(),
+    this.showOldGoldLine = const Value.absent(),
+    this.showDiamondClarity = const Value.absent(),
+    this.showCertificationNo = const Value.absent(),
+    this.showDiamondCarats = const Value.absent(),
+    this.showDiamondPieces = const Value.absent(),
+    this.showMetalWeight = const Value.absent(),
+    this.showFineWeight = const Value.absent(),
+    this.showGstBreakup = const Value.absent(),
+    this.showHsnCode = const Value.absent(),
     this.returnWindowDays = const Value.absent(),
-    this.returnHandlingChargePercent = const Value.absent(),
     this.returnMode = const Value.absent(),
-    this.returnVoucherPrefix = const Value.absent(),
+    this.handlingChargePercent = const Value.absent(),
     this.buybackRatePercent = const Value.absent(),
     this.buybackPurityDeductPercent = const Value.absent(),
-    this.buybackDefaultKarat = const Value.absent(),
-    this.returnTerms = const Value.absent(),
+    this.termsAndConditions = const Value.absent(),
+    this.footerMessage = const Value.absent(),
+    this.selectedTemplate = const Value.absent(),
   });
-  BillingSettingsCompanion.insert({
+  SalesBillingSettingsCompanion.insert({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
-    this.salesInvoicePrefix = const Value.absent(),
-    this.salesStartingNumber = const Value.absent(),
-    this.salesYearlyReset = const Value.absent(),
-    this.estimatePrefix = const Value.absent(),
-    this.estimateValidityDays = const Value.absent(),
-    this.salesDefaultPaymentMode = const Value.absent(),
-    this.salesUpiId = const Value.absent(),
-    this.salesDefaultCreditDays = const Value.absent(),
-    this.salesMinAdvancePercent = const Value.absent(),
-    this.salesAllowDiscount = const Value.absent(),
-    this.salesMaxDiscountPercent = const Value.absent(),
-    this.salesRoundingRule = const Value.absent(),
-    this.salesShowMakingCharges = const Value.absent(),
-    this.salesShowHuid = const Value.absent(),
-    this.salesShowOldGoldLine = const Value.absent(),
-    this.salesTerms = const Value.absent(),
-    this.salesFooterMsg = const Value.absent(),
-    this.purchaseInvoicePrefix = const Value.absent(),
-    this.purchaseStartingNumber = const Value.absent(),
-    this.purchaseYearlyReset = const Value.absent(),
-    this.purchaseDefaultPaymentDays = const Value.absent(),
-    this.purchaseAdvancePercent = const Value.absent(),
-    this.purchaseDefaultPaymentMode = const Value.absent(),
-    this.purchaseWeightTolerancePercent = const Value.absent(),
-    this.purchaseDefaultKarat = const Value.absent(),
-    this.purchaseTerms = const Value.absent(),
-    this.purchaseAutoPrint = const Value.absent(),
-    this.girviPrefix = const Value.absent(),
-    this.girviStartingNumber = const Value.absent(),
-    this.girviDefaultInterestRate = const Value.absent(),
-    this.girviInterestType = const Value.absent(),
-    this.girviGracePeriodDays = const Value.absent(),
-    this.girviDefaultDuration = const Value.absent(),
-    this.girviReminderDays = const Value.absent(),
-    this.girviNoticeDays = const Value.absent(),
-    this.girviTerms = const Value.absent(),
-    this.girviAutoPrint = const Value.absent(),
+    required String metal,
+    this.showPieces = const Value.absent(),
+    this.showGrossWeight = const Value.absent(),
+    this.showLessWeight = const Value.absent(),
+    this.showNetWeight = const Value.absent(),
+    this.showPurity = const Value.absent(),
+    this.showRate = const Value.absent(),
+    this.showMakingCharges = const Value.absent(),
+    this.showMakingChargeType = const Value.absent(),
+    this.showStoneDetails = const Value.absent(),
+    this.showStoneValue = const Value.absent(),
+    this.showTotalValue = const Value.absent(),
+    this.showHuid = const Value.absent(),
+    this.showWastage = const Value.absent(),
+    this.showOldGoldLine = const Value.absent(),
+    this.showDiamondClarity = const Value.absent(),
+    this.showCertificationNo = const Value.absent(),
+    this.showDiamondCarats = const Value.absent(),
+    this.showDiamondPieces = const Value.absent(),
+    this.showMetalWeight = const Value.absent(),
+    this.showFineWeight = const Value.absent(),
+    this.showGstBreakup = const Value.absent(),
+    this.showHsnCode = const Value.absent(),
     this.returnWindowDays = const Value.absent(),
-    this.returnHandlingChargePercent = const Value.absent(),
     this.returnMode = const Value.absent(),
-    this.returnVoucherPrefix = const Value.absent(),
+    this.handlingChargePercent = const Value.absent(),
     this.buybackRatePercent = const Value.absent(),
     this.buybackPurityDeductPercent = const Value.absent(),
-    this.buybackDefaultKarat = const Value.absent(),
-    this.returnTerms = const Value.absent(),
-  });
-  static Insertable<BillingSetting> custom({
+    this.termsAndConditions = const Value.absent(),
+    this.footerMessage = const Value.absent(),
+    this.selectedTemplate = const Value.absent(),
+  }) : metal = Value(metal);
+  static Insertable<SalesBillingSetting> custom({
     Expression<int>? id,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
-    Expression<String>? salesInvoicePrefix,
-    Expression<int>? salesStartingNumber,
-    Expression<bool>? salesYearlyReset,
-    Expression<String>? estimatePrefix,
-    Expression<int>? estimateValidityDays,
-    Expression<String>? salesDefaultPaymentMode,
-    Expression<String>? salesUpiId,
-    Expression<int>? salesDefaultCreditDays,
-    Expression<int>? salesMinAdvancePercent,
-    Expression<bool>? salesAllowDiscount,
-    Expression<double>? salesMaxDiscountPercent,
-    Expression<String>? salesRoundingRule,
-    Expression<bool>? salesShowMakingCharges,
-    Expression<bool>? salesShowHuid,
-    Expression<bool>? salesShowOldGoldLine,
-    Expression<String>? salesTerms,
-    Expression<String>? salesFooterMsg,
-    Expression<String>? purchaseInvoicePrefix,
-    Expression<int>? purchaseStartingNumber,
-    Expression<bool>? purchaseYearlyReset,
-    Expression<int>? purchaseDefaultPaymentDays,
-    Expression<int>? purchaseAdvancePercent,
-    Expression<String>? purchaseDefaultPaymentMode,
-    Expression<double>? purchaseWeightTolerancePercent,
-    Expression<String>? purchaseDefaultKarat,
-    Expression<String>? purchaseTerms,
-    Expression<bool>? purchaseAutoPrint,
-    Expression<String>? girviPrefix,
-    Expression<int>? girviStartingNumber,
-    Expression<double>? girviDefaultInterestRate,
-    Expression<String>? girviInterestType,
-    Expression<int>? girviGracePeriodDays,
-    Expression<String>? girviDefaultDuration,
-    Expression<int>? girviReminderDays,
-    Expression<int>? girviNoticeDays,
-    Expression<String>? girviTerms,
-    Expression<bool>? girviAutoPrint,
+    Expression<String>? metal,
+    Expression<bool>? showPieces,
+    Expression<bool>? showGrossWeight,
+    Expression<bool>? showLessWeight,
+    Expression<bool>? showNetWeight,
+    Expression<bool>? showPurity,
+    Expression<bool>? showRate,
+    Expression<bool>? showMakingCharges,
+    Expression<bool>? showMakingChargeType,
+    Expression<bool>? showStoneDetails,
+    Expression<bool>? showStoneValue,
+    Expression<bool>? showTotalValue,
+    Expression<bool>? showHuid,
+    Expression<bool>? showWastage,
+    Expression<bool>? showOldGoldLine,
+    Expression<bool>? showDiamondClarity,
+    Expression<bool>? showCertificationNo,
+    Expression<bool>? showDiamondCarats,
+    Expression<bool>? showDiamondPieces,
+    Expression<bool>? showMetalWeight,
+    Expression<bool>? showFineWeight,
+    Expression<bool>? showGstBreakup,
+    Expression<bool>? showHsnCode,
     Expression<int>? returnWindowDays,
-    Expression<double>? returnHandlingChargePercent,
     Expression<String>? returnMode,
-    Expression<String>? returnVoucherPrefix,
+    Expression<double>? handlingChargePercent,
     Expression<double>? buybackRatePercent,
     Expression<double>? buybackPurityDeductPercent,
-    Expression<String>? buybackDefaultKarat,
-    Expression<String>? returnTerms,
+    Expression<String>? termsAndConditions,
+    Expression<String>? footerMessage,
+    Expression<String>? selectedTemplate,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
-      if (salesInvoicePrefix != null)
-        'sales_invoice_prefix': salesInvoicePrefix,
-      if (salesStartingNumber != null)
-        'sales_starting_number': salesStartingNumber,
-      if (salesYearlyReset != null) 'sales_yearly_reset': salesYearlyReset,
-      if (estimatePrefix != null) 'estimate_prefix': estimatePrefix,
-      if (estimateValidityDays != null)
-        'estimate_validity_days': estimateValidityDays,
-      if (salesDefaultPaymentMode != null)
-        'sales_default_payment_mode': salesDefaultPaymentMode,
-      if (salesUpiId != null) 'sales_upi_id': salesUpiId,
-      if (salesDefaultCreditDays != null)
-        'sales_default_credit_days': salesDefaultCreditDays,
-      if (salesMinAdvancePercent != null)
-        'sales_min_advance_percent': salesMinAdvancePercent,
-      if (salesAllowDiscount != null)
-        'sales_allow_discount': salesAllowDiscount,
-      if (salesMaxDiscountPercent != null)
-        'sales_max_discount_percent': salesMaxDiscountPercent,
-      if (salesRoundingRule != null) 'sales_rounding_rule': salesRoundingRule,
-      if (salesShowMakingCharges != null)
-        'sales_show_making_charges': salesShowMakingCharges,
-      if (salesShowHuid != null) 'sales_show_huid': salesShowHuid,
-      if (salesShowOldGoldLine != null)
-        'sales_show_old_gold_line': salesShowOldGoldLine,
-      if (salesTerms != null) 'sales_terms': salesTerms,
-      if (salesFooterMsg != null) 'sales_footer_msg': salesFooterMsg,
-      if (purchaseInvoicePrefix != null)
-        'purchase_invoice_prefix': purchaseInvoicePrefix,
-      if (purchaseStartingNumber != null)
-        'purchase_starting_number': purchaseStartingNumber,
-      if (purchaseYearlyReset != null)
-        'purchase_yearly_reset': purchaseYearlyReset,
-      if (purchaseDefaultPaymentDays != null)
-        'purchase_default_payment_days': purchaseDefaultPaymentDays,
-      if (purchaseAdvancePercent != null)
-        'purchase_advance_percent': purchaseAdvancePercent,
-      if (purchaseDefaultPaymentMode != null)
-        'purchase_default_payment_mode': purchaseDefaultPaymentMode,
-      if (purchaseWeightTolerancePercent != null)
-        'purchase_weight_tolerance_percent': purchaseWeightTolerancePercent,
-      if (purchaseDefaultKarat != null)
-        'purchase_default_karat': purchaseDefaultKarat,
-      if (purchaseTerms != null) 'purchase_terms': purchaseTerms,
-      if (purchaseAutoPrint != null) 'purchase_auto_print': purchaseAutoPrint,
-      if (girviPrefix != null) 'girvi_prefix': girviPrefix,
-      if (girviStartingNumber != null)
-        'girvi_starting_number': girviStartingNumber,
-      if (girviDefaultInterestRate != null)
-        'girvi_default_interest_rate': girviDefaultInterestRate,
-      if (girviInterestType != null) 'girvi_interest_type': girviInterestType,
-      if (girviGracePeriodDays != null)
-        'girvi_grace_period_days': girviGracePeriodDays,
-      if (girviDefaultDuration != null)
-        'girvi_default_duration': girviDefaultDuration,
-      if (girviReminderDays != null) 'girvi_reminder_days': girviReminderDays,
-      if (girviNoticeDays != null) 'girvi_notice_days': girviNoticeDays,
-      if (girviTerms != null) 'girvi_terms': girviTerms,
-      if (girviAutoPrint != null) 'girvi_auto_print': girviAutoPrint,
+      if (metal != null) 'metal': metal,
+      if (showPieces != null) 'show_pieces': showPieces,
+      if (showGrossWeight != null) 'show_gross_weight': showGrossWeight,
+      if (showLessWeight != null) 'show_less_weight': showLessWeight,
+      if (showNetWeight != null) 'show_net_weight': showNetWeight,
+      if (showPurity != null) 'show_purity': showPurity,
+      if (showRate != null) 'show_rate': showRate,
+      if (showMakingCharges != null) 'show_making_charges': showMakingCharges,
+      if (showMakingChargeType != null)
+        'show_making_charge_type': showMakingChargeType,
+      if (showStoneDetails != null) 'show_stone_details': showStoneDetails,
+      if (showStoneValue != null) 'show_stone_value': showStoneValue,
+      if (showTotalValue != null) 'show_total_value': showTotalValue,
+      if (showHuid != null) 'show_huid': showHuid,
+      if (showWastage != null) 'show_wastage': showWastage,
+      if (showOldGoldLine != null) 'show_old_gold_line': showOldGoldLine,
+      if (showDiamondClarity != null)
+        'show_diamond_clarity': showDiamondClarity,
+      if (showCertificationNo != null)
+        'show_certification_no': showCertificationNo,
+      if (showDiamondCarats != null) 'show_diamond_carats': showDiamondCarats,
+      if (showDiamondPieces != null) 'show_diamond_pieces': showDiamondPieces,
+      if (showMetalWeight != null) 'show_metal_weight': showMetalWeight,
+      if (showFineWeight != null) 'show_fine_weight': showFineWeight,
+      if (showGstBreakup != null) 'show_gst_breakup': showGstBreakup,
+      if (showHsnCode != null) 'show_hsn_code': showHsnCode,
       if (returnWindowDays != null) 'return_window_days': returnWindowDays,
-      if (returnHandlingChargePercent != null)
-        'return_handling_charge_percent': returnHandlingChargePercent,
       if (returnMode != null) 'return_mode': returnMode,
-      if (returnVoucherPrefix != null)
-        'return_voucher_prefix': returnVoucherPrefix,
+      if (handlingChargePercent != null)
+        'handling_charge_percent': handlingChargePercent,
       if (buybackRatePercent != null)
         'buyback_rate_percent': buybackRatePercent,
       if (buybackPurityDeductPercent != null)
         'buyback_purity_deduct_percent': buybackPurityDeductPercent,
-      if (buybackDefaultKarat != null)
-        'buyback_default_karat': buybackDefaultKarat,
-      if (returnTerms != null) 'return_terms': returnTerms,
+      if (termsAndConditions != null)
+        'terms_and_conditions': termsAndConditions,
+      if (footerMessage != null) 'footer_message': footerMessage,
+      if (selectedTemplate != null) 'selected_template': selectedTemplate,
     });
   }
 
-  BillingSettingsCompanion copyWith(
+  SalesBillingSettingsCompanion copyWith(
       {Value<int>? id,
       Value<DateTime>? createdAt,
       Value<DateTime?>? updatedAt,
-      Value<String>? salesInvoicePrefix,
-      Value<int>? salesStartingNumber,
-      Value<bool>? salesYearlyReset,
-      Value<String>? estimatePrefix,
-      Value<int>? estimateValidityDays,
-      Value<String>? salesDefaultPaymentMode,
-      Value<String>? salesUpiId,
-      Value<int>? salesDefaultCreditDays,
-      Value<int>? salesMinAdvancePercent,
-      Value<bool>? salesAllowDiscount,
-      Value<double>? salesMaxDiscountPercent,
-      Value<String>? salesRoundingRule,
-      Value<bool>? salesShowMakingCharges,
-      Value<bool>? salesShowHuid,
-      Value<bool>? salesShowOldGoldLine,
-      Value<String>? salesTerms,
-      Value<String>? salesFooterMsg,
-      Value<String>? purchaseInvoicePrefix,
-      Value<int>? purchaseStartingNumber,
-      Value<bool>? purchaseYearlyReset,
-      Value<int>? purchaseDefaultPaymentDays,
-      Value<int>? purchaseAdvancePercent,
-      Value<String>? purchaseDefaultPaymentMode,
-      Value<double>? purchaseWeightTolerancePercent,
-      Value<String>? purchaseDefaultKarat,
-      Value<String>? purchaseTerms,
-      Value<bool>? purchaseAutoPrint,
-      Value<String>? girviPrefix,
-      Value<int>? girviStartingNumber,
-      Value<double>? girviDefaultInterestRate,
-      Value<String>? girviInterestType,
-      Value<int>? girviGracePeriodDays,
-      Value<String>? girviDefaultDuration,
-      Value<int>? girviReminderDays,
-      Value<int>? girviNoticeDays,
-      Value<String>? girviTerms,
-      Value<bool>? girviAutoPrint,
+      Value<String>? metal,
+      Value<bool>? showPieces,
+      Value<bool>? showGrossWeight,
+      Value<bool>? showLessWeight,
+      Value<bool>? showNetWeight,
+      Value<bool>? showPurity,
+      Value<bool>? showRate,
+      Value<bool>? showMakingCharges,
+      Value<bool>? showMakingChargeType,
+      Value<bool>? showStoneDetails,
+      Value<bool>? showStoneValue,
+      Value<bool>? showTotalValue,
+      Value<bool>? showHuid,
+      Value<bool>? showWastage,
+      Value<bool>? showOldGoldLine,
+      Value<bool>? showDiamondClarity,
+      Value<bool>? showCertificationNo,
+      Value<bool>? showDiamondCarats,
+      Value<bool>? showDiamondPieces,
+      Value<bool>? showMetalWeight,
+      Value<bool>? showFineWeight,
+      Value<bool>? showGstBreakup,
+      Value<bool>? showHsnCode,
       Value<int>? returnWindowDays,
-      Value<double>? returnHandlingChargePercent,
       Value<String>? returnMode,
-      Value<String>? returnVoucherPrefix,
+      Value<double>? handlingChargePercent,
       Value<double>? buybackRatePercent,
       Value<double>? buybackPurityDeductPercent,
-      Value<String>? buybackDefaultKarat,
-      Value<String>? returnTerms}) {
-    return BillingSettingsCompanion(
+      Value<String>? termsAndConditions,
+      Value<String>? footerMessage,
+      Value<String>? selectedTemplate}) {
+    return SalesBillingSettingsCompanion(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      salesInvoicePrefix: salesInvoicePrefix ?? this.salesInvoicePrefix,
-      salesStartingNumber: salesStartingNumber ?? this.salesStartingNumber,
-      salesYearlyReset: salesYearlyReset ?? this.salesYearlyReset,
-      estimatePrefix: estimatePrefix ?? this.estimatePrefix,
-      estimateValidityDays: estimateValidityDays ?? this.estimateValidityDays,
-      salesDefaultPaymentMode:
-          salesDefaultPaymentMode ?? this.salesDefaultPaymentMode,
-      salesUpiId: salesUpiId ?? this.salesUpiId,
-      salesDefaultCreditDays:
-          salesDefaultCreditDays ?? this.salesDefaultCreditDays,
-      salesMinAdvancePercent:
-          salesMinAdvancePercent ?? this.salesMinAdvancePercent,
-      salesAllowDiscount: salesAllowDiscount ?? this.salesAllowDiscount,
-      salesMaxDiscountPercent:
-          salesMaxDiscountPercent ?? this.salesMaxDiscountPercent,
-      salesRoundingRule: salesRoundingRule ?? this.salesRoundingRule,
-      salesShowMakingCharges:
-          salesShowMakingCharges ?? this.salesShowMakingCharges,
-      salesShowHuid: salesShowHuid ?? this.salesShowHuid,
-      salesShowOldGoldLine: salesShowOldGoldLine ?? this.salesShowOldGoldLine,
-      salesTerms: salesTerms ?? this.salesTerms,
-      salesFooterMsg: salesFooterMsg ?? this.salesFooterMsg,
-      purchaseInvoicePrefix:
-          purchaseInvoicePrefix ?? this.purchaseInvoicePrefix,
-      purchaseStartingNumber:
-          purchaseStartingNumber ?? this.purchaseStartingNumber,
-      purchaseYearlyReset: purchaseYearlyReset ?? this.purchaseYearlyReset,
-      purchaseDefaultPaymentDays:
-          purchaseDefaultPaymentDays ?? this.purchaseDefaultPaymentDays,
-      purchaseAdvancePercent:
-          purchaseAdvancePercent ?? this.purchaseAdvancePercent,
-      purchaseDefaultPaymentMode:
-          purchaseDefaultPaymentMode ?? this.purchaseDefaultPaymentMode,
-      purchaseWeightTolerancePercent:
-          purchaseWeightTolerancePercent ?? this.purchaseWeightTolerancePercent,
-      purchaseDefaultKarat: purchaseDefaultKarat ?? this.purchaseDefaultKarat,
-      purchaseTerms: purchaseTerms ?? this.purchaseTerms,
-      purchaseAutoPrint: purchaseAutoPrint ?? this.purchaseAutoPrint,
-      girviPrefix: girviPrefix ?? this.girviPrefix,
-      girviStartingNumber: girviStartingNumber ?? this.girviStartingNumber,
-      girviDefaultInterestRate:
-          girviDefaultInterestRate ?? this.girviDefaultInterestRate,
-      girviInterestType: girviInterestType ?? this.girviInterestType,
-      girviGracePeriodDays: girviGracePeriodDays ?? this.girviGracePeriodDays,
-      girviDefaultDuration: girviDefaultDuration ?? this.girviDefaultDuration,
-      girviReminderDays: girviReminderDays ?? this.girviReminderDays,
-      girviNoticeDays: girviNoticeDays ?? this.girviNoticeDays,
-      girviTerms: girviTerms ?? this.girviTerms,
-      girviAutoPrint: girviAutoPrint ?? this.girviAutoPrint,
+      metal: metal ?? this.metal,
+      showPieces: showPieces ?? this.showPieces,
+      showGrossWeight: showGrossWeight ?? this.showGrossWeight,
+      showLessWeight: showLessWeight ?? this.showLessWeight,
+      showNetWeight: showNetWeight ?? this.showNetWeight,
+      showPurity: showPurity ?? this.showPurity,
+      showRate: showRate ?? this.showRate,
+      showMakingCharges: showMakingCharges ?? this.showMakingCharges,
+      showMakingChargeType: showMakingChargeType ?? this.showMakingChargeType,
+      showStoneDetails: showStoneDetails ?? this.showStoneDetails,
+      showStoneValue: showStoneValue ?? this.showStoneValue,
+      showTotalValue: showTotalValue ?? this.showTotalValue,
+      showHuid: showHuid ?? this.showHuid,
+      showWastage: showWastage ?? this.showWastage,
+      showOldGoldLine: showOldGoldLine ?? this.showOldGoldLine,
+      showDiamondClarity: showDiamondClarity ?? this.showDiamondClarity,
+      showCertificationNo: showCertificationNo ?? this.showCertificationNo,
+      showDiamondCarats: showDiamondCarats ?? this.showDiamondCarats,
+      showDiamondPieces: showDiamondPieces ?? this.showDiamondPieces,
+      showMetalWeight: showMetalWeight ?? this.showMetalWeight,
+      showFineWeight: showFineWeight ?? this.showFineWeight,
+      showGstBreakup: showGstBreakup ?? this.showGstBreakup,
+      showHsnCode: showHsnCode ?? this.showHsnCode,
       returnWindowDays: returnWindowDays ?? this.returnWindowDays,
-      returnHandlingChargePercent:
-          returnHandlingChargePercent ?? this.returnHandlingChargePercent,
       returnMode: returnMode ?? this.returnMode,
-      returnVoucherPrefix: returnVoucherPrefix ?? this.returnVoucherPrefix,
+      handlingChargePercent:
+          handlingChargePercent ?? this.handlingChargePercent,
       buybackRatePercent: buybackRatePercent ?? this.buybackRatePercent,
       buybackPurityDeductPercent:
           buybackPurityDeductPercent ?? this.buybackPurityDeductPercent,
-      buybackDefaultKarat: buybackDefaultKarat ?? this.buybackDefaultKarat,
-      returnTerms: returnTerms ?? this.returnTerms,
+      termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+      footerMessage: footerMessage ?? this.footerMessage,
+      selectedTemplate: selectedTemplate ?? this.selectedTemplate,
     );
   }
 
@@ -21463,146 +20834,85 @@ class BillingSettingsCompanion extends UpdateCompanion<BillingSetting> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
-    if (salesInvoicePrefix.present) {
-      map['sales_invoice_prefix'] = Variable<String>(salesInvoicePrefix.value);
+    if (metal.present) {
+      map['metal'] = Variable<String>(metal.value);
     }
-    if (salesStartingNumber.present) {
-      map['sales_starting_number'] = Variable<int>(salesStartingNumber.value);
+    if (showPieces.present) {
+      map['show_pieces'] = Variable<bool>(showPieces.value);
     }
-    if (salesYearlyReset.present) {
-      map['sales_yearly_reset'] = Variable<bool>(salesYearlyReset.value);
+    if (showGrossWeight.present) {
+      map['show_gross_weight'] = Variable<bool>(showGrossWeight.value);
     }
-    if (estimatePrefix.present) {
-      map['estimate_prefix'] = Variable<String>(estimatePrefix.value);
+    if (showLessWeight.present) {
+      map['show_less_weight'] = Variable<bool>(showLessWeight.value);
     }
-    if (estimateValidityDays.present) {
-      map['estimate_validity_days'] = Variable<int>(estimateValidityDays.value);
+    if (showNetWeight.present) {
+      map['show_net_weight'] = Variable<bool>(showNetWeight.value);
     }
-    if (salesDefaultPaymentMode.present) {
-      map['sales_default_payment_mode'] =
-          Variable<String>(salesDefaultPaymentMode.value);
+    if (showPurity.present) {
+      map['show_purity'] = Variable<bool>(showPurity.value);
     }
-    if (salesUpiId.present) {
-      map['sales_upi_id'] = Variable<String>(salesUpiId.value);
+    if (showRate.present) {
+      map['show_rate'] = Variable<bool>(showRate.value);
     }
-    if (salesDefaultCreditDays.present) {
-      map['sales_default_credit_days'] =
-          Variable<int>(salesDefaultCreditDays.value);
+    if (showMakingCharges.present) {
+      map['show_making_charges'] = Variable<bool>(showMakingCharges.value);
     }
-    if (salesMinAdvancePercent.present) {
-      map['sales_min_advance_percent'] =
-          Variable<int>(salesMinAdvancePercent.value);
+    if (showMakingChargeType.present) {
+      map['show_making_charge_type'] =
+          Variable<bool>(showMakingChargeType.value);
     }
-    if (salesAllowDiscount.present) {
-      map['sales_allow_discount'] = Variable<bool>(salesAllowDiscount.value);
+    if (showStoneDetails.present) {
+      map['show_stone_details'] = Variable<bool>(showStoneDetails.value);
     }
-    if (salesMaxDiscountPercent.present) {
-      map['sales_max_discount_percent'] =
-          Variable<double>(salesMaxDiscountPercent.value);
+    if (showStoneValue.present) {
+      map['show_stone_value'] = Variable<bool>(showStoneValue.value);
     }
-    if (salesRoundingRule.present) {
-      map['sales_rounding_rule'] = Variable<String>(salesRoundingRule.value);
+    if (showTotalValue.present) {
+      map['show_total_value'] = Variable<bool>(showTotalValue.value);
     }
-    if (salesShowMakingCharges.present) {
-      map['sales_show_making_charges'] =
-          Variable<bool>(salesShowMakingCharges.value);
+    if (showHuid.present) {
+      map['show_huid'] = Variable<bool>(showHuid.value);
     }
-    if (salesShowHuid.present) {
-      map['sales_show_huid'] = Variable<bool>(salesShowHuid.value);
+    if (showWastage.present) {
+      map['show_wastage'] = Variable<bool>(showWastage.value);
     }
-    if (salesShowOldGoldLine.present) {
-      map['sales_show_old_gold_line'] =
-          Variable<bool>(salesShowOldGoldLine.value);
+    if (showOldGoldLine.present) {
+      map['show_old_gold_line'] = Variable<bool>(showOldGoldLine.value);
     }
-    if (salesTerms.present) {
-      map['sales_terms'] = Variable<String>(salesTerms.value);
+    if (showDiamondClarity.present) {
+      map['show_diamond_clarity'] = Variable<bool>(showDiamondClarity.value);
     }
-    if (salesFooterMsg.present) {
-      map['sales_footer_msg'] = Variable<String>(salesFooterMsg.value);
+    if (showCertificationNo.present) {
+      map['show_certification_no'] = Variable<bool>(showCertificationNo.value);
     }
-    if (purchaseInvoicePrefix.present) {
-      map['purchase_invoice_prefix'] =
-          Variable<String>(purchaseInvoicePrefix.value);
+    if (showDiamondCarats.present) {
+      map['show_diamond_carats'] = Variable<bool>(showDiamondCarats.value);
     }
-    if (purchaseStartingNumber.present) {
-      map['purchase_starting_number'] =
-          Variable<int>(purchaseStartingNumber.value);
+    if (showDiamondPieces.present) {
+      map['show_diamond_pieces'] = Variable<bool>(showDiamondPieces.value);
     }
-    if (purchaseYearlyReset.present) {
-      map['purchase_yearly_reset'] = Variable<bool>(purchaseYearlyReset.value);
+    if (showMetalWeight.present) {
+      map['show_metal_weight'] = Variable<bool>(showMetalWeight.value);
     }
-    if (purchaseDefaultPaymentDays.present) {
-      map['purchase_default_payment_days'] =
-          Variable<int>(purchaseDefaultPaymentDays.value);
+    if (showFineWeight.present) {
+      map['show_fine_weight'] = Variable<bool>(showFineWeight.value);
     }
-    if (purchaseAdvancePercent.present) {
-      map['purchase_advance_percent'] =
-          Variable<int>(purchaseAdvancePercent.value);
+    if (showGstBreakup.present) {
+      map['show_gst_breakup'] = Variable<bool>(showGstBreakup.value);
     }
-    if (purchaseDefaultPaymentMode.present) {
-      map['purchase_default_payment_mode'] =
-          Variable<String>(purchaseDefaultPaymentMode.value);
-    }
-    if (purchaseWeightTolerancePercent.present) {
-      map['purchase_weight_tolerance_percent'] =
-          Variable<double>(purchaseWeightTolerancePercent.value);
-    }
-    if (purchaseDefaultKarat.present) {
-      map['purchase_default_karat'] =
-          Variable<String>(purchaseDefaultKarat.value);
-    }
-    if (purchaseTerms.present) {
-      map['purchase_terms'] = Variable<String>(purchaseTerms.value);
-    }
-    if (purchaseAutoPrint.present) {
-      map['purchase_auto_print'] = Variable<bool>(purchaseAutoPrint.value);
-    }
-    if (girviPrefix.present) {
-      map['girvi_prefix'] = Variable<String>(girviPrefix.value);
-    }
-    if (girviStartingNumber.present) {
-      map['girvi_starting_number'] = Variable<int>(girviStartingNumber.value);
-    }
-    if (girviDefaultInterestRate.present) {
-      map['girvi_default_interest_rate'] =
-          Variable<double>(girviDefaultInterestRate.value);
-    }
-    if (girviInterestType.present) {
-      map['girvi_interest_type'] = Variable<String>(girviInterestType.value);
-    }
-    if (girviGracePeriodDays.present) {
-      map['girvi_grace_period_days'] =
-          Variable<int>(girviGracePeriodDays.value);
-    }
-    if (girviDefaultDuration.present) {
-      map['girvi_default_duration'] =
-          Variable<String>(girviDefaultDuration.value);
-    }
-    if (girviReminderDays.present) {
-      map['girvi_reminder_days'] = Variable<int>(girviReminderDays.value);
-    }
-    if (girviNoticeDays.present) {
-      map['girvi_notice_days'] = Variable<int>(girviNoticeDays.value);
-    }
-    if (girviTerms.present) {
-      map['girvi_terms'] = Variable<String>(girviTerms.value);
-    }
-    if (girviAutoPrint.present) {
-      map['girvi_auto_print'] = Variable<bool>(girviAutoPrint.value);
+    if (showHsnCode.present) {
+      map['show_hsn_code'] = Variable<bool>(showHsnCode.value);
     }
     if (returnWindowDays.present) {
       map['return_window_days'] = Variable<int>(returnWindowDays.value);
     }
-    if (returnHandlingChargePercent.present) {
-      map['return_handling_charge_percent'] =
-          Variable<double>(returnHandlingChargePercent.value);
-    }
     if (returnMode.present) {
       map['return_mode'] = Variable<String>(returnMode.value);
     }
-    if (returnVoucherPrefix.present) {
-      map['return_voucher_prefix'] =
-          Variable<String>(returnVoucherPrefix.value);
+    if (handlingChargePercent.present) {
+      map['handling_charge_percent'] =
+          Variable<double>(handlingChargePercent.value);
     }
     if (buybackRatePercent.present) {
       map['buyback_rate_percent'] = Variable<double>(buybackRatePercent.value);
@@ -21611,68 +20921,1331 @@ class BillingSettingsCompanion extends UpdateCompanion<BillingSetting> {
       map['buyback_purity_deduct_percent'] =
           Variable<double>(buybackPurityDeductPercent.value);
     }
-    if (buybackDefaultKarat.present) {
-      map['buyback_default_karat'] =
-          Variable<String>(buybackDefaultKarat.value);
+    if (termsAndConditions.present) {
+      map['terms_and_conditions'] = Variable<String>(termsAndConditions.value);
     }
-    if (returnTerms.present) {
-      map['return_terms'] = Variable<String>(returnTerms.value);
+    if (footerMessage.present) {
+      map['footer_message'] = Variable<String>(footerMessage.value);
+    }
+    if (selectedTemplate.present) {
+      map['selected_template'] = Variable<String>(selectedTemplate.value);
     }
     return map;
   }
 
   @override
   String toString() {
-    return (StringBuffer('BillingSettingsCompanion(')
+    return (StringBuffer('SalesBillingSettingsCompanion(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('salesInvoicePrefix: $salesInvoicePrefix, ')
-          ..write('salesStartingNumber: $salesStartingNumber, ')
-          ..write('salesYearlyReset: $salesYearlyReset, ')
-          ..write('estimatePrefix: $estimatePrefix, ')
-          ..write('estimateValidityDays: $estimateValidityDays, ')
-          ..write('salesDefaultPaymentMode: $salesDefaultPaymentMode, ')
-          ..write('salesUpiId: $salesUpiId, ')
-          ..write('salesDefaultCreditDays: $salesDefaultCreditDays, ')
-          ..write('salesMinAdvancePercent: $salesMinAdvancePercent, ')
-          ..write('salesAllowDiscount: $salesAllowDiscount, ')
-          ..write('salesMaxDiscountPercent: $salesMaxDiscountPercent, ')
-          ..write('salesRoundingRule: $salesRoundingRule, ')
-          ..write('salesShowMakingCharges: $salesShowMakingCharges, ')
-          ..write('salesShowHuid: $salesShowHuid, ')
-          ..write('salesShowOldGoldLine: $salesShowOldGoldLine, ')
-          ..write('salesTerms: $salesTerms, ')
-          ..write('salesFooterMsg: $salesFooterMsg, ')
-          ..write('purchaseInvoicePrefix: $purchaseInvoicePrefix, ')
-          ..write('purchaseStartingNumber: $purchaseStartingNumber, ')
-          ..write('purchaseYearlyReset: $purchaseYearlyReset, ')
-          ..write('purchaseDefaultPaymentDays: $purchaseDefaultPaymentDays, ')
-          ..write('purchaseAdvancePercent: $purchaseAdvancePercent, ')
-          ..write('purchaseDefaultPaymentMode: $purchaseDefaultPaymentMode, ')
-          ..write(
-              'purchaseWeightTolerancePercent: $purchaseWeightTolerancePercent, ')
-          ..write('purchaseDefaultKarat: $purchaseDefaultKarat, ')
-          ..write('purchaseTerms: $purchaseTerms, ')
-          ..write('purchaseAutoPrint: $purchaseAutoPrint, ')
-          ..write('girviPrefix: $girviPrefix, ')
-          ..write('girviStartingNumber: $girviStartingNumber, ')
-          ..write('girviDefaultInterestRate: $girviDefaultInterestRate, ')
-          ..write('girviInterestType: $girviInterestType, ')
-          ..write('girviGracePeriodDays: $girviGracePeriodDays, ')
-          ..write('girviDefaultDuration: $girviDefaultDuration, ')
-          ..write('girviReminderDays: $girviReminderDays, ')
-          ..write('girviNoticeDays: $girviNoticeDays, ')
-          ..write('girviTerms: $girviTerms, ')
-          ..write('girviAutoPrint: $girviAutoPrint, ')
+          ..write('metal: $metal, ')
+          ..write('showPieces: $showPieces, ')
+          ..write('showGrossWeight: $showGrossWeight, ')
+          ..write('showLessWeight: $showLessWeight, ')
+          ..write('showNetWeight: $showNetWeight, ')
+          ..write('showPurity: $showPurity, ')
+          ..write('showRate: $showRate, ')
+          ..write('showMakingCharges: $showMakingCharges, ')
+          ..write('showMakingChargeType: $showMakingChargeType, ')
+          ..write('showStoneDetails: $showStoneDetails, ')
+          ..write('showStoneValue: $showStoneValue, ')
+          ..write('showTotalValue: $showTotalValue, ')
+          ..write('showHuid: $showHuid, ')
+          ..write('showWastage: $showWastage, ')
+          ..write('showOldGoldLine: $showOldGoldLine, ')
+          ..write('showDiamondClarity: $showDiamondClarity, ')
+          ..write('showCertificationNo: $showCertificationNo, ')
+          ..write('showDiamondCarats: $showDiamondCarats, ')
+          ..write('showDiamondPieces: $showDiamondPieces, ')
+          ..write('showMetalWeight: $showMetalWeight, ')
+          ..write('showFineWeight: $showFineWeight, ')
+          ..write('showGstBreakup: $showGstBreakup, ')
+          ..write('showHsnCode: $showHsnCode, ')
           ..write('returnWindowDays: $returnWindowDays, ')
-          ..write('returnHandlingChargePercent: $returnHandlingChargePercent, ')
           ..write('returnMode: $returnMode, ')
-          ..write('returnVoucherPrefix: $returnVoucherPrefix, ')
+          ..write('handlingChargePercent: $handlingChargePercent, ')
           ..write('buybackRatePercent: $buybackRatePercent, ')
           ..write('buybackPurityDeductPercent: $buybackPurityDeductPercent, ')
-          ..write('buybackDefaultKarat: $buybackDefaultKarat, ')
-          ..write('returnTerms: $returnTerms')
+          ..write('termsAndConditions: $termsAndConditions, ')
+          ..write('footerMessage: $footerMessage, ')
+          ..write('selectedTemplate: $selectedTemplate')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PurchaseBillingSettingsTable extends PurchaseBillingSettings
+    with TableInfo<$PurchaseBillingSettingsTable, PurchaseBillingSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PurchaseBillingSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _metalMeta = const VerificationMeta('metal');
+  @override
+  late final GeneratedColumn<String> metal = GeneratedColumn<String>(
+      'metal', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _showGrossWeightMeta =
+      const VerificationMeta('showGrossWeight');
+  @override
+  late final GeneratedColumn<bool> showGrossWeight = GeneratedColumn<bool>(
+      'show_gross_weight', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_gross_weight" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showLessWeightMeta =
+      const VerificationMeta('showLessWeight');
+  @override
+  late final GeneratedColumn<bool> showLessWeight = GeneratedColumn<bool>(
+      'show_less_weight', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_less_weight" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showNetWeightMeta =
+      const VerificationMeta('showNetWeight');
+  @override
+  late final GeneratedColumn<bool> showNetWeight = GeneratedColumn<bool>(
+      'show_net_weight', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_net_weight" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showPurityMeta =
+      const VerificationMeta('showPurity');
+  @override
+  late final GeneratedColumn<bool> showPurity = GeneratedColumn<bool>(
+      'show_purity', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("show_purity" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showRateMeta =
+      const VerificationMeta('showRate');
+  @override
+  late final GeneratedColumn<bool> showRate = GeneratedColumn<bool>(
+      'show_rate', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("show_rate" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showFineWeightMeta =
+      const VerificationMeta('showFineWeight');
+  @override
+  late final GeneratedColumn<bool> showFineWeight = GeneratedColumn<bool>(
+      'show_fine_weight', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_fine_weight" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showTotalValueMeta =
+      const VerificationMeta('showTotalValue');
+  @override
+  late final GeneratedColumn<bool> showTotalValue = GeneratedColumn<bool>(
+      'show_total_value', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_total_value" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showStoneDetailsMeta =
+      const VerificationMeta('showStoneDetails');
+  @override
+  late final GeneratedColumn<bool> showStoneDetails = GeneratedColumn<bool>(
+      'show_stone_details', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_stone_details" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _showStoneValueMeta =
+      const VerificationMeta('showStoneValue');
+  @override
+  late final GeneratedColumn<bool> showStoneValue = GeneratedColumn<bool>(
+      'show_stone_value', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_stone_value" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _showHuidMeta =
+      const VerificationMeta('showHuid');
+  @override
+  late final GeneratedColumn<bool> showHuid = GeneratedColumn<bool>(
+      'show_huid', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("show_huid" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _showSupplierDetailsMeta =
+      const VerificationMeta('showSupplierDetails');
+  @override
+  late final GeneratedColumn<bool> showSupplierDetails = GeneratedColumn<bool>(
+      'show_supplier_details', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_supplier_details" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showPanNumberMeta =
+      const VerificationMeta('showPanNumber');
+  @override
+  late final GeneratedColumn<bool> showPanNumber = GeneratedColumn<bool>(
+      'show_pan_number', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_pan_number" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showDiamondCaratsMeta =
+      const VerificationMeta('showDiamondCarats');
+  @override
+  late final GeneratedColumn<bool> showDiamondCarats = GeneratedColumn<bool>(
+      'show_diamond_carats', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_diamond_carats" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showDiamondClarityMeta =
+      const VerificationMeta('showDiamondClarity');
+  @override
+  late final GeneratedColumn<bool> showDiamondClarity = GeneratedColumn<bool>(
+      'show_diamond_clarity', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_diamond_clarity" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showCertificationNoMeta =
+      const VerificationMeta('showCertificationNo');
+  @override
+  late final GeneratedColumn<bool> showCertificationNo = GeneratedColumn<bool>(
+      'show_certification_no', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_certification_no" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _showGstBreakupMeta =
+      const VerificationMeta('showGstBreakup');
+  @override
+  late final GeneratedColumn<bool> showGstBreakup = GeneratedColumn<bool>(
+      'show_gst_breakup', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_gst_breakup" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _showHsnCodeMeta =
+      const VerificationMeta('showHsnCode');
+  @override
+  late final GeneratedColumn<bool> showHsnCode = GeneratedColumn<bool>(
+      'show_hsn_code', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_hsn_code" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _returnWindowDaysMeta =
+      const VerificationMeta('returnWindowDays');
+  @override
+  late final GeneratedColumn<int> returnWindowDays = GeneratedColumn<int>(
+      'return_window_days', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(3));
+  static const VerificationMeta _returnModeMeta =
+      const VerificationMeta('returnMode');
+  @override
+  late final GeneratedColumn<String> returnMode = GeneratedColumn<String>(
+      'return_mode', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('Credit Note'));
+  static const VerificationMeta _purityDeductPercentMeta =
+      const VerificationMeta('purityDeductPercent');
+  @override
+  late final GeneratedColumn<double> purityDeductPercent =
+      GeneratedColumn<double>('purity_deduct_percent', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(2.0));
+  static const VerificationMeta _termsAndConditionsMeta =
+      const VerificationMeta('termsAndConditions');
+  @override
+  late final GeneratedColumn<String> termsAndConditions = GeneratedColumn<
+          String>('terms_and_conditions', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('Quality will be checked on delivery.\n'
+          'Short delivery or defective goods must be reported within 24 hours.\n'
+          'Payment as per agreed terms only.'));
+  static const VerificationMeta _footerMessageMeta =
+      const VerificationMeta('footerMessage');
+  @override
+  late final GeneratedColumn<String> footerMessage = GeneratedColumn<String>(
+      'footer_message', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(''));
+  static const VerificationMeta _selectedTemplateMeta =
+      const VerificationMeta('selectedTemplate');
+  @override
+  late final GeneratedColumn<String> selectedTemplate = GeneratedColumn<String>(
+      'selected_template', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('default'));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        metal,
+        showGrossWeight,
+        showLessWeight,
+        showNetWeight,
+        showPurity,
+        showRate,
+        showFineWeight,
+        showTotalValue,
+        showStoneDetails,
+        showStoneValue,
+        showHuid,
+        showSupplierDetails,
+        showPanNumber,
+        showDiamondCarats,
+        showDiamondClarity,
+        showCertificationNo,
+        showGstBreakup,
+        showHsnCode,
+        returnWindowDays,
+        returnMode,
+        purityDeductPercent,
+        termsAndConditions,
+        footerMessage,
+        selectedTemplate
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'purchase_billing_settings';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<PurchaseBillingSetting> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('metal')) {
+      context.handle(
+          _metalMeta, metal.isAcceptableOrUnknown(data['metal']!, _metalMeta));
+    } else if (isInserting) {
+      context.missing(_metalMeta);
+    }
+    if (data.containsKey('show_gross_weight')) {
+      context.handle(
+          _showGrossWeightMeta,
+          showGrossWeight.isAcceptableOrUnknown(
+              data['show_gross_weight']!, _showGrossWeightMeta));
+    }
+    if (data.containsKey('show_less_weight')) {
+      context.handle(
+          _showLessWeightMeta,
+          showLessWeight.isAcceptableOrUnknown(
+              data['show_less_weight']!, _showLessWeightMeta));
+    }
+    if (data.containsKey('show_net_weight')) {
+      context.handle(
+          _showNetWeightMeta,
+          showNetWeight.isAcceptableOrUnknown(
+              data['show_net_weight']!, _showNetWeightMeta));
+    }
+    if (data.containsKey('show_purity')) {
+      context.handle(
+          _showPurityMeta,
+          showPurity.isAcceptableOrUnknown(
+              data['show_purity']!, _showPurityMeta));
+    }
+    if (data.containsKey('show_rate')) {
+      context.handle(_showRateMeta,
+          showRate.isAcceptableOrUnknown(data['show_rate']!, _showRateMeta));
+    }
+    if (data.containsKey('show_fine_weight')) {
+      context.handle(
+          _showFineWeightMeta,
+          showFineWeight.isAcceptableOrUnknown(
+              data['show_fine_weight']!, _showFineWeightMeta));
+    }
+    if (data.containsKey('show_total_value')) {
+      context.handle(
+          _showTotalValueMeta,
+          showTotalValue.isAcceptableOrUnknown(
+              data['show_total_value']!, _showTotalValueMeta));
+    }
+    if (data.containsKey('show_stone_details')) {
+      context.handle(
+          _showStoneDetailsMeta,
+          showStoneDetails.isAcceptableOrUnknown(
+              data['show_stone_details']!, _showStoneDetailsMeta));
+    }
+    if (data.containsKey('show_stone_value')) {
+      context.handle(
+          _showStoneValueMeta,
+          showStoneValue.isAcceptableOrUnknown(
+              data['show_stone_value']!, _showStoneValueMeta));
+    }
+    if (data.containsKey('show_huid')) {
+      context.handle(_showHuidMeta,
+          showHuid.isAcceptableOrUnknown(data['show_huid']!, _showHuidMeta));
+    }
+    if (data.containsKey('show_supplier_details')) {
+      context.handle(
+          _showSupplierDetailsMeta,
+          showSupplierDetails.isAcceptableOrUnknown(
+              data['show_supplier_details']!, _showSupplierDetailsMeta));
+    }
+    if (data.containsKey('show_pan_number')) {
+      context.handle(
+          _showPanNumberMeta,
+          showPanNumber.isAcceptableOrUnknown(
+              data['show_pan_number']!, _showPanNumberMeta));
+    }
+    if (data.containsKey('show_diamond_carats')) {
+      context.handle(
+          _showDiamondCaratsMeta,
+          showDiamondCarats.isAcceptableOrUnknown(
+              data['show_diamond_carats']!, _showDiamondCaratsMeta));
+    }
+    if (data.containsKey('show_diamond_clarity')) {
+      context.handle(
+          _showDiamondClarityMeta,
+          showDiamondClarity.isAcceptableOrUnknown(
+              data['show_diamond_clarity']!, _showDiamondClarityMeta));
+    }
+    if (data.containsKey('show_certification_no')) {
+      context.handle(
+          _showCertificationNoMeta,
+          showCertificationNo.isAcceptableOrUnknown(
+              data['show_certification_no']!, _showCertificationNoMeta));
+    }
+    if (data.containsKey('show_gst_breakup')) {
+      context.handle(
+          _showGstBreakupMeta,
+          showGstBreakup.isAcceptableOrUnknown(
+              data['show_gst_breakup']!, _showGstBreakupMeta));
+    }
+    if (data.containsKey('show_hsn_code')) {
+      context.handle(
+          _showHsnCodeMeta,
+          showHsnCode.isAcceptableOrUnknown(
+              data['show_hsn_code']!, _showHsnCodeMeta));
+    }
+    if (data.containsKey('return_window_days')) {
+      context.handle(
+          _returnWindowDaysMeta,
+          returnWindowDays.isAcceptableOrUnknown(
+              data['return_window_days']!, _returnWindowDaysMeta));
+    }
+    if (data.containsKey('return_mode')) {
+      context.handle(
+          _returnModeMeta,
+          returnMode.isAcceptableOrUnknown(
+              data['return_mode']!, _returnModeMeta));
+    }
+    if (data.containsKey('purity_deduct_percent')) {
+      context.handle(
+          _purityDeductPercentMeta,
+          purityDeductPercent.isAcceptableOrUnknown(
+              data['purity_deduct_percent']!, _purityDeductPercentMeta));
+    }
+    if (data.containsKey('terms_and_conditions')) {
+      context.handle(
+          _termsAndConditionsMeta,
+          termsAndConditions.isAcceptableOrUnknown(
+              data['terms_and_conditions']!, _termsAndConditionsMeta));
+    }
+    if (data.containsKey('footer_message')) {
+      context.handle(
+          _footerMessageMeta,
+          footerMessage.isAcceptableOrUnknown(
+              data['footer_message']!, _footerMessageMeta));
+    }
+    if (data.containsKey('selected_template')) {
+      context.handle(
+          _selectedTemplateMeta,
+          selectedTemplate.isAcceptableOrUnknown(
+              data['selected_template']!, _selectedTemplateMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PurchaseBillingSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PurchaseBillingSetting(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      metal: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}metal'])!,
+      showGrossWeight: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}show_gross_weight'])!,
+      showLessWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_less_weight'])!,
+      showNetWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_net_weight'])!,
+      showPurity: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_purity'])!,
+      showRate: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_rate'])!,
+      showFineWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_fine_weight'])!,
+      showTotalValue: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_total_value'])!,
+      showStoneDetails: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}show_stone_details'])!,
+      showStoneValue: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_stone_value'])!,
+      showHuid: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_huid'])!,
+      showSupplierDetails: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}show_supplier_details'])!,
+      showPanNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_pan_number'])!,
+      showDiamondCarats: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}show_diamond_carats'])!,
+      showDiamondClarity: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}show_diamond_clarity'])!,
+      showCertificationNo: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}show_certification_no'])!,
+      showGstBreakup: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_gst_breakup'])!,
+      showHsnCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}show_hsn_code'])!,
+      returnWindowDays: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}return_window_days'])!,
+      returnMode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}return_mode'])!,
+      purityDeductPercent: attachedDatabase.typeMapping.read(
+          DriftSqlType.double,
+          data['${effectivePrefix}purity_deduct_percent'])!,
+      termsAndConditions: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}terms_and_conditions'])!,
+      footerMessage: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}footer_message'])!,
+      selectedTemplate: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}selected_template'])!,
+    );
+  }
+
+  @override
+  $PurchaseBillingSettingsTable createAlias(String alias) {
+    return $PurchaseBillingSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class PurchaseBillingSetting extends DataClass
+    implements Insertable<PurchaseBillingSetting> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final String metal;
+  final bool showGrossWeight;
+  final bool showLessWeight;
+  final bool showNetWeight;
+  final bool showPurity;
+  final bool showRate;
+  final bool showFineWeight;
+  final bool showTotalValue;
+  final bool showStoneDetails;
+  final bool showStoneValue;
+  final bool showHuid;
+  final bool showSupplierDetails;
+  final bool showPanNumber;
+  final bool showDiamondCarats;
+  final bool showDiamondClarity;
+  final bool showCertificationNo;
+  final bool showGstBreakup;
+  final bool showHsnCode;
+  final int returnWindowDays;
+  final String returnMode;
+  final double purityDeductPercent;
+  final String termsAndConditions;
+  final String footerMessage;
+  final String selectedTemplate;
+  const PurchaseBillingSetting(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.metal,
+      required this.showGrossWeight,
+      required this.showLessWeight,
+      required this.showNetWeight,
+      required this.showPurity,
+      required this.showRate,
+      required this.showFineWeight,
+      required this.showTotalValue,
+      required this.showStoneDetails,
+      required this.showStoneValue,
+      required this.showHuid,
+      required this.showSupplierDetails,
+      required this.showPanNumber,
+      required this.showDiamondCarats,
+      required this.showDiamondClarity,
+      required this.showCertificationNo,
+      required this.showGstBreakup,
+      required this.showHsnCode,
+      required this.returnWindowDays,
+      required this.returnMode,
+      required this.purityDeductPercent,
+      required this.termsAndConditions,
+      required this.footerMessage,
+      required this.selectedTemplate});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['metal'] = Variable<String>(metal);
+    map['show_gross_weight'] = Variable<bool>(showGrossWeight);
+    map['show_less_weight'] = Variable<bool>(showLessWeight);
+    map['show_net_weight'] = Variable<bool>(showNetWeight);
+    map['show_purity'] = Variable<bool>(showPurity);
+    map['show_rate'] = Variable<bool>(showRate);
+    map['show_fine_weight'] = Variable<bool>(showFineWeight);
+    map['show_total_value'] = Variable<bool>(showTotalValue);
+    map['show_stone_details'] = Variable<bool>(showStoneDetails);
+    map['show_stone_value'] = Variable<bool>(showStoneValue);
+    map['show_huid'] = Variable<bool>(showHuid);
+    map['show_supplier_details'] = Variable<bool>(showSupplierDetails);
+    map['show_pan_number'] = Variable<bool>(showPanNumber);
+    map['show_diamond_carats'] = Variable<bool>(showDiamondCarats);
+    map['show_diamond_clarity'] = Variable<bool>(showDiamondClarity);
+    map['show_certification_no'] = Variable<bool>(showCertificationNo);
+    map['show_gst_breakup'] = Variable<bool>(showGstBreakup);
+    map['show_hsn_code'] = Variable<bool>(showHsnCode);
+    map['return_window_days'] = Variable<int>(returnWindowDays);
+    map['return_mode'] = Variable<String>(returnMode);
+    map['purity_deduct_percent'] = Variable<double>(purityDeductPercent);
+    map['terms_and_conditions'] = Variable<String>(termsAndConditions);
+    map['footer_message'] = Variable<String>(footerMessage);
+    map['selected_template'] = Variable<String>(selectedTemplate);
+    return map;
+  }
+
+  PurchaseBillingSettingsCompanion toCompanion(bool nullToAbsent) {
+    return PurchaseBillingSettingsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      metal: Value(metal),
+      showGrossWeight: Value(showGrossWeight),
+      showLessWeight: Value(showLessWeight),
+      showNetWeight: Value(showNetWeight),
+      showPurity: Value(showPurity),
+      showRate: Value(showRate),
+      showFineWeight: Value(showFineWeight),
+      showTotalValue: Value(showTotalValue),
+      showStoneDetails: Value(showStoneDetails),
+      showStoneValue: Value(showStoneValue),
+      showHuid: Value(showHuid),
+      showSupplierDetails: Value(showSupplierDetails),
+      showPanNumber: Value(showPanNumber),
+      showDiamondCarats: Value(showDiamondCarats),
+      showDiamondClarity: Value(showDiamondClarity),
+      showCertificationNo: Value(showCertificationNo),
+      showGstBreakup: Value(showGstBreakup),
+      showHsnCode: Value(showHsnCode),
+      returnWindowDays: Value(returnWindowDays),
+      returnMode: Value(returnMode),
+      purityDeductPercent: Value(purityDeductPercent),
+      termsAndConditions: Value(termsAndConditions),
+      footerMessage: Value(footerMessage),
+      selectedTemplate: Value(selectedTemplate),
+    );
+  }
+
+  factory PurchaseBillingSetting.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PurchaseBillingSetting(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      metal: serializer.fromJson<String>(json['metal']),
+      showGrossWeight: serializer.fromJson<bool>(json['showGrossWeight']),
+      showLessWeight: serializer.fromJson<bool>(json['showLessWeight']),
+      showNetWeight: serializer.fromJson<bool>(json['showNetWeight']),
+      showPurity: serializer.fromJson<bool>(json['showPurity']),
+      showRate: serializer.fromJson<bool>(json['showRate']),
+      showFineWeight: serializer.fromJson<bool>(json['showFineWeight']),
+      showTotalValue: serializer.fromJson<bool>(json['showTotalValue']),
+      showStoneDetails: serializer.fromJson<bool>(json['showStoneDetails']),
+      showStoneValue: serializer.fromJson<bool>(json['showStoneValue']),
+      showHuid: serializer.fromJson<bool>(json['showHuid']),
+      showSupplierDetails:
+          serializer.fromJson<bool>(json['showSupplierDetails']),
+      showPanNumber: serializer.fromJson<bool>(json['showPanNumber']),
+      showDiamondCarats: serializer.fromJson<bool>(json['showDiamondCarats']),
+      showDiamondClarity: serializer.fromJson<bool>(json['showDiamondClarity']),
+      showCertificationNo:
+          serializer.fromJson<bool>(json['showCertificationNo']),
+      showGstBreakup: serializer.fromJson<bool>(json['showGstBreakup']),
+      showHsnCode: serializer.fromJson<bool>(json['showHsnCode']),
+      returnWindowDays: serializer.fromJson<int>(json['returnWindowDays']),
+      returnMode: serializer.fromJson<String>(json['returnMode']),
+      purityDeductPercent:
+          serializer.fromJson<double>(json['purityDeductPercent']),
+      termsAndConditions:
+          serializer.fromJson<String>(json['termsAndConditions']),
+      footerMessage: serializer.fromJson<String>(json['footerMessage']),
+      selectedTemplate: serializer.fromJson<String>(json['selectedTemplate']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'metal': serializer.toJson<String>(metal),
+      'showGrossWeight': serializer.toJson<bool>(showGrossWeight),
+      'showLessWeight': serializer.toJson<bool>(showLessWeight),
+      'showNetWeight': serializer.toJson<bool>(showNetWeight),
+      'showPurity': serializer.toJson<bool>(showPurity),
+      'showRate': serializer.toJson<bool>(showRate),
+      'showFineWeight': serializer.toJson<bool>(showFineWeight),
+      'showTotalValue': serializer.toJson<bool>(showTotalValue),
+      'showStoneDetails': serializer.toJson<bool>(showStoneDetails),
+      'showStoneValue': serializer.toJson<bool>(showStoneValue),
+      'showHuid': serializer.toJson<bool>(showHuid),
+      'showSupplierDetails': serializer.toJson<bool>(showSupplierDetails),
+      'showPanNumber': serializer.toJson<bool>(showPanNumber),
+      'showDiamondCarats': serializer.toJson<bool>(showDiamondCarats),
+      'showDiamondClarity': serializer.toJson<bool>(showDiamondClarity),
+      'showCertificationNo': serializer.toJson<bool>(showCertificationNo),
+      'showGstBreakup': serializer.toJson<bool>(showGstBreakup),
+      'showHsnCode': serializer.toJson<bool>(showHsnCode),
+      'returnWindowDays': serializer.toJson<int>(returnWindowDays),
+      'returnMode': serializer.toJson<String>(returnMode),
+      'purityDeductPercent': serializer.toJson<double>(purityDeductPercent),
+      'termsAndConditions': serializer.toJson<String>(termsAndConditions),
+      'footerMessage': serializer.toJson<String>(footerMessage),
+      'selectedTemplate': serializer.toJson<String>(selectedTemplate),
+    };
+  }
+
+  PurchaseBillingSetting copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          String? metal,
+          bool? showGrossWeight,
+          bool? showLessWeight,
+          bool? showNetWeight,
+          bool? showPurity,
+          bool? showRate,
+          bool? showFineWeight,
+          bool? showTotalValue,
+          bool? showStoneDetails,
+          bool? showStoneValue,
+          bool? showHuid,
+          bool? showSupplierDetails,
+          bool? showPanNumber,
+          bool? showDiamondCarats,
+          bool? showDiamondClarity,
+          bool? showCertificationNo,
+          bool? showGstBreakup,
+          bool? showHsnCode,
+          int? returnWindowDays,
+          String? returnMode,
+          double? purityDeductPercent,
+          String? termsAndConditions,
+          String? footerMessage,
+          String? selectedTemplate}) =>
+      PurchaseBillingSetting(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        metal: metal ?? this.metal,
+        showGrossWeight: showGrossWeight ?? this.showGrossWeight,
+        showLessWeight: showLessWeight ?? this.showLessWeight,
+        showNetWeight: showNetWeight ?? this.showNetWeight,
+        showPurity: showPurity ?? this.showPurity,
+        showRate: showRate ?? this.showRate,
+        showFineWeight: showFineWeight ?? this.showFineWeight,
+        showTotalValue: showTotalValue ?? this.showTotalValue,
+        showStoneDetails: showStoneDetails ?? this.showStoneDetails,
+        showStoneValue: showStoneValue ?? this.showStoneValue,
+        showHuid: showHuid ?? this.showHuid,
+        showSupplierDetails: showSupplierDetails ?? this.showSupplierDetails,
+        showPanNumber: showPanNumber ?? this.showPanNumber,
+        showDiamondCarats: showDiamondCarats ?? this.showDiamondCarats,
+        showDiamondClarity: showDiamondClarity ?? this.showDiamondClarity,
+        showCertificationNo: showCertificationNo ?? this.showCertificationNo,
+        showGstBreakup: showGstBreakup ?? this.showGstBreakup,
+        showHsnCode: showHsnCode ?? this.showHsnCode,
+        returnWindowDays: returnWindowDays ?? this.returnWindowDays,
+        returnMode: returnMode ?? this.returnMode,
+        purityDeductPercent: purityDeductPercent ?? this.purityDeductPercent,
+        termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+        footerMessage: footerMessage ?? this.footerMessage,
+        selectedTemplate: selectedTemplate ?? this.selectedTemplate,
+      );
+  PurchaseBillingSetting copyWithCompanion(
+      PurchaseBillingSettingsCompanion data) {
+    return PurchaseBillingSetting(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      metal: data.metal.present ? data.metal.value : this.metal,
+      showGrossWeight: data.showGrossWeight.present
+          ? data.showGrossWeight.value
+          : this.showGrossWeight,
+      showLessWeight: data.showLessWeight.present
+          ? data.showLessWeight.value
+          : this.showLessWeight,
+      showNetWeight: data.showNetWeight.present
+          ? data.showNetWeight.value
+          : this.showNetWeight,
+      showPurity:
+          data.showPurity.present ? data.showPurity.value : this.showPurity,
+      showRate: data.showRate.present ? data.showRate.value : this.showRate,
+      showFineWeight: data.showFineWeight.present
+          ? data.showFineWeight.value
+          : this.showFineWeight,
+      showTotalValue: data.showTotalValue.present
+          ? data.showTotalValue.value
+          : this.showTotalValue,
+      showStoneDetails: data.showStoneDetails.present
+          ? data.showStoneDetails.value
+          : this.showStoneDetails,
+      showStoneValue: data.showStoneValue.present
+          ? data.showStoneValue.value
+          : this.showStoneValue,
+      showHuid: data.showHuid.present ? data.showHuid.value : this.showHuid,
+      showSupplierDetails: data.showSupplierDetails.present
+          ? data.showSupplierDetails.value
+          : this.showSupplierDetails,
+      showPanNumber: data.showPanNumber.present
+          ? data.showPanNumber.value
+          : this.showPanNumber,
+      showDiamondCarats: data.showDiamondCarats.present
+          ? data.showDiamondCarats.value
+          : this.showDiamondCarats,
+      showDiamondClarity: data.showDiamondClarity.present
+          ? data.showDiamondClarity.value
+          : this.showDiamondClarity,
+      showCertificationNo: data.showCertificationNo.present
+          ? data.showCertificationNo.value
+          : this.showCertificationNo,
+      showGstBreakup: data.showGstBreakup.present
+          ? data.showGstBreakup.value
+          : this.showGstBreakup,
+      showHsnCode:
+          data.showHsnCode.present ? data.showHsnCode.value : this.showHsnCode,
+      returnWindowDays: data.returnWindowDays.present
+          ? data.returnWindowDays.value
+          : this.returnWindowDays,
+      returnMode:
+          data.returnMode.present ? data.returnMode.value : this.returnMode,
+      purityDeductPercent: data.purityDeductPercent.present
+          ? data.purityDeductPercent.value
+          : this.purityDeductPercent,
+      termsAndConditions: data.termsAndConditions.present
+          ? data.termsAndConditions.value
+          : this.termsAndConditions,
+      footerMessage: data.footerMessage.present
+          ? data.footerMessage.value
+          : this.footerMessage,
+      selectedTemplate: data.selectedTemplate.present
+          ? data.selectedTemplate.value
+          : this.selectedTemplate,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PurchaseBillingSetting(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('metal: $metal, ')
+          ..write('showGrossWeight: $showGrossWeight, ')
+          ..write('showLessWeight: $showLessWeight, ')
+          ..write('showNetWeight: $showNetWeight, ')
+          ..write('showPurity: $showPurity, ')
+          ..write('showRate: $showRate, ')
+          ..write('showFineWeight: $showFineWeight, ')
+          ..write('showTotalValue: $showTotalValue, ')
+          ..write('showStoneDetails: $showStoneDetails, ')
+          ..write('showStoneValue: $showStoneValue, ')
+          ..write('showHuid: $showHuid, ')
+          ..write('showSupplierDetails: $showSupplierDetails, ')
+          ..write('showPanNumber: $showPanNumber, ')
+          ..write('showDiamondCarats: $showDiamondCarats, ')
+          ..write('showDiamondClarity: $showDiamondClarity, ')
+          ..write('showCertificationNo: $showCertificationNo, ')
+          ..write('showGstBreakup: $showGstBreakup, ')
+          ..write('showHsnCode: $showHsnCode, ')
+          ..write('returnWindowDays: $returnWindowDays, ')
+          ..write('returnMode: $returnMode, ')
+          ..write('purityDeductPercent: $purityDeductPercent, ')
+          ..write('termsAndConditions: $termsAndConditions, ')
+          ..write('footerMessage: $footerMessage, ')
+          ..write('selectedTemplate: $selectedTemplate')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+        id,
+        createdAt,
+        updatedAt,
+        metal,
+        showGrossWeight,
+        showLessWeight,
+        showNetWeight,
+        showPurity,
+        showRate,
+        showFineWeight,
+        showTotalValue,
+        showStoneDetails,
+        showStoneValue,
+        showHuid,
+        showSupplierDetails,
+        showPanNumber,
+        showDiamondCarats,
+        showDiamondClarity,
+        showCertificationNo,
+        showGstBreakup,
+        showHsnCode,
+        returnWindowDays,
+        returnMode,
+        purityDeductPercent,
+        termsAndConditions,
+        footerMessage,
+        selectedTemplate
+      ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PurchaseBillingSetting &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.metal == this.metal &&
+          other.showGrossWeight == this.showGrossWeight &&
+          other.showLessWeight == this.showLessWeight &&
+          other.showNetWeight == this.showNetWeight &&
+          other.showPurity == this.showPurity &&
+          other.showRate == this.showRate &&
+          other.showFineWeight == this.showFineWeight &&
+          other.showTotalValue == this.showTotalValue &&
+          other.showStoneDetails == this.showStoneDetails &&
+          other.showStoneValue == this.showStoneValue &&
+          other.showHuid == this.showHuid &&
+          other.showSupplierDetails == this.showSupplierDetails &&
+          other.showPanNumber == this.showPanNumber &&
+          other.showDiamondCarats == this.showDiamondCarats &&
+          other.showDiamondClarity == this.showDiamondClarity &&
+          other.showCertificationNo == this.showCertificationNo &&
+          other.showGstBreakup == this.showGstBreakup &&
+          other.showHsnCode == this.showHsnCode &&
+          other.returnWindowDays == this.returnWindowDays &&
+          other.returnMode == this.returnMode &&
+          other.purityDeductPercent == this.purityDeductPercent &&
+          other.termsAndConditions == this.termsAndConditions &&
+          other.footerMessage == this.footerMessage &&
+          other.selectedTemplate == this.selectedTemplate);
+}
+
+class PurchaseBillingSettingsCompanion
+    extends UpdateCompanion<PurchaseBillingSetting> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<String> metal;
+  final Value<bool> showGrossWeight;
+  final Value<bool> showLessWeight;
+  final Value<bool> showNetWeight;
+  final Value<bool> showPurity;
+  final Value<bool> showRate;
+  final Value<bool> showFineWeight;
+  final Value<bool> showTotalValue;
+  final Value<bool> showStoneDetails;
+  final Value<bool> showStoneValue;
+  final Value<bool> showHuid;
+  final Value<bool> showSupplierDetails;
+  final Value<bool> showPanNumber;
+  final Value<bool> showDiamondCarats;
+  final Value<bool> showDiamondClarity;
+  final Value<bool> showCertificationNo;
+  final Value<bool> showGstBreakup;
+  final Value<bool> showHsnCode;
+  final Value<int> returnWindowDays;
+  final Value<String> returnMode;
+  final Value<double> purityDeductPercent;
+  final Value<String> termsAndConditions;
+  final Value<String> footerMessage;
+  final Value<String> selectedTemplate;
+  const PurchaseBillingSettingsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.metal = const Value.absent(),
+    this.showGrossWeight = const Value.absent(),
+    this.showLessWeight = const Value.absent(),
+    this.showNetWeight = const Value.absent(),
+    this.showPurity = const Value.absent(),
+    this.showRate = const Value.absent(),
+    this.showFineWeight = const Value.absent(),
+    this.showTotalValue = const Value.absent(),
+    this.showStoneDetails = const Value.absent(),
+    this.showStoneValue = const Value.absent(),
+    this.showHuid = const Value.absent(),
+    this.showSupplierDetails = const Value.absent(),
+    this.showPanNumber = const Value.absent(),
+    this.showDiamondCarats = const Value.absent(),
+    this.showDiamondClarity = const Value.absent(),
+    this.showCertificationNo = const Value.absent(),
+    this.showGstBreakup = const Value.absent(),
+    this.showHsnCode = const Value.absent(),
+    this.returnWindowDays = const Value.absent(),
+    this.returnMode = const Value.absent(),
+    this.purityDeductPercent = const Value.absent(),
+    this.termsAndConditions = const Value.absent(),
+    this.footerMessage = const Value.absent(),
+    this.selectedTemplate = const Value.absent(),
+  });
+  PurchaseBillingSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required String metal,
+    this.showGrossWeight = const Value.absent(),
+    this.showLessWeight = const Value.absent(),
+    this.showNetWeight = const Value.absent(),
+    this.showPurity = const Value.absent(),
+    this.showRate = const Value.absent(),
+    this.showFineWeight = const Value.absent(),
+    this.showTotalValue = const Value.absent(),
+    this.showStoneDetails = const Value.absent(),
+    this.showStoneValue = const Value.absent(),
+    this.showHuid = const Value.absent(),
+    this.showSupplierDetails = const Value.absent(),
+    this.showPanNumber = const Value.absent(),
+    this.showDiamondCarats = const Value.absent(),
+    this.showDiamondClarity = const Value.absent(),
+    this.showCertificationNo = const Value.absent(),
+    this.showGstBreakup = const Value.absent(),
+    this.showHsnCode = const Value.absent(),
+    this.returnWindowDays = const Value.absent(),
+    this.returnMode = const Value.absent(),
+    this.purityDeductPercent = const Value.absent(),
+    this.termsAndConditions = const Value.absent(),
+    this.footerMessage = const Value.absent(),
+    this.selectedTemplate = const Value.absent(),
+  }) : metal = Value(metal);
+  static Insertable<PurchaseBillingSetting> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? metal,
+    Expression<bool>? showGrossWeight,
+    Expression<bool>? showLessWeight,
+    Expression<bool>? showNetWeight,
+    Expression<bool>? showPurity,
+    Expression<bool>? showRate,
+    Expression<bool>? showFineWeight,
+    Expression<bool>? showTotalValue,
+    Expression<bool>? showStoneDetails,
+    Expression<bool>? showStoneValue,
+    Expression<bool>? showHuid,
+    Expression<bool>? showSupplierDetails,
+    Expression<bool>? showPanNumber,
+    Expression<bool>? showDiamondCarats,
+    Expression<bool>? showDiamondClarity,
+    Expression<bool>? showCertificationNo,
+    Expression<bool>? showGstBreakup,
+    Expression<bool>? showHsnCode,
+    Expression<int>? returnWindowDays,
+    Expression<String>? returnMode,
+    Expression<double>? purityDeductPercent,
+    Expression<String>? termsAndConditions,
+    Expression<String>? footerMessage,
+    Expression<String>? selectedTemplate,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (metal != null) 'metal': metal,
+      if (showGrossWeight != null) 'show_gross_weight': showGrossWeight,
+      if (showLessWeight != null) 'show_less_weight': showLessWeight,
+      if (showNetWeight != null) 'show_net_weight': showNetWeight,
+      if (showPurity != null) 'show_purity': showPurity,
+      if (showRate != null) 'show_rate': showRate,
+      if (showFineWeight != null) 'show_fine_weight': showFineWeight,
+      if (showTotalValue != null) 'show_total_value': showTotalValue,
+      if (showStoneDetails != null) 'show_stone_details': showStoneDetails,
+      if (showStoneValue != null) 'show_stone_value': showStoneValue,
+      if (showHuid != null) 'show_huid': showHuid,
+      if (showSupplierDetails != null)
+        'show_supplier_details': showSupplierDetails,
+      if (showPanNumber != null) 'show_pan_number': showPanNumber,
+      if (showDiamondCarats != null) 'show_diamond_carats': showDiamondCarats,
+      if (showDiamondClarity != null)
+        'show_diamond_clarity': showDiamondClarity,
+      if (showCertificationNo != null)
+        'show_certification_no': showCertificationNo,
+      if (showGstBreakup != null) 'show_gst_breakup': showGstBreakup,
+      if (showHsnCode != null) 'show_hsn_code': showHsnCode,
+      if (returnWindowDays != null) 'return_window_days': returnWindowDays,
+      if (returnMode != null) 'return_mode': returnMode,
+      if (purityDeductPercent != null)
+        'purity_deduct_percent': purityDeductPercent,
+      if (termsAndConditions != null)
+        'terms_and_conditions': termsAndConditions,
+      if (footerMessage != null) 'footer_message': footerMessage,
+      if (selectedTemplate != null) 'selected_template': selectedTemplate,
+    });
+  }
+
+  PurchaseBillingSettingsCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<String>? metal,
+      Value<bool>? showGrossWeight,
+      Value<bool>? showLessWeight,
+      Value<bool>? showNetWeight,
+      Value<bool>? showPurity,
+      Value<bool>? showRate,
+      Value<bool>? showFineWeight,
+      Value<bool>? showTotalValue,
+      Value<bool>? showStoneDetails,
+      Value<bool>? showStoneValue,
+      Value<bool>? showHuid,
+      Value<bool>? showSupplierDetails,
+      Value<bool>? showPanNumber,
+      Value<bool>? showDiamondCarats,
+      Value<bool>? showDiamondClarity,
+      Value<bool>? showCertificationNo,
+      Value<bool>? showGstBreakup,
+      Value<bool>? showHsnCode,
+      Value<int>? returnWindowDays,
+      Value<String>? returnMode,
+      Value<double>? purityDeductPercent,
+      Value<String>? termsAndConditions,
+      Value<String>? footerMessage,
+      Value<String>? selectedTemplate}) {
+    return PurchaseBillingSettingsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      metal: metal ?? this.metal,
+      showGrossWeight: showGrossWeight ?? this.showGrossWeight,
+      showLessWeight: showLessWeight ?? this.showLessWeight,
+      showNetWeight: showNetWeight ?? this.showNetWeight,
+      showPurity: showPurity ?? this.showPurity,
+      showRate: showRate ?? this.showRate,
+      showFineWeight: showFineWeight ?? this.showFineWeight,
+      showTotalValue: showTotalValue ?? this.showTotalValue,
+      showStoneDetails: showStoneDetails ?? this.showStoneDetails,
+      showStoneValue: showStoneValue ?? this.showStoneValue,
+      showHuid: showHuid ?? this.showHuid,
+      showSupplierDetails: showSupplierDetails ?? this.showSupplierDetails,
+      showPanNumber: showPanNumber ?? this.showPanNumber,
+      showDiamondCarats: showDiamondCarats ?? this.showDiamondCarats,
+      showDiamondClarity: showDiamondClarity ?? this.showDiamondClarity,
+      showCertificationNo: showCertificationNo ?? this.showCertificationNo,
+      showGstBreakup: showGstBreakup ?? this.showGstBreakup,
+      showHsnCode: showHsnCode ?? this.showHsnCode,
+      returnWindowDays: returnWindowDays ?? this.returnWindowDays,
+      returnMode: returnMode ?? this.returnMode,
+      purityDeductPercent: purityDeductPercent ?? this.purityDeductPercent,
+      termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+      footerMessage: footerMessage ?? this.footerMessage,
+      selectedTemplate: selectedTemplate ?? this.selectedTemplate,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (metal.present) {
+      map['metal'] = Variable<String>(metal.value);
+    }
+    if (showGrossWeight.present) {
+      map['show_gross_weight'] = Variable<bool>(showGrossWeight.value);
+    }
+    if (showLessWeight.present) {
+      map['show_less_weight'] = Variable<bool>(showLessWeight.value);
+    }
+    if (showNetWeight.present) {
+      map['show_net_weight'] = Variable<bool>(showNetWeight.value);
+    }
+    if (showPurity.present) {
+      map['show_purity'] = Variable<bool>(showPurity.value);
+    }
+    if (showRate.present) {
+      map['show_rate'] = Variable<bool>(showRate.value);
+    }
+    if (showFineWeight.present) {
+      map['show_fine_weight'] = Variable<bool>(showFineWeight.value);
+    }
+    if (showTotalValue.present) {
+      map['show_total_value'] = Variable<bool>(showTotalValue.value);
+    }
+    if (showStoneDetails.present) {
+      map['show_stone_details'] = Variable<bool>(showStoneDetails.value);
+    }
+    if (showStoneValue.present) {
+      map['show_stone_value'] = Variable<bool>(showStoneValue.value);
+    }
+    if (showHuid.present) {
+      map['show_huid'] = Variable<bool>(showHuid.value);
+    }
+    if (showSupplierDetails.present) {
+      map['show_supplier_details'] = Variable<bool>(showSupplierDetails.value);
+    }
+    if (showPanNumber.present) {
+      map['show_pan_number'] = Variable<bool>(showPanNumber.value);
+    }
+    if (showDiamondCarats.present) {
+      map['show_diamond_carats'] = Variable<bool>(showDiamondCarats.value);
+    }
+    if (showDiamondClarity.present) {
+      map['show_diamond_clarity'] = Variable<bool>(showDiamondClarity.value);
+    }
+    if (showCertificationNo.present) {
+      map['show_certification_no'] = Variable<bool>(showCertificationNo.value);
+    }
+    if (showGstBreakup.present) {
+      map['show_gst_breakup'] = Variable<bool>(showGstBreakup.value);
+    }
+    if (showHsnCode.present) {
+      map['show_hsn_code'] = Variable<bool>(showHsnCode.value);
+    }
+    if (returnWindowDays.present) {
+      map['return_window_days'] = Variable<int>(returnWindowDays.value);
+    }
+    if (returnMode.present) {
+      map['return_mode'] = Variable<String>(returnMode.value);
+    }
+    if (purityDeductPercent.present) {
+      map['purity_deduct_percent'] =
+          Variable<double>(purityDeductPercent.value);
+    }
+    if (termsAndConditions.present) {
+      map['terms_and_conditions'] = Variable<String>(termsAndConditions.value);
+    }
+    if (footerMessage.present) {
+      map['footer_message'] = Variable<String>(footerMessage.value);
+    }
+    if (selectedTemplate.present) {
+      map['selected_template'] = Variable<String>(selectedTemplate.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PurchaseBillingSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('metal: $metal, ')
+          ..write('showGrossWeight: $showGrossWeight, ')
+          ..write('showLessWeight: $showLessWeight, ')
+          ..write('showNetWeight: $showNetWeight, ')
+          ..write('showPurity: $showPurity, ')
+          ..write('showRate: $showRate, ')
+          ..write('showFineWeight: $showFineWeight, ')
+          ..write('showTotalValue: $showTotalValue, ')
+          ..write('showStoneDetails: $showStoneDetails, ')
+          ..write('showStoneValue: $showStoneValue, ')
+          ..write('showHuid: $showHuid, ')
+          ..write('showSupplierDetails: $showSupplierDetails, ')
+          ..write('showPanNumber: $showPanNumber, ')
+          ..write('showDiamondCarats: $showDiamondCarats, ')
+          ..write('showDiamondClarity: $showDiamondClarity, ')
+          ..write('showCertificationNo: $showCertificationNo, ')
+          ..write('showGstBreakup: $showGstBreakup, ')
+          ..write('showHsnCode: $showHsnCode, ')
+          ..write('returnWindowDays: $returnWindowDays, ')
+          ..write('returnMode: $returnMode, ')
+          ..write('purityDeductPercent: $purityDeductPercent, ')
+          ..write('termsAndConditions: $termsAndConditions, ')
+          ..write('footerMessage: $footerMessage, ')
+          ..write('selectedTemplate: $selectedTemplate')
           ..write(')'))
         .toString();
   }
@@ -21705,8 +22278,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $GirviPaymentsTable girviPayments = $GirviPaymentsTable(this);
   late final $DeliveryOrdersTable deliveryOrders = $DeliveryOrdersTable(this);
   late final $DeliveryItemsTable deliveryItems = $DeliveryItemsTable(this);
-  late final $BillingSettingsTable billingSettings =
-      $BillingSettingsTable(this);
+  late final $SalesBillingSettingsTable salesBillingSettings =
+      $SalesBillingSettingsTable(this);
+  late final $PurchaseBillingSettingsTable purchaseBillingSettings =
+      $PurchaseBillingSettingsTable(this);
   late final Index idxCustomersName = Index('idx_customers_name',
       'CREATE INDEX idx_customers_name ON customers (name)');
   late final Index idxCustomersMobile = Index('idx_customers_mobile',
@@ -21815,6 +22390,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       'CREATE INDEX idx_ditem_order ON delivery_items (delivery_order_id)');
   late final Index idxDitemStatus = Index('idx_ditem_status',
       'CREATE INDEX idx_ditem_status ON delivery_items (item_status)');
+  late final Index idxSalesBillingMetal = Index('idx_sales_billing_metal',
+      'CREATE UNIQUE INDEX idx_sales_billing_metal ON sales_billing_settings (metal)');
+  late final Index idxPurchaseBillingMetal = Index('idx_purchase_billing_metal',
+      'CREATE UNIQUE INDEX idx_purchase_billing_metal ON purchase_billing_settings (metal)');
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -21841,7 +22420,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         girviPayments,
         deliveryOrders,
         deliveryItems,
-        billingSettings,
+        salesBillingSettings,
+        purchaseBillingSettings,
         idxCustomersName,
         idxCustomersMobile,
         idxCustomersTier,
@@ -21895,7 +22475,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         idxDeliveryCustomer,
         idxDeliveryDate,
         idxDitemOrder,
-        idxDitemStatus
+        idxDitemStatus,
+        idxSalesBillingMetal,
+        idxPurchaseBillingMetal
       ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules(
@@ -32805,112 +33387,84 @@ typedef $$DeliveryItemsTableProcessedTableManager = ProcessedTableManager<
     (DeliveryItem, $$DeliveryItemsTableReferences),
     DeliveryItem,
     PrefetchHooks Function({bool deliveryOrderId})>;
-typedef $$BillingSettingsTableCreateCompanionBuilder = BillingSettingsCompanion
-    Function({
+typedef $$SalesBillingSettingsTableCreateCompanionBuilder
+    = SalesBillingSettingsCompanion Function({
   Value<int> id,
   Value<DateTime> createdAt,
   Value<DateTime?> updatedAt,
-  Value<String> salesInvoicePrefix,
-  Value<int> salesStartingNumber,
-  Value<bool> salesYearlyReset,
-  Value<String> estimatePrefix,
-  Value<int> estimateValidityDays,
-  Value<String> salesDefaultPaymentMode,
-  Value<String> salesUpiId,
-  Value<int> salesDefaultCreditDays,
-  Value<int> salesMinAdvancePercent,
-  Value<bool> salesAllowDiscount,
-  Value<double> salesMaxDiscountPercent,
-  Value<String> salesRoundingRule,
-  Value<bool> salesShowMakingCharges,
-  Value<bool> salesShowHuid,
-  Value<bool> salesShowOldGoldLine,
-  Value<String> salesTerms,
-  Value<String> salesFooterMsg,
-  Value<String> purchaseInvoicePrefix,
-  Value<int> purchaseStartingNumber,
-  Value<bool> purchaseYearlyReset,
-  Value<int> purchaseDefaultPaymentDays,
-  Value<int> purchaseAdvancePercent,
-  Value<String> purchaseDefaultPaymentMode,
-  Value<double> purchaseWeightTolerancePercent,
-  Value<String> purchaseDefaultKarat,
-  Value<String> purchaseTerms,
-  Value<bool> purchaseAutoPrint,
-  Value<String> girviPrefix,
-  Value<int> girviStartingNumber,
-  Value<double> girviDefaultInterestRate,
-  Value<String> girviInterestType,
-  Value<int> girviGracePeriodDays,
-  Value<String> girviDefaultDuration,
-  Value<int> girviReminderDays,
-  Value<int> girviNoticeDays,
-  Value<String> girviTerms,
-  Value<bool> girviAutoPrint,
+  required String metal,
+  Value<bool> showPieces,
+  Value<bool> showGrossWeight,
+  Value<bool> showLessWeight,
+  Value<bool> showNetWeight,
+  Value<bool> showPurity,
+  Value<bool> showRate,
+  Value<bool> showMakingCharges,
+  Value<bool> showMakingChargeType,
+  Value<bool> showStoneDetails,
+  Value<bool> showStoneValue,
+  Value<bool> showTotalValue,
+  Value<bool> showHuid,
+  Value<bool> showWastage,
+  Value<bool> showOldGoldLine,
+  Value<bool> showDiamondClarity,
+  Value<bool> showCertificationNo,
+  Value<bool> showDiamondCarats,
+  Value<bool> showDiamondPieces,
+  Value<bool> showMetalWeight,
+  Value<bool> showFineWeight,
+  Value<bool> showGstBreakup,
+  Value<bool> showHsnCode,
   Value<int> returnWindowDays,
-  Value<double> returnHandlingChargePercent,
   Value<String> returnMode,
-  Value<String> returnVoucherPrefix,
+  Value<double> handlingChargePercent,
   Value<double> buybackRatePercent,
   Value<double> buybackPurityDeductPercent,
-  Value<String> buybackDefaultKarat,
-  Value<String> returnTerms,
+  Value<String> termsAndConditions,
+  Value<String> footerMessage,
+  Value<String> selectedTemplate,
 });
-typedef $$BillingSettingsTableUpdateCompanionBuilder = BillingSettingsCompanion
-    Function({
+typedef $$SalesBillingSettingsTableUpdateCompanionBuilder
+    = SalesBillingSettingsCompanion Function({
   Value<int> id,
   Value<DateTime> createdAt,
   Value<DateTime?> updatedAt,
-  Value<String> salesInvoicePrefix,
-  Value<int> salesStartingNumber,
-  Value<bool> salesYearlyReset,
-  Value<String> estimatePrefix,
-  Value<int> estimateValidityDays,
-  Value<String> salesDefaultPaymentMode,
-  Value<String> salesUpiId,
-  Value<int> salesDefaultCreditDays,
-  Value<int> salesMinAdvancePercent,
-  Value<bool> salesAllowDiscount,
-  Value<double> salesMaxDiscountPercent,
-  Value<String> salesRoundingRule,
-  Value<bool> salesShowMakingCharges,
-  Value<bool> salesShowHuid,
-  Value<bool> salesShowOldGoldLine,
-  Value<String> salesTerms,
-  Value<String> salesFooterMsg,
-  Value<String> purchaseInvoicePrefix,
-  Value<int> purchaseStartingNumber,
-  Value<bool> purchaseYearlyReset,
-  Value<int> purchaseDefaultPaymentDays,
-  Value<int> purchaseAdvancePercent,
-  Value<String> purchaseDefaultPaymentMode,
-  Value<double> purchaseWeightTolerancePercent,
-  Value<String> purchaseDefaultKarat,
-  Value<String> purchaseTerms,
-  Value<bool> purchaseAutoPrint,
-  Value<String> girviPrefix,
-  Value<int> girviStartingNumber,
-  Value<double> girviDefaultInterestRate,
-  Value<String> girviInterestType,
-  Value<int> girviGracePeriodDays,
-  Value<String> girviDefaultDuration,
-  Value<int> girviReminderDays,
-  Value<int> girviNoticeDays,
-  Value<String> girviTerms,
-  Value<bool> girviAutoPrint,
+  Value<String> metal,
+  Value<bool> showPieces,
+  Value<bool> showGrossWeight,
+  Value<bool> showLessWeight,
+  Value<bool> showNetWeight,
+  Value<bool> showPurity,
+  Value<bool> showRate,
+  Value<bool> showMakingCharges,
+  Value<bool> showMakingChargeType,
+  Value<bool> showStoneDetails,
+  Value<bool> showStoneValue,
+  Value<bool> showTotalValue,
+  Value<bool> showHuid,
+  Value<bool> showWastage,
+  Value<bool> showOldGoldLine,
+  Value<bool> showDiamondClarity,
+  Value<bool> showCertificationNo,
+  Value<bool> showDiamondCarats,
+  Value<bool> showDiamondPieces,
+  Value<bool> showMetalWeight,
+  Value<bool> showFineWeight,
+  Value<bool> showGstBreakup,
+  Value<bool> showHsnCode,
   Value<int> returnWindowDays,
-  Value<double> returnHandlingChargePercent,
   Value<String> returnMode,
-  Value<String> returnVoucherPrefix,
+  Value<double> handlingChargePercent,
   Value<double> buybackRatePercent,
   Value<double> buybackPurityDeductPercent,
-  Value<String> buybackDefaultKarat,
-  Value<String> returnTerms,
+  Value<String> termsAndConditions,
+  Value<String> footerMessage,
+  Value<String> selectedTemplate,
 });
 
-class $$BillingSettingsTableFilterComposer
-    extends Composer<_$AppDatabase, $BillingSettingsTable> {
-  $$BillingSettingsTableFilterComposer({
+class $$SalesBillingSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $SalesBillingSettingsTable> {
+  $$SalesBillingSettingsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -32926,162 +33480,99 @@ class $$BillingSettingsTableFilterComposer
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get salesInvoicePrefix => $composableBuilder(
-      column: $table.salesInvoicePrefix,
+  ColumnFilters<String> get metal => $composableBuilder(
+      column: $table.metal, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showPieces => $composableBuilder(
+      column: $table.showPieces, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showGrossWeight => $composableBuilder(
+      column: $table.showGrossWeight,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get salesStartingNumber => $composableBuilder(
-      column: $table.salesStartingNumber,
+  ColumnFilters<bool> get showLessWeight => $composableBuilder(
+      column: $table.showLessWeight,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get salesYearlyReset => $composableBuilder(
-      column: $table.salesYearlyReset,
+  ColumnFilters<bool> get showNetWeight => $composableBuilder(
+      column: $table.showNetWeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showPurity => $composableBuilder(
+      column: $table.showPurity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showRate => $composableBuilder(
+      column: $table.showRate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showMakingCharges => $composableBuilder(
+      column: $table.showMakingCharges,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get estimatePrefix => $composableBuilder(
-      column: $table.estimatePrefix,
+  ColumnFilters<bool> get showMakingChargeType => $composableBuilder(
+      column: $table.showMakingChargeType,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get estimateValidityDays => $composableBuilder(
-      column: $table.estimateValidityDays,
+  ColumnFilters<bool> get showStoneDetails => $composableBuilder(
+      column: $table.showStoneDetails,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get salesDefaultPaymentMode => $composableBuilder(
-      column: $table.salesDefaultPaymentMode,
+  ColumnFilters<bool> get showStoneValue => $composableBuilder(
+      column: $table.showStoneValue,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get salesUpiId => $composableBuilder(
-      column: $table.salesUpiId, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get salesDefaultCreditDays => $composableBuilder(
-      column: $table.salesDefaultCreditDays,
+  ColumnFilters<bool> get showTotalValue => $composableBuilder(
+      column: $table.showTotalValue,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get salesMinAdvancePercent => $composableBuilder(
-      column: $table.salesMinAdvancePercent,
+  ColumnFilters<bool> get showHuid => $composableBuilder(
+      column: $table.showHuid, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showWastage => $composableBuilder(
+      column: $table.showWastage, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showOldGoldLine => $composableBuilder(
+      column: $table.showOldGoldLine,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get salesAllowDiscount => $composableBuilder(
-      column: $table.salesAllowDiscount,
+  ColumnFilters<bool> get showDiamondClarity => $composableBuilder(
+      column: $table.showDiamondClarity,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<double> get salesMaxDiscountPercent => $composableBuilder(
-      column: $table.salesMaxDiscountPercent,
+  ColumnFilters<bool> get showCertificationNo => $composableBuilder(
+      column: $table.showCertificationNo,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get salesRoundingRule => $composableBuilder(
-      column: $table.salesRoundingRule,
+  ColumnFilters<bool> get showDiamondCarats => $composableBuilder(
+      column: $table.showDiamondCarats,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get salesShowMakingCharges => $composableBuilder(
-      column: $table.salesShowMakingCharges,
+  ColumnFilters<bool> get showDiamondPieces => $composableBuilder(
+      column: $table.showDiamondPieces,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get salesShowHuid => $composableBuilder(
-      column: $table.salesShowHuid, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get salesShowOldGoldLine => $composableBuilder(
-      column: $table.salesShowOldGoldLine,
+  ColumnFilters<bool> get showMetalWeight => $composableBuilder(
+      column: $table.showMetalWeight,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get salesTerms => $composableBuilder(
-      column: $table.salesTerms, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get salesFooterMsg => $composableBuilder(
-      column: $table.salesFooterMsg,
+  ColumnFilters<bool> get showFineWeight => $composableBuilder(
+      column: $table.showFineWeight,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get purchaseInvoicePrefix => $composableBuilder(
-      column: $table.purchaseInvoicePrefix,
+  ColumnFilters<bool> get showGstBreakup => $composableBuilder(
+      column: $table.showGstBreakup,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get purchaseStartingNumber => $composableBuilder(
-      column: $table.purchaseStartingNumber,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get purchaseYearlyReset => $composableBuilder(
-      column: $table.purchaseYearlyReset,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get purchaseDefaultPaymentDays => $composableBuilder(
-      column: $table.purchaseDefaultPaymentDays,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get purchaseAdvancePercent => $composableBuilder(
-      column: $table.purchaseAdvancePercent,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get purchaseDefaultPaymentMode => $composableBuilder(
-      column: $table.purchaseDefaultPaymentMode,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get purchaseWeightTolerancePercent =>
-      $composableBuilder(
-          column: $table.purchaseWeightTolerancePercent,
-          builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get purchaseDefaultKarat => $composableBuilder(
-      column: $table.purchaseDefaultKarat,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get purchaseTerms => $composableBuilder(
-      column: $table.purchaseTerms, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get purchaseAutoPrint => $composableBuilder(
-      column: $table.purchaseAutoPrint,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get girviPrefix => $composableBuilder(
-      column: $table.girviPrefix, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get girviStartingNumber => $composableBuilder(
-      column: $table.girviStartingNumber,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get girviDefaultInterestRate => $composableBuilder(
-      column: $table.girviDefaultInterestRate,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get girviInterestType => $composableBuilder(
-      column: $table.girviInterestType,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get girviGracePeriodDays => $composableBuilder(
-      column: $table.girviGracePeriodDays,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get girviDefaultDuration => $composableBuilder(
-      column: $table.girviDefaultDuration,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get girviReminderDays => $composableBuilder(
-      column: $table.girviReminderDays,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get girviNoticeDays => $composableBuilder(
-      column: $table.girviNoticeDays,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get girviTerms => $composableBuilder(
-      column: $table.girviTerms, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get girviAutoPrint => $composableBuilder(
-      column: $table.girviAutoPrint,
-      builder: (column) => ColumnFilters(column));
+  ColumnFilters<bool> get showHsnCode => $composableBuilder(
+      column: $table.showHsnCode, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get returnWindowDays => $composableBuilder(
       column: $table.returnWindowDays,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<double> get returnHandlingChargePercent => $composableBuilder(
-      column: $table.returnHandlingChargePercent,
-      builder: (column) => ColumnFilters(column));
-
   ColumnFilters<String> get returnMode => $composableBuilder(
       column: $table.returnMode, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get returnVoucherPrefix => $composableBuilder(
-      column: $table.returnVoucherPrefix,
+  ColumnFilters<double> get handlingChargePercent => $composableBuilder(
+      column: $table.handlingChargePercent,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get buybackRatePercent => $composableBuilder(
@@ -33092,17 +33583,21 @@ class $$BillingSettingsTableFilterComposer
       column: $table.buybackPurityDeductPercent,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get buybackDefaultKarat => $composableBuilder(
-      column: $table.buybackDefaultKarat,
+  ColumnFilters<String> get termsAndConditions => $composableBuilder(
+      column: $table.termsAndConditions,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get returnTerms => $composableBuilder(
-      column: $table.returnTerms, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get footerMessage => $composableBuilder(
+      column: $table.footerMessage, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get selectedTemplate => $composableBuilder(
+      column: $table.selectedTemplate,
+      builder: (column) => ColumnFilters(column));
 }
 
-class $$BillingSettingsTableOrderingComposer
-    extends Composer<_$AppDatabase, $BillingSettingsTable> {
-  $$BillingSettingsTableOrderingComposer({
+class $$SalesBillingSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SalesBillingSettingsTable> {
+  $$SalesBillingSettingsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -33118,164 +33613,100 @@ class $$BillingSettingsTableOrderingComposer
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get salesInvoicePrefix => $composableBuilder(
-      column: $table.salesInvoicePrefix,
+  ColumnOrderings<String> get metal => $composableBuilder(
+      column: $table.metal, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showPieces => $composableBuilder(
+      column: $table.showPieces, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showGrossWeight => $composableBuilder(
+      column: $table.showGrossWeight,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get salesStartingNumber => $composableBuilder(
-      column: $table.salesStartingNumber,
+  ColumnOrderings<bool> get showLessWeight => $composableBuilder(
+      column: $table.showLessWeight,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get salesYearlyReset => $composableBuilder(
-      column: $table.salesYearlyReset,
+  ColumnOrderings<bool> get showNetWeight => $composableBuilder(
+      column: $table.showNetWeight,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get estimatePrefix => $composableBuilder(
-      column: $table.estimatePrefix,
+  ColumnOrderings<bool> get showPurity => $composableBuilder(
+      column: $table.showPurity, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showRate => $composableBuilder(
+      column: $table.showRate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showMakingCharges => $composableBuilder(
+      column: $table.showMakingCharges,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get estimateValidityDays => $composableBuilder(
-      column: $table.estimateValidityDays,
+  ColumnOrderings<bool> get showMakingChargeType => $composableBuilder(
+      column: $table.showMakingChargeType,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get salesDefaultPaymentMode => $composableBuilder(
-      column: $table.salesDefaultPaymentMode,
+  ColumnOrderings<bool> get showStoneDetails => $composableBuilder(
+      column: $table.showStoneDetails,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get salesUpiId => $composableBuilder(
-      column: $table.salesUpiId, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get salesDefaultCreditDays => $composableBuilder(
-      column: $table.salesDefaultCreditDays,
+  ColumnOrderings<bool> get showStoneValue => $composableBuilder(
+      column: $table.showStoneValue,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get salesMinAdvancePercent => $composableBuilder(
-      column: $table.salesMinAdvancePercent,
+  ColumnOrderings<bool> get showTotalValue => $composableBuilder(
+      column: $table.showTotalValue,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get salesAllowDiscount => $composableBuilder(
-      column: $table.salesAllowDiscount,
+  ColumnOrderings<bool> get showHuid => $composableBuilder(
+      column: $table.showHuid, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showWastage => $composableBuilder(
+      column: $table.showWastage, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showOldGoldLine => $composableBuilder(
+      column: $table.showOldGoldLine,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<double> get salesMaxDiscountPercent => $composableBuilder(
-      column: $table.salesMaxDiscountPercent,
+  ColumnOrderings<bool> get showDiamondClarity => $composableBuilder(
+      column: $table.showDiamondClarity,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get salesRoundingRule => $composableBuilder(
-      column: $table.salesRoundingRule,
+  ColumnOrderings<bool> get showCertificationNo => $composableBuilder(
+      column: $table.showCertificationNo,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get salesShowMakingCharges => $composableBuilder(
-      column: $table.salesShowMakingCharges,
+  ColumnOrderings<bool> get showDiamondCarats => $composableBuilder(
+      column: $table.showDiamondCarats,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get salesShowHuid => $composableBuilder(
-      column: $table.salesShowHuid,
+  ColumnOrderings<bool> get showDiamondPieces => $composableBuilder(
+      column: $table.showDiamondPieces,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get salesShowOldGoldLine => $composableBuilder(
-      column: $table.salesShowOldGoldLine,
+  ColumnOrderings<bool> get showMetalWeight => $composableBuilder(
+      column: $table.showMetalWeight,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get salesTerms => $composableBuilder(
-      column: $table.salesTerms, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get salesFooterMsg => $composableBuilder(
-      column: $table.salesFooterMsg,
+  ColumnOrderings<bool> get showFineWeight => $composableBuilder(
+      column: $table.showFineWeight,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get purchaseInvoicePrefix => $composableBuilder(
-      column: $table.purchaseInvoicePrefix,
+  ColumnOrderings<bool> get showGstBreakup => $composableBuilder(
+      column: $table.showGstBreakup,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get purchaseStartingNumber => $composableBuilder(
-      column: $table.purchaseStartingNumber,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<bool> get purchaseYearlyReset => $composableBuilder(
-      column: $table.purchaseYearlyReset,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get purchaseDefaultPaymentDays => $composableBuilder(
-      column: $table.purchaseDefaultPaymentDays,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get purchaseAdvancePercent => $composableBuilder(
-      column: $table.purchaseAdvancePercent,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get purchaseDefaultPaymentMode => $composableBuilder(
-      column: $table.purchaseDefaultPaymentMode,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get purchaseWeightTolerancePercent =>
-      $composableBuilder(
-          column: $table.purchaseWeightTolerancePercent,
-          builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get purchaseDefaultKarat => $composableBuilder(
-      column: $table.purchaseDefaultKarat,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get purchaseTerms => $composableBuilder(
-      column: $table.purchaseTerms,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<bool> get purchaseAutoPrint => $composableBuilder(
-      column: $table.purchaseAutoPrint,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get girviPrefix => $composableBuilder(
-      column: $table.girviPrefix, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get girviStartingNumber => $composableBuilder(
-      column: $table.girviStartingNumber,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get girviDefaultInterestRate => $composableBuilder(
-      column: $table.girviDefaultInterestRate,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get girviInterestType => $composableBuilder(
-      column: $table.girviInterestType,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get girviGracePeriodDays => $composableBuilder(
-      column: $table.girviGracePeriodDays,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get girviDefaultDuration => $composableBuilder(
-      column: $table.girviDefaultDuration,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get girviReminderDays => $composableBuilder(
-      column: $table.girviReminderDays,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get girviNoticeDays => $composableBuilder(
-      column: $table.girviNoticeDays,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get girviTerms => $composableBuilder(
-      column: $table.girviTerms, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<bool> get girviAutoPrint => $composableBuilder(
-      column: $table.girviAutoPrint,
-      builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<bool> get showHsnCode => $composableBuilder(
+      column: $table.showHsnCode, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get returnWindowDays => $composableBuilder(
       column: $table.returnWindowDays,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<double> get returnHandlingChargePercent => $composableBuilder(
-      column: $table.returnHandlingChargePercent,
-      builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get returnMode => $composableBuilder(
       column: $table.returnMode, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get returnVoucherPrefix => $composableBuilder(
-      column: $table.returnVoucherPrefix,
+  ColumnOrderings<double> get handlingChargePercent => $composableBuilder(
+      column: $table.handlingChargePercent,
       builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get buybackRatePercent => $composableBuilder(
@@ -33286,17 +33717,22 @@ class $$BillingSettingsTableOrderingComposer
       column: $table.buybackPurityDeductPercent,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get buybackDefaultKarat => $composableBuilder(
-      column: $table.buybackDefaultKarat,
+  ColumnOrderings<String> get termsAndConditions => $composableBuilder(
+      column: $table.termsAndConditions,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get returnTerms => $composableBuilder(
-      column: $table.returnTerms, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get footerMessage => $composableBuilder(
+      column: $table.footerMessage,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get selectedTemplate => $composableBuilder(
+      column: $table.selectedTemplate,
+      builder: (column) => ColumnOrderings(column));
 }
 
-class $$BillingSettingsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $BillingSettingsTable> {
-  $$BillingSettingsTableAnnotationComposer({
+class $$SalesBillingSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SalesBillingSettingsTable> {
+  $$SalesBillingSettingsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -33312,130 +33748,83 @@ class $$BillingSettingsTableAnnotationComposer
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
-  GeneratedColumn<String> get salesInvoicePrefix => $composableBuilder(
-      column: $table.salesInvoicePrefix, builder: (column) => column);
+  GeneratedColumn<String> get metal =>
+      $composableBuilder(column: $table.metal, builder: (column) => column);
 
-  GeneratedColumn<int> get salesStartingNumber => $composableBuilder(
-      column: $table.salesStartingNumber, builder: (column) => column);
+  GeneratedColumn<bool> get showPieces => $composableBuilder(
+      column: $table.showPieces, builder: (column) => column);
 
-  GeneratedColumn<bool> get salesYearlyReset => $composableBuilder(
-      column: $table.salesYearlyReset, builder: (column) => column);
+  GeneratedColumn<bool> get showGrossWeight => $composableBuilder(
+      column: $table.showGrossWeight, builder: (column) => column);
 
-  GeneratedColumn<String> get estimatePrefix => $composableBuilder(
-      column: $table.estimatePrefix, builder: (column) => column);
+  GeneratedColumn<bool> get showLessWeight => $composableBuilder(
+      column: $table.showLessWeight, builder: (column) => column);
 
-  GeneratedColumn<int> get estimateValidityDays => $composableBuilder(
-      column: $table.estimateValidityDays, builder: (column) => column);
+  GeneratedColumn<bool> get showNetWeight => $composableBuilder(
+      column: $table.showNetWeight, builder: (column) => column);
 
-  GeneratedColumn<String> get salesDefaultPaymentMode => $composableBuilder(
-      column: $table.salesDefaultPaymentMode, builder: (column) => column);
+  GeneratedColumn<bool> get showPurity => $composableBuilder(
+      column: $table.showPurity, builder: (column) => column);
 
-  GeneratedColumn<String> get salesUpiId => $composableBuilder(
-      column: $table.salesUpiId, builder: (column) => column);
+  GeneratedColumn<bool> get showRate =>
+      $composableBuilder(column: $table.showRate, builder: (column) => column);
 
-  GeneratedColumn<int> get salesDefaultCreditDays => $composableBuilder(
-      column: $table.salesDefaultCreditDays, builder: (column) => column);
+  GeneratedColumn<bool> get showMakingCharges => $composableBuilder(
+      column: $table.showMakingCharges, builder: (column) => column);
 
-  GeneratedColumn<int> get salesMinAdvancePercent => $composableBuilder(
-      column: $table.salesMinAdvancePercent, builder: (column) => column);
+  GeneratedColumn<bool> get showMakingChargeType => $composableBuilder(
+      column: $table.showMakingChargeType, builder: (column) => column);
 
-  GeneratedColumn<bool> get salesAllowDiscount => $composableBuilder(
-      column: $table.salesAllowDiscount, builder: (column) => column);
+  GeneratedColumn<bool> get showStoneDetails => $composableBuilder(
+      column: $table.showStoneDetails, builder: (column) => column);
 
-  GeneratedColumn<double> get salesMaxDiscountPercent => $composableBuilder(
-      column: $table.salesMaxDiscountPercent, builder: (column) => column);
+  GeneratedColumn<bool> get showStoneValue => $composableBuilder(
+      column: $table.showStoneValue, builder: (column) => column);
 
-  GeneratedColumn<String> get salesRoundingRule => $composableBuilder(
-      column: $table.salesRoundingRule, builder: (column) => column);
+  GeneratedColumn<bool> get showTotalValue => $composableBuilder(
+      column: $table.showTotalValue, builder: (column) => column);
 
-  GeneratedColumn<bool> get salesShowMakingCharges => $composableBuilder(
-      column: $table.salesShowMakingCharges, builder: (column) => column);
+  GeneratedColumn<bool> get showHuid =>
+      $composableBuilder(column: $table.showHuid, builder: (column) => column);
 
-  GeneratedColumn<bool> get salesShowHuid => $composableBuilder(
-      column: $table.salesShowHuid, builder: (column) => column);
+  GeneratedColumn<bool> get showWastage => $composableBuilder(
+      column: $table.showWastage, builder: (column) => column);
 
-  GeneratedColumn<bool> get salesShowOldGoldLine => $composableBuilder(
-      column: $table.salesShowOldGoldLine, builder: (column) => column);
+  GeneratedColumn<bool> get showOldGoldLine => $composableBuilder(
+      column: $table.showOldGoldLine, builder: (column) => column);
 
-  GeneratedColumn<String> get salesTerms => $composableBuilder(
-      column: $table.salesTerms, builder: (column) => column);
+  GeneratedColumn<bool> get showDiamondClarity => $composableBuilder(
+      column: $table.showDiamondClarity, builder: (column) => column);
 
-  GeneratedColumn<String> get salesFooterMsg => $composableBuilder(
-      column: $table.salesFooterMsg, builder: (column) => column);
+  GeneratedColumn<bool> get showCertificationNo => $composableBuilder(
+      column: $table.showCertificationNo, builder: (column) => column);
 
-  GeneratedColumn<String> get purchaseInvoicePrefix => $composableBuilder(
-      column: $table.purchaseInvoicePrefix, builder: (column) => column);
+  GeneratedColumn<bool> get showDiamondCarats => $composableBuilder(
+      column: $table.showDiamondCarats, builder: (column) => column);
 
-  GeneratedColumn<int> get purchaseStartingNumber => $composableBuilder(
-      column: $table.purchaseStartingNumber, builder: (column) => column);
+  GeneratedColumn<bool> get showDiamondPieces => $composableBuilder(
+      column: $table.showDiamondPieces, builder: (column) => column);
 
-  GeneratedColumn<bool> get purchaseYearlyReset => $composableBuilder(
-      column: $table.purchaseYearlyReset, builder: (column) => column);
+  GeneratedColumn<bool> get showMetalWeight => $composableBuilder(
+      column: $table.showMetalWeight, builder: (column) => column);
 
-  GeneratedColumn<int> get purchaseDefaultPaymentDays => $composableBuilder(
-      column: $table.purchaseDefaultPaymentDays, builder: (column) => column);
+  GeneratedColumn<bool> get showFineWeight => $composableBuilder(
+      column: $table.showFineWeight, builder: (column) => column);
 
-  GeneratedColumn<int> get purchaseAdvancePercent => $composableBuilder(
-      column: $table.purchaseAdvancePercent, builder: (column) => column);
+  GeneratedColumn<bool> get showGstBreakup => $composableBuilder(
+      column: $table.showGstBreakup, builder: (column) => column);
 
-  GeneratedColumn<String> get purchaseDefaultPaymentMode => $composableBuilder(
-      column: $table.purchaseDefaultPaymentMode, builder: (column) => column);
-
-  GeneratedColumn<double> get purchaseWeightTolerancePercent =>
-      $composableBuilder(
-          column: $table.purchaseWeightTolerancePercent,
-          builder: (column) => column);
-
-  GeneratedColumn<String> get purchaseDefaultKarat => $composableBuilder(
-      column: $table.purchaseDefaultKarat, builder: (column) => column);
-
-  GeneratedColumn<String> get purchaseTerms => $composableBuilder(
-      column: $table.purchaseTerms, builder: (column) => column);
-
-  GeneratedColumn<bool> get purchaseAutoPrint => $composableBuilder(
-      column: $table.purchaseAutoPrint, builder: (column) => column);
-
-  GeneratedColumn<String> get girviPrefix => $composableBuilder(
-      column: $table.girviPrefix, builder: (column) => column);
-
-  GeneratedColumn<int> get girviStartingNumber => $composableBuilder(
-      column: $table.girviStartingNumber, builder: (column) => column);
-
-  GeneratedColumn<double> get girviDefaultInterestRate => $composableBuilder(
-      column: $table.girviDefaultInterestRate, builder: (column) => column);
-
-  GeneratedColumn<String> get girviInterestType => $composableBuilder(
-      column: $table.girviInterestType, builder: (column) => column);
-
-  GeneratedColumn<int> get girviGracePeriodDays => $composableBuilder(
-      column: $table.girviGracePeriodDays, builder: (column) => column);
-
-  GeneratedColumn<String> get girviDefaultDuration => $composableBuilder(
-      column: $table.girviDefaultDuration, builder: (column) => column);
-
-  GeneratedColumn<int> get girviReminderDays => $composableBuilder(
-      column: $table.girviReminderDays, builder: (column) => column);
-
-  GeneratedColumn<int> get girviNoticeDays => $composableBuilder(
-      column: $table.girviNoticeDays, builder: (column) => column);
-
-  GeneratedColumn<String> get girviTerms => $composableBuilder(
-      column: $table.girviTerms, builder: (column) => column);
-
-  GeneratedColumn<bool> get girviAutoPrint => $composableBuilder(
-      column: $table.girviAutoPrint, builder: (column) => column);
+  GeneratedColumn<bool> get showHsnCode => $composableBuilder(
+      column: $table.showHsnCode, builder: (column) => column);
 
   GeneratedColumn<int> get returnWindowDays => $composableBuilder(
       column: $table.returnWindowDays, builder: (column) => column);
 
-  GeneratedColumn<double> get returnHandlingChargePercent => $composableBuilder(
-      column: $table.returnHandlingChargePercent, builder: (column) => column);
-
   GeneratedColumn<String> get returnMode => $composableBuilder(
       column: $table.returnMode, builder: (column) => column);
 
-  GeneratedColumn<String> get returnVoucherPrefix => $composableBuilder(
-      column: $table.returnVoucherPrefix, builder: (column) => column);
+  GeneratedColumn<double> get handlingChargePercent => $composableBuilder(
+      column: $table.handlingChargePercent, builder: (column) => column);
 
   GeneratedColumn<double> get buybackRatePercent => $composableBuilder(
       column: $table.buybackRatePercent, builder: (column) => column);
@@ -33443,238 +33832,188 @@ class $$BillingSettingsTableAnnotationComposer
   GeneratedColumn<double> get buybackPurityDeductPercent => $composableBuilder(
       column: $table.buybackPurityDeductPercent, builder: (column) => column);
 
-  GeneratedColumn<String> get buybackDefaultKarat => $composableBuilder(
-      column: $table.buybackDefaultKarat, builder: (column) => column);
+  GeneratedColumn<String> get termsAndConditions => $composableBuilder(
+      column: $table.termsAndConditions, builder: (column) => column);
 
-  GeneratedColumn<String> get returnTerms => $composableBuilder(
-      column: $table.returnTerms, builder: (column) => column);
+  GeneratedColumn<String> get footerMessage => $composableBuilder(
+      column: $table.footerMessage, builder: (column) => column);
+
+  GeneratedColumn<String> get selectedTemplate => $composableBuilder(
+      column: $table.selectedTemplate, builder: (column) => column);
 }
 
-class $$BillingSettingsTableTableManager extends RootTableManager<
+class $$SalesBillingSettingsTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $BillingSettingsTable,
-    BillingSetting,
-    $$BillingSettingsTableFilterComposer,
-    $$BillingSettingsTableOrderingComposer,
-    $$BillingSettingsTableAnnotationComposer,
-    $$BillingSettingsTableCreateCompanionBuilder,
-    $$BillingSettingsTableUpdateCompanionBuilder,
+    $SalesBillingSettingsTable,
+    SalesBillingSetting,
+    $$SalesBillingSettingsTableFilterComposer,
+    $$SalesBillingSettingsTableOrderingComposer,
+    $$SalesBillingSettingsTableAnnotationComposer,
+    $$SalesBillingSettingsTableCreateCompanionBuilder,
+    $$SalesBillingSettingsTableUpdateCompanionBuilder,
     (
-      BillingSetting,
-      BaseReferences<_$AppDatabase, $BillingSettingsTable, BillingSetting>
+      SalesBillingSetting,
+      BaseReferences<_$AppDatabase, $SalesBillingSettingsTable,
+          SalesBillingSetting>
     ),
-    BillingSetting,
+    SalesBillingSetting,
     PrefetchHooks Function()> {
-  $$BillingSettingsTableTableManager(
-      _$AppDatabase db, $BillingSettingsTable table)
+  $$SalesBillingSettingsTableTableManager(
+      _$AppDatabase db, $SalesBillingSettingsTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$BillingSettingsTableFilterComposer($db: db, $table: table),
+              $$SalesBillingSettingsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$BillingSettingsTableOrderingComposer($db: db, $table: table),
+              $$SalesBillingSettingsTableOrderingComposer(
+                  $db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$BillingSettingsTableAnnotationComposer($db: db, $table: table),
+              $$SalesBillingSettingsTableAnnotationComposer(
+                  $db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
-            Value<String> salesInvoicePrefix = const Value.absent(),
-            Value<int> salesStartingNumber = const Value.absent(),
-            Value<bool> salesYearlyReset = const Value.absent(),
-            Value<String> estimatePrefix = const Value.absent(),
-            Value<int> estimateValidityDays = const Value.absent(),
-            Value<String> salesDefaultPaymentMode = const Value.absent(),
-            Value<String> salesUpiId = const Value.absent(),
-            Value<int> salesDefaultCreditDays = const Value.absent(),
-            Value<int> salesMinAdvancePercent = const Value.absent(),
-            Value<bool> salesAllowDiscount = const Value.absent(),
-            Value<double> salesMaxDiscountPercent = const Value.absent(),
-            Value<String> salesRoundingRule = const Value.absent(),
-            Value<bool> salesShowMakingCharges = const Value.absent(),
-            Value<bool> salesShowHuid = const Value.absent(),
-            Value<bool> salesShowOldGoldLine = const Value.absent(),
-            Value<String> salesTerms = const Value.absent(),
-            Value<String> salesFooterMsg = const Value.absent(),
-            Value<String> purchaseInvoicePrefix = const Value.absent(),
-            Value<int> purchaseStartingNumber = const Value.absent(),
-            Value<bool> purchaseYearlyReset = const Value.absent(),
-            Value<int> purchaseDefaultPaymentDays = const Value.absent(),
-            Value<int> purchaseAdvancePercent = const Value.absent(),
-            Value<String> purchaseDefaultPaymentMode = const Value.absent(),
-            Value<double> purchaseWeightTolerancePercent = const Value.absent(),
-            Value<String> purchaseDefaultKarat = const Value.absent(),
-            Value<String> purchaseTerms = const Value.absent(),
-            Value<bool> purchaseAutoPrint = const Value.absent(),
-            Value<String> girviPrefix = const Value.absent(),
-            Value<int> girviStartingNumber = const Value.absent(),
-            Value<double> girviDefaultInterestRate = const Value.absent(),
-            Value<String> girviInterestType = const Value.absent(),
-            Value<int> girviGracePeriodDays = const Value.absent(),
-            Value<String> girviDefaultDuration = const Value.absent(),
-            Value<int> girviReminderDays = const Value.absent(),
-            Value<int> girviNoticeDays = const Value.absent(),
-            Value<String> girviTerms = const Value.absent(),
-            Value<bool> girviAutoPrint = const Value.absent(),
+            Value<String> metal = const Value.absent(),
+            Value<bool> showPieces = const Value.absent(),
+            Value<bool> showGrossWeight = const Value.absent(),
+            Value<bool> showLessWeight = const Value.absent(),
+            Value<bool> showNetWeight = const Value.absent(),
+            Value<bool> showPurity = const Value.absent(),
+            Value<bool> showRate = const Value.absent(),
+            Value<bool> showMakingCharges = const Value.absent(),
+            Value<bool> showMakingChargeType = const Value.absent(),
+            Value<bool> showStoneDetails = const Value.absent(),
+            Value<bool> showStoneValue = const Value.absent(),
+            Value<bool> showTotalValue = const Value.absent(),
+            Value<bool> showHuid = const Value.absent(),
+            Value<bool> showWastage = const Value.absent(),
+            Value<bool> showOldGoldLine = const Value.absent(),
+            Value<bool> showDiamondClarity = const Value.absent(),
+            Value<bool> showCertificationNo = const Value.absent(),
+            Value<bool> showDiamondCarats = const Value.absent(),
+            Value<bool> showDiamondPieces = const Value.absent(),
+            Value<bool> showMetalWeight = const Value.absent(),
+            Value<bool> showFineWeight = const Value.absent(),
+            Value<bool> showGstBreakup = const Value.absent(),
+            Value<bool> showHsnCode = const Value.absent(),
             Value<int> returnWindowDays = const Value.absent(),
-            Value<double> returnHandlingChargePercent = const Value.absent(),
             Value<String> returnMode = const Value.absent(),
-            Value<String> returnVoucherPrefix = const Value.absent(),
+            Value<double> handlingChargePercent = const Value.absent(),
             Value<double> buybackRatePercent = const Value.absent(),
             Value<double> buybackPurityDeductPercent = const Value.absent(),
-            Value<String> buybackDefaultKarat = const Value.absent(),
-            Value<String> returnTerms = const Value.absent(),
+            Value<String> termsAndConditions = const Value.absent(),
+            Value<String> footerMessage = const Value.absent(),
+            Value<String> selectedTemplate = const Value.absent(),
           }) =>
-              BillingSettingsCompanion(
+              SalesBillingSettingsCompanion(
             id: id,
             createdAt: createdAt,
             updatedAt: updatedAt,
-            salesInvoicePrefix: salesInvoicePrefix,
-            salesStartingNumber: salesStartingNumber,
-            salesYearlyReset: salesYearlyReset,
-            estimatePrefix: estimatePrefix,
-            estimateValidityDays: estimateValidityDays,
-            salesDefaultPaymentMode: salesDefaultPaymentMode,
-            salesUpiId: salesUpiId,
-            salesDefaultCreditDays: salesDefaultCreditDays,
-            salesMinAdvancePercent: salesMinAdvancePercent,
-            salesAllowDiscount: salesAllowDiscount,
-            salesMaxDiscountPercent: salesMaxDiscountPercent,
-            salesRoundingRule: salesRoundingRule,
-            salesShowMakingCharges: salesShowMakingCharges,
-            salesShowHuid: salesShowHuid,
-            salesShowOldGoldLine: salesShowOldGoldLine,
-            salesTerms: salesTerms,
-            salesFooterMsg: salesFooterMsg,
-            purchaseInvoicePrefix: purchaseInvoicePrefix,
-            purchaseStartingNumber: purchaseStartingNumber,
-            purchaseYearlyReset: purchaseYearlyReset,
-            purchaseDefaultPaymentDays: purchaseDefaultPaymentDays,
-            purchaseAdvancePercent: purchaseAdvancePercent,
-            purchaseDefaultPaymentMode: purchaseDefaultPaymentMode,
-            purchaseWeightTolerancePercent: purchaseWeightTolerancePercent,
-            purchaseDefaultKarat: purchaseDefaultKarat,
-            purchaseTerms: purchaseTerms,
-            purchaseAutoPrint: purchaseAutoPrint,
-            girviPrefix: girviPrefix,
-            girviStartingNumber: girviStartingNumber,
-            girviDefaultInterestRate: girviDefaultInterestRate,
-            girviInterestType: girviInterestType,
-            girviGracePeriodDays: girviGracePeriodDays,
-            girviDefaultDuration: girviDefaultDuration,
-            girviReminderDays: girviReminderDays,
-            girviNoticeDays: girviNoticeDays,
-            girviTerms: girviTerms,
-            girviAutoPrint: girviAutoPrint,
+            metal: metal,
+            showPieces: showPieces,
+            showGrossWeight: showGrossWeight,
+            showLessWeight: showLessWeight,
+            showNetWeight: showNetWeight,
+            showPurity: showPurity,
+            showRate: showRate,
+            showMakingCharges: showMakingCharges,
+            showMakingChargeType: showMakingChargeType,
+            showStoneDetails: showStoneDetails,
+            showStoneValue: showStoneValue,
+            showTotalValue: showTotalValue,
+            showHuid: showHuid,
+            showWastage: showWastage,
+            showOldGoldLine: showOldGoldLine,
+            showDiamondClarity: showDiamondClarity,
+            showCertificationNo: showCertificationNo,
+            showDiamondCarats: showDiamondCarats,
+            showDiamondPieces: showDiamondPieces,
+            showMetalWeight: showMetalWeight,
+            showFineWeight: showFineWeight,
+            showGstBreakup: showGstBreakup,
+            showHsnCode: showHsnCode,
             returnWindowDays: returnWindowDays,
-            returnHandlingChargePercent: returnHandlingChargePercent,
             returnMode: returnMode,
-            returnVoucherPrefix: returnVoucherPrefix,
+            handlingChargePercent: handlingChargePercent,
             buybackRatePercent: buybackRatePercent,
             buybackPurityDeductPercent: buybackPurityDeductPercent,
-            buybackDefaultKarat: buybackDefaultKarat,
-            returnTerms: returnTerms,
+            termsAndConditions: termsAndConditions,
+            footerMessage: footerMessage,
+            selectedTemplate: selectedTemplate,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
-            Value<String> salesInvoicePrefix = const Value.absent(),
-            Value<int> salesStartingNumber = const Value.absent(),
-            Value<bool> salesYearlyReset = const Value.absent(),
-            Value<String> estimatePrefix = const Value.absent(),
-            Value<int> estimateValidityDays = const Value.absent(),
-            Value<String> salesDefaultPaymentMode = const Value.absent(),
-            Value<String> salesUpiId = const Value.absent(),
-            Value<int> salesDefaultCreditDays = const Value.absent(),
-            Value<int> salesMinAdvancePercent = const Value.absent(),
-            Value<bool> salesAllowDiscount = const Value.absent(),
-            Value<double> salesMaxDiscountPercent = const Value.absent(),
-            Value<String> salesRoundingRule = const Value.absent(),
-            Value<bool> salesShowMakingCharges = const Value.absent(),
-            Value<bool> salesShowHuid = const Value.absent(),
-            Value<bool> salesShowOldGoldLine = const Value.absent(),
-            Value<String> salesTerms = const Value.absent(),
-            Value<String> salesFooterMsg = const Value.absent(),
-            Value<String> purchaseInvoicePrefix = const Value.absent(),
-            Value<int> purchaseStartingNumber = const Value.absent(),
-            Value<bool> purchaseYearlyReset = const Value.absent(),
-            Value<int> purchaseDefaultPaymentDays = const Value.absent(),
-            Value<int> purchaseAdvancePercent = const Value.absent(),
-            Value<String> purchaseDefaultPaymentMode = const Value.absent(),
-            Value<double> purchaseWeightTolerancePercent = const Value.absent(),
-            Value<String> purchaseDefaultKarat = const Value.absent(),
-            Value<String> purchaseTerms = const Value.absent(),
-            Value<bool> purchaseAutoPrint = const Value.absent(),
-            Value<String> girviPrefix = const Value.absent(),
-            Value<int> girviStartingNumber = const Value.absent(),
-            Value<double> girviDefaultInterestRate = const Value.absent(),
-            Value<String> girviInterestType = const Value.absent(),
-            Value<int> girviGracePeriodDays = const Value.absent(),
-            Value<String> girviDefaultDuration = const Value.absent(),
-            Value<int> girviReminderDays = const Value.absent(),
-            Value<int> girviNoticeDays = const Value.absent(),
-            Value<String> girviTerms = const Value.absent(),
-            Value<bool> girviAutoPrint = const Value.absent(),
+            required String metal,
+            Value<bool> showPieces = const Value.absent(),
+            Value<bool> showGrossWeight = const Value.absent(),
+            Value<bool> showLessWeight = const Value.absent(),
+            Value<bool> showNetWeight = const Value.absent(),
+            Value<bool> showPurity = const Value.absent(),
+            Value<bool> showRate = const Value.absent(),
+            Value<bool> showMakingCharges = const Value.absent(),
+            Value<bool> showMakingChargeType = const Value.absent(),
+            Value<bool> showStoneDetails = const Value.absent(),
+            Value<bool> showStoneValue = const Value.absent(),
+            Value<bool> showTotalValue = const Value.absent(),
+            Value<bool> showHuid = const Value.absent(),
+            Value<bool> showWastage = const Value.absent(),
+            Value<bool> showOldGoldLine = const Value.absent(),
+            Value<bool> showDiamondClarity = const Value.absent(),
+            Value<bool> showCertificationNo = const Value.absent(),
+            Value<bool> showDiamondCarats = const Value.absent(),
+            Value<bool> showDiamondPieces = const Value.absent(),
+            Value<bool> showMetalWeight = const Value.absent(),
+            Value<bool> showFineWeight = const Value.absent(),
+            Value<bool> showGstBreakup = const Value.absent(),
+            Value<bool> showHsnCode = const Value.absent(),
             Value<int> returnWindowDays = const Value.absent(),
-            Value<double> returnHandlingChargePercent = const Value.absent(),
             Value<String> returnMode = const Value.absent(),
-            Value<String> returnVoucherPrefix = const Value.absent(),
+            Value<double> handlingChargePercent = const Value.absent(),
             Value<double> buybackRatePercent = const Value.absent(),
             Value<double> buybackPurityDeductPercent = const Value.absent(),
-            Value<String> buybackDefaultKarat = const Value.absent(),
-            Value<String> returnTerms = const Value.absent(),
+            Value<String> termsAndConditions = const Value.absent(),
+            Value<String> footerMessage = const Value.absent(),
+            Value<String> selectedTemplate = const Value.absent(),
           }) =>
-              BillingSettingsCompanion.insert(
+              SalesBillingSettingsCompanion.insert(
             id: id,
             createdAt: createdAt,
             updatedAt: updatedAt,
-            salesInvoicePrefix: salesInvoicePrefix,
-            salesStartingNumber: salesStartingNumber,
-            salesYearlyReset: salesYearlyReset,
-            estimatePrefix: estimatePrefix,
-            estimateValidityDays: estimateValidityDays,
-            salesDefaultPaymentMode: salesDefaultPaymentMode,
-            salesUpiId: salesUpiId,
-            salesDefaultCreditDays: salesDefaultCreditDays,
-            salesMinAdvancePercent: salesMinAdvancePercent,
-            salesAllowDiscount: salesAllowDiscount,
-            salesMaxDiscountPercent: salesMaxDiscountPercent,
-            salesRoundingRule: salesRoundingRule,
-            salesShowMakingCharges: salesShowMakingCharges,
-            salesShowHuid: salesShowHuid,
-            salesShowOldGoldLine: salesShowOldGoldLine,
-            salesTerms: salesTerms,
-            salesFooterMsg: salesFooterMsg,
-            purchaseInvoicePrefix: purchaseInvoicePrefix,
-            purchaseStartingNumber: purchaseStartingNumber,
-            purchaseYearlyReset: purchaseYearlyReset,
-            purchaseDefaultPaymentDays: purchaseDefaultPaymentDays,
-            purchaseAdvancePercent: purchaseAdvancePercent,
-            purchaseDefaultPaymentMode: purchaseDefaultPaymentMode,
-            purchaseWeightTolerancePercent: purchaseWeightTolerancePercent,
-            purchaseDefaultKarat: purchaseDefaultKarat,
-            purchaseTerms: purchaseTerms,
-            purchaseAutoPrint: purchaseAutoPrint,
-            girviPrefix: girviPrefix,
-            girviStartingNumber: girviStartingNumber,
-            girviDefaultInterestRate: girviDefaultInterestRate,
-            girviInterestType: girviInterestType,
-            girviGracePeriodDays: girviGracePeriodDays,
-            girviDefaultDuration: girviDefaultDuration,
-            girviReminderDays: girviReminderDays,
-            girviNoticeDays: girviNoticeDays,
-            girviTerms: girviTerms,
-            girviAutoPrint: girviAutoPrint,
+            metal: metal,
+            showPieces: showPieces,
+            showGrossWeight: showGrossWeight,
+            showLessWeight: showLessWeight,
+            showNetWeight: showNetWeight,
+            showPurity: showPurity,
+            showRate: showRate,
+            showMakingCharges: showMakingCharges,
+            showMakingChargeType: showMakingChargeType,
+            showStoneDetails: showStoneDetails,
+            showStoneValue: showStoneValue,
+            showTotalValue: showTotalValue,
+            showHuid: showHuid,
+            showWastage: showWastage,
+            showOldGoldLine: showOldGoldLine,
+            showDiamondClarity: showDiamondClarity,
+            showCertificationNo: showCertificationNo,
+            showDiamondCarats: showDiamondCarats,
+            showDiamondPieces: showDiamondPieces,
+            showMetalWeight: showMetalWeight,
+            showFineWeight: showFineWeight,
+            showGstBreakup: showGstBreakup,
+            showHsnCode: showHsnCode,
             returnWindowDays: returnWindowDays,
-            returnHandlingChargePercent: returnHandlingChargePercent,
             returnMode: returnMode,
-            returnVoucherPrefix: returnVoucherPrefix,
+            handlingChargePercent: handlingChargePercent,
             buybackRatePercent: buybackRatePercent,
             buybackPurityDeductPercent: buybackPurityDeductPercent,
-            buybackDefaultKarat: buybackDefaultKarat,
-            returnTerms: returnTerms,
+            termsAndConditions: termsAndConditions,
+            footerMessage: footerMessage,
+            selectedTemplate: selectedTemplate,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -33683,21 +34022,560 @@ class $$BillingSettingsTableTableManager extends RootTableManager<
         ));
 }
 
-typedef $$BillingSettingsTableProcessedTableManager = ProcessedTableManager<
+typedef $$SalesBillingSettingsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $SalesBillingSettingsTable,
+        SalesBillingSetting,
+        $$SalesBillingSettingsTableFilterComposer,
+        $$SalesBillingSettingsTableOrderingComposer,
+        $$SalesBillingSettingsTableAnnotationComposer,
+        $$SalesBillingSettingsTableCreateCompanionBuilder,
+        $$SalesBillingSettingsTableUpdateCompanionBuilder,
+        (
+          SalesBillingSetting,
+          BaseReferences<_$AppDatabase, $SalesBillingSettingsTable,
+              SalesBillingSetting>
+        ),
+        SalesBillingSetting,
+        PrefetchHooks Function()>;
+typedef $$PurchaseBillingSettingsTableCreateCompanionBuilder
+    = PurchaseBillingSettingsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required String metal,
+  Value<bool> showGrossWeight,
+  Value<bool> showLessWeight,
+  Value<bool> showNetWeight,
+  Value<bool> showPurity,
+  Value<bool> showRate,
+  Value<bool> showFineWeight,
+  Value<bool> showTotalValue,
+  Value<bool> showStoneDetails,
+  Value<bool> showStoneValue,
+  Value<bool> showHuid,
+  Value<bool> showSupplierDetails,
+  Value<bool> showPanNumber,
+  Value<bool> showDiamondCarats,
+  Value<bool> showDiamondClarity,
+  Value<bool> showCertificationNo,
+  Value<bool> showGstBreakup,
+  Value<bool> showHsnCode,
+  Value<int> returnWindowDays,
+  Value<String> returnMode,
+  Value<double> purityDeductPercent,
+  Value<String> termsAndConditions,
+  Value<String> footerMessage,
+  Value<String> selectedTemplate,
+});
+typedef $$PurchaseBillingSettingsTableUpdateCompanionBuilder
+    = PurchaseBillingSettingsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<String> metal,
+  Value<bool> showGrossWeight,
+  Value<bool> showLessWeight,
+  Value<bool> showNetWeight,
+  Value<bool> showPurity,
+  Value<bool> showRate,
+  Value<bool> showFineWeight,
+  Value<bool> showTotalValue,
+  Value<bool> showStoneDetails,
+  Value<bool> showStoneValue,
+  Value<bool> showHuid,
+  Value<bool> showSupplierDetails,
+  Value<bool> showPanNumber,
+  Value<bool> showDiamondCarats,
+  Value<bool> showDiamondClarity,
+  Value<bool> showCertificationNo,
+  Value<bool> showGstBreakup,
+  Value<bool> showHsnCode,
+  Value<int> returnWindowDays,
+  Value<String> returnMode,
+  Value<double> purityDeductPercent,
+  Value<String> termsAndConditions,
+  Value<String> footerMessage,
+  Value<String> selectedTemplate,
+});
+
+class $$PurchaseBillingSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $PurchaseBillingSettingsTable> {
+  $$PurchaseBillingSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get metal => $composableBuilder(
+      column: $table.metal, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showGrossWeight => $composableBuilder(
+      column: $table.showGrossWeight,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showLessWeight => $composableBuilder(
+      column: $table.showLessWeight,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showNetWeight => $composableBuilder(
+      column: $table.showNetWeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showPurity => $composableBuilder(
+      column: $table.showPurity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showRate => $composableBuilder(
+      column: $table.showRate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showFineWeight => $composableBuilder(
+      column: $table.showFineWeight,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showTotalValue => $composableBuilder(
+      column: $table.showTotalValue,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showStoneDetails => $composableBuilder(
+      column: $table.showStoneDetails,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showStoneValue => $composableBuilder(
+      column: $table.showStoneValue,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showHuid => $composableBuilder(
+      column: $table.showHuid, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showSupplierDetails => $composableBuilder(
+      column: $table.showSupplierDetails,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showPanNumber => $composableBuilder(
+      column: $table.showPanNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showDiamondCarats => $composableBuilder(
+      column: $table.showDiamondCarats,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showDiamondClarity => $composableBuilder(
+      column: $table.showDiamondClarity,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showCertificationNo => $composableBuilder(
+      column: $table.showCertificationNo,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showGstBreakup => $composableBuilder(
+      column: $table.showGstBreakup,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showHsnCode => $composableBuilder(
+      column: $table.showHsnCode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get returnWindowDays => $composableBuilder(
+      column: $table.returnWindowDays,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get returnMode => $composableBuilder(
+      column: $table.returnMode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get purityDeductPercent => $composableBuilder(
+      column: $table.purityDeductPercent,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get termsAndConditions => $composableBuilder(
+      column: $table.termsAndConditions,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get footerMessage => $composableBuilder(
+      column: $table.footerMessage, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get selectedTemplate => $composableBuilder(
+      column: $table.selectedTemplate,
+      builder: (column) => ColumnFilters(column));
+}
+
+class $$PurchaseBillingSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PurchaseBillingSettingsTable> {
+  $$PurchaseBillingSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get metal => $composableBuilder(
+      column: $table.metal, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showGrossWeight => $composableBuilder(
+      column: $table.showGrossWeight,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showLessWeight => $composableBuilder(
+      column: $table.showLessWeight,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showNetWeight => $composableBuilder(
+      column: $table.showNetWeight,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showPurity => $composableBuilder(
+      column: $table.showPurity, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showRate => $composableBuilder(
+      column: $table.showRate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showFineWeight => $composableBuilder(
+      column: $table.showFineWeight,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showTotalValue => $composableBuilder(
+      column: $table.showTotalValue,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showStoneDetails => $composableBuilder(
+      column: $table.showStoneDetails,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showStoneValue => $composableBuilder(
+      column: $table.showStoneValue,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showHuid => $composableBuilder(
+      column: $table.showHuid, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showSupplierDetails => $composableBuilder(
+      column: $table.showSupplierDetails,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showPanNumber => $composableBuilder(
+      column: $table.showPanNumber,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showDiamondCarats => $composableBuilder(
+      column: $table.showDiamondCarats,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showDiamondClarity => $composableBuilder(
+      column: $table.showDiamondClarity,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showCertificationNo => $composableBuilder(
+      column: $table.showCertificationNo,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showGstBreakup => $composableBuilder(
+      column: $table.showGstBreakup,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showHsnCode => $composableBuilder(
+      column: $table.showHsnCode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get returnWindowDays => $composableBuilder(
+      column: $table.returnWindowDays,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get returnMode => $composableBuilder(
+      column: $table.returnMode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get purityDeductPercent => $composableBuilder(
+      column: $table.purityDeductPercent,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get termsAndConditions => $composableBuilder(
+      column: $table.termsAndConditions,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get footerMessage => $composableBuilder(
+      column: $table.footerMessage,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get selectedTemplate => $composableBuilder(
+      column: $table.selectedTemplate,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$PurchaseBillingSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PurchaseBillingSettingsTable> {
+  $$PurchaseBillingSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get metal =>
+      $composableBuilder(column: $table.metal, builder: (column) => column);
+
+  GeneratedColumn<bool> get showGrossWeight => $composableBuilder(
+      column: $table.showGrossWeight, builder: (column) => column);
+
+  GeneratedColumn<bool> get showLessWeight => $composableBuilder(
+      column: $table.showLessWeight, builder: (column) => column);
+
+  GeneratedColumn<bool> get showNetWeight => $composableBuilder(
+      column: $table.showNetWeight, builder: (column) => column);
+
+  GeneratedColumn<bool> get showPurity => $composableBuilder(
+      column: $table.showPurity, builder: (column) => column);
+
+  GeneratedColumn<bool> get showRate =>
+      $composableBuilder(column: $table.showRate, builder: (column) => column);
+
+  GeneratedColumn<bool> get showFineWeight => $composableBuilder(
+      column: $table.showFineWeight, builder: (column) => column);
+
+  GeneratedColumn<bool> get showTotalValue => $composableBuilder(
+      column: $table.showTotalValue, builder: (column) => column);
+
+  GeneratedColumn<bool> get showStoneDetails => $composableBuilder(
+      column: $table.showStoneDetails, builder: (column) => column);
+
+  GeneratedColumn<bool> get showStoneValue => $composableBuilder(
+      column: $table.showStoneValue, builder: (column) => column);
+
+  GeneratedColumn<bool> get showHuid =>
+      $composableBuilder(column: $table.showHuid, builder: (column) => column);
+
+  GeneratedColumn<bool> get showSupplierDetails => $composableBuilder(
+      column: $table.showSupplierDetails, builder: (column) => column);
+
+  GeneratedColumn<bool> get showPanNumber => $composableBuilder(
+      column: $table.showPanNumber, builder: (column) => column);
+
+  GeneratedColumn<bool> get showDiamondCarats => $composableBuilder(
+      column: $table.showDiamondCarats, builder: (column) => column);
+
+  GeneratedColumn<bool> get showDiamondClarity => $composableBuilder(
+      column: $table.showDiamondClarity, builder: (column) => column);
+
+  GeneratedColumn<bool> get showCertificationNo => $composableBuilder(
+      column: $table.showCertificationNo, builder: (column) => column);
+
+  GeneratedColumn<bool> get showGstBreakup => $composableBuilder(
+      column: $table.showGstBreakup, builder: (column) => column);
+
+  GeneratedColumn<bool> get showHsnCode => $composableBuilder(
+      column: $table.showHsnCode, builder: (column) => column);
+
+  GeneratedColumn<int> get returnWindowDays => $composableBuilder(
+      column: $table.returnWindowDays, builder: (column) => column);
+
+  GeneratedColumn<String> get returnMode => $composableBuilder(
+      column: $table.returnMode, builder: (column) => column);
+
+  GeneratedColumn<double> get purityDeductPercent => $composableBuilder(
+      column: $table.purityDeductPercent, builder: (column) => column);
+
+  GeneratedColumn<String> get termsAndConditions => $composableBuilder(
+      column: $table.termsAndConditions, builder: (column) => column);
+
+  GeneratedColumn<String> get footerMessage => $composableBuilder(
+      column: $table.footerMessage, builder: (column) => column);
+
+  GeneratedColumn<String> get selectedTemplate => $composableBuilder(
+      column: $table.selectedTemplate, builder: (column) => column);
+}
+
+class $$PurchaseBillingSettingsTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $BillingSettingsTable,
-    BillingSetting,
-    $$BillingSettingsTableFilterComposer,
-    $$BillingSettingsTableOrderingComposer,
-    $$BillingSettingsTableAnnotationComposer,
-    $$BillingSettingsTableCreateCompanionBuilder,
-    $$BillingSettingsTableUpdateCompanionBuilder,
+    $PurchaseBillingSettingsTable,
+    PurchaseBillingSetting,
+    $$PurchaseBillingSettingsTableFilterComposer,
+    $$PurchaseBillingSettingsTableOrderingComposer,
+    $$PurchaseBillingSettingsTableAnnotationComposer,
+    $$PurchaseBillingSettingsTableCreateCompanionBuilder,
+    $$PurchaseBillingSettingsTableUpdateCompanionBuilder,
     (
-      BillingSetting,
-      BaseReferences<_$AppDatabase, $BillingSettingsTable, BillingSetting>
+      PurchaseBillingSetting,
+      BaseReferences<_$AppDatabase, $PurchaseBillingSettingsTable,
+          PurchaseBillingSetting>
     ),
-    BillingSetting,
-    PrefetchHooks Function()>;
+    PurchaseBillingSetting,
+    PrefetchHooks Function()> {
+  $$PurchaseBillingSettingsTableTableManager(
+      _$AppDatabase db, $PurchaseBillingSettingsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PurchaseBillingSettingsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PurchaseBillingSettingsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PurchaseBillingSettingsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<String> metal = const Value.absent(),
+            Value<bool> showGrossWeight = const Value.absent(),
+            Value<bool> showLessWeight = const Value.absent(),
+            Value<bool> showNetWeight = const Value.absent(),
+            Value<bool> showPurity = const Value.absent(),
+            Value<bool> showRate = const Value.absent(),
+            Value<bool> showFineWeight = const Value.absent(),
+            Value<bool> showTotalValue = const Value.absent(),
+            Value<bool> showStoneDetails = const Value.absent(),
+            Value<bool> showStoneValue = const Value.absent(),
+            Value<bool> showHuid = const Value.absent(),
+            Value<bool> showSupplierDetails = const Value.absent(),
+            Value<bool> showPanNumber = const Value.absent(),
+            Value<bool> showDiamondCarats = const Value.absent(),
+            Value<bool> showDiamondClarity = const Value.absent(),
+            Value<bool> showCertificationNo = const Value.absent(),
+            Value<bool> showGstBreakup = const Value.absent(),
+            Value<bool> showHsnCode = const Value.absent(),
+            Value<int> returnWindowDays = const Value.absent(),
+            Value<String> returnMode = const Value.absent(),
+            Value<double> purityDeductPercent = const Value.absent(),
+            Value<String> termsAndConditions = const Value.absent(),
+            Value<String> footerMessage = const Value.absent(),
+            Value<String> selectedTemplate = const Value.absent(),
+          }) =>
+              PurchaseBillingSettingsCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            metal: metal,
+            showGrossWeight: showGrossWeight,
+            showLessWeight: showLessWeight,
+            showNetWeight: showNetWeight,
+            showPurity: showPurity,
+            showRate: showRate,
+            showFineWeight: showFineWeight,
+            showTotalValue: showTotalValue,
+            showStoneDetails: showStoneDetails,
+            showStoneValue: showStoneValue,
+            showHuid: showHuid,
+            showSupplierDetails: showSupplierDetails,
+            showPanNumber: showPanNumber,
+            showDiamondCarats: showDiamondCarats,
+            showDiamondClarity: showDiamondClarity,
+            showCertificationNo: showCertificationNo,
+            showGstBreakup: showGstBreakup,
+            showHsnCode: showHsnCode,
+            returnWindowDays: returnWindowDays,
+            returnMode: returnMode,
+            purityDeductPercent: purityDeductPercent,
+            termsAndConditions: termsAndConditions,
+            footerMessage: footerMessage,
+            selectedTemplate: selectedTemplate,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required String metal,
+            Value<bool> showGrossWeight = const Value.absent(),
+            Value<bool> showLessWeight = const Value.absent(),
+            Value<bool> showNetWeight = const Value.absent(),
+            Value<bool> showPurity = const Value.absent(),
+            Value<bool> showRate = const Value.absent(),
+            Value<bool> showFineWeight = const Value.absent(),
+            Value<bool> showTotalValue = const Value.absent(),
+            Value<bool> showStoneDetails = const Value.absent(),
+            Value<bool> showStoneValue = const Value.absent(),
+            Value<bool> showHuid = const Value.absent(),
+            Value<bool> showSupplierDetails = const Value.absent(),
+            Value<bool> showPanNumber = const Value.absent(),
+            Value<bool> showDiamondCarats = const Value.absent(),
+            Value<bool> showDiamondClarity = const Value.absent(),
+            Value<bool> showCertificationNo = const Value.absent(),
+            Value<bool> showGstBreakup = const Value.absent(),
+            Value<bool> showHsnCode = const Value.absent(),
+            Value<int> returnWindowDays = const Value.absent(),
+            Value<String> returnMode = const Value.absent(),
+            Value<double> purityDeductPercent = const Value.absent(),
+            Value<String> termsAndConditions = const Value.absent(),
+            Value<String> footerMessage = const Value.absent(),
+            Value<String> selectedTemplate = const Value.absent(),
+          }) =>
+              PurchaseBillingSettingsCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            metal: metal,
+            showGrossWeight: showGrossWeight,
+            showLessWeight: showLessWeight,
+            showNetWeight: showNetWeight,
+            showPurity: showPurity,
+            showRate: showRate,
+            showFineWeight: showFineWeight,
+            showTotalValue: showTotalValue,
+            showStoneDetails: showStoneDetails,
+            showStoneValue: showStoneValue,
+            showHuid: showHuid,
+            showSupplierDetails: showSupplierDetails,
+            showPanNumber: showPanNumber,
+            showDiamondCarats: showDiamondCarats,
+            showDiamondClarity: showDiamondClarity,
+            showCertificationNo: showCertificationNo,
+            showGstBreakup: showGstBreakup,
+            showHsnCode: showHsnCode,
+            returnWindowDays: returnWindowDays,
+            returnMode: returnMode,
+            purityDeductPercent: purityDeductPercent,
+            termsAndConditions: termsAndConditions,
+            footerMessage: footerMessage,
+            selectedTemplate: selectedTemplate,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$PurchaseBillingSettingsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $PurchaseBillingSettingsTable,
+        PurchaseBillingSetting,
+        $$PurchaseBillingSettingsTableFilterComposer,
+        $$PurchaseBillingSettingsTableOrderingComposer,
+        $$PurchaseBillingSettingsTableAnnotationComposer,
+        $$PurchaseBillingSettingsTableCreateCompanionBuilder,
+        $$PurchaseBillingSettingsTableUpdateCompanionBuilder,
+        (
+          PurchaseBillingSetting,
+          BaseReferences<_$AppDatabase, $PurchaseBillingSettingsTable,
+              PurchaseBillingSetting>
+        ),
+        PurchaseBillingSetting,
+        PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -33744,6 +34622,9 @@ class $AppDatabaseManager {
       $$DeliveryOrdersTableTableManager(_db, _db.deliveryOrders);
   $$DeliveryItemsTableTableManager get deliveryItems =>
       $$DeliveryItemsTableTableManager(_db, _db.deliveryItems);
-  $$BillingSettingsTableTableManager get billingSettings =>
-      $$BillingSettingsTableTableManager(_db, _db.billingSettings);
+  $$SalesBillingSettingsTableTableManager get salesBillingSettings =>
+      $$SalesBillingSettingsTableTableManager(_db, _db.salesBillingSettings);
+  $$PurchaseBillingSettingsTableTableManager get purchaseBillingSettings =>
+      $$PurchaseBillingSettingsTableTableManager(
+          _db, _db.purchaseBillingSettings);
 }

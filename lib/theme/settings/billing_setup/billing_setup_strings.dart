@@ -4,6 +4,7 @@
 // LAYER       : Theme / Strings
 // DESCRIPTION : All display text constants — zero hardcoded strings in UI.
 //               Mirrors KarigarStrings pattern.
+//               v14 UPDATE: Metal hub + metal settings strings added.
 // =============================================================================
 
 class BillingSetupStrings {
@@ -28,164 +29,250 @@ class BillingSetupStrings {
   static const String returnTitle = 'RETURN & BUYBACK';
   static const String returnSub = 'Return policy configuration';
 
-  // ── HUB CARDS ─────────────────────────────────────────────────────────────
+  // ── HUB CARDS (v14 — only 2 cards now: Sales + Purchase) ─────────────────
   static const String cardSalesTitle = 'Sales Billing';
-  static const String cardSalesSub = 'Invoice, discount, UPI & terms';
-  static const String cardSalesCount = '6 sections';
+  static const String cardSalesSub =
+      'Invoice display, return policy & terms\nper metal type';
+  static const String cardSalesTag = 'Gold · Silver · Diamond · Platinum';
 
   static const String cardPurchaseTitle = 'Purchase Billing';
-  static const String cardPurchaseSub = 'Supplier, GRN & payment rules';
-  static const String cardPurchaseCount = '4 sections';
+  static const String cardPurchaseSub =
+      'Voucher display, return policy & terms\nper metal type';
+  static const String cardPurchaseTag = 'Gold · Silver · Diamond · Platinum';
 
+  static const String hubInfoNote =
+      'Each metal type has its own invoice display rules, '
+      'return policy and terms. Changes apply to new bills only.';
+
+  // ── METAL HUB ─────────────────────────────────────────────────────────────
+  static const String selectMetal = 'SELECT METAL TYPE';
+
+  // Metal display names
+  static const String metalGold = 'Gold';
+  static const String metalSilver = 'Silver';
+  static const String metalDiamond = 'Diamond';
+  static const String metalPlatinum = 'Platinum';
+
+  // Metal emojis
+  static const String emojiGold = '🥇';
+  static const String emojiSilver = '🥈';
+  static const String emojiDiamond = '💎';
+  static const String emojiPlatinum = '⬜';
+
+  // Metal hub card subtitles — Sales
+  static const String goldSalesSub =
+      'Invoice display, HUID, return\npolicy & T&C for gold bills';
+  static const String silverSalesSub =
+      'Invoice display, purity, return\npolicy & T&C for silver bills';
+  static const String diamondSalesSub =
+      'Carat, clarity, certification,\nreturn policy & T&C for diamond';
+  static const String platinumSalesSub =
+      'Invoice display, purity, return\npolicy & T&C for platinum bills';
+
+  // Metal hub card subtitles — Purchase
+  static const String goldPurchaseSub =
+      'Voucher display, HUID, return\npolicy & T&C for gold purchase';
+  static const String silverPurchaseSub =
+      'Voucher display, purity, return\npolicy & T&C for silver purchase';
+  static const String diamondPurchaseSub =
+      'Carat, clarity, certification,\nreturn policy & T&C for diamond';
+  static const String platinumPurchaseSub =
+      'Voucher display, purity, return\npolicy & T&C for platinum purchase';
+
+  // Helper — subtitle for a metal in Sales hub
+  static String salesMetalSub(String metal) {
+    switch (metal) {
+      case 'gold':
+        return goldSalesSub;
+      case 'silver':
+        return silverSalesSub;
+      case 'diamond':
+        return diamondSalesSub;
+      case 'platinum':
+        return platinumSalesSub;
+      default:
+        return '';
+    }
+  }
+
+  // Helper — subtitle for a metal in Purchase hub
+  static String purchaseMetalSub(String metal) {
+    switch (metal) {
+      case 'gold':
+        return goldPurchaseSub;
+      case 'silver':
+        return silverPurchaseSub;
+      case 'diamond':
+        return diamondPurchaseSub;
+      case 'platinum':
+        return platinumPurchaseSub;
+      default:
+        return '';
+    }
+  }
+
+  // ── METAL SETTINGS SCREEN — Section Headers ───────────────────────────────
+  static const String secInvoiceDisplay = 'Invoice Item Display';
+  static const String subInvoiceDisplay =
+      'What appears on each line item of the bill';
+
+  static const String secVoucherDisplay = 'Purchase Voucher Display';
+  static const String subVoucherDisplay =
+      'What appears on each line item of the purchase voucher';
+
+  static const String secReturnBuyback = 'Return & Buyback Policy';
+  static const String subReturnBuyback =
+      'Rules for this metal\'s return & exchange';
+
+  static const String secPurchaseReturn = 'Purchase Return Policy';
+  static const String subPurchaseReturn =
+      'Rules for returning purchased items to supplier';
+
+  static const String secTermsTemplate = 'Terms & Template';
+
+  // ── INVOICE DISPLAY TOGGLE LABELS ─────────────────────────────────────────
+  static const String togPieces = 'Pieces (Pcs)';
+  static const String togPiecesSub = 'Number of pieces in the item';
+
+  static const String togGrossWeight = 'Gross Weight';
+  static const String togGrossWeightSub = 'Total weight before deductions';
+
+  static const String togLessWeight = 'Less / Stone Weight';
+  static const String togLessWeightSub =
+      'Weight deducted (stone, beading etc.)';
+
+  static const String togNetWeight = 'Net Weight';
+  static const String togNetWeightSub = 'Weight after deductions';
+
+  static const String togPurity = 'Purity / Tunch';
+  static const String togPuritySub = 'e.g. 22KT, 925, 950PT';
+
+  static const String togRate = 'Rate (₹/g)';
+  static const String togRateSub = 'Metal rate per gram';
+
+  static const String togRateCarat = 'Rate (₹/ct)';
+  static const String togRateCaratSub = 'Diamond rate per carat';
+
+  static const String togMaking = 'Making Charges';
+  static const String togMakingSub = 'Labour/making charge amount';
+
+  static const String togMakingType = 'Making Charge Type';
+  static const String togMakingTypeSub = 'Show /g or % or /pc label';
+
+  static const String togFineWeight = 'Fine Weight';
+  static const String togFineWeightSub = 'Calculated: net wt × purity %';
+
+  static const String togHuid = 'HUID Number';
+  static const String togHuidSub = 'BIS Hallmark HUID — govt. mandatory';
+
+  static const String togHuidPurchase = 'HUID Number';
+  static const String togHuidPurchaseSub =
+      'BIS Hallmark HUID — mandatory for gold purchase';
+
+  static const String togWastage = 'Wastage %';
+  static const String togWastageSub = 'Wastage shown as a separate line';
+
+  static const String togOldGold = 'Old Gold Exchange Line';
+  static const String togOldGoldSub =
+      'Shown when customer gives old gold in exchange';
+
+  static const String togDiamondCarats = 'Diamond Carats';
+  static const String togDiamondCaratsSub = 'Total diamond weight in carats';
+
+  static const String togDiamondPieces = 'Diamond Pieces';
+  static const String togDiamondPiecesSub = 'Number of diamond pieces';
+
+  static const String togClarity = 'Clarity Grade';
+  static const String togClaritySub = 'VVS1, VS1, SI1 etc.';
+
+  static const String togCertNo = 'Certification Number';
+  static const String togCertNoSub = 'GIA / IGI / HRD cert no.';
+
+  static const String togMetalWeight = 'Metal Frame Weight';
+  static const String togMetalWeightSub = 'Weight of gold/silver setting';
+
+  static const String togStoneDetails = 'Stone Details';
+  static const String togStoneDetailsSub = 'Stone type, carats, pieces';
+
+  static const String togStoneValue = 'Stone Value';
+  static const String togStoneValueSub = 'Stone/diamond value as separate line';
+
+  static const String togGstBreakup = 'GST Breakup';
+  static const String togGstBreakupSub = 'Show CGST + SGST lines separately';
+
+  static const String togHsn = 'HSN Code';
+  static const String togHsnSub = 'Show HSN code on invoice';
+
+  static const String togTotalValue = 'Total Value';
+  static const String togTotalValueSub = 'Final line item total';
+
+  static const String togSupplierDetails = 'Supplier / Seller Details';
+  static const String togSupplierDetailsSub = 'Name, mobile, city on voucher';
+
+  static const String togPanNumber = 'PAN Number';
+  static const String togPanNumberSub =
+      'Required for transactions above ₹2 lakh';
+
+  // ── RETURN & BUYBACK FIELD LABELS ─────────────────────────────────────────
+  static const String lblReturnWindow = 'Return Window (Days)';
+  static const String hintReturnWindow = 'e.g. 7';
+  static const String subReturnWindow = '0 = No return allowed';
+
+  static const String lblReturnMode = 'Return Mode';
+  static const String lblHandlingCharge = 'Handling Charge %';
+  static const String hintHandlingCharge = 'e.g. 0';
+  static const String subHandlingCharge = 'Deducted on return';
+
+  static const String lblBuybackRate = 'Buyback Rate %';
+  static const String hintBuybackRate = 'e.g. 90';
+  static const String subBuybackRate = '% of today\'s market rate';
+
+  static const String lblPurityDeduct = 'Purity Deduction %';
+  static const String hintPurityDeduct = 'e.g. 2';
+  static const String subPurityDeductSales =
+      'Testing/refining loss deducted during buyback';
+  static const String subPurityDeductPurchase =
+      'Deducted for testing/refining loss';
+
+  // ── TERMS & TEMPLATE FIELD LABELS ─────────────────────────────────────────
+  static const String lblTerms = 'Terms & Conditions';
+  static const String lblFooter = 'Footer Message';
+  static const String lblTemplate = 'Print Template';
+  static const String hintFooter = 'e.g. Thank you for shopping with us!';
+  static const String hintFooterPurchase = 'e.g. Thank you for your supply.';
+  static const String templateHelper = 'More templates can be added in future';
+
+  // ── SAVE BUTTON ───────────────────────────────────────────────────────────
+  static String saveLabel(String metalDisplay) => 'Save $metalDisplay Settings';
+  static String savePurchaseLabel(String metalDisplay) =>
+      'Save $metalDisplay Purchase Settings';
+  static String savedSuccess(String metal) => '$metal billing settings saved!';
+  static String savedPurchase(String metal) =>
+      '$metal purchase settings saved!';
+  static const String saveFailed = 'Save failed. Please try again.';
+
+  // ── APPBAR SUBTITLES ──────────────────────────────────────────────────────
+  static const String salesSettingsSub =
+      'Invoice display · Return policy · Terms';
+  static const String purchaseSettingsSub =
+      'Voucher display · Return policy · Terms';
+  static const String selectModuleSub = 'Select metal type to configure';
+
+  // ── MODULE HUB INFO ───────────────────────────────────────────────────────
+  static const String selectModule = 'SELECT MODULE';
+  static const String configureLabel = 'Configure';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LEGACY — Old hub card strings (kept for backward compat if used elsewhere)
+  // ═══════════════════════════════════════════════════════════════════════════
+  static const String cardSalesCount = '4 metals';
+  static const String cardPurchaseCount = '4 metals';
   static const String cardGirviTitle = 'Girvi Billing';
   static const String cardGirviSub = 'Interest, notice & auction rules';
   static const String cardGirviCount = '4 sections';
-
   static const String cardReturnTitle = 'Return & Buyback';
   static const String cardReturnSub = 'Return policy & buyback rates';
   static const String cardReturnCount = '3 sections';
-
-  // ── SECTION HEADERS — SALES ───────────────────────────────────────────────
-  static const String secInvoiceNo = 'Invoice Numbering';
-  static const String subInvoiceNo = 'BILL NUMBER FORMAT & SEQUENCE';
-
-  static const String secEstimate = 'Estimate / Quotation';
-  static const String subEstimate = 'QUOTATION SETTINGS';
-
-  static const String secPayment = 'Payment Settings';
-  static const String subPayment = 'DEFAULT PAYMENT & CREDIT RULES';
-
-  static const String secDiscount = 'Discount & Rounding';
-  static const String subDiscount = 'BILL AMOUNT ADJUSTMENT RULES';
-
-  static const String secDisplay = 'Invoice Items Display';
-  static const String subDisplay = 'WHAT SHOWS ON PRINTED BILL';
-
-  static const String secSalesTerms = 'Terms, Conditions & Footer';
-  static const String subSalesTerms = 'PRINTED ON EVERY SALES INVOICE';
-
-  // ── SECTION HEADERS — PURCHASE ────────────────────────────────────────────
-  static const String secPurInvoice = 'Purchase Voucher Numbering';
-  static const String subPurInvoice = 'GRN / PURCHASE BILL FORMAT';
-
-  static const String secPurPayment = 'Supplier Payment Terms';
-  static const String subPurPayment = 'CREDIT & ADVANCE DEFAULTS';
-
-  static const String secPurItem = 'Item & Weight Rules';
-  static const String subPurItem = 'QUALITY & KARAT DEFAULTS';
-
-  static const String secPurTerms = 'Purchase Terms & Print';
-  static const String subPurTerms = 'PRINTED ON PURCHASE ORDER';
-
-  // ── SECTION HEADERS — GIRVI ───────────────────────────────────────────────
-  static const String secGrvVoucher = 'Girvi Patti Numbering';
-  static const String subGrvVoucher = 'LOAN TICKET FORMAT & SEQUENCE';
-
-  static const String secGrvInterest = 'Interest Rules';
-  static const String subGrvInterest = 'LOAN CHARGES & CALCULATION';
-
-  static const String secGrvNotice = 'Reminder & Notice Period';
-  static const String subGrvNotice = 'EXPIRY ALERTS & LEGAL NOTICE';
-
-  static const String secGrvTerms = 'Girvi Terms & Print';
-  static const String subGrvTerms = 'PRINTED ON GIRVI PATTI';
-
-  // ── SECTION HEADERS — RETURN ──────────────────────────────────────────────
-  static const String secRetPolicy = 'Return Policy';
-  static const String subRetPolicy = 'CUSTOMER RETURN & EXCHANGE RULES';
-
-  static const String secBuyback = 'Buyback (Old Gold Purchase)';
-  static const String subBuyback = 'RATE & PURITY DEDUCTION';
-
-  static const String secRetTerms = 'Return Terms & Conditions';
-  static const String subRetTerms = 'PRINTED ON RETURN VOUCHER';
-
-  // ── FIELD LABELS & HINTS ──────────────────────────────────────────────────
-  static const String lblInvoicePrefix = 'Invoice Prefix';
-  static const String hintInvoicePrefix = 'e.g.  INV-  or  LOTUS-';
-  static const String lblStartingNo = 'Starting Invoice Number';
-  static const String hintStartingNo = 'e.g.  1  or  501';
-  static const String lblYearlyReset = 'Reset number on new financial year';
-  static const String lblEstimatePrefix = 'Estimate Prefix';
-  static const String hintEstimatePrefix = 'e.g.  EST-';
-  static const String lblEstValidity = 'Validity (Days)';
-  static const String hintEstValidity = 'e.g.  7';
-  static const String lblPayMode = 'Default Payment Mode';
-  static const String lblUpiId = 'UPI ID (shown on invoice)';
-  static const String hintUpiId = 'e.g.  lotus@upi';
-  static const String lblCreditDays = 'Default Credit Days';
-  static const String hintCreditDays = 'e.g.  30';
-  static const String lblMinAdvance = 'Min. Advance % for Orders';
-  static const String hintMinAdvance = 'e.g.  30';
-  static const String lblAllowDiscount = 'Allow staff to give discount';
-  static const String lblMaxDiscount = 'Max Discount % Allowed';
-  static const String hintMaxDiscount = 'e.g.  5';
-  static const String lblRounding = 'Bill Total Rounding Rule';
-  static const String lblShowMaking = 'Show Making Charges on Bill';
-  static const String lblShowHuid = 'Show HUID / Hallmark Number';
-  static const String lblShowOldGold = 'Show Old Gold Deduction Line';
-  static const String lblSalesTerms = 'Terms & Conditions';
-  static const String hintSalesTerms = 'Enter sales terms & conditions...';
-  static const String lblFooterMsg = 'Invoice Footer Message';
-  static const String hintFooterMsg = 'e.g.  Thank you for shopping with us!';
-
-  static const String lblPurPrefix = 'Purchase Bill Prefix';
-  static const String hintPurPrefix = 'e.g.  PUR-  or  GRN-';
-  static const String lblPurStartNo = 'Starting Purchase Number';
-  static const String hintPurStartNo = 'e.g.  1  or  101';
-  static const String lblPurYearReset = 'Reset number on new financial year';
-  static const String lblPurPayDays = 'Default Payment Days';
-  static const String hintPurPayDays = 'e.g.  30';
-  static const String lblPurAdvance = 'Default Advance % to Supplier';
-  static const String hintPurAdvance = 'e.g.  20';
-  static const String lblPurPayMode = 'Default Payment Mode';
-  static const String lblWeightTolerance = 'Weight Tolerance %';
-  static const String hintWeightTol = 'e.g.  0.5';
-  static const String lblPurKarat = 'Default Karat (Purchase)';
-  static const String lblPurTerms = 'Purchase Terms & Conditions';
-  static const String hintPurTerms = 'Enter purchase terms...';
-  static const String lblPurAutoPrint = 'Auto-print purchase order on save';
-
-  static const String lblGrvPrefix = 'Girvi Ticket Prefix';
-  static const String hintGrvPrefix = 'e.g.  GRV-  or  LOAN-';
-  static const String lblGrvStartNo = 'Starting Girvi Number';
-  static const String hintGrvStartNo = 'e.g.  1  or  501';
-  static const String lblInterestRate = 'Default Interest Rate (% per month)';
-  static const String hintInterestRate = 'e.g.  1.5';
-  static const String lblInterestType = 'Interest Calculation Type';
-  static const String lblGracePeriod = 'Grace Period (Days after due date)';
-  static const String hintGracePeriod = 'e.g.  3';
-  static const String lblGrvDuration = 'Default Loan Duration';
-  static const String lblReminderDays = 'Reminder Days Before Expiry';
-  static const String hintReminderDays = 'e.g.  15';
-  static const String lblNoticeDays = 'Legal Notice Period (Days)';
-  static const String hintNoticeDays = 'e.g.  30';
-  static const String lblGrvTerms = 'Girvi Terms & Conditions';
-  static const String hintGrvTerms = 'Enter girvi loan terms...';
-  static const String lblGrvAutoPrint = 'Auto-print girvi patti on save';
-
-  static const String lblRetWindow = 'Return Window (Days after purchase)';
-  static const String hintRetWindow = 'e.g.  7';
-  static const String lblHandlingCharge = 'Restocking / Handling Charge %';
-  static const String hintHandlingCharge = 'e.g.  0  or  2';
-  static const String lblReturnMode = 'Return Mode Allowed';
-  static const String lblRetVoucher = 'Return Voucher Prefix';
-  static const String hintRetVoucher = 'e.g.  RET-  or  CR-';
-  static const String lblBuybackRate = 'Buyback Rate (% of today\'s rate)';
-  static const String hintBuybackRate = 'e.g.  90';
-  static const String lblPurityDeduct = 'Purity Deduction % (Melting)';
-  static const String hintPurityDeduct = 'e.g.  2';
-  static const String lblBuybackKarat = 'Default Buyback Karat';
-  static const String lblRetTerms = 'Return & Buyback Terms';
-  static const String hintRetTerms = 'Enter return/buyback terms...';
-
-  // ── MESSAGES ─────────────────────────────────────────────────────────────
-  static const String msgSaved = 'Settings saved successfully';
-  static const String msgFixErrors = 'Please fix errors before saving';
-  static const String msgSaving = 'Saving...';
-  static const String lblLocked = 'Locked';
-  static const String lblSave = 'Save';
-  static const String configure = 'Configure';
 
   // ── DROPDOWN OPTIONS ─────────────────────────────────────────────────────
   static const List<String> paymentModes = [
@@ -219,10 +306,11 @@ class BillingSetupStrings {
     '9 Months',
     '12 Months'
   ];
-  static const List<String> returnModes = [
-    'Exchange Only',
-    'Cash Refund Only',
-    'Exchange or Cash Refund'
+  static const List<String> returnModes = ['Exchange Only', 'Refund', 'Both'];
+  static const List<String> purchaseReturnModes = [
+    'Exchange',
+    'Credit Note',
+    'Cash Refund'
   ];
 
   // ── DEFAULT TERMS TEXTS ──────────────────────────────────────────────────
@@ -232,7 +320,7 @@ class BillingSetupStrings {
       'Original bill is mandatory for any service claim.';
 
   static const String defaultSalesFooter =
-      'Thank you for shopping with us! Visit us again. 🙏';
+      'Thank you for shopping with us! Visit us again.';
 
   static const String defaultPurchaseTerms =
       'Quality will be checked on delivery.\n'

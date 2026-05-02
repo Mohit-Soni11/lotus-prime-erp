@@ -4,6 +4,7 @@
 // LAYER       : Theme / Colors
 // DESCRIPTION : Master color palette — mirrors KarigarColors exactly.
 //               Dark shell AppBar + warm cream body. 4 accent families.
+//               v14 UPDATE: Metal-specific accents added for Sales/Purchase hub.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -100,4 +101,59 @@ class BillingSetupColors {
   static const Color retPolicy = Color(0xFFE11D48);
   static const Color retBuyback = Color(0xFFD97706);
   static const Color retTerms = Color(0xFF374151);
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // v14 — METAL TYPE ACCENTS (Sales & Purchase Metal Hub)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // 🥇 Gold
+  static const Color metalGold = Color(0xFFB8860B);
+  static const Color metalGoldLight = Color(0x1AB8860B);
+  static const Color metalGoldBg = Color(0xFFFFFBEB);
+
+  // 🥈 Silver
+  static const Color metalSilver = Color(0xFF6B7280);
+  static const Color metalSilverLight = Color(0x1A6B7280);
+  static const Color metalSilverBg = Color(0xFFF9FAFB);
+
+  // 💎 Diamond
+  static const Color metalDiamond = Color(0xFF0EA5E9);
+  static const Color metalDiamondLight = Color(0x1A0EA5E9);
+  static const Color metalDiamondBg = Color(0xFFF0F9FF);
+
+  // ⬜ Platinum
+  static const Color metalPlatinum = Color(0xFF7C3AED);
+  static const Color metalPlatinumLight = Color(0x1A7C3AED);
+  static const Color metalPlatinumBg = Color(0xFFF5F3FF);
+
+  // Helper — returns accent color for a given metal string
+  static Color metalAccent(String metal) {
+    switch (metal) {
+      case 'gold':
+        return metalGold;
+      case 'silver':
+        return metalSilver;
+      case 'diamond':
+        return metalDiamond;
+      case 'platinum':
+        return metalPlatinum;
+      default:
+        return metalSilver;
+    }
+  }
+
+  static Color metalBg(String metal) {
+    switch (metal) {
+      case 'gold':
+        return metalGoldBg;
+      case 'silver':
+        return metalSilverBg;
+      case 'diamond':
+        return metalDiamondBg;
+      case 'platinum':
+        return metalPlatinumBg;
+      default:
+        return metalSilverBg;
+    }
+  }
 }

@@ -28,8 +28,9 @@ import '../tables/shop_profile_table.dart';
 import '../tables/stock/stock_items.dart';
 import '../tables/stock/suppliers.dart';
 
-// ✅ v13: Billing Setup
-import '../tables/setting/billing/billing_settings_table.dart';
+// ✅ v14: Per-Metal Billing Setup (replaces old BillingSettings)
+import '../tables/setting/billing/sales_billing_settings.dart';
+import '../tables/setting/billing/purchase_billing_settings.dart';
 
 part 'app_database.g.dart';
 
@@ -56,7 +57,8 @@ part 'app_database.g.dart';
     GirviPayments,
     DeliveryOrders,
     DeliveryItems,
-    BillingSettings, // ✅ v13
+    SalesBillingSettings, // ✅ v14
+    PurchaseBillingSettings, // ✅ v14
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -67,7 +69,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase._internal() : super(_openConnection());
 
   @override
-  int get schemaVersion => 13; // ✅ v13: Billing Setup
+  int get schemaVersion => 14; // ✅ v14: Per-Metal Billing Setup
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -176,7 +178,6 @@ class AppDatabase extends _$AppDatabase {
             debugPrint('v11: Delivery tables created.');
           }
 
-          // v12: Purchase Vouchers — unchanged
           if (from < 12) {
             await customStatement(_createPurchaseVouchersTableSql);
             await customStatement(_createPurchaseVoucherItemsTableSql);
@@ -186,10 +187,23 @@ class AppDatabase extends _$AppDatabase {
             debugPrint('v12: Purchase voucher tables created.');
           }
 
-          // ✅ v13: Billing Setup
           if (from < 13) {
-            await m.createTable(billingSettings);
-            debugPrint('v13: BillingSettings table created.');
+            // Old billing_settings — created via safety net below, no Drift table now
+            debugPrint(
+                'v13: BillingSettings (legacy) — handled by safety net.');
+          }
+
+          // ✅ v14: Per-metal billing setup
+          if (from < 14) {
+            // Drop old flat billing_settings if it exists
+            try {
+              await customStatement('DROP TABLE IF EXISTS "billing_settings"');
+            } catch (_) {}
+            // Create new per-metal tables
+            await m.createTable(salesBillingSettings);
+            await m.createTable(purchaseBillingSettings);
+            debugPrint(
+                'v14: Per-metal SalesBillingSettings & PurchaseBillingSettings created.');
           }
         },
         beforeOpen: (details) async {
@@ -289,60 +303,6 @@ class AppDatabase extends _$AppDatabase {
           for (final statement in _purchaseVoucherIndexSql) {
             await customStatement(statement);
           }
-
-          // ✅ v13 Safety net: BillingSettings
-          await customStatement('''
-            CREATE TABLE IF NOT EXISTS "billing_settings" (
-              "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-              "sales_invoice_prefix" TEXT NOT NULL DEFAULT 'INV-',
-              "sales_starting_number" INTEGER NOT NULL DEFAULT 1,
-              "sales_yearly_reset" INTEGER NOT NULL DEFAULT 1,
-              "estimate_prefix" TEXT NOT NULL DEFAULT 'EST-',
-              "estimate_validity_days" INTEGER NOT NULL DEFAULT 7,
-              "sales_default_payment_mode" TEXT NOT NULL DEFAULT 'Cash',
-              "sales_upi_id" TEXT NOT NULL DEFAULT '',
-              "sales_default_credit_days" INTEGER NOT NULL DEFAULT 30,
-              "sales_min_advance_percent" INTEGER NOT NULL DEFAULT 30,
-              "sales_allow_discount" INTEGER NOT NULL DEFAULT 1,
-              "sales_max_discount_percent" REAL NOT NULL DEFAULT 5.0,
-              "sales_rounding_rule" TEXT NOT NULL DEFAULT 'Nearest ₹1',
-              "sales_show_making_charges" INTEGER NOT NULL DEFAULT 1,
-              "sales_show_huid" INTEGER NOT NULL DEFAULT 1,
-              "sales_show_old_gold_line" INTEGER NOT NULL DEFAULT 1,
-              "sales_terms" TEXT NOT NULL DEFAULT 'Items once sold will not be taken back or exchanged.',
-              "sales_footer_msg" TEXT NOT NULL DEFAULT 'Thank you for shopping with us!',
-              "purchase_invoice_prefix" TEXT NOT NULL DEFAULT 'PUR-',
-              "purchase_starting_number" INTEGER NOT NULL DEFAULT 1,
-              "purchase_yearly_reset" INTEGER NOT NULL DEFAULT 1,
-              "purchase_default_payment_days" INTEGER NOT NULL DEFAULT 30,
-              "purchase_advance_percent" INTEGER NOT NULL DEFAULT 20,
-              "purchase_default_payment_mode" TEXT NOT NULL DEFAULT 'Bank Transfer',
-              "purchase_weight_tolerance_percent" REAL NOT NULL DEFAULT 0.5,
-              "purchase_default_karat" TEXT NOT NULL DEFAULT '22K',
-              "purchase_terms" TEXT NOT NULL DEFAULT 'Quality will be checked on delivery.',
-              "purchase_auto_print" INTEGER NOT NULL DEFAULT 0,
-              "girvi_prefix" TEXT NOT NULL DEFAULT 'GRV-',
-              "girvi_starting_number" INTEGER NOT NULL DEFAULT 1,
-              "girvi_default_interest_rate" REAL NOT NULL DEFAULT 1.5,
-              "girvi_interest_type" TEXT NOT NULL DEFAULT 'Simple',
-              "girvi_grace_period_days" INTEGER NOT NULL DEFAULT 3,
-              "girvi_default_duration" TEXT NOT NULL DEFAULT '6 Months',
-              "girvi_reminder_days" INTEGER NOT NULL DEFAULT 15,
-              "girvi_notice_days" INTEGER NOT NULL DEFAULT 30,
-              "girvi_terms" TEXT NOT NULL DEFAULT 'Interest charged per month on the loan amount.',
-              "girvi_auto_print" INTEGER NOT NULL DEFAULT 1,
-              "return_window_days" INTEGER NOT NULL DEFAULT 7,
-              "return_handling_charge_percent" REAL NOT NULL DEFAULT 0.0,
-              "return_mode" TEXT NOT NULL DEFAULT 'Exchange Only',
-              "return_voucher_prefix" TEXT NOT NULL DEFAULT 'RET-',
-              "buyback_rate_percent" REAL NOT NULL DEFAULT 90.0,
-              "buyback_purity_deduct_percent" REAL NOT NULL DEFAULT 2.0,
-              "buyback_default_karat" TEXT NOT NULL DEFAULT '22K',
-              "return_terms" TEXT NOT NULL DEFAULT 'Returns accepted with original bill only.',
-              "created_at" INTEGER NOT NULL,
-              "updated_at" INTEGER
-            )
-          ''');
 
           debugPrint('Safety net bootstrap complete.');
         },
