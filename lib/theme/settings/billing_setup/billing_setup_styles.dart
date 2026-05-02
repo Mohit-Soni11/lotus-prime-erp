@@ -56,10 +56,47 @@ class BillingSetupStyles {
         letterSpacing: 1.2,
       );
 
+  // ── APP BAR TYPOGRAPHY ────────────────────────────────────────────────────
+
+  static TextStyle get appBarTitle => GoogleFonts.inter(
+        fontSize: 15,
+        fontWeight: FontWeight.w700,
+        color: BillingSetupColors.shellTextTitle,
+        letterSpacing: 0.5,
+      );
+
+  static TextStyle get appBarSubtitle => GoogleFonts.inter(
+        fontSize: 10,
+        fontWeight: FontWeight.w500,
+        color: BillingSetupColors.shellTextMuted,
+        letterSpacing: 0.2,
+      );
+
+  static TextStyle get systemOnlineText => GoogleFonts.inter(
+        fontSize: 9,
+        fontWeight: FontWeight.w800,
+        color: BillingSetupColors.onlineGreen,
+        letterSpacing: 1.0,
+      );
+
+  static TextStyle get moduleBadgeTitle => GoogleFonts.inter(
+        fontSize: 10,
+        fontWeight: FontWeight.w800,
+        color: BillingSetupColors.brandGold,
+        letterSpacing: 0.6,
+      );
+
+  static TextStyle get moduleBadgeSub => GoogleFonts.inter(
+        fontSize: 9,
+        fontWeight: FontWeight.w400,
+        color: BillingSetupColors.shellTextMuted,
+      );
+
   // ═══════════════════════════════════════════════════════════════════════════
   // DIMENSIONS
   // ═══════════════════════════════════════════════════════════════════════════
 
+  static const double appBarHeight = 72.0;
   static const double inputHeight = 52.0;
   static const double dropdownHeight = 52.0;
   static const double rCard = 16.0;

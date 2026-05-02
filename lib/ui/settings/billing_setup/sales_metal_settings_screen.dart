@@ -672,11 +672,15 @@ class _InputField extends StatelessWidget {
           keyboardType: keyboardType,
           inputFormatters: inputFormatters,
           maxLines: maxLines,
-          style: GoogleFonts.inter(fontSize: 13),
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF111827), // ✅ Fixed: dark black text visible
+          ),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle:
-                GoogleFonts.inter(fontSize: 13, color: const Color(0xFFD1D5DB)),
+                GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9CA3AF)),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             border: OutlineInputBorder(

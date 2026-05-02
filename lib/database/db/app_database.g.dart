@@ -22251,6 +22251,750 @@ class PurchaseBillingSettingsCompanion
   }
 }
 
+class $GirviBillingSettingsTable extends GirviBillingSettings
+    with TableInfo<$GirviBillingSettingsTable, GirviBillingSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GirviBillingSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _girviPrefixMeta =
+      const VerificationMeta('girviPrefix');
+  @override
+  late final GeneratedColumn<String> girviPrefix = GeneratedColumn<String>(
+      'girvi_prefix', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('GRV-'));
+  static const VerificationMeta _startingNumberMeta =
+      const VerificationMeta('startingNumber');
+  @override
+  late final GeneratedColumn<int> startingNumber = GeneratedColumn<int>(
+      'starting_number', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  static const VerificationMeta _defaultInterestRateMeta =
+      const VerificationMeta('defaultInterestRate');
+  @override
+  late final GeneratedColumn<double> defaultInterestRate =
+      GeneratedColumn<double>('default_interest_rate', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(1.5));
+  static const VerificationMeta _interestTypeMeta =
+      const VerificationMeta('interestType');
+  @override
+  late final GeneratedColumn<String> interestType = GeneratedColumn<String>(
+      'interest_type', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('Simple'));
+  static const VerificationMeta _gracePeriodDaysMeta =
+      const VerificationMeta('gracePeriodDays');
+  @override
+  late final GeneratedColumn<int> gracePeriodDays = GeneratedColumn<int>(
+      'grace_period_days', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(3));
+  static const VerificationMeta _defaultDurationMeta =
+      const VerificationMeta('defaultDuration');
+  @override
+  late final GeneratedColumn<String> defaultDuration = GeneratedColumn<String>(
+      'default_duration', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('6 Months'));
+  static const VerificationMeta _reminderDaysMeta =
+      const VerificationMeta('reminderDays');
+  @override
+  late final GeneratedColumn<int> reminderDays = GeneratedColumn<int>(
+      'reminder_days', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(15));
+  static const VerificationMeta _noticeDaysMeta =
+      const VerificationMeta('noticeDays');
+  @override
+  late final GeneratedColumn<int> noticeDays = GeneratedColumn<int>(
+      'notice_days', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(30));
+  static const VerificationMeta _termsAndConditionsMeta =
+      const VerificationMeta('termsAndConditions');
+  @override
+  late final GeneratedColumn<String> termsAndConditions = GeneratedColumn<
+          String>('terms_and_conditions', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(
+          'Interest will be charged per month on the loan amount.\n'
+          'Unclaimed ornaments after notice period will be auctioned as per law.\n'
+          'Customer is responsible for timely repayment.'));
+  static const VerificationMeta _footerMessageMeta =
+      const VerificationMeta('footerMessage');
+  @override
+  late final GeneratedColumn<String> footerMessage = GeneratedColumn<String>(
+      'footer_message', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(''));
+  static const VerificationMeta _autoPrintMeta =
+      const VerificationMeta('autoPrint');
+  @override
+  late final GeneratedColumn<bool> autoPrint = GeneratedColumn<bool>(
+      'auto_print', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("auto_print" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _selectedTemplateMeta =
+      const VerificationMeta('selectedTemplate');
+  @override
+  late final GeneratedColumn<String> selectedTemplate = GeneratedColumn<String>(
+      'selected_template', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('default'));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        girviPrefix,
+        startingNumber,
+        defaultInterestRate,
+        interestType,
+        gracePeriodDays,
+        defaultDuration,
+        reminderDays,
+        noticeDays,
+        termsAndConditions,
+        footerMessage,
+        autoPrint,
+        selectedTemplate
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'girvi_billing_settings';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<GirviBillingSetting> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('girvi_prefix')) {
+      context.handle(
+          _girviPrefixMeta,
+          girviPrefix.isAcceptableOrUnknown(
+              data['girvi_prefix']!, _girviPrefixMeta));
+    }
+    if (data.containsKey('starting_number')) {
+      context.handle(
+          _startingNumberMeta,
+          startingNumber.isAcceptableOrUnknown(
+              data['starting_number']!, _startingNumberMeta));
+    }
+    if (data.containsKey('default_interest_rate')) {
+      context.handle(
+          _defaultInterestRateMeta,
+          defaultInterestRate.isAcceptableOrUnknown(
+              data['default_interest_rate']!, _defaultInterestRateMeta));
+    }
+    if (data.containsKey('interest_type')) {
+      context.handle(
+          _interestTypeMeta,
+          interestType.isAcceptableOrUnknown(
+              data['interest_type']!, _interestTypeMeta));
+    }
+    if (data.containsKey('grace_period_days')) {
+      context.handle(
+          _gracePeriodDaysMeta,
+          gracePeriodDays.isAcceptableOrUnknown(
+              data['grace_period_days']!, _gracePeriodDaysMeta));
+    }
+    if (data.containsKey('default_duration')) {
+      context.handle(
+          _defaultDurationMeta,
+          defaultDuration.isAcceptableOrUnknown(
+              data['default_duration']!, _defaultDurationMeta));
+    }
+    if (data.containsKey('reminder_days')) {
+      context.handle(
+          _reminderDaysMeta,
+          reminderDays.isAcceptableOrUnknown(
+              data['reminder_days']!, _reminderDaysMeta));
+    }
+    if (data.containsKey('notice_days')) {
+      context.handle(
+          _noticeDaysMeta,
+          noticeDays.isAcceptableOrUnknown(
+              data['notice_days']!, _noticeDaysMeta));
+    }
+    if (data.containsKey('terms_and_conditions')) {
+      context.handle(
+          _termsAndConditionsMeta,
+          termsAndConditions.isAcceptableOrUnknown(
+              data['terms_and_conditions']!, _termsAndConditionsMeta));
+    }
+    if (data.containsKey('footer_message')) {
+      context.handle(
+          _footerMessageMeta,
+          footerMessage.isAcceptableOrUnknown(
+              data['footer_message']!, _footerMessageMeta));
+    }
+    if (data.containsKey('auto_print')) {
+      context.handle(_autoPrintMeta,
+          autoPrint.isAcceptableOrUnknown(data['auto_print']!, _autoPrintMeta));
+    }
+    if (data.containsKey('selected_template')) {
+      context.handle(
+          _selectedTemplateMeta,
+          selectedTemplate.isAcceptableOrUnknown(
+              data['selected_template']!, _selectedTemplateMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GirviBillingSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GirviBillingSetting(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      girviPrefix: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}girvi_prefix'])!,
+      startingNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}starting_number'])!,
+      defaultInterestRate: attachedDatabase.typeMapping.read(
+          DriftSqlType.double,
+          data['${effectivePrefix}default_interest_rate'])!,
+      interestType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}interest_type'])!,
+      gracePeriodDays: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}grace_period_days'])!,
+      defaultDuration: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}default_duration'])!,
+      reminderDays: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}reminder_days'])!,
+      noticeDays: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}notice_days'])!,
+      termsAndConditions: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}terms_and_conditions'])!,
+      footerMessage: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}footer_message'])!,
+      autoPrint: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}auto_print'])!,
+      selectedTemplate: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}selected_template'])!,
+    );
+  }
+
+  @override
+  $GirviBillingSettingsTable createAlias(String alias) {
+    return $GirviBillingSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class GirviBillingSetting extends DataClass
+    implements Insertable<GirviBillingSetting> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final String girviPrefix;
+  final int startingNumber;
+  final double defaultInterestRate;
+  final String interestType;
+  final int gracePeriodDays;
+  final String defaultDuration;
+  final int reminderDays;
+  final int noticeDays;
+  final String termsAndConditions;
+  final String footerMessage;
+  final bool autoPrint;
+  final String selectedTemplate;
+  const GirviBillingSetting(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.girviPrefix,
+      required this.startingNumber,
+      required this.defaultInterestRate,
+      required this.interestType,
+      required this.gracePeriodDays,
+      required this.defaultDuration,
+      required this.reminderDays,
+      required this.noticeDays,
+      required this.termsAndConditions,
+      required this.footerMessage,
+      required this.autoPrint,
+      required this.selectedTemplate});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['girvi_prefix'] = Variable<String>(girviPrefix);
+    map['starting_number'] = Variable<int>(startingNumber);
+    map['default_interest_rate'] = Variable<double>(defaultInterestRate);
+    map['interest_type'] = Variable<String>(interestType);
+    map['grace_period_days'] = Variable<int>(gracePeriodDays);
+    map['default_duration'] = Variable<String>(defaultDuration);
+    map['reminder_days'] = Variable<int>(reminderDays);
+    map['notice_days'] = Variable<int>(noticeDays);
+    map['terms_and_conditions'] = Variable<String>(termsAndConditions);
+    map['footer_message'] = Variable<String>(footerMessage);
+    map['auto_print'] = Variable<bool>(autoPrint);
+    map['selected_template'] = Variable<String>(selectedTemplate);
+    return map;
+  }
+
+  GirviBillingSettingsCompanion toCompanion(bool nullToAbsent) {
+    return GirviBillingSettingsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      girviPrefix: Value(girviPrefix),
+      startingNumber: Value(startingNumber),
+      defaultInterestRate: Value(defaultInterestRate),
+      interestType: Value(interestType),
+      gracePeriodDays: Value(gracePeriodDays),
+      defaultDuration: Value(defaultDuration),
+      reminderDays: Value(reminderDays),
+      noticeDays: Value(noticeDays),
+      termsAndConditions: Value(termsAndConditions),
+      footerMessage: Value(footerMessage),
+      autoPrint: Value(autoPrint),
+      selectedTemplate: Value(selectedTemplate),
+    );
+  }
+
+  factory GirviBillingSetting.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GirviBillingSetting(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      girviPrefix: serializer.fromJson<String>(json['girviPrefix']),
+      startingNumber: serializer.fromJson<int>(json['startingNumber']),
+      defaultInterestRate:
+          serializer.fromJson<double>(json['defaultInterestRate']),
+      interestType: serializer.fromJson<String>(json['interestType']),
+      gracePeriodDays: serializer.fromJson<int>(json['gracePeriodDays']),
+      defaultDuration: serializer.fromJson<String>(json['defaultDuration']),
+      reminderDays: serializer.fromJson<int>(json['reminderDays']),
+      noticeDays: serializer.fromJson<int>(json['noticeDays']),
+      termsAndConditions:
+          serializer.fromJson<String>(json['termsAndConditions']),
+      footerMessage: serializer.fromJson<String>(json['footerMessage']),
+      autoPrint: serializer.fromJson<bool>(json['autoPrint']),
+      selectedTemplate: serializer.fromJson<String>(json['selectedTemplate']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'girviPrefix': serializer.toJson<String>(girviPrefix),
+      'startingNumber': serializer.toJson<int>(startingNumber),
+      'defaultInterestRate': serializer.toJson<double>(defaultInterestRate),
+      'interestType': serializer.toJson<String>(interestType),
+      'gracePeriodDays': serializer.toJson<int>(gracePeriodDays),
+      'defaultDuration': serializer.toJson<String>(defaultDuration),
+      'reminderDays': serializer.toJson<int>(reminderDays),
+      'noticeDays': serializer.toJson<int>(noticeDays),
+      'termsAndConditions': serializer.toJson<String>(termsAndConditions),
+      'footerMessage': serializer.toJson<String>(footerMessage),
+      'autoPrint': serializer.toJson<bool>(autoPrint),
+      'selectedTemplate': serializer.toJson<String>(selectedTemplate),
+    };
+  }
+
+  GirviBillingSetting copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          String? girviPrefix,
+          int? startingNumber,
+          double? defaultInterestRate,
+          String? interestType,
+          int? gracePeriodDays,
+          String? defaultDuration,
+          int? reminderDays,
+          int? noticeDays,
+          String? termsAndConditions,
+          String? footerMessage,
+          bool? autoPrint,
+          String? selectedTemplate}) =>
+      GirviBillingSetting(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        girviPrefix: girviPrefix ?? this.girviPrefix,
+        startingNumber: startingNumber ?? this.startingNumber,
+        defaultInterestRate: defaultInterestRate ?? this.defaultInterestRate,
+        interestType: interestType ?? this.interestType,
+        gracePeriodDays: gracePeriodDays ?? this.gracePeriodDays,
+        defaultDuration: defaultDuration ?? this.defaultDuration,
+        reminderDays: reminderDays ?? this.reminderDays,
+        noticeDays: noticeDays ?? this.noticeDays,
+        termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+        footerMessage: footerMessage ?? this.footerMessage,
+        autoPrint: autoPrint ?? this.autoPrint,
+        selectedTemplate: selectedTemplate ?? this.selectedTemplate,
+      );
+  GirviBillingSetting copyWithCompanion(GirviBillingSettingsCompanion data) {
+    return GirviBillingSetting(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      girviPrefix:
+          data.girviPrefix.present ? data.girviPrefix.value : this.girviPrefix,
+      startingNumber: data.startingNumber.present
+          ? data.startingNumber.value
+          : this.startingNumber,
+      defaultInterestRate: data.defaultInterestRate.present
+          ? data.defaultInterestRate.value
+          : this.defaultInterestRate,
+      interestType: data.interestType.present
+          ? data.interestType.value
+          : this.interestType,
+      gracePeriodDays: data.gracePeriodDays.present
+          ? data.gracePeriodDays.value
+          : this.gracePeriodDays,
+      defaultDuration: data.defaultDuration.present
+          ? data.defaultDuration.value
+          : this.defaultDuration,
+      reminderDays: data.reminderDays.present
+          ? data.reminderDays.value
+          : this.reminderDays,
+      noticeDays:
+          data.noticeDays.present ? data.noticeDays.value : this.noticeDays,
+      termsAndConditions: data.termsAndConditions.present
+          ? data.termsAndConditions.value
+          : this.termsAndConditions,
+      footerMessage: data.footerMessage.present
+          ? data.footerMessage.value
+          : this.footerMessage,
+      autoPrint: data.autoPrint.present ? data.autoPrint.value : this.autoPrint,
+      selectedTemplate: data.selectedTemplate.present
+          ? data.selectedTemplate.value
+          : this.selectedTemplate,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GirviBillingSetting(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('girviPrefix: $girviPrefix, ')
+          ..write('startingNumber: $startingNumber, ')
+          ..write('defaultInterestRate: $defaultInterestRate, ')
+          ..write('interestType: $interestType, ')
+          ..write('gracePeriodDays: $gracePeriodDays, ')
+          ..write('defaultDuration: $defaultDuration, ')
+          ..write('reminderDays: $reminderDays, ')
+          ..write('noticeDays: $noticeDays, ')
+          ..write('termsAndConditions: $termsAndConditions, ')
+          ..write('footerMessage: $footerMessage, ')
+          ..write('autoPrint: $autoPrint, ')
+          ..write('selectedTemplate: $selectedTemplate')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      createdAt,
+      updatedAt,
+      girviPrefix,
+      startingNumber,
+      defaultInterestRate,
+      interestType,
+      gracePeriodDays,
+      defaultDuration,
+      reminderDays,
+      noticeDays,
+      termsAndConditions,
+      footerMessage,
+      autoPrint,
+      selectedTemplate);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GirviBillingSetting &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.girviPrefix == this.girviPrefix &&
+          other.startingNumber == this.startingNumber &&
+          other.defaultInterestRate == this.defaultInterestRate &&
+          other.interestType == this.interestType &&
+          other.gracePeriodDays == this.gracePeriodDays &&
+          other.defaultDuration == this.defaultDuration &&
+          other.reminderDays == this.reminderDays &&
+          other.noticeDays == this.noticeDays &&
+          other.termsAndConditions == this.termsAndConditions &&
+          other.footerMessage == this.footerMessage &&
+          other.autoPrint == this.autoPrint &&
+          other.selectedTemplate == this.selectedTemplate);
+}
+
+class GirviBillingSettingsCompanion
+    extends UpdateCompanion<GirviBillingSetting> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<String> girviPrefix;
+  final Value<int> startingNumber;
+  final Value<double> defaultInterestRate;
+  final Value<String> interestType;
+  final Value<int> gracePeriodDays;
+  final Value<String> defaultDuration;
+  final Value<int> reminderDays;
+  final Value<int> noticeDays;
+  final Value<String> termsAndConditions;
+  final Value<String> footerMessage;
+  final Value<bool> autoPrint;
+  final Value<String> selectedTemplate;
+  const GirviBillingSettingsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.girviPrefix = const Value.absent(),
+    this.startingNumber = const Value.absent(),
+    this.defaultInterestRate = const Value.absent(),
+    this.interestType = const Value.absent(),
+    this.gracePeriodDays = const Value.absent(),
+    this.defaultDuration = const Value.absent(),
+    this.reminderDays = const Value.absent(),
+    this.noticeDays = const Value.absent(),
+    this.termsAndConditions = const Value.absent(),
+    this.footerMessage = const Value.absent(),
+    this.autoPrint = const Value.absent(),
+    this.selectedTemplate = const Value.absent(),
+  });
+  GirviBillingSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.girviPrefix = const Value.absent(),
+    this.startingNumber = const Value.absent(),
+    this.defaultInterestRate = const Value.absent(),
+    this.interestType = const Value.absent(),
+    this.gracePeriodDays = const Value.absent(),
+    this.defaultDuration = const Value.absent(),
+    this.reminderDays = const Value.absent(),
+    this.noticeDays = const Value.absent(),
+    this.termsAndConditions = const Value.absent(),
+    this.footerMessage = const Value.absent(),
+    this.autoPrint = const Value.absent(),
+    this.selectedTemplate = const Value.absent(),
+  });
+  static Insertable<GirviBillingSetting> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? girviPrefix,
+    Expression<int>? startingNumber,
+    Expression<double>? defaultInterestRate,
+    Expression<String>? interestType,
+    Expression<int>? gracePeriodDays,
+    Expression<String>? defaultDuration,
+    Expression<int>? reminderDays,
+    Expression<int>? noticeDays,
+    Expression<String>? termsAndConditions,
+    Expression<String>? footerMessage,
+    Expression<bool>? autoPrint,
+    Expression<String>? selectedTemplate,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (girviPrefix != null) 'girvi_prefix': girviPrefix,
+      if (startingNumber != null) 'starting_number': startingNumber,
+      if (defaultInterestRate != null)
+        'default_interest_rate': defaultInterestRate,
+      if (interestType != null) 'interest_type': interestType,
+      if (gracePeriodDays != null) 'grace_period_days': gracePeriodDays,
+      if (defaultDuration != null) 'default_duration': defaultDuration,
+      if (reminderDays != null) 'reminder_days': reminderDays,
+      if (noticeDays != null) 'notice_days': noticeDays,
+      if (termsAndConditions != null)
+        'terms_and_conditions': termsAndConditions,
+      if (footerMessage != null) 'footer_message': footerMessage,
+      if (autoPrint != null) 'auto_print': autoPrint,
+      if (selectedTemplate != null) 'selected_template': selectedTemplate,
+    });
+  }
+
+  GirviBillingSettingsCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<String>? girviPrefix,
+      Value<int>? startingNumber,
+      Value<double>? defaultInterestRate,
+      Value<String>? interestType,
+      Value<int>? gracePeriodDays,
+      Value<String>? defaultDuration,
+      Value<int>? reminderDays,
+      Value<int>? noticeDays,
+      Value<String>? termsAndConditions,
+      Value<String>? footerMessage,
+      Value<bool>? autoPrint,
+      Value<String>? selectedTemplate}) {
+    return GirviBillingSettingsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      girviPrefix: girviPrefix ?? this.girviPrefix,
+      startingNumber: startingNumber ?? this.startingNumber,
+      defaultInterestRate: defaultInterestRate ?? this.defaultInterestRate,
+      interestType: interestType ?? this.interestType,
+      gracePeriodDays: gracePeriodDays ?? this.gracePeriodDays,
+      defaultDuration: defaultDuration ?? this.defaultDuration,
+      reminderDays: reminderDays ?? this.reminderDays,
+      noticeDays: noticeDays ?? this.noticeDays,
+      termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+      footerMessage: footerMessage ?? this.footerMessage,
+      autoPrint: autoPrint ?? this.autoPrint,
+      selectedTemplate: selectedTemplate ?? this.selectedTemplate,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (girviPrefix.present) {
+      map['girvi_prefix'] = Variable<String>(girviPrefix.value);
+    }
+    if (startingNumber.present) {
+      map['starting_number'] = Variable<int>(startingNumber.value);
+    }
+    if (defaultInterestRate.present) {
+      map['default_interest_rate'] =
+          Variable<double>(defaultInterestRate.value);
+    }
+    if (interestType.present) {
+      map['interest_type'] = Variable<String>(interestType.value);
+    }
+    if (gracePeriodDays.present) {
+      map['grace_period_days'] = Variable<int>(gracePeriodDays.value);
+    }
+    if (defaultDuration.present) {
+      map['default_duration'] = Variable<String>(defaultDuration.value);
+    }
+    if (reminderDays.present) {
+      map['reminder_days'] = Variable<int>(reminderDays.value);
+    }
+    if (noticeDays.present) {
+      map['notice_days'] = Variable<int>(noticeDays.value);
+    }
+    if (termsAndConditions.present) {
+      map['terms_and_conditions'] = Variable<String>(termsAndConditions.value);
+    }
+    if (footerMessage.present) {
+      map['footer_message'] = Variable<String>(footerMessage.value);
+    }
+    if (autoPrint.present) {
+      map['auto_print'] = Variable<bool>(autoPrint.value);
+    }
+    if (selectedTemplate.present) {
+      map['selected_template'] = Variable<String>(selectedTemplate.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GirviBillingSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('girviPrefix: $girviPrefix, ')
+          ..write('startingNumber: $startingNumber, ')
+          ..write('defaultInterestRate: $defaultInterestRate, ')
+          ..write('interestType: $interestType, ')
+          ..write('gracePeriodDays: $gracePeriodDays, ')
+          ..write('defaultDuration: $defaultDuration, ')
+          ..write('reminderDays: $reminderDays, ')
+          ..write('noticeDays: $noticeDays, ')
+          ..write('termsAndConditions: $termsAndConditions, ')
+          ..write('footerMessage: $footerMessage, ')
+          ..write('autoPrint: $autoPrint, ')
+          ..write('selectedTemplate: $selectedTemplate')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -22282,6 +23026,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $SalesBillingSettingsTable(this);
   late final $PurchaseBillingSettingsTable purchaseBillingSettings =
       $PurchaseBillingSettingsTable(this);
+  late final $GirviBillingSettingsTable girviBillingSettings =
+      $GirviBillingSettingsTable(this);
   late final Index idxCustomersName = Index('idx_customers_name',
       'CREATE INDEX idx_customers_name ON customers (name)');
   late final Index idxCustomersMobile = Index('idx_customers_mobile',
@@ -22422,6 +23168,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         deliveryItems,
         salesBillingSettings,
         purchaseBillingSettings,
+        girviBillingSettings,
         idxCustomersName,
         idxCustomersMobile,
         idxCustomersTier,
@@ -34576,6 +35323,344 @@ typedef $$PurchaseBillingSettingsTableProcessedTableManager
         ),
         PurchaseBillingSetting,
         PrefetchHooks Function()>;
+typedef $$GirviBillingSettingsTableCreateCompanionBuilder
+    = GirviBillingSettingsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<String> girviPrefix,
+  Value<int> startingNumber,
+  Value<double> defaultInterestRate,
+  Value<String> interestType,
+  Value<int> gracePeriodDays,
+  Value<String> defaultDuration,
+  Value<int> reminderDays,
+  Value<int> noticeDays,
+  Value<String> termsAndConditions,
+  Value<String> footerMessage,
+  Value<bool> autoPrint,
+  Value<String> selectedTemplate,
+});
+typedef $$GirviBillingSettingsTableUpdateCompanionBuilder
+    = GirviBillingSettingsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<String> girviPrefix,
+  Value<int> startingNumber,
+  Value<double> defaultInterestRate,
+  Value<String> interestType,
+  Value<int> gracePeriodDays,
+  Value<String> defaultDuration,
+  Value<int> reminderDays,
+  Value<int> noticeDays,
+  Value<String> termsAndConditions,
+  Value<String> footerMessage,
+  Value<bool> autoPrint,
+  Value<String> selectedTemplate,
+});
+
+class $$GirviBillingSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $GirviBillingSettingsTable> {
+  $$GirviBillingSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get girviPrefix => $composableBuilder(
+      column: $table.girviPrefix, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get startingNumber => $composableBuilder(
+      column: $table.startingNumber,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get defaultInterestRate => $composableBuilder(
+      column: $table.defaultInterestRate,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get interestType => $composableBuilder(
+      column: $table.interestType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get gracePeriodDays => $composableBuilder(
+      column: $table.gracePeriodDays,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get defaultDuration => $composableBuilder(
+      column: $table.defaultDuration,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get reminderDays => $composableBuilder(
+      column: $table.reminderDays, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get noticeDays => $composableBuilder(
+      column: $table.noticeDays, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get termsAndConditions => $composableBuilder(
+      column: $table.termsAndConditions,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get footerMessage => $composableBuilder(
+      column: $table.footerMessage, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get autoPrint => $composableBuilder(
+      column: $table.autoPrint, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get selectedTemplate => $composableBuilder(
+      column: $table.selectedTemplate,
+      builder: (column) => ColumnFilters(column));
+}
+
+class $$GirviBillingSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GirviBillingSettingsTable> {
+  $$GirviBillingSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get girviPrefix => $composableBuilder(
+      column: $table.girviPrefix, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get startingNumber => $composableBuilder(
+      column: $table.startingNumber,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get defaultInterestRate => $composableBuilder(
+      column: $table.defaultInterestRate,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get interestType => $composableBuilder(
+      column: $table.interestType,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get gracePeriodDays => $composableBuilder(
+      column: $table.gracePeriodDays,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get defaultDuration => $composableBuilder(
+      column: $table.defaultDuration,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get reminderDays => $composableBuilder(
+      column: $table.reminderDays,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get noticeDays => $composableBuilder(
+      column: $table.noticeDays, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get termsAndConditions => $composableBuilder(
+      column: $table.termsAndConditions,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get footerMessage => $composableBuilder(
+      column: $table.footerMessage,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get autoPrint => $composableBuilder(
+      column: $table.autoPrint, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get selectedTemplate => $composableBuilder(
+      column: $table.selectedTemplate,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$GirviBillingSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GirviBillingSettingsTable> {
+  $$GirviBillingSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get girviPrefix => $composableBuilder(
+      column: $table.girviPrefix, builder: (column) => column);
+
+  GeneratedColumn<int> get startingNumber => $composableBuilder(
+      column: $table.startingNumber, builder: (column) => column);
+
+  GeneratedColumn<double> get defaultInterestRate => $composableBuilder(
+      column: $table.defaultInterestRate, builder: (column) => column);
+
+  GeneratedColumn<String> get interestType => $composableBuilder(
+      column: $table.interestType, builder: (column) => column);
+
+  GeneratedColumn<int> get gracePeriodDays => $composableBuilder(
+      column: $table.gracePeriodDays, builder: (column) => column);
+
+  GeneratedColumn<String> get defaultDuration => $composableBuilder(
+      column: $table.defaultDuration, builder: (column) => column);
+
+  GeneratedColumn<int> get reminderDays => $composableBuilder(
+      column: $table.reminderDays, builder: (column) => column);
+
+  GeneratedColumn<int> get noticeDays => $composableBuilder(
+      column: $table.noticeDays, builder: (column) => column);
+
+  GeneratedColumn<String> get termsAndConditions => $composableBuilder(
+      column: $table.termsAndConditions, builder: (column) => column);
+
+  GeneratedColumn<String> get footerMessage => $composableBuilder(
+      column: $table.footerMessage, builder: (column) => column);
+
+  GeneratedColumn<bool> get autoPrint =>
+      $composableBuilder(column: $table.autoPrint, builder: (column) => column);
+
+  GeneratedColumn<String> get selectedTemplate => $composableBuilder(
+      column: $table.selectedTemplate, builder: (column) => column);
+}
+
+class $$GirviBillingSettingsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $GirviBillingSettingsTable,
+    GirviBillingSetting,
+    $$GirviBillingSettingsTableFilterComposer,
+    $$GirviBillingSettingsTableOrderingComposer,
+    $$GirviBillingSettingsTableAnnotationComposer,
+    $$GirviBillingSettingsTableCreateCompanionBuilder,
+    $$GirviBillingSettingsTableUpdateCompanionBuilder,
+    (
+      GirviBillingSetting,
+      BaseReferences<_$AppDatabase, $GirviBillingSettingsTable,
+          GirviBillingSetting>
+    ),
+    GirviBillingSetting,
+    PrefetchHooks Function()> {
+  $$GirviBillingSettingsTableTableManager(
+      _$AppDatabase db, $GirviBillingSettingsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GirviBillingSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GirviBillingSettingsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GirviBillingSettingsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<String> girviPrefix = const Value.absent(),
+            Value<int> startingNumber = const Value.absent(),
+            Value<double> defaultInterestRate = const Value.absent(),
+            Value<String> interestType = const Value.absent(),
+            Value<int> gracePeriodDays = const Value.absent(),
+            Value<String> defaultDuration = const Value.absent(),
+            Value<int> reminderDays = const Value.absent(),
+            Value<int> noticeDays = const Value.absent(),
+            Value<String> termsAndConditions = const Value.absent(),
+            Value<String> footerMessage = const Value.absent(),
+            Value<bool> autoPrint = const Value.absent(),
+            Value<String> selectedTemplate = const Value.absent(),
+          }) =>
+              GirviBillingSettingsCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            girviPrefix: girviPrefix,
+            startingNumber: startingNumber,
+            defaultInterestRate: defaultInterestRate,
+            interestType: interestType,
+            gracePeriodDays: gracePeriodDays,
+            defaultDuration: defaultDuration,
+            reminderDays: reminderDays,
+            noticeDays: noticeDays,
+            termsAndConditions: termsAndConditions,
+            footerMessage: footerMessage,
+            autoPrint: autoPrint,
+            selectedTemplate: selectedTemplate,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<String> girviPrefix = const Value.absent(),
+            Value<int> startingNumber = const Value.absent(),
+            Value<double> defaultInterestRate = const Value.absent(),
+            Value<String> interestType = const Value.absent(),
+            Value<int> gracePeriodDays = const Value.absent(),
+            Value<String> defaultDuration = const Value.absent(),
+            Value<int> reminderDays = const Value.absent(),
+            Value<int> noticeDays = const Value.absent(),
+            Value<String> termsAndConditions = const Value.absent(),
+            Value<String> footerMessage = const Value.absent(),
+            Value<bool> autoPrint = const Value.absent(),
+            Value<String> selectedTemplate = const Value.absent(),
+          }) =>
+              GirviBillingSettingsCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            girviPrefix: girviPrefix,
+            startingNumber: startingNumber,
+            defaultInterestRate: defaultInterestRate,
+            interestType: interestType,
+            gracePeriodDays: gracePeriodDays,
+            defaultDuration: defaultDuration,
+            reminderDays: reminderDays,
+            noticeDays: noticeDays,
+            termsAndConditions: termsAndConditions,
+            footerMessage: footerMessage,
+            autoPrint: autoPrint,
+            selectedTemplate: selectedTemplate,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$GirviBillingSettingsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $GirviBillingSettingsTable,
+        GirviBillingSetting,
+        $$GirviBillingSettingsTableFilterComposer,
+        $$GirviBillingSettingsTableOrderingComposer,
+        $$GirviBillingSettingsTableAnnotationComposer,
+        $$GirviBillingSettingsTableCreateCompanionBuilder,
+        $$GirviBillingSettingsTableUpdateCompanionBuilder,
+        (
+          GirviBillingSetting,
+          BaseReferences<_$AppDatabase, $GirviBillingSettingsTable,
+              GirviBillingSetting>
+        ),
+        GirviBillingSetting,
+        PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -34627,4 +35712,6 @@ class $AppDatabaseManager {
   $$PurchaseBillingSettingsTableTableManager get purchaseBillingSettings =>
       $$PurchaseBillingSettingsTableTableManager(
           _db, _db.purchaseBillingSettings);
+  $$GirviBillingSettingsTableTableManager get girviBillingSettings =>
+      $$GirviBillingSettingsTableTableManager(_db, _db.girviBillingSettings);
 }

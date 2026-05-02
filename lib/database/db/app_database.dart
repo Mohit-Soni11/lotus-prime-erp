@@ -31,6 +31,7 @@ import '../tables/stock/suppliers.dart';
 // ✅ v14: Per-Metal Billing Setup (replaces old BillingSettings)
 import '../tables/setting/billing/sales_billing_settings.dart';
 import '../tables/setting/billing/purchase_billing_settings.dart';
+import '../tables/setting/billing/girvi_billing_settings.dart';
 
 part 'app_database.g.dart';
 
@@ -59,6 +60,7 @@ part 'app_database.g.dart';
     DeliveryItems,
     SalesBillingSettings, // ✅ v14
     PurchaseBillingSettings, // ✅ v14
+    GirviBillingSettings, // ✅ v14
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -69,7 +71,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase._internal() : super(_openConnection());
 
   @override
-  int get schemaVersion => 14; // ✅ v14: Per-Metal Billing Setup
+  int get schemaVersion => 15; // ✅ v15: GirviBillingSettings added
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -204,6 +206,12 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(purchaseBillingSettings);
             debugPrint(
                 'v14: Per-metal SalesBillingSettings & PurchaseBillingSettings created.');
+          }
+
+          // ✅ v15: Girvi billing settings
+          if (from < 15) {
+            await m.createTable(girviBillingSettings);
+            debugPrint('v15: GirviBillingSettings created.');
           }
         },
         beforeOpen: (details) async {

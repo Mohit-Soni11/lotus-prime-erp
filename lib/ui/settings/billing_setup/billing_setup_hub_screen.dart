@@ -1,18 +1,18 @@
 // =============================================================================
 // FILE        : lib/ui/settings/billing_setup/billing_setup_hub_screen.dart
 // MODULE      : Billing Setup
-// DESCRIPTION : Hub screen — 2 cards only: Sales & Purchase.
-//               Each navigates to its Metal Hub (4 metal cards inside).
-// REPLACES    : Old 4-card hub (Sales, Purchase, Girvi, Return)
+// DESCRIPTION : Hub screen — 4 cards: Sales, Purchase, Girvi, Return
 // =============================================================================
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../theme/settings/billing_setup/billing_setup_theme.dart';
+import '../../../theme/settings/billing_setup/billing_setup_colors.dart';
+import '../../../theme/settings/billing_setup/billing_setup_strings.dart';
 import 'billing_setup_app_bar.dart';
 import 'sales_metal_hub.dart';
 import 'purchase_metal_hub.dart';
+import 'girvi_billing_screen.dart';
 
 class BillingSetupHubScreen extends StatelessWidget {
   const BillingSetupHubScreen({super.key});
@@ -36,8 +36,8 @@ class BillingSetupHubScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: BillingSetupColors.bodyBg,
       appBar: BillingSetupAppBar(
-        screenTitle: 'Billing Setup',
-        screenSubtitle: 'Configure invoice rules per metal type',
+        screenTitle: BillingSetupStrings.hubTitle,
+        screenSubtitle: BillingSetupStrings.hubSub,
         onBack: () => Navigator.maybePop(context),
       ),
       body: SafeArea(
@@ -47,74 +47,84 @@ class BillingSetupHubScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'SELECT MODULE',
-                style: BillingSetupStyles.sectionLabel,
-              ),
+              Text('SELECT MODULE',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.1,
+                    color: BillingSetupColors.textMuted,
+                  )),
               const SizedBox(height: 16),
-              // ── Two cards side by side ────────────────────────────────────
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final isWide = constraints.maxWidth > 500;
-                  if (isWide) {
-                    return Row(
-                      children: [
-                        Expanded(
-                          child: _ModuleCard(
-                            icon: Icons.point_of_sale_rounded,
-                            title: 'Sales Billing',
-                            subtitle:
-                                'Invoice display, return policy & terms\nper metal type',
-                            accent: BillingSetupColors.salesBrand,
-                            tag: 'Gold · Silver · Diamond · Platinum',
-                            onTap: () =>
-                                _navigate(context, const SalesMetalHubScreen()),
-                          ),
+
+              // ── Row 1: Sales + Purchase ───────────────────────────────────
+              Row(children: [
+                Expanded(
+                  child: _ModuleCard(
+                    icon: Icons.point_of_sale_rounded,
+                    title: BillingSetupStrings.cardSalesTitle,
+                    subtitle: BillingSetupStrings.cardSalesSub,
+                    accent: BillingSetupColors.salesBrand,
+                    tag: BillingSetupStrings.cardSalesTag,
+                    onTap: () =>
+                        _navigate(context, const SalesMetalHubScreen()),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _ModuleCard(
+                    icon: Icons.shopping_bag_outlined,
+                    title: BillingSetupStrings.cardPurchaseTitle,
+                    subtitle: BillingSetupStrings.cardPurchaseSub,
+                    accent: BillingSetupColors.purchaseBrand,
+                    tag: BillingSetupStrings.cardPurchaseTag,
+                    onTap: () =>
+                        _navigate(context, const PurchaseMetalHubScreen()),
+                  ),
+                ),
+              ]),
+
+              const SizedBox(height: 14),
+
+              // ── Row 2: Girvi + Return ─────────────────────────────────────
+              Row(children: [
+                Expanded(
+                  child: _ModuleCard(
+                    icon: Icons.lock_outline_rounded,
+                    title: BillingSetupStrings.cardGirviTitle,
+                    subtitle: BillingSetupStrings.cardGirviSub,
+                    accent: BillingSetupColors.girviBrand,
+                    tag: 'Interest · Notice · Terms',
+                    onTap: () => _navigate(context, const GirviBillingScreen()),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _ModuleCard(
+                    icon: Icons.swap_horiz_rounded,
+                    title: BillingSetupStrings.cardReturnTitle,
+                    subtitle: BillingSetupStrings.cardReturnSub,
+                    accent: BillingSetupColors.returnBrand,
+                    tag: 'Policy · Buyback · Terms',
+                    onTap: () {
+                      // Return screen — agle step mein
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Return & Buyback — Coming soon!',
+                              style: GoogleFonts.inter(color: Colors.white)),
+                          backgroundColor: BillingSetupColors.returnBrand,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          duration: const Duration(seconds: 2),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _ModuleCard(
-                            icon: Icons.shopping_bag_outlined,
-                            title: 'Purchase Billing',
-                            subtitle:
-                                'Voucher display, return policy & terms\nper metal type',
-                            accent: BillingSetupColors.purchaseBrand,
-                            tag: 'Gold · Silver · Diamond · Platinum',
-                            onTap: () => _navigate(
-                                context, const PurchaseMetalHubScreen()),
-                          ),
-                        ),
-                      ],
-                    );
-                  }
-                  return Column(
-                    children: [
-                      _ModuleCard(
-                        icon: Icons.point_of_sale_rounded,
-                        title: 'Sales Billing',
-                        subtitle:
-                            'Invoice display, return policy & terms per metal type',
-                        accent: BillingSetupColors.salesBrand,
-                        tag: 'Gold · Silver · Diamond · Platinum',
-                        onTap: () =>
-                            _navigate(context, const SalesMetalHubScreen()),
-                      ),
-                      const SizedBox(height: 16),
-                      _ModuleCard(
-                        icon: Icons.shopping_bag_outlined,
-                        title: 'Purchase Billing',
-                        subtitle:
-                            'Voucher display, return policy & terms per metal type',
-                        accent: BillingSetupColors.purchaseBrand,
-                        tag: 'Gold · Silver · Diamond · Platinum',
-                        onTap: () =>
-                            _navigate(context, const PurchaseMetalHubScreen()),
-                      ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 28),
+                      );
+                    },
+                  ),
+                ),
+              ]),
+
+              const SizedBox(height: 24),
+
               // ── Info banner ───────────────────────────────────────────────
               Container(
                 padding: const EdgeInsets.all(14),
@@ -122,8 +132,7 @@ class BillingSetupHubScreen extends StatelessWidget {
                   color: BillingSetupColors.salesBrand.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: BillingSetupColors.salesBrand.withOpacity(0.2),
-                  ),
+                      color: BillingSetupColors.salesBrand.withOpacity(0.2)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,8 +142,7 @@ class BillingSetupHubScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Each metal type has its own invoice display rules, '
-                        'return policy and terms. Changes apply to new bills only.',
+                        BillingSetupStrings.hubInfoNote,
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: BillingSetupColors.textBody,
@@ -216,7 +224,7 @@ class _ModuleCardState extends State<_ModuleCard>
           scale: _scale,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
@@ -239,42 +247,39 @@ class _ModuleCardState extends State<_ModuleCard>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Icon ─────────────────────────────────────────────────
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: widget.accent.withOpacity(_hovered ? 0.15 : 0.08),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(widget.icon, size: 24, color: widget.accent),
+                  child: Icon(widget.icon, size: 22, color: widget.accent),
                 ),
-                const SizedBox(height: 16),
-                // ── Title ─────────────────────────────────────────────────
+                const SizedBox(height: 12),
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 150),
                   style: GoogleFonts.manrope(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color:
                         _hovered ? widget.accent : BillingSetupColors.textDark,
                   ),
                   child: Text(widget.title),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
                   widget.subtitle,
                   style: GoogleFonts.inter(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: BillingSetupColors.textMuted,
-                    height: 1.5,
+                    height: 1.4,
                   ),
                 ),
-                const SizedBox(height: 14),
-                // ── Metal tag ─────────────────────────────────────────────
+                const SizedBox(height: 10),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: widget.accent.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(20),
@@ -283,32 +288,27 @@ class _ModuleCardState extends State<_ModuleCard>
                   child: Text(
                     widget.tag,
                     style: GoogleFonts.inter(
-                      fontSize: 10,
+                      fontSize: 9,
                       fontWeight: FontWeight.w600,
                       color: widget.accent,
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
-                // ── Configure arrow ───────────────────────────────────────
-                Row(
-                  children: [
-                    Text(
-                      'Configure',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: widget.accent.withOpacity(_hovered ? 1 : 0.5),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      size: 12,
+                const SizedBox(height: 10),
+                Row(children: [
+                  Text(
+                    BillingSetupStrings.configureLabel,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                       color: widget.accent.withOpacity(_hovered ? 1 : 0.5),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_rounded,
+                      size: 11,
+                      color: widget.accent.withOpacity(_hovered ? 1 : 0.5)),
+                ]),
               ],
             ),
           ),
