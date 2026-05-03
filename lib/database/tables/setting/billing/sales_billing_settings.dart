@@ -107,6 +107,13 @@ class SalesBillingSettings extends Table with BaseTable {
       const Constant('Items once sold will not be taken back or exchanged.\n'
           'Guarantee is provided as per BIS standards.\n'
           'Original bill is mandatory for any service claim.'))();
+
+  // ✅ NEW: Return & Buyback policy text — printed on bill
+  TextColumn get returnPolicyText => text().withDefault(const Constant(
+      'Returns accepted within 7 days with original bill only.\nExchange is subject to stock availability.'))();
+  TextColumn get buybackPolicyText => text().withDefault(const Constant(
+      'Buyback at market rate after purity deduction.\nOriginal bill mandatory for buyback.'))();
+
   TextColumn get footerMessage => text().withDefault(
       const Constant('Thank you for shopping with us! Visit us again.'))();
 

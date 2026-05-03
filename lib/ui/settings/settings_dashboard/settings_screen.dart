@@ -18,6 +18,9 @@ import '../account_profile/account_profile_screen.dart';
 // ✅ v12: Billing Setup
 import '../billing_setup/billing_setup_hub_screen.dart';
 
+// ✅ Metal Costing Analysis
+import '../metal_costing/metal_costing_hub_screen.dart';
+
 class SettingsScreen extends StatelessWidget {
   final Function(String routeId) onNavigate;
   const SettingsScreen({super.key, required this.onNavigate});
@@ -44,6 +47,24 @@ class SettingsScreen extends StatelessWidget {
           context,
           PageRouteBuilder(
             pageBuilder: (_, animation, __) => const BillingSetupHubScreen(),
+            transitionsBuilder: (_, animation, __, child) => FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              ),
+              child: child,
+            ),
+            transitionDuration: const Duration(milliseconds: 260),
+          ),
+        );
+        break;
+
+      // ✅ Metal Costing Analysis — fade transition
+      case 'metal_costing':
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (_, animation, __) => const MetalCostingHubScreen(),
             transitionsBuilder: (_, animation, __, child) => FadeTransition(
               opacity: CurvedAnimation(
                 parent: animation,

@@ -81,6 +81,12 @@ class PurchaseBillingSettings extends Table with BaseTable {
       'Quality will be checked on delivery.\n'
       'Short delivery or defective goods must be reported within 24 hours.\n'
       'Payment as per agreed terms only.'))();
+  // ✅ NEW columns
+  TextColumn get returnPolicyText => text().withDefault(const Constant(
+      'Returns accepted within 24 hours with original voucher.'))();
+  TextColumn get buybackPolicyText => text().withDefault(
+      const Constant('Buyback at agreed rate after purity deduction.'))();
+
   TextColumn get footerMessage => text().withDefault(const Constant(''))();
 
   // ═══════════════════════════════════════════════════════════════════════════

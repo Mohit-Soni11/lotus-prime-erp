@@ -37,6 +37,8 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
   final _buybackRateCtrl = TextEditingController();
   final _purityDeductCtrl = TextEditingController();
   final _termsCtrl = TextEditingController();
+  final _returnPolicyCtrl = TextEditingController(); // ✅ NEW
+  final _buybackPolicyCtrl = TextEditingController(); // ✅ NEW
   final _footerCtrl = TextEditingController();
 
   // Metal accent color
@@ -57,6 +59,8 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
     _buybackRateCtrl.dispose();
     _purityDeductCtrl.dispose();
     _termsCtrl.dispose();
+    _returnPolicyCtrl.dispose();
+    _buybackPolicyCtrl.dispose();
     _footerCtrl.dispose();
     super.dispose();
   }
@@ -69,6 +73,8 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
     _buybackRateCtrl.text = model.buybackRatePercent.toString();
     _purityDeductCtrl.text = model.buybackPurityDeductPercent.toString();
     _termsCtrl.text = model.termsAndConditions;
+    _returnPolicyCtrl.text = model.returnPolicyText;
+    _buybackPolicyCtrl.text = model.buybackPolicyText;
     _footerCtrl.text = model.footerMessage;
     if (mounted) setState(() => _loading = false);
   }
@@ -86,6 +92,8 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
           double.tryParse(_purityDeductCtrl.text.trim()) ??
               _model.buybackPurityDeductPercent,
       termsAndConditions: _termsCtrl.text.trim(),
+      returnPolicyText: _returnPolicyCtrl.text.trim(),
+      buybackPolicyText: _buybackPolicyCtrl.text.trim(),
       footerMessage: _footerCtrl.text.trim(),
     );
     final ok = await _repo.saveForMetal(updated);
@@ -545,13 +553,13 @@ class _SectionCard extends StatelessWidget {
                     children: [
                       Text(title,
                           style: GoogleFonts.manrope(
-                            fontSize: 14,
+                            fontSize: 16,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF111827),
                           )),
                       Text(subtitle,
                           style: GoogleFonts.inter(
-                            fontSize: 11,
+                            fontSize: 13,
                             color: const Color(0xFF6B7280),
                           )),
                     ],
@@ -601,13 +609,13 @@ class _ToggleRow extends StatelessWidget {
               children: [
                 Text(label,
                     style: GoogleFonts.inter(
-                      fontSize: 13,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF111827),
                     )),
                 Text(subtitle,
                     style: GoogleFonts.inter(
-                      fontSize: 11,
+                      fontSize: 13,
                       color: const Color(0xFF6B7280),
                     )),
               ],
@@ -673,14 +681,14 @@ class _InputField extends StatelessWidget {
           inputFormatters: inputFormatters,
           maxLines: maxLines,
           style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF111827), // ✅ Fixed: dark black text visible
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF111827), // ✅ Bold black visible text
           ),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle:
-                GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9CA3AF)),
+                GoogleFonts.inter(fontSize: 14, color: const Color(0xFF9CA3AF)),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             border: OutlineInputBorder(
@@ -728,19 +736,31 @@ class _DropdownField extends StatelessWidget {
       children: [
         Text(label,
             style: GoogleFonts.inter(
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF374151),
             )),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
           value: items.contains(value) ? value : items.first,
+          dropdownColor: Colors.white, // ✅ Fix: white bg, not black
+          iconEnabledColor: const Color(0xFF374151),
           items: items
-              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+              .map((e) => DropdownMenuItem(
+                    value: e,
+                    child: Text(
+                      e,
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        color: const Color(0xFF111827), // ✅ Dark visible text
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ))
               .toList(),
           onChanged: onChanged,
           style:
-              GoogleFonts.inter(fontSize: 13, color: const Color(0xFF111827)),
+              GoogleFonts.inter(fontSize: 15, color: const Color(0xFF111827)),
           decoration: InputDecoration(
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

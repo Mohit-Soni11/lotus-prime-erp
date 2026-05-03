@@ -58,6 +58,8 @@ class SalesBillingRepo {
               buybackPurityDeductPercent:
                   Value(model.buybackPurityDeductPercent),
               termsAndConditions: Value(model.termsAndConditions),
+              returnPolicyText: Value(model.returnPolicyText),
+              buybackPolicyText: Value(model.buybackPolicyText),
               footerMessage: Value(model.footerMessage),
               selectedTemplate: Value(model.selectedTemplate),
             ),
@@ -112,6 +114,8 @@ class SalesBillingRepo {
       buybackRatePercent: row.buybackRatePercent,
       buybackPurityDeductPercent: row.buybackPurityDeductPercent,
       termsAndConditions: row.termsAndConditions,
+      returnPolicyText: row.returnPolicyText,
+      buybackPolicyText: row.buybackPolicyText,
       footerMessage: row.footerMessage,
       selectedTemplate: row.selectedTemplate,
     );

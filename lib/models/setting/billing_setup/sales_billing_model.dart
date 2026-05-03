@@ -111,6 +111,8 @@ class SalesBillingModel {
 
   // Section 3 — Terms
   final String termsAndConditions;
+  final String returnPolicyText; // ✅ NEW: Return policy printed on bill
+  final String buybackPolicyText; // ✅ NEW: Buyback policy printed on bill
   final String footerMessage;
 
   // Section 4 — Template
@@ -152,6 +154,11 @@ class SalesBillingModel {
         'Items once sold will not be taken back or exchanged.\n'
             'Guarantee is provided as per BIS standards.\n'
             'Original bill is mandatory for any service claim.',
+    this.returnPolicyText =
+        'Returns accepted within 7 days with original bill only.\n'
+            'Exchange is subject to stock availability.',
+    this.buybackPolicyText = 'Buyback at market rate after purity deduction.\n'
+        'Original bill mandatory for buyback.',
     this.footerMessage = 'Thank you for shopping with us! Visit us again.',
     // Template
     this.selectedTemplate = 'default',
@@ -329,6 +336,8 @@ class SalesBillingModel {
     double? buybackRatePercent,
     double? buybackPurityDeductPercent,
     String? termsAndConditions,
+    String? returnPolicyText,
+    String? buybackPolicyText,
     String? footerMessage,
     String? selectedTemplate,
   }) {
@@ -364,6 +373,8 @@ class SalesBillingModel {
       buybackPurityDeductPercent:
           buybackPurityDeductPercent ?? this.buybackPurityDeductPercent,
       termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+      returnPolicyText: returnPolicyText ?? this.returnPolicyText,
+      buybackPolicyText: buybackPolicyText ?? this.buybackPolicyText,
       footerMessage: footerMessage ?? this.footerMessage,
       selectedTemplate: selectedTemplate ?? this.selectedTemplate,
     );

@@ -19687,6 +19687,24 @@ class $SalesBillingSettingsTable extends SalesBillingSettings
               'Items once sold will not be taken back or exchanged.\n'
               'Guarantee is provided as per BIS standards.\n'
               'Original bill is mandatory for any service claim.'));
+  static const VerificationMeta _returnPolicyTextMeta =
+      const VerificationMeta('returnPolicyText');
+  @override
+  late final GeneratedColumn<String> returnPolicyText = GeneratedColumn<String>(
+      'return_policy_text', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(
+          'Returns accepted within 7 days with original bill only.\nExchange is subject to stock availability.'));
+  static const VerificationMeta _buybackPolicyTextMeta =
+      const VerificationMeta('buybackPolicyText');
+  @override
+  late final GeneratedColumn<String> buybackPolicyText = GeneratedColumn<
+          String>('buyback_policy_text', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(
+          'Buyback at market rate after purity deduction.\nOriginal bill mandatory for buyback.'));
   static const VerificationMeta _footerMessageMeta =
       const VerificationMeta('footerMessage');
   @override
@@ -19738,6 +19756,8 @@ class $SalesBillingSettingsTable extends SalesBillingSettings
         buybackRatePercent,
         buybackPurityDeductPercent,
         termsAndConditions,
+        returnPolicyText,
+        buybackPolicyText,
         footerMessage,
         selectedTemplate
       ];
@@ -19934,6 +19954,18 @@ class $SalesBillingSettingsTable extends SalesBillingSettings
           termsAndConditions.isAcceptableOrUnknown(
               data['terms_and_conditions']!, _termsAndConditionsMeta));
     }
+    if (data.containsKey('return_policy_text')) {
+      context.handle(
+          _returnPolicyTextMeta,
+          returnPolicyText.isAcceptableOrUnknown(
+              data['return_policy_text']!, _returnPolicyTextMeta));
+    }
+    if (data.containsKey('buyback_policy_text')) {
+      context.handle(
+          _buybackPolicyTextMeta,
+          buybackPolicyText.isAcceptableOrUnknown(
+              data['buyback_policy_text']!, _buybackPolicyTextMeta));
+    }
     if (data.containsKey('footer_message')) {
       context.handle(
           _footerMessageMeta,
@@ -20021,6 +20053,10 @@ class $SalesBillingSettingsTable extends SalesBillingSettings
           data['${effectivePrefix}buyback_purity_deduct_percent'])!,
       termsAndConditions: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}terms_and_conditions'])!,
+      returnPolicyText: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}return_policy_text'])!,
+      buybackPolicyText: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}buyback_policy_text'])!,
       footerMessage: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}footer_message'])!,
       selectedTemplate: attachedDatabase.typeMapping.read(
@@ -20068,6 +20104,8 @@ class SalesBillingSetting extends DataClass
   final double buybackRatePercent;
   final double buybackPurityDeductPercent;
   final String termsAndConditions;
+  final String returnPolicyText;
+  final String buybackPolicyText;
   final String footerMessage;
   final String selectedTemplate;
   const SalesBillingSetting(
@@ -20103,6 +20141,8 @@ class SalesBillingSetting extends DataClass
       required this.buybackRatePercent,
       required this.buybackPurityDeductPercent,
       required this.termsAndConditions,
+      required this.returnPolicyText,
+      required this.buybackPolicyText,
       required this.footerMessage,
       required this.selectedTemplate});
   @override
@@ -20143,6 +20183,8 @@ class SalesBillingSetting extends DataClass
     map['buyback_purity_deduct_percent'] =
         Variable<double>(buybackPurityDeductPercent);
     map['terms_and_conditions'] = Variable<String>(termsAndConditions);
+    map['return_policy_text'] = Variable<String>(returnPolicyText);
+    map['buyback_policy_text'] = Variable<String>(buybackPolicyText);
     map['footer_message'] = Variable<String>(footerMessage);
     map['selected_template'] = Variable<String>(selectedTemplate);
     return map;
@@ -20184,6 +20226,8 @@ class SalesBillingSetting extends DataClass
       buybackRatePercent: Value(buybackRatePercent),
       buybackPurityDeductPercent: Value(buybackPurityDeductPercent),
       termsAndConditions: Value(termsAndConditions),
+      returnPolicyText: Value(returnPolicyText),
+      buybackPolicyText: Value(buybackPolicyText),
       footerMessage: Value(footerMessage),
       selectedTemplate: Value(selectedTemplate),
     );
@@ -20231,6 +20275,8 @@ class SalesBillingSetting extends DataClass
           serializer.fromJson<double>(json['buybackPurityDeductPercent']),
       termsAndConditions:
           serializer.fromJson<String>(json['termsAndConditions']),
+      returnPolicyText: serializer.fromJson<String>(json['returnPolicyText']),
+      buybackPolicyText: serializer.fromJson<String>(json['buybackPolicyText']),
       footerMessage: serializer.fromJson<String>(json['footerMessage']),
       selectedTemplate: serializer.fromJson<String>(json['selectedTemplate']),
     );
@@ -20272,6 +20318,8 @@ class SalesBillingSetting extends DataClass
       'buybackPurityDeductPercent':
           serializer.toJson<double>(buybackPurityDeductPercent),
       'termsAndConditions': serializer.toJson<String>(termsAndConditions),
+      'returnPolicyText': serializer.toJson<String>(returnPolicyText),
+      'buybackPolicyText': serializer.toJson<String>(buybackPolicyText),
       'footerMessage': serializer.toJson<String>(footerMessage),
       'selectedTemplate': serializer.toJson<String>(selectedTemplate),
     };
@@ -20310,6 +20358,8 @@ class SalesBillingSetting extends DataClass
           double? buybackRatePercent,
           double? buybackPurityDeductPercent,
           String? termsAndConditions,
+          String? returnPolicyText,
+          String? buybackPolicyText,
           String? footerMessage,
           String? selectedTemplate}) =>
       SalesBillingSetting(
@@ -20347,6 +20397,8 @@ class SalesBillingSetting extends DataClass
         buybackPurityDeductPercent:
             buybackPurityDeductPercent ?? this.buybackPurityDeductPercent,
         termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+        returnPolicyText: returnPolicyText ?? this.returnPolicyText,
+        buybackPolicyText: buybackPolicyText ?? this.buybackPolicyText,
         footerMessage: footerMessage ?? this.footerMessage,
         selectedTemplate: selectedTemplate ?? this.selectedTemplate,
       );
@@ -20431,6 +20483,12 @@ class SalesBillingSetting extends DataClass
       termsAndConditions: data.termsAndConditions.present
           ? data.termsAndConditions.value
           : this.termsAndConditions,
+      returnPolicyText: data.returnPolicyText.present
+          ? data.returnPolicyText.value
+          : this.returnPolicyText,
+      buybackPolicyText: data.buybackPolicyText.present
+          ? data.buybackPolicyText.value
+          : this.buybackPolicyText,
       footerMessage: data.footerMessage.present
           ? data.footerMessage.value
           : this.footerMessage,
@@ -20475,6 +20533,8 @@ class SalesBillingSetting extends DataClass
           ..write('buybackRatePercent: $buybackRatePercent, ')
           ..write('buybackPurityDeductPercent: $buybackPurityDeductPercent, ')
           ..write('termsAndConditions: $termsAndConditions, ')
+          ..write('returnPolicyText: $returnPolicyText, ')
+          ..write('buybackPolicyText: $buybackPolicyText, ')
           ..write('footerMessage: $footerMessage, ')
           ..write('selectedTemplate: $selectedTemplate')
           ..write(')'))
@@ -20515,6 +20575,8 @@ class SalesBillingSetting extends DataClass
         buybackRatePercent,
         buybackPurityDeductPercent,
         termsAndConditions,
+        returnPolicyText,
+        buybackPolicyText,
         footerMessage,
         selectedTemplate
       ]);
@@ -20554,6 +20616,8 @@ class SalesBillingSetting extends DataClass
           other.buybackRatePercent == this.buybackRatePercent &&
           other.buybackPurityDeductPercent == this.buybackPurityDeductPercent &&
           other.termsAndConditions == this.termsAndConditions &&
+          other.returnPolicyText == this.returnPolicyText &&
+          other.buybackPolicyText == this.buybackPolicyText &&
           other.footerMessage == this.footerMessage &&
           other.selectedTemplate == this.selectedTemplate);
 }
@@ -20592,6 +20656,8 @@ class SalesBillingSettingsCompanion
   final Value<double> buybackRatePercent;
   final Value<double> buybackPurityDeductPercent;
   final Value<String> termsAndConditions;
+  final Value<String> returnPolicyText;
+  final Value<String> buybackPolicyText;
   final Value<String> footerMessage;
   final Value<String> selectedTemplate;
   const SalesBillingSettingsCompanion({
@@ -20627,6 +20693,8 @@ class SalesBillingSettingsCompanion
     this.buybackRatePercent = const Value.absent(),
     this.buybackPurityDeductPercent = const Value.absent(),
     this.termsAndConditions = const Value.absent(),
+    this.returnPolicyText = const Value.absent(),
+    this.buybackPolicyText = const Value.absent(),
     this.footerMessage = const Value.absent(),
     this.selectedTemplate = const Value.absent(),
   });
@@ -20663,6 +20731,8 @@ class SalesBillingSettingsCompanion
     this.buybackRatePercent = const Value.absent(),
     this.buybackPurityDeductPercent = const Value.absent(),
     this.termsAndConditions = const Value.absent(),
+    this.returnPolicyText = const Value.absent(),
+    this.buybackPolicyText = const Value.absent(),
     this.footerMessage = const Value.absent(),
     this.selectedTemplate = const Value.absent(),
   }) : metal = Value(metal);
@@ -20699,6 +20769,8 @@ class SalesBillingSettingsCompanion
     Expression<double>? buybackRatePercent,
     Expression<double>? buybackPurityDeductPercent,
     Expression<String>? termsAndConditions,
+    Expression<String>? returnPolicyText,
+    Expression<String>? buybackPolicyText,
     Expression<String>? footerMessage,
     Expression<String>? selectedTemplate,
   }) {
@@ -20742,6 +20814,8 @@ class SalesBillingSettingsCompanion
         'buyback_purity_deduct_percent': buybackPurityDeductPercent,
       if (termsAndConditions != null)
         'terms_and_conditions': termsAndConditions,
+      if (returnPolicyText != null) 'return_policy_text': returnPolicyText,
+      if (buybackPolicyText != null) 'buyback_policy_text': buybackPolicyText,
       if (footerMessage != null) 'footer_message': footerMessage,
       if (selectedTemplate != null) 'selected_template': selectedTemplate,
     });
@@ -20780,6 +20854,8 @@ class SalesBillingSettingsCompanion
       Value<double>? buybackRatePercent,
       Value<double>? buybackPurityDeductPercent,
       Value<String>? termsAndConditions,
+      Value<String>? returnPolicyText,
+      Value<String>? buybackPolicyText,
       Value<String>? footerMessage,
       Value<String>? selectedTemplate}) {
     return SalesBillingSettingsCompanion(
@@ -20817,6 +20893,8 @@ class SalesBillingSettingsCompanion
       buybackPurityDeductPercent:
           buybackPurityDeductPercent ?? this.buybackPurityDeductPercent,
       termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+      returnPolicyText: returnPolicyText ?? this.returnPolicyText,
+      buybackPolicyText: buybackPolicyText ?? this.buybackPolicyText,
       footerMessage: footerMessage ?? this.footerMessage,
       selectedTemplate: selectedTemplate ?? this.selectedTemplate,
     );
@@ -20924,6 +21002,12 @@ class SalesBillingSettingsCompanion
     if (termsAndConditions.present) {
       map['terms_and_conditions'] = Variable<String>(termsAndConditions.value);
     }
+    if (returnPolicyText.present) {
+      map['return_policy_text'] = Variable<String>(returnPolicyText.value);
+    }
+    if (buybackPolicyText.present) {
+      map['buyback_policy_text'] = Variable<String>(buybackPolicyText.value);
+    }
     if (footerMessage.present) {
       map['footer_message'] = Variable<String>(footerMessage.value);
     }
@@ -20968,6 +21052,8 @@ class SalesBillingSettingsCompanion
           ..write('buybackRatePercent: $buybackRatePercent, ')
           ..write('buybackPurityDeductPercent: $buybackPurityDeductPercent, ')
           ..write('termsAndConditions: $termsAndConditions, ')
+          ..write('returnPolicyText: $returnPolicyText, ')
+          ..write('buybackPolicyText: $buybackPolicyText, ')
           ..write('footerMessage: $footerMessage, ')
           ..write('selectedTemplate: $selectedTemplate')
           ..write(')'))
@@ -21213,6 +21299,24 @@ class $PurchaseBillingSettingsTable extends PurchaseBillingSettings
       defaultValue: const Constant('Quality will be checked on delivery.\n'
           'Short delivery or defective goods must be reported within 24 hours.\n'
           'Payment as per agreed terms only.'));
+  static const VerificationMeta _returnPolicyTextMeta =
+      const VerificationMeta('returnPolicyText');
+  @override
+  late final GeneratedColumn<String> returnPolicyText = GeneratedColumn<String>(
+      'return_policy_text', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(
+          'Returns accepted within 24 hours with original voucher.'));
+  static const VerificationMeta _buybackPolicyTextMeta =
+      const VerificationMeta('buybackPolicyText');
+  @override
+  late final GeneratedColumn<String> buybackPolicyText =
+      GeneratedColumn<String>('buyback_policy_text', aliasedName, false,
+          type: DriftSqlType.string,
+          requiredDuringInsert: false,
+          defaultValue:
+              const Constant('Buyback at agreed rate after purity deduction.'));
   static const VerificationMeta _footerMessageMeta =
       const VerificationMeta('footerMessage');
   @override
@@ -21256,6 +21360,8 @@ class $PurchaseBillingSettingsTable extends PurchaseBillingSettings
         returnMode,
         purityDeductPercent,
         termsAndConditions,
+        returnPolicyText,
+        buybackPolicyText,
         footerMessage,
         selectedTemplate
       ];
@@ -21409,6 +21515,18 @@ class $PurchaseBillingSettingsTable extends PurchaseBillingSettings
           termsAndConditions.isAcceptableOrUnknown(
               data['terms_and_conditions']!, _termsAndConditionsMeta));
     }
+    if (data.containsKey('return_policy_text')) {
+      context.handle(
+          _returnPolicyTextMeta,
+          returnPolicyText.isAcceptableOrUnknown(
+              data['return_policy_text']!, _returnPolicyTextMeta));
+    }
+    if (data.containsKey('buyback_policy_text')) {
+      context.handle(
+          _buybackPolicyTextMeta,
+          buybackPolicyText.isAcceptableOrUnknown(
+              data['buyback_policy_text']!, _buybackPolicyTextMeta));
+    }
     if (data.containsKey('footer_message')) {
       context.handle(
           _footerMessageMeta,
@@ -21481,6 +21599,10 @@ class $PurchaseBillingSettingsTable extends PurchaseBillingSettings
           data['${effectivePrefix}purity_deduct_percent'])!,
       termsAndConditions: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}terms_and_conditions'])!,
+      returnPolicyText: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}return_policy_text'])!,
+      buybackPolicyText: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}buyback_policy_text'])!,
       footerMessage: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}footer_message'])!,
       selectedTemplate: attachedDatabase.typeMapping.read(
@@ -21521,6 +21643,8 @@ class PurchaseBillingSetting extends DataClass
   final String returnMode;
   final double purityDeductPercent;
   final String termsAndConditions;
+  final String returnPolicyText;
+  final String buybackPolicyText;
   final String footerMessage;
   final String selectedTemplate;
   const PurchaseBillingSetting(
@@ -21549,6 +21673,8 @@ class PurchaseBillingSetting extends DataClass
       required this.returnMode,
       required this.purityDeductPercent,
       required this.termsAndConditions,
+      required this.returnPolicyText,
+      required this.buybackPolicyText,
       required this.footerMessage,
       required this.selectedTemplate});
   @override
@@ -21581,6 +21707,8 @@ class PurchaseBillingSetting extends DataClass
     map['return_mode'] = Variable<String>(returnMode);
     map['purity_deduct_percent'] = Variable<double>(purityDeductPercent);
     map['terms_and_conditions'] = Variable<String>(termsAndConditions);
+    map['return_policy_text'] = Variable<String>(returnPolicyText);
+    map['buyback_policy_text'] = Variable<String>(buybackPolicyText);
     map['footer_message'] = Variable<String>(footerMessage);
     map['selected_template'] = Variable<String>(selectedTemplate);
     return map;
@@ -21615,6 +21743,8 @@ class PurchaseBillingSetting extends DataClass
       returnMode: Value(returnMode),
       purityDeductPercent: Value(purityDeductPercent),
       termsAndConditions: Value(termsAndConditions),
+      returnPolicyText: Value(returnPolicyText),
+      buybackPolicyText: Value(buybackPolicyText),
       footerMessage: Value(footerMessage),
       selectedTemplate: Value(selectedTemplate),
     );
@@ -21653,6 +21783,8 @@ class PurchaseBillingSetting extends DataClass
           serializer.fromJson<double>(json['purityDeductPercent']),
       termsAndConditions:
           serializer.fromJson<String>(json['termsAndConditions']),
+      returnPolicyText: serializer.fromJson<String>(json['returnPolicyText']),
+      buybackPolicyText: serializer.fromJson<String>(json['buybackPolicyText']),
       footerMessage: serializer.fromJson<String>(json['footerMessage']),
       selectedTemplate: serializer.fromJson<String>(json['selectedTemplate']),
     );
@@ -21686,6 +21818,8 @@ class PurchaseBillingSetting extends DataClass
       'returnMode': serializer.toJson<String>(returnMode),
       'purityDeductPercent': serializer.toJson<double>(purityDeductPercent),
       'termsAndConditions': serializer.toJson<String>(termsAndConditions),
+      'returnPolicyText': serializer.toJson<String>(returnPolicyText),
+      'buybackPolicyText': serializer.toJson<String>(buybackPolicyText),
       'footerMessage': serializer.toJson<String>(footerMessage),
       'selectedTemplate': serializer.toJson<String>(selectedTemplate),
     };
@@ -21717,6 +21851,8 @@ class PurchaseBillingSetting extends DataClass
           String? returnMode,
           double? purityDeductPercent,
           String? termsAndConditions,
+          String? returnPolicyText,
+          String? buybackPolicyText,
           String? footerMessage,
           String? selectedTemplate}) =>
       PurchaseBillingSetting(
@@ -21745,6 +21881,8 @@ class PurchaseBillingSetting extends DataClass
         returnMode: returnMode ?? this.returnMode,
         purityDeductPercent: purityDeductPercent ?? this.purityDeductPercent,
         termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+        returnPolicyText: returnPolicyText ?? this.returnPolicyText,
+        buybackPolicyText: buybackPolicyText ?? this.buybackPolicyText,
         footerMessage: footerMessage ?? this.footerMessage,
         selectedTemplate: selectedTemplate ?? this.selectedTemplate,
       );
@@ -21811,6 +21949,12 @@ class PurchaseBillingSetting extends DataClass
       termsAndConditions: data.termsAndConditions.present
           ? data.termsAndConditions.value
           : this.termsAndConditions,
+      returnPolicyText: data.returnPolicyText.present
+          ? data.returnPolicyText.value
+          : this.returnPolicyText,
+      buybackPolicyText: data.buybackPolicyText.present
+          ? data.buybackPolicyText.value
+          : this.buybackPolicyText,
       footerMessage: data.footerMessage.present
           ? data.footerMessage.value
           : this.footerMessage,
@@ -21848,6 +21992,8 @@ class PurchaseBillingSetting extends DataClass
           ..write('returnMode: $returnMode, ')
           ..write('purityDeductPercent: $purityDeductPercent, ')
           ..write('termsAndConditions: $termsAndConditions, ')
+          ..write('returnPolicyText: $returnPolicyText, ')
+          ..write('buybackPolicyText: $buybackPolicyText, ')
           ..write('footerMessage: $footerMessage, ')
           ..write('selectedTemplate: $selectedTemplate')
           ..write(')'))
@@ -21881,6 +22027,8 @@ class PurchaseBillingSetting extends DataClass
         returnMode,
         purityDeductPercent,
         termsAndConditions,
+        returnPolicyText,
+        buybackPolicyText,
         footerMessage,
         selectedTemplate
       ]);
@@ -21913,6 +22061,8 @@ class PurchaseBillingSetting extends DataClass
           other.returnMode == this.returnMode &&
           other.purityDeductPercent == this.purityDeductPercent &&
           other.termsAndConditions == this.termsAndConditions &&
+          other.returnPolicyText == this.returnPolicyText &&
+          other.buybackPolicyText == this.buybackPolicyText &&
           other.footerMessage == this.footerMessage &&
           other.selectedTemplate == this.selectedTemplate);
 }
@@ -21944,6 +22094,8 @@ class PurchaseBillingSettingsCompanion
   final Value<String> returnMode;
   final Value<double> purityDeductPercent;
   final Value<String> termsAndConditions;
+  final Value<String> returnPolicyText;
+  final Value<String> buybackPolicyText;
   final Value<String> footerMessage;
   final Value<String> selectedTemplate;
   const PurchaseBillingSettingsCompanion({
@@ -21972,6 +22124,8 @@ class PurchaseBillingSettingsCompanion
     this.returnMode = const Value.absent(),
     this.purityDeductPercent = const Value.absent(),
     this.termsAndConditions = const Value.absent(),
+    this.returnPolicyText = const Value.absent(),
+    this.buybackPolicyText = const Value.absent(),
     this.footerMessage = const Value.absent(),
     this.selectedTemplate = const Value.absent(),
   });
@@ -22001,6 +22155,8 @@ class PurchaseBillingSettingsCompanion
     this.returnMode = const Value.absent(),
     this.purityDeductPercent = const Value.absent(),
     this.termsAndConditions = const Value.absent(),
+    this.returnPolicyText = const Value.absent(),
+    this.buybackPolicyText = const Value.absent(),
     this.footerMessage = const Value.absent(),
     this.selectedTemplate = const Value.absent(),
   }) : metal = Value(metal);
@@ -22030,6 +22186,8 @@ class PurchaseBillingSettingsCompanion
     Expression<String>? returnMode,
     Expression<double>? purityDeductPercent,
     Expression<String>? termsAndConditions,
+    Expression<String>? returnPolicyText,
+    Expression<String>? buybackPolicyText,
     Expression<String>? footerMessage,
     Expression<String>? selectedTemplate,
   }) {
@@ -22064,6 +22222,8 @@ class PurchaseBillingSettingsCompanion
         'purity_deduct_percent': purityDeductPercent,
       if (termsAndConditions != null)
         'terms_and_conditions': termsAndConditions,
+      if (returnPolicyText != null) 'return_policy_text': returnPolicyText,
+      if (buybackPolicyText != null) 'buyback_policy_text': buybackPolicyText,
       if (footerMessage != null) 'footer_message': footerMessage,
       if (selectedTemplate != null) 'selected_template': selectedTemplate,
     });
@@ -22095,6 +22255,8 @@ class PurchaseBillingSettingsCompanion
       Value<String>? returnMode,
       Value<double>? purityDeductPercent,
       Value<String>? termsAndConditions,
+      Value<String>? returnPolicyText,
+      Value<String>? buybackPolicyText,
       Value<String>? footerMessage,
       Value<String>? selectedTemplate}) {
     return PurchaseBillingSettingsCompanion(
@@ -22123,6 +22285,8 @@ class PurchaseBillingSettingsCompanion
       returnMode: returnMode ?? this.returnMode,
       purityDeductPercent: purityDeductPercent ?? this.purityDeductPercent,
       termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+      returnPolicyText: returnPolicyText ?? this.returnPolicyText,
+      buybackPolicyText: buybackPolicyText ?? this.buybackPolicyText,
       footerMessage: footerMessage ?? this.footerMessage,
       selectedTemplate: selectedTemplate ?? this.selectedTemplate,
     );
@@ -22207,6 +22371,12 @@ class PurchaseBillingSettingsCompanion
     if (termsAndConditions.present) {
       map['terms_and_conditions'] = Variable<String>(termsAndConditions.value);
     }
+    if (returnPolicyText.present) {
+      map['return_policy_text'] = Variable<String>(returnPolicyText.value);
+    }
+    if (buybackPolicyText.present) {
+      map['buyback_policy_text'] = Variable<String>(buybackPolicyText.value);
+    }
     if (footerMessage.present) {
       map['footer_message'] = Variable<String>(footerMessage.value);
     }
@@ -22244,6 +22414,8 @@ class PurchaseBillingSettingsCompanion
           ..write('returnMode: $returnMode, ')
           ..write('purityDeductPercent: $purityDeductPercent, ')
           ..write('termsAndConditions: $termsAndConditions, ')
+          ..write('returnPolicyText: $returnPolicyText, ')
+          ..write('buybackPolicyText: $buybackPolicyText, ')
           ..write('footerMessage: $footerMessage, ')
           ..write('selectedTemplate: $selectedTemplate')
           ..write(')'))
@@ -34168,6 +34340,8 @@ typedef $$SalesBillingSettingsTableCreateCompanionBuilder
   Value<double> buybackRatePercent,
   Value<double> buybackPurityDeductPercent,
   Value<String> termsAndConditions,
+  Value<String> returnPolicyText,
+  Value<String> buybackPolicyText,
   Value<String> footerMessage,
   Value<String> selectedTemplate,
 });
@@ -34205,6 +34379,8 @@ typedef $$SalesBillingSettingsTableUpdateCompanionBuilder
   Value<double> buybackRatePercent,
   Value<double> buybackPurityDeductPercent,
   Value<String> termsAndConditions,
+  Value<String> returnPolicyText,
+  Value<String> buybackPolicyText,
   Value<String> footerMessage,
   Value<String> selectedTemplate,
 });
@@ -34332,6 +34508,14 @@ class $$SalesBillingSettingsTableFilterComposer
 
   ColumnFilters<String> get termsAndConditions => $composableBuilder(
       column: $table.termsAndConditions,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get returnPolicyText => $composableBuilder(
+      column: $table.returnPolicyText,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get buybackPolicyText => $composableBuilder(
+      column: $table.buybackPolicyText,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get footerMessage => $composableBuilder(
@@ -34468,6 +34652,14 @@ class $$SalesBillingSettingsTableOrderingComposer
       column: $table.termsAndConditions,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get returnPolicyText => $composableBuilder(
+      column: $table.returnPolicyText,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get buybackPolicyText => $composableBuilder(
+      column: $table.buybackPolicyText,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get footerMessage => $composableBuilder(
       column: $table.footerMessage,
       builder: (column) => ColumnOrderings(column));
@@ -34582,6 +34774,12 @@ class $$SalesBillingSettingsTableAnnotationComposer
   GeneratedColumn<String> get termsAndConditions => $composableBuilder(
       column: $table.termsAndConditions, builder: (column) => column);
 
+  GeneratedColumn<String> get returnPolicyText => $composableBuilder(
+      column: $table.returnPolicyText, builder: (column) => column);
+
+  GeneratedColumn<String> get buybackPolicyText => $composableBuilder(
+      column: $table.buybackPolicyText, builder: (column) => column);
+
   GeneratedColumn<String> get footerMessage => $composableBuilder(
       column: $table.footerMessage, builder: (column) => column);
 
@@ -34651,6 +34849,8 @@ class $$SalesBillingSettingsTableTableManager extends RootTableManager<
             Value<double> buybackRatePercent = const Value.absent(),
             Value<double> buybackPurityDeductPercent = const Value.absent(),
             Value<String> termsAndConditions = const Value.absent(),
+            Value<String> returnPolicyText = const Value.absent(),
+            Value<String> buybackPolicyText = const Value.absent(),
             Value<String> footerMessage = const Value.absent(),
             Value<String> selectedTemplate = const Value.absent(),
           }) =>
@@ -34687,6 +34887,8 @@ class $$SalesBillingSettingsTableTableManager extends RootTableManager<
             buybackRatePercent: buybackRatePercent,
             buybackPurityDeductPercent: buybackPurityDeductPercent,
             termsAndConditions: termsAndConditions,
+            returnPolicyText: returnPolicyText,
+            buybackPolicyText: buybackPolicyText,
             footerMessage: footerMessage,
             selectedTemplate: selectedTemplate,
           ),
@@ -34723,6 +34925,8 @@ class $$SalesBillingSettingsTableTableManager extends RootTableManager<
             Value<double> buybackRatePercent = const Value.absent(),
             Value<double> buybackPurityDeductPercent = const Value.absent(),
             Value<String> termsAndConditions = const Value.absent(),
+            Value<String> returnPolicyText = const Value.absent(),
+            Value<String> buybackPolicyText = const Value.absent(),
             Value<String> footerMessage = const Value.absent(),
             Value<String> selectedTemplate = const Value.absent(),
           }) =>
@@ -34759,6 +34963,8 @@ class $$SalesBillingSettingsTableTableManager extends RootTableManager<
             buybackRatePercent: buybackRatePercent,
             buybackPurityDeductPercent: buybackPurityDeductPercent,
             termsAndConditions: termsAndConditions,
+            returnPolicyText: returnPolicyText,
+            buybackPolicyText: buybackPolicyText,
             footerMessage: footerMessage,
             selectedTemplate: selectedTemplate,
           ),
@@ -34813,6 +35019,8 @@ typedef $$PurchaseBillingSettingsTableCreateCompanionBuilder
   Value<String> returnMode,
   Value<double> purityDeductPercent,
   Value<String> termsAndConditions,
+  Value<String> returnPolicyText,
+  Value<String> buybackPolicyText,
   Value<String> footerMessage,
   Value<String> selectedTemplate,
 });
@@ -34843,6 +35051,8 @@ typedef $$PurchaseBillingSettingsTableUpdateCompanionBuilder
   Value<String> returnMode,
   Value<double> purityDeductPercent,
   Value<String> termsAndConditions,
+  Value<String> returnPolicyText,
+  Value<String> buybackPolicyText,
   Value<String> footerMessage,
   Value<String> selectedTemplate,
 });
@@ -34943,6 +35153,14 @@ class $$PurchaseBillingSettingsTableFilterComposer
 
   ColumnFilters<String> get termsAndConditions => $composableBuilder(
       column: $table.termsAndConditions,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get returnPolicyText => $composableBuilder(
+      column: $table.returnPolicyText,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get buybackPolicyText => $composableBuilder(
+      column: $table.buybackPolicyText,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get footerMessage => $composableBuilder(
@@ -35053,6 +35271,14 @@ class $$PurchaseBillingSettingsTableOrderingComposer
       column: $table.termsAndConditions,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get returnPolicyText => $composableBuilder(
+      column: $table.returnPolicyText,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get buybackPolicyText => $composableBuilder(
+      column: $table.buybackPolicyText,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get footerMessage => $composableBuilder(
       column: $table.footerMessage,
       builder: (column) => ColumnOrderings(column));
@@ -35146,6 +35372,12 @@ class $$PurchaseBillingSettingsTableAnnotationComposer
   GeneratedColumn<String> get termsAndConditions => $composableBuilder(
       column: $table.termsAndConditions, builder: (column) => column);
 
+  GeneratedColumn<String> get returnPolicyText => $composableBuilder(
+      column: $table.returnPolicyText, builder: (column) => column);
+
+  GeneratedColumn<String> get buybackPolicyText => $composableBuilder(
+      column: $table.buybackPolicyText, builder: (column) => column);
+
   GeneratedColumn<String> get footerMessage => $composableBuilder(
       column: $table.footerMessage, builder: (column) => column);
 
@@ -35209,6 +35441,8 @@ class $$PurchaseBillingSettingsTableTableManager extends RootTableManager<
             Value<String> returnMode = const Value.absent(),
             Value<double> purityDeductPercent = const Value.absent(),
             Value<String> termsAndConditions = const Value.absent(),
+            Value<String> returnPolicyText = const Value.absent(),
+            Value<String> buybackPolicyText = const Value.absent(),
             Value<String> footerMessage = const Value.absent(),
             Value<String> selectedTemplate = const Value.absent(),
           }) =>
@@ -35238,6 +35472,8 @@ class $$PurchaseBillingSettingsTableTableManager extends RootTableManager<
             returnMode: returnMode,
             purityDeductPercent: purityDeductPercent,
             termsAndConditions: termsAndConditions,
+            returnPolicyText: returnPolicyText,
+            buybackPolicyText: buybackPolicyText,
             footerMessage: footerMessage,
             selectedTemplate: selectedTemplate,
           ),
@@ -35267,6 +35503,8 @@ class $$PurchaseBillingSettingsTableTableManager extends RootTableManager<
             Value<String> returnMode = const Value.absent(),
             Value<double> purityDeductPercent = const Value.absent(),
             Value<String> termsAndConditions = const Value.absent(),
+            Value<String> returnPolicyText = const Value.absent(),
+            Value<String> buybackPolicyText = const Value.absent(),
             Value<String> footerMessage = const Value.absent(),
             Value<String> selectedTemplate = const Value.absent(),
           }) =>
@@ -35296,6 +35534,8 @@ class $$PurchaseBillingSettingsTableTableManager extends RootTableManager<
             returnMode: returnMode,
             purityDeductPercent: purityDeductPercent,
             termsAndConditions: termsAndConditions,
+            returnPolicyText: returnPolicyText,
+            buybackPolicyText: buybackPolicyText,
             footerMessage: footerMessage,
             selectedTemplate: selectedTemplate,
           ),

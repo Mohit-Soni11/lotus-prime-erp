@@ -34,6 +34,8 @@ class PurchaseBillingModel {
 
   // Section 3 — Terms
   final String termsAndConditions;
+  final String returnPolicyText; // ✅ NEW
+  final String buybackPolicyText; // ✅ NEW
   final String footerMessage;
 
   // Section 4 — Template
@@ -64,6 +66,9 @@ class PurchaseBillingModel {
     this.termsAndConditions = 'Quality will be checked on delivery.\n'
         'Short delivery or defective goods must be reported within 24 hours.\n'
         'Payment as per agreed terms only.',
+    this.returnPolicyText =
+        'Returns accepted within 24 hours with original voucher.',
+    this.buybackPolicyText = 'Buyback at agreed rate after purity deduction.',
     this.footerMessage = '',
     this.selectedTemplate = 'default',
   });
@@ -191,6 +196,8 @@ class PurchaseBillingModel {
     String? returnMode,
     double? purityDeductPercent,
     String? termsAndConditions,
+    String? returnPolicyText,
+    String? buybackPolicyText,
     String? footerMessage,
     String? selectedTemplate,
   }) {
@@ -217,6 +224,8 @@ class PurchaseBillingModel {
       returnMode: returnMode ?? this.returnMode,
       purityDeductPercent: purityDeductPercent ?? this.purityDeductPercent,
       termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+      returnPolicyText: returnPolicyText ?? this.returnPolicyText,
+      buybackPolicyText: buybackPolicyText ?? this.buybackPolicyText,
       footerMessage: footerMessage ?? this.footerMessage,
       selectedTemplate: selectedTemplate ?? this.selectedTemplate,
     );

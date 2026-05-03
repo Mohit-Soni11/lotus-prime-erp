@@ -47,6 +47,8 @@ class PurchaseBillingRepo {
               returnMode: Value(model.returnMode),
               purityDeductPercent: Value(model.purityDeductPercent),
               termsAndConditions: Value(model.termsAndConditions),
+              returnPolicyText: Value(model.returnPolicyText),
+              buybackPolicyText: Value(model.buybackPolicyText),
               footerMessage: Value(model.footerMessage),
               selectedTemplate: Value(model.selectedTemplate),
             ),
@@ -92,6 +94,8 @@ class PurchaseBillingRepo {
       returnMode: row.returnMode,
       purityDeductPercent: row.purityDeductPercent,
       termsAndConditions: row.termsAndConditions,
+      returnPolicyText: row.returnPolicyText,
+      buybackPolicyText: row.buybackPolicyText,
       footerMessage: row.footerMessage,
       selectedTemplate: row.selectedTemplate,
     );

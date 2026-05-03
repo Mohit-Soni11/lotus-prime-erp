@@ -52,6 +52,14 @@ class SettingsData {
 
     // ── FINANCE ───────────────────────────────────────────────────────────
     SettingsModel(
+      id: 'metal_costing',
+      icon: Icons.analytics_rounded,
+      title: 'Metal Cost Analyser',
+      subtitle: 'Purchase cost, current value & profit/loss per metal & purity',
+      category: SettingsCategory.finance,
+      accentColor: Color(0xFFD97706),
+    ),
+    SettingsModel(
       id: 'gst_config',
       icon: SettingsIcons.taxGst,
       title: 'Tax & GST',
