@@ -10,6 +10,10 @@
 //               - Stone Value as separate ₹ charge (NOT deducted)
 //               - 🔒 Owner-only section (purchaseRate, making, cost price)
 //               - Session-level OR per-row supplier selection
+//
+// CHANGE LOG:
+//   ✅ Replaced embedded _buildAppBar() with proper AddStockAppBar widget
+//      (matches Customer List / Karigar / Day Book dark-shell pattern)
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -20,6 +24,7 @@ import '../../../logic/stock/add_stock_controller.dart';
 import '../../../models/stock/stock_enums/stock_enums.dart';
 import '../../../../../models/stock/supplier_model/supplier_model.dart';
 import '../../../theme/stock/add_stock/add_stock_theme.dart';
+import 'add_stock_app_bar.dart'; // ✅ NEW: Proper dark-shell AppBar
 
 // =============================================================================
 // ROOT SCREEN
@@ -53,7 +58,13 @@ class _AddStockScreenState extends State<AddStockScreen>
       listenable: _ctrl,
       builder: (context, _) => Scaffold(
         backgroundColor: AddStockColors.bodyBg,
-        appBar: _buildAppBar(),
+
+        // ✅ UPDATED: Proper dark-shell AppBar (matches all other screens)
+        appBar: AddStockAppBar(
+          ctrl: _ctrl,
+          onBack: () => Navigator.pop(context),
+        ),
+
         body: AnimatedSwitcher(
           duration: const Duration(milliseconds: 280),
           switchInCurve: Curves.easeOutQuart,
@@ -66,83 +77,6 @@ class _AddStockScreenState extends State<AddStockScreen>
             AddStockStep.items => _ItemsStep(
                 ctrl: _ctrl, onSave: _onSave, key: const ValueKey('items')),
           },
-        ),
-      ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    return PreferredSize(
-      preferredSize: const Size.fromHeight(AddStockStyles.appBarHeight + 50),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: AddStockColors.shellPanelBg,
-          border: Border(
-              bottom: BorderSide(color: AddStockColors.shellBorder, width: 1)),
-          boxShadow: [
-            BoxShadow(
-                color: Color(0x26000000), blurRadius: 16, offset: Offset(0, 4))
-          ],
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: Column(children: [
-            // Title row
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              child: Row(
-                children: [
-                  if (_ctrl.step != AddStockStep.metal) ...[
-                    GestureDetector(
-                      onTap: _ctrl.prevStep,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AddStockColors.shellBg,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AddStockColors.shellBorder),
-                        ),
-                        child: const Icon(AddStockIcons.backArrow,
-                            color: AddStockColors.shellTextTitle, size: 20),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                  ],
-                  Row(
-                    children: [
-                      const Icon(AddStockIcons.addStock,
-                          color: AddStockColors.brandGold, size: 20),
-                      const SizedBox(width: 8),
-                      Text(AddStockStrings.screenTitle,
-                          style: AddStockStyles.shellTitle),
-                    ],
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: AddStockColors.moduleBadgeBg,
-                      borderRadius: BorderRadius.circular(8),
-                      border:
-                          Border.all(color: AddStockColors.moduleBadgeBorder),
-                    ),
-                    child: Text(AddStockStrings.moduleBadge,
-                        style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: AddStockColors.moduleBadgeText)),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Step indicator
-            _StepIndicator(step: _ctrl.step),
-            const SizedBox(height: 8),
-          ]),
         ),
       ),
     );
@@ -210,73 +144,6 @@ class _AddStockScreenState extends State<AddStockScreen>
         behavior: SnackBarBehavior.floating,
       ));
     }
-  }
-}
-
-// =============================================================================
-// STEP INDICATOR
-// =============================================================================
-
-class _StepIndicator extends StatelessWidget {
-  final AddStockStep step;
-  const _StepIndicator({required this.step});
-
-  @override
-  Widget build(BuildContext context) {
-    final labels = [
-      AddStockStrings.stepMetal,
-      AddStockStrings.stepPurity,
-      AddStockStrings.stepItems
-    ];
-    final current = step.index;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: List.generate(3, (i) {
-          final done = i < current;
-          final active = i == current;
-          return Expanded(
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 12,
-                  backgroundColor: active
-                      ? AddStockColors.brandGold
-                      : done
-                          ? AddStockColors.brandGold.withOpacity(0.5)
-                          : AddStockColors.shellBorder,
-                  child: done
-                      ? const Icon(Icons.check, size: 13, color: Colors.black)
-                      : Text('${i + 1}',
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: active
-                                  ? Colors.black
-                                  : AddStockColors.shellTextMuted)),
-                ),
-                const SizedBox(width: 6),
-                Flexible(
-                    child: Text(labels[i],
-                        style: TextStyle(
-                            fontSize: 11,
-                            color: active
-                                ? AddStockColors.brandGold
-                                : AddStockColors.shellTextMuted,
-                            fontWeight:
-                                active ? FontWeight.w700 : FontWeight.normal))),
-                if (i < 2)
-                  Expanded(
-                      child: Container(
-                          height: 1,
-                          margin: const EdgeInsets.symmetric(horizontal: 6),
-                          color: AddStockColors.shellBorder)),
-              ],
-            ),
-          );
-        }),
-      ),
-    );
   }
 }
 
