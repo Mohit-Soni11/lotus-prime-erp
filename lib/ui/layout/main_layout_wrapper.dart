@@ -15,6 +15,7 @@
 //   v8 — ✅ Expense Entry module wired
 //   v9 — ✅ Day Book module wired
 //   v10 — ✅ Delivery Management module wired
+//   v11 — ✅ Add Stock Route wired to AddStockHubScreen
 // =============================================================================
 
 import 'dart:io';
@@ -40,7 +41,7 @@ import '../booking_advance/booking_advance_screen.dart';
 import '../sales & orders/delivery/delivery_management_screen.dart';
 
 // STOCK
-import '../stock/add_stock/add_stock_screen.dart';
+import '../stock/add_stock/add_stock_hub_screen.dart';
 import '../stock/inventory/inventory_screen.dart';
 
 // CUSTOMER
@@ -220,8 +221,8 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
     // ── STOCK ─────────────────────────────────────────────────────────────────
 
     else if (routeId == AppRoutes.addStockRoute) {
-      Navigator.push(
-          context, MaterialPageRoute(builder: (_) => const AddStockScreen()));
+      Navigator.push(context,
+          MaterialPageRoute(builder: (_) => const AddStockHubScreen()));
     } else if (routeId == AppRoutes.inventoryRoute) {
       Navigator.push(
           context,

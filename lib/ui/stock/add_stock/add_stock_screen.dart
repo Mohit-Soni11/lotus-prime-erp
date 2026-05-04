@@ -2,18 +2,19 @@
 // FILE        : add_stock_screen.dart
 // MODULE      : Stock & Inventory
 // LAYER       : UI / Screen
-// DESCRIPTION : Stepped Add Stock wizard. Dark AppBar + Cream body.
-//               Step 1 → Metal  → Step 2 → Purity  → Step 3 → Items
+// DESCRIPTION : Stepped Add Stock wizard.
+//               ✅ v2: Metal pre-selected from hub → Step 1 REMOVED
+//               Step 1 → Purity  → Step 2 → Items
 //
-//               Step 3: Invoice-style multi-row table with:
+//               Step 2: Invoice-style multi-row table with:
 //               - Auto net weight = Gross − Stone
 //               - Stone Value as separate ₹ charge (NOT deducted)
 //               - 🔒 Owner-only section (purchaseRate, making, cost price)
 //               - Session-level OR per-row supplier selection
 //
 // CHANGE LOG:
-//   ✅ Replaced embedded _buildAppBar() with proper AddStockAppBar widget
-//      (matches Customer List / Karigar / Day Book dark-shell pattern)
+//   v1 — 3-step wizard (Metal → Purity → Items)
+//   v2 — Metal step removed; metal accepted from AddStockHubScreen
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -24,14 +25,18 @@ import '../../../logic/stock/add_stock_controller.dart';
 import '../../../models/stock/stock_enums/stock_enums.dart';
 import '../../../../../models/stock/supplier_model/supplier_model.dart';
 import '../../../theme/stock/add_stock/add_stock_theme.dart';
-import 'add_stock_app_bar.dart'; // ✅ NEW: Proper dark-shell AppBar
+import 'add_stock_app_bar.dart';
 
 // =============================================================================
 // ROOT SCREEN
 // =============================================================================
 
 class AddStockScreen extends StatefulWidget {
-  const AddStockScreen({super.key});
+  /// ✅ v2: Metal is required — passed from hub screen
+  final StockCategory metal;
+
+  const AddStockScreen({super.key, required this.metal});
+
   @override
   State<AddStockScreen> createState() => _AddStockScreenState();
 }
@@ -43,7 +48,8 @@ class _AddStockScreenState extends State<AddStockScreen>
   @override
   void initState() {
     super.initState();
-    _ctrl = AddStockController();
+    // ✅ Pass pre-selected metal — no more Step 1
+    _ctrl = AddStockController(initialMetal: widget.metal);
   }
 
   @override
@@ -58,20 +64,15 @@ class _AddStockScreenState extends State<AddStockScreen>
       listenable: _ctrl,
       builder: (context, _) => Scaffold(
         backgroundColor: AddStockColors.bodyBg,
-
-        // ✅ UPDATED: Proper dark-shell AppBar (matches all other screens)
         appBar: AddStockAppBar(
           ctrl: _ctrl,
           onBack: () => Navigator.pop(context),
         ),
-
         body: AnimatedSwitcher(
           duration: const Duration(milliseconds: 280),
           switchInCurve: Curves.easeOutQuart,
           switchOutCurve: Curves.easeInQuart,
           child: switch (_ctrl.step) {
-            AddStockStep.metal =>
-              _MetalStep(ctrl: _ctrl, key: const ValueKey('metal')),
             AddStockStep.purity =>
               _PurityStep(ctrl: _ctrl, key: const ValueKey('purity')),
             AddStockStep.items => _ItemsStep(
@@ -126,7 +127,7 @@ class _AddStockScreenState extends State<AddStockScreen>
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                Navigator.pop(context);
+                Navigator.pop(context); // Back to hub
               },
               style: ElevatedButton.styleFrom(
                   backgroundColor: AddStockColors.brandGold,
@@ -148,136 +149,7 @@ class _AddStockScreenState extends State<AddStockScreen>
 }
 
 // =============================================================================
-// STEP 1: METAL SELECTION
-// =============================================================================
-
-class _MetalStep extends StatelessWidget {
-  final AddStockController ctrl;
-  const _MetalStep({required this.ctrl, super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(28),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text(AddStockStrings.metalQuestion,
-              style: AddStockStyles.pageTitle, textAlign: TextAlign.center),
-          const SizedBox(height: 8),
-          Text(AddStockStrings.metalSubtitle,
-              style: AddStockStyles.caption, textAlign: TextAlign.center),
-          const SizedBox(height: 32),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 1.4,
-            children: [
-              _MetalTile(
-                  label: AddStockStrings.metalGold,
-                  icon: Icons.circle,
-                  accentColor: const Color(0xFFFFD700),
-                  metal: StockCategory.gold,
-                  ctrl: ctrl),
-              _MetalTile(
-                  label: AddStockStrings.metalSilver,
-                  icon: Icons.circle,
-                  accentColor: const Color(0xFF90A4AE),
-                  metal: StockCategory.silver,
-                  ctrl: ctrl),
-              _MetalTile(
-                  label: AddStockStrings.metalDiamond,
-                  icon: Icons.diamond_outlined,
-                  accentColor: const Color(0xFF29B6F6),
-                  metal: StockCategory.diamond,
-                  ctrl: ctrl),
-              _MetalTile(
-                  label: AddStockStrings.metalPlatinum,
-                  icon: Icons.circle,
-                  accentColor: const Color(0xFF78909C),
-                  metal: StockCategory.platinum,
-                  ctrl: ctrl),
-            ],
-          ),
-          const SizedBox(height: 36),
-          SizedBox(
-            width: double.infinity,
-            height: 54,
-            child: ElevatedButton.icon(
-              onPressed: ctrl.nextStep,
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AddStockColors.brandGold,
-                  foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14))),
-              icon: const Icon(Icons.arrow_forward_rounded, size: 20),
-              label: Text(AddStockStrings.btnNextPurity,
-                  style: GoogleFonts.manrope(
-                      fontWeight: FontWeight.w800, fontSize: 15)),
-            ),
-          ),
-        ]),
-      ),
-    );
-  }
-}
-
-class _MetalTile extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color accentColor;
-  final StockCategory metal;
-  final AddStockController ctrl;
-  const _MetalTile(
-      {required this.label,
-      required this.icon,
-      required this.accentColor,
-      required this.metal,
-      required this.ctrl});
-
-  bool get isSelected => ctrl.selectedMetal == metal;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => ctrl.setMetal(metal),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? accentColor.withOpacity(0.12)
-              : AddStockColors.cardBg,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-              color: isSelected ? accentColor : AddStockColors.cardBorder,
-              width: isSelected ? 2.5 : 1),
-          boxShadow: [
-            BoxShadow(
-                color: isSelected
-                    ? accentColor.withOpacity(0.2)
-                    : AddStockColors.shadowLight,
-                blurRadius: isSelected ? 12 : 6,
-                offset: const Offset(0, 3))
-          ],
-        ),
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(icon, color: accentColor, size: 36),
-          const SizedBox(height: 8),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: isSelected ? accentColor : AddStockColors.textBody)),
-        ]),
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// STEP 2: PURITY SELECTION
+// STEP 1: PURITY SELECTION  (was Step 2 before)
 // =============================================================================
 
 class _PurityStep extends StatefulWidget {
@@ -289,44 +161,112 @@ class _PurityStep extends StatefulWidget {
 
 class _PurityStepState extends State<_PurityStep> {
   final _customCtrl = TextEditingController();
+
   @override
   void dispose() {
     _customCtrl.dispose();
     super.dispose();
   }
 
+  // Metal-specific accent color
+  Color get _metalAccent {
+    switch (widget.ctrl.selectedMetal) {
+      case StockCategory.gold:
+        return const Color(0xFFD4AF37);
+      case StockCategory.silver:
+        return const Color(0xFF78909C);
+      case StockCategory.diamond:
+        return const Color(0xFF29B6F6);
+      case StockCategory.platinum:
+        return const Color(0xFF607D8B);
+      default:
+        return AddStockColors.brandGold;
+    }
+  }
+
+  IconData get _metalIcon {
+    switch (widget.ctrl.selectedMetal) {
+      case StockCategory.gold:
+        return Icons.diamond_rounded;
+      case StockCategory.silver:
+        return Icons.toll_rounded;
+      case StockCategory.diamond:
+        return Icons.hexagon_outlined;
+      case StockCategory.platinum:
+        return Icons.radio_button_checked_rounded;
+      default:
+        return Icons.category_rounded;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ctrl = widget.ctrl;
+    final accent = _metalAccent;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-                color: AddStockColors.brandGoldBg,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AddStockColors.brandGoldBorder)),
-            child: Text(ctrl.selectedMetal.label,
-                style: GoogleFonts.manrope(
-                    fontWeight: FontWeight.w800,
-                    color: AddStockColors.brandGold,
-                    fontSize: 14)),
+        // ── Metal badge (shows which metal was selected in hub) ────────────
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: accent.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: accent.withOpacity(0.25)),
           ),
-          const SizedBox(width: 12),
-          Text(AddStockStrings.purityQuestion,
-              style: AddStockStyles.sectionTitle),
-        ]),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_metalIcon, color: accent, size: 18),
+              const SizedBox(width: 10),
+              Text(
+                ctrl.selectedMetal.label,
+                style: GoogleFonts.manrope(
+                  fontWeight: FontWeight.w800,
+                  color: accent,
+                  fontSize: 15,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 1,
+                height: 16,
+                color: accent.withOpacity(0.25),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                AddStockStrings.purityQuestion,
+                style: GoogleFonts.inter(
+                  color: AddStockColors.textMuted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: 24),
+
+        Text('Purity / Karat', style: AddStockStyles.sectionTitle),
+        const SizedBox(height: 4),
+        Text(
+          'Is metal ki purity select karein',
+          style: AddStockStyles.caption,
+        ),
+        const SizedBox(height: 20),
+
+        // ── Purity chips ──────────────────────────────────────────────────
         Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: 10,
+          runSpacing: 10,
           children: ctrl.purityOptions.map((opt) {
             final isSelected = ctrl.purityDisplay == opt ||
                 (!ctrl.isCustomPurity &&
                     ctrl.purityDisplay.isEmpty &&
                     opt == ctrl.purityOptions.first);
+            final isCustom = opt == 'Custom';
+
             return GestureDetector(
               onTap: () => ctrl.setPurity(opt),
               child: AnimatedContainer(
@@ -334,35 +274,55 @@ class _PurityStepState extends State<_PurityStep> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? AddStockColors.brandGold
-                      : AddStockColors.cardBg,
+                  color: isSelected ? accent : AddStockColors.cardBg,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: isSelected
-                          ? AddStockColors.brandGold
-                          : AddStockColors.cardBorder,
-                      width: isSelected ? 2 : 1),
+                    color: isSelected
+                        ? accent
+                        : isCustom
+                            ? AddStockColors.cardBorder
+                            : AddStockColors.cardBorder,
+                    width: isSelected ? 2 : 1,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                        color: isSelected
-                            ? AddStockColors.brandGoldGlow
-                            : AddStockColors.shadowLight,
-                        blurRadius: 8,
-                        offset: const Offset(0, 3))
+                      color: isSelected
+                          ? accent.withOpacity(0.3)
+                          : AddStockColors.shadowLight,
+                      blurRadius: isSelected ? 10 : 6,
+                      offset: const Offset(0, 3),
+                    ),
                   ],
                 ),
-                child: Text(opt,
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isCustom)
+                      Icon(
+                        Icons.edit_rounded,
+                        size: 14,
                         color: isSelected
                             ? Colors.black
-                            : AddStockColors.textBody)),
+                            : AddStockColors.textMuted,
+                      ),
+                    if (isCustom) const SizedBox(width: 6),
+                    Text(
+                      opt,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color:
+                            isSelected ? Colors.black : AddStockColors.textBody,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           }).toList(),
         ),
+
+        // ── Custom purity input ───────────────────────────────────────────
         if (ctrl.isCustomPurity) ...[
           const SizedBox(height: 20),
           Text(AddStockStrings.purityCustomLabel,
@@ -375,6 +335,7 @@ class _PurityStepState extends State<_PurityStep> {
             decoration: InputDecoration(
               hintText: AddStockStrings.purityCustomHint,
               hintStyle: AddStockStyles.fieldHint,
+              prefixIcon: Icon(Icons.tune_rounded, color: accent, size: 18),
               filled: true,
               fillColor: AddStockColors.inputBg,
               border: OutlineInputBorder(
@@ -383,29 +344,32 @@ class _PurityStepState extends State<_PurityStep> {
                       const BorderSide(color: AddStockColors.cardBorder)),
               focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(
-                      color: AddStockColors.brandGold, width: 1.5)),
+                  borderSide: BorderSide(color: accent, width: 1.5)),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
           ),
         ],
+
         const SizedBox(height: 36),
+
         SizedBox(
           width: double.infinity,
           height: 54,
           child: ElevatedButton.icon(
             onPressed: ctrl.canProceedFromPurity ? ctrl.nextStep : null,
             style: ElevatedButton.styleFrom(
-                backgroundColor: AddStockColors.brandGold,
+                backgroundColor: accent,
                 disabledBackgroundColor: AddStockColors.inputBgLocked,
                 foregroundColor: Colors.black,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14))),
             icon: const Icon(Icons.arrow_forward_rounded, size: 20),
-            label: Text(AddStockStrings.btnNextItems,
-                style: GoogleFonts.manrope(
-                    fontWeight: FontWeight.w800, fontSize: 15)),
+            label: Text(
+              AddStockStrings.btnNextItems,
+              style: GoogleFonts.manrope(
+                  fontWeight: FontWeight.w800, fontSize: 15),
+            ),
           ),
         ),
       ]),
@@ -414,7 +378,7 @@ class _PurityStepState extends State<_PurityStep> {
 }
 
 // =============================================================================
-// STEP 3: MULTI-ITEM ENTRY
+// STEP 2: MULTI-ITEM ENTRY  (was Step 3 before)
 // =============================================================================
 
 class _ItemsStep extends StatelessWidget {
@@ -553,7 +517,7 @@ class _ItemsStep extends StatelessWidget {
 }
 
 // =============================================================================
-// ITEM ROW CARD
+// ITEM ROW CARD  (unchanged from v1)
 // =============================================================================
 
 class _ItemRowCard extends StatefulWidget {
@@ -896,7 +860,7 @@ class _ItemRowCardState extends State<_ItemRowCard> {
                     ]),
               ),
 
-              // Per-row supplier (when "same for all" = OFF)
+              // Per-row supplier
               if (!widget.ctrl.sameForAll) ...[
                 const SizedBox(height: 12),
                 _SupplierAutocomplete(
@@ -1025,7 +989,7 @@ class _ItemRowCardState extends State<_ItemRowCard> {
 }
 
 // =============================================================================
-// SUPPLIER AUTOCOMPLETE FIELD
+// SUPPLIER AUTOCOMPLETE FIELD  (unchanged)
 // =============================================================================
 
 class _SupplierAutocomplete extends StatefulWidget {

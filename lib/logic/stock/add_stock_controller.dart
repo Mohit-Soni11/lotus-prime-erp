@@ -2,8 +2,9 @@
 // FILE        : add_stock_controller.dart
 // MODULE      : Stock & Inventory
 // LAYER       : Logic / Controller
-// DESCRIPTION : Reworked stepped Add Stock wizard controller.
-//               Step 1: Metal → Step 2: Purity → Step 3: Multi-item table
+// DESCRIPTION : Stepped Add Stock wizard controller.
+//               ✅ v2: Accepts initialMetal from hub → skips metal step
+//               Step 1: Purity → Step 2: Multi-item table
 //
 // WEIGHT LOGIC:
 //   netWeight  = grossWeight − stoneWeight   (metal billing)
@@ -27,8 +28,7 @@ class StockRowEntry {
   final String id;
 
   String itemName = '';
-  StockSubCategory subCategory =
-      StockSubCategory.values.first; // ✅ Safer enum access
+  StockSubCategory subCategory = StockSubCategory.values.first;
   String huid = '';
 
   double grossWeight = 0.0;
@@ -71,10 +71,10 @@ class StockRowEntry {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Wizard Steps
+// Wizard Steps  (Metal step removed — hub screen handles it)
 // ─────────────────────────────────────────────────────────────────────────────
 
-enum AddStockStep { metal, purity, items }
+enum AddStockStep { purity, items }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Controller
@@ -84,95 +84,109 @@ class AddStockController extends ChangeNotifier {
   late final AppDatabase _db;
   late final SupplierRepository _supplierRepo;
 
-  AddStockController() {
+  /// ✅ v2: initialMetal is REQUIRED — passed from hub screen
+  AddStockController({required StockCategory initialMetal}) {
     _db = AppDatabase();
     _supplierRepo = SupplierRepository(_db);
+    _selectedMetal = initialMetal;
     _loadSuppliers();
     _addRow();
   }
 
   // ── Step ──────────────────────────────────────────────────────────────────
-  AddStockStep _step = AddStockStep.metal;
+  AddStockStep _step = AddStockStep.purity;
   AddStockStep get step => _step;
 
   void nextStep() {
-    if (_step == AddStockStep.metal)
-      _step = AddStockStep.purity;
-    else if (_step == AddStockStep.purity) _step = AddStockStep.items;
+    if (_step == AddStockStep.purity) _step = AddStockStep.items;
     notifyListeners();
   }
 
   void prevStep() {
-    if (_step == AddStockStep.purity)
-      _step = AddStockStep.metal;
-    else if (_step == AddStockStep.items) _step = AddStockStep.purity;
+    if (_step == AddStockStep.items) _step = AddStockStep.purity;
     notifyListeners();
   }
 
   // ── Metal / Purity ────────────────────────────────────────────────────────
-  StockCategory _selectedMetal = StockCategory.gold;
-  String _selectedPurity = '22K (916)';
-  bool _isCustomPurity = false;
-  String _customPurity = '';
-
+  late StockCategory _selectedMetal;
   StockCategory get selectedMetal => _selectedMetal;
+
+  String _purityDisplay = '';
+  String get purityDisplay => _purityDisplay;
+
+  bool _isCustomPurity = false;
   bool get isCustomPurity => _isCustomPurity;
-  String get purityDisplay => _isCustomPurity ? _customPurity : _selectedPurity;
 
-  void setMetal(StockCategory metal) {
-    _selectedMetal = metal;
-    _isCustomPurity = false;
-    final opts = purityOptions;
-    _selectedPurity = opts.isNotEmpty ? opts.first : '';
-    notifyListeners();
-  }
-
-  void setPurity(String purity) {
-    _isCustomPurity = (purity == 'Other');
-    _selectedPurity = purity;
-    notifyListeners();
-  }
-
-  void setCustomPurity(String val) {
-    _customPurity = val;
-    notifyListeners();
-  }
+  bool get canProceedFromPurity => _purityDisplay.trim().isNotEmpty;
 
   List<String> get purityOptions {
     switch (_selectedMetal) {
       case StockCategory.gold:
-        return GoldPurity.values.map((e) => e.label).toList();
+        return [
+          '24K (999)',
+          '22K (916)',
+          '18K (750)',
+          '14K (585)',
+          '10K (417)',
+          'Custom',
+        ];
       case StockCategory.silver:
-        return SilverPurity.values.map((e) => e.label).toList();
+        return ['999 (Pure)', '925 (Sterling)', '800', '700', 'Custom'];
       case StockCategory.platinum:
-        return PlatinumPurity.values.map((e) => e.label).toList();
+        return ['950 Platinum', '900 Platinum', '850 Platinum', 'Custom'];
+      case StockCategory.diamond:
+        return ['Solitaire', 'Studded', 'Fancy', 'Custom'];
       default:
-        return ['Other'];
+        return ['Standard', 'Custom'];
     }
   }
 
-  bool get canProceedFromPurity =>
-      !_isCustomPurity || _customPurity.trim().isNotEmpty;
+  void setPurity(String opt) {
+    _isCustomPurity = opt == 'Custom';
+    if (!_isCustomPurity) {
+      _purityDisplay = opt;
+    } else {
+      _purityDisplay = '';
+    }
+    notifyListeners();
+  }
+
+  void setCustomPurity(String val) {
+    _purityDisplay = val.trim();
+    notifyListeners();
+  }
 
   // ── Suppliers ─────────────────────────────────────────────────────────────
   List<SupplierListItemModel> _suppliers = [];
-  bool _loadingSuppliers = false;
-  bool _sameForAll = true;
-  int? _sessionSupplierId;
-  String _sessionSupplierName = '';
-
   List<SupplierListItemModel> get suppliers => _suppliers;
-  bool get loadingSuppliers => _loadingSuppliers;
-  bool get sameForAll => _sameForAll;
-  String get sessionSupplierName => _sessionSupplierName;
 
   Future<void> _loadSuppliers() async {
-    _loadingSuppliers = true;
+    _suppliers = await _supplierRepo.getAllSuppliers();
     notifyListeners();
-    try {
-      _suppliers = await _supplierRepo.getAllSuppliers();
-    } catch (_) {}
-    _loadingSuppliers = false;
+  }
+
+  // ── Session Supplier (same-for-all) ───────────────────────────────────────
+  int? _sessionSupplierId;
+  String _sessionSupplierName = '';
+  bool _sameForAll = true;
+
+  String get sessionSupplierName => _sessionSupplierName;
+  bool get sameForAll => _sameForAll;
+
+  void setSessionSupplier(SupplierListItemModel? s) {
+    _sessionSupplierId = s?.id;
+    _sessionSupplierName = s?.displayName ?? '';
+    if (_sameForAll) {
+      for (final r in _rows) {
+        r.supplierId = _sessionSupplierId;
+        r.supplierName = _sessionSupplierName;
+      }
+    }
+    notifyListeners();
+  }
+
+  void setSessionSupplierText(String v) {
+    _sessionSupplierName = v;
     notifyListeners();
   }
 
@@ -187,268 +201,213 @@ class AddStockController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setSessionSupplier(SupplierListItemModel? s) {
-    _sessionSupplierId = s?.id;
-    _sessionSupplierName = s?.businessName ?? '';
-    if (_sameForAll) {
-      for (final r in _rows) {
-        r.supplierId = _sessionSupplierId;
-        r.supplierName = _sessionSupplierName;
-      }
-    }
-    notifyListeners();
-  }
-
-  void setSessionSupplierText(String name) {
-    _sessionSupplierName = name;
-    if (_sameForAll) {
-      for (final r in _rows) {
-        r.supplierName = name;
-      }
-    }
-    notifyListeners();
-  }
-
   void setRowSupplier(String rowId, SupplierListItemModel? s) {
-    final r = _rowById(rowId);
+    final r = _rows.firstWhere((r) => r.id == rowId);
     r.supplierId = s?.id;
-    r.supplierName = s?.businessName ?? '';
+    r.supplierName = s?.displayName ?? '';
     notifyListeners();
   }
 
   // ── Rows ──────────────────────────────────────────────────────────────────
   final List<StockRowEntry> _rows = [];
-
   List<StockRowEntry> get rows => List.unmodifiable(_rows);
   int get rowCount => _rows.length;
 
   void _addRow() {
-    final r = StockRowEntry(id: 'row_${DateTime.now().microsecondsSinceEpoch}');
+    final id = DateTime.now().microsecondsSinceEpoch.toString();
+    final row = StockRowEntry(id: id);
     if (_sameForAll) {
-      r.supplierId = _sessionSupplierId;
-      r.supplierName = _sessionSupplierName;
+      row.supplierId = _sessionSupplierId;
+      row.supplierName = _sessionSupplierName;
     }
-    _rows.add(r);
+    _rows.add(row);
     notifyListeners();
   }
 
   void addRow() => _addRow();
 
-  void removeRow(String rowId) {
+  void removeRow(String id) {
     if (_rows.length <= 1) return;
-    _rows.removeWhere((r) => r.id == rowId);
+    _rows.removeWhere((r) => r.id == id);
     notifyListeners();
   }
 
-  // ── Row updaters ──────────────────────────────────────────────────────────
+  // ── Row Update Methods ────────────────────────────────────────────────────
   void updateItemName(String id, String v) {
-    _rowById(id).itemName = v;
+    _rows.firstWhere((r) => r.id == id).itemName = v;
     notifyListeners();
   }
 
   void updateSubCategory(String id, StockSubCategory v) {
-    _rowById(id).subCategory = v;
+    _rows.firstWhere((r) => r.id == id).subCategory = v;
     notifyListeners();
   }
 
   void updateHuid(String id, String v) {
-    _rowById(id).huid = v;
+    _rows.firstWhere((r) => r.id == id).huid = v;
     notifyListeners();
   }
 
   void updateGrossWeight(String id, String v) {
-    _rowById(id).grossWeight = double.tryParse(v) ?? 0;
+    _rows.firstWhere((r) => r.id == id).grossWeight = double.tryParse(v) ?? 0.0;
     notifyListeners();
   }
 
   void updateStoneWeight(String id, String v) {
-    _rowById(id).stoneWeight = double.tryParse(v) ?? 0;
+    _rows.firstWhere((r) => r.id == id).stoneWeight = double.tryParse(v) ?? 0.0;
     notifyListeners();
   }
 
   void updateStoneValue(String id, String v) {
-    _rowById(id).stoneValue = double.tryParse(v) ?? 0;
+    _rows.firstWhere((r) => r.id == id).stoneValue = double.tryParse(v) ?? 0.0;
     notifyListeners();
   }
 
   void updateStoneType(String id, StoneType v) {
-    _rowById(id).stoneType = v;
+    _rows.firstWhere((r) => r.id == id).stoneType = v;
     notifyListeners();
   }
 
   void updateStoneCarats(String id, String v) {
-    _rowById(id).stoneCarats = double.tryParse(v) ?? 0;
+    _rows.firstWhere((r) => r.id == id).stoneCarats = double.tryParse(v) ?? 0.0;
     notifyListeners();
   }
 
   void updateStonePieces(String id, String v) {
-    _rowById(id).stonePieces = int.tryParse(v) ?? 0;
+    _rows.firstWhere((r) => r.id == id).stonePieces = int.tryParse(v) ?? 0;
     notifyListeners();
   }
 
   void updatePurchaseRate(String id, String v) {
-    _rowById(id).purchaseRate = double.tryParse(v) ?? 0;
+    _rows.firstWhere((r) => r.id == id).purchaseRate =
+        double.tryParse(v) ?? 0.0;
     notifyListeners();
   }
 
   void updateMakingCharges(String id, String v) {
-    _rowById(id).makingCharges = double.tryParse(v) ?? 0;
+    _rows.firstWhere((r) => r.id == id).makingCharges =
+        double.tryParse(v) ?? 0.0;
     notifyListeners();
   }
 
   void updateMakingType(String id, MakingChargesType v) {
-    _rowById(id).makingChargesType = v;
+    _rows.firstWhere((r) => r.id == id).makingChargesType = v;
     notifyListeners();
   }
 
-  StockRowEntry _rowById(String id) => _rows.firstWhere((r) => r.id == id);
-
   // ── Validation ────────────────────────────────────────────────────────────
-  String? validateRow(StockRowEntry r) {
-    if (r.itemName.trim().isEmpty) return 'Item name required';
-    if (r.grossWeight <= 0) return 'Gross weight must be > 0';
-    if (r.stoneWeight > r.grossWeight)
-      return 'Stone weight cannot exceed gross weight';
+  String? validateRow(StockRowEntry row) {
+    if (row.itemName.trim().isEmpty) return 'Item name required';
+    if (row.grossWeight <= 0) return 'Gross weight required';
     return null;
   }
 
-  bool get allRowsValid => _rows.every((r) => validateRow(r) == null);
-
-  // ── SKU ───────────────────────────────────────────────────────────────────
-  String _generateSku() {
-    String cat = _selectedMetal.label
-        .substring(0, _selectedMetal.label.length.clamp(0, 3))
-        .toUpperCase();
-    String pur =
-        purityDisplay.replaceAll(RegExp(r'[^A-Za-z0-9]'), '').toUpperCase();
-    pur = pur.substring(0, pur.length.clamp(0, 3));
-
-    // ✅ FIX: Replaced simple sequence with a microsecond suffix to prevent UNIQUE constraint crashes
-    String uniqueId = DateTime.now().microsecondsSinceEpoch.toString();
-    uniqueId = uniqueId.substring(uniqueId.length - 4);
-
-    return '$cat-$pur-$uniqueId';
-  }
+  bool get isValid =>
+      _rows.isNotEmpty &&
+      _rows.every((r) => validateRow(r) == null) &&
+      canProceedFromPurity;
 
   // ── Save ──────────────────────────────────────────────────────────────────
   bool _isSaving = false;
-  String? _errorMessage;
-  String? _successMessage;
-  int _savedCount = 0;
-
   bool get isSaving => _isSaving;
+
+  String? _errorMessage;
   String? get errorMessage => _errorMessage;
+
+  String? _successMessage;
   String? get successMessage => _successMessage;
-  int get savedCount => _savedCount;
+
+  // ── SKU Generator ─────────────────────────────────────────────────────────
+  String _generateSku(int index) {
+    final prefix = _selectedMetal.label.substring(0, 4).toUpperCase();
+    final now = DateTime.now();
+    final datePart =
+        '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+    final uniq = now.microsecondsSinceEpoch % 99999;
+    return '$prefix-$datePart-${uniq + index}';
+  }
 
   Future<bool> saveAll() async {
-    if (!allRowsValid) {
-      _errorMessage = 'Please fix errors before saving.';
-      notifyListeners();
-      return false;
-    }
-
     _isSaving = true;
     _errorMessage = null;
-    _successMessage = null;
     notifyListeners();
 
-    int saved = 0;
     try {
-      for (final row in _rows) {
-        final sku = _generateSku();
+      int saved = 0;
+      for (int i = 0; i < _rows.length; i++) {
+        final row = _rows[i];
+        if (validateRow(row) != null) continue;
 
-        // Slight delay to ensure microseconds generate unique SKUs in rapid loop
-        await Future.delayed(const Duration(milliseconds: 2));
-
-        await _db.into(_db.stockItems).insert(StockItemsCompanion.insert(
-              sku: sku,
-              itemName: row.itemName.trim(),
-              category: _selectedMetal.label,
-              subCategory: row.subCategory.label,
-              metalType: drift.Value([
-                StockCategory.diamond,
-                StockCategory.antique,
-                StockCategory.other
-              ].contains(_selectedMetal)
-                  ? 'None / Other'
-                  : _selectedMetal.label),
-              purity: drift.Value(purityDisplay.isEmpty ? null : purityDisplay),
-              grossWeight: drift.Value(row.grossWeight),
-              stoneWeight: drift.Value(row.stoneWeight),
-              netWeight: drift.Value(row.netWeight),
-              stoneType: drift.Value(row.stoneType.label),
-              stoneCarats: drift.Value(row.stoneCarats),
-              stonePieces: drift.Value(row.stonePieces),
-              stoneValue: drift.Value(row.stoneValue),
-
-              // ✅ FIXED: yahan naye column names update kar diye hain
-              makingCharge: drift.Value(row.makingCharges),
-              makingChargeType: drift.Value(row.makingChargesType.label),
-              wastage: const drift.Value(0.0), // Naya added tha table mein
-
-              purchaseRate: drift.Value(row.purchaseRate),
-              huid:
-                  drift.Value(row.huid.trim().isEmpty ? null : row.huid.trim()),
-              gstRate: drift.Value(
-                  _selectedMetal == StockCategory.diamond ? 1.5 : 3.0),
-              supplierId: drift.Value(row.supplierId),
-              supplierName: drift.Value(row.supplierName.trim().isEmpty
-                  ? null
-                  : row.supplierName.trim()),
-              status: const drift.Value('Available'),
-
-              isActive: const drift.Value(true), // Naya added tha table mein
-
-              description: const drift.Value(''),
-              mrp: const drift.Value(0.0),
-              quantity: const drift.Value(1),
-              hsnCode: drift.Value(
-                  _selectedMetal == StockCategory.silver ? '7114' : '7113'),
-
-              // ✅ FIXED: rackLocation ko location kar diya
-              location: const drift.Value(''),
-            ));
+        await _db.into(_db.stockItems).insert(
+              StockItemsCompanion.insert(
+                // ✅ sku — required unique field
+                sku: _generateSku(i),
+                itemName: row.itemName,
+                category: _selectedMetal.label,
+                subCategory: row.subCategory.label,
+                // ✅ purity is nullable in table
+                purity:
+                    drift.Value(_purityDisplay.isEmpty ? null : _purityDisplay),
+                huid: drift.Value(row.huid.isEmpty ? null : row.huid),
+                grossWeight: drift.Value(row.grossWeight),
+                stoneWeight: drift.Value(row.stoneWeight),
+                netWeight: drift.Value(row.netWeight),
+                stoneType: drift.Value(row.stoneType.label),
+                stoneCarats: drift.Value(row.stoneCarats),
+                stonePieces: drift.Value(row.stonePieces),
+                stoneValue: drift.Value(row.stoneValue),
+                purchaseRate: drift.Value(row.purchaseRate),
+                // ✅ makingCharge  (table column name — NOT makingCharges)
+                makingCharge: drift.Value(row.makingCharges),
+                // ✅ makingChargeType (table column name — NOT makingChargesType)
+                makingChargeType: drift.Value(row.makingChargesType.label),
+                // ✅ purchasePrice = costPrice calc  (no costPrice column in table)
+                purchasePrice: drift.Value(row.costPrice),
+                supplierId: drift.Value(row.supplierId),
+                supplierName: drift.Value(
+                    row.supplierName.isEmpty ? null : row.supplierName),
+                // ✅ status (NOT stockStatus)
+                status: drift.Value('Available'),
+              ),
+            );
         saved++;
       }
 
-      _savedCount = saved;
-      _successMessage = '$saved item${saved > 1 ? 's' : ''} added to stock!';
-      return true;
-    } catch (e) {
-      debugPrint('AddStockController.saveAll: $e');
-      _errorMessage =
-          'Error saving items. Database conflict or missing values.';
-      return false;
-    } finally {
+      _successMessage =
+          '$saved item${saved > 1 ? 's' : ''} saved to ${_selectedMetal.label} stock successfully!';
       _isSaving = false;
       notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Save failed: $e';
+      _isSaving = false;
+      notifyListeners();
+      return false;
     }
   }
 
+  // ── Reset ─────────────────────────────────────────────────────────────────
   void resetAllRows() {
     _rows.clear();
     _addRow();
-    _errorMessage = null;
-    _successMessage = null;
+    _purityDisplay = '';
+    _isCustomPurity = false;
+    _step = AddStockStep.purity;
     notifyListeners();
   }
 
   void resetForNewBatch() {
-    _step = AddStockStep.metal;
-    _isCustomPurity = false;
-    _customPurity = '';
     _rows.clear();
-    _savedCount = 0;
-    _errorMessage = null;
-    _successMessage = null;
     _addRow();
+    _purityDisplay = '';
+    _isCustomPurity = false;
+    _step = AddStockStep.purity;
     notifyListeners();
   }
 
-  void clearMessages() {
-    _errorMessage = null;
-    _successMessage = null;
-    notifyListeners();
+  @override
+  void dispose() {
+    _db.close();
+    super.dispose();
   }
 }

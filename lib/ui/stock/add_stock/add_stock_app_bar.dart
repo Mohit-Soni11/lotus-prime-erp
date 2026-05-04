@@ -3,19 +3,20 @@
 // MODULE      : Stock & Inventory
 // LAYER       : UI / AppBar
 // DESCRIPTION : Dark-shell AppBar for Add Stock screen.
-//               Matches Customer List / Karigar / Day Book pattern exactly:
+//               ✅ v2: Metal step removed — 2-step indicator (Purity → Items)
+//               ✅ v2: Metal badge shown next to title (metal identity visible)
 //               ✅ Animated Hover Back Button (gold on hover)
 //               ✅ Vertical Divider (gradient)
 //               ✅ Gradient Module Icon + "ADD STOCK" Title
 //               ✅ Radar Blink "SYSTEM ONLINE" status
 //               ✅ Right: Refresh + "Stock & Inventory" badge
-//               ✅ Step Indicator Row below (Metal → Purity → Items)
 // =============================================================================
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../logic/stock/add_stock_controller.dart';
+import '../../../models/stock/stock_enums/stock_enums.dart';
 import '../../../theme/stock/add_stock/add_stock_theme.dart';
 
 // =============================================================================
@@ -32,9 +33,9 @@ class AddStockAppBar extends StatefulWidget implements PreferredSizeWidget {
     required this.ctrl,
   });
 
-  // AppBar height: 64 (main row) + 48 (step indicator row)
+  // AppBar height: 64 (main row) + 44 (step indicator row)
   @override
-  Size get preferredSize => const Size.fromHeight(112.0);
+  Size get preferredSize => const Size.fromHeight(108.0);
 
   @override
   State<AddStockAppBar> createState() => _AddStockAppBarState();
@@ -59,6 +60,37 @@ class _AddStockAppBarState extends State<AddStockAppBar>
     super.dispose();
   }
 
+  // ✅ v2: Metal-specific accent colour for badge
+  Color get _metalAccent {
+    switch (widget.ctrl.selectedMetal) {
+      case StockCategory.gold:
+        return const Color(0xFFD4AF37);
+      case StockCategory.silver:
+        return const Color(0xFF78909C);
+      case StockCategory.diamond:
+        return const Color(0xFF29B6F6);
+      case StockCategory.platinum:
+        return const Color(0xFF607D8B);
+      default:
+        return AddStockColors.brandGold;
+    }
+  }
+
+  IconData get _metalIcon {
+    switch (widget.ctrl.selectedMetal) {
+      case StockCategory.gold:
+        return Icons.diamond_rounded;
+      case StockCategory.silver:
+        return Icons.toll_rounded;
+      case StockCategory.diamond:
+        return Icons.hexagon_outlined;
+      case StockCategory.platinum:
+        return Icons.radio_button_checked_rounded;
+      default:
+        return Icons.category_rounded;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -66,7 +98,7 @@ class _AddStockAppBarState extends State<AddStockAppBar>
       builder: (_, __) {
         return Container(
           width: double.infinity,
-          height: 112.0,
+          height: 108.0,
           decoration: const BoxDecoration(
             color: AddStockColors.shellPanelBg,
             border: Border(
@@ -85,7 +117,7 @@ class _AddStockAppBarState extends State<AddStockAppBar>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── Main Header Row ──────────────────────────────────────────
+                // ── Main Header Row ────────────────────────────────────────
                 SizedBox(
                   height: 64,
                   child: Padding(
@@ -100,55 +132,75 @@ class _AddStockAppBarState extends State<AddStockAppBar>
                         _buildVerticalDivider(),
                         const SizedBox(width: 16),
 
-                        // 3. Gradient Module Icon
+                        // 3. Metal Icon (changes per metal) ✅ v2
                         Container(
                           width: 30,
                           height: 30,
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFFFFD700),
-                                AddStockColors.brandGold,
-                              ],
-                            ),
+                            color: _metalAccent.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color:
-                                    AddStockColors.brandGold.withOpacity(0.4),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+                            border: Border.all(
+                              color: _metalAccent.withOpacity(0.3),
+                              width: 1,
+                            ),
                           ),
-                          child: const Icon(
-                            AddStockIcons.inventory,
-                            color: Colors.white,
-                            size: 17,
+                          child: Icon(
+                            _metalIcon,
+                            color: _metalAccent,
+                            size: 16,
                           ),
                         ),
                         const SizedBox(width: 12),
 
-                        // 4. Title + Radar
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              AddStockStrings.screenTitle,
-                              style: GoogleFonts.inter(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: AddStockColors.shellTextTitle,
-                                letterSpacing: 0.8,
+                        // 4. Title + Metal badge + Radar
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Title + metal badge on same line
+                              Row(
+                                children: [
+                                  Text(
+                                    AddStockStrings.screenTitle,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: AddStockColors.shellTextTitle,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  // ✅ v2: Metal badge — shows selected metal
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 7, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: _metalAccent.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(5),
+                                      border: Border.all(
+                                        color: _metalAccent.withOpacity(0.35),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      widget.ctrl.selectedMetal.label
+                                          .toUpperCase(),
+                                      style: GoogleFonts.inter(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w800,
+                                        color: _metalAccent,
+                                        letterSpacing: 0.6,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(height: 3),
-                            _RadarWidget(blinkCtrl: _blinkCtrl),
-                          ],
+                              const SizedBox(height: 3),
+                              _RadarWidget(blinkCtrl: _blinkCtrl),
+                            ],
+                          ),
                         ),
-
-                        const Spacer(),
 
                         // 5. Right: Refresh + Module Badge
                         _buildVerticalDivider(),
@@ -182,9 +234,9 @@ class _AddStockAppBarState extends State<AddStockAppBar>
                   ),
                 ),
 
-                // ── Step Indicator Row ───────────────────────────────────────
+                // ── Step Indicator Row (2 steps: Purity → Items) ✅ v2 ────
                 Container(
-                  height: 48,
+                  height: 44,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   decoration: const BoxDecoration(
                     color: AddStockColors.shellBg,
@@ -197,20 +249,18 @@ class _AddStockAppBarState extends State<AddStockAppBar>
                     children: [
                       _StepDot(
                         index: 0,
-                        label: AddStockStrings.stepMetal,
-                        currentStep: widget.ctrl.step,
-                      ),
-                      _StepLine(done: widget.ctrl.step.index > 0),
-                      _StepDot(
-                        index: 1,
                         label: AddStockStrings.stepPurity,
                         currentStep: widget.ctrl.step,
+                        accentColor: _metalAccent,
                       ),
-                      _StepLine(done: widget.ctrl.step.index > 1),
+                      _StepLine(
+                          done: widget.ctrl.step.index > 0,
+                          accentColor: _metalAccent),
                       _StepDot(
-                        index: 2,
+                        index: 1,
                         label: AddStockStrings.stepItems,
                         currentStep: widget.ctrl.step,
+                        accentColor: _metalAccent,
                       ),
                     ],
                   ),
@@ -243,18 +293,20 @@ class _AddStockAppBarState extends State<AddStockAppBar>
 }
 
 // =============================================================================
-// STEP DOT
+// STEP DOT  (✅ v2: uses metal accent colour)
 // =============================================================================
 
 class _StepDot extends StatelessWidget {
   final int index;
   final String label;
   final AddStockStep currentStep;
+  final Color accentColor;
 
   const _StepDot({
     required this.index,
     required this.label,
     required this.currentStep,
+    required this.accentColor,
   });
 
   @override
@@ -272,9 +324,9 @@ class _StepDot extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: active
-                ? AddStockColors.brandGold
+                ? accentColor
                 : done
-                    ? AddStockColors.brandGold.withOpacity(0.45)
+                    ? accentColor.withOpacity(0.45)
                     : AddStockColors.shellBorder,
             shape: BoxShape.circle,
           ),
@@ -296,9 +348,7 @@ class _StepDot extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-            color: active
-                ? AddStockColors.brandGold
-                : AddStockColors.shellTextMuted,
+            color: active ? accentColor : AddStockColors.shellTextMuted,
             letterSpacing: 0.2,
           ),
         ),
@@ -308,12 +358,13 @@ class _StepDot extends StatelessWidget {
 }
 
 // =============================================================================
-// STEP LINE (connector between dots)
+// STEP LINE  (✅ v2: uses metal accent colour)
 // =============================================================================
 
 class _StepLine extends StatelessWidget {
   final bool done;
-  const _StepLine({required this.done});
+  final Color accentColor;
+  const _StepLine({required this.done, required this.accentColor});
 
   @override
   Widget build(BuildContext context) {
@@ -325,8 +376,8 @@ class _StepLine extends StatelessWidget {
           gradient: LinearGradient(
             colors: done
                 ? [
-                    AddStockColors.brandGold.withOpacity(0.6),
-                    AddStockColors.brandGold.withOpacity(0.3),
+                    accentColor.withOpacity(0.6),
+                    accentColor.withOpacity(0.3),
                   ]
                 : [
                     AddStockColors.shellBorder,
@@ -341,7 +392,7 @@ class _StepLine extends StatelessWidget {
 }
 
 // =============================================================================
-// ANIMATED HOVER BACK BUTTON (exact Customer List pattern)
+// ANIMATED HOVER BACK BUTTON  (unchanged)
 // =============================================================================
 
 class _HoverBackButton extends StatefulWidget {
@@ -408,7 +459,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
 }
 
 // =============================================================================
-// HOVER ICON BUTTON (for right-side actions)
+// HOVER ICON BUTTON  (unchanged)
 // =============================================================================
 
 class _HoverIconBtn extends StatefulWidget {
@@ -471,7 +522,7 @@ class _HoverIconBtnState extends State<_HoverIconBtn> {
 }
 
 // =============================================================================
-// RADAR / SYSTEM ONLINE WIDGET (exact Customer List pattern)
+// RADAR / SYSTEM ONLINE WIDGET  (unchanged)
 // =============================================================================
 
 class _RadarWidget extends StatelessWidget {
