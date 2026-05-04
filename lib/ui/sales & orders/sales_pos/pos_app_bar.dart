@@ -3,30 +3,24 @@
 // TYPE: Smart UI Component
 // AUTHOR: Senior System Architect
 // DESCRIPTION: Top navigation, Radar Status and System Badge.
-//              ✅ Hover animation & Golden Glow added to Back Button.
-//              🚀 FIXED: Smart Title Filter added to override old Parent titles.
+//              ✅ Premium Layout with Gold Gradient Icon.
+//              ✅ Removed System Admin Login Badge.
+//              ✅ Perfectly positioned Shop Name & New Sales Title.
 // ==========================================
 
 import 'package:flutter/material.dart';
 
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
-import 'system_login_badge.dart';
 import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
 import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
 
 class PosAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String title;
-  final String userName;
-  final String userRole;
-  final String userInitials;
   final VoidCallback onBack;
 
   const PosAppBar({
     super.key,
     required this.title,
-    required this.userName,
-    required this.userRole,
-    required this.userInitials,
     required this.onBack,
   });
 
@@ -51,11 +45,12 @@ class _PosAppBarState extends State<PosAppBar> {
       final String tenantId = await ShopSessionManager.getPermanentTenantId();
       final repo = ShopSetupRepository();
       final data = await repo.fetchExistingSetup(tenantId);
-      
+
       if (data != null && data['basic_info'] != null) {
         if (mounted) {
           setState(() {
-            _shopDisplayName = data['basic_info']['display_name']?.toString() ?? "";
+            _shopDisplayName =
+                data['basic_info']['display_name']?.toString() ?? "";
           });
         }
       }
@@ -68,7 +63,8 @@ class _PosAppBarState extends State<PosAppBar> {
   Widget build(BuildContext context) {
     // 🚀 SMART FILTER: Overriding the old hardcoded parent title
     String displayContext = widget.title.toUpperCase();
-    if (displayContext.contains("POS TERMINAL") || displayContext.contains("LOTUS")) {
+    if (displayContext.contains("POS TERMINAL") ||
+        displayContext.contains("LOTUS")) {
       displayContext = "NEW SALES";
     }
 
@@ -95,76 +91,77 @@ class _PosAppBarState extends State<PosAppBar> {
       child: SafeArea(
         bottom: false,
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // ── 1. Animated Back Button ──────────────────────────────────────
             _HoverBackButton(onTap: widget.onBack),
-            const SizedBox(width: 20),
-            _buildVerticalDivider(),
-            const SizedBox(width: 20),
+            const SizedBox(width: 18),
 
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 5,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: SalesPosColors.brandGold,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: SalesPosColors.brandGold.withOpacity(0.6),
-                            blurRadius: 6,
-                          )
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    
-                    // 🚀 IDENTITY: Real Name from Database (e.g. RIYANSH JEWELLERS)
-                    if (_shopDisplayName.isNotEmpty) ...[
-                      Text(
-                        _shopDisplayName.toUpperCase(),
-                        style: SalesPosStyles.headerTitle.copyWith(
-                          fontSize: 13,
-                          color: SalesPosStyles.headerTitle.color?.withOpacity(0.7) ?? Colors.white70,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10.0),
-                        child: Text(
-                          "•",
-                          style: TextStyle(color: SalesPosColors.brandGold, fontSize: 18),
-                        ),
-                      ),
-                    ],
-                    
-                    // 🚀 CONTEXT: Forced to "NEW SALES" dynamically
-                    Text(
-                      displayContext, 
-                      style: SalesPosStyles.headerTitle.copyWith(
-                        fontSize: 17,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
+            // ── 2. Vertical Divider ──────────────────────────────────────────
+            _buildVerticalDivider(),
+            const SizedBox(width: 18),
+
+            // ── 3. Premium Gradient Module Icon (For New Sales) ──────────────
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    SalesPosColors.goldGradientStart,
+                    SalesPosColors.brandGold,
                   ],
                 ),
-                const SizedBox(height: 6),
-                const RadarStatusWidget(),
-              ],
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: SalesPosColors.brandGold.withOpacity(0.5),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  )
+                ],
+              ),
+              child: const Icon(
+                Icons
+                    .point_of_sale_rounded, // Premium icon representing Sales/POS
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            // ── 4. Perfectly Aligned Main Title ──────────────────────────────
+            if (_shopDisplayName.isNotEmpty) ...[
+              Text(
+                _shopDisplayName.toUpperCase(),
+                style: SalesPosStyles.headerTitle.copyWith(
+                  fontSize: 14,
+                  color: SalesPosStyles.headerTitle.color?.withOpacity(0.8) ??
+                      Colors.white70,
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 10.0),
+                child: Text(
+                  "•",
+                  style:
+                      TextStyle(color: SalesPosColors.brandGold, fontSize: 18),
+                ),
+              ),
+            ],
+
+            Text(
+              displayContext,
+              style: SalesPosStyles.headerTitle,
             ),
 
+            // Spacer pushes the radar widget to the far right side
             const Spacer(),
 
-            SystemLoginBadge(
-              userName: widget.userName,
-              userRole: widget.userRole,
-              userInitials: widget.userInitials,
-            ),
+            // ── 5. System Online Radar Badge ─────────────────────────────────
+            const RadarStatusWidget(),
           ],
         ),
       ),
@@ -173,7 +170,7 @@ class _PosAppBarState extends State<PosAppBar> {
 
   Widget _buildVerticalDivider() {
     return Container(
-      width: 1,
+      width: 1.5,
       height: 32,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -190,6 +187,9 @@ class _PosAppBarState extends State<PosAppBar> {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// HOVER BACK BUTTON
+// ─────────────────────────────────────────────────────────────────────────────
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
   const _HoverBackButton({required this.onTap});
@@ -199,6 +199,7 @@ class _HoverBackButton extends StatefulWidget {
 
 class _HoverBackButtonState extends State<_HoverBackButton> {
   bool _isHovered = false;
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -208,34 +209,40 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedScale(
-          scale: _isHovered ? 1.05 : 1.0, 
+          scale: _isHovered ? 1.05 : 1.0,
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOutBack,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOut,
             width: 42,
             height: 42,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: SalesPosColors.bodyPanelBg,
+              color: _isHovered
+                  ? SalesPosColors.shellBg
+                  : SalesPosColors.shellBorder.withOpacity(0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: _isHovered ? SalesPosColors.brandGold : SalesPosColors.bodyBorder,
+                color: _isHovered
+                    ? SalesPosColors.brandGold
+                    : SalesPosColors.shellBorder,
                 width: _isHovered ? 1.5 : 1.0,
               ),
-              boxShadow: [
-                if (_isHovered)
-                  BoxShadow(
-                    color: SalesPosColors.brandGold.withOpacity(0.25), 
-                    blurRadius: 12,
-                    offset: const Offset(0, 3),
-                  )
-              ],
+              boxShadow: _isHovered
+                  ? [
+                      BoxShadow(
+                        color: SalesPosColors.brandGold.withOpacity(0.25),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                      )
+                    ]
+                  : [],
             ),
             child: Icon(
-              Icons.arrow_back_rounded, 
-              color: _isHovered ? SalesPosColors.brandGold : SalesPosColors.textDark,
+              SalesPosIcons.backArrow,
+              color: _isHovered
+                  ? SalesPosColors.brandGold
+                  : SalesPosColors.shellTextTitle,
               size: 20,
             ),
           ),
@@ -245,6 +252,9 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// RADAR STATUS (Updated to Match the Premium Pill Shape exactly)
+// ─────────────────────────────────────────────────────────────────────────────
 class RadarStatusWidget extends StatefulWidget {
   const RadarStatusWidget({super.key});
   @override
@@ -267,7 +277,8 @@ class _RadarStatusWidgetState extends State<RadarStatusWidget>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       _controller.stop();
     } else if (state == AppLifecycleState.resumed) {
       _controller.repeat();
@@ -283,56 +294,56 @@ class _RadarStatusWidgetState extends State<RadarStatusWidget>
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 14,
-          height: 14,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              _buildWave(delay: 0.0, size: 14),
-              _buildWave(delay: 0.5, size: 14),
-              Container(
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(
-                  color: SalesPosColors.success,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: SalesPosColors.success,
-                      blurRadius: 6,
-                      spreadRadius: 1,
-                    )
-                  ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: SalesPosColors.onlineIndicator.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(30), // Pill Shape
+        border: Border.all(
+          color: SalesPosColors.onlineIndicator.withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _buildWave(delay: 0.0, size: 14),
+                _buildWave(delay: 0.5, size: 14),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: SalesPosColors.onlineIndicator,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: SalesPosColors.onlineIndicator,
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      )
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: SalesPosColors.success.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: SalesPosColors.success.withOpacity(0.2),
-              width: 1,
+              ],
             ),
           ),
-          child: const Text(
-            "SYSTEM ONLINE", 
+          const SizedBox(width: 8),
+          const Text(
+            "SYSTEM ONLINE",
             style: TextStyle(
-              color: SalesPosColors.success,
-              fontSize: 9.5,
+              color: SalesPosColors.onlineIndicator,
+              fontSize: 12.0,
               fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
+              letterSpacing: 0.5,
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -354,7 +365,7 @@ class _RadarStatusWidgetState extends State<RadarStatusWidget>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: SalesPosColors.success.withOpacity(0.5),
+                  color: SalesPosColors.onlineIndicator.withOpacity(0.5),
                   width: 1.5,
                 ),
               ),

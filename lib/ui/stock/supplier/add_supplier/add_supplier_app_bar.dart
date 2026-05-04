@@ -1,42 +1,39 @@
-// =============================================================================
-// FILE: customer_list_app_bar.dart
-// MODULE: Customer → Customer List
-// LAYER: UI
-// DESCRIPTION: Dark-shell AppBar — premium layout with improved spacing and gold gradient
-// =============================================================================
+// -----------------------------------------------------------------------------
+// FILE: add_supplier_app_bar.dart
+// MODULE: Supplier → Add Supplier
+// DESCRIPTION: Separated App Bar widget matching the premium design of other modules.
+// -----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
-import '../../../theme/customer/customer_list/customer_list_theme.dart';
-// import '../../../logic/customer/customer_list/customer_list_controller.dart'; // Uncomment when ready
+import '../../../../theme/stock/supplier/add_supplier/add_supplier_theme.dart';
+// Note: Assuming you have access to the logic or pass necessary data down to this widget.
+import '../../../../logic/stock/add_supplier_logic.dart';
 
-class CustomerListAppBar extends StatefulWidget implements PreferredSizeWidget {
+class AddSupplierAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
-  final String shopName;
-  // final CustomerListController ctrl; // Uncomment when controller is linked
+  final AddSupplierLogic logic; // Pass logic to know if it's edit mode
 
-  const CustomerListAppBar({
+  const AddSupplierAppBar({
     super.key,
     required this.onBack,
-    this.shopName = CustomerListStrings.shopName,
-    // required this.ctrl,
+    required this.logic,
   });
 
   @override
   Size get preferredSize =>
-      const Size.fromHeight(CustomerListStyles.appBarHeight);
+      const Size.fromHeight(AddSupplierStyles.appBarHeight);
 
   @override
-  State<CustomerListAppBar> createState() => _CustomerListAppBarState();
+  State<AddSupplierAppBar> createState() => _AddSupplierAppBarState();
 }
 
-class _CustomerListAppBarState extends State<CustomerListAppBar>
+class _AddSupplierAppBarState extends State<AddSupplierAppBar>
     with SingleTickerProviderStateMixin {
   late AnimationController _blinkCtrl;
 
   @override
   void initState() {
     super.initState();
-    // Animation controller for the Radar blink
     _blinkCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -51,24 +48,20 @@ class _CustomerListAppBarState extends State<CustomerListAppBar>
 
   @override
   Widget build(BuildContext context) {
-    // return ListenableBuilder(
-    //   listenable: widget.ctrl,
-    //   builder: (_, __) {
     return Container(
-      width: double.infinity,
-      height: CustomerListStyles.appBarHeight,
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      height: AddSupplierStyles.appBarHeight,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: const BoxDecoration(
-        color: CustomerListColors.shellPanelBg,
+        color: AddSupplierColors.shellPanelBg,
         border: Border(
-          bottom: BorderSide(color: CustomerListColors.shellBorder, width: 1.0),
+          bottom: BorderSide(color: AddSupplierColors.shellBorder, width: 1),
         ),
         boxShadow: [
           BoxShadow(
             color: Color(0x26000000),
             blurRadius: 16,
             offset: Offset(0, 4),
-          ),
+          )
         ],
       ),
       child: SafeArea(
@@ -78,7 +71,7 @@ class _CustomerListAppBarState extends State<CustomerListAppBar>
           children: [
             // ── 1. Animated Back Button ──────────────────────────────────────
             _HoverBackButton(onTap: widget.onBack),
-            const SizedBox(width: 18), // Matched spacing with premium UI
+            const SizedBox(width: 18),
 
             // ── 2. Vertical Divider ──────────────────────────────────────────
             _buildVerticalDivider(),
@@ -92,23 +85,26 @@ class _CustomerListAppBarState extends State<CustomerListAppBar>
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
+                  // Note: Assuming goldGradientStart is added to AddSupplierColors
+                  // If not, it needs to be added similar to other color files.
+                  // For now, using brandGoldLight as a fallback if goldGradientStart isn't there.
                   colors: [
-                    CustomerListColors
-                        .goldGradientStart, // Real gradient color now
-                    CustomerListColors.brandGold,
+                    Color(
+                        0xFFFFD700), // Hardcoded here for the gradient if not in theme yet
+                    AddSupplierColors.brandGold,
                   ],
                 ),
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: CustomerListColors.brandGold.withOpacity(0.5),
+                    color: AddSupplierColors.brandGold.withOpacity(0.5),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   )
                 ],
               ),
               child: const Icon(
-                CustomerListIcons.moduleIcon,
+                AddSupplierIcons.moduleIcon,
                 color: Colors.white,
                 size: 18,
               ),
@@ -116,9 +112,14 @@ class _CustomerListAppBarState extends State<CustomerListAppBar>
             const SizedBox(width: 14),
 
             // ── 4. Main Title ────────────────────────────────────────────────
-            Text(
-              CustomerListStrings.appBarTitle,
-              style: CustomerListStyles.appBarTitle,
+            ListenableBuilder(
+              listenable: widget.logic,
+              builder: (context, _) => Text(
+                widget.logic.isEditMode
+                    ? AddSupplierStrings.appBarTitleEdit
+                    : AddSupplierStrings.appBarTitleAdd,
+                style: AddSupplierStyles.appBarTitle,
+              ),
             ),
 
             // Spacer pushes everything else to the right
@@ -126,19 +127,15 @@ class _CustomerListAppBarState extends State<CustomerListAppBar>
 
             // ── 5. Premium Radar Widget ──────────────────────────────────────
             _RadarWidget(blinkCtrl: _blinkCtrl),
-
-            // Note: Removed the 3 icons (_ActionButtons) and the divider next to it as requested.
           ],
         ),
       ),
     );
-    //   },
-    // );
   }
 
   Widget _buildVerticalDivider() {
     return Container(
-      width: 1.5, // Thicker divider
+      width: 1.5,
       height: 32,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -146,7 +143,7 @@ class _CustomerListAppBarState extends State<CustomerListAppBar>
           end: Alignment.bottomCenter,
           colors: [
             Colors.transparent,
-            CustomerListColors.shellBorder,
+            AddSupplierColors.shellBorder,
             Colors.transparent,
           ],
         ),
@@ -156,7 +153,7 @@ class _CustomerListAppBarState extends State<CustomerListAppBar>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ANIMATED BACK BUTTON
+// Animated Back Button
 // ─────────────────────────────────────────────────────────────────────────────
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -182,37 +179,37 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOutBack,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
+            duration: const Duration(milliseconds: 250),
             width: 42,
             height: 42,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: _isHovered
-                  ? CustomerListColors.shellBg
-                  : CustomerListColors.shellBorder.withOpacity(0.3),
+                  ? AddSupplierColors.shellBg
+                  : AddSupplierColors.shellBorder.withOpacity(0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isHovered
-                    ? CustomerListColors.brandGold
-                    : CustomerListColors.shellBorder,
+                    ? AddSupplierColors.brandGold
+                    : AddSupplierColors.shellBorder,
                 width: _isHovered ? 1.5 : 1.0,
               ),
               boxShadow: _isHovered
                   ? [
                       BoxShadow(
-                        color: CustomerListColors.brandGold.withOpacity(0.3),
+                        color: AddSupplierColors.brandGold.withOpacity(0.25),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
-                      ),
+                      )
                     ]
                   : [],
             ),
             child: Icon(
-              CustomerListIcons.backArrow,
+              AddSupplierIcons.backArrow,
               color: _isHovered
-                  ? CustomerListColors.brandGold
-                  : CustomerListColors.shellTextTitle,
-              size: 18,
+                  ? AddSupplierColors.brandGold
+                  : AddSupplierColors.shellTextTitle,
+              size: 20,
             ),
           ),
         ),
@@ -222,7 +219,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// RADAR / ONLINE WIDGET (Pill shape added)
+// Radar Widget
 // ─────────────────────────────────────────────────────────────────────────────
 class _RadarWidget extends StatelessWidget {
   final AnimationController blinkCtrl;
@@ -233,10 +230,10 @@ class _RadarWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: CustomerListColors.onlineGreen.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(30), // Pill Shape
+        color: AddSupplierColors.onlineGreen.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(30),
         border: Border.all(
-          color: CustomerListColors.onlineGreen.withOpacity(0.3),
+          color: AddSupplierColors.onlineGreen.withOpacity(0.3),
         ),
       ),
       child: Row(
@@ -254,14 +251,14 @@ class _RadarWidget extends StatelessWidget {
                   width: 6,
                   height: 6,
                   decoration: const BoxDecoration(
-                    color: CustomerListColors.onlineGreen,
+                    color: AddSupplierColors.onlineGreen,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: CustomerListColors.onlineGreen,
+                        color: AddSupplierColors.onlineGreen,
                         blurRadius: 6,
                         spreadRadius: 1,
-                      ),
+                      )
                     ],
                   ),
                 ),
@@ -270,8 +267,8 @@ class _RadarWidget extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           const Text(
-            CustomerListStrings.systemOnline,
-            style: CustomerListStyles.systemOnlineText,
+            AddSupplierStrings.systemOnline,
+            style: AddSupplierStyles.systemOnlineText,
           ),
         ],
       ),
@@ -293,7 +290,7 @@ class _RadarWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: CustomerListColors.onlineGreen.withOpacity(0.5),
+                  color: AddSupplierColors.onlineGreen.withOpacity(0.5),
                   width: 1.5,
                 ),
               ),

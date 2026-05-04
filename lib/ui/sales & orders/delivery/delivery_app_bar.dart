@@ -2,8 +2,8 @@
 // FILE        : delivery_app_bar.dart
 // MODULE      : Sales → Delivery Management
 // LAYER       : UI
-// DESCRIPTION : Dark shell AppBar — consistent with BookingAdvanceAppBar.
-//               Shows module icon (local_shipping), title, online indicator.
+// DESCRIPTION : Dark shell AppBar — premium layout.
+//               Removed inline refresh button as requested.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -11,12 +11,11 @@ import '../../../theme/sales/delivery/delivery_theme.dart';
 
 class DeliveryAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
-  final VoidCallback onRefresh;
+  // NOTE: Removed onRefresh parameter
 
   const DeliveryAppBar({
     super.key,
     required this.onBack,
-    required this.onRefresh,
   });
 
   @override
@@ -32,71 +31,67 @@ class DeliveryAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: SafeArea(
         bottom: false,
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // ── 1. Hover Back Button ─────────────────────────────────────────
             _HoverBackButton(onTap: onBack),
             const SizedBox(width: 18),
-            _divider(),
+
+            // ── 2. Vertical Divider ──────────────────────────────────────────
+            _buildDivider(),
             const SizedBox(width: 18),
 
-            // Module icon + title
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          DeliveryColors.goldGradientStart,
-                          DeliveryColors.goldGradientEnd,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(7),
-                      boxShadow: [
-                        BoxShadow(
-                          color: DeliveryColors.brandGold.withOpacity(0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      DeliveryIcons.moduleIcon,
-                      color: Colors.white,
-                      size: 16,
-                    ),
+            // ── 3. Premium Gradient Module Icon ──────────────────────────────
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    DeliveryColors.goldGradientStart,
+                    DeliveryColors.goldGradientEnd,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: DeliveryColors.brandGold.withOpacity(0.5),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
                   ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    DeliveryStrings.appBarTitle,
-                    style: DeliveryStyles.headerTitle,
-                  ),
-                ]),
-                const SizedBox(height: 5),
-                const _OnlineIndicator(),
-              ],
+                ],
+              ),
+              child: const Icon(
+                DeliveryIcons.moduleIcon,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            // ── 4. Main Title ────────────────────────────────────────────────
+            const Text(
+              DeliveryStrings.appBarTitle,
+              style: DeliveryStyles.headerTitle,
             ),
 
+            // Spacer pushes everything else to the right
             const Spacer(),
 
-            // Refresh button
-            _HoverIconButton(
-              icon: DeliveryIcons.refresh,
-              onTap: onRefresh,
-              tooltip: 'Refresh',
-            ),
-            const SizedBox(width: 8),
+            // ── 5. System Online Radar Badge ─────────────────────────────────
+            const _RadarStatusWidget(),
+
+            // Removed: Refresh Icon Button
           ],
         ),
       ),
     );
   }
 
-  Widget _divider() => Container(
-        width: 1,
+  Widget _buildDivider() => Container(
+        width: 1.5,
         height: 32,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -122,6 +117,7 @@ class _HoverBackButton extends StatefulWidget {
 
 class _HoverBackButtonState extends State<_HoverBackButton> {
   bool _h = false;
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -172,71 +168,17 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-// ── Hover Icon Button ─────────────────────────────────────────────────────────
-class _HoverIconButton extends StatefulWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final String tooltip;
-  const _HoverIconButton({
-    required this.icon,
-    required this.onTap,
-    required this.tooltip,
-  });
+// ── Radar Status Widget (Pill Shape matched) ───────────────────────────────────
+class _RadarStatusWidget extends StatefulWidget {
+  const _RadarStatusWidget();
   @override
-  State<_HoverIconButton> createState() => _HoverIconButtonState();
+  State<_RadarStatusWidget> createState() => _RadarStatusWidgetState();
 }
 
-class _HoverIconButtonState extends State<_HoverIconButton> {
-  bool _h = false;
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _h = true),
-      onExit: (_) => setState(() => _h = false),
-      cursor: SystemMouseCursors.click,
-      child: Tooltip(
-        message: widget.tooltip,
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 38,
-            height: 38,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: _h
-                  ? DeliveryColors.brandGold.withOpacity(0.12)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: _h
-                    ? DeliveryColors.brandGold.withOpacity(0.4)
-                    : Colors.transparent,
-              ),
-            ),
-            child: Icon(
-              widget.icon,
-              color:
-                  _h ? DeliveryColors.brandGold : DeliveryColors.shellTextMuted,
-              size: 20,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Online Indicator ──────────────────────────────────────────────────────────
-class _OnlineIndicator extends StatefulWidget {
-  const _OnlineIndicator();
-  @override
-  State<_OnlineIndicator> createState() => _OnlineIndicatorState();
-}
-
-class _OnlineIndicatorState extends State<_OnlineIndicator>
+class _RadarStatusWidgetState extends State<_RadarStatusWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
+
   @override
   void initState() {
     super.initState();
@@ -253,50 +195,55 @@ class _OnlineIndicatorState extends State<_OnlineIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      SizedBox(
-        width: 14,
-        height: 14,
-        child: Stack(alignment: Alignment.center, children: [
-          _wave(0.0),
-          _wave(0.5),
-          Container(
-            width: 6,
-            height: 6,
-            decoration: const BoxDecoration(
-              color: DeliveryColors.onlineGreen,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: DeliveryColors.onlineGreen,
-                  blurRadius: 6,
-                  spreadRadius: 1,
-                )
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: DeliveryColors.onlineGreen.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: DeliveryColors.onlineGreen.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _wave(0.0),
+                _wave(0.5),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: DeliveryColors.onlineGreen,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: DeliveryColors.onlineGreen,
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      )
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
-        ]),
-      ),
-      const SizedBox(width: 8),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(
-          color: DeliveryColors.onlineGreen.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(20),
-          border:
-              Border.all(color: DeliveryColors.onlineGreen.withOpacity(0.25)),
-        ),
-        child: const Text(
-          DeliveryStrings.systemOnline,
-          style: TextStyle(
-            color: DeliveryColors.onlineGreen,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.3,
+          const SizedBox(width: 8),
+          const Text(
+            DeliveryStrings.systemOnline,
+            style: TextStyle(
+              color: DeliveryColors.onlineGreen,
+              fontSize: 12.0,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
           ),
-        ),
+        ],
       ),
-    ]);
+    );
   }
 
   Widget _wave(double delay) {

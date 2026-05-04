@@ -36,8 +36,8 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
   // ANIMATION (entry animation for body)
   // ==========================================
   late final AnimationController _entryController;
-  late final Animation<double>   _fadeAnim;
-  late final Animation<Offset>   _slideAnim;
+  late final Animation<double> _fadeAnim;
+  late final Animation<Offset> _slideAnim;
 
   @override
   void initState() {
@@ -50,7 +50,7 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
 
     // Entry animation
     _entryController = AnimationController(
-      vsync:    this,
+      vsync: this,
       duration: const Duration(milliseconds: 450),
     );
 
@@ -60,7 +60,7 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
 
     _slideAnim = Tween<Offset>(
       begin: const Offset(0, 0.04),
-      end:   Offset.zero,
+      end: Offset.zero,
     ).animate(
       CurvedAnimation(parent: _entryController, curve: Curves.easeOutCubic),
     );
@@ -93,12 +93,9 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
     return Scaffold(
       backgroundColor: DefaulterColors.bodyBg,
 
-      // ── APP BAR (dark shell) ──────────────────
+      // ── APP BAR (Fixed according to updated premium design) ──────
       appBar: DefaulterAppBar(
-        onBack:         () => Navigator.of(context).pop(),
-        onRefresh:      _logic.refresh,
-        defaulterCount: state.stats.totalDefaulters,
-        isLoading:      state.isLoading,
+        onBack: () => Navigator.of(context).pop(), // Only passing onBack now
       ),
 
       // ── BODY ─────────────────────────────────
@@ -111,7 +108,7 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
             children: [
               // 1. Stats Summary Panel
               DefaulterStatsPanel(
-                stats:     state.stats,
+                stats: state.stats,
                 isLoading: state.isLoading,
               ),
 
@@ -119,27 +116,27 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
 
               // 2. Filter & Search Bar
               DefaulterFilterBar(
-                activeFilter:    state.activeFilter,
-                activeSort:      state.activeSort,
-                searchQuery:     state.searchQuery,
+                activeFilter: state.activeFilter,
+                activeSort: state.activeSort,
+                searchQuery: state.searchQuery,
                 onFilterChanged: _logic.setFilter,
-                onSortChanged:   _logic.setSort,
+                onSortChanged: _logic.setSort,
                 onSearchChanged: _logic.onSearch,
               ),
 
               // 3. Result Count Bar
               _ResultCountBar(
                 displayedCount: state.displayedDefaulters.length,
-                totalCount:     state.allDefaulters.length,
-                activeFilter:   state.activeFilter,
-                isLoading:      state.isLoading,
+                totalCount: state.allDefaulters.length,
+                activeFilter: state.activeFilter,
+                isLoading: state.isLoading,
               ),
 
               // 4. Data Table (Expanded — fills remaining space)
               Expanded(
                 child: DefaulterDataTable(
-                  defaulters:   state.displayedDefaulters,
-                  isLoading:    state.isLoading,
+                  defaulters: state.displayedDefaulters,
+                  isLoading: state.isLoading,
                   errorMessage: state.errorMessage,
                 ),
               ),
@@ -156,10 +153,10 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
 // ─────────────────────────────────────────
 
 class _ResultCountBar extends StatelessWidget {
-  final int               displayedCount;
-  final int               totalCount;
+  final int displayedCount;
+  final int totalCount;
   final DefaulterFilterBy activeFilter;
-  final bool              isLoading;
+  final bool isLoading;
 
   const _ResultCountBar({
     required this.displayedCount,
@@ -183,18 +180,18 @@ class _ResultCountBar extends StatelessWidget {
           Text(
             countText,
             style: const TextStyle(
-              fontSize:   12,
+              fontSize: 12,
               fontWeight: FontWeight.w500,
-              color:      DefaulterColors.bodyTextMuted,
+              color: DefaulterColors.bodyTextMuted,
             ),
           ),
           const Spacer(),
           Text(
             'Last updated: ${_timeNow()}',
             style: const TextStyle(
-              fontSize:   11,
+              fontSize: 11,
               fontWeight: FontWeight.w400,
-              color:      DefaulterColors.bodyTextHint,
+              color: DefaulterColors.bodyTextHint,
             ),
           ),
         ],

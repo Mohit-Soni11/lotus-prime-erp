@@ -14,6 +14,7 @@ import '../../../../logic/stock/add_supplier_logic.dart';
 import '../../../../models/stock/supplier_model/supplier_model.dart';
 import '../../../../models/stock/supplier_model/supplier_enums.dart';
 import '../../../../theme/stock/supplier/add_supplier/add_supplier_theme.dart';
+import 'add_supplier_app_bar.dart'; // Added import for the separated AppBar
 
 class AddSupplierScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -112,7 +113,11 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AddSupplierColors.bodyBg,
-      appBar: _buildAppBar(),
+      // Replaced inline AppBar with the separated component
+      appBar: AddSupplierAppBar(
+        onBack: widget.onBack ?? () => Navigator.pop(context),
+        logic: _logic,
+      ),
       body: ListenableBuilder(
         listenable: _logic,
         builder: (context, _) => Form(
@@ -295,76 +300,7 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return PreferredSize(
-      preferredSize: const Size.fromHeight(AddSupplierStyles.appBarHeight),
-      child: Container(
-        height: AddSupplierStyles.appBarHeight,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        decoration: const BoxDecoration(
-          color: AddSupplierColors.shellPanelBg,
-          border: Border(
-              bottom:
-                  BorderSide(color: AddSupplierColors.shellBorder, width: 1)),
-          boxShadow: [
-            BoxShadow(
-                color: Color(0x26000000), blurRadius: 16, offset: Offset(0, 4))
-          ],
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: Row(
-            children: [
-              _buildBackButton(),
-              const SizedBox(width: 20),
-              Container(
-                  width: 1, height: 32, color: AddSupplierColors.shellBorder),
-              const SizedBox(width: 20),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    const Icon(AddSupplierIcons.moduleIcon,
-                        color: AddSupplierColors.brandGold, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      _logic.isEditMode
-                          ? AddSupplierStrings.appBarTitleEdit
-                          : AddSupplierStrings.appBarTitleAdd,
-                      style: AddSupplierStyles.appBarTitle,
-                    ),
-                  ]),
-                  const SizedBox(height: 4),
-                  Text(AddSupplierStrings.appBarSubtitle,
-                      style: AddSupplierStyles.appBarSubtitle),
-                ],
-              ),
-              const Spacer(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBackButton() {
-    return GestureDetector(
-      onTap: widget.onBack ?? () => Navigator.pop(context),
-      child: Container(
-        width: 42,
-        height: 42,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AddSupplierColors.shellBg,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AddSupplierColors.shellBorder),
-        ),
-        child: const Icon(AddSupplierIcons.backArrow,
-            color: AddSupplierColors.shellTextTitle, size: 20),
-      ),
-    );
-  }
+  // NOTE: Removed inline _buildAppBar() and _buildBackButton() functions from here.
 
   Widget _buildSection({
     required IconData icon,

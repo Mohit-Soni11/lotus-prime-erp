@@ -5,6 +5,7 @@
 // DESCRIPTION: The main shell connecting all zero-lag POS components.
 //              ✅ Parent NEVER rebuilds (True Zero-Lag).
 //              ✅ Global tap-to-unfocus added for premium UX.
+//              ✅ FIXED: Removed deprecated login badge parameters.
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -12,7 +13,7 @@ import 'package:flutter/material.dart';
 import '../../../logic/sales & orders/sales pos/pos_billing_controller.dart';
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 
-import 'pos_app_bar.dart'; 
+import 'pos_app_bar.dart';
 import 'pos_top_control_bar.dart';
 import 'pos_invoice_status_bar.dart';
 import 'pos_customer_details_panel.dart';
@@ -49,36 +50,32 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: SalesPosColors.bodyBg, 
-        
-        // ── TOP APP BAR ──
+        backgroundColor: SalesPosColors.bodyBg,
+
+        // ── TOP APP BAR (FIXED) ──
         appBar: PosAppBar(
           title: "${_ctrl.shopName} - POS TERMINAL",
-          userName: "System Admin",
-          userRole: "Owner",
-          userInitials: "SA",
+          // Removed userName, userRole, and userInitials from here
           onBack: () => Navigator.pop(context),
         ),
-        
+
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 12.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                
                 // ==========================================
                 // LEFT COLUMN (70%) - SMART SCROLL ZONE
                 // ==========================================
                 Expanded(
                   flex: 70,
                   child: SingleChildScrollView(
-                    controller: _ctrl.tableScrollCtrl, 
+                    controller: _ctrl.tableScrollCtrl,
                     physics: const BouncingScrollPhysics(),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        
                         // ── HEADER COMPONENT ROW ──
                         LayoutBuilder(
                           builder: (context, constraints) {
@@ -86,11 +83,14 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
                             if (sideBySide) {
                               return IntrinsicHeight(
                                 child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
                                     PosTopControlBar(ctrl: _ctrl),
                                     const SizedBox(width: 16),
-                                    Expanded(child: PosInvoiceStatusBar(ctrl: _ctrl)),
+                                    Expanded(
+                                        child:
+                                            PosInvoiceStatusBar(ctrl: _ctrl)),
                                   ],
                                 ),
                               );
@@ -108,35 +108,34 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
                           },
                         ),
                         const SizedBox(height: 14),
-                        
+
                         // ── CUSTOMER INFO ──
                         PosCustomerDetailsPanel(ctrl: _ctrl),
                         const SizedBox(height: 16),
-                        
+
                         // ── MAIN CART TABLE ──
-                        PosSaleItemsTable(ctrl: _ctrl), 
+                        PosSaleItemsTable(ctrl: _ctrl),
                         const SizedBox(height: 16),
 
                         // ── OLD GOLD / EXCHANGE TABLE ──
-                        PosOldGoldTable(ctrl: _ctrl), 
-                        
+                        PosOldGoldTable(ctrl: _ctrl),
+
                         // Extra bottom padding for scroll comfort
                         const SizedBox(height: 40),
                       ],
                     ),
                   ),
                 ),
-                
-                const SizedBox(width: 18), 
-                
+
+                const SizedBox(width: 18),
+
                 // ==========================================
                 // RIGHT COLUMN (30%) - FIXED BILLING HUB
                 // ==========================================
                 Expanded(
                   flex: 30,
-                  child: PosRightBillingPanel(ctrl: _ctrl), 
+                  child: PosRightBillingPanel(ctrl: _ctrl),
                 ),
-
               ],
             ),
           ),

@@ -1,32 +1,22 @@
 // ==========================================
 // FILE: defaulter_app_bar.dart
 // MODULE: Customer → Defaulter List
-// DESCRIPTION: Dark shell header bar.
-//              Matches POS app bar pattern:
-//              [Back] [Green Dot + SYSTEM ONLINE] [DEFAULTER LIST] [Count Badge] [Refresh]
-//              NO "Enterprise POS Terminal" text. NO login badge.
+// DESCRIPTION: Dark shell header bar — Premium Layout matching other modules.
 // ==========================================
 
 import 'package:flutter/material.dart';
-
 import '../../../theme/customer/defaulter/defaulter_theme.dart';
 
 class DefaulterAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
-  final VoidCallback onRefresh;
-  final int defaulterCount;
-  final bool isLoading;
 
   const DefaulterAppBar({
     super.key,
     required this.onBack,
-    required this.onRefresh,
-    required this.defaulterCount,
-    required this.isLoading,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(64);
+  Size get preferredSize => const Size.fromHeight(70.0); // Matched height
 
   @override
   State<DefaulterAppBar> createState() => _DefaulterAppBarState();
@@ -34,80 +24,169 @@ class DefaulterAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _DefaulterAppBarState extends State<DefaulterAppBar>
     with SingleTickerProviderStateMixin {
-  // Online dot pulse animation
-  late final AnimationController _pulseController;
-  late final Animation<double> _pulseAnim;
+  late AnimationController _blinkCtrl;
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
+    // Replaced simple pulse with standard Radar blink
+    _blinkCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    )..repeat(reverse: true);
-
-    _pulseAnim = Tween<double>(begin: 0.3, end: 1.0).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
+      duration: const Duration(seconds: 2),
+    )..repeat();
   }
 
   @override
   void dispose() {
-    _pulseController.dispose();
+    _blinkCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 64,
+      width: double.infinity,
+      height: 70.0,
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
       decoration: DefaulterStyles.shellHeaderDecoration,
       child: SafeArea(
         bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              // ── BACK BUTTON ──────────────────────────
-              _BackButton(onTap: widget.onBack),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // ── 1. Animated Back Button ──────────────────────────
+            _HoverBackButton(onTap: widget.onBack),
+            const SizedBox(width: 18),
 
-              const SizedBox(width: 16),
+            // ── 2. Vertical Divider ──────────────────────────────
+            _buildVerticalDivider(),
+            const SizedBox(width: 18),
 
-              // ── ONLINE INDICATOR ─────────────────────
-              _OnlineBadge(pulseAnim: _pulseAnim),
-
-              const SizedBox(width: 16),
-
-              // ── TITLE BLOCK ──────────────────────────
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      DefaulterStrings.moduleTitle,
-                      style: DefaulterStyles.shellModuleTitle,
-                    ),
-                    Text(
-                      DefaulterStrings.moduleSubtitle,
-                      style: DefaulterStyles.shellSubtitle,
-                    ),
+            // ── 3. Premium Gradient Module Icon ──────────────────
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    DefaulterColors.goldGradientStart,
+                    DefaulterColors.brandGold,
                   ],
                 ),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: DefaulterColors.brandGold.withOpacity(0.5),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  )
+                ],
               ),
-
-              // ── COUNT BADGE ──────────────────────────
-              if (widget.defaulterCount > 0)
-                _CountBadge(count: widget.defaulterCount),
-
-              const SizedBox(width: 12),
-
-              // ── REFRESH BUTTON ───────────────────────
-              _RefreshButton(
-                onTap: widget.onRefresh,
-                isLoading: widget.isLoading,
+              child: const Icon(
+                DefaulterIcons.listIcon, // Icon changed to listIcon
+                color: Colors.white,
+                size: 18,
               ),
-            ],
+            ),
+            const SizedBox(width: 14),
+
+            // ── 4. Main Title ────────────────────────────────────
+            Text(
+              DefaulterStrings.moduleTitle,
+              style: DefaulterStyles.shellModuleTitle,
+            ),
+
+            // Spacer pushes everything else to the right
+            const Spacer(),
+
+            // ── 5. Premium Radar Widget ──────────────────────────
+            _RadarWidget(blinkCtrl: _blinkCtrl),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVerticalDivider() {
+    return Container(
+      width: 1.5,
+      height: 32,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent,
+            DefaulterColors.shellBorder,
+            Colors.transparent,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ANIMATED BACK BUTTON
+// ─────────────────────────────────────────────────────────────────────────────
+class _HoverBackButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _HoverBackButton({required this.onTap});
+
+  @override
+  State<_HoverBackButton> createState() => _HoverBackButtonState();
+}
+
+class _HoverBackButtonState extends State<_HoverBackButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _isHovered ? 1.05 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: _isHovered
+                  ? DefaulterColors.shellBg
+                  : DefaulterColors.shellBorder.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: _isHovered
+                    ? DefaulterColors.brandGold
+                    : DefaulterColors.shellBorder,
+                width: _isHovered ? 1.5 : 1.0,
+              ),
+              boxShadow: _isHovered
+                  ? [
+                      BoxShadow(
+                        color: DefaulterColors.brandGold.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                  : [],
+            ),
+            child: Icon(
+              DefaulterIcons.backArrow,
+              color: _isHovered
+                  ? DefaulterColors.brandGold
+                  : DefaulterColors.shellTextTitle,
+              size: 18,
+            ),
           ),
         ),
       ),
@@ -115,76 +194,54 @@ class _DefaulterAppBarState extends State<DefaulterAppBar>
   }
 }
 
-// ─────────────────────────────────────────
-// PRIVATE WIDGETS
-// ─────────────────────────────────────────
-
-class _BackButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const _BackButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: DefaulterColors.shellPanelBg,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: DefaulterColors.shellBorder, width: 1),
-        ),
-        child: const Icon(
-          DefaulterIcons.backArrow,
-          color: DefaulterColors.shellTextTitle,
-          size: 16,
-        ),
-      ),
-    );
-  }
-}
-
-class _OnlineBadge extends StatelessWidget {
-  final Animation<double> pulseAnim;
-  const _OnlineBadge({required this.pulseAnim});
+// ─────────────────────────────────────────────────────────────────────────────
+// RADAR / ONLINE WIDGET (Pill shape matched)
+// ─────────────────────────────────────────────────────────────────────────────
+class _RadarWidget extends StatelessWidget {
+  final AnimationController blinkCtrl;
+  const _RadarWidget({required this.blinkCtrl});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: DefaulterColors.shellPanelBg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: DefaulterColors.shellBorder, width: 1),
+        color: DefaulterColors.onlineGreen.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: DefaulterColors.onlineGreen.withOpacity(0.3),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Pulsing green dot
-          AnimatedBuilder(
-            animation: pulseAnim,
-            builder: (_, __) => Container(
-              width: 7,
-              height: 7,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: DefaulterColors.onlineGreen
-                    .withOpacity(pulseAnim.value),
-                boxShadow: [
-                  BoxShadow(
-                    color: DefaulterColors.onlinePulse,
-                    blurRadius: 6 * pulseAnim.value,
-                    spreadRadius: 1,
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _buildWave(blinkCtrl, 0.0),
+                _buildWave(blinkCtrl, 0.5),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: DefaulterColors.onlineGreen,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: DefaulterColors.onlineGreen,
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-
-          const SizedBox(width: 6),
-
+          const SizedBox(width: 8),
           Text(
             DefaulterStrings.systemOnline,
             style: DefaulterStyles.onlineBadgeText,
@@ -193,79 +250,30 @@ class _OnlineBadge extends StatelessWidget {
       ),
     );
   }
-}
 
-class _CountBadge extends StatelessWidget {
-  final int count;
-  const _CountBadge({required this.count});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 400),
-      child: Container(
-        key: ValueKey<int>(count),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-          color: DefaulterColors.riskCriticalDot.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: DefaulterColors.riskCriticalDot.withOpacity(0.4),
-            width: 1,
+  Widget _buildWave(AnimationController ctrl, double delay) {
+    return AnimatedBuilder(
+      animation: ctrl,
+      builder: (_, __) {
+        final val = (ctrl.value + delay) % 1.0;
+        return Opacity(
+          opacity: 1.0 - val,
+          child: Transform.scale(
+            scale: 1.0 + (val * 1.5),
+            child: Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: DefaulterColors.onlineGreen.withOpacity(0.5),
+                  width: 1.5,
+                ),
+              ),
+            ),
           ),
-        ),
-        child: Text(
-          '$count Accounts',
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            color: DefaulterColors.riskCriticalDot,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RefreshButton extends StatelessWidget {
-  final VoidCallback onTap;
-  final bool isLoading;
-  const _RefreshButton({required this.onTap, required this.isLoading});
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: DefaulterStrings.tooltipRefresh,
-      child: InkWell(
-        onTap: isLoading ? null : onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: DefaulterColors.shellPanelBg,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: DefaulterColors.shellBorder, width: 1),
-          ),
-          child: Center(
-            child: isLoading
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: DefaulterColors.brandGold,
-                    ),
-                  )
-                : const Icon(
-                    DefaulterIcons.refreshData,
-                    color: DefaulterColors.shellTextMuted,
-                    size: 18,
-                  ),
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

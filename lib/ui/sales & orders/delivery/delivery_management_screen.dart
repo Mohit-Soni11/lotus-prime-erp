@@ -51,7 +51,7 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
         backgroundColor: DeliveryColors.bodyBg,
         appBar: DeliveryAppBar(
           onBack: widget.onBack ?? () => Navigator.of(context).pop(),
-          onRefresh: _ctrl.refreshAll,
+          // Removed onRefresh from here as we updated the AppBar
         ),
         body: SafeArea(
           child: Column(

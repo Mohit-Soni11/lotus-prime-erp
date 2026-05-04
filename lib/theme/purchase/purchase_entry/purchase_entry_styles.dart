@@ -13,11 +13,11 @@ class PurchaseEntryStyles {
   PurchaseEntryStyles._();
 
   static TextStyle get headerTitle => GoogleFonts.inter(
-    fontSize: 18.0,
-    fontWeight: FontWeight.w700,
-    color: PurchaseEntryColors.shellTitle,
-    letterSpacing: 1.2,
-  );
+        fontSize: 18.0,
+        fontWeight: FontWeight.w700,
+        color: PurchaseEntryColors.shellTitle,
+        letterSpacing: 1.2,
+      );
 
   static const TextStyle highVisHeader = TextStyle(
     fontSize: 14,
@@ -27,10 +27,10 @@ class PurchaseEntryStyles {
   );
 
   static TextStyle get subTitleMuted => TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w800,
-    color: PurchaseEntryColors.textMuted.withOpacity(0.70),
-  );
+        fontSize: 13,
+        fontWeight: FontWeight.w800,
+        color: PurchaseEntryColors.textMuted.withOpacity(0.70),
+      );
 
   static const TextStyle grandTotalText = TextStyle(
     fontSize: 26,
@@ -50,5 +50,12 @@ class PurchaseEntryStyles {
     fontWeight: FontWeight.w900,
     color: PurchaseEntryColors.textDark,
     letterSpacing: 0.8,
+  );
+
+  static const TextStyle systemOnlineText = TextStyle(
+    color: PurchaseEntryColors.onlineGreen, // <-- Updated to proper onlineGreen
+    fontSize: 12.0,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0.5,
   );
 }

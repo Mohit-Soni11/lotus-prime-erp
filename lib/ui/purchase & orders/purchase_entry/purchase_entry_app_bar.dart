@@ -3,17 +3,15 @@
 // MODULE      : Purchase Entry
 // LAYER       : UI
 // DESCRIPTION : Dark-shell AppBar matching Sales POS design language.
-//               ✅ Radar blink animation
-//               ✅ Gold hover back button
-//               ✅ Shop name from DB
-//               ✅ System Login Badge
+//               ✅ Removed System Login Badge
+//               ✅ Added correct Purchase premium gradient icon
+//               ✅ Updated positioning and System Online Radar with neon green
 // =============================================================================
 
 import 'package:flutter/material.dart';
 import '../../../theme/purchase/purchase_entry/purchase_entry_theme.dart';
 import 'package:lotus_erp/repositories/setting/shop_setup/shop_session_manager.dart';
 import 'package:lotus_erp/repositories/setting/shop_setup/shop_setup_repository.dart';
-import 'package:lotus_erp/ui/sales%20%26%20orders/sales_pos/system_login_badge.dart';
 
 class PurchaseEntryAppBar extends StatefulWidget
     implements PreferredSizeWidget {
@@ -74,76 +72,79 @@ class _PurchaseEntryAppBarState extends State<PurchaseEntryAppBar> {
       child: SafeArea(
         bottom: false,
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // ── 1. Hover Back Button ─────────────────────────────────────────
             _HoverBackButton(onTap: widget.onBack),
-            const SizedBox(width: 20),
+            const SizedBox(width: 18),
+
+            // ── 2. Vertical Divider ──────────────────────────────────────────
             _verticalDivider(),
-            const SizedBox(width: 20),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    // Purchase accent dot (sky blue — different from gold Sales dot)
-                    Container(
-                      width: 5,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: PurchaseEntryColors.purchaseAccent,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: PurchaseEntryColors.purchaseAccent
-                                .withOpacity(0.6),
-                            blurRadius: 6,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
+            const SizedBox(width: 18),
 
-                    if (_shopName.isNotEmpty) ...[
-                      Text(
-                        _shopName.toUpperCase(),
-                        style: PurchaseEntryStyles.headerTitle.copyWith(
-                          fontSize: 13,
-                          color: PurchaseEntryStyles.headerTitle.color
-                              ?.withOpacity(0.7),
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10.0),
-                        child: Text(
-                          '|',
-                          style: TextStyle(
-                            color: PurchaseEntryColors.brandGold,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ),
-                    ],
-
-                    Text(
-                      PurchaseEntryStrings.screenTitle,
-                      style: PurchaseEntryStyles.headerTitle.copyWith(
-                        fontSize: 17,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
+            // ── 3. Premium Gradient Module Icon ──────────────────────────────
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    PurchaseEntryColors.goldGradStart,
+                    PurchaseEntryColors.brandGold,
                   ],
                 ),
-                const SizedBox(height: 6),
-                const _RadarStatusWidget(),
-              ],
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: PurchaseEntryColors.brandGold.withOpacity(0.5),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                PurchaseEntryIcons.purchaseHeader, // Correct Purchase Icon
+                color: Colors.white,
+                size: 18,
+              ),
             ),
+            const SizedBox(width: 14),
+
+            // ── 4. Perfectly Aligned Main Title ──────────────────────────────
+            if (_shopName.isNotEmpty) ...[
+              Text(
+                _shopName.toUpperCase(),
+                style: PurchaseEntryStyles.headerTitle.copyWith(
+                  fontSize: 14,
+                  color:
+                      PurchaseEntryStyles.headerTitle.color?.withOpacity(0.8) ??
+                          Colors.white70,
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 10.0),
+                child: Text(
+                  '•',
+                  style: TextStyle(
+                    color: PurchaseEntryColors.brandGold,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ],
+
+            Text(
+              PurchaseEntryStrings.screenTitle,
+              style: PurchaseEntryStyles.headerTitle,
+            ),
+
+            // Spacer pushes everything else to the right
             const Spacer(),
-            SystemLoginBadge(
-              userName: 'System Admin',
-              userRole: 'Owner',
-              userInitials: 'SA',
-            ),
+
+            // ── 5. System Online Radar Badge ─────────────────────────────────
+            const _RadarStatusWidget(),
           ],
         ),
       ),
@@ -151,7 +152,7 @@ class _PurchaseEntryAppBarState extends State<PurchaseEntryAppBar> {
   }
 
   Widget _verticalDivider() => Container(
-        width: 1,
+        width: 1.5,
         height: 32,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -196,12 +197,14 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
             height: 42,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: PurchaseEntryColors.bodyPanel,
+              color: _isHovered
+                  ? PurchaseEntryColors.shellBg
+                  : PurchaseEntryColors.shellBorder.withOpacity(0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isHovered
                     ? PurchaseEntryColors.brandGold
-                    : PurchaseEntryColors.bodyBorder,
+                    : PurchaseEntryColors.shellBorder,
                 width: _isHovered ? 1.5 : 1.0,
               ),
               boxShadow: [
@@ -217,7 +220,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               PurchaseEntryIcons.backArrow,
               color: _isHovered
                   ? PurchaseEntryColors.brandGold
-                  : PurchaseEntryColors.textDark,
+                  : PurchaseEntryColors.shellTitle,
               size: 20,
             ),
           ),
@@ -267,55 +270,51 @@ class _RadarStatusWidgetState extends State<_RadarStatusWidget>
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 14,
-          height: 14,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              _wave(0.0),
-              _wave(0.5),
-              Container(
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(
-                  color: PurchaseEntryColors.success,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: PurchaseEntryColors.success,
-                      blurRadius: 6,
-                      spreadRadius: 1,
-                    ),
-                  ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: PurchaseEntryColors.onlineGreen.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(30), // Pill shape
+        border: Border.all(
+          color: PurchaseEntryColors.onlineGreen.withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _wave(0.0),
+                _wave(0.5),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: PurchaseEntryColors.onlineGreen,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: PurchaseEntryColors.onlineGreen,
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: PurchaseEntryColors.success.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: PurchaseEntryColors.success.withOpacity(0.2),
+              ],
             ),
           ),
-          child: const Text(
+          const SizedBox(width: 8),
+          Text(
             PurchaseEntryStrings.systemOnline,
-            style: TextStyle(
-              color: PurchaseEntryColors.success,
-              fontSize: 9.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-            ),
+            style: PurchaseEntryStyles.systemOnlineText,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -334,7 +333,7 @@ class _RadarStatusWidgetState extends State<_RadarStatusWidget>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: PurchaseEntryColors.success.withOpacity(0.5),
+                  color: PurchaseEntryColors.onlineGreen.withOpacity(0.5),
                   width: 1.5,
                 ),
               ),

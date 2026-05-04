@@ -12,29 +12,30 @@ class DefaulterStyles {
   DefaulterStyles._();
 
   // ==========================================
-  // SHELL / APP BAR TYPOGRAPHY
+  // SHELL / APP BAR TYPOGRAPHY (Updated to Premium Match)
   // ==========================================
 
   static TextStyle get shellModuleTitle => GoogleFonts.inter(
-    fontSize: 18.0,
-    fontWeight: FontWeight.w800,
-    color: DefaulterColors.shellTextTitle,
-    letterSpacing: 1.8,
-  );
+        fontSize: 18.0, // Match 18px
+        fontWeight: FontWeight.w700, // Match w700
+        color: DefaulterColors.shellTextTitle,
+        letterSpacing: 1.2, // Match 1.2
+      );
 
   static TextStyle get shellSubtitle => GoogleFonts.inter(
-    fontSize: 10.5,
-    fontWeight: FontWeight.w600,
-    color: DefaulterColors.shellTextMuted,
-    letterSpacing: 0.5,
-  );
+        fontSize: 10.5,
+        fontWeight: FontWeight.w600,
+        color: DefaulterColors.shellTextMuted,
+        letterSpacing: 0.5,
+      );
 
-  static TextStyle get onlineBadgeText => GoogleFonts.inter(
-    fontSize: 9.5,
-    fontWeight: FontWeight.w700,
-    color: DefaulterColors.onlineGreen,
-    letterSpacing: 1.0,
-  );
+  static TextStyle get onlineBadgeText => TextStyle(
+        // Removed GoogleFonts to match exact style
+        fontSize: 12.0, // Match 12px
+        fontWeight: FontWeight.w700,
+        color: DefaulterColors.onlineGreen,
+        letterSpacing: 0.5,
+      );
 
   // ==========================================
   // STATS PANEL
@@ -192,60 +193,68 @@ class DefaulterStyles {
   // DECORATIONS
   // ==========================================
 
+  // Updated to match the shellPanel style from other headers
   static const BoxDecoration shellHeaderDecoration = BoxDecoration(
-    color: DefaulterColors.shellBg,
+    color: DefaulterColors.shellPanelBg,
     border: Border(
       bottom: BorderSide(color: DefaulterColors.shellBorder, width: 1),
     ),
+    boxShadow: [
+      BoxShadow(
+        color: Color(0x26000000),
+        blurRadius: 16,
+        offset: Offset(0, 4),
+      ),
+    ],
   );
 
   static BoxDecoration get bodyDecoration => const BoxDecoration(
-    color: DefaulterColors.bodyBg,
-  );
+        color: DefaulterColors.bodyBg,
+      );
 
   static BoxDecoration get statCardDecoration => BoxDecoration(
-    color: DefaulterColors.statCardBg,
-    borderRadius: BorderRadius.circular(12),
-    border: Border.all(color: DefaulterColors.statCardBorder, width: 1),
-    boxShadow: [
-      BoxShadow(
-        color: DefaulterColors.shadowLight,
-        blurRadius: 8,
-        offset: const Offset(0, 2),
-      ),
-    ],
-  );
+        color: DefaulterColors.statCardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: DefaulterColors.statCardBorder, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: DefaulterColors.shadowLight,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      );
 
   static BoxDecoration get tableContainerDecoration => BoxDecoration(
-    color: DefaulterColors.bodyPanelBg,
-    borderRadius: BorderRadius.circular(12),
-    border: Border.all(color: DefaulterColors.bodyBorder, width: 1),
-    boxShadow: [
-      BoxShadow(
-        color: DefaulterColors.shadowLight,
-        blurRadius: 12,
-        offset: const Offset(0, 3),
-      ),
-    ],
-  );
+        color: DefaulterColors.bodyPanelBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: DefaulterColors.bodyBorder, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: DefaulterColors.shadowLight,
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      );
 
   static BoxDecoration get searchBarDecoration => BoxDecoration(
-    color: DefaulterColors.searchBg,
-    borderRadius: BorderRadius.circular(10),
-    border: Border.all(color: DefaulterColors.searchBorder, width: 1),
-    boxShadow: [
-      BoxShadow(
-        color: DefaulterColors.shadowLight,
-        blurRadius: 6,
-        offset: const Offset(0, 2),
-      ),
-    ],
-  );
+        color: DefaulterColors.searchBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: DefaulterColors.searchBorder, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: DefaulterColors.shadowLight,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      );
 
   static BoxDecoration get tableHeaderDecoration => const BoxDecoration(
-    color: DefaulterColors.tableHeaderBg,
-    border: Border(
-      bottom: BorderSide(color: DefaulterColors.tableDivider, width: 1.5),
-    ),
-  );
+        color: DefaulterColors.tableHeaderBg,
+        border: Border(
+          bottom: BorderSide(color: DefaulterColors.tableDivider, width: 1.5),
+        ),
+      );
 }
