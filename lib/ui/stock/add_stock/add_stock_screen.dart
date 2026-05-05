@@ -1,38 +1,14 @@
-// =============================================================================
-// FILE        : add_stock_screen.dart
-// MODULE      : Stock & Inventory
-// LAYER       : UI / Screen
-// DESCRIPTION : Stepped Add Stock wizard.
-//               ✅ v2: Metal pre-selected from hub → Step 1 REMOVED
-//               Step 1 → Purity  → Step 2 → Items
-//
-//               Step 2: Invoice-style multi-row table with:
-//               - Auto net weight = Gross − Stone
-//               - Stone Value as separate ₹ charge (NOT deducted)
-//               - 🔒 Owner-only section (purchaseRate, making, cost price)
-//               - Session-level OR per-row supplier selection
-//
-// CHANGE LOG:
-//   v1 — 3-step wizard (Metal → Purity → Items)
-//   v2 — Metal step removed; metal accepted from AddStockHubScreen
-// =============================================================================
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-import '../../../logic/stock/add_stock_controller.dart';
-import '../../../models/stock/stock_enums/stock_enums.dart';
-import '../../../../../models/stock/supplier_model/supplier_model.dart';
-import '../../../theme/stock/add_stock/add_stock_theme.dart';
-import 'add_stock_app_bar.dart';
-
-// =============================================================================
-// ROOT SCREEN
-// =============================================================================
+import 'package:lotus_erp/logic/stock/add_stock_controller.dart';
+import 'package:lotus_erp/models/stock/stock_enums/stock_enums.dart';
+import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
+import 'package:lotus_erp/ui/stock/add_stock/add_stock_app_bar.dart';
+import 'stock_metal_ui.dart';
+import 'add_stock_items_step.dart';
+import 'add_stock_purity_step.dart';
 
 class AddStockScreen extends StatefulWidget {
-  /// ✅ v2: Metal is required — passed from hub screen
   final StockCategory metal;
 
   const AddStockScreen({super.key, required this.metal});
@@ -41,14 +17,12 @@ class AddStockScreen extends StatefulWidget {
   State<AddStockScreen> createState() => _AddStockScreenState();
 }
 
-class _AddStockScreenState extends State<AddStockScreen>
-    with SingleTickerProviderStateMixin {
+class _AddStockScreenState extends State<AddStockScreen> {
   late final AddStockController _ctrl;
 
   @override
   void initState() {
     super.initState();
-    // ✅ Pass pre-selected metal — no more Step 1
     _ctrl = AddStockController(initialMetal: widget.metal);
   }
 
@@ -60,1002 +34,276 @@ class _AddStockScreenState extends State<AddStockScreen>
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: _ctrl,
-      builder: (context, _) => Scaffold(
-        backgroundColor: AddStockColors.bodyBg,
-        appBar: AddStockAppBar(
-          ctrl: _ctrl,
-          onBack: () => Navigator.pop(context),
-        ),
-        body: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 280),
-          switchInCurve: Curves.easeOutQuart,
-          switchOutCurve: Curves.easeInQuart,
-          child: switch (_ctrl.step) {
-            AddStockStep.purity =>
-              _PurityStep(ctrl: _ctrl, key: const ValueKey('purity')),
-            AddStockStep.items => _ItemsStep(
-                ctrl: _ctrl, onSave: _onSave, key: const ValueKey('items')),
-          },
-        ),
+    return WillPopScope(
+      onWillPop: _handleExitAttempt,
+      child: ListenableBuilder(
+        listenable: _ctrl,
+        builder: (context, _) {
+          return Scaffold(
+            backgroundColor: AddStockColors.bodyBg,
+            appBar: AddStockAppBar(
+              ctrl: _ctrl,
+              onBack: _handleBackPressed,
+              onResetRequested: _showResetDialog,
+            ),
+            body: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 260),
+              switchInCurve: Curves.easeOutQuart,
+              switchOutCurve: Curves.easeInQuart,
+              child: _ctrl.step == AddStockStep.purity
+                  ? AddStockPurityStep(
+                      key: const ValueKey('purity-step'),
+                      ctrl: _ctrl,
+                    )
+                  : AddStockItemsStep(
+                      key: const ValueKey('items-step'),
+                      ctrl: _ctrl,
+                      onSave: _onSave,
+                      onResetBatch: _showResetDialog,
+                    ),
+            ),
+          );
+        },
       ),
     );
+  }
+
+  Future<void> _handleBackPressed() async {
+    final canLeave = await _handleExitAttempt();
+    if (!mounted || !canLeave) {
+      return;
+    }
+    Navigator.of(context).pop();
+  }
+
+  Future<bool> _handleExitAttempt() async {
+    if (!_ctrl.hasAnyInput || _ctrl.isSaving) {
+      return !_ctrl.isSaving;
+    }
+
+    final shouldDiscard = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: Text(
+            AddStockStrings.confirmExitTitle,
+            style: AddStockStyles.sectionTitle,
+          ),
+          content: Text(
+            AddStockStrings.confirmExitBody,
+            style: AddStockStyles.caption,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(
+                AddStockStrings.btnKeepEditing,
+                style: GoogleFonts.inter(
+                  color: AddStockColors.textBody,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AddStockColors.danger,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(
+                AddStockStrings.btnDiscard,
+                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    return shouldDiscard ?? false;
+  }
+
+  Future<void> _showResetDialog() async {
+    if (_ctrl.isSaving) {
+      return;
+    }
+
+    if (!_ctrl.hasAnyInput) {
+      _ctrl.resetForNewBatch();
+      return;
+    }
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: Text(
+            AddStockStrings.confirmResetTitle,
+            style: AddStockStyles.sectionTitle,
+          ),
+          content: Text(
+            AddStockStrings.confirmResetBody,
+            style: AddStockStyles.caption,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(
+                AddStockStrings.btnCancel,
+                style: GoogleFonts.inter(
+                  color: AddStockColors.textBody,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AddStockColors.brandGold,
+                foregroundColor: Colors.black,
+              ),
+              child: Text(
+                AddStockStrings.btnResetBatch,
+                style: GoogleFonts.inter(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      _ctrl.resetForNewBatch();
+    }
   }
 
   Future<void> _onSave() async {
     final success = await _ctrl.saveAll();
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
-    if (success) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(children: [
-            const Icon(Icons.check_circle_rounded,
-                color: AddStockColors.success, size: 28),
-            const SizedBox(width: 10),
-            Text(AddStockStrings.savedTitle,
-                style: AddStockStyles.sectionTitle),
-          ]),
-          content:
-              Text(_ctrl.successMessage ?? '', style: AddStockStyles.caption),
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_ctrl.errorMessage ?? AddStockStrings.errSaveFailed),
+          backgroundColor: AddStockColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    await _showSavedDialog();
+  }
+
+  Future<void> _showSavedDialog() async {
+    final ui = stockMetalUiFor(_ctrl.selectedMetal);
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
+          content: SizedBox(
+            width: 420,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    gradient: ui.gradient,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  AddStockStrings.savedTitle,
+                  style: GoogleFonts.manrope(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AddStockColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _ctrl.successMessage ?? '',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    height: 1.6,
+                    color: AddStockColors.textBody,
+                  ),
+                ),
+              ],
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.of(dialogContext).pop();
                 _ctrl.resetAllRows();
               },
-              child: Text(AddStockStrings.btnAddMore,
-                  style: TextStyle(
-                      color: AddStockColors.brandGold,
-                      fontWeight: FontWeight.w700)),
+              child: Text(
+                AddStockStrings.btnAddMore,
+                style: GoogleFonts.inter(
+                  color: ui.accent,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
-            ElevatedButton(
+            OutlinedButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.of(dialogContext).pop();
                 _ctrl.resetForNewBatch();
               },
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AddStockColors.shellBg,
-                  foregroundColor: AddStockColors.shellTextTitle),
-              child: const Text(AddStockStrings.btnNewBatch),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: ui.accent.withOpacity(0.32)),
+              ),
+              child: Text(
+                AddStockStrings.btnNewBatch,
+                style: GoogleFonts.inter(
+                  color: ui.accent,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context); // Back to hub
+                Navigator.of(dialogContext).pop();
+                if (mounted) {
+                  Navigator.of(context).pop();
+                }
               },
               style: ElevatedButton.styleFrom(
-                  backgroundColor: AddStockColors.brandGold,
-                  foregroundColor: Colors.black),
-              child: Text(AddStockStrings.btnDone,
-                  style: GoogleFonts.manrope(fontWeight: FontWeight.w800)),
-            ),
-          ],
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(_ctrl.errorMessage ?? AddStockStrings.errSaveFailed),
-        backgroundColor: AddStockColors.danger,
-        behavior: SnackBarBehavior.floating,
-      ));
-    }
-  }
-}
-
-// =============================================================================
-// STEP 1: PURITY SELECTION  (was Step 2 before)
-// =============================================================================
-
-class _PurityStep extends StatefulWidget {
-  final AddStockController ctrl;
-  const _PurityStep({required this.ctrl, super.key});
-  @override
-  State<_PurityStep> createState() => _PurityStepState();
-}
-
-class _PurityStepState extends State<_PurityStep> {
-  final _customCtrl = TextEditingController();
-
-  @override
-  void dispose() {
-    _customCtrl.dispose();
-    super.dispose();
-  }
-
-  // Metal-specific accent color
-  Color get _metalAccent {
-    switch (widget.ctrl.selectedMetal) {
-      case StockCategory.gold:
-        return const Color(0xFFD4AF37);
-      case StockCategory.silver:
-        return const Color(0xFF78909C);
-      case StockCategory.diamond:
-        return const Color(0xFF29B6F6);
-      case StockCategory.platinum:
-        return const Color(0xFF607D8B);
-      default:
-        return AddStockColors.brandGold;
-    }
-  }
-
-  IconData get _metalIcon {
-    switch (widget.ctrl.selectedMetal) {
-      case StockCategory.gold:
-        return Icons.diamond_rounded;
-      case StockCategory.silver:
-        return Icons.toll_rounded;
-      case StockCategory.diamond:
-        return Icons.hexagon_outlined;
-      case StockCategory.platinum:
-        return Icons.radio_button_checked_rounded;
-      default:
-        return Icons.category_rounded;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final ctrl = widget.ctrl;
-    final accent = _metalAccent;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // ── Metal badge (shows which metal was selected in hub) ────────────
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: accent.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: accent.withOpacity(0.25)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(_metalIcon, color: accent, size: 18),
-              const SizedBox(width: 10),
-              Text(
-                ctrl.selectedMetal.label,
-                style: GoogleFonts.manrope(
-                  fontWeight: FontWeight.w800,
-                  color: accent,
-                  fontSize: 15,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 1,
-                height: 16,
-                color: accent.withOpacity(0.25),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                AddStockStrings.purityQuestion,
-                style: GoogleFonts.inter(
-                  color: AddStockColors.textMuted,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        Text('Purity / Karat', style: AddStockStyles.sectionTitle),
-        const SizedBox(height: 4),
-        Text(
-          'Is metal ki purity select karein',
-          style: AddStockStyles.caption,
-        ),
-        const SizedBox(height: 20),
-
-        // ── Purity chips ──────────────────────────────────────────────────
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: ctrl.purityOptions.map((opt) {
-            final isSelected = ctrl.purityDisplay == opt ||
-                (!ctrl.isCustomPurity &&
-                    ctrl.purityDisplay.isEmpty &&
-                    opt == ctrl.purityOptions.first);
-            final isCustom = opt == 'Custom';
-
-            return GestureDetector(
-              onTap: () => ctrl.setPurity(opt),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-                decoration: BoxDecoration(
-                  color: isSelected ? accent : AddStockColors.cardBg,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSelected
-                        ? accent
-                        : isCustom
-                            ? AddStockColors.cardBorder
-                            : AddStockColors.cardBorder,
-                    width: isSelected ? 2 : 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isSelected
-                          ? accent.withOpacity(0.3)
-                          : AddStockColors.shadowLight,
-                      blurRadius: isSelected ? 10 : 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (isCustom)
-                      Icon(
-                        Icons.edit_rounded,
-                        size: 14,
-                        color: isSelected
-                            ? Colors.black
-                            : AddStockColors.textMuted,
-                      ),
-                    if (isCustom) const SizedBox(width: 6),
-                    Text(
-                      opt,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color:
-                            isSelected ? Colors.black : AddStockColors.textBody,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-
-        // ── Custom purity input ───────────────────────────────────────────
-        if (ctrl.isCustomPurity) ...[
-          const SizedBox(height: 20),
-          Text(AddStockStrings.purityCustomLabel,
-              style: AddStockStyles.fieldLabel),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _customCtrl,
-            onChanged: ctrl.setCustomPurity,
-            style: AddStockStyles.fieldInput,
-            decoration: InputDecoration(
-              hintText: AddStockStrings.purityCustomHint,
-              hintStyle: AddStockStyles.fieldHint,
-              prefixIcon: Icon(Icons.tune_rounded, color: accent, size: 18),
-              filled: true,
-              fillColor: AddStockColors.inputBg,
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide:
-                      const BorderSide(color: AddStockColors.cardBorder)),
-              focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: accent, width: 1.5)),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            ),
-          ),
-        ],
-
-        const SizedBox(height: 36),
-
-        SizedBox(
-          width: double.infinity,
-          height: 54,
-          child: ElevatedButton.icon(
-            onPressed: ctrl.canProceedFromPurity ? ctrl.nextStep : null,
-            style: ElevatedButton.styleFrom(
-                backgroundColor: accent,
-                disabledBackgroundColor: AddStockColors.inputBgLocked,
+                backgroundColor: ui.accent,
                 foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14))),
-            icon: const Icon(Icons.arrow_forward_rounded, size: 20),
-            label: Text(
-              AddStockStrings.btnNextItems,
-              style: GoogleFonts.manrope(
-                  fontWeight: FontWeight.w800, fontSize: 15),
-            ),
-          ),
-        ),
-      ]),
-    );
-  }
-}
-
-// =============================================================================
-// STEP 2: MULTI-ITEM ENTRY  (was Step 3 before)
-// =============================================================================
-
-class _ItemsStep extends StatelessWidget {
-  final AddStockController ctrl;
-  final Future<void> Function() onSave;
-  const _ItemsStep({required this.ctrl, required this.onSave, super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(children: [
-      _buildSessionBar(context),
-      Expanded(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
-          children: [
-            ...ctrl.rows.map((row) => _ItemRowCard(row: row, ctrl: ctrl)),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: ctrl.addRow,
-              icon: const Icon(Icons.add_circle_outline_rounded,
-                  color: AddStockColors.brandGold),
-              label: Text(AddStockStrings.btnAddRow,
-                  style: GoogleFonts.inter(
-                      fontWeight: FontWeight.w700,
-                      color: AddStockColors.brandGold)),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AddStockColors.brandGold),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+              ),
+              child: Text(
+                AddStockStrings.btnDone,
+                style: GoogleFonts.inter(fontWeight: FontWeight.w800),
               ),
             ),
           ],
-        ),
-      ),
-      _buildSaveBar(context),
-    ]);
-  }
-
-  Widget _buildSessionBar(BuildContext context) {
-    return Container(
-      color: AddStockColors.cardBg,
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          _badge(ctrl.selectedMetal.label, AddStockColors.brandGold),
-          const SizedBox(width: 8),
-          _badge(ctrl.purityDisplay, AddStockColors.accentPricing),
-          const Spacer(),
-          Text('${ctrl.rowCount} item${ctrl.rowCount != 1 ? 's' : ''}',
-              style:
-                  AddStockStyles.caption.copyWith(fontWeight: FontWeight.w700)),
-        ]),
-        const SizedBox(height: 10),
-        Row(children: [
-          Expanded(
-            child: _SupplierAutocomplete(
-              label: AddStockStrings.supplierSession,
-              suppliers: ctrl.suppliers,
-              initialName: ctrl.sessionSupplierName,
-              onSelected: ctrl.setSessionSupplier,
-              onTextChanged: ctrl.setSessionSupplierText,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Column(children: [
-            Text(AddStockStrings.sameForAll, style: AddStockStyles.caption),
-            Switch(
-                value: ctrl.sameForAll,
-                onChanged: ctrl.setSameForAll,
-                activeColor: AddStockColors.brandGold,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap),
-          ]),
-        ]),
-      ]),
-    );
-  }
-
-  Widget _badge(String text, Color color) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Text(text,
-            style: TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w800, color: color)),
-      );
-
-  Widget _buildSaveBar(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
-      decoration: BoxDecoration(color: AddStockColors.cardBg, boxShadow: [
-        BoxShadow(
-            color: AddStockColors.shadowMedium,
-            blurRadius: 16,
-            offset: const Offset(0, -4))
-      ]),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        if (ctrl.errorMessage != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(ctrl.errorMessage!,
-                style: TextStyle(color: AddStockColors.danger, fontSize: 13)),
-          ),
-        SizedBox(
-          width: double.infinity,
-          height: 54,
-          child: ElevatedButton.icon(
-            onPressed: ctrl.isSaving ? null : onSave,
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AddStockColors.accentPricing,
-                disabledBackgroundColor: AddStockColors.inputBgLocked,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12))),
-            icon: ctrl.isSaving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                        color: Colors.white, strokeWidth: 2))
-                : const Icon(AddStockIcons.save, color: Colors.white, size: 20),
-            label: Text(
-              ctrl.isSaving
-                  ? AddStockStrings.btnSaving
-                  : 'Save ${ctrl.rowCount} Item${ctrl.rowCount > 1 ? 's' : ''} to Stock',
-              style:
-                  AddStockStyles.saveButtonText.copyWith(color: Colors.white),
-            ),
-          ),
-        ),
-      ]),
-    );
-  }
-}
-
-// =============================================================================
-// ITEM ROW CARD  (unchanged from v1)
-// =============================================================================
-
-class _ItemRowCard extends StatefulWidget {
-  final StockRowEntry row;
-  final AddStockController ctrl;
-  const _ItemRowCard({required this.row, required this.ctrl});
-  @override
-  State<_ItemRowCard> createState() => _ItemRowCardState();
-}
-
-class _ItemRowCardState extends State<_ItemRowCard> {
-  bool _expanded = true;
-
-  late final TextEditingController _itemNameCtrl;
-  late final TextEditingController _huidCtrl;
-  late final TextEditingController _grossCtrl;
-  late final TextEditingController _stoneWtCtrl;
-  late final TextEditingController _stoneValCtrl;
-  late final TextEditingController _rateCtrl;
-  late final TextEditingController _makingCtrl;
-  late final TextEditingController _caratCtrl;
-  late final TextEditingController _pcsCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    final r = widget.row;
-    _itemNameCtrl = TextEditingController(text: r.itemName);
-    _huidCtrl = TextEditingController(text: r.huid);
-    _grossCtrl = TextEditingController(
-        text: r.grossWeight > 0 ? r.grossWeight.toString() : '');
-    _stoneWtCtrl = TextEditingController(
-        text: r.stoneWeight > 0 ? r.stoneWeight.toString() : '');
-    _stoneValCtrl = TextEditingController(
-        text: r.stoneValue > 0 ? r.stoneValue.toString() : '');
-    _rateCtrl = TextEditingController(
-        text: r.purchaseRate > 0 ? r.purchaseRate.toString() : '');
-    _makingCtrl = TextEditingController(
-        text: r.makingCharges > 0 ? r.makingCharges.toString() : '');
-    _caratCtrl = TextEditingController(
-        text: r.stoneCarats > 0 ? r.stoneCarats.toString() : '');
-    _pcsCtrl = TextEditingController(
-        text: r.stonePieces > 0 ? r.stonePieces.toString() : '');
-  }
-
-  @override
-  void dispose() {
-    for (final c in [
-      _itemNameCtrl,
-      _huidCtrl,
-      _grossCtrl,
-      _stoneWtCtrl,
-      _stoneValCtrl,
-      _rateCtrl,
-      _makingCtrl,
-      _caratCtrl,
-      _pcsCtrl
-    ]) {
-      c.dispose();
-    }
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final ctrl = widget.ctrl;
-    final row = widget.row;
-    final idx = ctrl.rows.indexOf(row) + 1;
-    final err = ctrl.validateRow(row);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: AddStockColors.cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: err != null
-                ? AddStockColors.danger.withOpacity(0.4)
-                : AddStockColors.cardBorder),
-        boxShadow: [
-          BoxShadow(
-              color: AddStockColors.shadowLight,
-              blurRadius: 8,
-              offset: const Offset(0, 2))
-        ],
-      ),
-      child: Column(children: [
-        // ── Header ──────────────────────────────────────────────────────
-        GestureDetector(
-          onTap: () => setState(() => _expanded = !_expanded),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: AddStockColors.brandGoldBg,
-              borderRadius: _expanded
-                  ? const BorderRadius.vertical(top: Radius.circular(12))
-                  : BorderRadius.circular(12),
-            ),
-            child: Row(children: [
-              CircleAvatar(
-                  radius: 13,
-                  backgroundColor: AddStockColors.brandGold,
-                  child: Text('$idx',
-                      style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black))),
-              const SizedBox(width: 10),
-              Expanded(
-                  child: Text(
-                row.itemName.isNotEmpty ? row.itemName : 'New Item',
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: row.itemName.isNotEmpty
-                        ? AddStockColors.textDark
-                        : AddStockColors.textHint),
-              )),
-              if (err != null)
-                const Padding(
-                    padding: EdgeInsets.only(right: 8),
-                    child: Icon(Icons.error_outline,
-                        color: AddStockColors.danger, size: 18)),
-              if (ctrl.rowCount > 1)
-                InkWell(
-                  onTap: () => ctrl.removeRow(row.id),
-                  borderRadius: BorderRadius.circular(20),
-                  child: const Padding(
-                      padding: EdgeInsets.all(4),
-                      child: Icon(Icons.delete_outline_rounded,
-                          color: AddStockColors.danger, size: 20)),
-                ),
-              const SizedBox(width: 4),
-              Icon(
-                  _expanded
-                      ? Icons.keyboard_arrow_up_rounded
-                      : Icons.keyboard_arrow_down_rounded,
-                  color: AddStockColors.brandGold),
-            ]),
-          ),
-        ),
-
-        // ── Body ────────────────────────────────────────────────────────
-        if (_expanded)
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              // Item Name + Sub Category
-              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Expanded(
-                    flex: 3,
-                    child: _f(
-                        label: AddStockStrings.lblItemName,
-                        ctrl: _itemNameCtrl,
-                        onCh: (v) => ctrl.updateItemName(row.id, v),
-                        textCap: TextCapitalization.words)),
-                const SizedBox(width: 10),
-                Expanded(
-                    flex: 2,
-                    child: _dd<StockSubCategory>(
-                      label: AddStockStrings.lblSubCategory,
-                      value: row.subCategory,
-                      items: StockSubCategory.values,
-                      labelFor: (e) => e.label,
-                      onChanged: (v) {
-                        if (v != null) ctrl.updateSubCategory(row.id, v);
-                      },
-                    )),
-              ]),
-              const SizedBox(height: 10),
-
-              // HUID
-              _f(
-                  label: AddStockStrings.lblHuid,
-                  hint: AddStockStrings.hintHuid,
-                  ctrl: _huidCtrl,
-                  onCh: (v) => ctrl.updateHuid(row.id, v),
-                  textCap: TextCapitalization.characters,
-                  maxLength: 6),
-              const SizedBox(height: 10),
-
-              // Weights
-              _sectionLabel('Weight Details'),
-              const SizedBox(height: 6),
-              Row(children: [
-                Expanded(
-                    child: _f(
-                        label: AddStockStrings.lblGrossWeight,
-                        ctrl: _grossCtrl,
-                        onCh: (v) => ctrl.updateGrossWeight(row.id, v),
-                        keyboard: TextInputType.number)),
-                const SizedBox(width: 10),
-                Expanded(
-                    child: _f(
-                        label: AddStockStrings.lblStoneWeight,
-                        ctrl: _stoneWtCtrl,
-                        onCh: (v) => ctrl.updateStoneWeight(row.id, v),
-                        keyboard: TextInputType.number)),
-                const SizedBox(width: 10),
-                Expanded(
-                    child: _readOnly(
-                        label: AddStockStrings.lblNetWeight,
-                        value: row.netWeight > 0
-                            ? '${row.netWeight.toStringAsFixed(3)} g'
-                            : '—',
-                        tooltip: AddStockStrings.netWeightNote)),
-              ]),
-              const SizedBox(height: 10),
-
-              // Stone Value box
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3E5F5),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFCE93D8)),
-                ),
-                child: Row(children: [
-                  const Icon(AddStockIcons.stoneDetails,
-                      size: 16, color: Color(0xFF7B1FA2)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                      child: _f(
-                          label: AddStockStrings.lblStoneValue,
-                          ctrl: _stoneValCtrl,
-                          onCh: (v) => ctrl.updateStoneValue(row.id, v),
-                          keyboard: TextInputType.number,
-                          prefix: '₹')),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                      flex: 2,
-                      child: Text(AddStockStrings.stoneValueNote,
-                          style: TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF7B1FA2),
-                              height: 1.4))),
-                ]),
-              ),
-              const SizedBox(height: 10),
-
-              // Stone type + carats + pieces
-              Row(children: [
-                Expanded(
-                    child: _dd<StoneType>(
-                        label: AddStockStrings.lblStoneType,
-                        value: row.stoneType,
-                        items: StoneType.values,
-                        labelFor: (e) => e.label,
-                        onChanged: (v) {
-                          if (v != null) ctrl.updateStoneType(row.id, v);
-                        })),
-                const SizedBox(width: 10),
-                Expanded(
-                    child: _f(
-                        label: AddStockStrings.lblCarats,
-                        ctrl: _caratCtrl,
-                        onCh: (v) => ctrl.updateStoneCarats(row.id, v),
-                        keyboard: TextInputType.number)),
-                const SizedBox(width: 10),
-                Expanded(
-                    child: _f(
-                        label: AddStockStrings.lblPieces,
-                        ctrl: _pcsCtrl,
-                        onCh: (v) => ctrl.updateStonePieces(row.id, v),
-                        keyboard: TextInputType.number)),
-              ]),
-              const SizedBox(height: 12),
-
-              // 🔒 Owner-only
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AddStockColors.warningBg,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                      color: AddStockColors.warning.withOpacity(0.3)),
-                ),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(children: [
-                        Icon(AddStockIcons.compliance,
-                            size: 14, color: AddStockColors.warning),
-                        const SizedBox(width: 6),
-                        Text(AddStockStrings.ownerOnlyTitle,
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AddStockColors.warning)),
-                      ]),
-                      const SizedBox(height: 10),
-                      Row(children: [
-                        Expanded(
-                            child: _f(
-                                label: AddStockStrings.lblPurchaseRate,
-                                ctrl: _rateCtrl,
-                                onCh: (v) => ctrl.updatePurchaseRate(row.id, v),
-                                keyboard: TextInputType.number,
-                                prefix: '₹',
-                                fillColor: const Color(0xFFFFFDE7))),
-                        const SizedBox(width: 10),
-                        Expanded(
-                            child: _f(
-                                label: AddStockStrings.lblMakingCharges,
-                                ctrl: _makingCtrl,
-                                onCh: (v) =>
-                                    ctrl.updateMakingCharges(row.id, v),
-                                keyboard: TextInputType.number,
-                                prefix: '₹',
-                                fillColor: const Color(0xFFFFFDE7))),
-                        const SizedBox(width: 10),
-                        Expanded(
-                            child: _dd<MakingChargesType>(
-                          label: AddStockStrings.lblMakingType,
-                          value: row.makingChargesType,
-                          items: MakingChargesType.values,
-                          labelFor: (e) => e.label.split(' ').first,
-                          onChanged: (v) {
-                            if (v != null) ctrl.updateMakingType(row.id, v);
-                          },
-                          fillColor: const Color(0xFFFFFDE7),
-                        )),
-                      ]),
-                      if (row.costPrice > 0)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Row(children: [
-                            const Icon(AddStockIcons.pricing,
-                                size: 14, color: AddStockColors.warning),
-                            const SizedBox(width: 6),
-                            Text(
-                                '${AddStockStrings.costPriceLabel}₹${row.costPrice.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
-                                    color: AddStockColors.warning)),
-                          ]),
-                        ),
-                    ]),
-              ),
-
-              // Per-row supplier
-              if (!widget.ctrl.sameForAll) ...[
-                const SizedBox(height: 12),
-                _SupplierAutocomplete(
-                  label: AddStockStrings.lblSupplierRow,
-                  suppliers: widget.ctrl.suppliers,
-                  initialName: row.supplierName,
-                  onSelected: (s) => widget.ctrl.setRowSupplier(row.id, s),
-                  onTextChanged: (v) {
-                    row.supplierName = v;
-                  },
-                ),
-              ],
-            ]),
-          ),
-      ]),
-    );
-  }
-
-  Widget _sectionLabel(String label) => Text(label,
-      style: AddStockStyles.sectionTitle.copyWith(
-          fontSize: 12, letterSpacing: 0.5, color: AddStockColors.brandGold));
-
-  Widget _f(
-      {required String label,
-      String? hint,
-      required TextEditingController ctrl,
-      required Function(String) onCh,
-      TextInputType keyboard = TextInputType.text,
-      TextCapitalization textCap = TextCapitalization.none,
-      int? maxLength,
-      String? prefix,
-      Color? fillColor}) {
-    return TextFormField(
-      controller: ctrl,
-      onChanged: onCh,
-      keyboardType: keyboard,
-      textCapitalization: textCap,
-      maxLength: maxLength,
-      inputFormatters: keyboard == TextInputType.number
-          ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))]
-          : null,
-      style: AddStockStyles.fieldInput,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        prefixText: prefix,
-        labelStyle: AddStockStyles.fieldLabel,
-        hintStyle: AddStockStyles.fieldHint,
-        filled: true,
-        fillColor: fillColor ?? AddStockColors.inputBg,
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AddStockColors.cardBorder)),
-        enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AddStockColors.cardBorder)),
-        focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide:
-                const BorderSide(color: AddStockColors.brandGold, width: 1.5)),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        isDense: true,
-        counterText: '',
-      ),
-    );
-  }
-
-  Widget _readOnly(
-      {required String label, required String value, String? tooltip}) {
-    return Tooltip(
-      message: tooltip ?? '',
-      child: TextFormField(
-        readOnly: true,
-        initialValue: value,
-        style: AddStockStyles.readOnlyValue,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: AddStockStyles.fieldLabel,
-          filled: true,
-          fillColor: AddStockColors.inputBgLocked,
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AddStockColors.cardBorder)),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          isDense: true,
-          suffixIcon: const Icon(Icons.calculate_outlined,
-              size: 14, color: AddStockColors.success),
-        ),
-      ),
-    );
-  }
-
-  Widget _dd<T>(
-      {required String label,
-      required T value,
-      required List<T> items,
-      required String Function(T) labelFor,
-      required void Function(T?) onChanged,
-      Color? fillColor}) {
-    return DropdownButtonFormField<T>(
-      value: value,
-      onChanged: onChanged,
-      isExpanded: true,
-      style: AddStockStyles.fieldInput,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: AddStockStyles.fieldLabel,
-        filled: true,
-        fillColor: fillColor ?? AddStockColors.inputBg,
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AddStockColors.cardBorder)),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        isDense: true,
-      ),
-      items: items
-          .map((e) => DropdownMenuItem<T>(
-              value: e,
-              child: Text(labelFor(e), overflow: TextOverflow.ellipsis)))
-          .toList(),
-    );
-  }
-}
-
-// =============================================================================
-// SUPPLIER AUTOCOMPLETE FIELD  (unchanged)
-// =============================================================================
-
-class _SupplierAutocomplete extends StatefulWidget {
-  final String label;
-  final List<SupplierListItemModel> suppliers;
-  final String initialName;
-  final void Function(SupplierListItemModel?) onSelected;
-  final void Function(String) onTextChanged;
-  const _SupplierAutocomplete(
-      {required this.label,
-      required this.suppliers,
-      required this.initialName,
-      required this.onSelected,
-      required this.onTextChanged});
-  @override
-  State<_SupplierAutocomplete> createState() => _SupplierAutocompleteState();
-}
-
-class _SupplierAutocompleteState extends State<_SupplierAutocomplete> {
-  @override
-  Widget build(BuildContext context) {
-    return Autocomplete<SupplierListItemModel>(
-      initialValue: TextEditingValue(text: widget.initialName),
-      displayStringForOption: (s) => s.displayName,
-      optionsBuilder: (tv) {
-        if (tv.text.isEmpty) return const [];
-        final q = tv.text.toLowerCase();
-        return widget.suppliers.where((s) =>
-            s.businessName.toLowerCase().contains(q) || s.mobile.contains(q));
+        );
       },
-      onSelected: widget.onSelected,
-      fieldViewBuilder: (ctx, ctrl, focusNode, onSubmit) => TextField(
-        controller: ctrl,
-        focusNode: focusNode,
-        onChanged: widget.onTextChanged,
-        onSubmitted: (_) => onSubmit(),
-        style: AddStockStyles.fieldInput,
-        decoration: InputDecoration(
-          labelText: widget.label,
-          hintText: AddStockStrings.supplierHint,
-          hintStyle: AddStockStyles.fieldHint,
-          labelStyle: AddStockStyles.fieldLabel,
-          prefixIcon: const Icon(AddStockIcons.supplier,
-              color: AddStockColors.brandGold, size: 18),
-          filled: true,
-          fillColor: AddStockColors.inputBg,
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AddStockColors.cardBorder)),
-          focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                  color: AddStockColors.brandGold, width: 1.5)),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          isDense: true,
-          suffixIcon: ctrl.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear, size: 16),
-                  onPressed: () {
-                    ctrl.clear();
-                    widget.onSelected(null);
-                  })
-              : null,
-        ),
-      ),
     );
   }
 }
