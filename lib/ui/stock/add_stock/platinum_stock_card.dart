@@ -32,81 +32,86 @@ class PlatinumStockCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  ui.title,
-                  style: GoogleFonts.manrope(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF1F2937),
-                  ),
-                ),
-                SizedBox(
-                  width: 72,
-                  height: 42,
-                  child: Stack(
-                    alignment: Alignment.centerRight,
+                _platinumOrb(56),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _ring(ui.accent.withOpacity(0.24)),
-                      Positioned(left: 8, child: _ring(ui.accent)),
+                      Text(
+                        ui.title,
+                        style: GoogleFonts.manrope(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF1F2937),
+                        ),
+                      ),
+                      Text(
+                        'Premium metals desk',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: ui.accent,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Premium wedding bands and custom pieces',
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                height: 1.45,
-                color: const Color(0xFF4B5563),
-              ),
-            ),
-            const SizedBox(height: 18),
-            Row(
-              children: [
-                Expanded(child: _panel('Purity desk', ui.quickTag, ui.accent)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _panel(
-                    'Workflow',
-                    'Precise, low-volume intake',
-                    ui.accent,
-                  ),
-                ),
-              ],
-            ),
-            const Spacer(),
+            const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.8),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: ui.accent.withOpacity(0.16)),
+                gradient: LinearGradient(
+                  colors: [
+                    ui.accent.withOpacity(0.12),
+                    Colors.white.withOpacity(0.88),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: ui.accent.withOpacity(0.2)),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.workspace_premium_rounded,
-                    size: 16,
-                    color: ui.accent,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'High-value, minimalist desk with premium controls',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: const Color(0xFF4B5563),
-                        height: 1.4,
-                      ),
+                  Text(
+                    ui.helperLine,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      height: 1.45,
+                      color: const Color(0xFF374151),
                     ),
                   ),
-                  Icon(Icons.arrow_forward_rounded, size: 18, color: ui.accent),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _badge('High-value', ui.accent),
+                      _badge('Custom orders', ui.accent),
+                      _badge(ui.quickTag, ui.accent),
+                    ],
+                  ),
                 ],
               ),
+            ),
+            const Spacer(),
+            Row(
+              children: [
+                Text(
+                  'Open platinum desk',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: ui.accent,
+                  ),
+                ),
+                const Spacer(),
+                Icon(Icons.arrow_forward_rounded, size: 18, color: ui.accent),
+              ],
             ),
           ],
         ),
@@ -114,47 +119,54 @@ class PlatinumStockCard extends StatelessWidget {
     );
   }
 
-  Widget _panel(String label, String value, Color accent) {
+  Widget _platinumOrb(double size) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      width: size,
+      height: size,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.75),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withOpacity(0.16)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: accent,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: GoogleFonts.manrope(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1F2937),
-              height: 1.35,
-            ),
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFD4DDE3), Color(0xFF728996)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF728996).withOpacity(0.35),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
+      ),
+      child: Center(
+        child: Text(
+          'Pt',
+          style: GoogleFonts.manrope(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            letterSpacing: 0.5,
+          ),
+        ),
       ),
     );
   }
 
-  Widget _ring(Color color) {
+  Widget _badge(String label, Color accent) {
     return Container(
-      width: 34,
-      height: 34,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: color, width: 4),
+        color: Colors.white.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accent.withOpacity(0.22)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: const Color(0xFF374151),
+        ),
       ),
     );
   }

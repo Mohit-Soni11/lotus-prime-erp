@@ -33,7 +33,7 @@ class DiamondStockCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                _facetOrb(ui.accent, 56),
+                _diamondOrb(56),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -90,9 +90,9 @@ class DiamondStockCard extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _badge('Carats'),
-                      _badge('Stone value'),
-                      _badge(ui.quickTag),
+                      _badge('Carats', ui.accent),
+                      _badge('Stone value', ui.accent),
+                      _badge(ui.quickTag, ui.accent),
                     ],
                   ),
                 ],
@@ -119,7 +119,36 @@ class DiamondStockCard extends StatelessWidget {
     );
   }
 
-  Widget _badge(String label) {
+  Widget _diamondOrb(double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFCAEEFF), Color(0xFF1FA8E7)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1FA8E7).withOpacity(0.35),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: const Center(
+        child: Icon(
+          Icons.diamond_rounded,
+          size: 26,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget _badge(String label, Color accent) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -135,23 +164,6 @@ class DiamondStockCard extends StatelessWidget {
           color: const Color(0xFF24557A),
         ),
       ),
-    );
-  }
-
-  Widget _facetOrb(Color accent, double size) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.white, accent.withOpacity(0.24)],
-        ),
-        shape: BoxShape.circle,
-        border: Border.all(color: accent.withOpacity(0.28), width: 1.4),
-      ),
-      child: Icon(Icons.auto_awesome_rounded, size: 24, color: accent),
     );
   }
 }

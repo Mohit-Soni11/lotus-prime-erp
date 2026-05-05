@@ -33,74 +33,80 @@ class SilverStockCard extends StatelessWidget {
           children: [
             Row(
               children: [
+                _silverOrb(56),
+                const SizedBox(width: 14),
                 Expanded(
-                  child: Text(
-                    'Fast rack movement',
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: ui.accent,
-                      letterSpacing: 0.5,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        ui.title,
+                        style: GoogleFonts.manrope(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF1A2530),
+                        ),
+                      ),
+                      Text(
+                        'Chaandi inventory desk',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: ui.accent,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Icon(ui.icon, size: 20, color: ui.accent),
               ],
             ),
-            const SizedBox(height: 14),
-            Text(
-              ui.title,
-              style: GoogleFonts.manrope(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF111827),
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              ui.tagLine,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                height: 1.45,
-                color: const Color(0xFF4B5563),
-              ),
-            ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.78),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: ui.accent.withOpacity(0.16)),
+                gradient: LinearGradient(
+                  colors: [
+                    ui.accent.withOpacity(0.12),
+                    Colors.white.withOpacity(0.88),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: ui.accent.withOpacity(0.2)),
               ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _line('Purity presets', ui.quickTag),
-                  const SizedBox(height: 10),
-                  _line('Entry mode', 'Multi-piece batch intake'),
-                  const SizedBox(height: 10),
-                  _line('Ideal for', 'Anklets, chains, gifting items'),
+                  Text(
+                    ui.helperLine,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      height: 1.45,
+                      color: const Color(0xFF374151),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _badge('Batch entry', ui.accent),
+                      _badge('Sterling', ui.accent),
+                      _badge(ui.quickTag, ui.accent),
+                    ],
+                  ),
                 ],
               ),
             ),
             const Spacer(),
             Row(
               children: [
-                Container(
-                  width: 44,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: ui.accent.withOpacity(0.25),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  width: 18,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: ui.accent.withOpacity(0.55),
-                    borderRadius: BorderRadius.circular(999),
+                Text(
+                  'Open silver inventory',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: ui.accent,
                   ),
                 ),
                 const Spacer(),
@@ -113,45 +119,55 @@ class SilverStockCard extends StatelessWidget {
     );
   }
 
-  Widget _line(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 6,
-          height: 6,
-          margin: const EdgeInsets.only(top: 5),
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Color(0xFF748A98),
+  Widget _silverOrb(double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFEEF3F6), Color(0xFF8BA1AF)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF8BA1AF).withOpacity(0.35),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          'Ag',
+          style: GoogleFonts.manrope(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            letterSpacing: 0.5,
           ),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: '$label: ',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF374151),
-                  ),
-                ),
-                TextSpan(
-                  text: value,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    color: const Color(0xFF6B7280),
-                    height: 1.45,
-                  ),
-                ),
-              ],
-            ),
-          ),
+      ),
+    );
+  }
+
+  Widget _badge(String label, Color accent) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accent.withOpacity(0.22)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: const Color(0xFF374151),
         ),
-      ],
+      ),
     );
   }
 }

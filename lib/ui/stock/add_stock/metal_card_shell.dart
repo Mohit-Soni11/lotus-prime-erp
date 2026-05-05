@@ -22,13 +22,11 @@ class MetalCardShell extends StatefulWidget {
   State<MetalCardShell> createState() => _MetalCardShellState();
 }
 
-class _MetalCardShellState extends State<MetalCardShell>
-    with SingleTickerProviderStateMixin {
+class _MetalCardShellState extends State<MetalCardShell> {
   bool _hovered = false;
   bool _pressed = false;
   late final Animation<double> _fadeIn;
   late final Animation<Offset> _slideIn;
-  late final AnimationController _shimmerCtrl;
 
   @override
   void initState() {
@@ -50,16 +48,10 @@ class _MetalCardShellState extends State<MetalCardShell>
         curve: Interval(begin, end, curve: Curves.easeOutQuart),
       ),
     );
-
-    _shimmerCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2400),
-    )..repeat();
   }
 
   @override
   void dispose() {
-    _shimmerCtrl.dispose();
     super.dispose();
   }
 
@@ -126,29 +118,6 @@ class _MetalCardShellState extends State<MetalCardShell>
                             color: widget.accent.withOpacity(0.08),
                           ),
                         ),
-                      ),
-                      AnimatedBuilder(
-                        animation: _shimmerCtrl,
-                        builder: (_, __) {
-                          return Positioned.fill(
-                            child: Opacity(
-                              opacity: _hovered ? 0.08 : 0.04,
-                              child: Transform.translate(
-                                offset: Offset(
-                                  (_shimmerCtrl.value * 260) - 80,
-                                  -60,
-                                ),
-                                child: Transform.rotate(
-                                  angle: 0.35,
-                                  child: Container(
-                                    width: 48,
-                                    color: widget.accent,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
                       ),
                       Padding(
                         padding: const EdgeInsets.all(20),
