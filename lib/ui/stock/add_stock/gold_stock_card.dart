@@ -125,11 +125,6 @@ class GoldStockCard extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFFFE7A3), Color(0xFFD4AF37)],
-        ),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFD4AF37).withOpacity(0.35),
@@ -138,15 +133,12 @@ class GoldStockCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Center(
-        child: Text(
-          'Au',
-          style: GoogleFonts.manrope(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF5C3D00),
-            letterSpacing: 0.5,
-          ),
+      child: ClipOval(
+        child: Image.asset(
+          'lib/logo/gold.jpeg',
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
         ),
       ),
     );

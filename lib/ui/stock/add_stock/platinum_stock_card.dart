@@ -125,11 +125,6 @@ class PlatinumStockCard extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFD4DDE3), Color(0xFF728996)],
-        ),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF728996).withOpacity(0.35),
@@ -138,15 +133,12 @@ class PlatinumStockCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Center(
-        child: Text(
-          'Pt',
-          style: GoogleFonts.manrope(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-            letterSpacing: 0.5,
-          ),
+      child: ClipOval(
+        child: Image.asset(
+          'lib/logo/silver and platinum .jpeg',
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
         ),
       ),
     );

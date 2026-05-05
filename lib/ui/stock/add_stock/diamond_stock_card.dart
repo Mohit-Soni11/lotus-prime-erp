@@ -125,11 +125,6 @@ class DiamondStockCard extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFCAEEFF), Color(0xFF1FA8E7)],
-        ),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF1FA8E7).withOpacity(0.35),
@@ -138,11 +133,12 @@ class DiamondStockCard extends StatelessWidget {
           ),
         ],
       ),
-      child: const Center(
-        child: Icon(
-          Icons.diamond_rounded,
-          size: 26,
-          color: Colors.white,
+      child: ClipOval(
+        child: Image.asset(
+          'lib/logo/diamond .jpeg',
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
         ),
       ),
     );
