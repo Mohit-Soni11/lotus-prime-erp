@@ -2,103 +2,203 @@
 // FILE        : add_karigar_app_bar.dart
 // MODULE      : Karigar → Add Karigar
 // LAYER       : UI / Component
-// DESCRIPTION : Dark shell AppBar for the Add Karigar screen.
+// DESCRIPTION : Premium Dark shell AppBar for the Add Karigar screen.
 // =============================================================================
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../theme/karigar/add_karigar/add_karigar_theme.dart';
 
-class AddKarigarAppBar extends StatelessWidget implements PreferredSizeWidget {
+class AddKarigarAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
   const AddKarigarAppBar({super.key, required this.onBack});
 
   @override
-  Size get preferredSize => const Size.fromHeight(70);
+  Size get preferredSize => const Size.fromHeight(70.0);
+
+  @override
+  State<AddKarigarAppBar> createState() => _AddKarigarAppBarState();
+}
+
+class _AddKarigarAppBarState extends State<AddKarigarAppBar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _blinkCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _blinkCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _blinkCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: AddKarigarStyles.shellDecoration,
+      height: 70.0,
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      decoration: const BoxDecoration(
+        color: AddKarigarColors.shellPanelBg,
+        border: Border(
+          bottom: BorderSide(color: AddKarigarColors.shellBorder, width: 1.0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x26000000),
+            blurRadius: 16,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
       child: SafeArea(
         bottom: false,
-        child: Row(children: [
-          _HoverBackButton(onTap: onBack),
-          const SizedBox(width: 20),
-          _Divider(),
-          const SizedBox(width: 20),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Container(
-                  width: 5, height: 5,
-                  decoration: BoxDecoration(
-                    color: AddKarigarColors.brandGold,
-                    shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(
-                      color: AddKarigarColors.brandGold.withOpacity(0.6),
-                      blurRadius: 6,
-                    )],
-                  ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // ── 1. Animated Back Button ──────────────────────────────────────
+            _HoverBackButton(onTap: widget.onBack),
+            const SizedBox(width: 18),
+
+            // ── 2. Vertical Divider ──────────────────────────────────────────
+            _buildVerticalDivider(),
+            const SizedBox(width: 18),
+
+            // ── 3. Premium Gradient Module Icon ──────────────────────────────
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AddKarigarColors.goldGradientStart,
+                    AddKarigarColors.brandGold,
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(AddKarigarStrings.screenTitle,
-                    style: AddKarigarStyles.shellTitle),
-              ]),
-              const SizedBox(height: 5),
-              const _RadarBadge(),
-            ],
-          ),
-          const Spacer(),
-          _ModuleBadge(),
-        ]),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: AddKarigarColors.brandGold.withOpacity(0.5),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  )
+                ],
+              ),
+              child: const Icon(
+                AddKarigarIcons.moduleIcon,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            // ── 4. Main Title ────────────────────────────────────────────────
+            Text(
+              AddKarigarStrings.screenTitle.toUpperCase(),
+              style: AddKarigarStyles.shellTitle.copyWith(
+                fontSize: 18,
+                letterSpacing: 1.2,
+              ),
+            ),
+
+            // Spacer pushes everything else to the right
+            const Spacer(),
+
+            // ── 5. Premium Radar Widget ──────────────────────────────────────
+            _RadarWidget(blinkCtrl: _blinkCtrl),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVerticalDivider() {
+    return Container(
+      width: 1.5,
+      height: 32,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent,
+            AddKarigarColors.shellBorder,
+            Colors.transparent,
+          ],
+        ),
       ),
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ANIMATED BACK BUTTON
+// ─────────────────────────────────────────────────────────────────────────────
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
   const _HoverBackButton({required this.onTap});
+
   @override
   State<_HoverBackButton> createState() => _HoverBackButtonState();
 }
 
 class _HoverBackButtonState extends State<_HoverBackButton> {
-  bool _hovered = false;
+  bool _isHovered = false;
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          width: 42, height: 42,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AddKarigarColors.shellBg,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: _hovered ? AddKarigarColors.brandGold : AddKarigarColors.shellBorder,
-              width: _hovered ? 1.5 : 1.0,
+        child: AnimatedScale(
+          scale: _isHovered ? 1.05 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: _isHovered
+                  ? AddKarigarColors.shellBg
+                  : AddKarigarColors.shellBorder.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: _isHovered
+                    ? AddKarigarColors.brandGold
+                    : AddKarigarColors.shellBorder,
+                width: _isHovered ? 1.5 : 1.0,
+              ),
+              boxShadow: _isHovered
+                  ? [
+                      BoxShadow(
+                        color: AddKarigarColors.brandGold.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                  : [],
             ),
-            boxShadow: _hovered ? [BoxShadow(
-              color: AddKarigarColors.brandGold.withOpacity(0.25),
-              blurRadius: 12, offset: const Offset(0, 3),
-            )] : [],
-          ),
-          child: Icon(
-            AddKarigarIcons.backArrow,
-            color: _hovered ? AddKarigarColors.brandGold : AddKarigarColors.shellTextTitle,
-            size: 20,
+            child: Icon(
+              AddKarigarIcons.backArrow,
+              color: _isHovered
+                  ? AddKarigarColors.brandGold
+                  : AddKarigarColors.shellTextTitle,
+              size: 18,
+            ),
           ),
         ),
       ),
@@ -106,127 +206,91 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-class _Divider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 1, height: 32,
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topCenter, end: Alignment.bottomCenter,
-        colors: [Colors.transparent, AddKarigarColors.shellBorder, Colors.transparent],
-      ),
-    ),
-  );
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// RADAR / ONLINE WIDGET (Pill shape added)
+// ─────────────────────────────────────────────────────────────────────────────
+class _RadarWidget extends StatelessWidget {
+  final AnimationController blinkCtrl;
+  const _RadarWidget({required this.blinkCtrl});
 
-class _RadarBadge extends StatefulWidget {
-  const _RadarBadge();
-  @override
-  State<_RadarBadge> createState() => _RadarBadgeState();
-}
-
-class _RadarBadgeState extends State<_RadarBadge>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  late AnimationController _ac;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _ac = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState s) {
-    if (s == AppLifecycleState.paused || s == AppLifecycleState.inactive) _ac.stop();
-    else if (s == AppLifecycleState.resumed) _ac.repeat();
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _ac.dispose();
-    super.dispose();
-  }
-
-  Widget _wave(double delay) => AnimatedBuilder(
-    animation: _ac,
-    builder: (_, __) {
-      final v = (_ac.value + delay) % 1.0;
-      return Opacity(
-        opacity: 1.0 - v,
-        child: Transform.scale(
-          scale: 1.0 + v * 1.5,
-          child: Container(
-            width: 14, height: 14,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF00E676).withOpacity(0.5), width: 1.5),
-            ),
-          ),
-        ),
-      );
-    },
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(children: [
-      SizedBox(width: 14, height: 14,
-        child: Stack(alignment: Alignment.center, children: [
-          _wave(0.0), _wave(0.5),
-          Container(width: 6, height: 6,
-            decoration: const BoxDecoration(color: Color(0xFF00E676), shape: BoxShape.circle)),
-        ]),
-      ),
-      const SizedBox(width: 8),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(
-          color: const Color(0xFF00E676).withOpacity(0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF00E676).withOpacity(0.2)),
-        ),
-        child: Text(AddKarigarStrings.systemOnline, style: GoogleFonts.inter(
-          color: const Color(0xFF00E676), fontSize: 9.5,
-          fontWeight: FontWeight.w700, letterSpacing: 0.8,
-        )),
-      ),
-    ]);
-  }
-}
-
-class _ModuleBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AddKarigarColors.moduleBadgeBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AddKarigarColors.moduleBadgeBorder),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: AddKarigarColors.brandGold.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: const Icon(AddKarigarIcons.moduleIcon,
-              color: AddKarigarColors.brandGold, size: 14),
+        color: AddKarigarColors.onlineGreen.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: AddKarigarColors.onlineGreen.withOpacity(0.3),
         ),
-        const SizedBox(width: 10),
-        Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-          Text(AddKarigarStrings.moduleBadge, style: GoogleFonts.inter(
-            color: AddKarigarColors.shellTextTitle, fontSize: 12,
-            fontWeight: FontWeight.w700, letterSpacing: 0.3,
-          )),
-          Text(AddKarigarStrings.screenSub, style: GoogleFonts.inter(
-            color: AddKarigarColors.shellTextMuted, fontSize: 10,
-          )),
-        ]),
-      ]),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _buildWave(blinkCtrl, 0.0),
+                _buildWave(blinkCtrl, 0.5),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: AddKarigarColors.onlineGreen,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AddKarigarColors.onlineGreen,
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            AddKarigarStrings.systemOnline,
+            style: GoogleFonts.inter(
+              color: AddKarigarColors.onlineGreen,
+              fontSize: 12.0,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWave(AnimationController ctrl, double delay) {
+    return AnimatedBuilder(
+      animation: ctrl,
+      builder: (_, __) {
+        final val = (ctrl.value + delay) % 1.0;
+        return Opacity(
+          opacity: 1.0 - val,
+          child: Transform.scale(
+            scale: 1.0 + (val * 1.5),
+            child: Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AddKarigarColors.onlineGreen.withOpacity(0.5),
+                  width: 1.5,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

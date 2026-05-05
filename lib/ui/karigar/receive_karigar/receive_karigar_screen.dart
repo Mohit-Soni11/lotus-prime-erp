@@ -7,7 +7,8 @@
 //               Making Charges → Payment Settlement → Notes
 //               Key UX: Live wastage computation with color-coded alerts,
 //               auto making charge calculation, inline payment settlement.
-//               ListenableBuilder — zero setState in UI.
+//               - App Bar extracted to receive_karigar_app_bar.dart
+//               - ListenableBuilder — zero setState in UI.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -20,7 +21,7 @@ import '../../../logic/karigar/receive_karigar_controller.dart';
 import '../../../models/karigar/karigar_enums/karigar_enums.dart';
 import '../../../models/karigar/karigar_issue_model.dart';
 import '../../../theme/karigar/karigar_theme.dart';
-import '../shared/karigar_app_bar.dart';
+import 'receive_karigar_app_bar.dart'; // NAYA IMPORT
 import '../shared/karigar_field_widgets.dart';
 import '../shared/karigar_section_card.dart';
 
@@ -34,47 +35,51 @@ class ReceiveKarigarScreen extends StatefulWidget {
 
 class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
     with TickerProviderStateMixin {
-
   late final ReceiveKarigarController _ctrl;
-  final AppDatabase _db   = AppDatabase();
-  final _formKey          = GlobalKey<FormState>();
+  final AppDatabase _db = AppDatabase();
+  final _formKey = GlobalKey<FormState>();
 
   // Text Controllers
   final _grossReceivedCtrl = TextEditingController();
-  final _stoneWtCtrl       = TextEditingController();
-  final _makingRateCtrl    = TextEditingController();
-  final _makingAmountCtrl  = TextEditingController();
-  final _paidCtrl          = TextEditingController();
-  final _qtyCtrl           = TextEditingController(text: '1');
-  final _notesCtrl         = TextEditingController();
+  final _stoneWtCtrl = TextEditingController();
+  final _makingRateCtrl = TextEditingController();
+  final _makingAmountCtrl = TextEditingController();
+  final _paidCtrl = TextEditingController();
+  final _qtyCtrl = TextEditingController(text: '1');
+  final _notesCtrl = TextEditingController();
 
   // Focus nodes
-  final _grossFocus   = FocusNode();
-  final _stoneFocus   = FocusNode();
-  final _rateFocus    = FocusNode();
-  final _amountFocus  = FocusNode();
-  final _paidFocus    = FocusNode();
+  final _grossFocus = FocusNode();
+  final _stoneFocus = FocusNode();
+  final _rateFocus = FocusNode();
+  final _amountFocus = FocusNode();
+  final _paidFocus = FocusNode();
 
   DateTime _receiptDate = DateTime.now();
 
   // Stagger animations
   static const int _secCount = 5;
   late final List<AnimationController> _secAnim;
-  late final List<Animation<double>>   _secFade;
-  late final List<Animation<Offset>>   _secSlide;
+  late final List<Animation<double>> _secFade;
+  late final List<Animation<Offset>> _secSlide;
 
   @override
   void initState() {
     super.initState();
     _ctrl = ReceiveKarigarController(_db);
 
-    _secAnim = List.generate(_secCount, (_) =>
-        AnimationController(vsync: this, duration: const Duration(milliseconds: 500)));
-    _secFade = _secAnim.map((a) =>
-        CurvedAnimation(parent: a, curve: Curves.easeInOut)).toList();
-    _secSlide = _secAnim.map((a) =>
-        Tween<Offset>(begin: const Offset(0, 0.10), end: Offset.zero)
-            .animate(CurvedAnimation(parent: a, curve: Curves.easeOutCubic))).toList();
+    _secAnim = List.generate(
+        _secCount,
+        (_) => AnimationController(
+            vsync: this, duration: const Duration(milliseconds: 500)));
+    _secFade = _secAnim
+        .map((a) => CurvedAnimation(parent: a, curve: Curves.easeInOut))
+        .toList();
+    _secSlide = _secAnim
+        .map((a) => Tween<Offset>(
+                begin: const Offset(0, 0.10), end: Offset.zero)
+            .animate(CurvedAnimation(parent: a, curve: Curves.easeOutCubic)))
+        .toList();
 
     for (int i = 0; i < _secCount; i++) {
       Future.delayed(Duration(milliseconds: 60 + i * 80), () {
@@ -85,10 +90,10 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
     // Wire weight listeners
     _grossReceivedCtrl.addListener(
         () => _ctrl.onGrossReceivedChanged(_grossReceivedCtrl.text));
-    _stoneWtCtrl.addListener(
-        () => _ctrl.onStoneWeightChanged(_stoneWtCtrl.text));
-    _makingRateCtrl.addListener(
-        () => _ctrl.onMakingRateChanged(_makingRateCtrl.text));
+    _stoneWtCtrl
+        .addListener(() => _ctrl.onStoneWeightChanged(_stoneWtCtrl.text));
+    _makingRateCtrl
+        .addListener(() => _ctrl.onMakingRateChanged(_makingRateCtrl.text));
 
     _ctrl.initialize(preSelectedIssueId: widget.preSelectedIssueId);
   }
@@ -96,11 +101,24 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
   @override
   void dispose() {
     _ctrl.dispose();
-    for (final c in [_grossReceivedCtrl, _stoneWtCtrl, _makingRateCtrl,
-                     _makingAmountCtrl, _paidCtrl, _qtyCtrl, _notesCtrl]) {
+    for (final c in [
+      _grossReceivedCtrl,
+      _stoneWtCtrl,
+      _makingRateCtrl,
+      _makingAmountCtrl,
+      _paidCtrl,
+      _qtyCtrl,
+      _notesCtrl
+    ]) {
       c.dispose();
     }
-    for (final f in [_grossFocus, _stoneFocus, _rateFocus, _amountFocus, _paidFocus]) {
+    for (final f in [
+      _grossFocus,
+      _stoneFocus,
+      _rateFocus,
+      _amountFocus,
+      _paidFocus
+    ]) {
       f.dispose();
     }
     for (final a in _secAnim) a.dispose();
@@ -113,30 +131,38 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final makingAmount = double.tryParse(_makingAmountCtrl.text) ?? _ctrl.computedMakingCharges;
-    final paidAmount   = double.tryParse(_paidCtrl.text) ?? 0.0;
-    final qty          = int.tryParse(_qtyCtrl.text) ?? 1;
+    final makingAmount =
+        double.tryParse(_makingAmountCtrl.text) ?? _ctrl.computedMakingCharges;
+    final paidAmount = double.tryParse(_paidCtrl.text) ?? 0.0;
+    final qty = int.tryParse(_qtyCtrl.text) ?? 1;
 
     final ok = await _ctrl.saveReceipt(
-      receiptDate:         _receiptDate,
-      quantityReceived:    qty,
+      receiptDate: _receiptDate,
+      quantityReceived: qty,
       grossWeightReceived: double.tryParse(_grossReceivedCtrl.text) ?? 0.0,
-      stoneWeight:         double.tryParse(_stoneWtCtrl.text) ?? 0.0,
+      stoneWeight: double.tryParse(_stoneWtCtrl.text) ?? 0.0,
       makingChargesAmount: makingAmount,
-      paidAmount:          paidAmount,
-      notes:               _notesCtrl.text,
+      paidAmount: paidAmount,
+      notes: _notesCtrl.text,
     );
 
     if (ok && mounted) {
-      _showSuccessSnackbar(_ctrl.successMessage ?? KarigarStrings.successReceiptSaved);
+      _showSuccessSnackbar(
+          _ctrl.successMessage ?? KarigarStrings.successReceiptSaved);
       _resetAll();
     }
   }
 
   Future<void> _resetAll() async {
     _formKey.currentState?.reset();
-    for (final c in [_grossReceivedCtrl, _stoneWtCtrl, _makingRateCtrl,
-                     _makingAmountCtrl, _paidCtrl, _notesCtrl]) {
+    for (final c in [
+      _grossReceivedCtrl,
+      _stoneWtCtrl,
+      _makingRateCtrl,
+      _makingAmountCtrl,
+      _paidCtrl,
+      _notesCtrl
+    ]) {
       c.clear();
     }
     _qtyCtrl.text = '1';
@@ -149,8 +175,9 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
       content: Row(children: [
         const Icon(KarigarIcons.markDone, color: Colors.white, size: 18),
         const SizedBox(width: 10),
-        Expanded(child: Text(msg,
-            style: GoogleFonts.inter(color: Colors.white, fontSize: 13))),
+        Expanded(
+            child: Text(msg,
+                style: GoogleFonts.inter(color: Colors.white, fontSize: 13))),
       ]),
       backgroundColor: KarigarColors.success,
       behavior: SnackBarBehavior.floating,
@@ -161,14 +188,14 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
 
   Future<void> _pickReceiptDate() async {
     final picked = await showDatePicker(
-      context:     context,
+      context: context,
       initialDate: _receiptDate,
-      firstDate:   DateTime(2020),
-      lastDate:    DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
           colorScheme: const ColorScheme.light(
-            primary:   KarigarColors.brandGold,
+            primary: KarigarColors.brandGold,
             onPrimary: KarigarColors.shellBg,
           ),
         ),
@@ -179,9 +206,9 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
   }
 
   Widget _animated(int i, Widget child) => FadeTransition(
-    opacity: _secFade[i],
-    child:   SlideTransition(position: _secSlide[i], child: child),
-  );
+        opacity: _secFade[i],
+        child: SlideTransition(position: _secSlide[i], child: child),
+      );
 
   // ── BUILD ──────────────────────────────────────────────────────────────────
 
@@ -191,9 +218,8 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: KarigarColors.shellBg,
-        appBar: KarigarAppBar(
-          screenTitle:    KarigarStrings.receiveScreenTitle,
-          screenSubtitle: KarigarStrings.receiveScreenSub,
+        // NAYA APP BAR CALL YAHAN HAI
+        appBar: ReceiveKarigarAppBar(
           onBack: () => Navigator.maybePop(context),
         ),
         body: SafeArea(
@@ -203,7 +229,8 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
               listenable: _ctrl,
               builder: (context, _) {
                 // Auto-sync making amount from computed value
-                if (_makingAmountCtrl.text.isEmpty && _ctrl.computedMakingCharges > 0) {
+                if (_makingAmountCtrl.text.isEmpty &&
+                    _ctrl.computedMakingCharges > 0) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _makingAmountCtrl.text =
                         _ctrl.computedMakingCharges.toStringAsFixed(2);
@@ -218,67 +245,77 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-
                         if (_ctrl.hasError)
                           KarigarErrorBanner(
-                            message:   _ctrl.errorMessage!,
+                            message: _ctrl.errorMessage!,
                             onDismiss: _ctrl.clearMessages,
                           ),
 
                         // ── Section 1: Select Pending Issue ───────
-                        _animated(0, KarigarSectionCard(
-                          icon:     KarigarIcons.issueDetails,
-                          title:    'Select Pending Issue',
-                          subtitle: 'Choose which issue you are receiving goods for',
-                          accent:   KarigarColors.accentIssue,
-                          child:    _buildIssueSelectionSection(),
-                        )),
+                        _animated(
+                            0,
+                            KarigarSectionCard(
+                              icon: KarigarIcons.issueDetails,
+                              title: 'Select Pending Issue',
+                              subtitle:
+                                  'Choose which issue you are receiving goods for',
+                              accent: KarigarColors.accentIssue,
+                              child: _buildIssueSelectionSection(),
+                            )),
                         const SizedBox(height: 20),
 
                         // ── Section 2: Weight & Wastage ───────────
-                        _animated(1, KarigarSectionCard(
-                          icon:     KarigarIcons.wastage,
-                          title:    KarigarStrings.secWastage,
-                          subtitle: KarigarStrings.descWastage,
-                          accent:   KarigarColors.accentWastage,
-                          child:    _buildWeightSection(),
-                        )),
+                        _animated(
+                            1,
+                            KarigarSectionCard(
+                              icon: KarigarIcons.wastage,
+                              title: KarigarStrings.secWastage,
+                              subtitle: KarigarStrings.descWastage,
+                              accent: KarigarColors.accentWastage,
+                              child: _buildWeightSection(),
+                            )),
                         const SizedBox(height: 20),
 
                         // ── Section 3: Making Charges ─────────────
-                        _animated(2, KarigarSectionCard(
-                          icon:     KarigarIcons.charges,
-                          title:    KarigarStrings.secMakingCharges,
-                          subtitle: KarigarStrings.descMakingCharges,
-                          accent:   KarigarColors.accentCharges,
-                          child:    _buildChargesSection(),
-                        )),
+                        _animated(
+                            2,
+                            KarigarSectionCard(
+                              icon: KarigarIcons.charges,
+                              title: KarigarStrings.secMakingCharges,
+                              subtitle: KarigarStrings.descMakingCharges,
+                              accent: KarigarColors.accentCharges,
+                              child: _buildChargesSection(),
+                            )),
                         const SizedBox(height: 20),
 
                         // ── Section 4: Payment ────────────────────
-                        _animated(3, KarigarSectionCard(
-                          icon:     KarigarIcons.payment,
-                          title:    KarigarStrings.secPayment,
-                          subtitle: KarigarStrings.descPayment,
-                          accent:   KarigarColors.accentPayment,
-                          child:    _buildPaymentSection(),
-                        )),
+                        _animated(
+                            3,
+                            KarigarSectionCard(
+                              icon: KarigarIcons.payment,
+                              title: KarigarStrings.secPayment,
+                              subtitle: KarigarStrings.descPayment,
+                              accent: KarigarColors.accentPayment,
+                              child: _buildPaymentSection(),
+                            )),
                         const SizedBox(height: 20),
 
                         // ── Section 5: Notes ──────────────────────
-                        _animated(4, KarigarSectionCard(
-                          icon:     KarigarIcons.notes,
-                          title:    KarigarStrings.secNotes,
-                          subtitle: KarigarStrings.descNotes,
-                          accent:   KarigarColors.accentNotes,
-                          child: KarigarInputField(
-                            label:      KarigarStrings.lblNotes,
-                            hint:       KarigarStrings.hintNotes,
-                            icon:       KarigarIcons.notes,
-                            controller: _notesCtrl,
-                            maxLines:   3,
-                          ),
-                        )),
+                        _animated(
+                            4,
+                            KarigarSectionCard(
+                              icon: KarigarIcons.notes,
+                              title: KarigarStrings.secNotes,
+                              subtitle: KarigarStrings.descNotes,
+                              accent: KarigarColors.accentNotes,
+                              child: KarigarInputField(
+                                label: KarigarStrings.lblNotes,
+                                hint: KarigarStrings.hintNotes,
+                                icon: KarigarIcons.notes,
+                                controller: _notesCtrl,
+                                maxLines: 3,
+                              ),
+                            )),
                         const SizedBox(height: 28),
 
                         _buildActionButtons(),
@@ -305,7 +342,7 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
         child: Padding(
           padding: EdgeInsets.all(16),
           child: CircularProgressIndicator(
-            color: KarigarColors.brandGold, strokeWidth: 2),
+              color: KarigarColors.brandGold, strokeWidth: 2),
         ),
       );
     }
@@ -332,7 +369,6 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
     }
 
     return Column(children: [
-
       // Selected issue display
       if (_ctrl.hasIssue) ...[
         _SelectedIssueCard(issue: _ctrl.selectedIssue!),
@@ -358,17 +394,22 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
                     style: KarigarStyles.fieldHint),
                 icon: const Icon(KarigarIcons.dropDown,
                     color: KarigarColors.textMuted, size: 20),
-                items: _ctrl.pendingIssues.map((issue) =>
-                  DropdownMenuItem<KarigarIssueWithKarigar>(
-                    value: issue,
-                    child: Text(
-                      '${issue.issueNumber} — ${issue.karigarName} (${issue.netWeightIssued.toStringAsFixed(3)}g)',
-                      style: KarigarStyles.fieldInput.copyWith(fontSize: 13),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ).toList(),
-                onChanged: (v) { if (v != null) _ctrl.selectIssue(v); },
+                items: _ctrl.pendingIssues
+                    .map(
+                      (issue) => DropdownMenuItem<KarigarIssueWithKarigar>(
+                        value: issue,
+                        child: Text(
+                          '${issue.issueNumber} — ${issue.karigarName} (${issue.netWeightIssued.toStringAsFixed(3)}g)',
+                          style:
+                              KarigarStyles.fieldInput.copyWith(fontSize: 13),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) _ctrl.selectIssue(v);
+                },
               ),
             ),
           ),
@@ -378,21 +419,21 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
       // Receipt date
       const SizedBox(height: 16),
       _DatePickerRow(
-        label:  KarigarStrings.lblReceiptDate,
-        value:  DateFormat('dd MMM yyyy').format(_receiptDate),
-        onTap:  _pickReceiptDate,
+        label: KarigarStrings.lblReceiptDate,
+        value: DateFormat('dd MMM yyyy').format(_receiptDate),
+        onTap: _pickReceiptDate,
       ),
 
       // Qty
       const SizedBox(height: 16),
       KarigarInputField(
-        label:       KarigarStrings.lblQuantity,
-        hint:        KarigarStrings.hintQuantity,
-        icon:        KarigarIcons.quantity,
-        controller:  _qtyCtrl,
+        label: KarigarStrings.lblQuantity,
+        hint: KarigarStrings.hintQuantity,
+        icon: KarigarIcons.quantity,
+        controller: _qtyCtrl,
         keyboardType: TextInputType.number,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        validator:   (v) {
+        validator: (v) {
           if (v == null || v.isEmpty) return 'Quantity is required';
           final i = int.tryParse(v);
           if (i == null || i < 1) return 'Minimum 1 piece';
@@ -404,18 +445,19 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
 
   Widget _buildWeightSection() {
     return Column(children: [
-
       KarigarRowTwo(
         left: KarigarInputField(
-          label:       KarigarStrings.lblGrossReceived,
-          hint:        KarigarStrings.hintWeight,
-          icon:        KarigarIcons.weight,
-          controller:  _grossReceivedCtrl,
-          focusNode:   _grossFocus,
-          nextFocus:   _stoneFocus,
+          label: KarigarStrings.lblGrossReceived,
+          hint: KarigarStrings.hintWeight,
+          icon: KarigarIcons.weight,
+          controller: _grossReceivedCtrl,
+          focusNode: _grossFocus,
+          nextFocus: _stoneFocus,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
-          validator:   (v) {
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
+          ],
+          validator: (v) {
             if (v == null || v.isEmpty) return 'Received weight required';
             final d = double.tryParse(v);
             if (d == null || d <= 0) return 'Enter valid weight';
@@ -423,38 +465,45 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
           },
         ),
         right: KarigarInputField(
-          label:       KarigarStrings.lblStoneWeight,
-          hint:        KarigarStrings.hintWeight,
-          icon:        KarigarIcons.metal,
-          controller:  _stoneWtCtrl,
-          focusNode:   _stoneFocus,
+          label: KarigarStrings.lblStoneWeight,
+          hint: KarigarStrings.hintWeight,
+          icon: KarigarIcons.metal,
+          controller: _stoneWtCtrl,
+          focusNode: _stoneFocus,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
+          ],
         ),
       ),
       const SizedBox(height: 16),
 
       Row(children: [
-        Expanded(child: KarigarReadOnlyField(
+        Expanded(
+            child: KarigarReadOnlyField(
           label: KarigarStrings.lblNetReceived,
           value: '${_ctrl.netWeightReceived.toStringAsFixed(3)}g',
-          icon:  KarigarIcons.weight,
+          icon: KarigarIcons.weight,
           color: KarigarColors.success,
-          note:  KarigarStrings.noteNetReceived,
+          note: KarigarStrings.noteNetReceived,
         )),
         const SizedBox(width: 14),
-        Expanded(child: KarigarReadOnlyField(
+        Expanded(
+            child: KarigarReadOnlyField(
           label: KarigarStrings.lblWastageWeight,
           value: '${_ctrl.wastageWeight.toStringAsFixed(3)}g',
-          icon:  KarigarIcons.wastage,
-          color: _ctrl.isHighWastage ? KarigarColors.danger : KarigarColors.textMuted,
-          note:  KarigarStrings.noteWastage,
+          icon: KarigarIcons.wastage,
+          color: _ctrl.isHighWastage
+              ? KarigarColors.danger
+              : KarigarColors.textMuted,
+          note: KarigarStrings.noteWastage,
         )),
         const SizedBox(width: 14),
-        Expanded(child: KarigarReadOnlyField(
+        Expanded(
+            child: KarigarReadOnlyField(
           label: KarigarStrings.lblWastagePercent,
           value: '${_ctrl.wastagePercent.toStringAsFixed(2)}%',
-          icon:  KarigarIcons.wastage,
+          icon: KarigarIcons.wastage,
           color: _ctrl.isCriticalWastage
               ? KarigarColors.danger
               : _ctrl.isHighWastage
@@ -473,10 +522,10 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
     return Column(children: [
       KarigarRowTwo(
         left: KarigarDropdown<KarigarMakingType>(
-          label:     KarigarStrings.lblMakingType,
-          icon:      KarigarIcons.charges,
-          value:     _ctrl.makingType,
-          items:     KarigarMakingType.values,
+          label: KarigarStrings.lblMakingType,
+          icon: KarigarIcons.charges,
+          value: _ctrl.makingType,
+          items: KarigarMakingType.values,
           itemLabel: (e) => e.label,
           onChanged: (v) {
             if (v != null) {
@@ -487,16 +536,18 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
           },
         ),
         right: KarigarInputField(
-          label:       KarigarStrings.lblMakingRate,
-          hint:        KarigarStrings.hintRate,
-          icon:        KarigarIcons.money,
-          controller:  _makingRateCtrl,
-          focusNode:   _rateFocus,
-          nextFocus:   _amountFocus,
-          prefixText:  '₹',
+          label: KarigarStrings.lblMakingRate,
+          hint: KarigarStrings.hintRate,
+          icon: KarigarIcons.money,
+          controller: _makingRateCtrl,
+          focusNode: _rateFocus,
+          nextFocus: _amountFocus,
+          prefixText: '₹',
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
-          onChanged:   (_) {
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
+          ],
+          onChanged: (_) {
             // Auto-calculate amount based on computed value
             final computed = _ctrl.computedMakingCharges;
             if (_makingRateCtrl.text.isNotEmpty) {
@@ -506,33 +557,34 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
         ),
       ),
       const SizedBox(height: 16),
-
       KarigarInputField(
-        label:       KarigarStrings.lblMakingAmount,
-        hint:        KarigarStrings.hintAmount,
-        icon:        KarigarIcons.money,
-        controller:  _makingAmountCtrl,
-        focusNode:   _amountFocus,
-        nextFocus:   _paidFocus,
-        prefixText:  '₹',
+        label: KarigarStrings.lblMakingAmount,
+        hint: KarigarStrings.hintAmount,
+        icon: KarigarIcons.money,
+        controller: _makingAmountCtrl,
+        focusNode: _amountFocus,
+        nextFocus: _paidFocus,
+        prefixText: '₹',
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
+        ],
       ),
     ]);
   }
 
   Widget _buildPaymentSection() {
     final totalDue = double.tryParse(_makingAmountCtrl.text) ?? 0.0;
-    final paid     = double.tryParse(_paidCtrl.text) ?? 0.0;
-    final balance  = (totalDue - paid).clamp(0.0, double.infinity);
+    final paid = double.tryParse(_paidCtrl.text) ?? 0.0;
+    final balance = (totalDue - paid).clamp(0.0, double.infinity);
 
     return Column(children: [
       KarigarRowTwo(
         left: KarigarDropdown<KarigarPaymentStatus>(
-          label:     KarigarStrings.lblPaymentStatus,
-          icon:      KarigarIcons.payment,
-          value:     _ctrl.paymentStatus,
-          items:     KarigarPaymentStatus.values,
+          label: KarigarStrings.lblPaymentStatus,
+          icon: KarigarIcons.payment,
+          value: _ctrl.paymentStatus,
+          items: KarigarPaymentStatus.values,
           itemLabel: (e) => e.label,
           onChanged: (v) {
             if (v != null) {
@@ -546,14 +598,16 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
           },
         ),
         right: KarigarInputField(
-          label:       KarigarStrings.lblPaidAmount,
-          hint:        KarigarStrings.hintAmount,
-          icon:        KarigarIcons.money,
-          controller:  _paidCtrl,
-          focusNode:   _paidFocus,
-          prefixText:  '₹',
+          label: KarigarStrings.lblPaidAmount,
+          hint: KarigarStrings.hintAmount,
+          icon: KarigarIcons.money,
+          controller: _paidCtrl,
+          focusNode: _paidFocus,
+          prefixText: '₹',
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
+          ],
         ),
       ),
       const SizedBox(height: 16),
@@ -562,9 +616,9 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
       KarigarReadOnlyField(
         label: KarigarStrings.lblBalanceDue,
         value: '₹${balance.toStringAsFixed(2)}',
-        icon:  KarigarIcons.statsMoney,
+        icon: KarigarIcons.statsMoney,
         color: balance > 0 ? KarigarColors.danger : KarigarColors.success,
-        note:  KarigarStrings.noteBalanceDue,
+        note: KarigarStrings.noteBalanceDue,
       ),
     ]);
   }
@@ -573,12 +627,15 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
     return Row(children: [
       OutlinedButton.icon(
         onPressed: _ctrl.isSaving ? null : _resetAll,
-        icon:  Icon(KarigarIcons.reset, size: 18, color: KarigarColors.textMuted),
-        label: Text(KarigarStrings.btnReset, style: KarigarStyles.resetButtonText),
+        icon:
+            Icon(KarigarIcons.reset, size: 18, color: KarigarColors.textMuted),
+        label:
+            Text(KarigarStrings.btnReset, style: KarigarStyles.resetButtonText),
         style: OutlinedButton.styleFrom(
           side: const BorderSide(color: KarigarColors.cardBorder),
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
       const SizedBox(width: 14),
@@ -586,11 +643,16 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
         child: ElevatedButton.icon(
           onPressed: _ctrl.isSaving ? null : _onSave,
           icon: _ctrl.isSaving
-              ? const SizedBox(width: 18, height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white))
               : Icon(KarigarIcons.save, size: 18, color: KarigarColors.shellBg),
           label: Text(
-            _ctrl.isSaving ? KarigarStrings.btnSaving : KarigarStrings.btnSaveReceipt,
+            _ctrl.isSaving
+                ? KarigarStrings.btnSaving
+                : KarigarStrings.btnSaveReceipt,
             style: KarigarStyles.saveButtonText,
           ),
           style: ElevatedButton.styleFrom(
@@ -599,7 +661,8 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
             disabledBackgroundColor: KarigarColors.brandGold.withOpacity(0.5),
             padding: const EdgeInsets.symmetric(vertical: 15),
             elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         ),
       ),
@@ -623,7 +686,8 @@ class _SelectedIssueCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: KarigarColors.info.withOpacity(0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: KarigarColors.info.withOpacity(0.35), width: 1.5),
+        border:
+            Border.all(color: KarigarColors.info.withOpacity(0.35), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -632,8 +696,9 @@ class _SelectedIssueCard extends StatelessWidget {
             const Icon(KarigarIcons.issueDetails,
                 color: KarigarColors.info, size: 16),
             const SizedBox(width: 8),
-            Text('Selected Issue', style: KarigarStyles.fieldLabel.copyWith(
-                color: KarigarColors.info)),
+            Text('Selected Issue',
+                style: KarigarStyles.fieldLabel
+                    .copyWith(color: KarigarColors.info)),
             const Spacer(),
             KarigarStatusPill(
               label: issue.statusEnum.label,
@@ -642,7 +707,8 @@ class _SelectedIssueCard extends StatelessWidget {
           ]),
           const SizedBox(height: 10),
           Row(children: [
-            Expanded(child: Column(
+            Expanded(
+                child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(issue.issueNumber, style: KarigarStyles.issueNumber),
@@ -676,8 +742,8 @@ class _SelectedIssueCard extends StatelessWidget {
 }
 
 class _DatePickerRow extends StatelessWidget {
-  final String       label;
-  final String       value;
+  final String label;
+  final String value;
   final VoidCallback onTap;
   const _DatePickerRow({
     required this.label,
@@ -704,7 +770,9 @@ class _DatePickerRow extends StatelessWidget {
               const SizedBox(width: 10),
               Container(width: 1, height: 22, color: KarigarColors.cardBorder),
               const SizedBox(width: 10),
-              Expanded(child: Text(value, style: KarigarStyles.fieldInput.copyWith(fontSize: 13))),
+              Expanded(
+                  child: Text(value,
+                      style: KarigarStyles.fieldInput.copyWith(fontSize: 13))),
               const Icon(Icons.edit_calendar_rounded,
                   color: KarigarColors.textHint, size: 16),
             ]),

@@ -1,22 +1,37 @@
+// =============================================================================
+// FILE        : girvi_list_app_bar.dart
+// MODULE      : Girvi / Pawn
+// LAYER       : UI / Component
+// DESCRIPTION : Premium Dark shell AppBar for the Girvi List screen.
+//               Zero hardcoded colors, styles, icons or strings.
+// =============================================================================
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
+import '../../../theme/girvi/girvi_theme.dart';
 
-class AddStockHubAppBar extends StatefulWidget implements PreferredSizeWidget {
+class GirviListAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
+  final VoidCallback onCalculatorTap;
+  final VoidCallback onRefreshTap;
 
-  const AddStockHubAppBar({super.key, required this.onBack});
+  const GirviListAppBar({
+    super.key,
+    required this.onBack,
+    required this.onCalculatorTap,
+    required this.onRefreshTap,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(70.0);
 
   @override
-  State<AddStockHubAppBar> createState() => _AddStockHubAppBarState();
+  State<GirviListAppBar> createState() => _GirviListAppBarState();
 }
 
-class _AddStockHubAppBarState extends State<AddStockHubAppBar>
+class _GirviListAppBarState extends State<GirviListAppBar>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _blinkCtrl;
+  late AnimationController _blinkCtrl;
 
   @override
   void initState() {
@@ -40,13 +55,13 @@ class _AddStockHubAppBarState extends State<AddStockHubAppBar>
       height: 70.0,
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       decoration: const BoxDecoration(
-        color: AddStockColors.shellPanelBg,
+        color: GirviColors.shellPanelBg,
         border: Border(
-          bottom: BorderSide(color: AddStockColors.shellBorder, width: 1.0),
+          bottom: BorderSide(color: GirviColors.shellBorder, width: 1.0),
         ),
         boxShadow: [
           BoxShadow(
-            color: Color(0x26000000),
+            color: GirviColors.shadowMedium,
             blurRadius: 16,
             offset: Offset(0, 4),
           ),
@@ -65,7 +80,7 @@ class _AddStockHubAppBarState extends State<AddStockHubAppBar>
             _buildVerticalDivider(),
             const SizedBox(width: 18),
 
-            // ── 3. Premium Gradient Icon ─────────────────────────────────────
+            // ── 3. Premium Gradient Module Icon ──────────────────────────────
             Container(
               width: 34,
               height: 34,
@@ -74,22 +89,22 @@ class _AddStockHubAppBarState extends State<AddStockHubAppBar>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AddStockColors.goldGradientStart,
-                    AddStockColors.brandGold,
+                    GirviColors.goldGradientStart,
+                    GirviColors.brandGold,
                   ],
                 ),
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: AddStockColors.brandGold.withOpacity(0.5),
+                    color: GirviColors.brandGold.withOpacity(0.5),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   )
                 ],
               ),
               child: const Icon(
-                AddStockIcons.inventory,
-                color: Colors.white,
+                GirviIcons.list, // List icon for Ledger
+                color: GirviColors.cardBg,
                 size: 18,
               ),
             ),
@@ -97,8 +112,8 @@ class _AddStockHubAppBarState extends State<AddStockHubAppBar>
 
             // ── 4. Main Title ────────────────────────────────────────────────
             Text(
-              'ADD STOCK DESK',
-              style: AddStockStyles.shellTitle.copyWith(
+              GirviStrings.listTitle.toUpperCase(),
+              style: GirviStyles.shellTitle.copyWith(
                 fontSize: 18,
                 letterSpacing: 1.2,
               ),
@@ -107,7 +122,25 @@ class _AddStockHubAppBarState extends State<AddStockHubAppBar>
             // Spacer pushes everything else to the right
             const Spacer(),
 
-            // ── 5. Premium Radar Widget ──────────────────────────────────────
+            // ── 5. Action Buttons ────────────────────────────────────────────
+            _HoverActionButton(
+              icon: GirviIcons.calculator,
+              onTap: widget.onCalculatorTap,
+              tooltip: GirviStrings.calcTitle,
+              iconColor: GirviColors.brandGold,
+            ),
+            const SizedBox(width: 10),
+            _HoverActionButton(
+              icon: GirviIcons.refresh,
+              onTap: widget.onRefreshTap,
+              tooltip: 'Refresh Ledger',
+              iconColor: GirviColors.shellTextMuted,
+            ),
+            const SizedBox(width: 16),
+            _buildVerticalDivider(),
+            const SizedBox(width: 16),
+
+            // ── 6. Premium Radar Widget ──────────────────────────────────────
             _RadarWidget(blinkCtrl: _blinkCtrl),
           ],
         ),
@@ -125,7 +158,7 @@ class _AddStockHubAppBarState extends State<AddStockHubAppBar>
           end: Alignment.bottomCenter,
           colors: [
             Colors.transparent,
-            AddStockColors.shellBorder,
+            GirviColors.shellBorder,
             Colors.transparent,
           ],
         ),
@@ -135,7 +168,7 @@ class _AddStockHubAppBarState extends State<AddStockHubAppBar>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// REUSABLE COMPONENTS
+// REUSABLE APP BAR COMPONENTS
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _HoverBackButton extends StatefulWidget {
@@ -168,19 +201,19 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: _isHovered
-                  ? AddStockColors.shellBg
-                  : AddStockColors.shellBorder.withOpacity(0.3),
+                  ? GirviColors.shellBg
+                  : GirviColors.shellBorder.withOpacity(0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isHovered
-                    ? AddStockColors.brandGold
-                    : AddStockColors.shellBorder,
+                    ? GirviColors.brandGold
+                    : GirviColors.shellBorder,
                 width: _isHovered ? 1.5 : 1.0,
               ),
               boxShadow: _isHovered
                   ? [
                       BoxShadow(
-                        color: AddStockColors.brandGold.withOpacity(0.3),
+                        color: GirviColors.brandGold.withOpacity(0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
                       ),
@@ -188,10 +221,65 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
                   : [],
             ),
             child: Icon(
-              AddStockIcons.backArrow,
+              GirviIcons.backArrow,
               color: _isHovered
-                  ? AddStockColors.brandGold
-                  : AddStockColors.shellTextTitle,
+                  ? GirviColors.brandGold
+                  : GirviColors.shellTextTitle,
+              size: 18,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HoverActionButton extends StatefulWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final String tooltip;
+  final Color iconColor;
+
+  const _HoverActionButton({
+    required this.icon,
+    required this.onTap,
+    required this.tooltip,
+    required this.iconColor,
+  });
+
+  @override
+  State<_HoverActionButton> createState() => _HoverActionButtonState();
+}
+
+class _HoverActionButtonState extends State<_HoverActionButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: widget.tooltip,
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color:
+                  _isHovered ? GirviColors.shellBg : GirviColors.shellPanelBg,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _isHovered
+                    ? GirviColors.brandGold
+                    : GirviColors.shellBorder,
+              ),
+            ),
+            child: Icon(
+              widget.icon,
+              color: _isHovered ? GirviColors.brandGold : widget.iconColor,
               size: 18,
             ),
           ),
@@ -210,10 +298,10 @@ class _RadarWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AddStockColors.onlineGreen.withOpacity(0.08),
+        color: GirviColors.onlineGreen.withOpacity(0.08),
         borderRadius: BorderRadius.circular(30),
         border: Border.all(
-          color: AddStockColors.onlineGreen.withOpacity(0.3),
+          color: GirviColors.onlineGreen.withOpacity(0.3),
         ),
       ),
       child: Row(
@@ -231,11 +319,11 @@ class _RadarWidget extends StatelessWidget {
                   width: 6,
                   height: 6,
                   decoration: const BoxDecoration(
-                    color: AddStockColors.onlineGreen,
+                    color: GirviColors.onlineGreen,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AddStockColors.onlineGreen,
+                        color: GirviColors.onlineGreen,
                         blurRadius: 6,
                         spreadRadius: 1,
                       ),
@@ -247,9 +335,9 @@ class _RadarWidget extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            AddStockStrings.systemOnline,
+            GirviStrings.systemOnline,
             style: GoogleFonts.inter(
-              color: AddStockColors.onlineGreen,
+              color: GirviColors.onlineGreen,
               fontSize: 12.0,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
@@ -275,7 +363,7 @@ class _RadarWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AddStockColors.onlineGreen.withOpacity(0.5),
+                  color: GirviColors.onlineGreen.withOpacity(0.5),
                   width: 1.5,
                 ),
               ),

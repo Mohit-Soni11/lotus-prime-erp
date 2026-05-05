@@ -16,6 +16,8 @@ class AddStockColors {
   static const Color brandGold = Color(0xFFD4AF37);
   static const Color brandGoldLight = Color(0x1AD4AF37);
   static const Color brandGoldGlow = Color(0x40D4AF37);
+  static const Color goldGradientStart =
+      Color(0xFFFFD700); // Premium Gradient Start
 
   // ✅ NEW: Added for PC 2 UI Compatibility (Selected/Highlighted states)
   static const Color brandGoldBg = Color(0xFFFFFDF5);

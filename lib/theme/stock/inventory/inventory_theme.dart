@@ -6,5 +6,6 @@
 // =============================================================================
 
 export 'inventory_colors.dart';
+export 'inventory_icons.dart';
 export 'inventory_strings.dart';
 export 'inventory_styles.dart';

@@ -6,18 +6,16 @@ import 'stock_metal_ui.dart';
 
 class AddStockAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
-  final VoidCallback onResetRequested;
   final AddStockController ctrl;
 
   const AddStockAppBar({
     super.key,
     required this.onBack,
-    required this.onResetRequested,
     required this.ctrl,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(108);
+  Size get preferredSize => const Size.fromHeight(114.0);
 
   @override
   State<AddStockAppBar> createState() => _AddStockAppBarState();
@@ -52,9 +50,6 @@ class _AddStockAppBarState extends State<AddStockAppBar>
           width: double.infinity,
           decoration: const BoxDecoration(
             color: AddStockColors.shellPanelBg,
-            border: Border(
-              bottom: BorderSide(color: AddStockColors.shellBorder, width: 1),
-            ),
             boxShadow: [
               BoxShadow(
                 color: Color(0x26000000),
@@ -67,112 +62,72 @@ class _AddStockAppBarState extends State<AddStockAppBar>
             bottom: false,
             child: Column(
               children: [
-                SizedBox(
-                  height: 64,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      children: [
-                        _HoverActionButton(
-                          icon: AddStockIcons.backArrow,
-                          tooltip: 'Back',
-                          onTap: widget.onBack,
+                // ══════════════════════════════════════════════════════════════
+                // TOP ROW: Premium Header
+                // ══════════════════════════════════════════════════════════════
+                Container(
+                  height: 70.0,
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _HoverBackButton(onTap: widget.onBack),
+                      const SizedBox(width: 18),
+                      _buildVerticalDivider(),
+                      const SizedBox(width: 18),
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          gradient: ui.gradient,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: ui.accent.withOpacity(0.4),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            )
+                          ],
                         ),
-                        const SizedBox(width: 14),
-                        _divider(),
-                        const SizedBox(width: 14),
-                        Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            gradient: ui.gradient,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(ui.icon, color: Colors.white, size: 18),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    AddStockStrings.screenTitle,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: AddStockColors.shellTextTitle,
-                                      letterSpacing: 0.8,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _metalBadge(ui),
-                                ],
-                              ),
-                              const SizedBox(height: 3),
-                              Row(
-                                children: [
-                                  _RadarWidget(blinkCtrl: _blinkCtrl),
-                                  const SizedBox(width: 8),
-                                  Flexible(
-                                    child: Text(
-                                      '${widget.ctrl.totalQuantity} pcs • ${widget.ctrl.totalGrossWeight.toStringAsFixed(3)}g gross • ${widget.ctrl.batchCode}',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 10,
-                                        color: AddStockColors.shellTextMuted,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        _divider(),
-                        const SizedBox(width: 12),
-                        _HoverActionButton(
-                          icon: AddStockIcons.reset,
-                          tooltip: AddStockStrings.btnResetBatch,
-                          onTap: widget.onResetRequested,
-                        ),
-                        const SizedBox(width: 10),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AddStockColors.moduleBadgeBg,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: AddStockColors.moduleBadgeBorder,
+                        child: Icon(ui.icon, color: Colors.white, size: 18),
+                      ),
+                      const SizedBox(width: 14),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            AddStockStrings.screenTitle,
+                            style: AddStockStyles.shellTitle.copyWith(
+                              fontSize: 18,
+                              letterSpacing: 1.2,
                             ),
                           ),
-                          child: Text(
-                            AddStockStrings.moduleBadge,
-                            style: GoogleFonts.inter(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: AddStockColors.moduleBadgeText,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 12),
+                          _metalBadge(ui),
+                        ],
+                      ),
+                      const Spacer(),
+                      _RadarWidget(blinkCtrl: _blinkCtrl),
+                    ],
                   ),
                 ),
+
+                // ══════════════════════════════════════════════════════════════
+                // BOTTOM ROW: Clean Process Stepper
+                // ══════════════════════════════════════════════════════════════
                 Container(
-                  height: 44,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  height: 44.0,
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   decoration: const BoxDecoration(
                     color: AddStockColors.shellBg,
                     border: Border(
                       top: BorderSide(
                         color: AddStockColors.shellBorder,
-                        width: 0.5,
+                        width: 1.0,
+                      ),
+                      bottom: BorderSide(
+                        color: AddStockColors.shellBorder,
+                        width: 1.0,
                       ),
                     ),
                   ),
@@ -197,14 +152,18 @@ class _AddStockAppBarState extends State<AddStockAppBar>
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
+                          horizontal: 12,
+                          vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: ui.accent.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(999),
+                          color: widget.ctrl.rowsWithErrorsCount == 0
+                              ? AddStockColors.success.withOpacity(0.12)
+                              : AddStockColors.danger.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: ui.accent.withOpacity(0.28),
+                            color: widget.ctrl.rowsWithErrorsCount == 0
+                                ? AddStockColors.success.withOpacity(0.3)
+                                : AddStockColors.danger.withOpacity(0.3),
                           ),
                         ),
                         child: Text(
@@ -214,7 +173,10 @@ class _AddStockAppBarState extends State<AddStockAppBar>
                           style: GoogleFonts.inter(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: ui.accent,
+                            letterSpacing: 0.5,
+                            color: widget.ctrl.rowsWithErrorsCount == 0
+                                ? AddStockColors.success
+                                : AddStockColors.danger,
                           ),
                         ),
                       ),
@@ -229,10 +191,10 @@ class _AddStockAppBarState extends State<AddStockAppBar>
     );
   }
 
-  Widget _divider() {
+  Widget _buildVerticalDivider() {
     return Container(
-      width: 1,
-      height: 30,
+      width: 1.5,
+      height: 32,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -249,24 +211,181 @@ class _AddStockAppBarState extends State<AddStockAppBar>
 
   Widget _metalBadge(StockMetalUiData ui) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: ui.accent.withOpacity(0.16),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: ui.accent.withOpacity(0.3)),
+        color: ui.accent.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: ui.accent.withOpacity(0.4)),
       ),
       child: Text(
         ui.title.toUpperCase(),
         style: GoogleFonts.inter(
-          fontSize: 9,
+          fontSize: 10,
           fontWeight: FontWeight.w800,
-          letterSpacing: 0.6,
+          letterSpacing: 0.8,
           color: ui.accent,
         ),
       ),
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REUSABLE COMPONENTS FOR APP BARS
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _HoverBackButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _HoverBackButton({required this.onTap});
+
+  @override
+  State<_HoverBackButton> createState() => _HoverBackButtonState();
+}
+
+class _HoverBackButtonState extends State<_HoverBackButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _isHovered ? 1.05 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: _isHovered
+                  ? AddStockColors.shellBg
+                  : AddStockColors.shellBorder.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: _isHovered
+                    ? AddStockColors.brandGold
+                    : AddStockColors.shellBorder,
+                width: _isHovered ? 1.5 : 1.0,
+              ),
+              boxShadow: _isHovered
+                  ? [
+                      BoxShadow(
+                        color: AddStockColors.brandGold.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                  : [],
+            ),
+            child: Icon(
+              AddStockIcons.backArrow,
+              color: _isHovered
+                  ? AddStockColors.brandGold
+                  : AddStockColors.shellTextTitle,
+              size: 18,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RadarWidget extends StatelessWidget {
+  final AnimationController blinkCtrl;
+  const _RadarWidget({required this.blinkCtrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AddStockColors.onlineGreen.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: AddStockColors.onlineGreen.withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _buildWave(blinkCtrl, 0.0),
+                _buildWave(blinkCtrl, 0.5),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: AddStockColors.onlineGreen,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AddStockColors.onlineGreen,
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            AddStockStrings.systemOnline,
+            style: GoogleFonts.inter(
+              color: AddStockColors.onlineGreen,
+              fontSize: 12.0,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWave(AnimationController ctrl, double delay) {
+    return AnimatedBuilder(
+      animation: ctrl,
+      builder: (_, __) {
+        final val = (ctrl.value + delay) % 1.0;
+        return Opacity(
+          opacity: 1.0 - val,
+          child: Transform.scale(
+            scale: 1.0 + (val * 1.5),
+            child: Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AddStockColors.onlineGreen.withOpacity(0.5),
+                  width: 1.5,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STEPPER WIDGETS
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _StepDot extends StatelessWidget {
   final int index;
@@ -291,35 +410,50 @@ class _StepDot extends StatelessWidget {
       children: [
         AnimatedContainer(
           duration: const Duration(milliseconds: 220),
-          width: 22,
-          height: 22,
+          width: 24,
+          height: 24,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: active
                 ? accentColor
                 : done
-                    ? accentColor.withOpacity(0.5)
-                    : AddStockColors.shellBorder,
+                    ? accentColor.withOpacity(0.2)
+                    : AddStockColors.shellBorder.withOpacity(0.3),
             shape: BoxShape.circle,
+            border: Border.all(
+              color: active || done ? accentColor : AddStockColors.shellBorder,
+              width: active ? 1.5 : 1.0,
+            ),
+            boxShadow: active
+                ? [
+                    BoxShadow(
+                      color: accentColor.withOpacity(0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    )
+                  ]
+                : [],
           ),
           child: done
-              ? const Icon(Icons.check, size: 12, color: Colors.black)
+              ? Icon(Icons.check_rounded, size: 14, color: accentColor)
               : Text(
                   '${index + 1}',
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color:
-                        active ? Colors.black : AddStockColors.shellTextMuted,
+                    fontWeight: FontWeight.w800,
+                    color: active
+                        ? AddStockColors.shellBg
+                        : AddStockColors.shellTextMuted,
                   ),
                 ),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 8),
         Text(
           label,
           style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+            fontSize: 13,
+            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+            letterSpacing: 0.3,
             color: active ? accentColor : AddStockColors.shellTextMuted,
           ),
         ),
@@ -338,134 +472,21 @@ class _StepLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8),
-        height: 1.5,
+        margin: const EdgeInsets.symmetric(horizontal: 12),
+        height: 2.0,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: done
-                ? [accentColor.withOpacity(0.6), accentColor.withOpacity(0.24)]
-                : const [
-                    AddStockColors.shellBorder,
-                    AddStockColors.shellBorder,
-                  ],
-          ),
+          color:
+              done ? accentColor : AddStockColors.shellBorder.withOpacity(0.5),
           borderRadius: BorderRadius.circular(999),
+          boxShadow: done
+              ? [
+                  BoxShadow(
+                    color: accentColor.withOpacity(0.3),
+                    blurRadius: 4,
+                  )
+                ]
+              : [],
         ),
-      ),
-    );
-  }
-}
-
-class _HoverActionButton extends StatefulWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  const _HoverActionButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  @override
-  State<_HoverActionButton> createState() => _HoverActionButtonState();
-}
-
-class _HoverActionButtonState extends State<_HoverActionButton> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: Tooltip(
-        message: widget.tooltip,
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: _hovered
-                  ? AddStockColors.shellBg
-                  : AddStockColors.shellBorder.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: _hovered
-                    ? AddStockColors.brandGold
-                    : AddStockColors.shellBorder,
-                width: _hovered ? 1.5 : 1.0,
-              ),
-            ),
-            child: Icon(
-              widget.icon,
-              size: 18,
-              color: _hovered
-                  ? AddStockColors.brandGold
-                  : AddStockColors.shellTextTitle,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RadarWidget extends StatelessWidget {
-  final AnimationController blinkCtrl;
-
-  const _RadarWidget({required this.blinkCtrl});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 14,
-      height: 14,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          AnimatedBuilder(
-            animation: blinkCtrl,
-            builder: (_, __) {
-              final value = blinkCtrl.value;
-              return Opacity(
-                opacity: 1.0 - value,
-                child: Transform.scale(
-                  scale: 1.0 + (value * 1.5),
-                  child: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AddStockColors.onlineGreen.withOpacity(0.5),
-                        width: 1.2,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-          Container(
-            width: 6,
-            height: 6,
-            decoration: const BoxDecoration(
-              color: AddStockColors.onlineGreen,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AddStockColors.onlineGreen,
-                  blurRadius: 6,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

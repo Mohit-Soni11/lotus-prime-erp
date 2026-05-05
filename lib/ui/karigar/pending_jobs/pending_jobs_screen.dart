@@ -4,7 +4,7 @@
 // LAYER       : UI / Screen
 // DESCRIPTION : Pending Jobs screen — live tracker for all open karigar jobs.
 //               Features:
-//               - Dark shell AppBar (same pattern)
+//               - App Bar extracted to pending_jobs_app_bar.dart
 //               - 5 summary stat cards (karigars, jobs, overdue, weight, outstanding)
 //               - Filter chips: All | Pending | In Progress | Overdue
 //               - Search by karigar name, issue number, or item
@@ -23,12 +23,12 @@ import '../../../models/karigar/karigar_enums/karigar_enums.dart';
 import '../../../models/karigar/karigar_issue_model.dart';
 import '../../../models/karigar/karigar_stats_model.dart';
 import '../../../theme/karigar/karigar_theme.dart';
-import '../shared/karigar_app_bar.dart';
+import 'pending_jobs_app_bar.dart'; // NAYA IMPORT
 import '../shared/karigar_field_widgets.dart';
 
 class PendingJobsScreen extends StatefulWidget {
-  final VoidCallback?               onBack;
-  final Function(int issueId)?      onReceiveGoods;
+  final VoidCallback? onBack;
+  final Function(int issueId)? onReceiveGoods;
 
   const PendingJobsScreen({
     super.key,
@@ -42,14 +42,13 @@ class PendingJobsScreen extends StatefulWidget {
 
 class _PendingJobsScreenState extends State<PendingJobsScreen>
     with TickerProviderStateMixin {
-
   late final PendingJobsController _ctrl;
   final _searchCtrl = TextEditingController();
 
   // Stagger animation for header cards
   late final AnimationController _headerAnim;
-  late final Animation<double>   _headerFade;
-  late final Animation<Offset>   _headerSlide;
+  late final Animation<double> _headerFade;
+  late final Animation<Offset> _headerSlide;
 
   @override
   void initState() {
@@ -60,7 +59,8 @@ class _PendingJobsScreenState extends State<PendingJobsScreen>
         vsync: this, duration: const Duration(milliseconds: 600));
     _headerFade = CurvedAnimation(parent: _headerAnim, curve: Curves.easeInOut);
     _headerSlide = Tween<Offset>(begin: const Offset(0, -0.1), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _headerAnim, curve: Curves.easeOutCubic));
+        .animate(
+            CurvedAnimation(parent: _headerAnim, curve: Curves.easeOutCubic));
 
     _ctrl.loadData().then((_) {
       if (mounted) _headerAnim.forward();
@@ -81,10 +81,9 @@ class _PendingJobsScreenState extends State<PendingJobsScreen>
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: KarigarColors.shellBg,
-        appBar: KarigarAppBar(
-          screenTitle:    KarigarStrings.pendingScreenTitle,
-          screenSubtitle: KarigarStrings.pendingScreenSub,
-          onBack:         widget.onBack ?? () => Navigator.maybePop(context),
+        // NAYA APP BAR CALL
+        appBar: PendingJobsAppBar(
+          onBack: widget.onBack ?? () => Navigator.maybePop(context),
         ),
         body: SafeArea(
           child: Container(
@@ -92,7 +91,6 @@ class _PendingJobsScreenState extends State<PendingJobsScreen>
             child: ListenableBuilder(
               listenable: _ctrl,
               builder: (context, _) {
-
                 if (_ctrl.isLoading) {
                   return const Center(
                     child: CircularProgressIndicator(
@@ -103,7 +101,6 @@ class _PendingJobsScreenState extends State<PendingJobsScreen>
                 }
 
                 return Column(children: [
-
                   // ── Stats Header ─────────────────────────────────────
                   FadeTransition(
                     opacity: _headerFade,
@@ -115,10 +112,10 @@ class _PendingJobsScreenState extends State<PendingJobsScreen>
 
                   // ── Search + Filters ─────────────────────────────────
                   _SearchAndFilterBar(
-                    ctrl:       _ctrl,
+                    ctrl: _ctrl,
                     searchCtrl: _searchCtrl,
-                    onSearch:   _ctrl.onSearchChanged,
-                    onFilter:   _ctrl.onFilterChanged,
+                    onSearch: _ctrl.onSearchChanged,
+                    onFilter: _ctrl.onFilterChanged,
                   ),
 
                   // ── Job List ─────────────────────────────────────────
@@ -128,15 +125,18 @@ class _PendingJobsScreenState extends State<PendingJobsScreen>
                         : ListView.separated(
                             padding: const EdgeInsets.all(16),
                             physics: const BouncingScrollPhysics(),
-                            itemCount:    _ctrl.filteredJobs.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 10),
+                            itemCount: _ctrl.filteredJobs.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 10),
                             itemBuilder: (_, i) {
                               final job = _ctrl.filteredJobs[i];
                               return _JobCard(
-                                job:          job,
-                                onMarkInProgress: () => _ctrl.markInProgress(job.id),
-                                onCancel:     () => _confirmCancel(job),
-                                onReceive:    () => widget.onReceiveGoods?.call(job.id),
+                                job: job,
+                                onMarkInProgress: () =>
+                                    _ctrl.markInProgress(job.id),
+                                onCancel: () => _confirmCancel(job),
+                                onReceive: () =>
+                                    widget.onReceiveGoods?.call(job.id),
                               );
                             },
                           ),
@@ -165,16 +165,20 @@ class _PendingJobsScreenState extends State<PendingJobsScreen>
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text('No, Keep It',
-                style: GoogleFonts.inter(color: KarigarColors.textMuted, fontWeight: FontWeight.w600)),
+                style: GoogleFonts.inter(
+                    color: KarigarColors.textMuted,
+                    fontWeight: FontWeight.w600)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: KarigarColors.danger,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             child: Text('Cancel Job',
-                style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w700)),
+                style: GoogleFonts.inter(
+                    color: Colors.white, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -194,42 +198,44 @@ class _StatsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rupee = NumberFormat('₹##,##,##0', 'en_IN');
-    final wt    = NumberFormat('##0.00', 'en_IN');
+    final wt = NumberFormat('##0.00', 'en_IN');
 
     return Container(
       color: KarigarColors.shellPanelBg,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: Row(children: [
         _StatChip(
-          icon:  KarigarIcons.karigar,
+          icon: KarigarIcons.karigar,
           label: KarigarStrings.statActiveKarigars,
           value: '${stats.totalKarigars}',
           color: KarigarColors.brandGold,
         ),
         const SizedBox(width: 10),
         _StatChip(
-          icon:  KarigarIcons.pending,
+          icon: KarigarIcons.pending,
           label: KarigarStrings.statActiveJobs,
           value: '${stats.totalActiveJobs}',
           color: KarigarColors.statusInProgress,
         ),
         const SizedBox(width: 10),
         _StatChip(
-          icon:  KarigarIcons.overdue,
+          icon: KarigarIcons.overdue,
           label: KarigarStrings.statOverdueJobs,
           value: '${stats.totalOverdueJobs}',
-          color: stats.totalOverdueJobs > 0 ? KarigarColors.danger : KarigarColors.textMuted,
+          color: stats.totalOverdueJobs > 0
+              ? KarigarColors.danger
+              : KarigarColors.textMuted,
         ),
         const SizedBox(width: 10),
         _StatChip(
-          icon:  KarigarIcons.statsWeight,
+          icon: KarigarIcons.statsWeight,
           label: KarigarStrings.statWeightPending,
           value: '${wt.format(stats.totalWeightWithKarigar)}g',
           color: KarigarColors.info,
         ),
         const SizedBox(width: 10),
         _StatChip(
-          icon:  KarigarIcons.statsMoney,
+          icon: KarigarIcons.statsMoney,
           label: KarigarStrings.statOutstanding,
           value: rupee.format(stats.totalOutstanding),
           color: KarigarColors.warning,
@@ -241,9 +247,9 @@ class _StatsHeader extends StatelessWidget {
 
 class _StatChip extends StatelessWidget {
   final IconData icon;
-  final String   label;
-  final String   value;
-  final Color    color;
+  final String label;
+  final String value;
+  final Color color;
   const _StatChip({
     required this.icon,
     required this.label,
@@ -266,17 +272,20 @@ class _StatChip extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 16),
             const SizedBox(height: 6),
-            Text(value, style: GoogleFonts.manrope(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: KarigarColors.shellTextTitle,
-            )),
+            Text(value,
+                style: GoogleFonts.manrope(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: KarigarColors.shellTextTitle,
+                )),
             const SizedBox(height: 2),
-            Text(label, style: GoogleFonts.inter(
-              fontSize: 10,
-              fontWeight: FontWeight.w400,
-              color: KarigarColors.shellTextMuted,
-            ), overflow: TextOverflow.ellipsis),
+            Text(label,
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w400,
+                  color: KarigarColors.shellTextMuted,
+                ),
+                overflow: TextOverflow.ellipsis),
           ],
         ),
       ),
@@ -290,8 +299,8 @@ class _StatChip extends StatelessWidget {
 
 class _SearchAndFilterBar extends StatelessWidget {
   final PendingJobsController ctrl;
-  final TextEditingController  searchCtrl;
-  final Function(String)       onSearch;
+  final TextEditingController searchCtrl;
+  final Function(String) onSearch;
   final Function(PendingJobsFilter) onFilter;
 
   const _SearchAndFilterBar({
@@ -310,12 +319,12 @@ class _SearchAndFilterBar extends StatelessWidget {
         // Search bar
         TextField(
           controller: searchCtrl,
-          onChanged:  onSearch,
-          style:      KarigarStyles.fieldInput.copyWith(fontSize: 13),
+          onChanged: onSearch,
+          style: KarigarStyles.fieldInput.copyWith(fontSize: 13),
           decoration: InputDecoration(
-            hintText:    'Search by karigar, issue number, or item...',
-            hintStyle:   KarigarStyles.fieldHint,
-            prefixIcon:  const Icon(KarigarIcons.search,
+            hintText: 'Search by karigar, issue number, or item...',
+            hintStyle: KarigarStyles.fieldHint,
+            prefixIcon: const Icon(KarigarIcons.search,
                 color: KarigarColors.textHint, size: 20),
             suffixIcon: searchCtrl.text.isNotEmpty
                 ? IconButton(
@@ -327,8 +336,8 @@ class _SearchAndFilterBar extends StatelessWidget {
                     },
                   )
                 : null,
-            filled:      true,
-            fillColor:   KarigarColors.inputBg,
+            filled: true,
+            fillColor: KarigarColors.inputBg,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: KarigarColors.cardBorder),
@@ -339,9 +348,11 @@ class _SearchAndFilterBar extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: KarigarColors.brandGold, width: 1.5),
+              borderSide:
+                  const BorderSide(color: KarigarColors.brandGold, width: 1.5),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),
         ),
         const SizedBox(height: 10),
@@ -352,14 +363,15 @@ class _SearchAndFilterBar extends StatelessWidget {
           child: Row(
             children: PendingJobsFilter.values.map((filter) {
               final isActive = ctrl.activeFilter == filter;
-              final color    = _filterColor(filter);
+              final color = _filterColor(filter);
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: GestureDetector(
                   onTap: () => onFilter(filter),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
                       color: isActive
                           ? color.withOpacity(0.12)
@@ -370,11 +382,13 @@ class _SearchAndFilterBar extends StatelessWidget {
                         width: isActive ? 1.5 : 1.0,
                       ),
                     ),
-                    child: Text(filter.label, style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                      color: isActive ? color : KarigarColors.textMuted,
-                    )),
+                    child: Text(filter.label,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight:
+                              isActive ? FontWeight.w700 : FontWeight.w500,
+                          color: isActive ? color : KarigarColors.textMuted,
+                        )),
                   ),
                 ),
               );
@@ -387,10 +401,14 @@ class _SearchAndFilterBar extends StatelessWidget {
 
   Color _filterColor(PendingJobsFilter filter) {
     switch (filter) {
-      case PendingJobsFilter.all:        return KarigarColors.brandGold;
-      case PendingJobsFilter.pending:    return KarigarColors.statusPending;
-      case PendingJobsFilter.inProgress: return KarigarColors.statusInProgress;
-      case PendingJobsFilter.overdue:    return KarigarColors.danger;
+      case PendingJobsFilter.all:
+        return KarigarColors.brandGold;
+      case PendingJobsFilter.pending:
+        return KarigarColors.statusPending;
+      case PendingJobsFilter.inProgress:
+        return KarigarColors.statusInProgress;
+      case PendingJobsFilter.overdue:
+        return KarigarColors.danger;
     }
   }
 }
@@ -401,9 +419,9 @@ class _SearchAndFilterBar extends StatelessWidget {
 
 class _JobCard extends StatelessWidget {
   final KarigarIssueWithKarigar job;
-  final VoidCallback            onMarkInProgress;
-  final VoidCallback            onCancel;
-  final VoidCallback?           onReceive;
+  final VoidCallback onMarkInProgress;
+  final VoidCallback onCancel;
+  final VoidCallback? onReceive;
 
   const _JobCard({
     required this.job,
@@ -414,12 +432,12 @@ class _JobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fmt        = DateFormat('dd MMM yy');
+    final fmt = DateFormat('dd MMM yy');
     final statusColor = _statusColor(job.statusEnum, job.isOverdue);
 
     return Container(
       decoration: BoxDecoration(
-        color:  KarigarColors.cardBg,
+        color: KarigarColors.cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: job.isOverdue
@@ -442,21 +460,22 @@ class _JobCard extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
           child: Column(children: [
-
             // Row 1: Issue # + Status
             Row(children: [
               Text(job.issueNumber, style: KarigarStyles.issueNumber),
               const SizedBox(width: 10),
               KarigarStatusPill(
-                label: job.isOverdue ? KarigarStrings.statusOverdue
+                label: job.isOverdue
+                    ? KarigarStrings.statusOverdue
                     : job.statusEnum.label,
                 color: statusColor,
-                icon:  job.isOverdue ? KarigarIcons.overdue : null,
+                icon: job.isOverdue ? KarigarIcons.overdue : null,
               ),
               const Spacer(),
               if (job.isOverdue) ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: KarigarColors.danger.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(8),
@@ -472,7 +491,8 @@ class _JobCard extends StatelessWidget {
                 ),
               ] else ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: KarigarColors.textHint.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(8),
@@ -503,13 +523,16 @@ class _JobCard extends StatelessWidget {
                     )),
               ),
               const SizedBox(width: 12),
-              Expanded(child: Column(
+              Expanded(
+                  child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(job.karigarName, style: KarigarStyles.jobTitle),
                   const SizedBox(height: 2),
-                  Text(job.itemDescription, style: KarigarStyles.jobSubtitle,
-                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(job.itemDescription,
+                      style: KarigarStyles.jobSubtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
                 ],
               )),
               Column(
@@ -541,7 +564,9 @@ class _JobCard extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: job.isOverdue ? KarigarColors.danger : KarigarColors.textMuted,
+                    color: job.isOverdue
+                        ? KarigarColors.danger
+                        : KarigarColors.textMuted,
                   ),
                 ),
             ]),
@@ -557,7 +582,7 @@ class _JobCard extends StatelessWidget {
           child: Row(children: [
             if (job.statusEnum == IssueStatus.pending)
               _ActionButton(
-                icon:  KarigarIcons.inProgress,
+                icon: KarigarIcons.inProgress,
                 label: 'In Progress',
                 color: KarigarColors.info,
                 onTap: onMarkInProgress,
@@ -565,7 +590,7 @@ class _JobCard extends StatelessWidget {
             const Spacer(),
             if (onReceive != null)
               _ActionButton(
-                icon:  KarigarIcons.receive,
+                icon: KarigarIcons.receive,
                 label: 'Receive Goods',
                 color: KarigarColors.success,
                 onTap: onReceive!,
@@ -573,7 +598,7 @@ class _JobCard extends StatelessWidget {
               ),
             const SizedBox(width: 8),
             _ActionButton(
-              icon:  KarigarIcons.cancel,
+              icon: KarigarIcons.cancel,
               label: 'Cancel',
               color: KarigarColors.danger,
               onTap: onCancel,
@@ -587,10 +612,14 @@ class _JobCard extends StatelessWidget {
   Color _statusColor(IssueStatus status, bool isOverdue) {
     if (isOverdue) return KarigarColors.danger;
     switch (status) {
-      case IssueStatus.pending:    return KarigarColors.statusPending;
-      case IssueStatus.inProgress: return KarigarColors.statusInProgress;
-      case IssueStatus.completed:  return KarigarColors.statusCompleted;
-      case IssueStatus.cancelled:  return KarigarColors.statusCancelled;
+      case IssueStatus.pending:
+        return KarigarColors.statusPending;
+      case IssueStatus.inProgress:
+        return KarigarColors.statusInProgress;
+      case IssueStatus.completed:
+        return KarigarColors.statusCompleted;
+      case IssueStatus.cancelled:
+        return KarigarColors.statusCancelled;
     }
   }
 }
@@ -608,20 +637,21 @@ class _InfoChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: KarigarColors.cardBorder),
       ),
-      child: Text(label, style: KarigarStyles.caption.copyWith(
-        fontWeight: FontWeight.w600,
-        color: KarigarColors.textBody,
-      )),
+      child: Text(label,
+          style: KarigarStyles.caption.copyWith(
+            fontWeight: FontWeight.w600,
+            color: KarigarColors.textBody,
+          )),
     );
   }
 }
 
 class _ActionButton extends StatelessWidget {
-  final IconData     icon;
-  final String       label;
-  final Color        color;
+  final IconData icon;
+  final String label;
+  final Color color;
   final VoidCallback onTap;
-  final bool         isPrimary;
+  final bool isPrimary;
 
   const _ActionButton({
     required this.icon,
@@ -648,11 +678,12 @@ class _ActionButton extends StatelessWidget {
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, color: color, size: 14),
           const SizedBox(width: 5),
-          Text(label, style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: color,
-          )),
+          Text(label,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: color,
+              )),
         ]),
       ),
     );
@@ -678,7 +709,7 @@ class _EmptyState extends StatelessWidget {
             filter == PendingJobsFilter.overdue
                 ? KarigarIcons.completed
                 : KarigarIcons.emptyJobs,
-            size:  64,
+            size: 64,
             color: KarigarColors.textHint,
           ),
           const SizedBox(height: 16),

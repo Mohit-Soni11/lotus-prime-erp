@@ -5,7 +5,7 @@
 // DESCRIPTION : Notice & Auction management screen.
 //               Lists all OVERDUE girvi loans.
 //               Actions: Send Notice, Mark Auctioned.
-//               Shows days overdue, overdue interest, notice history.
+//               - App Bar extracted to notice_auction_app_bar.dart
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -18,6 +18,7 @@ import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../repositories/girvi/girvi_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
+import 'notice_auction_app_bar.dart'; // NAYA IMPORT
 import '../shared/girvi_shared_widgets.dart';
 
 class NoticeAuctionScreen extends StatefulWidget {
@@ -29,22 +30,21 @@ class NoticeAuctionScreen extends StatefulWidget {
 }
 
 class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
-
-  final AppDatabase      _db   = AppDatabase();
-  late final GirviRepository    _repo;
-  late GirviListController       _listCtrl;
+  final AppDatabase _db = AppDatabase();
+  late final GirviRepository _repo;
+  late GirviListController _listCtrl;
 
   List<GirviLoanWithCustomer> _overdueLoans = [];
-  bool   _loading = true;
+  bool _loading = true;
   String? _error;
 
-  final _fmt     = NumberFormat('#,##,##0.00', 'en_IN');
+  final _fmt = NumberFormat('#,##,##0.00', 'en_IN');
   final _dateFmt = DateFormat('dd MMM yyyy');
 
   @override
   void initState() {
     super.initState();
-    _repo     = GirviRepository(_db);
+    _repo = GirviRepository(_db);
     _listCtrl = GirviListController(_db);
     _load();
   }
@@ -56,15 +56,19 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       await _repo.syncOverdueStatus();
       final all = await _repo.getLoansWithCustomer();
-      _overdueLoans = all.where((g) =>
-          g.loan.isOverdue ||
-          g.loan.girviStatus == GirviStatus.overdue).toList();
-      _overdueLoans.sort(
-          (a, b) => b.loan.daysElapsed.compareTo(a.loan.daysElapsed));
+      _overdueLoans = all
+          .where((g) =>
+              g.loan.isOverdue || g.loan.girviStatus == GirviStatus.overdue)
+          .toList();
+      _overdueLoans
+          .sort((a, b) => b.loan.daysElapsed.compareTo(a.loan.daysElapsed));
     } catch (e) {
       _error = 'Failed to load overdue loans.';
     } finally {
@@ -74,42 +78,46 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
 
   Future<void> _markAuctioned(GirviLoanWithCustomer data) async {
     final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: GirviColors.cardBg,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(children: [
-          const Icon(GirviIcons.auctioned, color: GirviColors.danger),
-          const SizedBox(width: 10),
-          Text('Mark as Auctioned',
-              style: GoogleFonts.manrope(
-                  fontSize: 16, fontWeight: FontWeight.w800,
-                  color: GirviColors.textDark)),
-        ]),
-        content: Text(
-            'Mark ${data.loan.ticketNo} (${data.customerName}) as auctioned?\n\n'
-            'This action is IRREVERSIBLE.',
-            style: GoogleFonts.inter(fontSize: 13, color: GirviColors.textBody)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel',
-                style: GoogleFonts.inter(color: GirviColors.textMuted)),
+          context: context,
+          builder: (_) => AlertDialog(
+            backgroundColor: GirviColors.cardBg,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(children: [
+              const Icon(GirviIcons.auctioned, color: GirviColors.danger),
+              const SizedBox(width: 10),
+              Text('Mark as Auctioned',
+                  style: GoogleFonts.manrope(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: GirviColors.textDark)),
+            ]),
+            content: Text(
+                'Mark ${data.loan.ticketNo} (${data.customerName}) as auctioned?\n\n'
+                'This action is IRREVERSIBLE.',
+                style: GoogleFonts.inter(
+                    fontSize: 13, color: GirviColors.textBody)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text('Cancel',
+                    style: GoogleFonts.inter(color: GirviColors.textMuted)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: GirviColors.danger,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: () => Navigator.pop(context, true),
+                child: Text('Mark Auctioned',
+                    style: GoogleFonts.manrope(fontWeight: FontWeight.w800)),
+              ),
+            ],
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: GirviColors.danger,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: Text('Mark Auctioned',
-                style: GoogleFonts.manrope(fontWeight: FontWeight.w800)),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
 
     if (!confirmed) return;
 
@@ -148,26 +156,10 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: GirviColors.bodyBg,
-      appBar: GirviAppBar(
-        screenTitle:    GirviStrings.noticeTitle,
-        screenSubtitle: GirviStrings.noticeSub,
+      // NAYA APP BAR CALL
+      appBar: NoticeAuctionAppBar(
         onBack: widget.onBack ?? () => Navigator.pop(context),
-        actions: [
-          GestureDetector(
-            onTap: _load,
-            child: Container(
-              margin: const EdgeInsets.only(right: 6),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: GirviColors.shellPanelBg,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: GirviColors.shellBorder),
-              ),
-              child: const Icon(GirviIcons.refresh,
-                  color: GirviColors.shellTextMuted, size: 18),
-            ),
-          ),
-        ],
+        onRefreshTap: _load,
       ),
       body: _loading
           ? const Center(
@@ -195,18 +187,22 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
               border: Border.all(color: GirviColors.dangerBorder),
             ),
             child: Row(children: [
-              const Icon(GirviIcons.overdue, color: GirviColors.danger, size: 20),
+              const Icon(GirviIcons.overdue,
+                  color: GirviColors.danger, size: 20),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${_overdueLoans.length} Overdue Loan${_overdueLoans.length > 1 ? 's' : ''}',
+                  Text(
+                      '${_overdueLoans.length} Overdue Loan${_overdueLoans.length > 1 ? 's' : ''}',
                       style: GoogleFonts.manrope(
                           color: GirviColors.danger,
-                          fontSize: 14, fontWeight: FontWeight.w800)),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800)),
                   Text(
                     'Total: ₹${_fmt.format(_overdueLoans.fold(0.0, (s, g) => s + g.loan.loanAmount))} principal outstanding',
-                    style: GirviStyles.caption.copyWith(color: GirviColors.danger),
+                    style:
+                        GirviStyles.caption.copyWith(color: GirviColors.danger),
                   ),
                 ],
               ),
@@ -220,9 +216,9 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
               (_, i) => _OverdueCard(
-                data:           _overdueLoans[i],
-                onSendNotice:   () => _sendNotice(_overdueLoans[i]),
-                onMarkAuctioned:() => _markAuctioned(_overdueLoans[i]),
+                data: _overdueLoans[i],
+                onSendNotice: () => _sendNotice(_overdueLoans[i]),
+                onMarkAuctioned: () => _markAuctioned(_overdueLoans[i]),
               ),
               childCount: _overdueLoans.length,
             ),
@@ -235,8 +231,8 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
 
 class _OverdueCard extends StatelessWidget {
   final GirviLoanWithCustomer data;
-  final VoidCallback          onSendNotice;
-  final VoidCallback          onMarkAuctioned;
+  final VoidCallback onSendNotice;
+  final VoidCallback onMarkAuctioned;
 
   const _OverdueCard({
     required this.data,
@@ -246,8 +242,8 @@ class _OverdueCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loan   = data.loan;
-    final fmt    = NumberFormat('#,##,##0.00', 'en_IN');
+    final loan = data.loan;
+    final fmt = NumberFormat('#,##,##0.00', 'en_IN');
     final dateFmt = DateFormat('dd MMM yyyy');
 
     return Container(
@@ -286,7 +282,8 @@ class _OverdueCard extends StatelessWidget {
                     Text(loan.ticketNo, style: GirviStyles.ticketNumber),
                     Text(data.customerName,
                         style: GoogleFonts.inter(
-                            fontSize: 13, fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                             color: GirviColors.textDark)),
                     Text(data.customerMobile, style: GirviStyles.caption),
                   ],
@@ -294,7 +291,8 @@ class _OverdueCard extends StatelessWidget {
               ),
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: GirviColors.dangerBg,
                     borderRadius: BorderRadius.circular(6),
@@ -303,10 +301,12 @@ class _OverdueCard extends StatelessWidget {
                   child: Text('${loan.daysToMaturity.abs()} days overdue',
                       style: GoogleFonts.inter(
                           color: GirviColors.danger,
-                          fontSize: 10, fontWeight: FontWeight.w800)),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800)),
                 ),
                 const SizedBox(height: 4),
-                Text('Since ${loan.maturityDate != null ? dateFmt.format(loan.maturityDate!) : "N/A"}',
+                Text(
+                    'Since ${loan.maturityDate != null ? dateFmt.format(loan.maturityDate!) : "N/A"}',
                     style: GirviStyles.caption.copyWith(fontSize: 10)),
               ]),
             ]),
@@ -320,14 +320,13 @@ class _OverdueCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _MiniInfo('Principal',
-                    '₹${fmt.format(loan.loanAmount)}',
+                _MiniInfo('Principal', '₹${fmt.format(loan.loanAmount)}',
                     GirviColors.brandGold),
-                _MiniInfo('Accrued Interest',
+                _MiniInfo(
+                    'Accrued Interest',
                     '₹${fmt.format(loan.accruedInterest)}',
                     GirviColors.warning),
-                _MiniInfo('Total Due',
-                    '₹${fmt.format(loan.totalDue)}',
+                _MiniInfo('Total Due', '₹${fmt.format(loan.totalDue)}',
                     GirviColors.danger),
               ],
             ),
@@ -356,7 +355,8 @@ class _OverdueCard extends StatelessWidget {
                       Text('Send Notice',
                           style: GoogleFonts.inter(
                               color: GirviColors.warning,
-                              fontSize: 12, fontWeight: FontWeight.w700)),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700)),
                     ]),
                   ),
                 ),
@@ -381,7 +381,8 @@ class _OverdueCard extends StatelessWidget {
                       Text('Mark Auctioned',
                           style: GoogleFonts.inter(
                               color: GirviColors.danger,
-                              fontSize: 12, fontWeight: FontWeight.w700)),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700)),
                     ]),
                   ),
                 ),
@@ -397,37 +398,38 @@ class _OverdueCard extends StatelessWidget {
 class _MiniInfo extends StatelessWidget {
   final String label;
   final String value;
-  final Color  color;
+  final Color color;
   const _MiniInfo(this.label, this.value, this.color);
 
   @override
   Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      Text(label, style: GirviStyles.caption.copyWith(fontSize: 10)),
-      const SizedBox(height: 3),
-      Text(value,
-          style: GoogleFonts.manrope(
-              fontSize: 12, fontWeight: FontWeight.w800, color: color)),
-    ],
-  );
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(label, style: GirviStyles.caption.copyWith(fontSize: 10)),
+          const SizedBox(height: 3),
+          Text(value,
+              style: GoogleFonts.manrope(
+                  fontSize: 12, fontWeight: FontWeight.w800, color: color)),
+        ],
+      );
 }
 
 class _EmptyOverdue extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Center(
-    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(GirviIcons.released,
-          color: GirviColors.success.withOpacity(0.5), size: 64),
-      const SizedBox(height: 16),
-      Text('No Overdue Loans! 🎉',
-          style: GoogleFonts.manrope(
-              fontSize: 18, fontWeight: FontWeight.w800,
-              color: GirviColors.textMuted)),
-      const SizedBox(height: 8),
-      Text('All active girvi loans are within their maturity date.',
-          style: GirviStyles.caption.copyWith(fontSize: 13),
-          textAlign: TextAlign.center),
-    ]),
-  );
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(GirviIcons.released,
+              color: GirviColors.success.withOpacity(0.5), size: 64),
+          const SizedBox(height: 16),
+          Text('No Overdue Loans! 🎉',
+              style: GoogleFonts.manrope(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: GirviColors.textMuted)),
+          const SizedBox(height: 8),
+          Text('All active girvi loans are within their maturity date.',
+              style: GirviStyles.caption.copyWith(fontSize: 13),
+              textAlign: TextAlign.center),
+        ]),
+      );
 }

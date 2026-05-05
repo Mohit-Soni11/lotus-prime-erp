@@ -7,6 +7,7 @@
 //               1. Customer Selection  2. Item Details  3. Weight Details
 //               4. Valuation          5. Loan Terms     6. Disbursement
 //               7. Dates              8. KYC            9. Notes
+//               - App Bar extracted to new_girvi_app_bar.dart
 //               Staggered animations, ListenableBuilder, zero setState.
 // =============================================================================
 
@@ -19,6 +20,7 @@ import '../../../database/db/app_database.dart';
 import '../../../logic/girvi/new_girvi_controller.dart';
 import '../../../models/girvi/girvi_enums.dart';
 import '../../../theme/girvi/girvi_theme.dart';
+import 'new_girvi_app_bar.dart'; // NAYA IMPORT
 import '../shared/girvi_shared_widgets.dart';
 import '../shared/select_customer_dialog.dart';
 
@@ -31,40 +33,39 @@ class NewGirviScreen extends StatefulWidget {
 
 class _NewGirviScreenState extends State<NewGirviScreen>
     with TickerProviderStateMixin {
-
   // ── Controller ────────────────────────────────────────────────────────────
   late final NewGirviController _ctrl;
-  final AppDatabase             _db = AppDatabase();
-  final GlobalKey<FormState>    _formKey = GlobalKey<FormState>();
+  final AppDatabase _db = AppDatabase();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   // ── Text Controllers ──────────────────────────────────────────────────────
-  final _itemDescCtrl   = TextEditingController();
-  final _grossWtCtrl    = TextEditingController();
-  final _stoneWtCtrl    = TextEditingController();
-  final _rateCtrl       = TextEditingController();
-  final _loanAmtCtrl    = TextEditingController();
-  final _interestCtrl   = TextEditingController(text: '2.0');
-  final _durationCtrl   = TextEditingController(text: '12');
-  final _idProofNoCtrl  = TextEditingController();
-  final _notesCtrl      = TextEditingController();
+  final _itemDescCtrl = TextEditingController();
+  final _grossWtCtrl = TextEditingController();
+  final _stoneWtCtrl = TextEditingController();
+  final _rateCtrl = TextEditingController();
+  final _loanAmtCtrl = TextEditingController();
+  final _interestCtrl = TextEditingController(text: '2.0');
+  final _durationCtrl = TextEditingController(text: '12');
+  final _idProofNoCtrl = TextEditingController();
+  final _notesCtrl = TextEditingController();
 
   // ── Focus Nodes ───────────────────────────────────────────────────────────
-  final _itemDescFocus  = FocusNode();
-  final _grossWtFocus   = FocusNode();
-  final _stoneWtFocus   = FocusNode();
-  final _rateFocus      = FocusNode();
-  final _loanAmtFocus   = FocusNode();
-  final _interestFocus  = FocusNode();
-  final _durationFocus  = FocusNode();
+  final _itemDescFocus = FocusNode();
+  final _grossWtFocus = FocusNode();
+  final _stoneWtFocus = FocusNode();
+  final _rateFocus = FocusNode();
+  final _loanAmtFocus = FocusNode();
+  final _interestFocus = FocusNode();
+  final _durationFocus = FocusNode();
   final _idProofNoFocus = FocusNode();
 
   // ── Animations ────────────────────────────────────────────────────────────
   static const int _sectionCount = 9;
   late final List<AnimationController> _sectionAnim;
-  late final List<Animation<double>>   _sectionFade;
-  late final List<Animation<Offset>>   _sectionSlide;
+  late final List<Animation<double>> _sectionFade;
+  late final List<Animation<Offset>> _sectionSlide;
 
-  final _fmt    = NumberFormat('#,##,##0.00', 'en_IN');
+  final _fmt = NumberFormat('#,##,##0.00', 'en_IN');
   final _dateFmt = DateFormat('dd MMM yyyy');
 
   @override
@@ -72,13 +73,18 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     super.initState();
     _ctrl = NewGirviController(_db);
 
-    _sectionAnim = List.generate(_sectionCount, (_) =>
-        AnimationController(vsync: this, duration: const Duration(milliseconds: 450)));
-    _sectionFade = _sectionAnim.map((a) =>
-        CurvedAnimation(parent: a, curve: Curves.easeInOut)).toList();
-    _sectionSlide = _sectionAnim.map((a) =>
-        Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero)
-            .animate(CurvedAnimation(parent: a, curve: Curves.easeOutCubic))).toList();
+    _sectionAnim = List.generate(
+        _sectionCount,
+        (_) => AnimationController(
+            vsync: this, duration: const Duration(milliseconds: 450)));
+    _sectionFade = _sectionAnim
+        .map((a) => CurvedAnimation(parent: a, curve: Curves.easeInOut))
+        .toList();
+    _sectionSlide = _sectionAnim
+        .map((a) => Tween<Offset>(
+                begin: const Offset(0, 0.08), end: Offset.zero)
+            .animate(CurvedAnimation(parent: a, curve: Curves.easeOutCubic)))
+        .toList();
 
     for (int i = 0; i < _sectionCount; i++) {
       Future.delayed(Duration(milliseconds: 60 + i * 70), () {
@@ -87,11 +93,15 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     }
 
     // Wire text → controller
-    _grossWtCtrl.addListener(() => _ctrl.onGrossWeightChanged(_grossWtCtrl.text));
-    _stoneWtCtrl.addListener(() => _ctrl.onStoneWeightChanged(_stoneWtCtrl.text));
-    _rateCtrl.addListener(()    => _ctrl.onRatePerGramChanged(_rateCtrl.text));
-    _interestCtrl.addListener(() => _ctrl.onInterestRateChanged(_interestCtrl.text));
-    _durationCtrl.addListener(() => _ctrl.onDurationChanged(_durationCtrl.text));
+    _grossWtCtrl
+        .addListener(() => _ctrl.onGrossWeightChanged(_grossWtCtrl.text));
+    _stoneWtCtrl
+        .addListener(() => _ctrl.onStoneWeightChanged(_stoneWtCtrl.text));
+    _rateCtrl.addListener(() => _ctrl.onRatePerGramChanged(_rateCtrl.text));
+    _interestCtrl
+        .addListener(() => _ctrl.onInterestRateChanged(_interestCtrl.text));
+    _durationCtrl
+        .addListener(() => _ctrl.onDurationChanged(_durationCtrl.text));
 
     _loanAmtCtrl.addListener(() {
       _ctrl.onLoanAmountChanged(_loanAmtCtrl.text);
@@ -104,8 +114,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   void _onControllerUpdate() {
     // Sync loanAmt field when controller recomputes via LTV slider
     final ctrlVal = _ctrl.loanAmount.toStringAsFixed(2);
-    if (_loanAmtCtrl.text != ctrlVal &&
-        !_loanAmtFocus.hasFocus) {
+    if (_loanAmtCtrl.text != ctrlVal && !_loanAmtFocus.hasFocus) {
       _loanAmtCtrl.text = ctrlVal == '0.00' ? '' : ctrlVal;
     }
   }
@@ -115,12 +124,25 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     _ctrl.removeListener(_onControllerUpdate);
     _ctrl.dispose();
     for (final c in [
-      _itemDescCtrl, _grossWtCtrl, _stoneWtCtrl, _rateCtrl,
-      _loanAmtCtrl, _interestCtrl, _durationCtrl, _idProofNoCtrl, _notesCtrl,
+      _itemDescCtrl,
+      _grossWtCtrl,
+      _stoneWtCtrl,
+      _rateCtrl,
+      _loanAmtCtrl,
+      _interestCtrl,
+      _durationCtrl,
+      _idProofNoCtrl,
+      _notesCtrl,
     ]) c.dispose();
     for (final f in [
-      _itemDescFocus, _grossWtFocus, _stoneWtFocus, _rateFocus,
-      _loanAmtFocus, _interestFocus, _durationFocus, _idProofNoFocus,
+      _itemDescFocus,
+      _grossWtFocus,
+      _stoneWtFocus,
+      _rateFocus,
+      _loanAmtFocus,
+      _interestFocus,
+      _durationFocus,
+      _idProofNoFocus,
     ]) f.dispose();
     for (final a in _sectionAnim) a.dispose();
     super.dispose();
@@ -141,8 +163,8 @@ class _NewGirviScreenState extends State<NewGirviScreen>
 
     final ok = await _ctrl.saveLoan(
       itemDescription: _itemDescCtrl.text,
-      idProofNumber:   _idProofNoCtrl.text,
-      notes:           _notesCtrl.text,
+      idProofNumber: _idProofNoCtrl.text,
+      notes: _notesCtrl.text,
     );
 
     if (ok && mounted) {
@@ -155,8 +177,13 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   Future<void> _resetAll() async {
     _formKey.currentState?.reset();
     for (final c in [
-      _itemDescCtrl, _grossWtCtrl, _stoneWtCtrl, _rateCtrl,
-      _loanAmtCtrl, _idProofNoCtrl, _notesCtrl,
+      _itemDescCtrl,
+      _grossWtCtrl,
+      _stoneWtCtrl,
+      _rateCtrl,
+      _loanAmtCtrl,
+      _idProofNoCtrl,
+      _notesCtrl,
     ]) c.clear();
     _interestCtrl.text = '2.0';
     _durationCtrl.text = '12';
@@ -168,8 +195,9 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       content: Row(children: [
         const Icon(GirviIcons.markDone, color: Colors.white, size: 18),
         const SizedBox(width: 10),
-        Expanded(child: Text(msg,
-            style: GoogleFonts.inter(color: Colors.white, fontSize: 13))),
+        Expanded(
+            child: Text(msg,
+                style: GoogleFonts.inter(color: Colors.white, fontSize: 13))),
       ]),
       backgroundColor: GirviColors.success,
       behavior: SnackBarBehavior.floating,
@@ -183,8 +211,9 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       content: Row(children: [
         const Icon(Icons.error_outline_rounded, color: Colors.white, size: 18),
         const SizedBox(width: 10),
-        Expanded(child: Text(msg,
-            style: GoogleFonts.inter(color: Colors.white, fontSize: 13))),
+        Expanded(
+            child: Text(msg,
+                style: GoogleFonts.inter(color: Colors.white, fontSize: 13))),
       ]),
       backgroundColor: GirviColors.danger,
       behavior: SnackBarBehavior.floating,
@@ -229,9 +258,9 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   }
 
   Widget _animated(int i, Widget child) => FadeTransition(
-    opacity: _sectionFade[i],
-    child: SlideTransition(position: _sectionSlide[i], child: child),
-  );
+        opacity: _sectionFade[i],
+        child: SlideTransition(position: _sectionSlide[i], child: child),
+      );
 
   // ── BUILD ─────────────────────────────────────────────────────────────────
 
@@ -239,9 +268,8 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: GirviColors.bodyBg,
-      appBar: GirviAppBar(
-        screenTitle: GirviStrings.newGirviTitle,
-        screenSubtitle: GirviStrings.newGirviSub,
+      // NAYA APP BAR CALL YAHAN HAI
+      appBar: NewGirviAppBar(
         onBack: () => Navigator.pop(context),
       ),
       body: ListenableBuilder(
@@ -310,22 +338,30 @@ class _NewGirviScreenState extends State<NewGirviScreen>
         color: GirviColors.shellBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: GirviColors.brandGold.withOpacity(0.3)),
-        boxShadow: [BoxShadow(
-          color: GirviColors.brandGold.withOpacity(0.08),
-          blurRadius: 12, offset: const Offset(0, 4),
-        )],
+        boxShadow: [
+          BoxShadow(
+            color: GirviColors.brandGold.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
       child: Row(children: [
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [GirviColors.brandGold, GirviColors.brandGold.withOpacity(0.7)],
-              begin: Alignment.topLeft, end: Alignment.bottomRight,
+              colors: [
+                GirviColors.brandGold,
+                GirviColors.brandGold.withOpacity(0.7)
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(GirviIcons.ticket, color: GirviColors.shellBg, size: 18),
+          child: const Icon(GirviIcons.ticket,
+              color: GirviColors.shellBg, size: 18),
         ),
         const SizedBox(width: 16),
         Column(
@@ -333,8 +369,10 @@ class _NewGirviScreenState extends State<NewGirviScreen>
           children: [
             Text('TICKET NUMBER',
                 style: GoogleFonts.inter(
-                  color: GirviColors.shellTextMuted,
-                  fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 1.2)),
+                    color: GirviColors.shellTextMuted,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2)),
             const SizedBox(height: 4),
             Text(_ctrl.ticketNo.isEmpty ? 'Generating...' : _ctrl.ticketNo,
                 style: GirviStyles.ticketNumber.copyWith(fontSize: 16)),
@@ -350,8 +388,10 @@ class _NewGirviScreenState extends State<NewGirviScreen>
           ),
           child: Text('DRAFT',
               style: GoogleFonts.inter(
-                color: GirviColors.warning,
-                fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1)),
+                  color: GirviColors.warning,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1)),
         ),
       ]),
     );
@@ -384,14 +424,14 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       accent: GirviColors.accentItem,
       child: Column(children: [
         GirviInputField(
-          label:       'Item Description *',
-          hint:        'e.g. Gold Necklace with pendant, 2 bangles',
-          icon:        GirviIcons.itemDetails,
-          controller:  _itemDescCtrl,
-          focusNode:   _itemDescFocus,
-          nextFocus:   _grossWtFocus,
-          maxLines:    2,
-          validator:   _ctrl.validateItemDescription,
+          label: 'Item Description *',
+          hint: 'e.g. Gold Necklace with pendant, 2 bangles',
+          icon: GirviIcons.itemDetails,
+          controller: _itemDescCtrl,
+          focusNode: _itemDescFocus,
+          nextFocus: _grossWtFocus,
+          maxLines: 2,
+          validator: _ctrl.validateItemDescription,
         ),
         const SizedBox(height: 14),
         GirviRowTwo(
@@ -401,32 +441,40 @@ class _NewGirviScreenState extends State<NewGirviScreen>
               Text('Item Count *', style: GirviStyles.fieldLabel),
               const SizedBox(height: 6),
               _ItemCountStepper(
-                count:     _ctrl.itemCount,
+                count: _ctrl.itemCount,
                 onChanged: _ctrl.setItemCount,
               ),
             ],
           ),
           right: GirviDropdown<MetalType>(
-            label:    'Metal Type *',
-            icon:     GirviIcons.gold,
-            value:    _ctrl.metalType,
-            items:    MetalType.values.map((e) => DropdownMenuItem(
-              value: e,
-              child: Text('${e.emoji}  ${e.displayName}'),
-            )).toList(),
-            onChanged: (v) { if (v != null) _ctrl.setMetalType(v); },
+            label: 'Metal Type *',
+            icon: GirviIcons.gold,
+            value: _ctrl.metalType,
+            items: MetalType.values
+                .map((e) => DropdownMenuItem(
+                      value: e,
+                      child: Text('${e.emoji}  ${e.displayName}'),
+                    ))
+                .toList(),
+            onChanged: (v) {
+              if (v != null) _ctrl.setMetalType(v);
+            },
           ),
         ),
         const SizedBox(height: 14),
         GirviDropdown<MetalPurity>(
-          label:    'Metal Purity *',
-          icon:     GirviIcons.valuation,
-          value:    _ctrl.metalPurity,
-          items:    MetalPurity.values.map((e) => DropdownMenuItem(
-            value: e,
-            child: Text(e.displayName),
-          )).toList(),
-          onChanged: (v) { if (v != null) _ctrl.setMetalPurity(v); },
+          label: 'Metal Purity *',
+          icon: GirviIcons.valuation,
+          value: _ctrl.metalPurity,
+          items: MetalPurity.values
+              .map((e) => DropdownMenuItem(
+                    value: e,
+                    child: Text(e.displayName),
+                  ))
+              .toList(),
+          onChanged: (v) {
+            if (v != null) _ctrl.setMetalPurity(v);
+          },
         ),
       ]),
     );
@@ -444,36 +492,40 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       child: Column(children: [
         GirviRowTwo(
           left: GirviInputField(
-            label:          'Gross Weight (g) *',
-            hint:           '0.00',
-            icon:           GirviIcons.weight,
-            controller:     _grossWtCtrl,
-            focusNode:      _grossWtFocus,
-            nextFocus:      _stoneWtFocus,
-            keyboardType:   const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters:[FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-            suffixText:     'g',
-            validator:      _ctrl.validateGrossWeight,
+            label: 'Gross Weight (g) *',
+            hint: '0.00',
+            icon: GirviIcons.weight,
+            controller: _grossWtCtrl,
+            focusNode: _grossWtFocus,
+            nextFocus: _stoneWtFocus,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
+            ],
+            suffixText: 'g',
+            validator: _ctrl.validateGrossWeight,
           ),
           right: GirviInputField(
-            label:          'Stone/Non-Metal (g)',
-            hint:           '0.00',
-            icon:           Icons.scatter_plot_outlined,
-            controller:     _stoneWtCtrl,
-            focusNode:      _stoneWtFocus,
-            nextFocus:      _rateFocus,
-            keyboardType:   const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters:[FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-            suffixText:     'g',
+            label: 'Stone/Non-Metal (g)',
+            hint: '0.00',
+            icon: Icons.scatter_plot_outlined,
+            controller: _stoneWtCtrl,
+            focusNode: _stoneWtFocus,
+            nextFocus: _rateFocus,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
+            ],
+            suffixText: 'g',
           ),
         ),
         const SizedBox(height: 14),
         // Net weight display
         GirviReadOnlyField(
-          label:       'Net Metal Weight',
-          value:       '${netWt.toStringAsFixed(3)} grams',
+          label: 'Net Metal Weight',
+          value: '${netWt.toStringAsFixed(3)} grams',
           highlighted: true,
-          valueColor:  netWt > 0 ? GirviColors.brandGold : GirviColors.textMuted,
+          valueColor: netWt > 0 ? GirviColors.brandGold : GirviColors.textMuted,
         ),
         if (_ctrl.grossWeight > 0 && _ctrl.stoneWeight > 0) ...[
           const SizedBox(height: 8),
@@ -491,7 +543,9 @@ class _NewGirviScreenState extends State<NewGirviScreen>
                 'Deduction: ${_ctrl.stoneWeight.toStringAsFixed(2)}g '
                 '(${(_ctrl.stoneWeight / _ctrl.grossWeight * 100).toStringAsFixed(1)}% of gross)',
                 style: GoogleFonts.inter(
-                    color: GirviColors.info, fontSize: 12, fontWeight: FontWeight.w500),
+                    color: GirviColors.info,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500),
               ),
             ]),
           ),
@@ -510,28 +564,30 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       accent: GirviColors.accentValuation,
       child: Column(children: [
         GirviInputField(
-          label:          'Market Rate (₹/gram) *',
-          hint:           '0.00',
-          icon:           GirviIcons.valuation,
-          controller:     _rateCtrl,
-          focusNode:      _rateFocus,
-          nextFocus:      _loanAmtFocus,
-          keyboardType:   const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters:[FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-          prefixText:     '₹ ',
-          validator:      _ctrl.validateRatePerGram,
+          label: 'Market Rate (₹/gram) *',
+          hint: '0.00',
+          icon: GirviIcons.valuation,
+          controller: _rateCtrl,
+          focusNode: _rateFocus,
+          nextFocus: _loanAmtFocus,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
+          ],
+          prefixText: '₹ ',
+          validator: _ctrl.validateRatePerGram,
         ),
         const SizedBox(height: 14),
         // Computed total value
         GirviReadOnlyField(
-          label:       'Total Item Value',
-          value:       '₹ ${_fmt.format(_ctrl.totalValue)}',
+          label: 'Total Item Value',
+          value: '₹ ${_fmt.format(_ctrl.totalValue)}',
           highlighted: _ctrl.totalValue > 0,
         ),
         if (_ctrl.totalValue > 0) ...[
           const SizedBox(height: 8),
           _LtvSuggestionRow(
-            totalValue:     _ctrl.totalValue,
+            totalValue: _ctrl.totalValue,
             onSuggestionTap: (ltv) {
               _ctrl.onLtvChanged(ltv);
               _loanAmtCtrl.text = _ctrl.loanAmount.toStringAsFixed(2);
@@ -552,16 +608,18 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       accent: GirviColors.accentLoan,
       child: Column(children: [
         GirviInputField(
-          label:          'Loan Amount (₹) *',
-          hint:           '0.00',
-          icon:           GirviIcons.loanTerms,
-          controller:     _loanAmtCtrl,
-          focusNode:      _loanAmtFocus,
-          nextFocus:      _interestFocus,
-          keyboardType:   const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters:[FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-          prefixText:     '₹ ',
-          validator:      _ctrl.validateLoanAmount,
+          label: 'Loan Amount (₹) *',
+          hint: '0.00',
+          icon: GirviIcons.loanTerms,
+          controller: _loanAmtCtrl,
+          focusNode: _loanAmtFocus,
+          nextFocus: _interestFocus,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
+          ],
+          prefixText: '₹ ',
+          validator: _ctrl.validateLoanAmount,
         ),
         const SizedBox(height: 8),
         // LTV indicator
@@ -576,38 +634,40 @@ class _NewGirviScreenState extends State<NewGirviScreen>
         const SizedBox(height: 14),
         GirviRowTwo(
           left: GirviInputField(
-            label:          'Interest Rate (% / month) *',
-            hint:           '2.0',
-            icon:           GirviIcons.interestRate,
-            controller:     _interestCtrl,
-            focusNode:      _interestFocus,
-            nextFocus:      _durationFocus,
-            keyboardType:   const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters:[FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-            suffixText:     '%',
-            validator:      _ctrl.validateInterestRate,
+            label: 'Interest Rate (% / month) *',
+            hint: '2.0',
+            icon: GirviIcons.interestRate,
+            controller: _interestCtrl,
+            focusNode: _interestFocus,
+            nextFocus: _durationFocus,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
+            ],
+            suffixText: '%',
+            validator: _ctrl.validateInterestRate,
           ),
           right: GirviInputField(
-            label:          'Duration (months) *',
-            hint:           '12',
-            icon:           GirviIcons.dates,
-            controller:     _durationCtrl,
-            focusNode:      _durationFocus,
-            nextFocus:      _idProofNoFocus,
-            keyboardType:   TextInputType.number,
-            inputFormatters:[FilteringTextInputFormatter.digitsOnly],
-            suffixText:     'mo',
-            validator:      _ctrl.validateDuration,
+            label: 'Duration (months) *',
+            hint: '12',
+            icon: GirviIcons.dates,
+            controller: _durationCtrl,
+            focusNode: _durationFocus,
+            nextFocus: _idProofNoFocus,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            suffixText: 'mo',
+            validator: _ctrl.validateDuration,
           ),
         ),
         const SizedBox(height: 14),
         // Computed interest preview
         _InterestPreviewCard(
-          principal:    _ctrl.loanAmount,
-          monthly:      _ctrl.monthlyInterest,
-          total:        _ctrl.totalInterestAtMaturity,
-          totalDue:     _ctrl.totalDueAtMaturity,
-          annualRate:   _ctrl.interestRate * 12,
+          principal: _ctrl.loanAmount,
+          monthly: _ctrl.monthlyInterest,
+          total: _ctrl.totalInterestAtMaturity,
+          totalDue: _ctrl.totalDueAtMaturity,
+          annualRate: _ctrl.interestRate * 12,
         ),
       ]),
     );
@@ -626,7 +686,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
             style: GirviStyles.caption.copyWith(fontSize: 12)),
         const SizedBox(height: 12),
         _PaymentModeSelector(
-          selected:  _ctrl.disbursementMode,
+          selected: _ctrl.disbursementMode,
           onChanged: _ctrl.setDisbursementMode,
         ),
       ]),
@@ -644,14 +704,14 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       child: Column(children: [
         GirviRowTwo(
           left: _DatePickerField(
-            label:   'Start Date *',
-            date:    _ctrl.startDate,
-            onTap:   _pickStartDate,
+            label: 'Start Date *',
+            date: _ctrl.startDate,
+            onTap: _pickStartDate,
           ),
           right: GirviReadOnlyField(
-            label:       'Maturity Date',
-            value:       _dateFmt.format(_ctrl.maturityDate),
-            valueColor:  GirviColors.info,
+            label: 'Maturity Date',
+            value: _dateFmt.format(_ctrl.maturityDate),
+            valueColor: GirviColors.info,
             highlighted: false,
           ),
         ),
@@ -671,7 +731,9 @@ class _NewGirviScreenState extends State<NewGirviScreen>
                 'Loan matures on ${_dateFmt.format(_ctrl.maturityDate)} '
                 '(${_ctrl.durationMonths} months from start date)',
                 style: GoogleFonts.inter(
-                    color: GirviColors.warning, fontSize: 12, fontWeight: FontWeight.w500),
+                    color: GirviColors.warning,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500),
               ),
             ),
           ]),
@@ -697,35 +759,41 @@ class _NewGirviScreenState extends State<NewGirviScreen>
             border: Border.all(color: GirviColors.dangerBorder),
           ),
           child: Row(children: [
-            const Icon(Icons.privacy_tip_outlined, color: GirviColors.danger, size: 14),
+            const Icon(Icons.privacy_tip_outlined,
+                color: GirviColors.danger, size: 14),
             const SizedBox(width: 8),
-            Expanded(child: Text(
-                'RBI guidelines require ID proof for pawn loans above ₹1000.',
-                style: GoogleFonts.inter(
-                    color: GirviColors.danger, fontSize: 11, fontWeight: FontWeight.w500))),
+            Expanded(
+                child: Text(
+                    'RBI guidelines require ID proof for pawn loans above ₹1000.',
+                    style: GoogleFonts.inter(
+                        color: GirviColors.danger,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500))),
           ]),
         ),
         const SizedBox(height: 14),
         GirviDropdown<GirviIdProofType?>(
-          label:    'ID Proof Type',
-          icon:     GirviIcons.kyc,
-          value:    _ctrl.idProofType,
-          items:    [
-            const DropdownMenuItem(value: null, child: Text('— Select ID Type —')),
+          label: 'ID Proof Type',
+          icon: GirviIcons.kyc,
+          value: _ctrl.idProofType,
+          items: [
+            const DropdownMenuItem(
+                value: null, child: Text('— Select ID Type —')),
             ...GirviIdProofType.values.map((e) => DropdownMenuItem(
-              value: e, child: Text(e.displayName),
-            )),
+                  value: e,
+                  child: Text(e.displayName),
+                )),
           ],
           onChanged: _ctrl.setIdProofType,
         ),
         const SizedBox(height: 14),
         GirviInputField(
-          label:     'ID Proof Number',
-          hint:      'Enter document number',
-          icon:      GirviIcons.kyc,
-          controller:_idProofNoCtrl,
+          label: 'ID Proof Number',
+          hint: 'Enter document number',
+          icon: GirviIcons.kyc,
+          controller: _idProofNoCtrl,
           focusNode: _idProofNoFocus,
-          enabled:   _ctrl.idProofType != null,
+          enabled: _ctrl.idProofType != null,
           keyboardType: TextInputType.text,
         ),
       ]),
@@ -741,11 +809,11 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       subtitle: GirviStrings.descNotes,
       accent: GirviColors.accentNotes,
       child: GirviInputField(
-        label:     'Internal Remarks',
-        hint:      'e.g. Customer mentioned item is old family jewellery...',
-        icon:      GirviIcons.notes,
-        controller:_notesCtrl,
-        maxLines:  3,
+        label: 'Internal Remarks',
+        hint: 'e.g. Customer mentioned item is old family jewellery...',
+        icon: GirviIcons.notes,
+        controller: _notesCtrl,
+        maxLines: 3,
         keyboardType: TextInputType.multiline,
       ),
     );
@@ -759,10 +827,13 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       decoration: BoxDecoration(
         color: GirviColors.cardBg,
         border: Border(top: BorderSide(color: GirviColors.cardBorder)),
-        boxShadow: [BoxShadow(
-          color: GirviColors.shellBg.withOpacity(0.08),
-          blurRadius: 12, offset: const Offset(0, -4),
-        )],
+        boxShadow: [
+          BoxShadow(
+            color: GirviColors.shellBg.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
+          )
+        ],
       ),
       child: ListenableBuilder(
         listenable: _ctrl,
@@ -771,7 +842,8 @@ class _NewGirviScreenState extends State<NewGirviScreen>
           GestureDetector(
             onTap: _resetAll,
             child: Container(
-              width: 52, height: 52,
+              width: 52,
+              height: 52,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: GirviColors.bodyBg,
@@ -795,28 +867,37 @@ class _NewGirviScreenState extends State<NewGirviScreen>
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [GirviColors.brandGold,
-                               GirviColors.brandGold.withOpacity(0.85)],
-                      begin: Alignment.topLeft, end: Alignment.bottomRight,
+                      colors: [
+                        GirviColors.brandGold,
+                        GirviColors.brandGold.withOpacity(0.85)
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: [BoxShadow(
-                      color: GirviColors.brandGold.withOpacity(0.35),
-                      blurRadius: 12, offset: const Offset(0, 4),
-                    )],
+                    boxShadow: [
+                      BoxShadow(
+                        color: GirviColors.brandGold.withOpacity(0.35),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
                   ),
                   child: _ctrl.isSaving
                       ? const SizedBox(
-                          width: 22, height: 22,
+                          width: 22,
+                          height: 22,
                           child: CircularProgressIndicator(
                               color: GirviColors.shellBg, strokeWidth: 2.5))
-                      : Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                          const Icon(GirviIcons.save,
-                              color: GirviColors.shellBg, size: 18),
-                          const SizedBox(width: 8),
-                          Text('Create Girvi Ticket',
-                              style: GirviStyles.saveButtonText),
-                        ]),
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                              const Icon(GirviIcons.save,
+                                  color: GirviColors.shellBg, size: 18),
+                              const SizedBox(width: 8),
+                              Text('Create Girvi Ticket',
+                                  style: GirviStyles.saveButtonText),
+                            ]),
                 ),
               ),
             ),
@@ -832,7 +913,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
 // =============================================================================
 
 class _SelectedCustomerCard extends StatelessWidget {
-  final Customer     customer;
+  final Customer customer;
   final VoidCallback onClear;
 
   const _SelectedCustomerCard({required this.customer, required this.onClear});
@@ -853,7 +934,8 @@ class _SelectedCustomerCard extends StatelessWidget {
             color: GirviColors.success.withOpacity(0.15),
             shape: BoxShape.circle,
           ),
-          child: const Icon(GirviIcons.customer, color: GirviColors.success, size: 20),
+          child: const Icon(GirviIcons.customer,
+              color: GirviColors.success, size: 20),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -862,12 +944,13 @@ class _SelectedCustomerCard extends StatelessWidget {
             children: [
               Text(customer.name,
                   style: GoogleFonts.manrope(
-                    fontSize: 15, fontWeight: FontWeight.w800,
-                    color: GirviColors.textDark)),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: GirviColors.textDark)),
               const SizedBox(height: 2),
               Text(customer.mobile,
                   style: GoogleFonts.inter(
-                    fontSize: 13, color: GirviColors.textMuted)),
+                      fontSize: 13, color: GirviColors.textMuted)),
               if (customer.city != null)
                 Text(customer.city!,
                     style: GoogleFonts.inter(
@@ -916,8 +999,9 @@ class _SelectCustomerButton extends StatelessWidget {
           const SizedBox(width: 10),
           Text(GirviStrings.selectCustomerHint,
               style: GoogleFonts.inter(
-                color: GirviColors.brandGold,
-                fontSize: 14, fontWeight: FontWeight.w600)),
+                  color: GirviColors.brandGold,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600)),
         ]),
       ),
     );
@@ -962,19 +1046,20 @@ class _StepBtn extends StatelessWidget {
   final VoidCallback onTap;
   final bool enabled;
 
-  const _StepBtn({required this.icon, required this.onTap, required this.enabled});
+  const _StepBtn(
+      {required this.icon, required this.onTap, required this.enabled});
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTap: enabled ? onTap : null,
-    child: Container(
-      width: GirviStyles.inputHeight,
-      alignment: Alignment.center,
-      child: Icon(icon,
-          color: enabled ? GirviColors.brandGold : GirviColors.textHint,
-          size: 20),
-    ),
-  );
+        onTap: enabled ? onTap : null,
+        child: Container(
+          width: GirviStyles.inputHeight,
+          alignment: Alignment.center,
+          child: Icon(icon,
+              color: enabled ? GirviColors.brandGold : GirviColors.textHint,
+              size: 20),
+        ),
+      );
 }
 
 class _LtvSuggestionRow extends StatelessWidget {
@@ -989,7 +1074,7 @@ class _LtvSuggestionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const ltvs = [50.0, 60.0, 70.0, 75.0, 80.0];
-    final fmt  = NumberFormat('#,##,##0', 'en_IN');
+    final fmt = NumberFormat('#,##,##0', 'en_IN');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1007,21 +1092,25 @@ class _LtvSuggestionRow extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () => onSuggestionTap(ltv),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                     decoration: BoxDecoration(
                       color: GirviColors.brandGoldLight,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: GirviColors.brandGold.withOpacity(0.3)),
+                      border: Border.all(
+                          color: GirviColors.brandGold.withOpacity(0.3)),
                     ),
                     child: Column(children: [
                       Text('${ltv.toInt()}% LTV',
                           style: GoogleFonts.inter(
-                            color: GirviColors.brandDeep,
-                            fontSize: 10, fontWeight: FontWeight.w700)),
+                              color: GirviColors.brandDeep,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700)),
                       Text('₹${fmt.format(amt)}',
                           style: GoogleFonts.manrope(
-                            color: GirviColors.textDark,
-                            fontSize: 11, fontWeight: FontWeight.w800)),
+                              color: GirviColors.textDark,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800)),
                     ]),
                   ),
                 ),
@@ -1060,29 +1149,31 @@ class _LtvIndicator extends StatelessWidget {
           Text('LTV Ratio', style: GirviStyles.fieldLabel),
           Text('${ltv.toStringAsFixed(1)}%',
               style: GoogleFonts.manrope(
-                fontSize: 16, fontWeight: FontWeight.w900, color: _color)),
+                  fontSize: 16, fontWeight: FontWeight.w900, color: _color)),
         ]),
         const SizedBox(height: 8),
         SliderTheme(
           data: SliderThemeData(
-            activeTrackColor:   _color,
-            thumbColor:         _color,
+            activeTrackColor: _color,
+            thumbColor: _color,
             inactiveTrackColor: GirviColors.divider,
-            overlayColor:       _color.withOpacity(0.2),
+            overlayColor: _color.withOpacity(0.2),
             trackHeight: 4,
           ),
           child: Slider(
-            value:    ltv.clamp(0, 100),
-            min:      0,
-            max:      100,
+            value: ltv.clamp(0, 100),
+            min: 0,
+            max: 100,
             divisions: 20,
             onChanged: onChanged,
           ),
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: ['0%', '25%', '50%', '75%', '100%'].map((t) =>
-            Text(t, style: GirviStyles.caption.copyWith(fontSize: 9))).toList(),
+          children: ['0%', '25%', '50%', '75%', '100%']
+              .map((t) =>
+                  Text(t, style: GirviStyles.caption.copyWith(fontSize: 9)))
+              .toList(),
         ),
       ]),
     );
@@ -1128,8 +1219,9 @@ class _InterestPreviewCard extends StatelessWidget {
           const SizedBox(width: 8),
           Text('Interest Preview',
               style: GoogleFonts.inter(
-                color: GirviColors.shellTextTitle,
-                fontSize: 12, fontWeight: FontWeight.w700)),
+                  color: GirviColors.shellTextTitle,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700)),
           const Spacer(),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -1139,7 +1231,9 @@ class _InterestPreviewCard extends StatelessWidget {
             ),
             child: Text('${annualRate.toStringAsFixed(0)}% p.a.',
                 style: GoogleFonts.inter(
-                    color: GirviColors.warning, fontSize: 10, fontWeight: FontWeight.w700)),
+                    color: GirviColors.warning,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700)),
           ),
         ]),
         const SizedBox(height: 12),
@@ -1148,8 +1242,8 @@ class _InterestPreviewCard extends StatelessWidget {
           children: [
             _PreviewStat('Monthly Interest', '₹ ${fmt.format(monthly)}',
                 GirviColors.warning),
-            _PreviewStat('Total Interest', '₹ ${fmt.format(total)}',
-                GirviColors.danger),
+            _PreviewStat(
+                'Total Interest', '₹ ${fmt.format(total)}', GirviColors.danger),
             _PreviewStat('Total Due', '₹ ${fmt.format(totalDue)}',
                 GirviColors.brandGold),
           ],
@@ -1162,20 +1256,20 @@ class _InterestPreviewCard extends StatelessWidget {
 class _PreviewStat extends StatelessWidget {
   final String label;
   final String value;
-  final Color  color;
+  final Color color;
 
   const _PreviewStat(this.label, this.value, this.color);
 
   @override
   Widget build(BuildContext context) => Column(children: [
-    Text(label,
-        style: GoogleFonts.inter(
-            color: GirviColors.shellTextMuted, fontSize: 10)),
-    const SizedBox(height: 4),
-    Text(value,
-        style: GoogleFonts.manrope(
-            color: color, fontSize: 12, fontWeight: FontWeight.w800)),
-  ]);
+        Text(label,
+            style: GoogleFonts.inter(
+                color: GirviColors.shellTextMuted, fontSize: 10)),
+        const SizedBox(height: 4),
+        Text(value,
+            style: GoogleFonts.manrope(
+                color: color, fontSize: 12, fontWeight: FontWeight.w800)),
+      ]);
 }
 
 class _PaymentModeSelector extends StatelessWidget {
@@ -1202,9 +1296,8 @@ class _PaymentModeSelector extends StatelessWidget {
                   : GirviColors.inputBg,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isSelected
-                    ? GirviColors.brandGold
-                    : GirviColors.cardBorder,
+                color:
+                    isSelected ? GirviColors.brandGold : GirviColors.cardBorder,
                 width: isSelected ? 1.5 : 1.0,
               ),
             ),
@@ -1213,8 +1306,7 @@ class _PaymentModeSelector extends StatelessWidget {
                 const Icon(GirviIcons.markDone,
                     color: GirviColors.brandGold, size: 14)
               else
-                Icon(_modeIcon(mode),
-                    color: GirviColors.textMuted, size: 14),
+                Icon(_modeIcon(mode), color: GirviColors.textMuted, size: 14),
               const SizedBox(width: 6),
               Text(mode.displayName,
                   style: GoogleFonts.inter(
@@ -1222,9 +1314,7 @@ class _PaymentModeSelector extends StatelessWidget {
                         ? GirviColors.brandGold
                         : GirviColors.textBody,
                     fontSize: 12,
-                    fontWeight: isSelected
-                        ? FontWeight.w700
-                        : FontWeight.w500,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   )),
             ]),
           ),
@@ -1235,15 +1325,18 @@ class _PaymentModeSelector extends StatelessWidget {
 
   IconData _modeIcon(GirviPaymentMode m) {
     switch (m) {
-      case GirviPaymentMode.cash:         return GirviIcons.cash;
-      case GirviPaymentMode.upi:          return GirviIcons.upi;
-      default:                            return GirviIcons.bank;
+      case GirviPaymentMode.cash:
+        return GirviIcons.cash;
+      case GirviPaymentMode.upi:
+        return GirviIcons.upi;
+      default:
+        return GirviIcons.bank;
     }
   }
 }
 
 class _DatePickerField extends StatelessWidget {
-  final String   label;
+  final String label;
   final DateTime date;
   final VoidCallback onTap;
 
@@ -1267,7 +1360,8 @@ class _DatePickerField extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: GirviStyles.inputNormal,
             child: Row(children: [
-              const Icon(GirviIcons.dates, color: GirviColors.accentDates, size: 18),
+              const Icon(GirviIcons.dates,
+                  color: GirviColors.accentDates, size: 18),
               const SizedBox(width: 10),
               Container(width: 1, height: 22, color: GirviColors.cardBorder),
               const SizedBox(width: 10),

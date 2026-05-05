@@ -3,20 +3,12 @@
 // MODULE      : Stock & Inventory
 // LAYER       : UI / Screen
 // DESCRIPTION : Production Inventory Ledger screen.
-//               Design matches Add Stock / New Sale POS exactly:
-//               - Dark shell AppBar (same pattern)
-//               - Gold dot + "INVENTORY LEDGER" title
-//               - Radar "SYSTEM ONLINE" status badge
-//               - "Stock & Inventory" module badge (right)
+//               Design matches Customer List header exactly:
+//               - Dark shell AppBar with Gold Gradient module icon
+//               - Pill-shaped Animated System Online Radar
 //               - Cream body background (0xFFF9F6F0)
-//               - White cards with colored accent borders
 //               - Staggered entry animations
-//               Sections:
-//               1. Opening Stock summary card
-//               2. Closing Stock summary card
-//               3. Metal Holdings card (Gold, Silver, Diamond, Platinum)
-//               4. Category filter chips
-//               5. Live stock items list (StreamBuilder)
+//               - Icons properly extracted to InvIcons
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -25,7 +17,7 @@ import 'package:intl/intl.dart';
 
 import '../../../database/db/app_database.dart';
 import '../../../logic/stock/inventory_controller.dart';
-import '../../../models/stock/inventory/inventory_stats_model.dart';
+//import '../../../models/stock/inventory/inventory_stats_model.dart';
 import '../../../models/stock/stock_enums/stock_enums.dart';
 import '../../../theme/stock/inventory/inventory_theme.dart';
 
@@ -116,8 +108,6 @@ class _InventoryScreenState extends State<InventoryScreen>
       backgroundColor: InvColors.bodyBg,
       appBar: _InventoryAppBar(
         onBack: widget.onBack ?? () => Navigator.of(context).maybePop(),
-        onRefresh: () => _ctrl.loadStats(),
-        isRefreshing: _ctrl.isLoading,
       ),
       body: _ctrl.isLoading && _ctrl.stats.openingCount == 0
           ? _buildLoadingState()
@@ -213,8 +203,7 @@ class _InventoryScreenState extends State<InventoryScreen>
             border: Border.all(color: InvColors.brandGold.withOpacity(0.3)),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.calendar_today_rounded,
-                size: 11, color: InvColors.brandGold),
+            const Icon(InvIcons.calendar, size: 11, color: InvColors.brandGold),
             const SizedBox(width: 6),
             Text(
               today,
@@ -242,7 +231,7 @@ class _InventoryScreenState extends State<InventoryScreen>
         // Opening Stock
         Expanded(
           child: _SummaryCard(
-            icon: Icons.lock_open_rounded,
+            icon: InvIcons.openingStock,
             label: InvStrings.cardOpening,
             note: InvStrings.cardOpeningNote,
             accentColor: InvColors.openingAccent,
@@ -260,7 +249,7 @@ class _InventoryScreenState extends State<InventoryScreen>
         // Closing Stock
         Expanded(
           child: _SummaryCard(
-            icon: Icons.lock_rounded,
+            icon: InvIcons.closingStock,
             label: InvStrings.cardClosing,
             note: InvStrings.cardClosingNote,
             accentColor: InvColors.closingAccent,
@@ -307,7 +296,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                 color: InvColors.metalAccent.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.account_balance_wallet_outlined,
+              child: const Icon(InvIcons.metalHoldings,
                   color: InvColors.metalAccent, size: 16),
             ),
             const SizedBox(width: 10),
@@ -330,7 +319,7 @@ class _InventoryScreenState extends State<InventoryScreen>
             children: [
               if (s.goldCount > 0)
                 _MetalHoldingChip(
-                  icon: Icons.circle_rounded,
+                  icon: InvIcons.catGold,
                   iconColor: InvColors.brandGold,
                   label: InvStrings.lblGold,
                   count: s.goldCount,
@@ -344,7 +333,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                 ),
               if (s.silverCount > 0)
                 _MetalHoldingChip(
-                  icon: Icons.circle_rounded,
+                  icon: InvIcons.catSilver,
                   iconColor: const Color(0xFF94A3B8),
                   label: InvStrings.lblSilver,
                   count: s.silverCount,
@@ -358,7 +347,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                 ),
               if (s.diamondCount > 0)
                 _MetalHoldingChip(
-                  icon: Icons.diamond_outlined,
+                  icon: InvIcons.catDiamond,
                   iconColor: const Color(0xFF3B82F6),
                   label: InvStrings.lblDiamond,
                   count: s.diamondCount,
@@ -373,7 +362,7 @@ class _InventoryScreenState extends State<InventoryScreen>
                 ),
               if (s.platinumCount > 0)
                 _MetalHoldingChip(
-                  icon: Icons.circle_rounded,
+                  icon: InvIcons.catPlatinum,
                   iconColor: const Color(0xFF8B5CF6),
                   label: InvStrings.lblPlatinum,
                   count: s.platinumCount,
@@ -414,7 +403,7 @@ class _InventoryScreenState extends State<InventoryScreen>
           color: InvColors.brandGold.withOpacity(0.12),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: const Icon(Icons.inventory_2_outlined,
+        child: const Icon(InvIcons.stockList,
             color: InvColors.brandGold, size: 16),
       ),
       const SizedBox(width: 10),
@@ -523,7 +512,7 @@ class _InventoryScreenState extends State<InventoryScreen>
               border: Border.all(color: InvColors.cardBorder),
             ),
             child: const Icon(
-              Icons.inventory_2_outlined,
+              InvIcons.emptyState,
               size: 40,
               color: InvColors.textHint,
             ),
@@ -959,12 +948,12 @@ class _StockItemCardState extends State<_StockItemCard> {
   }
 
   IconData _categoryIcon(String cat) {
-    if (cat == StockCategory.gold.label) return Icons.circle_rounded;
-    if (cat == StockCategory.silver.label) return Icons.circle_outlined;
-    if (cat == StockCategory.diamond.label) return Icons.diamond_outlined;
-    if (cat == StockCategory.platinum.label) return Icons.stars_rounded;
-    if (cat == StockCategory.antique.label) return Icons.auto_awesome_outlined;
-    return Icons.category_outlined;
+    if (cat == StockCategory.gold.label) return InvIcons.catGold;
+    if (cat == StockCategory.silver.label) return InvIcons.catSilver;
+    if (cat == StockCategory.diamond.label) return InvIcons.catDiamond;
+    if (cat == StockCategory.platinum.label) return InvIcons.catPlatinum;
+    if (cat == StockCategory.antique.label) return InvIcons.catAntique;
+    return InvIcons.catDefault;
   }
 }
 
@@ -1006,347 +995,291 @@ class _StatusBadge extends StatelessWidget {
 }
 
 // =============================================================================
-// APP BAR — Same dark shell pattern as Add Stock
+// APP BAR — Premium Design Match
 // =============================================================================
 
-class _InventoryAppBar extends StatelessWidget implements PreferredSizeWidget {
+class _InventoryAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
-  final VoidCallback onRefresh;
-  final bool isRefreshing;
 
   const _InventoryAppBar({
     required this.onBack,
-    required this.onRefresh,
-    required this.isRefreshing,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(70);
+  Size get preferredSize => const Size.fromHeight(70.0);
+
+  @override
+  State<_InventoryAppBar> createState() => _InventoryAppBarState();
+}
+
+class _InventoryAppBarState extends State<_InventoryAppBar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _blinkCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _blinkCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _blinkCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: InvStyles.shellDecoration,
+      height: 70.0,
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      decoration: const BoxDecoration(
+        color: InvColors.shellPanelBg,
+        border: Border(
+          bottom: BorderSide(color: InvColors.shellBorder, width: 1.0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x26000000),
+            blurRadius: 16,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
       child: SafeArea(
         bottom: false,
-        child: Row(children: [
-          _HoverBackButton(onTap: onBack),
-          const SizedBox(width: 20),
-          _VerticalDivider(),
-          const SizedBox(width: 20),
-          // Title + radar
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Container(
-                  width: 5,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: InvColors.brandGold,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: InvColors.brandGold.withOpacity(0.6),
-                        blurRadius: 6,
-                      )
-                    ],
-                  ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // ── 1. Animated Back Button ──────────────────────────────────────
+            _HoverBackButton(onTap: widget.onBack),
+            const SizedBox(width: 18),
+
+            // ── 2. Vertical Divider ──────────────────────────────────────────
+            _buildVerticalDivider(),
+            const SizedBox(width: 18),
+
+            // ── 3. Premium Gradient Module Icon ──────────────────────────────
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    InvColors.goldGradientStart,
+                    InvColors.brandGold,
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(InvStrings.screenTitle, style: InvStyles.shellTitle),
-              ]),
-              const SizedBox(height: 5),
-              const _RadarStatusBadge(),
-            ],
-          ),
-          const Spacer(),
-          // Refresh button
-          _RefreshButton(onTap: onRefresh, isLoading: isRefreshing),
-          const SizedBox(width: 12),
-          // Module badge
-          _ModuleBadge(),
-        ]),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: InvColors.brandGold.withOpacity(0.5),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  )
+                ],
+              ),
+              child: const Icon(
+                InvIcons.moduleIcon,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            // ── 4. Main Title ────────────────────────────────────────────────
+            Text(
+              InvStrings.screenTitle,
+              style: InvStyles.shellTitle.copyWith(
+                fontSize: 18,
+                letterSpacing: 1.2,
+              ),
+            ),
+
+            // Spacer pushes the radar widget to the right end
+            const Spacer(),
+
+            // ── 5. Premium Radar Widget ──────────────────────────────────────
+            _RadarWidget(blinkCtrl: _blinkCtrl),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVerticalDivider() {
+    return Container(
+      width: 1.5,
+      height: 32,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent,
+            InvColors.shellBorder,
+            Colors.transparent,
+          ],
+        ),
       ),
     );
   }
 }
 
-// ── Hover Back Button ────────────────────────────────────────────
-
+// ─────────────────────────────────────────────────────────────────────────────
+// ANIMATED BACK BUTTON
+// ─────────────────────────────────────────────────────────────────────────────
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
   const _HoverBackButton({required this.onTap});
+
   @override
   State<_HoverBackButton> createState() => _HoverBackButtonState();
 }
 
 class _HoverBackButtonState extends State<_HoverBackButton> {
-  bool _h = false;
+  bool _isHovered = false;
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      onEnter: (_) => setState(() => _h = true),
-      onExit: (_) => setState(() => _h = false),
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          width: 42,
-          height: 42,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: InvColors.shellBg,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: _h ? InvColors.brandGold : InvColors.shellBorder,
-              width: _h ? 1.5 : 1.0,
-            ),
-            boxShadow: [
-              if (_h)
-                BoxShadow(
-                  color: InvColors.brandGold.withOpacity(0.25),
-                  blurRadius: 12,
-                  offset: const Offset(0, 3),
-                ),
-            ],
-          ),
-          child: Icon(
-            Icons.arrow_back_rounded,
-            color: _h ? InvColors.brandGold : InvColors.shellTextTitle,
-            size: 20,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Refresh Button ────────────────────────────────────────────────
-
-class _RefreshButton extends StatefulWidget {
-  final VoidCallback onTap;
-  final bool isLoading;
-  const _RefreshButton({required this.onTap, required this.isLoading});
-  @override
-  State<_RefreshButton> createState() => _RefreshButtonState();
-}
-
-class _RefreshButtonState extends State<_RefreshButton> {
-  bool _h = false;
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _h = true),
-      onExit: (_) => setState(() => _h = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.isLoading ? null : widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          width: 38,
-          height: 38,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color:
-                _h ? InvColors.brandGold.withOpacity(0.15) : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: _h ? InvColors.brandGold : InvColors.shellBorder,
-            ),
-          ),
-          child: widget.isLoading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    color: InvColors.brandGold,
-                    strokeWidth: 1.8,
-                  ),
-                )
-              : Icon(Icons.refresh_rounded,
-                  color: _h ? InvColors.brandGold : InvColors.shellTextMuted,
-                  size: 18),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Radar SYSTEM ONLINE Badge ─────────────────────────────────────
-
-class _RadarStatusBadge extends StatefulWidget {
-  const _RadarStatusBadge();
-  @override
-  State<_RadarStatusBadge> createState() => _RadarStatusBadgeState();
-}
-
-class _RadarStatusBadgeState extends State<_RadarStatusBadge>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  late AnimationController _ac;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _ac = AnimationController(vsync: this, duration: const Duration(seconds: 2))
-      ..repeat();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState s) {
-    if (s == AppLifecycleState.paused || s == AppLifecycleState.inactive) {
-      _ac.stop();
-    } else if (s == AppLifecycleState.resumed) {
-      _ac.repeat();
-    }
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _ac.dispose();
-    super.dispose();
-  }
-
-  Widget _wave(double delay, double size) => AnimatedBuilder(
-        animation: _ac,
-        builder: (_, __) {
-          final v = (_ac.value + delay) % 1.0;
-          return Opacity(
-            opacity: 1.0 - v,
-            child: Transform.scale(
-              scale: 1.0 + v * 1.5,
-              child: Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: InvColors.onlineGreen.withOpacity(0.5),
-                    width: 1.5,
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(children: [
-      SizedBox(
-        width: 14,
-        height: 14,
-        child: Stack(alignment: Alignment.center, children: [
-          _wave(0.0, 14),
-          _wave(0.5, 14),
-          Container(
-            width: 6,
-            height: 6,
+        child: AnimatedScale(
+          scale: _isHovered ? 1.05 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: InvColors.onlineGreen,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: InvColors.onlineGreen,
-                  blurRadius: 6,
-                  spreadRadius: 1,
+              color: _isHovered
+                  ? InvColors.shellBg
+                  : InvColors.shellBorder.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: _isHovered ? InvColors.brandGold : InvColors.shellBorder,
+                width: _isHovered ? 1.5 : 1.0,
+              ),
+              boxShadow: _isHovered
+                  ? [
+                      BoxShadow(
+                        color: InvColors.brandGold.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                  : [],
+            ),
+            child: Icon(
+              InvIcons.backArrow,
+              color:
+                  _isHovered ? InvColors.brandGold : InvColors.shellTextTitle,
+              size: 18,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RADAR / ONLINE WIDGET (Pill shape added)
+// ─────────────────────────────────────────────────────────────────────────────
+class _RadarWidget extends StatelessWidget {
+  final AnimationController blinkCtrl;
+  const _RadarWidget({required this.blinkCtrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: InvColors.onlineGreen.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: InvColors.onlineGreen.withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _buildWave(blinkCtrl, 0.0),
+                _buildWave(blinkCtrl, 0.5),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: InvColors.onlineGreen,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: InvColors.onlineGreen,
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-        ]),
-      ),
-      const SizedBox(width: 8),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(
-          color: InvColors.onlineGreen.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: InvColors.onlineGreen.withOpacity(0.2),
-          ),
-        ),
-        child: Text(
-          InvStrings.systemOnline,
-          style: GoogleFonts.inter(
-            color: InvColors.onlineGreen,
-            fontSize: 9.5,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.8,
-          ),
-        ),
-      ),
-    ]);
-  }
-}
-
-// ── Module Badge (right side) ─────────────────────────────────────
-
-class _ModuleBadge extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: InvColors.moduleBadgeBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: InvColors.moduleBadgeBorder),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: InvColors.brandGold.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: const Icon(Icons.bar_chart_rounded,
-              color: InvColors.brandGold, size: 14),
-        ),
-        const SizedBox(width: 10),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              InvStrings.moduleBadge,
-              style: GoogleFonts.inter(
-                color: InvColors.shellTextTitle,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.3,
-              ),
+          const SizedBox(width: 8),
+          Text(
+            InvStrings.systemOnline,
+            style: GoogleFonts.inter(
+              color: InvColors.onlineGreen,
+              fontSize: 12.0,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
             ),
-            Text(
-              'Ledger View',
-              style: GoogleFonts.inter(
-                color: InvColors.shellTextMuted,
-                fontSize: 10,
-              ),
-            ),
-          ],
-        ),
-      ]),
+          ),
+        ],
+      ),
     );
   }
-}
 
-// ── Vertical Divider (header separator) ──────────────────────────
-
-class _VerticalDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 32,
-      color: InvColors.shellBorder,
+  Widget _buildWave(AnimationController ctrl, double delay) {
+    return AnimatedBuilder(
+      animation: ctrl,
+      builder: (_, __) {
+        final val = (ctrl.value + delay) % 1.0;
+        return Opacity(
+          opacity: 1.0 - val,
+          child: Transform.scale(
+            scale: 1.0 + (val * 1.5),
+            child: Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: InvColors.onlineGreen.withOpacity(0.5),
+                  width: 1.5,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

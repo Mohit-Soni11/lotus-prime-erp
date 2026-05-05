@@ -44,7 +44,7 @@ class _AddStockScreenState extends State<AddStockScreen> {
             appBar: AddStockAppBar(
               ctrl: _ctrl,
               onBack: _handleBackPressed,
-              onResetRequested: _showResetDialog,
+              // Yahan se onResetRequested hata diya gaya hai kyunki ab clean header use ho raha hai
             ),
             body: AnimatedSwitcher(
               duration: const Duration(milliseconds: 260),
