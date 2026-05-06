@@ -53,10 +53,13 @@ dependencies:
   font_awesome_flutter: ^11.0.0
   url_launcher: ^6.3.0
 
-  # --- 7. MAPS & LOCATION (UPDATED FOR WINDOWS/MOBILE) ---
-  flutter_map: ^6.1.0        # ✅ Works on Windows & Mobile inside app
-  latlong2: ^0.9.0           # ✅ Coordinates handling
-  geolocator: ^10.1.0        # ✅ GPS Logic
+  # ✅ FIX: http package — SmartInputService ke liye (Claude API calls)
+  http: ^1.2.1
+
+  # --- 7. MAPS & LOCATION ---
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.0
+  geolocator: ^10.1.0
   sqflite: ^2.4.2
   sqflite_common_ffi: ^2.3.7+1
   share_plus: ^12.0.1

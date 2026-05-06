@@ -3,15 +3,21 @@
 // MODULE      : Shared → Smart Input
 // LAYER       : Logic / Controller
 // PURPOSE     : Har SmartInputField ka apna controller hota hai.
-//               - State own karta hai (spell, suggestions, loading)
+//               - State own karta hai (spell, suggestions, loading, error)
 //               - 450ms debounce handle karta hai
 //               - UI ko sirf ek notifyListeners() se update karta hai
+//
+// ✅ FIXES APPLIED:
+//   1. SmartSuggestionResult use hota hai (success/empty/error alag)
+//   2. errorMessage state add kiya — UI ko pata chale kya galat hua
+//   3. isApiKeyMissing getter add kiya — screen pe clear warning dikhao
+//   4. _clearState mein error bhi reset hota hai
 // =============================================================================
 
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../config/env_config.dart';
 import 'smart_field_type.dart';
-//import 'smart_suggestion_model.dart';
 import 'smart_input_service.dart';
 
 class SmartInputController extends ChangeNotifier {
@@ -30,11 +36,18 @@ class SmartInputController extends ChangeNotifier {
   bool isLoading = false;
   String currentQuery = '';
 
+  /// ✅ NEW: Error message — null = koi error nahi
+  String? errorMessage;
+
   // ── Private ───────────────────────────────────────────────────────────────
   Timer? _debounceTimer;
-
-  // 450ms — sweet spot for Indian name inputs (not too fast, not too slow)
   static const Duration _debounceDuration = Duration(milliseconds: 450);
+
+  // ── Convenience getters ───────────────────────────────────────────────────
+  bool get hasError => errorMessage != null;
+  bool get isApiKeyMissing => !EnvConfig.hasValidAnthropicKey;
+  bool get hasAnySuggestion =>
+      spellCorrection != null || suggestions.isNotEmpty;
 
   // ════════════════════════════════════════════════════════════════════════════
   // ENTRY POINT — TextField.onChanged se call hota hai
@@ -42,10 +55,7 @@ class SmartInputController extends ChangeNotifier {
   void onTextChanged(String query) {
     currentQuery = query;
 
-    // Pichla pending timer cancel karo — wasteful API call avoid ho
     _debounceTimer?.cancel();
-
-    // Suggestions reset karo — snappy UX ke liye
     _clearState();
 
     if (query.trim().length < fieldType.minQueryLength) {
@@ -54,36 +64,50 @@ class SmartInputController extends ChangeNotifier {
       return;
     }
 
-    // Shimmer/loading indicator immediately dikhao
+    // API key nahi hai — loading dikhao hi mat, error dikhao
+    if (isApiKeyMissing) {
+      errorMessage = '⚠️ Smart suggestions ke liye API key set karo.\n'
+          'Run: flutter run --dart-define=ANTHROPIC_KEY=sk-ant-xxxx';
+      notifyListeners();
+      return;
+    }
+
+    // Shimmer immediately
     isLoading = true;
     notifyListeners();
 
-    // 450ms ke baad actual API call
     _debounceTimer = Timer(_debounceDuration, () => _fetch(query.trim()));
   }
 
   // ── API Fetch ─────────────────────────────────────────────────────────────
   Future<void> _fetch(String query) async {
-    try {
-      final result = await _service.fetchSuggestions(query, fieldType);
-      spellCorrection =
-          result.hasSpellCorrection ? result.spellCorrection : null;
-      suggestions = fieldType.showSuggestionChips ? result.suggestions : [];
-    } catch (_) {
+    final result = await _service.fetchSuggestions(query, fieldType);
+
+    if (result.isSuccess) {
+      final model = result.model!;
+      spellCorrection = model.hasSpellCorrection ? model.spellCorrection : null;
+      suggestions = fieldType.showSuggestionChips ? model.suggestions : [];
+      errorMessage = null;
+    } else if (result.isError) {
       spellCorrection = null;
       suggestions = [];
-    } finally {
-      isLoading = false;
-      notifyListeners(); // Single notify → single rebuild
+      errorMessage = result.errorMessage;
+    } else {
+      // isEmpty — koi suggestions nahi mila, that's fine
+      spellCorrection = null;
+      suggestions = [];
+      errorMessage = null;
     }
+
+    isLoading = false;
+    notifyListeners();
   }
 
   // ════════════════════════════════════════════════════════════════════════════
-  // USER ACTIONS — UI se call hoti hain
+  // USER ACTIONS
   // ════════════════════════════════════════════════════════════════════════════
 
   /// User ne "Search instead for X" tap kiya
-  /// Returns: accepted text (UI TextField update karega)
   String acceptSpellCorrection() {
     final text = spellCorrection ?? '';
     _clearState();
@@ -92,7 +116,6 @@ class SmartInputController extends ChangeNotifier {
   }
 
   /// User ne suggestion chip tap kiya
-  /// Returns: chosen chip text (UI TextField update karega)
   String acceptSuggestion(String chip) {
     _clearState();
     notifyListeners();
@@ -103,10 +126,8 @@ class SmartInputController extends ChangeNotifier {
   void _clearState() {
     spellCorrection = null;
     suggestions = [];
+    errorMessage = null;
   }
-
-  bool get hasAnySuggestion =>
-      spellCorrection != null || suggestions.isNotEmpty;
 
   // ── Cleanup ───────────────────────────────────────────────────────────────
   @override
