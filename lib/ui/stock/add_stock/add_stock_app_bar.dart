@@ -59,6 +59,7 @@ class _AddStockAppBarState extends State<AddStockAppBar>
             ],
           ),
           child: SafeArea(
+            top: false,
             bottom: false,
             child: Column(
               children: [

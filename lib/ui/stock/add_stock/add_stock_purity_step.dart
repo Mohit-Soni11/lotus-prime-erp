@@ -69,6 +69,7 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
     );
   }
 
+  // ── MAIN PANEL ─────────────────────────────────────────────────────────────
   Widget _buildMainPanel(AddStockController ctrl, StockMetalUiData ui) {
     return Container(
       decoration: AddStockStyles.cardWithAccent(ui.accent),
@@ -76,6 +77,7 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Gradient header banner
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(18),
@@ -89,10 +91,18 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.18),
-                    borderRadius: BorderRadius.circular(16),
+                    color: ui.textOnGradient.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(ui.icon, color: Colors.white, size: 28),
+                  clipBehavior: Clip.antiAlias,
+                  child: ui.logoAsset != null
+                      ? Image.asset(
+                          ui.logoAsset!,
+                          width: 52,
+                          height: 52,
+                          fit: BoxFit.cover,
+                        )
+                      : Icon(ui.icon, color: ui.textOnGradient, size: 28),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -100,11 +110,11 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${ui.title} batch setup',
+                        '${ui.title} — Stock Intake',
                         style: GoogleFonts.manrope(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
-                          color: Colors.white,
+                          color: ui.textOnGradient,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -113,7 +123,7 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           height: 1.45,
-                          color: Colors.white.withOpacity(0.92),
+                          color: ui.textOnGradient.withOpacity(0.75),
                         ),
                       ),
                     ],
@@ -123,10 +133,11 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
             ),
           ),
           const SizedBox(height: 22),
-          Text('Purity / Karat', style: AddStockStyles.pageTitle),
+
+          Text('Purity / Karat Grade', style: AddStockStyles.pageTitle),
           const SizedBox(height: 6),
           Text(
-            'Is batch ke liye base purity choose karo. Yeh selection saari rows par apply hogi aur later inventory save ke saath persist hogi.',
+            'Select the base purity for this batch. All items in this session will inherit this purity grade. This setting is locked once you proceed to item entry.',
             style: GoogleFonts.inter(
               fontSize: 13,
               height: 1.6,
@@ -134,6 +145,8 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
             ),
           ),
           const SizedBox(height: 22),
+
+          // Purity option chips
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -186,19 +199,18 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
               );
             }).toList(),
           ),
+
+          // Custom purity text field
           if (ctrl.isCustomPurity) ...[
             const SizedBox(height: 18),
-            Text(
-              AddStockStrings.purityCustomLabel,
-              style: AddStockStyles.fieldLabel,
-            ),
+            Text('Enter Custom Purity', style: AddStockStyles.fieldLabel),
             const SizedBox(height: 8),
             TextField(
               controller: _customCtrl,
               onChanged: ctrl.setCustomPurity,
               style: AddStockStyles.fieldInput,
               decoration: InputDecoration(
-                hintText: AddStockStrings.purityCustomHint,
+                hintText: 'e.g. 18K Rose Gold, 950 Platinum',
                 hintStyle: AddStockStyles.fieldHint,
                 prefixIcon: Icon(
                   Icons.tune_rounded,
@@ -209,15 +221,13 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
                 fillColor: AddStockColors.inputBg,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(
-                    color: AddStockColors.cardBorder,
-                  ),
+                  borderSide:
+                      const BorderSide(color: AddStockColors.cardBorder),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(
-                    color: AddStockColors.cardBorder,
-                  ),
+                  borderSide:
+                      const BorderSide(color: AddStockColors.cardBorder),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -226,6 +236,7 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
               ),
             ),
           ],
+
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
@@ -242,7 +253,7 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
               ),
               icon: const Icon(Icons.arrow_forward_rounded),
               label: Text(
-                AddStockStrings.btnNextItems,
+                'Continue to Item Entry',
                 style: GoogleFonts.manrope(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
@@ -255,6 +266,7 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
     );
   }
 
+  // ── SIDE PANEL — Smart Stock Summary ───────────────────────────────────────
   Widget _buildSidePanel(AddStockController ctrl, StockMetalUiData ui) {
     return Container(
       decoration: AddStockStyles.cardDecoration,
@@ -262,56 +274,172 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Batch Snapshot',
-            style: GoogleFonts.manrope(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: AddStockColors.textDark,
-            ),
+          // Header
+          Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: ui.accent.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child:
+                    Icon(Icons.inventory_2_rounded, size: 15, color: ui.accent),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Current Stock by Purity',
+                  style: GoogleFonts.manrope(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AddStockColors.textDark,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
-          _sideStat('Metal', ui.title),
-          const SizedBox(height: 10),
-          _sideStat('Suggested HSN', ctrl.defaultHsnCode),
-          const SizedBox(height: 10),
-          _sideStat(
-            'Purity selection',
-            ctrl.purityDisplay.trim().isEmpty
-                ? 'Not selected'
-                : ctrl.purityDisplay,
+          const SizedBox(height: 6),
+          Text(
+            'Available ${ui.title} inventory, grouped by purity grade.',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              height: 1.5,
+              color: AddStockColors.textMuted,
+            ),
           ),
           const SizedBox(height: 14),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: ui.softSurface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: ui.accent.withOpacity(0.14)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Tips before you continue',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+
+          // Stock table
+          if (ctrl.isLoadingStockSummary)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
                     color: ui.accent,
                   ),
                 ),
-                const SizedBox(height: 10),
-                _tip(
-                  'Purity batch-level par lock hogi, isliye sahi option lo.',
-                ),
-                _tip(
-                  'Aage har row mein HSN, HUID, pricing aur quantity save kar paoge.',
-                ),
-                _tip(
-                  'Supplier same-for-all mode on rahe to row entry fast ho jayegi.',
-                ),
-              ],
+              ),
+            )
+          else if (ctrl.purityStockSummary.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: ui.softSurface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ui.accent.withOpacity(0.14)),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.inventory_outlined,
+                    size: 28,
+                    color: ui.accent.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'No ${ui.title} stock on record.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AddStockColors.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Items added in this batch will appear here on your next session.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      height: 1.5,
+                      color: AddStockColors.textHint,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Column(
+              children: ctrl.purityStockSummary.entries.map((entry) {
+                return _purityRow(
+                  purity: entry.key,
+                  totalGrams: entry.value,
+                  accent: ui.accent,
+                  surface: ui.softSurface,
+                );
+              }).toList(),
+            ),
+
+          const SizedBox(height: 16),
+          const Divider(height: 1, color: AddStockColors.cardBorder),
+          const SizedBox(height: 16),
+
+          // Batch guidelines
+          Text(
+            'Batch Guidelines',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: ui.accent,
+            ),
+          ),
+          const SizedBox(height: 10),
+          _guideline(
+            'Purity is locked at batch level — select carefully before proceeding.',
+            ui.accent,
+          ),
+          _guideline(
+            'Each item row supports individual HSN code, HUID and quantity.',
+            ui.accent,
+          ),
+          _guideline(
+            'Enable "Same supplier for all" to pre-fill supplier across every row.',
+            ui.accent,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _purityRow({
+    required String purity,
+    required double totalGrams,
+    required Color accent,
+    required Color surface,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withOpacity(0.18)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              purity,
+              style: GoogleFonts.manrope(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AddStockColors.textDark,
+              ),
+            ),
+          ),
+          Text(
+            '${totalGrams.toStringAsFixed(3)} g',
+            style: GoogleFonts.manrope(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: accent,
             ),
           ),
         ],
@@ -319,32 +447,7 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
     );
   }
 
-  Widget _sideStat(String label, String value) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              color: AddStockColors.textMuted,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        Text(
-          value,
-          style: GoogleFonts.manrope(
-            fontSize: 12,
-            color: AddStockColors.textDark,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _tip(String text) {
+  Widget _guideline(String text, Color accent) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -354,9 +457,9 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
             width: 6,
             height: 6,
             margin: const EdgeInsets.only(top: 6),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AddStockColors.brandGold,
+              color: accent,
             ),
           ),
           const SizedBox(width: 8),

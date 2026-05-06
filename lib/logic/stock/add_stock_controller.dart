@@ -83,6 +83,7 @@ class AddStockController extends ChangeNotifier {
     _selectedMetal = initialMetal;
     _rows.add(_buildEmptyRow());
     _loadSuppliers();
+    _loadPurityStockSummary();
   }
 
   AddStockStep _step = AddStockStep.purity;
@@ -199,6 +200,49 @@ class AddStockController extends ChangeNotifier {
 
   Future<void> _loadSuppliers() async {
     await reloadSuppliers();
+  }
+
+  // ── PURITY STOCK SUMMARY ────────────────────────────────────
+  /// Maps purity label → total net weight (grams) currently in stock.
+  Map<String, double> _purityStockSummary = {};
+  Map<String, double> get purityStockSummary =>
+      Map.unmodifiable(_purityStockSummary);
+
+  bool _isLoadingStockSummary = false;
+  bool get isLoadingStockSummary => _isLoadingStockSummary;
+
+  Future<void> _loadPurityStockSummary() async {
+    _isLoadingStockSummary = true;
+    notifyListeners();
+
+    try {
+      final items = await (_db.select(_db.stockItems)
+            ..where(
+              (t) =>
+                  t.category.equals(_selectedMetal.label) &
+                  t.status.equals(StockStatus.available.label),
+            ))
+          .get();
+
+      final Map<String, double> summary = {};
+      for (final item in items) {
+        final purity = (item.purity?.trim().isEmpty ?? true)
+            ? 'Unspecified'
+            : item.purity!;
+        final netWt = item.netWeight * item.quantity;
+        summary[purity] = (summary[purity] ?? 0) + netWt;
+      }
+
+      // Sort by weight descending
+      _purityStockSummary = Map.fromEntries(
+        summary.entries.toList()..sort((a, b) => b.value.compareTo(a.value)),
+      );
+    } catch (_) {
+      _purityStockSummary = {};
+    }
+
+    _isLoadingStockSummary = false;
+    notifyListeners();
   }
 
   Future<void> reloadSuppliers() async {
