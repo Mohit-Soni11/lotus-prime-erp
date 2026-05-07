@@ -1,24 +1,10 @@
-// =============================================================================
-// FILE        : smart_input_controller.dart
-// MODULE      : Shared → Smart Input
-// LAYER       : Logic / Controller
-// PURPOSE     : Har SmartInputField ka apna controller hota hai.
-//               - State own karta hai (spell, suggestions, loading, error)
-//               - 450ms debounce handle karta hai
-//               - UI ko sirf ek notifyListeners() se update karta hai
-//
-// ✅ FIXES APPLIED:
-//   1. Gemini API Key check lagaya gaya hai
-//   2. Error messages updated for GEMINI_API_KEY
-// =============================================================================
-
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../config/env_config.dart';
 import 'smart_field_type.dart';
 import 'smart_input_service.dart';
 
 class SmartInputController extends ChangeNotifier {
-  // ── Dependencies ──────────────────────────────────────────────────────────
   final SmartFieldType fieldType;
   final SmartInputService _service;
 
@@ -27,32 +13,22 @@ class SmartInputController extends ChangeNotifier {
     SmartInputService? service,
   }) : _service = service ?? SmartInputService();
 
-  // ── Public Observable State ───────────────────────────────────────────────
   String? spellCorrection;
   List<String> suggestions = [];
   bool isLoading = false;
   String currentQuery = '';
   String? errorMessage;
 
-  // ── Private ───────────────────────────────────────────────────────────────
   Timer? _debounceTimer;
-  static const Duration _debounceDuration = Duration(milliseconds: 450);
+  static const Duration _debounceDuration = Duration(milliseconds: 600);
 
-  // ── Convenience getters ───────────────────────────────────────────────────
   bool get hasError => errorMessage != null;
-
-  // ✅ FIX: Now checking Gemini key instead of Anthropic
-  bool get isApiKeyMissing => SmartInputService.geminiKey.isEmpty;
-
+  bool get isApiKeyMissing => !EnvConfig.hasValidGeminiKey;
   bool get hasAnySuggestion =>
       spellCorrection != null || suggestions.isNotEmpty;
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // ENTRY POINT — TextField.onChanged se call hota hai
-  // ════════════════════════════════════════════════════════════════════════════
   void onTextChanged(String query) {
     currentQuery = query;
-
     _debounceTimer?.cancel();
     _clearState();
 
@@ -62,22 +38,21 @@ class SmartInputController extends ChangeNotifier {
       return;
     }
 
-    // API key nahi hai — loading dikhao hi mat, error dikhao
+    // DEBUG: Key check — agar key nahi hai to clearly dikhao
     if (isApiKeyMissing) {
-      errorMessage = '⚠️ Smart suggestions ke liye Gemini API key set karo.\n'
-          'Run: flutter run --dart-define=GEMINI_API_KEY=AIza...';
+      errorMessage =
+          '⚠️ API key nahi mili. App dobara run karo:\nflutter run -d windows --dart-define=GEMINI_API_KEY=AIzaXXX';
       notifyListeners();
       return;
     }
 
-    // Shimmer immediately
+    // Key hai — loading start karo
     isLoading = true;
     notifyListeners();
 
     _debounceTimer = Timer(_debounceDuration, () => _fetch(query.trim()));
   }
 
-  // ── API Fetch ─────────────────────────────────────────────────────────────
   Future<void> _fetch(String query) async {
     final result = await _service.fetchSuggestions(query, fieldType);
 
@@ -89,9 +64,9 @@ class SmartInputController extends ChangeNotifier {
     } else if (result.isError) {
       spellCorrection = null;
       suggestions = [];
+      // DEBUG: Error dikhao taaki pata chale kya problem hai
       errorMessage = result.errorMessage;
     } else {
-      // isEmpty — koi suggestions nahi mila, that's fine
       spellCorrection = null;
       suggestions = [];
       errorMessage = null;
@@ -100,10 +75,6 @@ class SmartInputController extends ChangeNotifier {
     isLoading = false;
     notifyListeners();
   }
-
-  // ════════════════════════════════════════════════════════════════════════════
-  // USER ACTIONS
-  // ════════════════════════════════════════════════════════════════════════════
 
   String acceptSpellCorrection() {
     final text = spellCorrection ?? '';
@@ -118,14 +89,12 @@ class SmartInputController extends ChangeNotifier {
     return chip;
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
   void _clearState() {
     spellCorrection = null;
     suggestions = [];
     errorMessage = null;
   }
 
-  // ── Cleanup ───────────────────────────────────────────────────────────────
   @override
   void dispose() {
     _debounceTimer?.cancel();

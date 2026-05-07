@@ -3,16 +3,26 @@
 // LAYER       : Config
 // DESCRIPTION : Environment configuration — dev/prod toggle + API keys
 //
-// ✅ FIX: Gemini API key yahan se manage hota hai.
+// ✅ UPDATED: Ab Google Gemini API use hoti hai — FREE & FAST!
 //
-// HOW TO RUN (Best Practice):
-//   flutter run --dart-define-from-file=.env
+// HOW TO GET FREE API KEY:
+//   1. https://aistudio.google.com/app/apikey
+//   2. "Create API Key" click karo — FREE hai!
+//
+// HOW TO RUN:
+//   flutter run --dart-define=GEMINI_API_KEY=AIzaXXXXXXXXXXXXXXXXXXXXXXXX
 //
 // VS CODE — launch.json mein add karo:
-//   "args": ["--dart-define-from-file=.env"]
+//   "args": ["--dart-define=GEMINI_API_KEY=AIzaXXXXXXXXXXXXXXXXXXXXXXXX"]
 //
-// ANDROID STUDIO — Run > Edit Configurations > Additional run args mein add:
-//   --dart-define-from-file=.env
+// ANDROID STUDIO — Run > Edit Configurations > Additional run args:
+//   --dart-define=GEMINI_API_KEY=AIzaXXXXXXXXXXXXXXXXXXXXXXXX
+//
+// FREE LIMITS (Gemini 1.5 Flash):
+//   ✅ 15 requests/minute
+//   ✅ 1500 requests/day
+//   ✅ 1 million tokens/minute
+//   ✅ Cost = ZERO Rs.!
 // =============================================================================
 
 enum Environment { dev, prod }
@@ -32,14 +42,15 @@ class EnvConfig {
     return 'https://api.lotuserp.com';
   }
 
-  // ── ✅ Gemini API Key (SmartInputService ke liye) ─────────────────────────
-  // Reads from .env file or command line arguments
+  // ── Google Gemini API Key (FREE!) ─────────────────────────────────────────
+  // Key lene ke liye: https://aistudio.google.com/app/apikey
+  // Run: flutter run --dart-define=GEMINI_API_KEY=AIzaXXXXXX
   static const String geminiApiKey = String.fromEnvironment(
     'GEMINI_API_KEY',
-    defaultValue: '', // Empty string = key nahi mili
+    defaultValue: '',
   );
 
-  // Key valid hai ya nahi check karo (Gemini keys start with 'AIza')
+  // Key valid hai ya nahi
   static bool get hasValidGeminiKey =>
       geminiApiKey.isNotEmpty && geminiApiKey.startsWith('AIza');
 }
