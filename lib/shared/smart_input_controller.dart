@@ -8,15 +8,12 @@
 //               - UI ko sirf ek notifyListeners() se update karta hai
 //
 // ✅ FIXES APPLIED:
-//   1. SmartSuggestionResult use hota hai (success/empty/error alag)
-//   2. errorMessage state add kiya — UI ko pata chale kya galat hua
-//   3. isApiKeyMissing getter add kiya — screen pe clear warning dikhao
-//   4. _clearState mein error bhi reset hota hai
+//   1. Gemini API Key check lagaya gaya hai
+//   2. Error messages updated for GEMINI_API_KEY
 // =============================================================================
 
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import '../config/env_config.dart';
 import 'smart_field_type.dart';
 import 'smart_input_service.dart';
 
@@ -35,8 +32,6 @@ class SmartInputController extends ChangeNotifier {
   List<String> suggestions = [];
   bool isLoading = false;
   String currentQuery = '';
-
-  /// ✅ NEW: Error message — null = koi error nahi
   String? errorMessage;
 
   // ── Private ───────────────────────────────────────────────────────────────
@@ -45,7 +40,10 @@ class SmartInputController extends ChangeNotifier {
 
   // ── Convenience getters ───────────────────────────────────────────────────
   bool get hasError => errorMessage != null;
-  bool get isApiKeyMissing => !EnvConfig.hasValidAnthropicKey;
+
+  // ✅ FIX: Now checking Gemini key instead of Anthropic
+  bool get isApiKeyMissing => SmartInputService.geminiKey.isEmpty;
+
   bool get hasAnySuggestion =>
       spellCorrection != null || suggestions.isNotEmpty;
 
@@ -66,8 +64,8 @@ class SmartInputController extends ChangeNotifier {
 
     // API key nahi hai — loading dikhao hi mat, error dikhao
     if (isApiKeyMissing) {
-      errorMessage = '⚠️ Smart suggestions ke liye API key set karo.\n'
-          'Run: flutter run --dart-define=ANTHROPIC_KEY=sk-ant-xxxx';
+      errorMessage = '⚠️ Smart suggestions ke liye Gemini API key set karo.\n'
+          'Run: flutter run --dart-define=GEMINI_API_KEY=AIza...';
       notifyListeners();
       return;
     }
@@ -107,7 +105,6 @@ class SmartInputController extends ChangeNotifier {
   // USER ACTIONS
   // ════════════════════════════════════════════════════════════════════════════
 
-  /// User ne "Search instead for X" tap kiya
   String acceptSpellCorrection() {
     final text = spellCorrection ?? '';
     _clearState();
@@ -115,7 +112,6 @@ class SmartInputController extends ChangeNotifier {
     return text;
   }
 
-  /// User ne suggestion chip tap kiya
   String acceptSuggestion(String chip) {
     _clearState();
     notifyListeners();

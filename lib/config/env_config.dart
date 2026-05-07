@@ -3,16 +3,16 @@
 // LAYER       : Config
 // DESCRIPTION : Environment configuration — dev/prod toggle + API keys
 //
-// ✅ FIX: Anthropic API key yahan se manage hota hai.
+// ✅ FIX: Gemini API key yahan se manage hota hai.
 //
-// HOW TO RUN:
-//   flutter run --dart-define=ANTHROPIC_KEY=sk-ant-xxxxxxxx
+// HOW TO RUN (Best Practice):
+//   flutter run --dart-define-from-file=.env
 //
 // VS CODE — launch.json mein add karo:
-//   "args": ["--dart-define=ANTHROPIC_KEY=sk-ant-xxxxxxxx"]
+//   "args": ["--dart-define-from-file=.env"]
 //
 // ANDROID STUDIO — Run > Edit Configurations > Additional run args mein add:
-//   --dart-define=ANTHROPIC_KEY=sk-ant-xxxxxxxx
+//   --dart-define-from-file=.env
 // =============================================================================
 
 enum Environment { dev, prod }
@@ -32,14 +32,14 @@ class EnvConfig {
     return 'https://api.lotuserp.com';
   }
 
-  // ── ✅ Anthropic API Key (SmartInputService ke liye) ──────────────────────
-  // Run command: flutter run --dart-define=ANTHROPIC_KEY=sk-ant-xxxxxxxx
-  static const String anthropicApiKey = String.fromEnvironment(
-    'ANTHROPIC_KEY',
+  // ── ✅ Gemini API Key (SmartInputService ke liye) ─────────────────────────
+  // Reads from .env file or command line arguments
+  static const String geminiApiKey = String.fromEnvironment(
+    'GEMINI_API_KEY',
     defaultValue: '', // Empty string = key nahi mili
   );
 
-  // Key valid hai ya nahi check karo
-  static bool get hasValidAnthropicKey =>
-      anthropicApiKey.isNotEmpty && anthropicApiKey.startsWith('sk-ant-');
+  // Key valid hai ya nahi check karo (Gemini keys start with 'AIza')
+  static bool get hasValidGeminiKey =>
+      geminiApiKey.isNotEmpty && geminiApiKey.startsWith('AIza');
 }

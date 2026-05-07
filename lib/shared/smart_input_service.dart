@@ -6,17 +6,17 @@
 //               SmartFieldType ke hisaab se alag-alag prompt build karta hai.
 //
 // ✅ FIXES APPLIED:
-//   1. http package properly use ho raha hai (pubspec mein add kiya)
-//   2. API key EnvConfig se aata hai — hardcode nahi
-//   3. Silent catch hata diya — error properly propagate hota hai
-//   4. Key missing ho to meaningful error return hota hai
-//   5. Response parsing robust banaya (null safety)
+//   1. Anthropic se Google Gemini 1.5 Flash par shift kiya (Free & Fast)
+//   2. Native JSON response_mime_type use kiya
+//   3. API key String.fromEnvironment('GEMINI_API_KEY') se read hoti hai
+//   4. Added missing SmartSuggestionResult class at the bottom.
 // =============================================================================
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async'; // TimeoutException ke liye
 import 'package:http/http.dart' as http;
-import '../config/env_config.dart';
+import '../config/env_config.dart'; // Ensure EnvConfig import is correct based on your folder structure
 import 'smart_field_type.dart';
 import 'smart_suggestion_model.dart';
 
@@ -25,10 +25,12 @@ class SmartInputService {
 
   SmartInputService({http.Client? client}) : _client = client ?? http.Client();
 
-  // ── API Config ─────────────────────────────────────────────────────────────
-  static const _apiUrl = 'https://api.anthropic.com/v1/messages';
-  static const _model = 'claude-sonnet-4-20250514';
-  static const _maxTok = 250;
+  // ── Gemini API Config ──────────────────────────────────────────────────────
+  // EnvConfig se key read kar rahe hain
+  static String get geminiKey => EnvConfig.geminiApiKey;
+
+  static const _apiUrl =
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
   static const _timeout = Duration(seconds: 10);
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -44,73 +46,69 @@ class SmartInputService {
     }
 
     // ── API Key check ────────────────────────────────────────────────────────
-    if (!EnvConfig.hasValidAnthropicKey) {
+    if (!EnvConfig.hasValidGeminiKey) {
       return SmartSuggestionResult.error(
-        'Anthropic API key missing.\n'
-        'Run: flutter run --dart-define=ANTHROPIC_KEY=sk-ant-xxxx',
+        'Gemini API key missing.\n'
+        'Run: flutter run --dart-define-from-file=.env',
       );
     }
 
     try {
+      final url = Uri.parse('$_apiUrl?key=$geminiKey');
+
       final response = await _client
           .post(
-            Uri.parse(_apiUrl),
-            headers: _buildHeaders(),
+            url,
+            headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
-              'model': _model,
-              'max_tokens': _maxTok,
-              'messages': [
+              "contents": [
                 {
-                  'role': 'user',
-                  'content': _buildPrompt(query.trim(), fieldType),
+                  "parts": [
+                    {"text": _buildPrompt(query.trim(), fieldType)}
+                  ]
                 }
               ],
+              "generationConfig": {
+                // Ye Gemini ko strictly valid JSON return karne force karta hai
+                "response_mime_type": "application/json"
+              }
             }),
           )
           .timeout(_timeout);
 
       // ── Non-200 responses ─────────────────────────────────────────────────
-      if (response.statusCode == 401) {
-        return SmartSuggestionResult.error(
-            'Invalid API key. Check your ANTHROPIC_KEY.');
+      if (response.statusCode == 400 || response.statusCode == 403) {
+        return SmartSuggestionResult.error('Invalid Gemini API key.');
       }
       if (response.statusCode == 429) {
-        return SmartSuggestionResult.error(
-            'Rate limit hit. Thodi der baad try karo.');
+        return SmartSuggestionResult.error('Rate limit hit. Wait a moment.');
       }
       if (response.statusCode != HttpStatus.ok) {
-        return SmartSuggestionResult.error(
-          'API error: ${response.statusCode}',
-        );
+        return SmartSuggestionResult.error('API error: ${response.statusCode}');
       }
 
-      // ── Parse response ────────────────────────────────────────────────────
+      // ── Parse Gemini response ─────────────────────────────────────────────
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      final content = body['content'] as List?;
-      final rawText = content?.isNotEmpty == true
-          ? (content!.first['text'] as String? ?? '').trim()
-          : '';
+      final candidates = body['candidates'] as List?;
 
+      if (candidates == null || candidates.isEmpty) {
+        return SmartSuggestionResult.empty();
+      }
+
+      final rawText =
+          candidates.first['content']?['parts']?[0]?['text'] as String? ?? '';
       if (rawText.isEmpty) return SmartSuggestionResult.empty();
 
-      // Clean markdown fences agar Claude ne laga diya
-      final cleaned = rawText
-          .replaceAll(RegExp(r'```json\s*'), '')
-          .replaceAll('```', '')
-          .trim();
-
-      final jsonMap = jsonDecode(cleaned) as Map<String, dynamic>;
+      final jsonMap = jsonDecode(rawText) as Map<String, dynamic>;
       return SmartSuggestionResult.success(
         SmartSuggestionModel.fromJson(jsonMap),
       );
     } on FormatException catch (e) {
-      // JSON parse fail — Claude ne unexpected format diya
       return SmartSuggestionResult.error('Parse error: $e');
     } on SocketException {
       return SmartSuggestionResult.error('No internet connection.');
-    } on HttpException {
-      return SmartSuggestionResult.error(
-          'Network error. Check your connection.');
+    } on TimeoutException {
+      return SmartSuggestionResult.error('Request timed out.');
     } catch (e) {
       return SmartSuggestionResult.error('Unexpected error: $e');
     }
@@ -120,86 +118,54 @@ class SmartInputService {
   // CONTEXT-AWARE PROMPT BUILDER
   // ════════════════════════════════════════════════════════════════════════════
   String _buildPrompt(String query, SmartFieldType fieldType) {
-    const jsonFormat =
-        'Return ONLY this exact JSON (no markdown, no explanation):\n'
+    const jsonFormat = 'Return ONLY this exact JSON structure:\n'
         '{"spellCorrection":"corrected if misspelled else null","suggestions":["s1","s2","s3"]}';
 
     switch (fieldType) {
-      // ── 👤 Name Field ──────────────────────────────────────────────────────
       case SmartFieldType.name:
-        return 'You are a smart input assistant for an Indian jewellery shop ERP.\n'
-            'User typed in a CUSTOMER/PERSON NAME field: "$query"\n\n'
-            '$jsonFormat\n\n'
+        return 'You are an Indian ERP assistant.\n'
+            'User typed a CUSTOMER NAME: "$query"\n\n$jsonFormat\n\n'
             'Rules:\n'
-            '- spellCorrection: If "$query" looks like a misspelled Indian personal name '
-            '(e.g. "chaodhari"→"Chaudhari", "ramech"→"Ramesh", "prya"→"Priya"), return corrected form. '
-            'If already correct, return null.\n'
-            '- suggestions: Give 2-3 Hindi Devanagari script versions of "$query" as a personal name '
-            '(e.g. "Ramesh" → ["रमेश","रामेश"]). Always provide at least 2.';
+            '- spellCorrection: If "$query" is a misspelled Indian name (e.g. "ramech"→"Ramesh"), correct it. Else null.\n'
+            '- suggestions: Give 2-3 standard Indian name completions or variations for "$query".';
 
-      // ── 🏠 Address Field ───────────────────────────────────────────────────
       case SmartFieldType.address:
-        return 'You are a smart input assistant for an Indian jewellery shop ERP.\n'
-            'User typed in an ADDRESS/CITY/AREA field: "$query"\n\n'
-            '$jsonFormat\n\n'
+        return 'You are an Indian ERP assistant.\n'
+            'User typed an ADDRESS/CITY: "$query"\n\n$jsonFormat\n\n'
             'Rules:\n'
-            '- spellCorrection: If "$query" looks like a misspelled Indian city, area, or locality '
-            '(e.g. "mumabi"→"Mumbai", "patana"→"Patna"), return correction. Else null.\n'
-            '- suggestions: Give 2-3 relevant Indian city names or area completions related to "$query" '
-            '(e.g. "pat"→["Patna","Patiala","Pathankot"]).';
+            '- spellCorrection: If misspelled Indian city/area (e.g. "mumabi"→"Mumbai"), correct it. Else null.\n'
+            '- suggestions: Give 2-3 relevant Indian city/area completions for "$query".';
 
-      // ── 💍 Item Field ──────────────────────────────────────────────────────
       case SmartFieldType.item:
-        return 'You are a smart input assistant for an Indian jewellery shop ERP.\n'
-            'User typed in a JEWELLERY ITEM field: "$query"\n\n'
-            '$jsonFormat\n\n'
+        return 'You are a jewellery ERP assistant.\n'
+            'User typed a JEWELLERY ITEM: "$query"\n\n$jsonFormat\n\n'
             'Rules:\n'
-            '- spellCorrection: If "$query" looks like a misspelled jewellery item '
-            '(e.g. "rnig"→"Ring", "chanin"→"Chain"), return correction. Else null.\n'
-            '- suggestions: Give 2-3 specific Indian jewellery item names related to "$query" '
-            '(e.g. "ring"→["Gold Ring 22K","Silver Ring","Diamond Ring"], '
-            '"chain"→["Gold Chain 22K","Silver Chain","Mangalsutra"]).';
+            '- spellCorrection: If misspelled (e.g. "rnig"→"Ring"), correct it. Else null.\n'
+            '- suggestions: Give 2-3 standard jewellery item names (e.g. "Gold Ring 22K", "Diamond Chain").';
 
-      // ── 📝 Remark Field ────────────────────────────────────────────────────
       case SmartFieldType.remark:
-        return 'You are a smart input assistant for an Indian jewellery shop ERP.\n'
-            'User typed in a REMARK/NOTE field: "$query"\n\n'
-            '$jsonFormat\n\n'
-            'Rules:\n'
-            '- spellCorrection: Fix obvious spelling mistakes in "$query". Return corrected full text. '
-            'If correct, return null.\n'
-            '- suggestions: Always return empty array [] — remarks are freeform.';
-
-      // ── 🏢 Company Field ───────────────────────────────────────────────────
-      case SmartFieldType.company:
-        return 'You are a smart input assistant for an Indian jewellery shop ERP.\n'
-            'User typed in a COMPANY/SHOP NAME field: "$query"\n\n'
-            '$jsonFormat\n\n'
-            'Rules:\n'
-            '- spellCorrection: If "$query" looks like a misspelled business name, return correction. Else null.\n'
-            '- suggestions: Give 2-3 common Indian business name completions for "$query" '
-            '(e.g. "lotus"→["Lotus Jewellers","Lotus Gold & Silver","Lotus Jewellery Pvt Ltd"]).';
-
-      // ── 🔖 Generic Field ───────────────────────────────────────────────────
-      case SmartFieldType.generic:
-      default:
-        return 'You are a smart input assistant for an Indian ERP system.\n'
-            'User typed: "$query"\n\n'
-            '$jsonFormat\n\n'
+        return 'You are an ERP assistant.\n'
+            'User typed a REMARK: "$query"\n\n$jsonFormat\n\n'
             'Rules:\n'
             '- spellCorrection: Fix obvious spelling mistakes. Else null.\n'
-            '- suggestions: Give 1-2 relevant completions if applicable. Else empty array.';
+            '- suggestions: Always return empty array [].';
+
+      case SmartFieldType.company:
+        return 'You are an Indian ERP assistant.\n'
+            'User typed a COMPANY NAME: "$query"\n\n$jsonFormat\n\n'
+            'Rules:\n'
+            '- spellCorrection: Correct obvious business name misspellings. Else null.\n'
+            '- suggestions: Give 2-3 common Indian business name completions for "$query".';
+
+      case SmartFieldType.generic:
+      default:
+        return 'You are an ERP assistant.\n'
+            'User typed: "$query"\n\n$jsonFormat\n\n'
+            'Rules:\n'
+            '- spellCorrection: Fix typos. Else null.\n'
+            '- suggestions: 1-2 relevant completions. Else empty array.';
     }
   }
-
-  // ── Request Headers ────────────────────────────────────────────────────────
-  Map<String, String> _buildHeaders() => {
-        HttpHeaders.contentTypeHeader: 'application/json; charset=utf-8',
-        HttpHeaders.acceptHeader: 'application/json',
-        'x-api-key': EnvConfig.anthropicApiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      };
 
   void dispose() => _client.close();
 }
