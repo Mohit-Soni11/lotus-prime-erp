@@ -41,6 +41,7 @@ class PurchaseVoucherItemDraft {
   final double lineAmount;
   final String subCategory;
   final String? huid;
+  final String? hsnCode;
   final double labourCharge;
   final MakingChargesType labourType;
   final String purityLabel;
@@ -59,6 +60,7 @@ class PurchaseVoucherItemDraft {
     required this.lineAmount,
     this.subCategory = 'Purchase Inward',
     this.huid,
+    this.hsnCode,
     this.labourCharge = 0.0,
     this.labourType = MakingChargesType.perGram,
     this.purityLabel = '',
@@ -320,6 +322,9 @@ class PurchaseEntryRepository {
                   purchasePrice: drift.Value(item.lineAmount),
                   mrp: drift.Value(item.lineAmount),
                   huid: drift.Value(item.huid),
+                  hsnCode: drift.Value(
+                    item.hsnCode?.trim().isEmpty ?? true ? null : item.hsnCode,
+                  ),
                   supplierId: drift.Value(
                     isSupplierPurchase ? draft.party.supplierId : null,
                   ),

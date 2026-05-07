@@ -689,7 +689,7 @@ class _GoldEntryTable extends StatelessWidget {
               border: Border.all(color: AddStockColors.cardBorder, width: 1.5),
             ),
             child: Text(
-              'ROWS : ${ctrl.rows.length}',
+              'ROWS : ${ctrl.enteredRowCount > 0 ? ctrl.enteredRowCount : ctrl.rows.length}',
               style: const TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 14,

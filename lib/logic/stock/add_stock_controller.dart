@@ -1109,6 +1109,7 @@ class AddStockController extends ChangeNotifier {
                 huid: row.huid.trim().isEmpty
                     ? null
                     : row.huid.trim().toUpperCase(),
+                hsnCode: row.hsnCode.trim().isEmpty ? null : row.hsnCode.trim(),
                 labourCharge: row.makingCharges,
                 labourType: row.makingChargesType,
                 purityLabel: composedPurityLabel(row),
