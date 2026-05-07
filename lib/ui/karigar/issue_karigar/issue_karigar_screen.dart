@@ -27,8 +27,6 @@ import '../shared/karigar_section_card.dart';
 import '../shared/add_karigar_dialog.dart';
 
 // ✅ SMART WRAPPER IMPORTS ADDED
-import '../../../shared/smart_wrapper.dart';
-import '../../../shared/smart_field_type.dart';
 
 class IssueKarigarScreen extends StatefulWidget {
   const IssueKarigarScreen({super.key});
@@ -379,10 +377,7 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
         const SizedBox(height: 16),
 
         // ✅ SMART WRAPPER ADDED FOR ITEM DESCRIPTION
-        SmartWrapper(
-          fieldType: SmartFieldType.item,
-          textController: _descCtrl,
-          child: KarigarInputField(
+        KarigarInputField(
             label: KarigarStrings.lblItemDesc,
             hint: KarigarStrings.hintItemDesc,
             icon: KarigarIcons.description,
@@ -554,10 +549,7 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
 
   Widget _buildNotesSection() {
     // ✅ SMART WRAPPER ADDED FOR NOTES
-    return SmartWrapper(
-      fieldType: SmartFieldType.remark,
-      textController: _notesCtrl,
-      child: KarigarInputField(
+    return KarigarInputField(
         label: KarigarStrings.lblNotes,
         hint: KarigarStrings.hintNotes,
         icon: KarigarIcons.notes,

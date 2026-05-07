@@ -17,8 +17,6 @@ import '../../../../theme/stock/supplier/add_supplier/add_supplier_theme.dart';
 import 'add_supplier_app_bar.dart'; // Added import for the separated AppBar
 
 // ✅ SMART WRAPPER IMPORTS ADDED
-import '../../../../shared/smart_wrapper.dart';
-import '../../../../shared/smart_field_type.dart';
 
 class AddSupplierScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -137,10 +135,7 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
                   subtitle: AddSupplierStrings.secBasicSub,
                   children: [
                     // ✅ SMART WRAPPER ADDED FOR BUSINESS NAME
-                    SmartWrapper(
-                      fieldType: SmartFieldType.company,
-                      textController: _businessNameCtrl,
-                      child: _buildField(
+                    _buildField(
                           label: AddSupplierStrings.lblBusinessName,
                           hint: AddSupplierStrings.hintBusinessName,
                           ctrl: _businessNameCtrl,
@@ -150,10 +145,7 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
                           textCap: TextCapitalization.words),
                     ),
                     // ✅ SMART WRAPPER ADDED FOR CONTACT PERSON
-                    SmartWrapper(
-                      fieldType: SmartFieldType.name,
-                      textController: _contactPersonCtrl,
-                      child: _buildField(
+                    _buildField(
                           label: AddSupplierStrings.lblContactPerson,
                           hint: AddSupplierStrings.hintContactPerson,
                           ctrl: _contactPersonCtrl,
@@ -238,10 +230,7 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
                   subtitle: AddSupplierStrings.secAddressSub,
                   children: [
                     // ✅ SMART WRAPPER ADDED FOR ADDRESS LINE 1
-                    SmartWrapper(
-                      fieldType: SmartFieldType.address,
-                      textController: _address1Ctrl,
-                      child: _buildField(
+                    _buildField(
                           label: AddSupplierStrings.lblAddress1,
                           hint: AddSupplierStrings.hintAddress1,
                           ctrl: _address1Ctrl,
@@ -250,10 +239,7 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
                           textCap: TextCapitalization.words),
                     ),
                     // ✅ SMART WRAPPER ADDED FOR ADDRESS LINE 2
-                    SmartWrapper(
-                      fieldType: SmartFieldType.address,
-                      textController: _address2Ctrl,
-                      child: _buildField(
+                    _buildField(
                           label: AddSupplierStrings.lblAddress2,
                           hint: AddSupplierStrings.hintAddress2,
                           ctrl: _address2Ctrl,
@@ -265,10 +251,7 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
                       children: [
                         // ✅ SMART WRAPPER ADDED FOR STATE
                         Expanded(
-                            child: SmartWrapper(
-                          fieldType: SmartFieldType.address,
-                          textController: _stateCtrl,
-                          child: _buildField(
+                            child: _buildField(
                               label: AddSupplierStrings.lblState,
                               hint: AddSupplierStrings.hintState,
                               ctrl: _stateCtrl,
@@ -307,10 +290,7 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
                         onChanged: _logic.setOpeningBalance,
                         keyboard: TextInputType.number),
                     // ✅ SMART WRAPPER ADDED FOR NOTES
-                    SmartWrapper(
-                      fieldType: SmartFieldType.remark,
-                      textController: _notesCtrl,
-                      child: _buildField(
+                    _buildField(
                           label: AddSupplierStrings.lblNotes,
                           hint: AddSupplierStrings.hintNotes,
                           ctrl: _notesCtrl,

@@ -23,9 +23,6 @@ import '../../../models/customer/add_customer/add_customer_form_model.dart';
 import '../../../theme/customer/add_customer/add_customer_theme.dart'; // ✅ Added centralized theme
 import 'add_customer_app_bar.dart'; // ✅ Added external AppBar (Adjust path as needed)
 
-// ✅ SMART WRAPPER IMPORTS ADDED HERE
-import '../../../shared/smart_wrapper.dart';
-import '../../../shared/smart_field_type.dart';
 
 // =============================================================================
 // MASTER SCREEN
@@ -746,10 +743,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       const SizedBox(height: 20),
       if (isCorp) ...[
         // ✅ SMART WRAPPER ADDED FOR COMPANY NAME
-        SmartWrapper(
-          fieldType: SmartFieldType.company,
-          textController: _companyCtrl,
-          child: _field(
+        _field(
               label: 'Company Name',
               required: true,
               icon: Icons.business_rounded,
@@ -774,10 +768,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           // ✅ SMART WRAPPER ADDED FOR FIRST NAME
           Expanded(
-              child: SmartWrapper(
-            fieldType: SmartFieldType.name,
-            textController: _firstNameCtrl,
-            child: _field(
+              child: _field(
                 label: 'First Name',
                 required: true,
                 icon: AddCustomerIcons.name,
@@ -792,10 +783,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
           const SizedBox(width: 14),
           // ✅ SMART WRAPPER ADDED FOR LAST NAME
           Expanded(
-              child: SmartWrapper(
-            fieldType: SmartFieldType.name,
-            textController: _lastNameCtrl,
-            child: _field(
+              child: _field(
                 label: 'Last Name',
                 icon: Icons.person_rounded,
                 ctrl: _lastNameCtrl,
@@ -1033,10 +1021,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
   Widget _buildAddressSection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       // ✅ SMART WRAPPER ADDED FOR ADDRESS LINE 1
-      SmartWrapper(
-        fieldType: SmartFieldType.address,
-        textController: _addr1Ctrl,
-        child: _field(
+      _field(
             label: 'Address Line 1',
             icon: Icons.home_rounded,
             ctrl: _addr1Ctrl,
@@ -1049,10 +1034,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       const SizedBox(height: 14),
 
       // ✅ SMART WRAPPER ADDED FOR ADDRESS LINE 2
-      SmartWrapper(
-        fieldType: SmartFieldType.address,
-        textController: _addr2Ctrl,
-        child: _field(
+      _field(
             label: 'Address Line 2 (Optional)',
             icon: Icons.location_on_outlined,
             ctrl: _addr2Ctrl,
@@ -1111,10 +1093,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // ✅ SMART WRAPPER ADDED FOR CITY
         Expanded(
-            child: SmartWrapper(
-          fieldType: SmartFieldType.address,
-          textController: _cityCtrl,
-          child: _field(
+            child: _field(
               label: AddCustomerStrings.lblCity,
               icon: AddCustomerIcons.city,
               ctrl: _cityCtrl,
@@ -1424,10 +1403,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       ]),
       const SizedBox(height: 8),
       // ✅ SMART WRAPPER ADDED FOR NOTES
-      SmartWrapper(
-        fieldType: SmartFieldType.remark,
-        textController: _notesCtrl,
-        child: AnimatedContainer(
+      AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
             color: AddCustomerColors.inputBg,

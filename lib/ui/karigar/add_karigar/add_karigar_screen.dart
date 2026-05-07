@@ -27,8 +27,6 @@ import '../../../theme/karigar/add_karigar/add_karigar_theme.dart';
 import 'add_karigar_app_bar.dart';
 
 // ✅ SMART WRAPPER IMPORTS ADDED
-import '../../../shared/smart_wrapper.dart';
-import '../../../shared/smart_field_type.dart';
 
 class AddKarigarScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -593,10 +591,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
     return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
       // ✅ SMART WRAPPER ADDED FOR FIRST NAME
       Expanded(
-          child: SmartWrapper(
-        fieldType: SmartFieldType.name,
-        textController: _firstNameCtrl,
-        child: _field(
+          child: _field(
           label: AddKarigarStrings.lblFirstName,
           hint: AddKarigarStrings.hintFirstName,
           icon: AddKarigarIcons.name,
@@ -612,10 +607,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
       const SizedBox(width: 14),
       // ✅ SMART WRAPPER ADDED FOR LAST NAME
       Expanded(
-          child: SmartWrapper(
-        fieldType: SmartFieldType.name,
-        textController: _lastNameCtrl,
-        child: _field(
+          child: _field(
           label: AddKarigarStrings.lblLastName,
           hint: AddKarigarStrings.hintLastName,
           icon: AddKarigarIcons.name,
@@ -722,10 +714,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
   Widget _buildAddressSection() {
     return Column(children: [
       // ✅ SMART WRAPPER ADDED FOR ADDRESS
-      SmartWrapper(
-        fieldType: SmartFieldType.address,
-        textController: _addressCtrl,
-        child: _field(
+      _field(
           label: AddKarigarStrings.lblAddress,
           hint: AddKarigarStrings.hintAddress,
           icon: AddKarigarIcons.address,
@@ -738,10 +727,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
       ),
       const SizedBox(height: 14),
       // ✅ SMART WRAPPER ADDED FOR CITY
-      SmartWrapper(
-        fieldType: SmartFieldType.address,
-        textController: _cityCtrl,
-        child: _field(
+      _field(
           label: AddKarigarStrings.lblCity,
           hint: AddKarigarStrings.hintCity,
           icon: AddKarigarIcons.city,
@@ -794,10 +780,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
   Widget _buildNotesSection() {
     return Column(children: [
       // ✅ SMART WRAPPER ADDED FOR NOTES
-      SmartWrapper(
-        fieldType: SmartFieldType.remark,
-        textController: _notesCtrl,
-        child: _field(
+      _field(
           label: AddKarigarStrings.lblNotes,
           hint: AddKarigarStrings.hintNotes,
           icon: AddKarigarIcons.notes,
