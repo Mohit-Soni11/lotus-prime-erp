@@ -425,6 +425,9 @@ class AddGoldStockItemsStep extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────
+// Gold Rate Reference Card
+// ─────────────────────────────────────────────
 class _GoldRateReferenceCard extends StatelessWidget {
   final AddStockController ctrl;
 
@@ -596,6 +599,9 @@ class _GoldRateReferenceCard extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────
+// FAST GOLD ENTRY TABLE
+// ─────────────────────────────────────────────
 class _GoldEntryTable extends StatelessWidget {
   final AddStockController ctrl;
 
@@ -612,52 +618,71 @@ class _GoldEntryTable extends StatelessWidget {
           builder: (context, constraints) {
             final needsScroll = constraints.maxWidth < _tableWidth;
 
-            return Container(
-              decoration: BoxDecoration(
-                color: AddStockColors.cardBg,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: AddStockColors.cardBorder,
-                  width: 1.5,
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: AddStockColors.shadowLight,
-                    blurRadius: 10,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(needsScroll),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: needsScroll
-                        ? const BouncingScrollPhysics()
-                        : const NeverScrollableScrollPhysics(),
-                    child: SizedBox(
-                      width: _tableWidth,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildColumnHeaders(),
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: ctrl.rows.length,
-                            itemBuilder: (context, index) => _GoldStockTableRow(
-                              index: index,
-                              row: ctrl.rows[index],
-                              ctrl: ctrl,
-                            ),
-                          ),
-                        ],
-                      ),
+            // ✅ F2 Shortcut — same pattern as POS table
+            return CallbackShortcuts(
+              bindings: {
+                const SingleActivator(LogicalKeyboardKey.f2): () =>
+                    ctrl.addRow(requestFocus: true),
+              },
+              child: Focus(
+                autofocus: false,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AddStockColors.cardBg,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: AddStockColors.cardBorder,
+                      width: 1.5,
                     ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: AddStockColors.shadowLight,
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
                   ),
-                ],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(needsScroll),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: needsScroll
+                            ? const BouncingScrollPhysics()
+                            : const NeverScrollableScrollPhysics(),
+                        child: SizedBox(
+                          width: _tableWidth,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildColumnHeaders(),
+                              // ✅ Empty state when no rows entered
+                              ctrl.rows.isEmpty
+                                  ? _buildEmptyState()
+                                  : ListView.builder(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemCount: ctrl.rows.length,
+                                      itemBuilder: (context, index) =>
+                                          _GoldStockTableRow(
+                                        // ✅ ObjectKey prevents state mix-up on delete
+                                        key: ObjectKey(ctrl.rows[index]),
+                                        index: index,
+                                        row: ctrl.rows[index],
+                                        ctrl: ctrl,
+                                      ),
+                                    ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // ✅ Bottom bar with ADD NEW ITEM button
+                      _buildBottomBar(context),
+                    ],
+                  ),
+                ),
               ),
             );
           },
@@ -711,7 +736,7 @@ class _GoldEntryTable extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Press Enter in the labour field to jump into the next blank row without breaking the typing flow.',
+                  'Press F2 or click ADD NEW ITEM to add a row. Press Enter in the labour field to jump to the next row.',
                   style: AddStockStyles.caption.copyWith(fontSize: 12),
                 ),
                 if (needsScroll) ...[
@@ -785,13 +810,192 @@ class _GoldEntryTable extends StatelessWidget {
           SizedBox(width: 8),
           _GoldHeaderCell('ROW TOTAL', width: 150, right: true),
           SizedBox(width: 8),
-          _GoldHeaderCell('ACT', width: 56, center: true),
+          // ✅ Wider ACT column for 2 buttons
+          _GoldHeaderCell('ACT', width: 96, center: true),
+        ],
+      ),
+    );
+  }
+
+  // ✅ Empty state widget
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 56),
+      child: Center(
+        child: Column(
+          children: [
+            Container(
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                color: AddStockColors.bodyBg,
+                borderRadius: BorderRadius.circular(18),
+                border:
+                    Border.all(color: AddStockColors.cardBorder, width: 2.0),
+              ),
+              child: const Icon(
+                Icons.inventory_2_outlined,
+                color: AddStockColors.brandGold,
+                size: 34,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'NO ITEMS YET',
+              style: GoogleFonts.manrope(
+                color: AddStockColors.textDark,
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Click ADD NEW ITEM or press F2 to begin entry',
+              style: AddStockStyles.caption.copyWith(fontSize: 13),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ✅ Bottom bar with ADD NEW ITEM button (like POS)
+  Widget _buildBottomBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: const BoxDecoration(
+        color: AddStockColors.bodyBg,
+        border: Border(
+          top: BorderSide(color: AddStockColors.cardBorder, width: 1.5),
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(18)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // ✅ ADD NEW ITEM button — same style as POS
+          InkWell(
+            onTap: () => ctrl.addRow(requestFocus: true),
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AddStockColors.success.withOpacity(0.08),
+                border: Border.all(
+                  color: AddStockColors.success.withOpacity(0.35),
+                  width: 1.5,
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.add_circle_outline_rounded,
+                    color: AddStockColors.success,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'ADD NEW ITEM',
+                    style: TextStyle(
+                      color: AddStockColors.success,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  // ✅ F2 badge
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AddStockColors.success.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      '[F2]',
+                      style: TextStyle(
+                        color: AddStockColors.success,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ✅ Totals summary on the right
+          if (ctrl.enteredRowCount > 0)
+            Row(
+              children: [
+                _summaryChip(
+                  'Net Weight',
+                  '${_wt(ctrl.totalNetWeight)} g',
+                  AddStockColors.brandGold,
+                ),
+                const SizedBox(width: 10),
+                _summaryChip(
+                  'Fine Gold',
+                  '${_wt(ctrl.totalFineGold)} g',
+                  AddStockColors.accentPricing,
+                ),
+                const SizedBox(width: 10),
+                _summaryChip(
+                  'Batch Total',
+                  _money(ctrl.totalBatchAmount),
+                  AddStockColors.success,
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryChip(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.09),
+        border: Border.all(color: color.withOpacity(0.28), width: 1.5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 10,
+              color: color,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 13,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
+// ─────────────────────────────────────────────
+// Column Header Cell
+// ─────────────────────────────────────────────
 class _GoldHeaderCell extends StatelessWidget {
   final String title;
   final double width;
@@ -825,12 +1029,16 @@ class _GoldHeaderCell extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────
+// Table Row Widget
+// ─────────────────────────────────────────────
 class _GoldStockTableRow extends StatefulWidget {
   final int index;
   final StockRowEntry row;
   final AddStockController ctrl;
 
   const _GoldStockTableRow({
+    super.key,
     required this.index,
     required this.row,
     required this.ctrl,
@@ -885,14 +1093,10 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
   }
 
   void _handlePendingFocus() {
-    if (!widget.ctrl.shouldRequestFocus(widget.row.id)) {
-      return;
-    }
+    if (!widget.ctrl.shouldRequestFocus(widget.row.id)) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       _itemFocus.requestFocus();
       widget.ctrl.clearFocusRequest(widget.row.id);
     });
@@ -914,9 +1118,7 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
   }
 
   String _decimalText(double value) {
-    if (value == 0) {
-      return '';
-    }
+    if (value == 0) return '';
     return value == value.roundToDouble()
         ? value.toStringAsFixed(0)
         : value
@@ -1035,7 +1237,8 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
               isBold: true,
             ),
             const SizedBox(width: 8),
-            _deleteCell(ctrl, row),
+            // ✅ Action cell — delete + duplicate
+            _actionCell(ctrl, row),
           ],
         ),
       ),
@@ -1070,18 +1273,38 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
     );
   }
 
+  // ✅ FIXED: dropdownColor + explicit item text color — no more black text
   Widget _subCategoryCell(StockRowEntry row, AddStockController ctrl) {
     return SizedBox(
       width: 170,
       child: DropdownButtonFormField<StockSubCategory>(
         value: row.subCategory,
         decoration: _inputDecoration(),
-        style: AddStockStyles.fieldInput.copyWith(fontSize: 13),
+        dropdownColor: Colors.white,
+        // ✅ FIX: Force selected value text color
+        style: AddStockStyles.fieldInput.copyWith(
+          fontSize: 13,
+          color: AddStockColors.textDark,
+        ),
+        icon: const Icon(
+          Icons.keyboard_arrow_down_rounded,
+          color: AddStockColors.textMuted,
+          size: 18,
+        ),
         items: StockSubCategory.values
             .map(
               (value) => DropdownMenuItem<StockSubCategory>(
                 value: value,
-                child: Text(value.label, overflow: TextOverflow.ellipsis),
+                child: Text(
+                  value.label,
+                  overflow: TextOverflow.ellipsis,
+                  // ✅ FIX: Explicit color in menu items
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: AddStockColors.textDark,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
             )
             .toList(),
@@ -1094,18 +1317,38 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
     );
   }
 
+  // ✅ FIXED: dropdownColor + explicit item text color — no more black text
   Widget _makingTypeCell(StockRowEntry row, AddStockController ctrl) {
     return SizedBox(
       width: 156,
       child: DropdownButtonFormField<MakingChargesType>(
         value: row.makingChargesType,
         decoration: _inputDecoration(),
-        style: AddStockStyles.fieldInput.copyWith(fontSize: 13),
+        dropdownColor: Colors.white,
+        // ✅ FIX: Force selected value text color
+        style: AddStockStyles.fieldInput.copyWith(
+          fontSize: 13,
+          color: AddStockColors.textDark,
+        ),
+        icon: const Icon(
+          Icons.keyboard_arrow_down_rounded,
+          color: AddStockColors.textMuted,
+          size: 18,
+        ),
         items: MakingChargesType.values
             .map(
               (value) => DropdownMenuItem<MakingChargesType>(
                 value: value,
-                child: Text(value.label, overflow: TextOverflow.ellipsis),
+                child: Text(
+                  value.label,
+                  overflow: TextOverflow.ellipsis,
+                  // ✅ FIX: Explicit color in menu items
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: AddStockColors.textDark,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
             )
             .toList(),
@@ -1202,34 +1445,74 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
     );
   }
 
-  Widget _deleteCell(AddStockController ctrl, StockRowEntry row) {
+  // ✅ NEW: Action cell with DELETE + DUPLICATE buttons
+  Widget _actionCell(AddStockController ctrl, StockRowEntry row) {
+    final canDelete = ctrl.rows.length > 1;
+
     return SizedBox(
-      width: 56,
-      child: Center(
-        child: Tooltip(
-          message: 'Remove row',
-          waitDuration: const Duration(milliseconds: 400),
-          child: InkWell(
-            onTap: ctrl.rows.length <= 1 ? null : () => ctrl.removeRow(row.id),
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AddStockColors.danger.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AddStockColors.danger.withOpacity(0.35),
+      width: 96,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Duplicate button
+          Tooltip(
+            message: 'Duplicate row',
+            waitDuration: const Duration(milliseconds: 400),
+            child: InkWell(
+              onTap: () => ctrl.addRow(requestFocus: false),
+              borderRadius: BorderRadius.circular(7),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AddStockColors.brandGold.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(7),
+                  border: Border.all(
+                    color: AddStockColors.brandGold.withOpacity(0.32),
+                  ),
                 ),
-              ),
-              child: const Icon(
-                Icons.delete_outline_rounded,
-                color: AddStockColors.danger,
-                size: 20,
+                child: const Icon(
+                  Icons.content_copy_rounded,
+                  color: AddStockColors.brandGold,
+                  size: 16,
+                ),
               ),
             ),
           ),
-        ),
+          const SizedBox(width: 6),
+          // Delete button
+          Tooltip(
+            message: canDelete ? 'Remove row' : 'Cannot remove last row',
+            waitDuration: const Duration(milliseconds: 400),
+            child: InkWell(
+              onTap: canDelete ? () => ctrl.removeRow(row.id) : null,
+              borderRadius: BorderRadius.circular(7),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 140),
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: canDelete
+                      ? AddStockColors.danger.withOpacity(0.10)
+                      : AddStockColors.cardBorder.withOpacity(0.40),
+                  borderRadius: BorderRadius.circular(7),
+                  border: Border.all(
+                    color: canDelete
+                        ? AddStockColors.danger.withOpacity(0.32)
+                        : AddStockColors.cardBorder,
+                  ),
+                ),
+                child: Icon(
+                  Icons.delete_outline_rounded,
+                  color: canDelete
+                      ? AddStockColors.danger
+                      : AddStockColors.textMuted,
+                  size: 17,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1264,6 +1547,9 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
   }
 }
 
+// ─────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────
 double _wt(double value) => double.parse(value.toStringAsFixed(3));
 
 String _money(double amount) {
