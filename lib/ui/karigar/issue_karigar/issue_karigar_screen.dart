@@ -26,8 +26,6 @@ import '../shared/karigar_field_widgets.dart';
 import '../shared/karigar_section_card.dart';
 import '../shared/add_karigar_dialog.dart';
 
-// ✅ SMART WRAPPER IMPORTS ADDED
-
 class IssueKarigarScreen extends StatefulWidget {
   const IssueKarigarScreen({super.key});
 
@@ -376,22 +374,20 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
         ),
         const SizedBox(height: 16),
 
-        // ✅ SMART WRAPPER ADDED FOR ITEM DESCRIPTION
+        // Item Description
         KarigarInputField(
-            label: KarigarStrings.lblItemDesc,
-            hint: KarigarStrings.hintItemDesc,
-            icon: KarigarIcons.description,
-            controller: _descCtrl,
-            focusNode: _descFocus,
-            nextFocus: _qtyFocus,
-            maxLines: 2,
-            validator: (v) {
-              if (v == null || v.trim().isEmpty)
-                return 'Description is required';
-              if (v.trim().length < 2) return 'Description is too short';
-              return null;
-            },
-          ),
+          label: KarigarStrings.lblItemDesc,
+          hint: KarigarStrings.hintItemDesc,
+          icon: KarigarIcons.description,
+          controller: _descCtrl,
+          focusNode: _descFocus,
+          nextFocus: _qtyFocus,
+          maxLines: 2,
+          validator: (v) {
+            if (v == null || v.trim().isEmpty) return 'Description is required';
+            if (v.trim().length < 2) return 'Description is too short';
+            return null;
+          },
         ),
         const SizedBox(height: 16),
 
@@ -548,14 +544,12 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
   }
 
   Widget _buildNotesSection() {
-    // ✅ SMART WRAPPER ADDED FOR NOTES
     return KarigarInputField(
-        label: KarigarStrings.lblNotes,
-        hint: KarigarStrings.hintNotes,
-        icon: KarigarIcons.notes,
-        controller: _notesCtrl,
-        maxLines: 4,
-      ),
+      label: KarigarStrings.lblNotes,
+      hint: KarigarStrings.hintNotes,
+      icon: KarigarIcons.notes,
+      controller: _notesCtrl,
+      maxLines: 4,
     );
   }
 

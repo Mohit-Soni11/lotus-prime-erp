@@ -26,8 +26,6 @@ import '../../../models/karigar/karigar_enums/karigar_enums.dart';
 import '../../../theme/karigar/add_karigar/add_karigar_theme.dart';
 import 'add_karigar_app_bar.dart';
 
-// ✅ SMART WRAPPER IMPORTS ADDED
-
 class AddKarigarScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final VoidCallback? onSaved;
@@ -589,34 +587,30 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
 
   Widget _buildIdentitySection() {
     return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      // ✅ SMART WRAPPER ADDED FOR FIRST NAME
       Expanded(
           child: _field(
-          label: AddKarigarStrings.lblFirstName,
-          hint: AddKarigarStrings.hintFirstName,
-          icon: AddKarigarIcons.name,
-          ctrl: _firstNameCtrl,
-          focus: _firstNameFocus,
-          next: _lastNameFocus,
-          required: true,
-          error: _logic.form.firstNameError,
-          onChanged: _logic.onFirstNameChanged,
-          capitalization: TextCapitalization.words,
-        ),
+        label: AddKarigarStrings.lblFirstName,
+        hint: AddKarigarStrings.hintFirstName,
+        icon: AddKarigarIcons.name,
+        ctrl: _firstNameCtrl,
+        focus: _firstNameFocus,
+        next: _lastNameFocus,
+        required: true,
+        error: _logic.form.firstNameError,
+        onChanged: _logic.onFirstNameChanged,
+        capitalization: TextCapitalization.words,
       )),
       const SizedBox(width: 14),
-      // ✅ SMART WRAPPER ADDED FOR LAST NAME
       Expanded(
           child: _field(
-          label: AddKarigarStrings.lblLastName,
-          hint: AddKarigarStrings.hintLastName,
-          icon: AddKarigarIcons.name,
-          ctrl: _lastNameCtrl,
-          focus: _lastNameFocus,
-          next: _phoneFocus,
-          onChanged: _logic.onLastNameChanged,
-          capitalization: TextCapitalization.words,
-        ),
+        label: AddKarigarStrings.lblLastName,
+        hint: AddKarigarStrings.hintLastName,
+        icon: AddKarigarIcons.name,
+        ctrl: _lastNameCtrl,
+        focus: _lastNameFocus,
+        next: _phoneFocus,
+        onChanged: _logic.onLastNameChanged,
+        capitalization: TextCapitalization.words,
       )),
     ]);
   }
@@ -713,30 +707,26 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
 
   Widget _buildAddressSection() {
     return Column(children: [
-      // ✅ SMART WRAPPER ADDED FOR ADDRESS
       _field(
-          label: AddKarigarStrings.lblAddress,
-          hint: AddKarigarStrings.hintAddress,
-          icon: AddKarigarIcons.address,
-          ctrl: _addressCtrl,
-          focus: _addressFocus,
-          next: _cityFocus,
-          onChanged: _logic.onAddressChanged,
-          capitalization: TextCapitalization.sentences,
-        ),
+        label: AddKarigarStrings.lblAddress,
+        hint: AddKarigarStrings.hintAddress,
+        icon: AddKarigarIcons.address,
+        ctrl: _addressCtrl,
+        focus: _addressFocus,
+        next: _cityFocus,
+        onChanged: _logic.onAddressChanged,
+        capitalization: TextCapitalization.sentences,
       ),
       const SizedBox(height: 14),
-      // ✅ SMART WRAPPER ADDED FOR CITY
       _field(
-          label: AddKarigarStrings.lblCity,
-          hint: AddKarigarStrings.hintCity,
-          icon: AddKarigarIcons.city,
-          ctrl: _cityCtrl,
-          focus: _cityFocus,
-          next: _balanceFocus,
-          onChanged: _logic.onCityChanged,
-          capitalization: TextCapitalization.words,
-        ),
+        label: AddKarigarStrings.lblCity,
+        hint: AddKarigarStrings.hintCity,
+        icon: AddKarigarIcons.city,
+        ctrl: _cityCtrl,
+        focus: _cityFocus,
+        next: _balanceFocus,
+        onChanged: _logic.onCityChanged,
+        capitalization: TextCapitalization.words,
       ),
     ]);
   }
@@ -779,17 +769,15 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
 
   Widget _buildNotesSection() {
     return Column(children: [
-      // ✅ SMART WRAPPER ADDED FOR NOTES
       _field(
-          label: AddKarigarStrings.lblNotes,
-          hint: AddKarigarStrings.hintNotes,
-          icon: AddKarigarIcons.notes,
-          ctrl: _notesCtrl,
-          focus: _notesFocus,
-          maxLines: 3,
-          onChanged: _logic.onNotesChanged,
-          capitalization: TextCapitalization.sentences,
-        ),
+        label: AddKarigarStrings.lblNotes,
+        hint: AddKarigarStrings.hintNotes,
+        icon: AddKarigarIcons.notes,
+        ctrl: _notesCtrl,
+        focus: _notesFocus,
+        maxLines: 3,
+        onChanged: _logic.onNotesChanged,
+        capitalization: TextCapitalization.sentences,
       ),
       const SizedBox(height: 20),
 

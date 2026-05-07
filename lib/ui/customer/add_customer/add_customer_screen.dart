@@ -23,7 +23,6 @@ import '../../../models/customer/add_customer/add_customer_form_model.dart';
 import '../../../theme/customer/add_customer/add_customer_theme.dart'; // ✅ Added centralized theme
 import 'add_customer_app_bar.dart'; // ✅ Added external AppBar (Adjust path as needed)
 
-
 // =============================================================================
 // MASTER SCREEN
 // =============================================================================
@@ -742,18 +741,16 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       ]),
       const SizedBox(height: 20),
       if (isCorp) ...[
-        // ✅ SMART WRAPPER ADDED FOR COMPANY NAME
         _field(
-              label: 'Company Name',
-              required: true,
-              icon: Icons.business_rounded,
-              ctrl: _companyCtrl,
-              focus: _companyFocus,
-              next: _contactFocus,
-              hint: 'Enter company / firm name',
-              onChanged: _logic.onCompanyNameChanged,
-              capitalization: TextCapitalization.words),
-        ),
+            label: 'Company Name',
+            required: true,
+            icon: Icons.business_rounded,
+            ctrl: _companyCtrl,
+            focus: _companyFocus,
+            next: _contactFocus,
+            hint: 'Enter company / firm name',
+            onChanged: _logic.onCompanyNameChanged,
+            capitalization: TextCapitalization.words),
         const SizedBox(height: 14),
         _field(
             label: 'Contact Person Name',
@@ -766,33 +763,29 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
             capitalization: TextCapitalization.words),
       ] else ...[
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // ✅ SMART WRAPPER ADDED FOR FIRST NAME
           Expanded(
               child: _field(
-                label: 'First Name',
-                required: true,
-                icon: AddCustomerIcons.name,
-                ctrl: _firstNameCtrl,
-                focus: _firstNameFocus,
-                next: _lastNameFocus,
-                hint: 'First name',
-                error: _logic.form.firstNameError,
-                onChanged: _logic.onFirstNameChanged,
-                capitalization: TextCapitalization.words),
-          )),
+                  label: 'First Name',
+                  required: true,
+                  icon: AddCustomerIcons.name,
+                  ctrl: _firstNameCtrl,
+                  focus: _firstNameFocus,
+                  next: _lastNameFocus,
+                  hint: 'First name',
+                  error: _logic.form.firstNameError,
+                  onChanged: _logic.onFirstNameChanged,
+                  capitalization: TextCapitalization.words)),
           const SizedBox(width: 14),
-          // ✅ SMART WRAPPER ADDED FOR LAST NAME
           Expanded(
               child: _field(
-                label: 'Last Name',
-                icon: Icons.person_rounded,
-                ctrl: _lastNameCtrl,
-                focus: _lastNameFocus,
-                next: _mobileFocus,
-                hint: 'Last name',
-                onChanged: _logic.onLastNameChanged,
-                capitalization: TextCapitalization.words),
-          )),
+                  label: 'Last Name',
+                  icon: Icons.person_rounded,
+                  ctrl: _lastNameCtrl,
+                  focus: _lastNameFocus,
+                  next: _mobileFocus,
+                  hint: 'Last name',
+                  onChanged: _logic.onLastNameChanged,
+                  capitalization: TextCapitalization.words)),
         ]),
       ],
       const SizedBox(height: 14),
@@ -1020,31 +1013,25 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
 
   Widget _buildAddressSection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      // ✅ SMART WRAPPER ADDED FOR ADDRESS LINE 1
       _field(
-            label: 'Address Line 1',
-            icon: Icons.home_rounded,
-            ctrl: _addr1Ctrl,
-            focus: _addr1Focus,
-            next: _addr2Focus,
-            hint: 'House no., Street, Area',
-            onChanged: _logic.onAddressLine1Changed,
-            capitalization: TextCapitalization.sentences),
-      ),
+          label: 'Address Line 1',
+          icon: Icons.home_rounded,
+          ctrl: _addr1Ctrl,
+          focus: _addr1Focus,
+          next: _addr2Focus,
+          hint: 'House no., Street, Area',
+          onChanged: _logic.onAddressLine1Changed,
+          capitalization: TextCapitalization.sentences),
       const SizedBox(height: 14),
-
-      // ✅ SMART WRAPPER ADDED FOR ADDRESS LINE 2
       _field(
-            label: 'Address Line 2 (Optional)',
-            icon: Icons.location_on_outlined,
-            ctrl: _addr2Ctrl,
-            focus: _addr2Focus,
-            hint: 'Landmark, Locality',
-            onChanged: _logic.onAddressLine2Changed,
-            capitalization: TextCapitalization.sentences),
-      ),
+          label: 'Address Line 2 (Optional)',
+          icon: Icons.location_on_outlined,
+          ctrl: _addr2Ctrl,
+          focus: _addr2Focus,
+          hint: 'Landmark, Locality',
+          onChanged: _logic.onAddressLine2Changed,
+          capitalization: TextCapitalization.sentences),
       const SizedBox(height: 14),
-
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(
             child: _buildSimpleDropdown(
@@ -1089,20 +1076,17 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
         ),
       ]),
       const SizedBox(height: 14),
-
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // ✅ SMART WRAPPER ADDED FOR CITY
         Expanded(
             child: _field(
-              label: AddCustomerStrings.lblCity,
-              icon: AddCustomerIcons.city,
-              ctrl: _cityCtrl,
-              focus: _cityFocus,
-              next: _pincodeFocus,
-              hint: AddCustomerStrings.hintCity,
-              onChanged: _logic.onCityChanged,
-              capitalization: TextCapitalization.words),
-        )),
+                label: AddCustomerStrings.lblCity,
+                icon: AddCustomerIcons.city,
+                ctrl: _cityCtrl,
+                focus: _cityFocus,
+                next: _pincodeFocus,
+                hint: AddCustomerStrings.hintCity,
+                onChanged: _logic.onCityChanged,
+                capitalization: TextCapitalization.words)),
         const SizedBox(width: 14),
         Expanded(
             child: _field(
@@ -1384,7 +1368,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
           hint: 'How did customer find us?',
           nullable: true),
       const SizedBox(height: 14),
-
       Row(children: [
         Text('INTERNAL NOTES / REMARKS', style: AddCustomerStyles.fieldLabel),
         const SizedBox(width: 8),
@@ -1402,41 +1385,39 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
         ),
       ]),
       const SizedBox(height: 8),
-      // ✅ SMART WRAPPER ADDED FOR NOTES
       AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          decoration: BoxDecoration(
-            color: AddCustomerColors.inputBg,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _logic.activeField == ActiveField.notes
-                  ? AddCustomerColors.brandGold
-                  : AddCustomerColors.inputBorder,
-              width: _logic.activeField == ActiveField.notes ? 2 : 1,
-            ),
-            boxShadow: _logic.activeField == ActiveField.notes
-                ? [
-                    BoxShadow(
-                        color: AddCustomerColors.brandGold.withOpacity(0.10),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3))
-                  ]
-                : [],
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: AddCustomerColors.inputBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _logic.activeField == ActiveField.notes
+                ? AddCustomerColors.brandGold
+                : AddCustomerColors.inputBorder,
+            width: _logic.activeField == ActiveField.notes ? 2 : 1,
           ),
-          padding: const EdgeInsets.all(14),
-          child: TextField(
-            controller: _notesCtrl,
-            focusNode: _notesFocus,
-            maxLines: 4,
-            onChanged: _logic.onNotesChanged,
-            style: AddCustomerStyles.fieldText,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: InputDecoration(
-              hintText: AddCustomerStrings.hintNotes,
-              hintStyle: AddCustomerStyles.fieldHint,
-              border: InputBorder.none,
-              isDense: true,
-            ),
+          boxShadow: _logic.activeField == ActiveField.notes
+              ? [
+                  BoxShadow(
+                      color: AddCustomerColors.brandGold.withOpacity(0.10),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3))
+                ]
+              : [],
+        ),
+        padding: const EdgeInsets.all(14),
+        child: TextField(
+          controller: _notesCtrl,
+          focusNode: _notesFocus,
+          maxLines: 4,
+          onChanged: _logic.onNotesChanged,
+          style: AddCustomerStyles.fieldText,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: InputDecoration(
+            hintText: AddCustomerStrings.hintNotes,
+            hintStyle: AddCustomerStyles.fieldHint,
+            border: InputBorder.none,
+            isDense: true,
           ),
         ),
       ),

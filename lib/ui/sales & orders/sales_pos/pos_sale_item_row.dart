@@ -16,8 +16,6 @@ import '../../../models/sales & orders/sales_pos_models/sales_pos_models.dart';
 import '../../../logic/sales & orders/sales pos/pos_billing_controller.dart';
 import 'shared_pos_components.dart';
 
-// ✅ SMART WRAPPER IMPORTS ADDED
-
 class _PurityData {
   static List<String> forMetal(MetalType metal) {
     switch (metal) {
@@ -787,14 +785,12 @@ class _DescriptionWithSuggestionsState
   Widget build(BuildContext context) {
     return CompositedTransformTarget(
       link: _link,
-      // ✅ SMART WRAPPER ADDED FOR ITEM DESCRIPTION
       child: PosAtomicTextField(
-          controller: widget.item.descCtrl,
-          hint: "Description",
-          focusNode: widget.item.firstFieldFocus,
-          textInputAction: TextInputAction.next,
-          onSubmitted: widget.onSubmitted,
-        ),
+        controller: widget.item.descCtrl,
+        hint: "Description",
+        focusNode: widget.item.firstFieldFocus,
+        textInputAction: TextInputAction.next,
+        onSubmitted: widget.onSubmitted,
       ),
     );
   }

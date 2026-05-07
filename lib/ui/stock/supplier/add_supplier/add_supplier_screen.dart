@@ -16,8 +16,6 @@ import '../../../../models/stock/supplier_model/supplier_enums.dart';
 import '../../../../theme/stock/supplier/add_supplier/add_supplier_theme.dart';
 import 'add_supplier_app_bar.dart'; // Added import for the separated AppBar
 
-// ✅ SMART WRAPPER IMPORTS ADDED
-
 class AddSupplierScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final VoidCallback? onSaved;
@@ -134,25 +132,21 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
                   title: AddSupplierStrings.secBasic,
                   subtitle: AddSupplierStrings.secBasicSub,
                   children: [
-                    // ✅ SMART WRAPPER ADDED FOR BUSINESS NAME
                     _buildField(
-                          label: AddSupplierStrings.lblBusinessName,
-                          hint: AddSupplierStrings.hintBusinessName,
-                          ctrl: _businessNameCtrl,
-                          icon: AddSupplierIcons.businessName,
-                          onChanged: (v) => _logic.businessName = v,
-                          validator: _logic.validateBusinessName,
-                          textCap: TextCapitalization.words),
-                    ),
-                    // ✅ SMART WRAPPER ADDED FOR CONTACT PERSON
+                        label: AddSupplierStrings.lblBusinessName,
+                        hint: AddSupplierStrings.hintBusinessName,
+                        ctrl: _businessNameCtrl,
+                        icon: AddSupplierIcons.businessName,
+                        onChanged: (v) => _logic.businessName = v,
+                        validator: _logic.validateBusinessName,
+                        textCap: TextCapitalization.words),
                     _buildField(
-                          label: AddSupplierStrings.lblContactPerson,
-                          hint: AddSupplierStrings.hintContactPerson,
-                          ctrl: _contactPersonCtrl,
-                          icon: AddSupplierIcons.contactPerson,
-                          onChanged: (v) => _logic.contactPerson = v,
-                          textCap: TextCapitalization.words),
-                    ),
+                        label: AddSupplierStrings.lblContactPerson,
+                        hint: AddSupplierStrings.hintContactPerson,
+                        ctrl: _contactPersonCtrl,
+                        icon: AddSupplierIcons.contactPerson,
+                        onChanged: (v) => _logic.contactPerson = v,
+                        textCap: TextCapitalization.words),
                     _buildTypeDropdown(),
                   ],
                 ),
@@ -229,36 +223,30 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
                   title: AddSupplierStrings.secAddress,
                   subtitle: AddSupplierStrings.secAddressSub,
                   children: [
-                    // ✅ SMART WRAPPER ADDED FOR ADDRESS LINE 1
                     _buildField(
-                          label: AddSupplierStrings.lblAddress1,
-                          hint: AddSupplierStrings.hintAddress1,
-                          ctrl: _address1Ctrl,
-                          icon: AddSupplierIcons.address,
-                          onChanged: (v) => _logic.addressLine1 = v,
-                          textCap: TextCapitalization.words),
-                    ),
-                    // ✅ SMART WRAPPER ADDED FOR ADDRESS LINE 2
+                        label: AddSupplierStrings.lblAddress1,
+                        hint: AddSupplierStrings.hintAddress1,
+                        ctrl: _address1Ctrl,
+                        icon: AddSupplierIcons.address,
+                        onChanged: (v) => _logic.addressLine1 = v,
+                        textCap: TextCapitalization.words),
                     _buildField(
-                          label: AddSupplierStrings.lblAddress2,
-                          hint: AddSupplierStrings.hintAddress2,
-                          ctrl: _address2Ctrl,
-                          icon: AddSupplierIcons.address,
-                          onChanged: (v) => _logic.addressLine2 = v,
-                          textCap: TextCapitalization.words),
-                    ),
+                        label: AddSupplierStrings.lblAddress2,
+                        hint: AddSupplierStrings.hintAddress2,
+                        ctrl: _address2Ctrl,
+                        icon: AddSupplierIcons.address,
+                        onChanged: (v) => _logic.addressLine2 = v,
+                        textCap: TextCapitalization.words),
                     Row(
                       children: [
-                        // ✅ SMART WRAPPER ADDED FOR STATE
                         Expanded(
                             child: _buildField(
-                              label: AddSupplierStrings.lblState,
-                              hint: AddSupplierStrings.hintState,
-                              ctrl: _stateCtrl,
-                              icon: AddSupplierIcons.state,
-                              onChanged: (v) => _logic.state = v,
-                              textCap: TextCapitalization.words),
-                        )),
+                                label: AddSupplierStrings.lblState,
+                                hint: AddSupplierStrings.hintState,
+                                ctrl: _stateCtrl,
+                                icon: AddSupplierIcons.state,
+                                onChanged: (v) => _logic.state = v,
+                                textCap: TextCapitalization.words)),
                         const SizedBox(width: 12),
                         Expanded(
                             child: _buildField(
@@ -289,15 +277,13 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
                         icon: AddSupplierIcons.openingBal,
                         onChanged: _logic.setOpeningBalance,
                         keyboard: TextInputType.number),
-                    // ✅ SMART WRAPPER ADDED FOR NOTES
                     _buildField(
-                          label: AddSupplierStrings.lblNotes,
-                          hint: AddSupplierStrings.hintNotes,
-                          ctrl: _notesCtrl,
-                          icon: AddSupplierIcons.notes,
-                          onChanged: (v) => _logic.notes = v,
-                          maxLines: 3),
-                    ),
+                        label: AddSupplierStrings.lblNotes,
+                        hint: AddSupplierStrings.hintNotes,
+                        ctrl: _notesCtrl,
+                        icon: AddSupplierIcons.notes,
+                        onChanged: (v) => _logic.notes = v,
+                        maxLines: 3),
                   ],
                 ),
                 const SizedBox(height: 28),
