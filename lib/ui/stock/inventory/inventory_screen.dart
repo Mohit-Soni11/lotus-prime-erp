@@ -58,15 +58,20 @@ class _InventoryScreenState extends State<InventoryScreen>
     _sectionAnim = List.generate(
       _sectionCount,
       (i) => AnimationController(
-          vsync: this, duration: const Duration(milliseconds: 500)),
+        vsync: this,
+        duration: const Duration(milliseconds: 500),
+      ),
     );
     _sectionFade = _sectionAnim
         .map((ac) => CurvedAnimation(parent: ac, curve: Curves.easeInOut))
         .toList();
     _sectionSlide = _sectionAnim
-        .map((ac) => Tween<Offset>(
-                begin: const Offset(0, 0.10), end: Offset.zero)
-            .animate(CurvedAnimation(parent: ac, curve: Curves.easeOutCubic)))
+        .map(
+          (ac) => Tween<Offset>(
+            begin: const Offset(0, 0.10),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: ac, curve: Curves.easeOutCubic)),
+        )
         .toList();
 
     for (int i = 0; i < _sectionCount; i++) {
@@ -125,10 +130,7 @@ class _InventoryScreenState extends State<InventoryScreen>
             strokeWidth: 2.5,
           ),
           const SizedBox(height: 16),
-          Text(
-            'Loading inventory data...',
-            style: InvStyles.pageSubtitle,
-          ),
+          Text('Loading inventory data...', style: InvStyles.pageSubtitle),
         ],
       ),
     );
@@ -169,9 +171,7 @@ class _InventoryScreenState extends State<InventoryScreen>
         // ── Stock Items List ─────────────────────────────────────
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-          sliver: SliverToBoxAdapter(
-            child: _animated(4, _buildStockList()),
-          ),
+          sliver: SliverToBoxAdapter(child: _animated(4, _buildStockList())),
         ),
       ],
     );
@@ -202,18 +202,25 @@ class _InventoryScreenState extends State<InventoryScreen>
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: InvColors.brandGold.withOpacity(0.3)),
           ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(InvIcons.calendar, size: 11, color: InvColors.brandGold),
-            const SizedBox(width: 6),
-            Text(
-              today,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                InvIcons.calendar,
+                size: 11,
                 color: InvColors.brandGold,
               ),
-            ),
-          ]),
+              const SizedBox(width: 6),
+              Text(
+                today,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: InvColors.brandGold,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -262,10 +269,7 @@ class _InventoryScreenState extends State<InventoryScreen>
             row2Label: InvStrings.lblValue,
             row2Value: _rupee.format(s.closingValue),
             // Delta chip
-            deltaWidget: _MovementChip(
-              added: s.todayAdded,
-              sold: s.todaySold,
-            ),
+            deltaWidget: _MovementChip(added: s.todayAdded, sold: s.todaySold),
           ),
         ),
       ],
@@ -289,27 +293,35 @@ class _InventoryScreenState extends State<InventoryScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Card header
-          Row(children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: InvColors.metalAccent.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(8),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: InvColors.metalAccent.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  InvIcons.metalHoldings,
+                  color: InvColors.metalAccent,
+                  size: 16,
+                ),
               ),
-              child: const Icon(InvIcons.metalHoldings,
-                  color: InvColors.metalAccent, size: 16),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(InvStrings.cardMetal,
-                    style: InvStyles.sectionTitle
-                        .copyWith(color: InvColors.textDark)),
-                Text(InvStrings.cardMetalNote, style: InvStyles.cardNote),
-              ],
-            ),
-          ]),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    InvStrings.cardMetal,
+                    style: InvStyles.sectionTitle.copyWith(
+                      color: InvColors.textDark,
+                    ),
+                  ),
+                  Text(InvStrings.cardMetalNote, style: InvStyles.cardNote),
+                ],
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
 
           // Metal chips row
@@ -396,25 +408,30 @@ class _InventoryScreenState extends State<InventoryScreen>
   // ════════════════════════════════════════════════════════════════
 
   Widget _buildSectionHeader() {
-    return Row(children: [
-      Container(
-        padding: const EdgeInsets.all(7),
-        decoration: BoxDecoration(
-          color: InvColors.brandGold.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(8),
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: InvColors.brandGold.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(
+            InvIcons.stockList,
+            color: InvColors.brandGold,
+            size: 16,
+          ),
         ),
-        child: const Icon(InvIcons.stockList,
-            color: InvColors.brandGold, size: 16),
-      ),
-      const SizedBox(width: 10),
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(InvStrings.secStockList, style: InvStyles.sectionTitle),
-          Text(InvStrings.secListSubtitle, style: InvStyles.cardNote),
-        ],
-      ),
-    ]);
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(InvStrings.secStockList, style: InvStyles.sectionTitle),
+            Text(InvStrings.secListSubtitle, style: InvStyles.cardNote),
+          ],
+        ),
+      ],
+    );
   }
 
   Widget _buildCategoryFilter() {
@@ -467,6 +484,9 @@ class _InventoryScreenState extends State<InventoryScreen>
         final items = snap.data ?? [];
         if (items.isEmpty) {
           return _buildEmptyState();
+        }
+        if (_ctrl.activeCategory == StockCategory.gold.label) {
+          return _buildGoldGroupedList(items);
         }
         return Column(
           children: [
@@ -534,6 +554,358 @@ class _InventoryScreenState extends State<InventoryScreen>
       ),
     );
   }
+
+  Widget _buildGoldGroupedList(List<StockItem> items) {
+    final groups = <_InventorySubCategoryGroup>[];
+    final bucket = <String, List<StockItem>>{};
+
+    for (final item in items) {
+      final key =
+          item.subCategory.trim().isEmpty ? 'Uncategorised' : item.subCategory;
+      bucket.putIfAbsent(key, () => []).add(item);
+    }
+
+    for (final entry in bucket.entries) {
+      final list = entry.value;
+      final totalQty = list.fold<int>(0, (sum, item) => sum + item.quantity);
+      final totalNetWeight = list.fold<double>(
+        0.0,
+        (sum, item) => sum + item.netWeight,
+      );
+      final totalValue = list.fold<double>(
+        0.0,
+        (sum, item) =>
+            sum +
+            ((item.mrp > 0 ? item.mrp : item.purchasePrice) * item.quantity),
+      );
+      final totalFineGold = list.fold<double>(
+        0.0,
+        (sum, item) =>
+            sum + (item.netWeight * (_parseTouchPercent(item.purity) / 100.0)),
+      );
+
+      final purityTags = list
+          .map((item) => item.purity?.trim() ?? '')
+          .where((value) => value.isNotEmpty)
+          .toSet()
+          .take(3)
+          .toList(growable: false);
+
+      groups.add(
+        _InventorySubCategoryGroup(
+          subCategory: entry.key,
+          items: list,
+          totalQuantity: totalQty,
+          totalNetWeight: totalNetWeight,
+          totalFineGold: totalFineGold,
+          totalValue: totalValue,
+          purityTags: purityTags,
+        ),
+      );
+    }
+
+    groups.sort((a, b) => b.totalValue.compareTo(a.totalValue));
+
+    return Column(
+      children: [
+        for (int index = 0; index < groups.length; index++) ...[
+          _GoldInventoryGroupCard(
+            group: groups[index],
+            rupeeFormat: _rupee,
+            wtFormat: _wt,
+          ),
+          if (index < groups.length - 1) const SizedBox(height: 14),
+        ],
+      ],
+    );
+  }
+
+  double _parseTouchPercent(String? purity) {
+    if (purity == null || purity.trim().isEmpty) {
+      return 0.0;
+    }
+
+    final text = purity.toUpperCase();
+    final percentMatch = RegExp(r'(\d+(?:\.\d+)?)\s*%').firstMatch(text);
+    if (percentMatch != null) {
+      return double.tryParse(percentMatch.group(1) ?? '') ?? 0.0;
+    }
+
+    final karatMatch = RegExp(r'(\d{1,2})K').firstMatch(text);
+    if (karatMatch != null) {
+      final karat = double.tryParse(karatMatch.group(1) ?? '');
+      if (karat != null) {
+        return (karat / 24.0) * 100.0;
+      }
+    }
+
+    final hallmarkMatch = RegExp(
+      r'\b(999|916|925|750|585|417)\b',
+    ).firstMatch(text);
+    if (hallmarkMatch != null) {
+      final hallmark = double.tryParse(hallmarkMatch.group(1) ?? '');
+      if (hallmark != null) {
+        return hallmark > 100 ? hallmark / 10.0 : hallmark;
+      }
+    }
+
+    final numericMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(text);
+    if (numericMatch != null) {
+      final raw = double.tryParse(numericMatch.group(1) ?? '');
+      if (raw != null) {
+        return raw > 100 ? raw / 10.0 : raw;
+      }
+    }
+
+    return 0.0;
+  }
+}
+
+class _InventorySubCategoryGroup {
+  final String subCategory;
+  final List<StockItem> items;
+  final int totalQuantity;
+  final double totalNetWeight;
+  final double totalFineGold;
+  final double totalValue;
+  final List<String> purityTags;
+
+  const _InventorySubCategoryGroup({
+    required this.subCategory,
+    required this.items,
+    required this.totalQuantity,
+    required this.totalNetWeight,
+    required this.totalFineGold,
+    required this.totalValue,
+    required this.purityTags,
+  });
+}
+
+class _GoldInventoryGroupCard extends StatelessWidget {
+  final _InventorySubCategoryGroup group;
+  final NumberFormat rupeeFormat;
+  final NumberFormat wtFormat;
+
+  const _GoldInventoryGroupCard({
+    required this.group,
+    required this.rupeeFormat,
+    required this.wtFormat,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: InvStyles.cardDecoration.copyWith(
+        border: Border.all(
+          color: InvColors.brandGold.withOpacity(0.18),
+          width: 1.2,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: InvColors.brandGold.withOpacity(0.10),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: InvColors.brandGold.withOpacity(0.22),
+                    ),
+                  ),
+                  child: const Icon(
+                    InvIcons.catGold,
+                    color: InvColors.brandGold,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        group.subCategory.toUpperCase(),
+                        style: InvStyles.sectionTitle.copyWith(
+                          color: InvColors.textDark,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${group.items.length} stock line${group.items.length == 1 ? '' : 's'} combined in one gold ledger card.',
+                        style: InvStyles.cardNote,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: InvColors.brandGoldLight,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: InvColors.brandGold.withOpacity(0.25),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'COMBINED VALUE',
+                        style: InvStyles.cardNote.copyWith(
+                          color: InvColors.brandGold,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 10,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        rupeeFormat.format(group.totalValue),
+                        style: InvStyles.cardSubValue.copyWith(
+                          color: InvColors.brandGold,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _groupMetric(
+                  'Pieces',
+                  '${group.totalQuantity} pcs',
+                  InvColors.brandGold,
+                ),
+                _groupMetric(
+                  'Net Weight',
+                  '${wtFormat.format(group.totalNetWeight)} g',
+                  InvColors.closingAccent,
+                ),
+                _groupMetric(
+                  'Fine Gold',
+                  '${wtFormat.format(group.totalFineGold)} g',
+                  InvColors.openingAccent,
+                ),
+                if (group.purityTags.isNotEmpty)
+                  _groupMetric(
+                    'Purity Mix',
+                    group.purityTags.join(' • '),
+                    InvColors.textMuted,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Column(
+              children: [
+                for (int index = 0; index < group.items.length; index++) ...[
+                  _GoldInventoryMiniRow(
+                    item: group.items[index],
+                    rupeeFormat: rupeeFormat,
+                    wtFormat: wtFormat,
+                  ),
+                  if (index < group.items.length - 1)
+                    const Divider(height: 18, color: InvColors.cardBorder),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _groupMetric(String label, String value, Color accent) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: accent.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withOpacity(0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: InvStyles.cardNote.copyWith(fontSize: 10)),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: InvStyles.cardSubValue.copyWith(
+              color: accent,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GoldInventoryMiniRow extends StatelessWidget {
+  final StockItem item;
+  final NumberFormat rupeeFormat;
+  final NumberFormat wtFormat;
+
+  const _GoldInventoryMiniRow({
+    required this.item,
+    required this.rupeeFormat,
+    required this.wtFormat,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.itemName,
+                style: InvStyles.itemName.copyWith(fontSize: 14),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                [
+                  'SKU ${item.sku}',
+                  if ((item.purity ?? '').isNotEmpty) item.purity!,
+                  if ((item.huid ?? '').isNotEmpty) 'HUID ${item.huid}',
+                ].join('  •  '),
+                style: InvStyles.itemSku,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          '${wtFormat.format(item.netWeight)} g',
+          style: InvStyles.itemFieldValue,
+        ),
+        const SizedBox(width: 16),
+        Text(
+          rupeeFormat.format(item.mrp > 0 ? item.mrp : item.purchasePrice),
+          style: InvStyles.itemMrp.copyWith(fontSize: 14),
+        ),
+      ],
+    );
+  }
 }
 
 // =============================================================================
@@ -580,44 +952,60 @@ class _SummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header row
-          Row(children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(8),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: accentColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: accentColor, size: 14),
               ),
-              child: Icon(icon, color: accentColor, size: 14),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
                       style: InvStyles.cardLabel.copyWith(
-                          color: accentColor, fontWeight: FontWeight.w700)),
-                  Text(note,
+                        color: accentColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      note,
                       style: InvStyles.cardNote,
-                      overflow: TextOverflow.ellipsis),
-                ],
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ]),
+            ],
+          ),
           const SizedBox(height: 12),
 
           // Big number
-          Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text(bigNumber,
-                style: InvStyles.cardBigNumber.copyWith(color: accentColor)),
-            const SizedBox(width: 4),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(bigUnit,
-                  style:
-                      InvStyles.cardNote.copyWith(fontWeight: FontWeight.w600)),
-            ),
-          ]),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                bigNumber,
+                style: InvStyles.cardBigNumber.copyWith(color: accentColor),
+              ),
+              const SizedBox(width: 4),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  bigUnit,
+                  style: InvStyles.cardNote.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 10),
 
           // Stats rows
@@ -646,9 +1034,10 @@ class _StatRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: InvStyles.cardNote),
-        Text(value,
-            style:
-                InvStyles.cardSubValue.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          value,
+          style: InvStyles.cardSubValue.copyWith(fontWeight: FontWeight.w700),
+        ),
       ],
     );
   }
@@ -666,13 +1055,16 @@ class _MovementChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (added == 0 && sold == 0) return const SizedBox.shrink();
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      if (added > 0)
-        _chip('+$added added today', InvColors.success, InvColors.successBg),
-      if (added > 0 && sold > 0) const SizedBox(width: 6),
-      if (sold > 0)
-        _chip('-$sold sold today', InvColors.danger, InvColors.dangerBg),
-    ]);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (added > 0)
+          _chip('+$added added today', InvColors.success, InvColors.successBg),
+        if (added > 0 && sold > 0) const SizedBox(width: 6),
+        if (sold > 0)
+          _chip('-$sold sold today', InvColors.danger, InvColors.dangerBg),
+      ],
+    );
   }
 
   Widget _chip(String text, Color color, Color bg) => Container(
@@ -736,13 +1128,19 @@ class _MetalHoldingChip extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 10, color: iconColor),
-            const SizedBox(width: 5),
-            Text(label,
-                style:
-                    InvStyles.metalChipText(textColor).copyWith(fontSize: 12)),
-          ]),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 10, color: iconColor),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: InvStyles.metalChipText(
+                  textColor,
+                ).copyWith(fontSize: 12),
+              ),
+            ],
+          ),
           const SizedBox(height: 4),
           Text(
             '$count pcs',
@@ -753,13 +1151,19 @@ class _MetalHoldingChip extends StatelessWidget {
             ),
           ),
           if (showWeight && weight > 0)
-            Text('${wtFormat.format(weight)} g',
-                style: InvStyles.metalChipText(textColor)
-                    .copyWith(fontWeight: FontWeight.w500, fontSize: 11)),
+            Text(
+              '${wtFormat.format(weight)} g',
+              style: InvStyles.metalChipText(
+                textColor,
+              ).copyWith(fontWeight: FontWeight.w500, fontSize: 11),
+            ),
           if (showValue && value > 0)
-            Text(rupeeFormat.format(value),
-                style: InvStyles.metalChipText(textColor)
-                    .copyWith(fontWeight: FontWeight.w600, fontSize: 11)),
+            Text(
+              rupeeFormat.format(value),
+              style: InvStyles.metalChipText(
+                textColor,
+              ).copyWith(fontWeight: FontWeight.w600, fontSize: 11),
+            ),
         ],
       ),
     );
@@ -792,24 +1196,24 @@ class _StockItemCardState extends State<_StockItemCard> {
       return (
         InvColors.statusAvailBg,
         InvColors.statusAvailText,
-        InvColors.closingAccent
+        InvColors.closingAccent,
       );
     if (status == StockStatus.sold.label)
       return (
         InvColors.statusSoldBg,
         InvColors.statusSoldText,
-        InvColors.danger
+        InvColors.danger,
       );
     if (status == StockStatus.onOrder.label)
       return (
         InvColors.statusOrderBg,
         InvColors.statusOrderText,
-        InvColors.warning
+        InvColors.warning,
       );
     return (
       InvColors.statusKarigarBg,
       InvColors.statusKarigarText,
-      InvColors.openingAccent
+      InvColors.openingAccent,
     );
   }
 
@@ -862,8 +1266,11 @@ class _StockItemCardState extends State<_StockItemCard> {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: accent.withOpacity(0.2)),
                 ),
-                child:
-                    Icon(_categoryIcon(item.category), color: accent, size: 20),
+                child: Icon(
+                  _categoryIcon(item.category),
+                  color: accent,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 14),
 
@@ -877,10 +1284,12 @@ class _StockItemCardState extends State<_StockItemCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Text(item.itemName,
-                              style: InvStyles.itemName,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis),
+                          child: Text(
+                            item.itemName,
+                            style: InvStyles.itemName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         _StatusBadge(
@@ -892,51 +1301,66 @@ class _StockItemCardState extends State<_StockItemCard> {
                     ),
                     const SizedBox(height: 4),
                     // SKU + category
-                    Row(children: [
-                      Text('${InvStrings.lblSku}: ${item.sku}',
-                          style: InvStyles.itemSku),
-                      const SizedBox(width: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: accent.withOpacity(0.10),
-                          borderRadius: BorderRadius.circular(4),
+                    Row(
+                      children: [
+                        Text(
+                          '${InvStrings.lblSku}: ${item.sku}',
+                          style: InvStyles.itemSku,
                         ),
-                        child: Text(item.category,
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: accent.withOpacity(0.10),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            item.category,
                             style: InvStyles.itemSku.copyWith(
-                                color: accent, fontWeight: FontWeight.w700)),
-                      ),
-                      if (item.purity != null &&
-                          (item.purity ?? '').isNotEmpty) ...[
-                        const SizedBox(width: 6),
-                        Text('• ${item.purity}', style: InvStyles.itemSku),
+                              color: accent,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        if (item.purity != null &&
+                            (item.purity ?? '').isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          Text('• ${item.purity}', style: InvStyles.itemSku),
+                        ],
                       ],
-                    ]),
+                    ),
                     const SizedBox(height: 10),
                     // Stats row
-                    Row(children: [
-                      _StatChip(
+                    Row(
+                      children: [
+                        _StatChip(
                           label: 'Gross',
-                          value:
-                              '${widget.wtFormat.format(item.grossWeight)}g'),
-                      const SizedBox(width: 8),
-                      _StatChip(
+                          value: '${widget.wtFormat.format(item.grossWeight)}g',
+                        ),
+                        const SizedBox(width: 8),
+                        _StatChip(
                           label: 'Net',
-                          value: '${widget.wtFormat.format(item.netWeight)}g'),
-                      const SizedBox(width: 8),
-                      _StatChip(label: 'Qty', value: '${item.quantity} pcs'),
-                      const Spacer(),
-                      // MRP
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text('MRP', style: InvStyles.itemFieldLabel),
-                          Text(widget.rupeeFormat.format(item.mrp),
-                              style: InvStyles.itemMrp),
-                        ],
-                      ),
-                    ]),
+                          value: '${widget.wtFormat.format(item.netWeight)}g',
+                        ),
+                        const SizedBox(width: 8),
+                        _StatChip(label: 'Qty', value: '${item.quantity} pcs'),
+                        const Spacer(),
+                        // MRP
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('MRP', style: InvStyles.itemFieldLabel),
+                            Text(
+                              widget.rupeeFormat.format(item.mrp),
+                              style: InvStyles.itemMrp,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -1001,9 +1425,7 @@ class _StatusBadge extends StatelessWidget {
 class _InventoryAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
 
-  const _InventoryAppBar({
-    required this.onBack,
-  });
+  const _InventoryAppBar({required this.onBack});
 
   @override
   Size get preferredSize => const Size.fromHeight(70.0);
@@ -1071,10 +1493,7 @@ class _InventoryAppBarState extends State<_InventoryAppBar>
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    InvColors.goldGradientStart,
-                    InvColors.brandGold,
-                  ],
+                  colors: [InvColors.goldGradientStart, InvColors.brandGold],
                 ),
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
@@ -1082,7 +1501,7 @@ class _InventoryAppBarState extends State<_InventoryAppBar>
                     color: InvColors.brandGold.withOpacity(0.5),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
-                  )
+                  ),
                 ],
               ),
               child: const Icon(
@@ -1209,9 +1628,7 @@ class _RadarWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: InvColors.onlineGreen.withOpacity(0.08),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(
-          color: InvColors.onlineGreen.withOpacity(0.3),
-        ),
+        border: Border.all(color: InvColors.onlineGreen.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

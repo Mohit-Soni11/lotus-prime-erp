@@ -16,9 +16,10 @@ enum StockCategory {
   final String label;
   const StockCategory(this.label);
 
-  static StockCategory fromLabel(String l) =>
-      StockCategory.values.firstWhere((e) => e.label == l,
-          orElse: () => StockCategory.other);
+  static StockCategory fromLabel(String l) => StockCategory.values.firstWhere(
+        (e) => e.label == l,
+        orElse: () => StockCategory.other,
+      );
 }
 
 enum StockSubCategory {
@@ -38,9 +39,8 @@ enum StockSubCategory {
   final String label;
   const StockSubCategory(this.label);
 
-  static StockSubCategory fromLabel(String l) =>
-      StockSubCategory.values.firstWhere((e) => e.label == l,
-          orElse: () => StockSubCategory.other);
+  static StockSubCategory fromLabel(String l) => StockSubCategory.values
+      .firstWhere((e) => e.label == l, orElse: () => StockSubCategory.other);
 }
 
 enum MetalType {
@@ -52,9 +52,10 @@ enum MetalType {
   final String label;
   const MetalType(this.label);
 
-  static MetalType fromLabel(String l) =>
-      MetalType.values.firstWhere((e) => e.label == l,
-          orElse: () => MetalType.none);
+  static MetalType fromLabel(String l) => MetalType.values.firstWhere(
+        (e) => e.label == l,
+        orElse: () => MetalType.none,
+      );
 }
 
 enum GoldPurity {
@@ -92,15 +93,20 @@ enum PlatinumPurity {
 
 enum MakingChargesType {
   perGram('Per Gram (Rs/g)'),
-  flat('Flat Amount (Rs)'),
-  percent('Percent (%)');
+  flat('Per Piece (Rs)'),
+  percent('Percentage (%)');
 
   final String label;
   const MakingChargesType(this.label);
 
   static MakingChargesType fromLabel(String l) =>
-      MakingChargesType.values.firstWhere((e) => e.label == l,
-          orElse: () => MakingChargesType.perGram);
+      MakingChargesType.values.firstWhere(
+        (e) =>
+            e.label == l ||
+            (e == MakingChargesType.flat && l == 'Flat Amount (Rs)') ||
+            (e == MakingChargesType.percent && l == 'Percent (%)'),
+        orElse: () => MakingChargesType.perGram,
+      );
 }
 
 enum StoneType {
@@ -120,9 +126,10 @@ enum StoneType {
 
   bool get hasDetails => this != StoneType.none;
 
-  static StoneType fromLabel(String l) =>
-      StoneType.values.firstWhere((e) => e.label == l,
-          orElse: () => StoneType.none);
+  static StoneType fromLabel(String l) => StoneType.values.firstWhere(
+        (e) => e.label == l,
+        orElse: () => StoneType.none,
+      );
 }
 
 enum StockStatus {
@@ -135,9 +142,10 @@ enum StockStatus {
   final String label;
   const StockStatus(this.label);
 
-  static StockStatus fromLabel(String l) =>
-      StockStatus.values.firstWhere((e) => e.label == l,
-          orElse: () => StockStatus.available);
+  static StockStatus fromLabel(String l) => StockStatus.values.firstWhere(
+        (e) => e.label == l,
+        orElse: () => StockStatus.available,
+      );
 }
 
 enum JewelleryHsn {

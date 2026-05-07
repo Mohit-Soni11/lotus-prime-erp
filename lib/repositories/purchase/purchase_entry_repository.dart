@@ -39,6 +39,13 @@ class PurchaseVoucherItemDraft {
   final double fineWeight;
   final double rate;
   final double lineAmount;
+  final String subCategory;
+  final String? huid;
+  final double labourCharge;
+  final MakingChargesType labourType;
+  final String purityLabel;
+  final double effectiveRatePerGram;
+  final double gstRate;
 
   const PurchaseVoucherItemDraft({
     required this.metal,
@@ -50,6 +57,13 @@ class PurchaseVoucherItemDraft {
     required this.fineWeight,
     required this.rate,
     required this.lineAmount,
+    this.subCategory = 'Purchase Inward',
+    this.huid,
+    this.labourCharge = 0.0,
+    this.labourType = MakingChargesType.perGram,
+    this.purityLabel = '',
+    this.effectiveRatePerGram = 0.0,
+    this.gstRate = 0.0,
   });
 }
 
@@ -137,8 +151,10 @@ class PurchaseEntryRepository {
         final now = DateTime.now();
         final createdAtMs = now.millisecondsSinceEpoch;
         final isSupplierPurchase = draft.source == PurchaseSource.fromSupplier;
-        final paymentStatus =
-            _resolvePaymentStatus(draft.balanceDue, draft.totalPaid);
+        final paymentStatus = _resolvePaymentStatus(
+          draft.balanceDue,
+          draft.totalPaid,
+        );
 
         await _db.customStatement(
           '''
@@ -266,21 +282,44 @@ class PurchaseEntryRepository {
                   itemName: drift.Value(
                     item.description.isNotEmpty
                         ? item.description
-                        : '${item.metal.displayName} Purchase Item',
+                        : '${item.subCategory} Purchase Item',
                   ),
                   description: drift.Value(
-                    'Purchased via ${draft.voucherNo} from ${draft.party.name}',
+                    _buildStockDescription(
+                      voucherNo: draft.voucherNo,
+                      partyName: draft.party.name,
+                      purityLabel: item.purityLabel.isEmpty
+                          ? _purityLabel(item)
+                          : item.purityLabel,
+                      labourCharge: item.labourCharge,
+                      labourType: item.labourType,
+                    ),
                   ),
                   category: drift.Value(_categoryLabel(item.metal)),
-                  subCategory: const drift.Value('Purchase Inward'),
+                  subCategory: drift.Value(
+                    item.subCategory.isEmpty
+                        ? 'Purchase Inward'
+                        : item.subCategory,
+                  ),
                   metalType: drift.Value(item.metal.displayName),
-                  purity: drift.Value(_purityLabel(item)),
+                  purity: drift.Value(
+                    item.purityLabel.isEmpty
+                        ? _purityLabel(item)
+                        : item.purityLabel,
+                  ),
                   grossWeight: drift.Value(item.grossWeight),
                   stoneWeight: drift.Value(item.lessWeight),
                   netWeight: drift.Value(item.netWeight),
-                  purchaseRate: drift.Value(item.rate),
+                  purchaseRate: drift.Value(
+                    item.effectiveRatePerGram > 0
+                        ? item.effectiveRatePerGram
+                        : item.rate,
+                  ),
+                  makingCharge: drift.Value(item.labourCharge),
+                  makingChargeType: drift.Value(item.labourType.label),
                   purchasePrice: drift.Value(item.lineAmount),
                   mrp: drift.Value(item.lineAmount),
+                  huid: drift.Value(item.huid),
                   supplierId: drift.Value(
                     isSupplierPurchase ? draft.party.supplierId : null,
                   ),
@@ -289,9 +328,7 @@ class PurchaseEntryRepository {
                   ),
                   quantity: const drift.Value(1),
                   status: drift.Value(StockStatus.available.label),
-                  gstRate: drift.Value(
-                    draft.taxType == PurchaseTaxType.gst ? 3.0 : 0.0,
-                  ),
+                  gstRate: drift.Value(item.gstRate),
                 ),
               );
           stockEntryCount++;
@@ -486,5 +523,21 @@ class PurchaseEntryRepository {
     return item.purity == item.purity.roundToDouble()
         ? item.purity.round().toString()
         : item.purity.toStringAsFixed(2);
+  }
+
+  String _buildStockDescription({
+    required String voucherNo,
+    required String partyName,
+    required String purityLabel,
+    required double labourCharge,
+    required MakingChargesType labourType,
+  }) {
+    final parts = <String>[
+      'Purchased via $voucherNo from $partyName',
+      if (purityLabel.isNotEmpty) purityLabel,
+      if (labourCharge > 0)
+        'Labour ${labourType.label}: ${labourCharge.toStringAsFixed(2)}',
+    ];
+    return parts.join(' • ');
   }
 }

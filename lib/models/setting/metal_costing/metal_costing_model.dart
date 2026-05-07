@@ -48,13 +48,22 @@ class MetalCostingItem {
 
   bool get isSold => soldPrice != null;
 
+  bool get _isFlatCharge =>
+      makingChargeType == 'Flat Amount (Rs)' ||
+      makingChargeType == 'Per Piece (Rs)';
+
+  bool get _isPercentCharge =>
+      makingChargeType == 'Percent (%)' || makingChargeType == 'Percentage (%)';
+
   // ── FORMULA 1: Purchase Cost ───────────────────────────────────────────────
   // (purchaseRate / 100) × netWeight × (wastage / 100) + makingCharge × netWeight
   double get purchaseCost {
     final metalCost = (purchaseRate / 100) * netWeight * (wastage / 100);
-    final making = makingChargeType == 'Flat Amount (Rs)'
+    final making = _isFlatCharge
         ? makingCharge
-        : makingCharge * netWeight;
+        : _isPercentCharge
+            ? metalCost * makingCharge / 100
+            : makingCharge * netWeight;
     return metalCost + making;
   }
 
@@ -70,9 +79,12 @@ class MetalCostingItem {
   }
 
   double get makingAmount {
-    return makingChargeType == 'Flat Amount (Rs)'
+    final metalCost = (purchaseRate / 100) * netWeight * (wastage / 100);
+    return _isFlatCharge
         ? makingCharge
-        : makingCharge * netWeight;
+        : _isPercentCharge
+            ? metalCost * makingCharge / 100
+            : makingCharge * netWeight;
   }
 
   // ── PROFITS ───────────────────────────────────────────────────────────────

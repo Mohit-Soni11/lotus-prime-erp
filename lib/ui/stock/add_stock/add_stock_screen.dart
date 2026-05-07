@@ -5,6 +5,7 @@ import 'package:lotus_erp/models/stock/stock_enums/stock_enums.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_app_bar.dart';
 import 'stock_metal_ui.dart';
+import 'add_gold_stock_items_step.dart';
 import 'add_stock_items_step.dart';
 import 'add_stock_purity_step.dart';
 
@@ -55,12 +56,19 @@ class _AddStockScreenState extends State<AddStockScreen> {
                       key: const ValueKey('purity-step'),
                       ctrl: _ctrl,
                     )
-                  : AddStockItemsStep(
-                      key: const ValueKey('items-step'),
-                      ctrl: _ctrl,
-                      onSave: _onSave,
-                      onResetBatch: _showResetDialog,
-                    ),
+                  : _ctrl.selectedMetal == StockCategory.gold
+                      ? AddGoldStockItemsStep(
+                          key: const ValueKey('gold-items-step'),
+                          ctrl: _ctrl,
+                          onSave: _onSave,
+                          onResetBatch: _showResetDialog,
+                        )
+                      : AddStockItemsStep(
+                          key: const ValueKey('items-step'),
+                          ctrl: _ctrl,
+                          onSave: _onSave,
+                          onResetBatch: _showResetDialog,
+                        ),
             ),
           );
         },
