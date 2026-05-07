@@ -198,6 +198,7 @@ class AddStockController extends ChangeNotifier {
   final TextEditingController supplierRegionCtrl = TextEditingController();
   final TextEditingController supplierPanCtrl = TextEditingController();
   final TextEditingController supplierGstCtrl = TextEditingController();
+  final TextEditingController gold24kManualCtrl = TextEditingController();
 
   String get sessionSupplierName => _sessionSupplierName;
   bool get sameForAll => _sameForAll;
@@ -266,6 +267,12 @@ class AddStockController extends ChangeNotifier {
 
   bool get hasActiveRateSnapshot =>
       pureGoldRatePerGram > 0 && selectedPurityRatePer10g > 0;
+
+  void setManual24kRate(String value) {
+    final parsed = double.tryParse(value.replaceAll(',', '')) ?? 0.0;
+    _gold24kRatePer10g = parsed;
+    notifyListeners();
+  }
 
   String? _pendingFocusRowId;
 
@@ -385,6 +392,9 @@ class AddStockController extends ChangeNotifier {
         _gold22kRatePer10g = _parseRateText(latestRate.gold22k);
         _gold18kRatePer10g = _parseRateText(latestRate.gold18k);
         _goldRateDate = latestRate.rateDate;
+        if (gold24kManualCtrl.text.isEmpty && _gold24kRatePer10g > 0) {
+          gold24kManualCtrl.text = _gold24kRatePer10g.toStringAsFixed(0);
+        }
       } else {
         _gold24kRatePer10g = 0.0;
         _gold22kRatePer10g = 0.0;
@@ -524,7 +534,11 @@ class AddStockController extends ChangeNotifier {
       _isApplyingSupplierProfile = true;
       supplierNameCtrl.text = fullSupplier.businessName;
       supplierMobileCtrl.text = fullSupplier.mobile;
-      supplierRegionCtrl.text = fullSupplier.state ?? '';
+      supplierRegionCtrl.text = [
+        fullSupplier.addressLine1 ?? '',
+        fullSupplier.addressLine2 ?? '',
+        fullSupplier.state ?? '',
+      ].where((s) => s.isNotEmpty).join(', ');
       supplierPanCtrl.text = fullSupplier.panNumber ?? '';
       supplierGstCtrl.text = fullSupplier.gstNumber ?? '';
       _isApplyingSupplierProfile = false;
@@ -1246,6 +1260,7 @@ class AddStockController extends ChangeNotifier {
     supplierRegionCtrl.dispose();
     supplierPanCtrl.dispose();
     supplierGstCtrl.dispose();
+    gold24kManualCtrl.dispose();
     super.dispose();
   }
 }

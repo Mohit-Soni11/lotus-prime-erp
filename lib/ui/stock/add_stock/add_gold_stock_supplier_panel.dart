@@ -149,6 +149,8 @@ class _AddGoldStockSupplierPanelState extends State<AddGoldStockSupplierPanel>
                 .toDouble();
 
         return Positioned(
+          top: 0,
+          left: 0,
           width: width,
           child: CompositedTransformFollower(
             link: activeLink,
@@ -156,6 +158,8 @@ class _AddGoldStockSupplierPanelState extends State<AddGoldStockSupplierPanel>
             offset: const Offset(0, 54),
             child: Material(
               color: Colors.transparent,
+              elevation: 8,
+              borderRadius: BorderRadius.circular(12),
               child: _GoldSupplierLookupDropdown(
                 suppliers: _activeSuggestions,
                 onSelected: (supplier) {
@@ -243,96 +247,89 @@ class _AddGoldStockSupplierPanelState extends State<AddGoldStockSupplierPanel>
               const SizedBox(height: 16),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 1120;
                   final singleColumn = constraints.maxWidth < 760;
-                  final halfWidth = (constraints.maxWidth - 12) / 2;
-
-                  double fieldWidth(
-                    double desktopWidth, {
-                    bool expandWhenCompact = false,
-                  }) {
-                    if (singleColumn) {
-                      return constraints.maxWidth;
-                    }
-                    if (compact) {
-                      return expandWhenCompact
-                          ? constraints.maxWidth
-                          : halfWidth;
-                    }
-                    return desktopWidth;
-                  }
 
                   return Column(
                     children: [
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          SizedBox(
-                            width: fieldWidth(190),
-                            child: CompositedTransformTarget(
-                              link: _mobileSuggestionLink,
-                              child: _buildInput(
-                                label: 'MOBILE NUMBER',
-                                hint: 'Search by phone',
-                                controller: widget.ctrl.supplierMobileCtrl,
-                                isNumber: true,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                  LengthLimitingTextInputFormatter(10),
-                                ],
-                                icon: Icons.phone_android_rounded,
+                      if (singleColumn) ...[
+                        CompositedTransformTarget(
+                          link: _mobileSuggestionLink,
+                          child: _buildInput(
+                            label: 'MOBILE NUMBER',
+                            hint: 'Search by phone',
+                            controller: widget.ctrl.supplierMobileCtrl,
+                            isNumber: true,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(10),
+                            ],
+                            icon: Icons.phone_android_rounded,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        CompositedTransformTarget(
+                          link: _nameSuggestionLink,
+                          child: _buildInput(
+                            label: 'SUPPLIER NAME',
+                            hint: 'Search by supplier name',
+                            controller: widget.ctrl.supplierNameCtrl,
+                            icon: Icons.business_center_rounded,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildInput(
+                          label: 'ADDRESS',
+                          hint: 'Auto-filled after link',
+                          controller: widget.ctrl.supplierRegionCtrl,
+                          readOnly: true,
+                          icon: Icons.location_on_outlined,
+                        ),
+                      ] else ...[
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 190,
+                              child: CompositedTransformTarget(
+                                link: _mobileSuggestionLink,
+                                child: _buildInput(
+                                  label: 'MOBILE NUMBER',
+                                  hint: 'Search by phone',
+                                  controller: widget.ctrl.supplierMobileCtrl,
+                                  isNumber: true,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    LengthLimitingTextInputFormatter(10),
+                                  ],
+                                  icon: Icons.phone_android_rounded,
+                                ),
                               ),
                             ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth(280),
-                            child: CompositedTransformTarget(
-                              link: _nameSuggestionLink,
-                              child: _buildInput(
-                                label: 'SUPPLIER NAME',
-                                hint: 'Search by supplier name',
-                                controller: widget.ctrl.supplierNameCtrl,
-                                icon: Icons.business_center_rounded,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: CompositedTransformTarget(
+                                link: _nameSuggestionLink,
+                                child: _buildInput(
+                                  label: 'SUPPLIER NAME',
+                                  hint: 'Search by supplier name',
+                                  controller: widget.ctrl.supplierNameCtrl,
+                                  icon: Icons.business_center_rounded,
+                                ),
                               ),
                             ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth(180),
-                            child: _buildInput(
-                              label: 'STATE / REGION',
-                              hint: 'Auto-filled after link',
-                              controller: widget.ctrl.supplierRegionCtrl,
-                              readOnly: true,
-                              icon: Icons.map_outlined,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildInput(
+                                label: 'ADDRESS',
+                                hint: 'Auto-filled after link',
+                                controller: widget.ctrl.supplierRegionCtrl,
+                                readOnly: true,
+                                icon: Icons.location_on_outlined,
+                              ),
                             ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth(190),
-                            child: _buildInput(
-                              label: 'PAN / ID NUMBER',
-                              hint: 'Auto-filled after link',
-                              controller: widget.ctrl.supplierPanCtrl,
-                              isCaps: true,
-                              readOnly: true,
-                              icon: Icons.badge_outlined,
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth(220, expandWhenCompact: true),
-                            child: _buildInput(
-                              label: 'GST NUMBER',
-                              hint: 'Auto-filled after link',
-                              controller: widget.ctrl.supplierGstCtrl,
-                              isCaps: true,
-                              readOnly: true,
-                              icon: Icons.receipt_long_rounded,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      _buildActionRow(compact),
+                          ],
+                        ),
+                      ],
                     ],
                   );
                 },
@@ -468,39 +465,6 @@ class _AddGoldStockSupplierPanelState extends State<AddGoldStockSupplierPanel>
           ],
         );
       },
-    );
-  }
-
-  Widget _buildActionRow(bool compact) {
-    final actions = [
-      Expanded(
-        child: _ActionButton(
-          title: 'Clear',
-          icon: Icons.refresh_rounded,
-          onTap: () {
-            _removeSuggestionOverlay();
-            widget.ctrl.clearSessionSupplier(clearFields: true);
-          },
-        ),
-      ),
-      const SizedBox(width: 10),
-      Expanded(
-        child: _ActionButton(
-          title: 'Create Supplier',
-          icon: Icons.person_add_alt_1_rounded,
-          isPrimary: true,
-          onTap: _openCreateSupplier,
-        ),
-      ),
-    ];
-
-    if (compact) {
-      return Row(children: actions);
-    }
-
-    return Align(
-      alignment: Alignment.centerRight,
-      child: SizedBox(width: 320, child: Row(children: actions)),
     );
   }
 

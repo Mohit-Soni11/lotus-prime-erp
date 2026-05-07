@@ -497,18 +497,10 @@ class _GoldRateReferenceCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
+                Row(
                   children: [
-                    _rateChip('24K', _money(ctrl.gold24kRatePer10g), rateDate),
-                    _rateChip(
-                      ctrl.selectedPurityShortLabel.isEmpty
-                          ? ctrl.purityDisplay
-                          : ctrl.selectedPurityShortLabel,
-                      _money(ctrl.selectedPurityRatePer10g),
-                      'per 10g',
-                    ),
+                    _editableRateChip(context, ctrl),
+                    const SizedBox(width: 10),
                     _rateChip(
                       'Pure / gm',
                       _money(ctrl.pureGoldRatePerGram),
@@ -547,6 +539,61 @@ class _GoldRateReferenceCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _editableRateChip(BuildContext context, AddStockController ctrl) {
+    return Container(
+      width: 180,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AddStockColors.bodyBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AddStockColors.brandGold.withOpacity(0.45),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '24K RATE (per 10g)',
+            style: AddStockStyles.caption.copyWith(fontSize: 10),
+          ),
+          const SizedBox(height: 4),
+          SizedBox(
+            height: 30,
+            child: TextField(
+              controller: ctrl.gold24kManualCtrl,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+              ],
+              style: AddStockStyles.sectionTitle.copyWith(fontSize: 15),
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+                border: InputBorder.none,
+                hintText: 'Enter rate',
+                hintStyle: AddStockStyles.caption.copyWith(fontSize: 13),
+                prefixText: 'Rs ',
+                prefixStyle: AddStockStyles.caption.copyWith(fontSize: 13),
+              ),
+              onChanged: ctrl.setManual24kRate,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Editable • tap to change',
+            style: AddStockStyles.caption.copyWith(
+              fontSize: 10,
+              color: AddStockColors.brandGold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _GoldEntryTable extends StatelessWidget {
@@ -554,7 +601,7 @@ class _GoldEntryTable extends StatelessWidget {
 
   const _GoldEntryTable({required this.ctrl});
 
-  static const double _tableWidth = 1538;
+  static const double _tableWidth = 1666;
 
   @override
   Widget build(BuildContext context) {
