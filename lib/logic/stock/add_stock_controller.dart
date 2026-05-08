@@ -106,11 +106,20 @@ class AddStockController extends ChangeNotifier {
   late final SupplierRepository _supplierRepo;
   late final PurchaseEntryRepository _purchaseRepo;
 
+  // ✅ FIX: Active row tracking — Delete key support (like POS activeRowIndex)
+  String? _activeRowId;
+  String? get activeRowId => _activeRowId;
+
+  void setActiveRow(String rowId) {
+    _activeRowId = rowId;
+  }
+
   AddStockController({required StockCategory initialMetal}) {
     _supplierRepo = SupplierRepository(_db);
     _purchaseRepo = PurchaseEntryRepository(db: _db);
     _selectedMetal = initialMetal;
-    _rows.add(_buildEmptyRow());
+    // ✅ FIX: Start with EMPTY rows — show empty state like POS.
+    // Row appears only when user clicks ADD NEW ITEM or presses F2.
     _loadSuppliers();
     _loadPurityStockSummary();
     if (_selectedMetal == StockCategory.gold) {
@@ -632,6 +641,7 @@ class AddStockController extends ChangeNotifier {
   void addRow({bool requestFocus = false}) {
     final newRow = _buildEmptyRow();
     _rows.add(newRow);
+    _activeRowId = newRow.id;
     if (requestFocus) {
       _pendingFocusRowId = newRow.id;
     }
@@ -667,17 +677,33 @@ class AddStockController extends ChangeNotifier {
   }
 
   void removeRow(String rowId) {
-    if (_rows.length <= 1) {
-      return;
-    }
+    // ✅ FIX: Allow deleting ANY row including the last one (like POS removeSaleItem).
+    // No minimum row guard — empty state is shown when list is empty.
     _rows.removeWhere((row) => row.id == rowId);
-    if (_rows.isEmpty) {
-      _rows.add(_buildEmptyRow());
-    }
     if (_pendingFocusRowId == rowId) {
       _pendingFocusRowId = null;
     }
+    if (_activeRowId == rowId) {
+      _activeRowId = _rows.isNotEmpty ? _rows.last.id : null;
+    }
     _emitChange();
+  }
+
+  // ✅ FIX: Delete key shortcut support — removes the currently focused row (like POS removeActiveItem)
+  void removeActiveRow() {
+    if (_activeRowId == null || _rows.isEmpty) return;
+    final idToRemove = _activeRowId!;
+    final removedIndex = _rows.indexWhere((r) => r.id == idToRemove);
+    removeRow(idToRemove);
+    // Focus previous row after delete
+    Future.delayed(const Duration(milliseconds: 50), () {
+      if (_rows.isEmpty) return;
+      final focusIndex =
+          (removedIndex > 0 ? removedIndex - 1 : 0).clamp(0, _rows.length - 1);
+      _pendingFocusRowId = _rows[focusIndex].id;
+      _activeRowId = _rows[focusIndex].id;
+      notifyListeners();
+    });
   }
 
   void updateItemName(String rowId, String value) {
@@ -1147,10 +1173,10 @@ class AddStockController extends ChangeNotifier {
   }
 
   void resetAllRows() {
-    _rows
-      ..clear()
-      ..add(_buildEmptyRow());
+    _rows.clear();
+    // ✅ FIX: Start empty after reset — user adds rows with F2 (like POS)
     _pendingFocusRowId = null;
+    _activeRowId = null;
     _errorMessage = null;
     _successMessage = null;
     _step = _purityDisplay.trim().isEmpty
@@ -1172,10 +1198,10 @@ class AddStockController extends ChangeNotifier {
     _gstEnabled = false;
     _purityDisplay = '';
     _isCustomPurity = false;
-    _rows
-      ..clear()
-      ..add(_buildEmptyRow());
+    _rows.clear();
+    // ✅ FIX: Start empty after batch reset — user adds rows with F2 (like POS)
     _pendingFocusRowId = null;
+    _activeRowId = null;
     _errorMessage = null;
     _successMessage = null;
     _step = AddStockStep.purity;

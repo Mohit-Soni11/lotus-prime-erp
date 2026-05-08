@@ -623,9 +623,12 @@ class _GoldEntryTable extends StatelessWidget {
               bindings: {
                 const SingleActivator(LogicalKeyboardKey.f2): () =>
                     ctrl.addRow(requestFocus: true),
+                // ✅ FIX: Delete key — removes active row (like POS removeActiveItem)
+                const SingleActivator(LogicalKeyboardKey.delete): () =>
+                    ctrl.removeActiveRow(),
               },
               child: Focus(
-                autofocus: false,
+                autofocus: true, // ✅ FIX: was false — F2 wasn't working at all!
                 child: Container(
                   decoration: BoxDecoration(
                     color: AddStockColors.cardBg,
@@ -1139,107 +1142,113 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
             ? AddStockColors.cardHoverBg
             : (isEven ? AddStockColors.cardBg : AddStockColors.bodyBg);
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
-        curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: background,
-          border: Border(
-            bottom: BorderSide(
-              color: error != null
-                  ? AddStockColors.danger.withOpacity(0.18)
-                  : AddStockColors.cardBorder,
-              width: 1,
+    return Focus(
+      // ✅ FIX: Track which row is active — needed for Delete key shortcut (like POS activeRowIndex)
+      onFocusChange: (hasFocus) {
+        if (hasFocus) widget.ctrl.setActiveRow(widget.row.id);
+      },
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: background,
+            border: Border(
+              bottom: BorderSide(
+                color: error != null
+                    ? AddStockColors.danger.withOpacity(0.18)
+                    : AddStockColors.cardBorder,
+                width: 1,
+              ),
             ),
           ),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            _sNoCell(),
-            const SizedBox(width: 8),
-            _subCategoryCell(row, ctrl),
-            const SizedBox(width: 8),
-            _textField(
-              width: 220,
-              controller: _itemCtrl,
-              hint: 'e.g. Maharaja',
-              focusNode: _itemFocus,
-              onChanged: (value) => ctrl.updateItemName(row.id, value),
-            ),
-            const SizedBox(width: 8),
-            _textField(
-              width: 120,
-              controller: _huidCtrl,
-              hint: 'AB1234',
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-                LengthLimitingTextInputFormatter(6),
-              ],
-              textCapitalization: TextCapitalization.characters,
-              onChanged: (value) => ctrl.updateHuid(row.id, value),
-            ),
-            const SizedBox(width: 8),
-            _numberField(
-              width: 96,
-              controller: _grossCtrl,
-              hint: '0.000',
-              onChanged: (value) => ctrl.updateGrossWeight(row.id, value),
-            ),
-            const SizedBox(width: 8),
-            _numberField(
-              width: 96,
-              controller: _lessCtrl,
-              hint: '0.000',
-              onChanged: (value) => ctrl.updateLessWeight(row.id, value),
-            ),
-            const SizedBox(width: 8),
-            _autoCell(
-              width: 96,
-              value: _wt(row.netWeight).toStringAsFixed(3),
-              color: AddStockColors.success,
-            ),
-            const SizedBox(width: 8),
-            _numberField(
-              width: 96,
-              controller: _touchCtrl,
-              hint: _decimalText(ctrl.selectedPurityBasePercent),
-              onChanged: (value) => ctrl.updateTouchPercent(row.id, value),
-            ),
-            const SizedBox(width: 8),
-            _autoCell(
-              width: 110,
-              value: '${_wt(ctrl.fineWeightOf(row))} g',
-              color: AddStockColors.brandGold,
-              isBold: true,
-            ),
-            const SizedBox(width: 8),
-            _makingTypeCell(row, ctrl),
-            const SizedBox(width: 8),
-            _numberField(
-              width: 110,
-              controller: _labourCtrl,
-              hint: '0.00',
-              onChanged: (value) => ctrl.updateMakingCharges(row.id, value),
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) => ctrl.completeRowAndAdvance(row.id),
-            ),
-            const SizedBox(width: 8),
-            _autoCell(
-              width: 150,
-              value: _money(ctrl.rowTotalAmount(row)),
-              color: AddStockColors.textDark,
-              alignRight: true,
-              isBold: true,
-            ),
-            const SizedBox(width: 8),
-            // ✅ Action cell — delete + duplicate
-            _actionCell(ctrl, row),
-          ],
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _sNoCell(),
+              const SizedBox(width: 8),
+              _subCategoryCell(row, ctrl),
+              const SizedBox(width: 8),
+              _textField(
+                width: 220,
+                controller: _itemCtrl,
+                hint: 'e.g. Maharaja',
+                focusNode: _itemFocus,
+                onChanged: (value) => ctrl.updateItemName(row.id, value),
+              ),
+              const SizedBox(width: 8),
+              _textField(
+                width: 120,
+                controller: _huidCtrl,
+                hint: 'AB1234',
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                  LengthLimitingTextInputFormatter(6),
+                ],
+                textCapitalization: TextCapitalization.characters,
+                onChanged: (value) => ctrl.updateHuid(row.id, value),
+              ),
+              const SizedBox(width: 8),
+              _numberField(
+                width: 96,
+                controller: _grossCtrl,
+                hint: '0.000',
+                onChanged: (value) => ctrl.updateGrossWeight(row.id, value),
+              ),
+              const SizedBox(width: 8),
+              _numberField(
+                width: 96,
+                controller: _lessCtrl,
+                hint: '0.000',
+                onChanged: (value) => ctrl.updateLessWeight(row.id, value),
+              ),
+              const SizedBox(width: 8),
+              _autoCell(
+                width: 96,
+                value: _wt(row.netWeight).toStringAsFixed(3),
+                color: AddStockColors.success,
+              ),
+              const SizedBox(width: 8),
+              _numberField(
+                width: 96,
+                controller: _touchCtrl,
+                hint: _decimalText(ctrl.selectedPurityBasePercent),
+                onChanged: (value) => ctrl.updateTouchPercent(row.id, value),
+              ),
+              const SizedBox(width: 8),
+              _autoCell(
+                width: 110,
+                value: '${_wt(ctrl.fineWeightOf(row))} g',
+                color: AddStockColors.brandGold,
+                isBold: true,
+              ),
+              const SizedBox(width: 8),
+              _makingTypeCell(row, ctrl),
+              const SizedBox(width: 8),
+              _numberField(
+                width: 110,
+                controller: _labourCtrl,
+                hint: '0.00',
+                onChanged: (value) => ctrl.updateMakingCharges(row.id, value),
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => ctrl.completeRowAndAdvance(row.id),
+              ),
+              const SizedBox(width: 8),
+              _autoCell(
+                width: 150,
+                value: _money(ctrl.rowTotalAmount(row)),
+                color: AddStockColors.textDark,
+                alignRight: true,
+                isBold: true,
+              ),
+              const SizedBox(width: 8),
+              // ✅ Action cell — delete + duplicate
+              _actionCell(ctrl, row),
+            ],
+          ),
         ),
       ),
     );
