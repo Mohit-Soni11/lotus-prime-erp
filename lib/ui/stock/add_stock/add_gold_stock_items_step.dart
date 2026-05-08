@@ -607,7 +607,7 @@ class _GoldEntryTable extends StatelessWidget {
 
   const _GoldEntryTable({required this.ctrl});
 
-  static const double _tableWidth = 1666;
+  static const double _tableWidth = 1710;
 
   @override
   Widget build(BuildContext context) {
