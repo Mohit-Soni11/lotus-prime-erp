@@ -5,7 +5,7 @@ import '../../database/db/app_database.dart';
 import '../../models/finance/bank_book/bank_book_enums.dart';
 import '../../models/finance/cash_book/cash_book_enums.dart';
 import '../../models/purchase/purchase_enums/purchase_enums.dart';
-import '../../models/stock/stock_enums/stock_enums.dart';
+import '../../models/stock/stock_item_model/stock_enums.dart';
 
 class PurchaseVoucherPartyDraft {
   final int? customerId;

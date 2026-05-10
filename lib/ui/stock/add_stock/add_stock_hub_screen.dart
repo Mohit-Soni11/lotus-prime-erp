@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:lotus_erp/models/stock/stock_enums/stock_enums.dart';
+import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_screen.dart';
+
+// ✅ Silver ka apna dedicated screen
+import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_stock_screen.dart';
+
 import 'add_stock_hub_app_bar.dart';
 import 'diamond_stock_card.dart';
 import 'gold_stock_card.dart';
 import 'platinum_stock_card.dart';
-import 'silver_stock_card.dart';
+import 'silver_stock_card.dart'; // ✅ Yeh sirf SilverStockCard widget hai — screen nahi
 
 class AddStockHubScreen extends StatefulWidget {
   const AddStockHubScreen({super.key});
@@ -27,9 +31,7 @@ class _AddStockHubScreenState extends State<AddStockHubScreen>
       duration: const Duration(milliseconds: 700),
     );
     Future.delayed(const Duration(milliseconds: 200), () {
-      if (mounted) {
-        _cardsAnim.forward();
-      }
+      if (mounted) _cardsAnim.forward();
     });
   }
 
@@ -40,12 +42,14 @@ class _AddStockHubScreenState extends State<AddStockHubScreen>
   }
 
   void _navigate(StockCategory metal) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (_, animation, __) => AddStockScreen(metal: metal),
-        transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(
+    // ✅ Silver → SilverStockScreen (apna isolated screen)
+    //    Gold / Diamond / Platinum → AddStockScreen (same as before)
+    if (metal == StockCategory.silver) {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (_, animation, __) => const SilverStockScreen(),
+          transitionsBuilder: (_, animation, __, child) => FadeTransition(
             opacity: CurvedAnimation(
               parent: animation,
               curve: Curves.easeOutQuart,
@@ -55,15 +59,37 @@ class _AddStockHubScreenState extends State<AddStockHubScreen>
                 begin: const Offset(0.04, 0),
                 end: Offset.zero,
               ).animate(
-                CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutQuart,
-                ),
+                CurvedAnimation(parent: animation, curve: Curves.easeOutQuart),
               ),
               child: child,
             ),
-          );
-        },
+          ),
+          transitionDuration: const Duration(milliseconds: 300),
+        ),
+      );
+      return;
+    }
+
+    // Gold, Diamond, Platinum — unchanged
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, animation, __) => AddStockScreen(metal: metal),
+        transitionsBuilder: (_, animation, __, child) => FadeTransition(
+          opacity: CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutQuart,
+          ),
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.04, 0),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutQuart),
+            ),
+            child: child,
+          ),
+        ),
         transitionDuration: const Duration(milliseconds: 300),
       ),
     );

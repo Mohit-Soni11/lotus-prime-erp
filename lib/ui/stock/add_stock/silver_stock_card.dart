@@ -1,6 +1,14 @@
+// =============================================================================
+// FILE        : silver_stock_card.dart
+// MODULE      : Stock & Inventory (Silver)
+// LAYER       : UI / Hub Card
+// DESCRIPTION : Hub screen card for Silver — navigates to SilverStockScreen.
+//               DO NOT put SilverStockScreen code here.
+// =============================================================================
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lotus_erp/models/stock/stock_enums/stock_enums.dart';
+import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
 import 'metal_card_shell.dart';
 import 'stock_metal_ui.dart';
 

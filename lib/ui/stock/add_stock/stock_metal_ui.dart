@@ -7,7 +7,7 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
-import 'package:lotus_erp/models/stock/stock_enums/stock_enums.dart';
+import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 
 class StockMetalUiData {

@@ -15,7 +15,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/foundation.dart';
 
 import '../../database/db/app_database.dart';
-import '../../models/stock/stock_enums/stock_enums.dart';
+import '../../models/stock/stock_item_model/stock_enums.dart';
 import '../../models/stock/inventory/inventory_stats_model.dart';
 
 class InventoryController extends ChangeNotifier {

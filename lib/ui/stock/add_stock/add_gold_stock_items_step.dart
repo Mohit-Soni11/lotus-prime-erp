@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lotus_erp/logic/stock/add_stock_controller.dart';
-import 'package:lotus_erp/models/stock/stock_enums/stock_enums.dart';
+import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_gold_stock_supplier_panel.dart';
 import 'stock_metal_ui.dart';

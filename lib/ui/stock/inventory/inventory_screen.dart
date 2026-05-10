@@ -18,7 +18,7 @@ import 'package:intl/intl.dart';
 import '../../../database/db/app_database.dart';
 import '../../../logic/stock/inventory_controller.dart';
 //import '../../../models/stock/inventory/inventory_stats_model.dart';
-import '../../../models/stock/stock_enums/stock_enums.dart';
+import '../../../models/stock/stock_item_model/stock_enums.dart';
 import '../../../theme/stock/inventory/inventory_theme.dart';
 
 // =============================================================================

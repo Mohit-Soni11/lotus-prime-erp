@@ -2,7 +2,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/models/purchase/purchase_enums/purchase_enums.dart';
-import 'package:lotus_erp/models/stock/stock_enums/stock_enums.dart';
+import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
 import 'package:lotus_erp/models/stock/supplier_model/supplier_model.dart';
 import 'package:lotus_erp/repositories/purchase/purchase_entry_repository.dart';
 import 'package:lotus_erp/repositories/supplier/supplier_repository.dart';
