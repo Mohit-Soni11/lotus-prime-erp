@@ -23167,6 +23167,1614 @@ class GirviBillingSettingsCompanion
   }
 }
 
+class $TaxGstConfigsTable extends TaxGstConfigs
+    with TableInfo<$TaxGstConfigsTable, TaxGstConfigData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TaxGstConfigsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _gstinMeta = const VerificationMeta('gstin');
+  @override
+  late final GeneratedColumn<String> gstin = GeneratedColumn<String>(
+      'gstin', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _legalNameMeta =
+      const VerificationMeta('legalName');
+  @override
+  late final GeneratedColumn<String> legalName = GeneratedColumn<String>(
+      'legal_name', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _panNumberMeta =
+      const VerificationMeta('panNumber');
+  @override
+  late final GeneratedColumn<String> panNumber = GeneratedColumn<String>(
+      'pan_number', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _tanNumberMeta =
+      const VerificationMeta('tanNumber');
+  @override
+  late final GeneratedColumn<String> tanNumber = GeneratedColumn<String>(
+      'tan_number', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _gstRegisteredOnMeta =
+      const VerificationMeta('gstRegisteredOn');
+  @override
+  late final GeneratedColumn<String> gstRegisteredOn = GeneratedColumn<String>(
+      'gst_registered_on', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _taxpayerTypeMeta =
+      const VerificationMeta('taxpayerType');
+  @override
+  late final GeneratedColumn<String> taxpayerType = GeneratedColumn<String>(
+      'taxpayer_type', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('Regular'));
+  static const VerificationMeta _stateCodeMeta =
+      const VerificationMeta('stateCode');
+  @override
+  late final GeneratedColumn<String> stateCode = GeneratedColumn<String>(
+      'state_code', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _gstCertificatePathMeta =
+      const VerificationMeta('gstCertificatePath');
+  @override
+  late final GeneratedColumn<String> gstCertificatePath =
+      GeneratedColumn<String>('gst_certificate_path', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _gstSlabsJsonMeta =
+      const VerificationMeta('gstSlabsJson');
+  @override
+  late final GeneratedColumn<String> gstSlabsJson = GeneratedColumn<String>(
+      'gst_slabs_json', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _hsnCodesJsonMeta =
+      const VerificationMeta('hsnCodesJson');
+  @override
+  late final GeneratedColumn<String> hsnCodesJson = GeneratedColumn<String>(
+      'hsn_codes_json', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _autoSplitIgstMeta =
+      const VerificationMeta('autoSplitIgst');
+  @override
+  late final GeneratedColumn<bool> autoSplitIgst = GeneratedColumn<bool>(
+      'auto_split_igst', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("auto_split_igst" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _taxInclusivePricingMeta =
+      const VerificationMeta('taxInclusivePricing');
+  @override
+  late final GeneratedColumn<bool> taxInclusivePricing = GeneratedColumn<bool>(
+      'tax_inclusive_pricing', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("tax_inclusive_pricing" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _roundOffGstAmountMeta =
+      const VerificationMeta('roundOffGstAmount');
+  @override
+  late final GeneratedColumn<bool> roundOffGstAmount = GeneratedColumn<bool>(
+      'round_off_gst_amount', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("round_off_gst_amount" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _showGstBreakupOnBillMeta =
+      const VerificationMeta('showGstBreakupOnBill');
+  @override
+  late final GeneratedColumn<bool> showGstBreakupOnBill = GeneratedColumn<bool>(
+      'show_gst_breakup_on_bill', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_gst_breakup_on_bill" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _compositeSupplyModeMeta =
+      const VerificationMeta('compositeSupplyMode');
+  @override
+  late final GeneratedColumn<bool> compositeSupplyMode = GeneratedColumn<bool>(
+      'composite_supply_mode', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("composite_supply_mode" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _tcsEnabledMeta =
+      const VerificationMeta('tcsEnabled');
+  @override
+  late final GeneratedColumn<bool> tcsEnabled = GeneratedColumn<bool>(
+      'tcs_enabled', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("tcs_enabled" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _tcsThresholdMeta =
+      const VerificationMeta('tcsThreshold');
+  @override
+  late final GeneratedColumn<double> tcsThreshold = GeneratedColumn<double>(
+      'tcs_threshold', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(200000.0));
+  static const VerificationMeta _tcsRatePctMeta =
+      const VerificationMeta('tcsRatePct');
+  @override
+  late final GeneratedColumn<double> tcsRatePct = GeneratedColumn<double>(
+      'tcs_rate_pct', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1.0));
+  static const VerificationMeta _tdsEnabledMeta =
+      const VerificationMeta('tdsEnabled');
+  @override
+  late final GeneratedColumn<bool> tdsEnabled = GeneratedColumn<bool>(
+      'tds_enabled', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("tds_enabled" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _tdsRatePctMeta =
+      const VerificationMeta('tdsRatePct');
+  @override
+  late final GeneratedColumn<double> tdsRatePct = GeneratedColumn<double>(
+      'tds_rate_pct', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1.0));
+  static const VerificationMeta _eInvoicingEnabledMeta =
+      const VerificationMeta('eInvoicingEnabled');
+  @override
+  late final GeneratedColumn<bool> eInvoicingEnabled = GeneratedColumn<bool>(
+      'e_invoicing_enabled', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("e_invoicing_enabled" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _eInvoiceTurnoverLimitMeta =
+      const VerificationMeta('eInvoiceTurnoverLimit');
+  @override
+  late final GeneratedColumn<String> eInvoiceTurnoverLimit =
+      GeneratedColumn<String>('e_invoice_turnover_limit', aliasedName, false,
+          type: DriftSqlType.string,
+          requiredDuringInsert: false,
+          defaultValue: const Constant('₹5 Crore'));
+  static const VerificationMeta _irpApiUsernameMeta =
+      const VerificationMeta('irpApiUsername');
+  @override
+  late final GeneratedColumn<String> irpApiUsername = GeneratedColumn<String>(
+      'irp_api_username', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _irpApiPasswordMeta =
+      const VerificationMeta('irpApiPassword');
+  @override
+  late final GeneratedColumn<String> irpApiPassword = GeneratedColumn<String>(
+      'irp_api_password', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _gstr1FilingReminderMeta =
+      const VerificationMeta('gstr1FilingReminder');
+  @override
+  late final GeneratedColumn<bool> gstr1FilingReminder = GeneratedColumn<bool>(
+      'gstr1_filing_reminder', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("gstr1_filing_reminder" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _gstr3bFilingReminderMeta =
+      const VerificationMeta('gstr3bFilingReminder');
+  @override
+  late final GeneratedColumn<bool> gstr3bFilingReminder = GeneratedColumn<bool>(
+      'gstr3b_filing_reminder', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("gstr3b_filing_reminder" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _bisLicenseNumberMeta =
+      const VerificationMeta('bisLicenseNumber');
+  @override
+  late final GeneratedColumn<String> bisLicenseNumber = GeneratedColumn<String>(
+      'bis_license_number', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _bisLicenseValidFromMeta =
+      const VerificationMeta('bisLicenseValidFrom');
+  @override
+  late final GeneratedColumn<String> bisLicenseValidFrom =
+      GeneratedColumn<String>('bis_license_valid_from', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _bisLicenseValidUptoMeta =
+      const VerificationMeta('bisLicenseValidUpto');
+  @override
+  late final GeneratedColumn<String> bisLicenseValidUpto =
+      GeneratedColumn<String>('bis_license_valid_upto', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _huidNumberMeta =
+      const VerificationMeta('huidNumber');
+  @override
+  late final GeneratedColumn<String> huidNumber = GeneratedColumn<String>(
+      'huid_number', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _bisLicenseDocPathMeta =
+      const VerificationMeta('bisLicenseDocPath');
+  @override
+  late final GeneratedColumn<String> bisLicenseDocPath =
+      GeneratedColumn<String>('bis_license_doc_path', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        gstin,
+        legalName,
+        panNumber,
+        tanNumber,
+        gstRegisteredOn,
+        taxpayerType,
+        stateCode,
+        gstCertificatePath,
+        gstSlabsJson,
+        hsnCodesJson,
+        autoSplitIgst,
+        taxInclusivePricing,
+        roundOffGstAmount,
+        showGstBreakupOnBill,
+        compositeSupplyMode,
+        tcsEnabled,
+        tcsThreshold,
+        tcsRatePct,
+        tdsEnabled,
+        tdsRatePct,
+        eInvoicingEnabled,
+        eInvoiceTurnoverLimit,
+        irpApiUsername,
+        irpApiPassword,
+        gstr1FilingReminder,
+        gstr3bFilingReminder,
+        bisLicenseNumber,
+        bisLicenseValidFrom,
+        bisLicenseValidUpto,
+        huidNumber,
+        bisLicenseDocPath,
+        createdAt,
+        updatedAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'tax_gst_configs';
+  @override
+  VerificationContext validateIntegrity(Insertable<TaxGstConfigData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('gstin')) {
+      context.handle(
+          _gstinMeta, gstin.isAcceptableOrUnknown(data['gstin']!, _gstinMeta));
+    }
+    if (data.containsKey('legal_name')) {
+      context.handle(_legalNameMeta,
+          legalName.isAcceptableOrUnknown(data['legal_name']!, _legalNameMeta));
+    }
+    if (data.containsKey('pan_number')) {
+      context.handle(_panNumberMeta,
+          panNumber.isAcceptableOrUnknown(data['pan_number']!, _panNumberMeta));
+    }
+    if (data.containsKey('tan_number')) {
+      context.handle(_tanNumberMeta,
+          tanNumber.isAcceptableOrUnknown(data['tan_number']!, _tanNumberMeta));
+    }
+    if (data.containsKey('gst_registered_on')) {
+      context.handle(
+          _gstRegisteredOnMeta,
+          gstRegisteredOn.isAcceptableOrUnknown(
+              data['gst_registered_on']!, _gstRegisteredOnMeta));
+    }
+    if (data.containsKey('taxpayer_type')) {
+      context.handle(
+          _taxpayerTypeMeta,
+          taxpayerType.isAcceptableOrUnknown(
+              data['taxpayer_type']!, _taxpayerTypeMeta));
+    }
+    if (data.containsKey('state_code')) {
+      context.handle(_stateCodeMeta,
+          stateCode.isAcceptableOrUnknown(data['state_code']!, _stateCodeMeta));
+    }
+    if (data.containsKey('gst_certificate_path')) {
+      context.handle(
+          _gstCertificatePathMeta,
+          gstCertificatePath.isAcceptableOrUnknown(
+              data['gst_certificate_path']!, _gstCertificatePathMeta));
+    }
+    if (data.containsKey('gst_slabs_json')) {
+      context.handle(
+          _gstSlabsJsonMeta,
+          gstSlabsJson.isAcceptableOrUnknown(
+              data['gst_slabs_json']!, _gstSlabsJsonMeta));
+    }
+    if (data.containsKey('hsn_codes_json')) {
+      context.handle(
+          _hsnCodesJsonMeta,
+          hsnCodesJson.isAcceptableOrUnknown(
+              data['hsn_codes_json']!, _hsnCodesJsonMeta));
+    }
+    if (data.containsKey('auto_split_igst')) {
+      context.handle(
+          _autoSplitIgstMeta,
+          autoSplitIgst.isAcceptableOrUnknown(
+              data['auto_split_igst']!, _autoSplitIgstMeta));
+    }
+    if (data.containsKey('tax_inclusive_pricing')) {
+      context.handle(
+          _taxInclusivePricingMeta,
+          taxInclusivePricing.isAcceptableOrUnknown(
+              data['tax_inclusive_pricing']!, _taxInclusivePricingMeta));
+    }
+    if (data.containsKey('round_off_gst_amount')) {
+      context.handle(
+          _roundOffGstAmountMeta,
+          roundOffGstAmount.isAcceptableOrUnknown(
+              data['round_off_gst_amount']!, _roundOffGstAmountMeta));
+    }
+    if (data.containsKey('show_gst_breakup_on_bill')) {
+      context.handle(
+          _showGstBreakupOnBillMeta,
+          showGstBreakupOnBill.isAcceptableOrUnknown(
+              data['show_gst_breakup_on_bill']!, _showGstBreakupOnBillMeta));
+    }
+    if (data.containsKey('composite_supply_mode')) {
+      context.handle(
+          _compositeSupplyModeMeta,
+          compositeSupplyMode.isAcceptableOrUnknown(
+              data['composite_supply_mode']!, _compositeSupplyModeMeta));
+    }
+    if (data.containsKey('tcs_enabled')) {
+      context.handle(
+          _tcsEnabledMeta,
+          tcsEnabled.isAcceptableOrUnknown(
+              data['tcs_enabled']!, _tcsEnabledMeta));
+    }
+    if (data.containsKey('tcs_threshold')) {
+      context.handle(
+          _tcsThresholdMeta,
+          tcsThreshold.isAcceptableOrUnknown(
+              data['tcs_threshold']!, _tcsThresholdMeta));
+    }
+    if (data.containsKey('tcs_rate_pct')) {
+      context.handle(
+          _tcsRatePctMeta,
+          tcsRatePct.isAcceptableOrUnknown(
+              data['tcs_rate_pct']!, _tcsRatePctMeta));
+    }
+    if (data.containsKey('tds_enabled')) {
+      context.handle(
+          _tdsEnabledMeta,
+          tdsEnabled.isAcceptableOrUnknown(
+              data['tds_enabled']!, _tdsEnabledMeta));
+    }
+    if (data.containsKey('tds_rate_pct')) {
+      context.handle(
+          _tdsRatePctMeta,
+          tdsRatePct.isAcceptableOrUnknown(
+              data['tds_rate_pct']!, _tdsRatePctMeta));
+    }
+    if (data.containsKey('e_invoicing_enabled')) {
+      context.handle(
+          _eInvoicingEnabledMeta,
+          eInvoicingEnabled.isAcceptableOrUnknown(
+              data['e_invoicing_enabled']!, _eInvoicingEnabledMeta));
+    }
+    if (data.containsKey('e_invoice_turnover_limit')) {
+      context.handle(
+          _eInvoiceTurnoverLimitMeta,
+          eInvoiceTurnoverLimit.isAcceptableOrUnknown(
+              data['e_invoice_turnover_limit']!, _eInvoiceTurnoverLimitMeta));
+    }
+    if (data.containsKey('irp_api_username')) {
+      context.handle(
+          _irpApiUsernameMeta,
+          irpApiUsername.isAcceptableOrUnknown(
+              data['irp_api_username']!, _irpApiUsernameMeta));
+    }
+    if (data.containsKey('irp_api_password')) {
+      context.handle(
+          _irpApiPasswordMeta,
+          irpApiPassword.isAcceptableOrUnknown(
+              data['irp_api_password']!, _irpApiPasswordMeta));
+    }
+    if (data.containsKey('gstr1_filing_reminder')) {
+      context.handle(
+          _gstr1FilingReminderMeta,
+          gstr1FilingReminder.isAcceptableOrUnknown(
+              data['gstr1_filing_reminder']!, _gstr1FilingReminderMeta));
+    }
+    if (data.containsKey('gstr3b_filing_reminder')) {
+      context.handle(
+          _gstr3bFilingReminderMeta,
+          gstr3bFilingReminder.isAcceptableOrUnknown(
+              data['gstr3b_filing_reminder']!, _gstr3bFilingReminderMeta));
+    }
+    if (data.containsKey('bis_license_number')) {
+      context.handle(
+          _bisLicenseNumberMeta,
+          bisLicenseNumber.isAcceptableOrUnknown(
+              data['bis_license_number']!, _bisLicenseNumberMeta));
+    }
+    if (data.containsKey('bis_license_valid_from')) {
+      context.handle(
+          _bisLicenseValidFromMeta,
+          bisLicenseValidFrom.isAcceptableOrUnknown(
+              data['bis_license_valid_from']!, _bisLicenseValidFromMeta));
+    }
+    if (data.containsKey('bis_license_valid_upto')) {
+      context.handle(
+          _bisLicenseValidUptoMeta,
+          bisLicenseValidUpto.isAcceptableOrUnknown(
+              data['bis_license_valid_upto']!, _bisLicenseValidUptoMeta));
+    }
+    if (data.containsKey('huid_number')) {
+      context.handle(
+          _huidNumberMeta,
+          huidNumber.isAcceptableOrUnknown(
+              data['huid_number']!, _huidNumberMeta));
+    }
+    if (data.containsKey('bis_license_doc_path')) {
+      context.handle(
+          _bisLicenseDocPathMeta,
+          bisLicenseDocPath.isAcceptableOrUnknown(
+              data['bis_license_doc_path']!, _bisLicenseDocPathMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TaxGstConfigData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TaxGstConfigData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      gstin: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}gstin']),
+      legalName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}legal_name']),
+      panNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}pan_number']),
+      tanNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}tan_number']),
+      gstRegisteredOn: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}gst_registered_on']),
+      taxpayerType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}taxpayer_type'])!,
+      stateCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}state_code']),
+      gstCertificatePath: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}gst_certificate_path']),
+      gstSlabsJson: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}gst_slabs_json']),
+      hsnCodesJson: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}hsn_codes_json']),
+      autoSplitIgst: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}auto_split_igst'])!,
+      taxInclusivePricing: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}tax_inclusive_pricing'])!,
+      roundOffGstAmount: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}round_off_gst_amount'])!,
+      showGstBreakupOnBill: attachedDatabase.typeMapping.read(DriftSqlType.bool,
+          data['${effectivePrefix}show_gst_breakup_on_bill'])!,
+      compositeSupplyMode: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}composite_supply_mode'])!,
+      tcsEnabled: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}tcs_enabled'])!,
+      tcsThreshold: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}tcs_threshold'])!,
+      tcsRatePct: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}tcs_rate_pct'])!,
+      tdsEnabled: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}tds_enabled'])!,
+      tdsRatePct: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}tds_rate_pct'])!,
+      eInvoicingEnabled: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}e_invoicing_enabled'])!,
+      eInvoiceTurnoverLimit: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}e_invoice_turnover_limit'])!,
+      irpApiUsername: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}irp_api_username']),
+      irpApiPassword: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}irp_api_password']),
+      gstr1FilingReminder: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}gstr1_filing_reminder'])!,
+      gstr3bFilingReminder: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}gstr3b_filing_reminder'])!,
+      bisLicenseNumber: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}bis_license_number']),
+      bisLicenseValidFrom: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}bis_license_valid_from']),
+      bisLicenseValidUpto: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}bis_license_valid_upto']),
+      huidNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}huid_number']),
+      bisLicenseDocPath: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}bis_license_doc_path']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $TaxGstConfigsTable createAlias(String alias) {
+    return $TaxGstConfigsTable(attachedDatabase, alias);
+  }
+}
+
+class TaxGstConfigData extends DataClass
+    implements Insertable<TaxGstConfigData> {
+  final int id;
+  final String? gstin;
+  final String? legalName;
+  final String? panNumber;
+  final String? tanNumber;
+  final String? gstRegisteredOn;
+  final String taxpayerType;
+  final String? stateCode;
+  final String? gstCertificatePath;
+
+  /// JSON-encoded List<GstSlabModel>
+  final String? gstSlabsJson;
+
+  /// JSON-encoded List<HsnCodeModel>
+  final String? hsnCodesJson;
+  final bool autoSplitIgst;
+  final bool taxInclusivePricing;
+  final bool roundOffGstAmount;
+  final bool showGstBreakupOnBill;
+  final bool compositeSupplyMode;
+  final bool tcsEnabled;
+  final double tcsThreshold;
+  final double tcsRatePct;
+  final bool tdsEnabled;
+  final double tdsRatePct;
+  final bool eInvoicingEnabled;
+  final String eInvoiceTurnoverLimit;
+  final String? irpApiUsername;
+  final String? irpApiPassword;
+  final bool gstr1FilingReminder;
+  final bool gstr3bFilingReminder;
+  final String? bisLicenseNumber;
+  final String? bisLicenseValidFrom;
+  final String? bisLicenseValidUpto;
+  final String? huidNumber;
+  final String? bisLicenseDocPath;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const TaxGstConfigData(
+      {required this.id,
+      this.gstin,
+      this.legalName,
+      this.panNumber,
+      this.tanNumber,
+      this.gstRegisteredOn,
+      required this.taxpayerType,
+      this.stateCode,
+      this.gstCertificatePath,
+      this.gstSlabsJson,
+      this.hsnCodesJson,
+      required this.autoSplitIgst,
+      required this.taxInclusivePricing,
+      required this.roundOffGstAmount,
+      required this.showGstBreakupOnBill,
+      required this.compositeSupplyMode,
+      required this.tcsEnabled,
+      required this.tcsThreshold,
+      required this.tcsRatePct,
+      required this.tdsEnabled,
+      required this.tdsRatePct,
+      required this.eInvoicingEnabled,
+      required this.eInvoiceTurnoverLimit,
+      this.irpApiUsername,
+      this.irpApiPassword,
+      required this.gstr1FilingReminder,
+      required this.gstr3bFilingReminder,
+      this.bisLicenseNumber,
+      this.bisLicenseValidFrom,
+      this.bisLicenseValidUpto,
+      this.huidNumber,
+      this.bisLicenseDocPath,
+      required this.createdAt,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    if (!nullToAbsent || gstin != null) {
+      map['gstin'] = Variable<String>(gstin);
+    }
+    if (!nullToAbsent || legalName != null) {
+      map['legal_name'] = Variable<String>(legalName);
+    }
+    if (!nullToAbsent || panNumber != null) {
+      map['pan_number'] = Variable<String>(panNumber);
+    }
+    if (!nullToAbsent || tanNumber != null) {
+      map['tan_number'] = Variable<String>(tanNumber);
+    }
+    if (!nullToAbsent || gstRegisteredOn != null) {
+      map['gst_registered_on'] = Variable<String>(gstRegisteredOn);
+    }
+    map['taxpayer_type'] = Variable<String>(taxpayerType);
+    if (!nullToAbsent || stateCode != null) {
+      map['state_code'] = Variable<String>(stateCode);
+    }
+    if (!nullToAbsent || gstCertificatePath != null) {
+      map['gst_certificate_path'] = Variable<String>(gstCertificatePath);
+    }
+    if (!nullToAbsent || gstSlabsJson != null) {
+      map['gst_slabs_json'] = Variable<String>(gstSlabsJson);
+    }
+    if (!nullToAbsent || hsnCodesJson != null) {
+      map['hsn_codes_json'] = Variable<String>(hsnCodesJson);
+    }
+    map['auto_split_igst'] = Variable<bool>(autoSplitIgst);
+    map['tax_inclusive_pricing'] = Variable<bool>(taxInclusivePricing);
+    map['round_off_gst_amount'] = Variable<bool>(roundOffGstAmount);
+    map['show_gst_breakup_on_bill'] = Variable<bool>(showGstBreakupOnBill);
+    map['composite_supply_mode'] = Variable<bool>(compositeSupplyMode);
+    map['tcs_enabled'] = Variable<bool>(tcsEnabled);
+    map['tcs_threshold'] = Variable<double>(tcsThreshold);
+    map['tcs_rate_pct'] = Variable<double>(tcsRatePct);
+    map['tds_enabled'] = Variable<bool>(tdsEnabled);
+    map['tds_rate_pct'] = Variable<double>(tdsRatePct);
+    map['e_invoicing_enabled'] = Variable<bool>(eInvoicingEnabled);
+    map['e_invoice_turnover_limit'] = Variable<String>(eInvoiceTurnoverLimit);
+    if (!nullToAbsent || irpApiUsername != null) {
+      map['irp_api_username'] = Variable<String>(irpApiUsername);
+    }
+    if (!nullToAbsent || irpApiPassword != null) {
+      map['irp_api_password'] = Variable<String>(irpApiPassword);
+    }
+    map['gstr1_filing_reminder'] = Variable<bool>(gstr1FilingReminder);
+    map['gstr3b_filing_reminder'] = Variable<bool>(gstr3bFilingReminder);
+    if (!nullToAbsent || bisLicenseNumber != null) {
+      map['bis_license_number'] = Variable<String>(bisLicenseNumber);
+    }
+    if (!nullToAbsent || bisLicenseValidFrom != null) {
+      map['bis_license_valid_from'] = Variable<String>(bisLicenseValidFrom);
+    }
+    if (!nullToAbsent || bisLicenseValidUpto != null) {
+      map['bis_license_valid_upto'] = Variable<String>(bisLicenseValidUpto);
+    }
+    if (!nullToAbsent || huidNumber != null) {
+      map['huid_number'] = Variable<String>(huidNumber);
+    }
+    if (!nullToAbsent || bisLicenseDocPath != null) {
+      map['bis_license_doc_path'] = Variable<String>(bisLicenseDocPath);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  TaxGstConfigsCompanion toCompanion(bool nullToAbsent) {
+    return TaxGstConfigsCompanion(
+      id: Value(id),
+      gstin:
+          gstin == null && nullToAbsent ? const Value.absent() : Value(gstin),
+      legalName: legalName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(legalName),
+      panNumber: panNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(panNumber),
+      tanNumber: tanNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tanNumber),
+      gstRegisteredOn: gstRegisteredOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(gstRegisteredOn),
+      taxpayerType: Value(taxpayerType),
+      stateCode: stateCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stateCode),
+      gstCertificatePath: gstCertificatePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(gstCertificatePath),
+      gstSlabsJson: gstSlabsJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(gstSlabsJson),
+      hsnCodesJson: hsnCodesJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hsnCodesJson),
+      autoSplitIgst: Value(autoSplitIgst),
+      taxInclusivePricing: Value(taxInclusivePricing),
+      roundOffGstAmount: Value(roundOffGstAmount),
+      showGstBreakupOnBill: Value(showGstBreakupOnBill),
+      compositeSupplyMode: Value(compositeSupplyMode),
+      tcsEnabled: Value(tcsEnabled),
+      tcsThreshold: Value(tcsThreshold),
+      tcsRatePct: Value(tcsRatePct),
+      tdsEnabled: Value(tdsEnabled),
+      tdsRatePct: Value(tdsRatePct),
+      eInvoicingEnabled: Value(eInvoicingEnabled),
+      eInvoiceTurnoverLimit: Value(eInvoiceTurnoverLimit),
+      irpApiUsername: irpApiUsername == null && nullToAbsent
+          ? const Value.absent()
+          : Value(irpApiUsername),
+      irpApiPassword: irpApiPassword == null && nullToAbsent
+          ? const Value.absent()
+          : Value(irpApiPassword),
+      gstr1FilingReminder: Value(gstr1FilingReminder),
+      gstr3bFilingReminder: Value(gstr3bFilingReminder),
+      bisLicenseNumber: bisLicenseNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bisLicenseNumber),
+      bisLicenseValidFrom: bisLicenseValidFrom == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bisLicenseValidFrom),
+      bisLicenseValidUpto: bisLicenseValidUpto == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bisLicenseValidUpto),
+      huidNumber: huidNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(huidNumber),
+      bisLicenseDocPath: bisLicenseDocPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bisLicenseDocPath),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory TaxGstConfigData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TaxGstConfigData(
+      id: serializer.fromJson<int>(json['id']),
+      gstin: serializer.fromJson<String?>(json['gstin']),
+      legalName: serializer.fromJson<String?>(json['legalName']),
+      panNumber: serializer.fromJson<String?>(json['panNumber']),
+      tanNumber: serializer.fromJson<String?>(json['tanNumber']),
+      gstRegisteredOn: serializer.fromJson<String?>(json['gstRegisteredOn']),
+      taxpayerType: serializer.fromJson<String>(json['taxpayerType']),
+      stateCode: serializer.fromJson<String?>(json['stateCode']),
+      gstCertificatePath:
+          serializer.fromJson<String?>(json['gstCertificatePath']),
+      gstSlabsJson: serializer.fromJson<String?>(json['gstSlabsJson']),
+      hsnCodesJson: serializer.fromJson<String?>(json['hsnCodesJson']),
+      autoSplitIgst: serializer.fromJson<bool>(json['autoSplitIgst']),
+      taxInclusivePricing:
+          serializer.fromJson<bool>(json['taxInclusivePricing']),
+      roundOffGstAmount: serializer.fromJson<bool>(json['roundOffGstAmount']),
+      showGstBreakupOnBill:
+          serializer.fromJson<bool>(json['showGstBreakupOnBill']),
+      compositeSupplyMode:
+          serializer.fromJson<bool>(json['compositeSupplyMode']),
+      tcsEnabled: serializer.fromJson<bool>(json['tcsEnabled']),
+      tcsThreshold: serializer.fromJson<double>(json['tcsThreshold']),
+      tcsRatePct: serializer.fromJson<double>(json['tcsRatePct']),
+      tdsEnabled: serializer.fromJson<bool>(json['tdsEnabled']),
+      tdsRatePct: serializer.fromJson<double>(json['tdsRatePct']),
+      eInvoicingEnabled: serializer.fromJson<bool>(json['eInvoicingEnabled']),
+      eInvoiceTurnoverLimit:
+          serializer.fromJson<String>(json['eInvoiceTurnoverLimit']),
+      irpApiUsername: serializer.fromJson<String?>(json['irpApiUsername']),
+      irpApiPassword: serializer.fromJson<String?>(json['irpApiPassword']),
+      gstr1FilingReminder:
+          serializer.fromJson<bool>(json['gstr1FilingReminder']),
+      gstr3bFilingReminder:
+          serializer.fromJson<bool>(json['gstr3bFilingReminder']),
+      bisLicenseNumber: serializer.fromJson<String?>(json['bisLicenseNumber']),
+      bisLicenseValidFrom:
+          serializer.fromJson<String?>(json['bisLicenseValidFrom']),
+      bisLicenseValidUpto:
+          serializer.fromJson<String?>(json['bisLicenseValidUpto']),
+      huidNumber: serializer.fromJson<String?>(json['huidNumber']),
+      bisLicenseDocPath:
+          serializer.fromJson<String?>(json['bisLicenseDocPath']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'gstin': serializer.toJson<String?>(gstin),
+      'legalName': serializer.toJson<String?>(legalName),
+      'panNumber': serializer.toJson<String?>(panNumber),
+      'tanNumber': serializer.toJson<String?>(tanNumber),
+      'gstRegisteredOn': serializer.toJson<String?>(gstRegisteredOn),
+      'taxpayerType': serializer.toJson<String>(taxpayerType),
+      'stateCode': serializer.toJson<String?>(stateCode),
+      'gstCertificatePath': serializer.toJson<String?>(gstCertificatePath),
+      'gstSlabsJson': serializer.toJson<String?>(gstSlabsJson),
+      'hsnCodesJson': serializer.toJson<String?>(hsnCodesJson),
+      'autoSplitIgst': serializer.toJson<bool>(autoSplitIgst),
+      'taxInclusivePricing': serializer.toJson<bool>(taxInclusivePricing),
+      'roundOffGstAmount': serializer.toJson<bool>(roundOffGstAmount),
+      'showGstBreakupOnBill': serializer.toJson<bool>(showGstBreakupOnBill),
+      'compositeSupplyMode': serializer.toJson<bool>(compositeSupplyMode),
+      'tcsEnabled': serializer.toJson<bool>(tcsEnabled),
+      'tcsThreshold': serializer.toJson<double>(tcsThreshold),
+      'tcsRatePct': serializer.toJson<double>(tcsRatePct),
+      'tdsEnabled': serializer.toJson<bool>(tdsEnabled),
+      'tdsRatePct': serializer.toJson<double>(tdsRatePct),
+      'eInvoicingEnabled': serializer.toJson<bool>(eInvoicingEnabled),
+      'eInvoiceTurnoverLimit': serializer.toJson<String>(eInvoiceTurnoverLimit),
+      'irpApiUsername': serializer.toJson<String?>(irpApiUsername),
+      'irpApiPassword': serializer.toJson<String?>(irpApiPassword),
+      'gstr1FilingReminder': serializer.toJson<bool>(gstr1FilingReminder),
+      'gstr3bFilingReminder': serializer.toJson<bool>(gstr3bFilingReminder),
+      'bisLicenseNumber': serializer.toJson<String?>(bisLicenseNumber),
+      'bisLicenseValidFrom': serializer.toJson<String?>(bisLicenseValidFrom),
+      'bisLicenseValidUpto': serializer.toJson<String?>(bisLicenseValidUpto),
+      'huidNumber': serializer.toJson<String?>(huidNumber),
+      'bisLicenseDocPath': serializer.toJson<String?>(bisLicenseDocPath),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  TaxGstConfigData copyWith(
+          {int? id,
+          Value<String?> gstin = const Value.absent(),
+          Value<String?> legalName = const Value.absent(),
+          Value<String?> panNumber = const Value.absent(),
+          Value<String?> tanNumber = const Value.absent(),
+          Value<String?> gstRegisteredOn = const Value.absent(),
+          String? taxpayerType,
+          Value<String?> stateCode = const Value.absent(),
+          Value<String?> gstCertificatePath = const Value.absent(),
+          Value<String?> gstSlabsJson = const Value.absent(),
+          Value<String?> hsnCodesJson = const Value.absent(),
+          bool? autoSplitIgst,
+          bool? taxInclusivePricing,
+          bool? roundOffGstAmount,
+          bool? showGstBreakupOnBill,
+          bool? compositeSupplyMode,
+          bool? tcsEnabled,
+          double? tcsThreshold,
+          double? tcsRatePct,
+          bool? tdsEnabled,
+          double? tdsRatePct,
+          bool? eInvoicingEnabled,
+          String? eInvoiceTurnoverLimit,
+          Value<String?> irpApiUsername = const Value.absent(),
+          Value<String?> irpApiPassword = const Value.absent(),
+          bool? gstr1FilingReminder,
+          bool? gstr3bFilingReminder,
+          Value<String?> bisLicenseNumber = const Value.absent(),
+          Value<String?> bisLicenseValidFrom = const Value.absent(),
+          Value<String?> bisLicenseValidUpto = const Value.absent(),
+          Value<String?> huidNumber = const Value.absent(),
+          Value<String?> bisLicenseDocPath = const Value.absent(),
+          DateTime? createdAt,
+          DateTime? updatedAt}) =>
+      TaxGstConfigData(
+        id: id ?? this.id,
+        gstin: gstin.present ? gstin.value : this.gstin,
+        legalName: legalName.present ? legalName.value : this.legalName,
+        panNumber: panNumber.present ? panNumber.value : this.panNumber,
+        tanNumber: tanNumber.present ? tanNumber.value : this.tanNumber,
+        gstRegisteredOn: gstRegisteredOn.present
+            ? gstRegisteredOn.value
+            : this.gstRegisteredOn,
+        taxpayerType: taxpayerType ?? this.taxpayerType,
+        stateCode: stateCode.present ? stateCode.value : this.stateCode,
+        gstCertificatePath: gstCertificatePath.present
+            ? gstCertificatePath.value
+            : this.gstCertificatePath,
+        gstSlabsJson:
+            gstSlabsJson.present ? gstSlabsJson.value : this.gstSlabsJson,
+        hsnCodesJson:
+            hsnCodesJson.present ? hsnCodesJson.value : this.hsnCodesJson,
+        autoSplitIgst: autoSplitIgst ?? this.autoSplitIgst,
+        taxInclusivePricing: taxInclusivePricing ?? this.taxInclusivePricing,
+        roundOffGstAmount: roundOffGstAmount ?? this.roundOffGstAmount,
+        showGstBreakupOnBill: showGstBreakupOnBill ?? this.showGstBreakupOnBill,
+        compositeSupplyMode: compositeSupplyMode ?? this.compositeSupplyMode,
+        tcsEnabled: tcsEnabled ?? this.tcsEnabled,
+        tcsThreshold: tcsThreshold ?? this.tcsThreshold,
+        tcsRatePct: tcsRatePct ?? this.tcsRatePct,
+        tdsEnabled: tdsEnabled ?? this.tdsEnabled,
+        tdsRatePct: tdsRatePct ?? this.tdsRatePct,
+        eInvoicingEnabled: eInvoicingEnabled ?? this.eInvoicingEnabled,
+        eInvoiceTurnoverLimit:
+            eInvoiceTurnoverLimit ?? this.eInvoiceTurnoverLimit,
+        irpApiUsername:
+            irpApiUsername.present ? irpApiUsername.value : this.irpApiUsername,
+        irpApiPassword:
+            irpApiPassword.present ? irpApiPassword.value : this.irpApiPassword,
+        gstr1FilingReminder: gstr1FilingReminder ?? this.gstr1FilingReminder,
+        gstr3bFilingReminder: gstr3bFilingReminder ?? this.gstr3bFilingReminder,
+        bisLicenseNumber: bisLicenseNumber.present
+            ? bisLicenseNumber.value
+            : this.bisLicenseNumber,
+        bisLicenseValidFrom: bisLicenseValidFrom.present
+            ? bisLicenseValidFrom.value
+            : this.bisLicenseValidFrom,
+        bisLicenseValidUpto: bisLicenseValidUpto.present
+            ? bisLicenseValidUpto.value
+            : this.bisLicenseValidUpto,
+        huidNumber: huidNumber.present ? huidNumber.value : this.huidNumber,
+        bisLicenseDocPath: bisLicenseDocPath.present
+            ? bisLicenseDocPath.value
+            : this.bisLicenseDocPath,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  TaxGstConfigData copyWithCompanion(TaxGstConfigsCompanion data) {
+    return TaxGstConfigData(
+      id: data.id.present ? data.id.value : this.id,
+      gstin: data.gstin.present ? data.gstin.value : this.gstin,
+      legalName: data.legalName.present ? data.legalName.value : this.legalName,
+      panNumber: data.panNumber.present ? data.panNumber.value : this.panNumber,
+      tanNumber: data.tanNumber.present ? data.tanNumber.value : this.tanNumber,
+      gstRegisteredOn: data.gstRegisteredOn.present
+          ? data.gstRegisteredOn.value
+          : this.gstRegisteredOn,
+      taxpayerType: data.taxpayerType.present
+          ? data.taxpayerType.value
+          : this.taxpayerType,
+      stateCode: data.stateCode.present ? data.stateCode.value : this.stateCode,
+      gstCertificatePath: data.gstCertificatePath.present
+          ? data.gstCertificatePath.value
+          : this.gstCertificatePath,
+      gstSlabsJson: data.gstSlabsJson.present
+          ? data.gstSlabsJson.value
+          : this.gstSlabsJson,
+      hsnCodesJson: data.hsnCodesJson.present
+          ? data.hsnCodesJson.value
+          : this.hsnCodesJson,
+      autoSplitIgst: data.autoSplitIgst.present
+          ? data.autoSplitIgst.value
+          : this.autoSplitIgst,
+      taxInclusivePricing: data.taxInclusivePricing.present
+          ? data.taxInclusivePricing.value
+          : this.taxInclusivePricing,
+      roundOffGstAmount: data.roundOffGstAmount.present
+          ? data.roundOffGstAmount.value
+          : this.roundOffGstAmount,
+      showGstBreakupOnBill: data.showGstBreakupOnBill.present
+          ? data.showGstBreakupOnBill.value
+          : this.showGstBreakupOnBill,
+      compositeSupplyMode: data.compositeSupplyMode.present
+          ? data.compositeSupplyMode.value
+          : this.compositeSupplyMode,
+      tcsEnabled:
+          data.tcsEnabled.present ? data.tcsEnabled.value : this.tcsEnabled,
+      tcsThreshold: data.tcsThreshold.present
+          ? data.tcsThreshold.value
+          : this.tcsThreshold,
+      tcsRatePct:
+          data.tcsRatePct.present ? data.tcsRatePct.value : this.tcsRatePct,
+      tdsEnabled:
+          data.tdsEnabled.present ? data.tdsEnabled.value : this.tdsEnabled,
+      tdsRatePct:
+          data.tdsRatePct.present ? data.tdsRatePct.value : this.tdsRatePct,
+      eInvoicingEnabled: data.eInvoicingEnabled.present
+          ? data.eInvoicingEnabled.value
+          : this.eInvoicingEnabled,
+      eInvoiceTurnoverLimit: data.eInvoiceTurnoverLimit.present
+          ? data.eInvoiceTurnoverLimit.value
+          : this.eInvoiceTurnoverLimit,
+      irpApiUsername: data.irpApiUsername.present
+          ? data.irpApiUsername.value
+          : this.irpApiUsername,
+      irpApiPassword: data.irpApiPassword.present
+          ? data.irpApiPassword.value
+          : this.irpApiPassword,
+      gstr1FilingReminder: data.gstr1FilingReminder.present
+          ? data.gstr1FilingReminder.value
+          : this.gstr1FilingReminder,
+      gstr3bFilingReminder: data.gstr3bFilingReminder.present
+          ? data.gstr3bFilingReminder.value
+          : this.gstr3bFilingReminder,
+      bisLicenseNumber: data.bisLicenseNumber.present
+          ? data.bisLicenseNumber.value
+          : this.bisLicenseNumber,
+      bisLicenseValidFrom: data.bisLicenseValidFrom.present
+          ? data.bisLicenseValidFrom.value
+          : this.bisLicenseValidFrom,
+      bisLicenseValidUpto: data.bisLicenseValidUpto.present
+          ? data.bisLicenseValidUpto.value
+          : this.bisLicenseValidUpto,
+      huidNumber:
+          data.huidNumber.present ? data.huidNumber.value : this.huidNumber,
+      bisLicenseDocPath: data.bisLicenseDocPath.present
+          ? data.bisLicenseDocPath.value
+          : this.bisLicenseDocPath,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TaxGstConfigData(')
+          ..write('id: $id, ')
+          ..write('gstin: $gstin, ')
+          ..write('legalName: $legalName, ')
+          ..write('panNumber: $panNumber, ')
+          ..write('tanNumber: $tanNumber, ')
+          ..write('gstRegisteredOn: $gstRegisteredOn, ')
+          ..write('taxpayerType: $taxpayerType, ')
+          ..write('stateCode: $stateCode, ')
+          ..write('gstCertificatePath: $gstCertificatePath, ')
+          ..write('gstSlabsJson: $gstSlabsJson, ')
+          ..write('hsnCodesJson: $hsnCodesJson, ')
+          ..write('autoSplitIgst: $autoSplitIgst, ')
+          ..write('taxInclusivePricing: $taxInclusivePricing, ')
+          ..write('roundOffGstAmount: $roundOffGstAmount, ')
+          ..write('showGstBreakupOnBill: $showGstBreakupOnBill, ')
+          ..write('compositeSupplyMode: $compositeSupplyMode, ')
+          ..write('tcsEnabled: $tcsEnabled, ')
+          ..write('tcsThreshold: $tcsThreshold, ')
+          ..write('tcsRatePct: $tcsRatePct, ')
+          ..write('tdsEnabled: $tdsEnabled, ')
+          ..write('tdsRatePct: $tdsRatePct, ')
+          ..write('eInvoicingEnabled: $eInvoicingEnabled, ')
+          ..write('eInvoiceTurnoverLimit: $eInvoiceTurnoverLimit, ')
+          ..write('irpApiUsername: $irpApiUsername, ')
+          ..write('irpApiPassword: $irpApiPassword, ')
+          ..write('gstr1FilingReminder: $gstr1FilingReminder, ')
+          ..write('gstr3bFilingReminder: $gstr3bFilingReminder, ')
+          ..write('bisLicenseNumber: $bisLicenseNumber, ')
+          ..write('bisLicenseValidFrom: $bisLicenseValidFrom, ')
+          ..write('bisLicenseValidUpto: $bisLicenseValidUpto, ')
+          ..write('huidNumber: $huidNumber, ')
+          ..write('bisLicenseDocPath: $bisLicenseDocPath, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+        id,
+        gstin,
+        legalName,
+        panNumber,
+        tanNumber,
+        gstRegisteredOn,
+        taxpayerType,
+        stateCode,
+        gstCertificatePath,
+        gstSlabsJson,
+        hsnCodesJson,
+        autoSplitIgst,
+        taxInclusivePricing,
+        roundOffGstAmount,
+        showGstBreakupOnBill,
+        compositeSupplyMode,
+        tcsEnabled,
+        tcsThreshold,
+        tcsRatePct,
+        tdsEnabled,
+        tdsRatePct,
+        eInvoicingEnabled,
+        eInvoiceTurnoverLimit,
+        irpApiUsername,
+        irpApiPassword,
+        gstr1FilingReminder,
+        gstr3bFilingReminder,
+        bisLicenseNumber,
+        bisLicenseValidFrom,
+        bisLicenseValidUpto,
+        huidNumber,
+        bisLicenseDocPath,
+        createdAt,
+        updatedAt
+      ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TaxGstConfigData &&
+          other.id == this.id &&
+          other.gstin == this.gstin &&
+          other.legalName == this.legalName &&
+          other.panNumber == this.panNumber &&
+          other.tanNumber == this.tanNumber &&
+          other.gstRegisteredOn == this.gstRegisteredOn &&
+          other.taxpayerType == this.taxpayerType &&
+          other.stateCode == this.stateCode &&
+          other.gstCertificatePath == this.gstCertificatePath &&
+          other.gstSlabsJson == this.gstSlabsJson &&
+          other.hsnCodesJson == this.hsnCodesJson &&
+          other.autoSplitIgst == this.autoSplitIgst &&
+          other.taxInclusivePricing == this.taxInclusivePricing &&
+          other.roundOffGstAmount == this.roundOffGstAmount &&
+          other.showGstBreakupOnBill == this.showGstBreakupOnBill &&
+          other.compositeSupplyMode == this.compositeSupplyMode &&
+          other.tcsEnabled == this.tcsEnabled &&
+          other.tcsThreshold == this.tcsThreshold &&
+          other.tcsRatePct == this.tcsRatePct &&
+          other.tdsEnabled == this.tdsEnabled &&
+          other.tdsRatePct == this.tdsRatePct &&
+          other.eInvoicingEnabled == this.eInvoicingEnabled &&
+          other.eInvoiceTurnoverLimit == this.eInvoiceTurnoverLimit &&
+          other.irpApiUsername == this.irpApiUsername &&
+          other.irpApiPassword == this.irpApiPassword &&
+          other.gstr1FilingReminder == this.gstr1FilingReminder &&
+          other.gstr3bFilingReminder == this.gstr3bFilingReminder &&
+          other.bisLicenseNumber == this.bisLicenseNumber &&
+          other.bisLicenseValidFrom == this.bisLicenseValidFrom &&
+          other.bisLicenseValidUpto == this.bisLicenseValidUpto &&
+          other.huidNumber == this.huidNumber &&
+          other.bisLicenseDocPath == this.bisLicenseDocPath &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class TaxGstConfigsCompanion extends UpdateCompanion<TaxGstConfigData> {
+  final Value<int> id;
+  final Value<String?> gstin;
+  final Value<String?> legalName;
+  final Value<String?> panNumber;
+  final Value<String?> tanNumber;
+  final Value<String?> gstRegisteredOn;
+  final Value<String> taxpayerType;
+  final Value<String?> stateCode;
+  final Value<String?> gstCertificatePath;
+  final Value<String?> gstSlabsJson;
+  final Value<String?> hsnCodesJson;
+  final Value<bool> autoSplitIgst;
+  final Value<bool> taxInclusivePricing;
+  final Value<bool> roundOffGstAmount;
+  final Value<bool> showGstBreakupOnBill;
+  final Value<bool> compositeSupplyMode;
+  final Value<bool> tcsEnabled;
+  final Value<double> tcsThreshold;
+  final Value<double> tcsRatePct;
+  final Value<bool> tdsEnabled;
+  final Value<double> tdsRatePct;
+  final Value<bool> eInvoicingEnabled;
+  final Value<String> eInvoiceTurnoverLimit;
+  final Value<String?> irpApiUsername;
+  final Value<String?> irpApiPassword;
+  final Value<bool> gstr1FilingReminder;
+  final Value<bool> gstr3bFilingReminder;
+  final Value<String?> bisLicenseNumber;
+  final Value<String?> bisLicenseValidFrom;
+  final Value<String?> bisLicenseValidUpto;
+  final Value<String?> huidNumber;
+  final Value<String?> bisLicenseDocPath;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  const TaxGstConfigsCompanion({
+    this.id = const Value.absent(),
+    this.gstin = const Value.absent(),
+    this.legalName = const Value.absent(),
+    this.panNumber = const Value.absent(),
+    this.tanNumber = const Value.absent(),
+    this.gstRegisteredOn = const Value.absent(),
+    this.taxpayerType = const Value.absent(),
+    this.stateCode = const Value.absent(),
+    this.gstCertificatePath = const Value.absent(),
+    this.gstSlabsJson = const Value.absent(),
+    this.hsnCodesJson = const Value.absent(),
+    this.autoSplitIgst = const Value.absent(),
+    this.taxInclusivePricing = const Value.absent(),
+    this.roundOffGstAmount = const Value.absent(),
+    this.showGstBreakupOnBill = const Value.absent(),
+    this.compositeSupplyMode = const Value.absent(),
+    this.tcsEnabled = const Value.absent(),
+    this.tcsThreshold = const Value.absent(),
+    this.tcsRatePct = const Value.absent(),
+    this.tdsEnabled = const Value.absent(),
+    this.tdsRatePct = const Value.absent(),
+    this.eInvoicingEnabled = const Value.absent(),
+    this.eInvoiceTurnoverLimit = const Value.absent(),
+    this.irpApiUsername = const Value.absent(),
+    this.irpApiPassword = const Value.absent(),
+    this.gstr1FilingReminder = const Value.absent(),
+    this.gstr3bFilingReminder = const Value.absent(),
+    this.bisLicenseNumber = const Value.absent(),
+    this.bisLicenseValidFrom = const Value.absent(),
+    this.bisLicenseValidUpto = const Value.absent(),
+    this.huidNumber = const Value.absent(),
+    this.bisLicenseDocPath = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  TaxGstConfigsCompanion.insert({
+    this.id = const Value.absent(),
+    this.gstin = const Value.absent(),
+    this.legalName = const Value.absent(),
+    this.panNumber = const Value.absent(),
+    this.tanNumber = const Value.absent(),
+    this.gstRegisteredOn = const Value.absent(),
+    this.taxpayerType = const Value.absent(),
+    this.stateCode = const Value.absent(),
+    this.gstCertificatePath = const Value.absent(),
+    this.gstSlabsJson = const Value.absent(),
+    this.hsnCodesJson = const Value.absent(),
+    this.autoSplitIgst = const Value.absent(),
+    this.taxInclusivePricing = const Value.absent(),
+    this.roundOffGstAmount = const Value.absent(),
+    this.showGstBreakupOnBill = const Value.absent(),
+    this.compositeSupplyMode = const Value.absent(),
+    this.tcsEnabled = const Value.absent(),
+    this.tcsThreshold = const Value.absent(),
+    this.tcsRatePct = const Value.absent(),
+    this.tdsEnabled = const Value.absent(),
+    this.tdsRatePct = const Value.absent(),
+    this.eInvoicingEnabled = const Value.absent(),
+    this.eInvoiceTurnoverLimit = const Value.absent(),
+    this.irpApiUsername = const Value.absent(),
+    this.irpApiPassword = const Value.absent(),
+    this.gstr1FilingReminder = const Value.absent(),
+    this.gstr3bFilingReminder = const Value.absent(),
+    this.bisLicenseNumber = const Value.absent(),
+    this.bisLicenseValidFrom = const Value.absent(),
+    this.bisLicenseValidUpto = const Value.absent(),
+    this.huidNumber = const Value.absent(),
+    this.bisLicenseDocPath = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  static Insertable<TaxGstConfigData> custom({
+    Expression<int>? id,
+    Expression<String>? gstin,
+    Expression<String>? legalName,
+    Expression<String>? panNumber,
+    Expression<String>? tanNumber,
+    Expression<String>? gstRegisteredOn,
+    Expression<String>? taxpayerType,
+    Expression<String>? stateCode,
+    Expression<String>? gstCertificatePath,
+    Expression<String>? gstSlabsJson,
+    Expression<String>? hsnCodesJson,
+    Expression<bool>? autoSplitIgst,
+    Expression<bool>? taxInclusivePricing,
+    Expression<bool>? roundOffGstAmount,
+    Expression<bool>? showGstBreakupOnBill,
+    Expression<bool>? compositeSupplyMode,
+    Expression<bool>? tcsEnabled,
+    Expression<double>? tcsThreshold,
+    Expression<double>? tcsRatePct,
+    Expression<bool>? tdsEnabled,
+    Expression<double>? tdsRatePct,
+    Expression<bool>? eInvoicingEnabled,
+    Expression<String>? eInvoiceTurnoverLimit,
+    Expression<String>? irpApiUsername,
+    Expression<String>? irpApiPassword,
+    Expression<bool>? gstr1FilingReminder,
+    Expression<bool>? gstr3bFilingReminder,
+    Expression<String>? bisLicenseNumber,
+    Expression<String>? bisLicenseValidFrom,
+    Expression<String>? bisLicenseValidUpto,
+    Expression<String>? huidNumber,
+    Expression<String>? bisLicenseDocPath,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (gstin != null) 'gstin': gstin,
+      if (legalName != null) 'legal_name': legalName,
+      if (panNumber != null) 'pan_number': panNumber,
+      if (tanNumber != null) 'tan_number': tanNumber,
+      if (gstRegisteredOn != null) 'gst_registered_on': gstRegisteredOn,
+      if (taxpayerType != null) 'taxpayer_type': taxpayerType,
+      if (stateCode != null) 'state_code': stateCode,
+      if (gstCertificatePath != null)
+        'gst_certificate_path': gstCertificatePath,
+      if (gstSlabsJson != null) 'gst_slabs_json': gstSlabsJson,
+      if (hsnCodesJson != null) 'hsn_codes_json': hsnCodesJson,
+      if (autoSplitIgst != null) 'auto_split_igst': autoSplitIgst,
+      if (taxInclusivePricing != null)
+        'tax_inclusive_pricing': taxInclusivePricing,
+      if (roundOffGstAmount != null) 'round_off_gst_amount': roundOffGstAmount,
+      if (showGstBreakupOnBill != null)
+        'show_gst_breakup_on_bill': showGstBreakupOnBill,
+      if (compositeSupplyMode != null)
+        'composite_supply_mode': compositeSupplyMode,
+      if (tcsEnabled != null) 'tcs_enabled': tcsEnabled,
+      if (tcsThreshold != null) 'tcs_threshold': tcsThreshold,
+      if (tcsRatePct != null) 'tcs_rate_pct': tcsRatePct,
+      if (tdsEnabled != null) 'tds_enabled': tdsEnabled,
+      if (tdsRatePct != null) 'tds_rate_pct': tdsRatePct,
+      if (eInvoicingEnabled != null) 'e_invoicing_enabled': eInvoicingEnabled,
+      if (eInvoiceTurnoverLimit != null)
+        'e_invoice_turnover_limit': eInvoiceTurnoverLimit,
+      if (irpApiUsername != null) 'irp_api_username': irpApiUsername,
+      if (irpApiPassword != null) 'irp_api_password': irpApiPassword,
+      if (gstr1FilingReminder != null)
+        'gstr1_filing_reminder': gstr1FilingReminder,
+      if (gstr3bFilingReminder != null)
+        'gstr3b_filing_reminder': gstr3bFilingReminder,
+      if (bisLicenseNumber != null) 'bis_license_number': bisLicenseNumber,
+      if (bisLicenseValidFrom != null)
+        'bis_license_valid_from': bisLicenseValidFrom,
+      if (bisLicenseValidUpto != null)
+        'bis_license_valid_upto': bisLicenseValidUpto,
+      if (huidNumber != null) 'huid_number': huidNumber,
+      if (bisLicenseDocPath != null) 'bis_license_doc_path': bisLicenseDocPath,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  TaxGstConfigsCompanion copyWith(
+      {Value<int>? id,
+      Value<String?>? gstin,
+      Value<String?>? legalName,
+      Value<String?>? panNumber,
+      Value<String?>? tanNumber,
+      Value<String?>? gstRegisteredOn,
+      Value<String>? taxpayerType,
+      Value<String?>? stateCode,
+      Value<String?>? gstCertificatePath,
+      Value<String?>? gstSlabsJson,
+      Value<String?>? hsnCodesJson,
+      Value<bool>? autoSplitIgst,
+      Value<bool>? taxInclusivePricing,
+      Value<bool>? roundOffGstAmount,
+      Value<bool>? showGstBreakupOnBill,
+      Value<bool>? compositeSupplyMode,
+      Value<bool>? tcsEnabled,
+      Value<double>? tcsThreshold,
+      Value<double>? tcsRatePct,
+      Value<bool>? tdsEnabled,
+      Value<double>? tdsRatePct,
+      Value<bool>? eInvoicingEnabled,
+      Value<String>? eInvoiceTurnoverLimit,
+      Value<String?>? irpApiUsername,
+      Value<String?>? irpApiPassword,
+      Value<bool>? gstr1FilingReminder,
+      Value<bool>? gstr3bFilingReminder,
+      Value<String?>? bisLicenseNumber,
+      Value<String?>? bisLicenseValidFrom,
+      Value<String?>? bisLicenseValidUpto,
+      Value<String?>? huidNumber,
+      Value<String?>? bisLicenseDocPath,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt}) {
+    return TaxGstConfigsCompanion(
+      id: id ?? this.id,
+      gstin: gstin ?? this.gstin,
+      legalName: legalName ?? this.legalName,
+      panNumber: panNumber ?? this.panNumber,
+      tanNumber: tanNumber ?? this.tanNumber,
+      gstRegisteredOn: gstRegisteredOn ?? this.gstRegisteredOn,
+      taxpayerType: taxpayerType ?? this.taxpayerType,
+      stateCode: stateCode ?? this.stateCode,
+      gstCertificatePath: gstCertificatePath ?? this.gstCertificatePath,
+      gstSlabsJson: gstSlabsJson ?? this.gstSlabsJson,
+      hsnCodesJson: hsnCodesJson ?? this.hsnCodesJson,
+      autoSplitIgst: autoSplitIgst ?? this.autoSplitIgst,
+      taxInclusivePricing: taxInclusivePricing ?? this.taxInclusivePricing,
+      roundOffGstAmount: roundOffGstAmount ?? this.roundOffGstAmount,
+      showGstBreakupOnBill: showGstBreakupOnBill ?? this.showGstBreakupOnBill,
+      compositeSupplyMode: compositeSupplyMode ?? this.compositeSupplyMode,
+      tcsEnabled: tcsEnabled ?? this.tcsEnabled,
+      tcsThreshold: tcsThreshold ?? this.tcsThreshold,
+      tcsRatePct: tcsRatePct ?? this.tcsRatePct,
+      tdsEnabled: tdsEnabled ?? this.tdsEnabled,
+      tdsRatePct: tdsRatePct ?? this.tdsRatePct,
+      eInvoicingEnabled: eInvoicingEnabled ?? this.eInvoicingEnabled,
+      eInvoiceTurnoverLimit:
+          eInvoiceTurnoverLimit ?? this.eInvoiceTurnoverLimit,
+      irpApiUsername: irpApiUsername ?? this.irpApiUsername,
+      irpApiPassword: irpApiPassword ?? this.irpApiPassword,
+      gstr1FilingReminder: gstr1FilingReminder ?? this.gstr1FilingReminder,
+      gstr3bFilingReminder: gstr3bFilingReminder ?? this.gstr3bFilingReminder,
+      bisLicenseNumber: bisLicenseNumber ?? this.bisLicenseNumber,
+      bisLicenseValidFrom: bisLicenseValidFrom ?? this.bisLicenseValidFrom,
+      bisLicenseValidUpto: bisLicenseValidUpto ?? this.bisLicenseValidUpto,
+      huidNumber: huidNumber ?? this.huidNumber,
+      bisLicenseDocPath: bisLicenseDocPath ?? this.bisLicenseDocPath,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (gstin.present) {
+      map['gstin'] = Variable<String>(gstin.value);
+    }
+    if (legalName.present) {
+      map['legal_name'] = Variable<String>(legalName.value);
+    }
+    if (panNumber.present) {
+      map['pan_number'] = Variable<String>(panNumber.value);
+    }
+    if (tanNumber.present) {
+      map['tan_number'] = Variable<String>(tanNumber.value);
+    }
+    if (gstRegisteredOn.present) {
+      map['gst_registered_on'] = Variable<String>(gstRegisteredOn.value);
+    }
+    if (taxpayerType.present) {
+      map['taxpayer_type'] = Variable<String>(taxpayerType.value);
+    }
+    if (stateCode.present) {
+      map['state_code'] = Variable<String>(stateCode.value);
+    }
+    if (gstCertificatePath.present) {
+      map['gst_certificate_path'] = Variable<String>(gstCertificatePath.value);
+    }
+    if (gstSlabsJson.present) {
+      map['gst_slabs_json'] = Variable<String>(gstSlabsJson.value);
+    }
+    if (hsnCodesJson.present) {
+      map['hsn_codes_json'] = Variable<String>(hsnCodesJson.value);
+    }
+    if (autoSplitIgst.present) {
+      map['auto_split_igst'] = Variable<bool>(autoSplitIgst.value);
+    }
+    if (taxInclusivePricing.present) {
+      map['tax_inclusive_pricing'] = Variable<bool>(taxInclusivePricing.value);
+    }
+    if (roundOffGstAmount.present) {
+      map['round_off_gst_amount'] = Variable<bool>(roundOffGstAmount.value);
+    }
+    if (showGstBreakupOnBill.present) {
+      map['show_gst_breakup_on_bill'] =
+          Variable<bool>(showGstBreakupOnBill.value);
+    }
+    if (compositeSupplyMode.present) {
+      map['composite_supply_mode'] = Variable<bool>(compositeSupplyMode.value);
+    }
+    if (tcsEnabled.present) {
+      map['tcs_enabled'] = Variable<bool>(tcsEnabled.value);
+    }
+    if (tcsThreshold.present) {
+      map['tcs_threshold'] = Variable<double>(tcsThreshold.value);
+    }
+    if (tcsRatePct.present) {
+      map['tcs_rate_pct'] = Variable<double>(tcsRatePct.value);
+    }
+    if (tdsEnabled.present) {
+      map['tds_enabled'] = Variable<bool>(tdsEnabled.value);
+    }
+    if (tdsRatePct.present) {
+      map['tds_rate_pct'] = Variable<double>(tdsRatePct.value);
+    }
+    if (eInvoicingEnabled.present) {
+      map['e_invoicing_enabled'] = Variable<bool>(eInvoicingEnabled.value);
+    }
+    if (eInvoiceTurnoverLimit.present) {
+      map['e_invoice_turnover_limit'] =
+          Variable<String>(eInvoiceTurnoverLimit.value);
+    }
+    if (irpApiUsername.present) {
+      map['irp_api_username'] = Variable<String>(irpApiUsername.value);
+    }
+    if (irpApiPassword.present) {
+      map['irp_api_password'] = Variable<String>(irpApiPassword.value);
+    }
+    if (gstr1FilingReminder.present) {
+      map['gstr1_filing_reminder'] = Variable<bool>(gstr1FilingReminder.value);
+    }
+    if (gstr3bFilingReminder.present) {
+      map['gstr3b_filing_reminder'] =
+          Variable<bool>(gstr3bFilingReminder.value);
+    }
+    if (bisLicenseNumber.present) {
+      map['bis_license_number'] = Variable<String>(bisLicenseNumber.value);
+    }
+    if (bisLicenseValidFrom.present) {
+      map['bis_license_valid_from'] =
+          Variable<String>(bisLicenseValidFrom.value);
+    }
+    if (bisLicenseValidUpto.present) {
+      map['bis_license_valid_upto'] =
+          Variable<String>(bisLicenseValidUpto.value);
+    }
+    if (huidNumber.present) {
+      map['huid_number'] = Variable<String>(huidNumber.value);
+    }
+    if (bisLicenseDocPath.present) {
+      map['bis_license_doc_path'] = Variable<String>(bisLicenseDocPath.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TaxGstConfigsCompanion(')
+          ..write('id: $id, ')
+          ..write('gstin: $gstin, ')
+          ..write('legalName: $legalName, ')
+          ..write('panNumber: $panNumber, ')
+          ..write('tanNumber: $tanNumber, ')
+          ..write('gstRegisteredOn: $gstRegisteredOn, ')
+          ..write('taxpayerType: $taxpayerType, ')
+          ..write('stateCode: $stateCode, ')
+          ..write('gstCertificatePath: $gstCertificatePath, ')
+          ..write('gstSlabsJson: $gstSlabsJson, ')
+          ..write('hsnCodesJson: $hsnCodesJson, ')
+          ..write('autoSplitIgst: $autoSplitIgst, ')
+          ..write('taxInclusivePricing: $taxInclusivePricing, ')
+          ..write('roundOffGstAmount: $roundOffGstAmount, ')
+          ..write('showGstBreakupOnBill: $showGstBreakupOnBill, ')
+          ..write('compositeSupplyMode: $compositeSupplyMode, ')
+          ..write('tcsEnabled: $tcsEnabled, ')
+          ..write('tcsThreshold: $tcsThreshold, ')
+          ..write('tcsRatePct: $tcsRatePct, ')
+          ..write('tdsEnabled: $tdsEnabled, ')
+          ..write('tdsRatePct: $tdsRatePct, ')
+          ..write('eInvoicingEnabled: $eInvoicingEnabled, ')
+          ..write('eInvoiceTurnoverLimit: $eInvoiceTurnoverLimit, ')
+          ..write('irpApiUsername: $irpApiUsername, ')
+          ..write('irpApiPassword: $irpApiPassword, ')
+          ..write('gstr1FilingReminder: $gstr1FilingReminder, ')
+          ..write('gstr3bFilingReminder: $gstr3bFilingReminder, ')
+          ..write('bisLicenseNumber: $bisLicenseNumber, ')
+          ..write('bisLicenseValidFrom: $bisLicenseValidFrom, ')
+          ..write('bisLicenseValidUpto: $bisLicenseValidUpto, ')
+          ..write('huidNumber: $huidNumber, ')
+          ..write('bisLicenseDocPath: $bisLicenseDocPath, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -23200,6 +24808,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $PurchaseBillingSettingsTable(this);
   late final $GirviBillingSettingsTable girviBillingSettings =
       $GirviBillingSettingsTable(this);
+  late final $TaxGstConfigsTable taxGstConfigs = $TaxGstConfigsTable(this);
   late final Index idxCustomersName = Index('idx_customers_name',
       'CREATE INDEX idx_customers_name ON customers (name)');
   late final Index idxCustomersMobile = Index('idx_customers_mobile',
@@ -23341,6 +24950,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         salesBillingSettings,
         purchaseBillingSettings,
         girviBillingSettings,
+        taxGstConfigs,
         idxCustomersName,
         idxCustomersMobile,
         idxCustomersTier,
@@ -35901,6 +37511,645 @@ typedef $$GirviBillingSettingsTableProcessedTableManager
         ),
         GirviBillingSetting,
         PrefetchHooks Function()>;
+typedef $$TaxGstConfigsTableCreateCompanionBuilder = TaxGstConfigsCompanion
+    Function({
+  Value<int> id,
+  Value<String?> gstin,
+  Value<String?> legalName,
+  Value<String?> panNumber,
+  Value<String?> tanNumber,
+  Value<String?> gstRegisteredOn,
+  Value<String> taxpayerType,
+  Value<String?> stateCode,
+  Value<String?> gstCertificatePath,
+  Value<String?> gstSlabsJson,
+  Value<String?> hsnCodesJson,
+  Value<bool> autoSplitIgst,
+  Value<bool> taxInclusivePricing,
+  Value<bool> roundOffGstAmount,
+  Value<bool> showGstBreakupOnBill,
+  Value<bool> compositeSupplyMode,
+  Value<bool> tcsEnabled,
+  Value<double> tcsThreshold,
+  Value<double> tcsRatePct,
+  Value<bool> tdsEnabled,
+  Value<double> tdsRatePct,
+  Value<bool> eInvoicingEnabled,
+  Value<String> eInvoiceTurnoverLimit,
+  Value<String?> irpApiUsername,
+  Value<String?> irpApiPassword,
+  Value<bool> gstr1FilingReminder,
+  Value<bool> gstr3bFilingReminder,
+  Value<String?> bisLicenseNumber,
+  Value<String?> bisLicenseValidFrom,
+  Value<String?> bisLicenseValidUpto,
+  Value<String?> huidNumber,
+  Value<String?> bisLicenseDocPath,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+});
+typedef $$TaxGstConfigsTableUpdateCompanionBuilder = TaxGstConfigsCompanion
+    Function({
+  Value<int> id,
+  Value<String?> gstin,
+  Value<String?> legalName,
+  Value<String?> panNumber,
+  Value<String?> tanNumber,
+  Value<String?> gstRegisteredOn,
+  Value<String> taxpayerType,
+  Value<String?> stateCode,
+  Value<String?> gstCertificatePath,
+  Value<String?> gstSlabsJson,
+  Value<String?> hsnCodesJson,
+  Value<bool> autoSplitIgst,
+  Value<bool> taxInclusivePricing,
+  Value<bool> roundOffGstAmount,
+  Value<bool> showGstBreakupOnBill,
+  Value<bool> compositeSupplyMode,
+  Value<bool> tcsEnabled,
+  Value<double> tcsThreshold,
+  Value<double> tcsRatePct,
+  Value<bool> tdsEnabled,
+  Value<double> tdsRatePct,
+  Value<bool> eInvoicingEnabled,
+  Value<String> eInvoiceTurnoverLimit,
+  Value<String?> irpApiUsername,
+  Value<String?> irpApiPassword,
+  Value<bool> gstr1FilingReminder,
+  Value<bool> gstr3bFilingReminder,
+  Value<String?> bisLicenseNumber,
+  Value<String?> bisLicenseValidFrom,
+  Value<String?> bisLicenseValidUpto,
+  Value<String?> huidNumber,
+  Value<String?> bisLicenseDocPath,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+});
+
+class $$TaxGstConfigsTableFilterComposer
+    extends Composer<_$AppDatabase, $TaxGstConfigsTable> {
+  $$TaxGstConfigsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get gstin => $composableBuilder(
+      column: $table.gstin, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get legalName => $composableBuilder(
+      column: $table.legalName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get panNumber => $composableBuilder(
+      column: $table.panNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get tanNumber => $composableBuilder(
+      column: $table.tanNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get gstRegisteredOn => $composableBuilder(
+      column: $table.gstRegisteredOn,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get taxpayerType => $composableBuilder(
+      column: $table.taxpayerType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get stateCode => $composableBuilder(
+      column: $table.stateCode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get gstCertificatePath => $composableBuilder(
+      column: $table.gstCertificatePath,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get gstSlabsJson => $composableBuilder(
+      column: $table.gstSlabsJson, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get hsnCodesJson => $composableBuilder(
+      column: $table.hsnCodesJson, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get autoSplitIgst => $composableBuilder(
+      column: $table.autoSplitIgst, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get taxInclusivePricing => $composableBuilder(
+      column: $table.taxInclusivePricing,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get roundOffGstAmount => $composableBuilder(
+      column: $table.roundOffGstAmount,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get showGstBreakupOnBill => $composableBuilder(
+      column: $table.showGstBreakupOnBill,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get compositeSupplyMode => $composableBuilder(
+      column: $table.compositeSupplyMode,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get tcsEnabled => $composableBuilder(
+      column: $table.tcsEnabled, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get tcsThreshold => $composableBuilder(
+      column: $table.tcsThreshold, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get tcsRatePct => $composableBuilder(
+      column: $table.tcsRatePct, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get tdsEnabled => $composableBuilder(
+      column: $table.tdsEnabled, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get tdsRatePct => $composableBuilder(
+      column: $table.tdsRatePct, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get eInvoicingEnabled => $composableBuilder(
+      column: $table.eInvoicingEnabled,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get eInvoiceTurnoverLimit => $composableBuilder(
+      column: $table.eInvoiceTurnoverLimit,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get irpApiUsername => $composableBuilder(
+      column: $table.irpApiUsername,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get irpApiPassword => $composableBuilder(
+      column: $table.irpApiPassword,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get gstr1FilingReminder => $composableBuilder(
+      column: $table.gstr1FilingReminder,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get gstr3bFilingReminder => $composableBuilder(
+      column: $table.gstr3bFilingReminder,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get bisLicenseNumber => $composableBuilder(
+      column: $table.bisLicenseNumber,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get bisLicenseValidFrom => $composableBuilder(
+      column: $table.bisLicenseValidFrom,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get bisLicenseValidUpto => $composableBuilder(
+      column: $table.bisLicenseValidUpto,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get huidNumber => $composableBuilder(
+      column: $table.huidNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get bisLicenseDocPath => $composableBuilder(
+      column: $table.bisLicenseDocPath,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$TaxGstConfigsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TaxGstConfigsTable> {
+  $$TaxGstConfigsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get gstin => $composableBuilder(
+      column: $table.gstin, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get legalName => $composableBuilder(
+      column: $table.legalName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get panNumber => $composableBuilder(
+      column: $table.panNumber, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get tanNumber => $composableBuilder(
+      column: $table.tanNumber, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get gstRegisteredOn => $composableBuilder(
+      column: $table.gstRegisteredOn,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get taxpayerType => $composableBuilder(
+      column: $table.taxpayerType,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get stateCode => $composableBuilder(
+      column: $table.stateCode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get gstCertificatePath => $composableBuilder(
+      column: $table.gstCertificatePath,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get gstSlabsJson => $composableBuilder(
+      column: $table.gstSlabsJson,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get hsnCodesJson => $composableBuilder(
+      column: $table.hsnCodesJson,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get autoSplitIgst => $composableBuilder(
+      column: $table.autoSplitIgst,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get taxInclusivePricing => $composableBuilder(
+      column: $table.taxInclusivePricing,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get roundOffGstAmount => $composableBuilder(
+      column: $table.roundOffGstAmount,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get showGstBreakupOnBill => $composableBuilder(
+      column: $table.showGstBreakupOnBill,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get compositeSupplyMode => $composableBuilder(
+      column: $table.compositeSupplyMode,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get tcsEnabled => $composableBuilder(
+      column: $table.tcsEnabled, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get tcsThreshold => $composableBuilder(
+      column: $table.tcsThreshold,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get tcsRatePct => $composableBuilder(
+      column: $table.tcsRatePct, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get tdsEnabled => $composableBuilder(
+      column: $table.tdsEnabled, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get tdsRatePct => $composableBuilder(
+      column: $table.tdsRatePct, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get eInvoicingEnabled => $composableBuilder(
+      column: $table.eInvoicingEnabled,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get eInvoiceTurnoverLimit => $composableBuilder(
+      column: $table.eInvoiceTurnoverLimit,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get irpApiUsername => $composableBuilder(
+      column: $table.irpApiUsername,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get irpApiPassword => $composableBuilder(
+      column: $table.irpApiPassword,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get gstr1FilingReminder => $composableBuilder(
+      column: $table.gstr1FilingReminder,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get gstr3bFilingReminder => $composableBuilder(
+      column: $table.gstr3bFilingReminder,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get bisLicenseNumber => $composableBuilder(
+      column: $table.bisLicenseNumber,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get bisLicenseValidFrom => $composableBuilder(
+      column: $table.bisLicenseValidFrom,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get bisLicenseValidUpto => $composableBuilder(
+      column: $table.bisLicenseValidUpto,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get huidNumber => $composableBuilder(
+      column: $table.huidNumber, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get bisLicenseDocPath => $composableBuilder(
+      column: $table.bisLicenseDocPath,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$TaxGstConfigsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TaxGstConfigsTable> {
+  $$TaxGstConfigsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get gstin =>
+      $composableBuilder(column: $table.gstin, builder: (column) => column);
+
+  GeneratedColumn<String> get legalName =>
+      $composableBuilder(column: $table.legalName, builder: (column) => column);
+
+  GeneratedColumn<String> get panNumber =>
+      $composableBuilder(column: $table.panNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get tanNumber =>
+      $composableBuilder(column: $table.tanNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get gstRegisteredOn => $composableBuilder(
+      column: $table.gstRegisteredOn, builder: (column) => column);
+
+  GeneratedColumn<String> get taxpayerType => $composableBuilder(
+      column: $table.taxpayerType, builder: (column) => column);
+
+  GeneratedColumn<String> get stateCode =>
+      $composableBuilder(column: $table.stateCode, builder: (column) => column);
+
+  GeneratedColumn<String> get gstCertificatePath => $composableBuilder(
+      column: $table.gstCertificatePath, builder: (column) => column);
+
+  GeneratedColumn<String> get gstSlabsJson => $composableBuilder(
+      column: $table.gstSlabsJson, builder: (column) => column);
+
+  GeneratedColumn<String> get hsnCodesJson => $composableBuilder(
+      column: $table.hsnCodesJson, builder: (column) => column);
+
+  GeneratedColumn<bool> get autoSplitIgst => $composableBuilder(
+      column: $table.autoSplitIgst, builder: (column) => column);
+
+  GeneratedColumn<bool> get taxInclusivePricing => $composableBuilder(
+      column: $table.taxInclusivePricing, builder: (column) => column);
+
+  GeneratedColumn<bool> get roundOffGstAmount => $composableBuilder(
+      column: $table.roundOffGstAmount, builder: (column) => column);
+
+  GeneratedColumn<bool> get showGstBreakupOnBill => $composableBuilder(
+      column: $table.showGstBreakupOnBill, builder: (column) => column);
+
+  GeneratedColumn<bool> get compositeSupplyMode => $composableBuilder(
+      column: $table.compositeSupplyMode, builder: (column) => column);
+
+  GeneratedColumn<bool> get tcsEnabled => $composableBuilder(
+      column: $table.tcsEnabled, builder: (column) => column);
+
+  GeneratedColumn<double> get tcsThreshold => $composableBuilder(
+      column: $table.tcsThreshold, builder: (column) => column);
+
+  GeneratedColumn<double> get tcsRatePct => $composableBuilder(
+      column: $table.tcsRatePct, builder: (column) => column);
+
+  GeneratedColumn<bool> get tdsEnabled => $composableBuilder(
+      column: $table.tdsEnabled, builder: (column) => column);
+
+  GeneratedColumn<double> get tdsRatePct => $composableBuilder(
+      column: $table.tdsRatePct, builder: (column) => column);
+
+  GeneratedColumn<bool> get eInvoicingEnabled => $composableBuilder(
+      column: $table.eInvoicingEnabled, builder: (column) => column);
+
+  GeneratedColumn<String> get eInvoiceTurnoverLimit => $composableBuilder(
+      column: $table.eInvoiceTurnoverLimit, builder: (column) => column);
+
+  GeneratedColumn<String> get irpApiUsername => $composableBuilder(
+      column: $table.irpApiUsername, builder: (column) => column);
+
+  GeneratedColumn<String> get irpApiPassword => $composableBuilder(
+      column: $table.irpApiPassword, builder: (column) => column);
+
+  GeneratedColumn<bool> get gstr1FilingReminder => $composableBuilder(
+      column: $table.gstr1FilingReminder, builder: (column) => column);
+
+  GeneratedColumn<bool> get gstr3bFilingReminder => $composableBuilder(
+      column: $table.gstr3bFilingReminder, builder: (column) => column);
+
+  GeneratedColumn<String> get bisLicenseNumber => $composableBuilder(
+      column: $table.bisLicenseNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get bisLicenseValidFrom => $composableBuilder(
+      column: $table.bisLicenseValidFrom, builder: (column) => column);
+
+  GeneratedColumn<String> get bisLicenseValidUpto => $composableBuilder(
+      column: $table.bisLicenseValidUpto, builder: (column) => column);
+
+  GeneratedColumn<String> get huidNumber => $composableBuilder(
+      column: $table.huidNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get bisLicenseDocPath => $composableBuilder(
+      column: $table.bisLicenseDocPath, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$TaxGstConfigsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TaxGstConfigsTable,
+    TaxGstConfigData,
+    $$TaxGstConfigsTableFilterComposer,
+    $$TaxGstConfigsTableOrderingComposer,
+    $$TaxGstConfigsTableAnnotationComposer,
+    $$TaxGstConfigsTableCreateCompanionBuilder,
+    $$TaxGstConfigsTableUpdateCompanionBuilder,
+    (
+      TaxGstConfigData,
+      BaseReferences<_$AppDatabase, $TaxGstConfigsTable, TaxGstConfigData>
+    ),
+    TaxGstConfigData,
+    PrefetchHooks Function()> {
+  $$TaxGstConfigsTableTableManager(_$AppDatabase db, $TaxGstConfigsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TaxGstConfigsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TaxGstConfigsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TaxGstConfigsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String?> gstin = const Value.absent(),
+            Value<String?> legalName = const Value.absent(),
+            Value<String?> panNumber = const Value.absent(),
+            Value<String?> tanNumber = const Value.absent(),
+            Value<String?> gstRegisteredOn = const Value.absent(),
+            Value<String> taxpayerType = const Value.absent(),
+            Value<String?> stateCode = const Value.absent(),
+            Value<String?> gstCertificatePath = const Value.absent(),
+            Value<String?> gstSlabsJson = const Value.absent(),
+            Value<String?> hsnCodesJson = const Value.absent(),
+            Value<bool> autoSplitIgst = const Value.absent(),
+            Value<bool> taxInclusivePricing = const Value.absent(),
+            Value<bool> roundOffGstAmount = const Value.absent(),
+            Value<bool> showGstBreakupOnBill = const Value.absent(),
+            Value<bool> compositeSupplyMode = const Value.absent(),
+            Value<bool> tcsEnabled = const Value.absent(),
+            Value<double> tcsThreshold = const Value.absent(),
+            Value<double> tcsRatePct = const Value.absent(),
+            Value<bool> tdsEnabled = const Value.absent(),
+            Value<double> tdsRatePct = const Value.absent(),
+            Value<bool> eInvoicingEnabled = const Value.absent(),
+            Value<String> eInvoiceTurnoverLimit = const Value.absent(),
+            Value<String?> irpApiUsername = const Value.absent(),
+            Value<String?> irpApiPassword = const Value.absent(),
+            Value<bool> gstr1FilingReminder = const Value.absent(),
+            Value<bool> gstr3bFilingReminder = const Value.absent(),
+            Value<String?> bisLicenseNumber = const Value.absent(),
+            Value<String?> bisLicenseValidFrom = const Value.absent(),
+            Value<String?> bisLicenseValidUpto = const Value.absent(),
+            Value<String?> huidNumber = const Value.absent(),
+            Value<String?> bisLicenseDocPath = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+          }) =>
+              TaxGstConfigsCompanion(
+            id: id,
+            gstin: gstin,
+            legalName: legalName,
+            panNumber: panNumber,
+            tanNumber: tanNumber,
+            gstRegisteredOn: gstRegisteredOn,
+            taxpayerType: taxpayerType,
+            stateCode: stateCode,
+            gstCertificatePath: gstCertificatePath,
+            gstSlabsJson: gstSlabsJson,
+            hsnCodesJson: hsnCodesJson,
+            autoSplitIgst: autoSplitIgst,
+            taxInclusivePricing: taxInclusivePricing,
+            roundOffGstAmount: roundOffGstAmount,
+            showGstBreakupOnBill: showGstBreakupOnBill,
+            compositeSupplyMode: compositeSupplyMode,
+            tcsEnabled: tcsEnabled,
+            tcsThreshold: tcsThreshold,
+            tcsRatePct: tcsRatePct,
+            tdsEnabled: tdsEnabled,
+            tdsRatePct: tdsRatePct,
+            eInvoicingEnabled: eInvoicingEnabled,
+            eInvoiceTurnoverLimit: eInvoiceTurnoverLimit,
+            irpApiUsername: irpApiUsername,
+            irpApiPassword: irpApiPassword,
+            gstr1FilingReminder: gstr1FilingReminder,
+            gstr3bFilingReminder: gstr3bFilingReminder,
+            bisLicenseNumber: bisLicenseNumber,
+            bisLicenseValidFrom: bisLicenseValidFrom,
+            bisLicenseValidUpto: bisLicenseValidUpto,
+            huidNumber: huidNumber,
+            bisLicenseDocPath: bisLicenseDocPath,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String?> gstin = const Value.absent(),
+            Value<String?> legalName = const Value.absent(),
+            Value<String?> panNumber = const Value.absent(),
+            Value<String?> tanNumber = const Value.absent(),
+            Value<String?> gstRegisteredOn = const Value.absent(),
+            Value<String> taxpayerType = const Value.absent(),
+            Value<String?> stateCode = const Value.absent(),
+            Value<String?> gstCertificatePath = const Value.absent(),
+            Value<String?> gstSlabsJson = const Value.absent(),
+            Value<String?> hsnCodesJson = const Value.absent(),
+            Value<bool> autoSplitIgst = const Value.absent(),
+            Value<bool> taxInclusivePricing = const Value.absent(),
+            Value<bool> roundOffGstAmount = const Value.absent(),
+            Value<bool> showGstBreakupOnBill = const Value.absent(),
+            Value<bool> compositeSupplyMode = const Value.absent(),
+            Value<bool> tcsEnabled = const Value.absent(),
+            Value<double> tcsThreshold = const Value.absent(),
+            Value<double> tcsRatePct = const Value.absent(),
+            Value<bool> tdsEnabled = const Value.absent(),
+            Value<double> tdsRatePct = const Value.absent(),
+            Value<bool> eInvoicingEnabled = const Value.absent(),
+            Value<String> eInvoiceTurnoverLimit = const Value.absent(),
+            Value<String?> irpApiUsername = const Value.absent(),
+            Value<String?> irpApiPassword = const Value.absent(),
+            Value<bool> gstr1FilingReminder = const Value.absent(),
+            Value<bool> gstr3bFilingReminder = const Value.absent(),
+            Value<String?> bisLicenseNumber = const Value.absent(),
+            Value<String?> bisLicenseValidFrom = const Value.absent(),
+            Value<String?> bisLicenseValidUpto = const Value.absent(),
+            Value<String?> huidNumber = const Value.absent(),
+            Value<String?> bisLicenseDocPath = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+          }) =>
+              TaxGstConfigsCompanion.insert(
+            id: id,
+            gstin: gstin,
+            legalName: legalName,
+            panNumber: panNumber,
+            tanNumber: tanNumber,
+            gstRegisteredOn: gstRegisteredOn,
+            taxpayerType: taxpayerType,
+            stateCode: stateCode,
+            gstCertificatePath: gstCertificatePath,
+            gstSlabsJson: gstSlabsJson,
+            hsnCodesJson: hsnCodesJson,
+            autoSplitIgst: autoSplitIgst,
+            taxInclusivePricing: taxInclusivePricing,
+            roundOffGstAmount: roundOffGstAmount,
+            showGstBreakupOnBill: showGstBreakupOnBill,
+            compositeSupplyMode: compositeSupplyMode,
+            tcsEnabled: tcsEnabled,
+            tcsThreshold: tcsThreshold,
+            tcsRatePct: tcsRatePct,
+            tdsEnabled: tdsEnabled,
+            tdsRatePct: tdsRatePct,
+            eInvoicingEnabled: eInvoicingEnabled,
+            eInvoiceTurnoverLimit: eInvoiceTurnoverLimit,
+            irpApiUsername: irpApiUsername,
+            irpApiPassword: irpApiPassword,
+            gstr1FilingReminder: gstr1FilingReminder,
+            gstr3bFilingReminder: gstr3bFilingReminder,
+            bisLicenseNumber: bisLicenseNumber,
+            bisLicenseValidFrom: bisLicenseValidFrom,
+            bisLicenseValidUpto: bisLicenseValidUpto,
+            huidNumber: huidNumber,
+            bisLicenseDocPath: bisLicenseDocPath,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$TaxGstConfigsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TaxGstConfigsTable,
+    TaxGstConfigData,
+    $$TaxGstConfigsTableFilterComposer,
+    $$TaxGstConfigsTableOrderingComposer,
+    $$TaxGstConfigsTableAnnotationComposer,
+    $$TaxGstConfigsTableCreateCompanionBuilder,
+    $$TaxGstConfigsTableUpdateCompanionBuilder,
+    (
+      TaxGstConfigData,
+      BaseReferences<_$AppDatabase, $TaxGstConfigsTable, TaxGstConfigData>
+    ),
+    TaxGstConfigData,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -35954,4 +38203,6 @@ class $AppDatabaseManager {
           _db, _db.purchaseBillingSettings);
   $$GirviBillingSettingsTableTableManager get girviBillingSettings =>
       $$GirviBillingSettingsTableTableManager(_db, _db.girviBillingSettings);
+  $$TaxGstConfigsTableTableManager get taxGstConfigs =>
+      $$TaxGstConfigsTableTableManager(_db, _db.taxGstConfigs);
 }

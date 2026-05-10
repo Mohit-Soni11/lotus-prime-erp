@@ -27,11 +27,13 @@ import '../tables/sales_orders.dart';
 import '../tables/shop_profile_table.dart';
 import '../tables/stock/stock_items.dart';
 import '../tables/stock/suppliers.dart';
-
-// ✅ v14: Per-Metal Billing Setup (replaces old BillingSettings)
 import '../tables/setting/billing/sales_billing_settings.dart';
 import '../tables/setting/billing/purchase_billing_settings.dart';
 import '../tables/setting/billing/girvi_billing_settings.dart';
+
+// ✅ v16: Tax & GST
+import '../../database/tables/setting/tax_gst/tax_gst_config_dao.dart';
+import '../../database/tables/setting/tax_gst/tax_gst_config_table.dart';
 
 part 'app_database.g.dart';
 
@@ -58,9 +60,10 @@ part 'app_database.g.dart';
     GirviPayments,
     DeliveryOrders,
     DeliveryItems,
-    SalesBillingSettings, // ✅ v14
-    PurchaseBillingSettings, // ✅ v14
-    GirviBillingSettings, // ✅ v14
+    SalesBillingSettings,
+    PurchaseBillingSettings,
+    GirviBillingSettings,
+    TaxGstConfigs, // ✅ v16
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -71,7 +74,10 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase._internal() : super(_openConnection());
 
   @override
-  int get schemaVersion => 15; // ✅ v15: GirviBillingSettings added
+  int get schemaVersion => 16;
+
+  // ✅ DAO getter — directly use karo: AppDatabase().taxGstDao.fetchConfig()
+  TaxGstConfigDao get taxGstDao => TaxGstConfigDao(this);
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -83,9 +89,7 @@ class AppDatabase extends _$AppDatabase {
 
           if (from < 2) {
             await m.createTable(dailyRates);
-            debugPrint('v2: DailyRates table created.');
           }
-
           if (from < 3) {
             await m.addColumn(customers, customers.entityType);
             await m.addColumn(customers, customers.firstName);
@@ -112,9 +116,7 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(customers, customers.creditLimit);
             await m.addColumn(customers, customers.customerTier);
             await m.addColumn(customers, customers.membershipId);
-            debugPrint('v3: Customers table expanded.');
           }
-
           if (from < 4) {
             await m.addColumn(stockItems, stockItems.description);
             await m.addColumn(stockItems, stockItems.category);
@@ -128,38 +130,22 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(stockItems, stockItems.imagePath);
             await m.addColumn(stockItems, stockItems.location);
             await m.addColumn(stockItems, stockItems.isActive);
-            debugPrint('v4: StockItems expanded.');
           }
-
-          if (from < 5) {
-            await m.createTable(cashTransactions);
-            debugPrint('v5: CashTransactions table created.');
-          }
-
-          if (from < 6) {
-            await m.addColumn(bills, bills.paidAmount);
-            debugPrint('v6: Bills.paidAmount added.');
-          }
-
+          if (from < 5) await m.createTable(cashTransactions);
+          if (from < 6) await m.addColumn(bills, bills.paidAmount);
           if (from < 7) {
             await m.createTable(bankAccounts);
             await m.createTable(bankTransactions);
-            debugPrint('v7: Bank Book tables created.');
           }
-
           if (from < 8) {
             await m.createTable(karigarMasters);
             await m.createTable(karigarIssues);
             await m.createTable(karigarReceipts);
-            debugPrint('v8: Karigar tables created.');
           }
-
           if (from < 9) {
             await m.createTable(girviLoans);
             await m.createTable(girviPayments);
-            debugPrint('v9: Girvi tables created.');
           }
-
           if (from < 10) {
             await m.createTable(suppliers);
             try {
@@ -171,54 +157,36 @@ class AppDatabase extends _$AppDatabase {
             try {
               await m.addColumn(stockItems, stockItems.supplierId);
             } catch (_) {}
-            debugPrint('v10: Supplier module migration complete.');
           }
-
           if (from < 11) {
             await m.createTable(deliveryOrders);
             await m.createTable(deliveryItems);
-            debugPrint('v11: Delivery tables created.');
           }
-
           if (from < 12) {
             await customStatement(_createPurchaseVouchersTableSql);
             await customStatement(_createPurchaseVoucherItemsTableSql);
-            for (final statement in _purchaseVoucherIndexSql) {
-              await customStatement(statement);
-            }
-            debugPrint('v12: Purchase voucher tables created.');
+            for (final s in _purchaseVoucherIndexSql) await customStatement(s);
           }
-
-          if (from < 13) {
-            // Old billing_settings — created via safety net below, no Drift table now
-            debugPrint(
-                'v13: BillingSettings (legacy) — handled by safety net.');
-          }
-
-          // ✅ v14: Per-metal billing setup
           if (from < 14) {
-            // Drop old flat billing_settings if it exists
             try {
               await customStatement('DROP TABLE IF EXISTS "billing_settings"');
             } catch (_) {}
-            // Create new per-metal tables
             await m.createTable(salesBillingSettings);
             await m.createTable(purchaseBillingSettings);
-            debugPrint(
-                'v14: Per-metal SalesBillingSettings & PurchaseBillingSettings created.');
           }
-
-          // ✅ v15: Girvi billing settings
           if (from < 15) {
             await m.createTable(girviBillingSettings);
-            debugPrint('v15: GirviBillingSettings created.');
+          }
+
+          // ✅ v16 — Tax & GST table
+          if (from < 16) {
+            await m.createTable(taxGstConfigs);
+            debugPrint('v16: TaxGstConfigs table created ✅');
           }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
-          if (kDebugMode) {
-            debugPrint('Database opened: v${details.versionNow}');
-          }
+          if (kDebugMode) debugPrint('Database opened: v${details.versionNow}');
 
           await customStatement('''
             CREATE TABLE IF NOT EXISTS "bank_accounts" (
@@ -236,7 +204,6 @@ class AppDatabase extends _$AppDatabase {
               "updated_at" INTEGER NOT NULL
             )
           ''');
-
           await customStatement('''
             CREATE TABLE IF NOT EXISTS "bank_transactions" (
               "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -251,7 +218,6 @@ class AppDatabase extends _$AppDatabase {
               FOREIGN KEY ("account_id") REFERENCES "bank_accounts" ("id")
             )
           ''');
-
           await customStatement('''
             CREATE TABLE IF NOT EXISTS "delivery_orders" (
               "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -283,7 +249,6 @@ class AppDatabase extends _$AppDatabase {
               FOREIGN KEY ("customer_id") REFERENCES "customers" ("id") ON DELETE CASCADE
             )
           ''');
-
           await customStatement('''
             CREATE TABLE IF NOT EXISTS "delivery_items" (
               "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -305,12 +270,9 @@ class AppDatabase extends _$AppDatabase {
               FOREIGN KEY ("delivery_order_id") REFERENCES "delivery_orders" ("id") ON DELETE CASCADE
             )
           ''');
-
           await customStatement(_createPurchaseVouchersTableSql);
           await customStatement(_createPurchaseVoucherItemsTableSql);
-          for (final statement in _purchaseVoucherIndexSql) {
-            await customStatement(statement);
-          }
+          for (final s in _purchaseVoucherIndexSql) await customStatement(s);
 
           debugPrint('Safety net bootstrap complete.');
         },
@@ -324,14 +286,10 @@ LazyDatabase _openConnection() {
     return NativeDatabase(
       file,
       logStatements: kDebugMode,
-      setup: (database) {
-        database.execute('PRAGMA journal_mode=WAL;');
-      },
+      setup: (db) => db.execute('PRAGMA journal_mode=WAL;'),
     );
   });
 }
-
-// ── Purchase Vouchers SQL (v12 — unchanged) ───────────────────────────────────
 
 const String _createPurchaseVouchersTableSql = '''
   CREATE TABLE IF NOT EXISTS "purchase_vouchers" (
