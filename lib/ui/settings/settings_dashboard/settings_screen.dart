@@ -5,7 +5,7 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../database/db/app_database.dart';
 
 import '../../../theme/settings/settings_dashboard/settings_theme.dart';
 import 'data/settings_data.dart';
@@ -20,6 +20,9 @@ import '../billing_setup/billing_setup_hub_screen.dart';
 
 // ✅ Metal Costing Analysis
 import '../metal_costing/metal_costing_hub_screen.dart';
+
+// ✅ v13: Tax & GST Hub
+import '../tax_gst/tax_gst_hub_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   final Function(String routeId) onNavigate;
@@ -65,6 +68,25 @@ class SettingsScreen extends StatelessWidget {
           context,
           PageRouteBuilder(
             pageBuilder: (_, animation, __) => const MetalCostingHubScreen(),
+            transitionsBuilder: (_, animation, __, child) => FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              ),
+              child: child,
+            ),
+            transitionDuration: const Duration(milliseconds: 260),
+          ),
+        );
+        break;
+
+      // ✅ v13: Tax & GST Hub — fade transition
+      case 'gst_config':
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (_, animation, __) =>
+                TaxGstHubScreen(database: AppDatabase()),
             transitionsBuilder: (_, animation, __, child) => FadeTransition(
               opacity: CurvedAnimation(
                 parent: animation,
