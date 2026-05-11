@@ -9,8 +9,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
-import 'metal_card_shell.dart';
-import 'stock_metal_ui.dart';
+import '../metal_card_shell.dart';
+import '../stock_metal_ui.dart';
 
 class SilverStockCard extends StatelessWidget {
   final AnimationController animationController;

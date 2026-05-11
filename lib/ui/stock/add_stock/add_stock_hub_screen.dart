@@ -10,7 +10,7 @@ import 'add_stock_hub_app_bar.dart';
 import 'diamond_stock_card.dart';
 import 'gold_stock_card.dart';
 import 'platinum_stock_card.dart';
-import 'silver_stock_card.dart'; // ✅ Yeh sirf SilverStockCard widget hai — screen nahi
+import 'add_stock_silver/silver_stock_card.dart'; // ✅ Yeh sirf SilverStockCard widget hai — screen nahi
 
 class AddStockHubScreen extends StatefulWidget {
   const AddStockHubScreen({super.key});

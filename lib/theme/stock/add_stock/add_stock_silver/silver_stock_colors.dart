@@ -43,14 +43,23 @@ class SilverStockColors {
   static const Color shellTextMuted = Color(0xFF9CA3AF);
 
   // ── LIGHT BODY (Main Content) ─────────────────────────────────
-  static const Color bodyBg = Color(0xFFF4F7F9); // Cool blue-grey — Silver feel
-  static const Color cardBg = Color(0xFFFFFFFF);
-  static const Color cardBorder = Color(0xFFE2E8F0);
-  static const Color cardHoverBg = Color(0xFFF1F5F9);
-  static const Color inputBg = Color(0xFFF8FAFC);
-  static const Color inputBgLocked = Color(0xFFF1F5F9);
-  static const Color panelBg = Color(0xFFFFFFFF);
-  static const Color borderLight = Color(0xFFE2E8F0);
+  // NOTE: bodyBg intentionally matches ALL modules (POS, Gold, Inventory, Supplier).
+  // Consistent warm cream across the entire app — no jarring color shift on navigation.
+  // Silver identity comes from accent colors, borders & badges — NOT the background.
+  static const Color bodyBg =
+      Color(0xFFF9F6F0); // Warm cream — same as POS & all modules
+  static const Color cardBg =
+      Color(0xFFFFFFFF); // Pure white cards — same as POS
+  static const Color cardBorder =
+      Color(0xFFE5E0D8); // Warm border — same as POS bodyBorder
+  static const Color cardHoverBg =
+      Color(0xFFF6F3EC); // Hover — same as POS cardHoverBg
+  static const Color inputBg = Color(0xFFF9FAFB); // Input — clean neutral
+  static const Color inputBgLocked = Color(0xFFF3F4F6); // Disabled — receded
+  static const Color panelBg =
+      Color(0xFFFFFFFF); // Panel bg — pure white like POS
+  static const Color borderLight =
+      Color(0xFFE5E0D8); // Unified border — matches cardBorder
 
   // ── TYPOGRAPHY ───────────────────────────────────────────────
   static const Color textDark = Color(0xFF0F172A);
@@ -75,8 +84,10 @@ class SilverStockColors {
   // ── EFFECTS ──────────────────────────────────────────────────
   static const Color shadowLight = Color(0x0F000000);
   static const Color shadowMedium = Color(0x1A000000);
-  static const Color divider = Color(0xFFE2E8F0);
-  static const Color activeToggleBg = Color(0xFFE2E8F0);
+  static const Color divider =
+      Color(0xFFEEEBE4); // Warm divider — matches POS & Gold
+  static const Color activeToggleBg =
+      Color(0xFFE5E0D8); // Toggle active — warm border tone
 
   // ── SILVER SHIMMER (for App Bar coin badge) ───────────────────
   static const Color shimmerBase = Color(0xFFCBD5E1);
