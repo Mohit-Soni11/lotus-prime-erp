@@ -209,6 +209,10 @@ class AddStockController extends ChangeNotifier {
   final TextEditingController supplierGstCtrl = TextEditingController();
   final TextEditingController gold24kManualCtrl = TextEditingController();
 
+  /// Supplier's own invoice reference — stored per batch for B2B / GST traceability.
+  /// Editable by the operator; not auto-generated. Persisted to Purchase records on save.
+  final TextEditingController supplierInvoiceCtrl = TextEditingController();
+
   String get sessionSupplierName => _sessionSupplierName;
   bool get sameForAll => _sameForAll;
   SupplierModel? get linkedSupplier => _linkedSupplier;
@@ -1195,10 +1199,8 @@ class AddStockController extends ChangeNotifier {
     supplierRegionCtrl.clear();
     supplierPanCtrl.clear();
     supplierGstCtrl.clear();
+    supplierInvoiceCtrl.clear();
     _gstEnabled = false;
-    _purityDisplay = '';
-    _isCustomPurity = false;
-    _rows.clear();
     // ✅ FIX: Start empty after batch reset — user adds rows with F2 (like POS)
     _pendingFocusRowId = null;
     _activeRowId = null;
@@ -1287,6 +1289,7 @@ class AddStockController extends ChangeNotifier {
     supplierPanCtrl.dispose();
     supplierGstCtrl.dispose();
     gold24kManualCtrl.dispose();
+    supplierInvoiceCtrl.dispose();
     super.dispose();
   }
 }

@@ -4,20 +4,27 @@
 // LAYER       : UI / Screen
 // DESCRIPTION : Dedicated Silver Stock entry screen.
 //               ✅ 100% Isolated Silver Theme & App Bar.
-//               ✅ Step 1 → Purity Selection (SilverPurityStep)
-//               ✅ Step 2 → Batch Config + Items Entry
+//               ✅ Step 1 → Purity Selection (SilverPurityStep).
+//               ✅ Step 2 → SilverBatchOverviewCard + SilverInvoiceCard
+//                          + Supplier Panel + Items Table (wired in next phase).
 //               ✅ No generic gold/purity stepper used.
+// UPDATED     : SilverBatchConfigPanel replaced by two focused cards:
+//               1. SilverBatchOverviewCard — compact stats + GST toggle.
+//               2. SilverInvoiceCard       — batch ID + supplier invoice + date/time.
 // =============================================================================
 
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/logic/stock/add_stock_controller.dart';
 import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
 
-// ── ISOLATED SILVER THEME & COMPONENTS ──
+// ── ISOLATED SILVER THEME ──────────────────────────────────────
 import '../../../../theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
+
+// ── SILVER UI COMPONENTS ───────────────────────────────────────
 import 'silver_app_bar.dart';
 import 'silver_purity_step.dart';
-import 'silver_batch_config_panel.dart';
+import 'silver_batch_overview_card.dart';
+import 'silver_invoice_card.dart';
 
 class SilverStockScreen extends StatefulWidget {
   const SilverStockScreen({super.key});
@@ -41,6 +48,7 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
     super.dispose();
   }
 
+  // ── BACK INTERCEPT ───────────────────────────────────────────
   Future<bool> _onWillPop() async {
     if (_ctrl.step == AddStockStep.items) {
       _ctrl.prevStep();
@@ -52,6 +60,7 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
     return true;
   }
 
+  // ── EXIT DIALOG ──────────────────────────────────────────────
   Future<bool?> _showExitDialog() {
     return showDialog<bool>(
       context: context,
@@ -75,13 +84,15 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Discard', style: TextStyle(color: Colors.white)),
+            child: Text(SilverStockStrings.btnDiscard,
+                style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 
+  // ── RESET DIALOG ─────────────────────────────────────────────
   Future<void> _showResetDialog() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -114,11 +125,13 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
     if (confirmed == true) _ctrl.resetForNewBatch();
   }
 
+  // ── SAVE ─────────────────────────────────────────────────────
   Future<void> _onSave() async {
     await _ctrl.saveAll();
     if (_ctrl.successMessage != null && mounted) _showSuccessDialog();
   }
 
+  // ── SUCCESS DIALOG ───────────────────────────────────────────
   void _showSuccessDialog() {
     showDialog(
       context: context,
@@ -169,6 +182,7 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
     );
   }
 
+  // ── BUILD ────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -200,13 +214,13 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
             ),
             child: _ctrl.step == AddStockStep.purity
 
-                // ── STEP 1 : PURITY SELECTION ──────────────────────
+                // ── STEP 1 : PURITY SELECTION ─────────────────────
                 ? SilverPurityStep(
                     key: const ValueKey('silver-purity'),
                     ctrl: _ctrl,
                   )
 
-                // ── STEP 2 : BATCH CONFIG + ITEMS ──────────────────
+                // ── STEP 2 : OVERVIEW + INVOICE + ITEMS ───────────
                 : _buildItemsBody(),
           ),
         ),
@@ -214,6 +228,7 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
     );
   }
 
+  // ── ITEMS BODY (STEP 2) ──────────────────────────────────────
   Widget _buildItemsBody() {
     return Padding(
       key: const ValueKey('silver-items'),
@@ -221,14 +236,27 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
       child: ListView(
         physics: const BouncingScrollPhysics(),
         children: [
-          // ── BATCH CONFIG PANEL ──────────────────────────────────
-          SilverBatchConfigPanel(
-            systemBatchId: _ctrl.batchCode,
-          ),
+          // ── CARD 1 : BATCH OVERVIEW ──────────────────────────
+          // Compact stats — purity, pieces, weights, cost/sale,
+          // and the animated GST / NORMAL toggle pill.
+          SilverBatchOverviewCard(ctrl: _ctrl),
+
+          const SizedBox(height: 16),
+
+          // ── CARD 2 : INVOICE NUMBER ──────────────────────────
+          // System batch ID (auto), supplier invoice (manual B2B),
+          // and live date / time chips.
+          SilverInvoiceCard(ctrl: _ctrl),
+
           const SizedBox(height: 20),
-          // ── TODO: Supplier Panel & Items Table ─────────────────
+
+          // ── UPCOMING: Supplier Panel ─────────────────────────
           // SilverSupplierPanel(ctrl: _ctrl),
+
+          // ── UPCOMING: Items Entry Table ──────────────────────
           // SilverEntryTable(ctrl: _ctrl),
+
+          // ── UPCOMING: Payment & Save Panel ──────────────────
           // SilverPaymentPanel(ctrl: _ctrl, onSave: _onSave),
         ],
       ),
