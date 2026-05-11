@@ -1,3 +1,18 @@
+// =============================================================================
+// FILE        : add_stock_controller.dart
+// MODULE      : Stock & Inventory
+// LAYER       : Logic / Controller
+// DESCRIPTION : Shared Add Stock controller for Gold, Diamond, Platinum,
+//               Antique, and Other metal categories.
+//
+// ⚠️  SILVER IS NOT HANDLED HERE.
+//     Silver has its own fully isolated controller:
+//     → lib/logic/stock/add_stock_silver/silver_stock_controller.dart
+//
+//     Passing StockCategory.silver to this controller will throw an
+//     AssertionError at construction time.
+// =============================================================================
+
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
@@ -106,7 +121,7 @@ class AddStockController extends ChangeNotifier {
   late final SupplierRepository _supplierRepo;
   late final PurchaseEntryRepository _purchaseRepo;
 
-  // ✅ FIX: Active row tracking — Delete key support (like POS activeRowIndex)
+  // Active row tracking — Delete key support (matches POS activeRowIndex behaviour).
   String? _activeRowId;
   String? get activeRowId => _activeRowId;
 
@@ -114,12 +129,20 @@ class AddStockController extends ChangeNotifier {
     _activeRowId = rowId;
   }
 
+  /// Creates the shared Add Stock controller for Gold, Diamond, Platinum, Antique, Other.
+  ///
+  /// ⚠️  Do NOT pass [StockCategory.silver] here.
+  ///     Silver has its own isolated controller:
+  ///     → `lib/logic/stock/add_stock_silver/silver_stock_controller.dart`
   AddStockController({required StockCategory initialMetal}) {
+    assert(
+      initialMetal != StockCategory.silver,
+      'AddStockController does not handle Silver. '
+      'Use SilverStockController (lib/logic/stock/add_stock_silver/) instead.',
+    );
     _supplierRepo = SupplierRepository(_db);
     _purchaseRepo = PurchaseEntryRepository(db: _db);
     _selectedMetal = initialMetal;
-    // ✅ FIX: Start with EMPTY rows — show empty state like POS.
-    // Row appears only when user clicks ADD NEW ITEM or presses F2.
     _loadSuppliers();
     _loadPurityStockSummary();
     if (_selectedMetal == StockCategory.gold) {
@@ -141,6 +164,8 @@ class AddStockController extends ChangeNotifier {
 
   bool get canProceedFromPurity => _purityDisplay.trim().isNotEmpty;
 
+  /// Purity preset options for the selected metal.
+  /// Silver is NOT listed here — it is handled by SilverStockController.
   List<String> get purityOptions {
     switch (_selectedMetal) {
       case StockCategory.gold:
@@ -152,8 +177,6 @@ class AddStockController extends ChangeNotifier {
           '10K (417)',
           'Custom',
         ];
-      case StockCategory.silver:
-        return ['999 (Pure)', '925 (Sterling)', '800', '700', 'Custom'];
       case StockCategory.platinum:
         return ['950 Platinum', '900 Platinum', '850 Platinum', 'Custom'];
       case StockCategory.diamond:
@@ -161,13 +184,18 @@ class AddStockController extends ChangeNotifier {
       case StockCategory.antique:
       case StockCategory.other:
         return ['Standard', 'Custom'];
+      case StockCategory.silver:
+        // Silver is handled by SilverStockController — should never reach here.
+        assert(false, 'Silver purity options are in SilverStockController.');
+        return [];
     }
   }
 
+  /// Default HSN code for the selected metal.
+  /// Silver HSN is managed inside SilverStockController.
   String get defaultHsnCode {
     switch (_selectedMetal) {
       case StockCategory.gold:
-      case StockCategory.silver:
       case StockCategory.platinum:
         return JewelleryHsn.h7113.code;
       case StockCategory.diamond:
@@ -175,6 +203,9 @@ class AddStockController extends ChangeNotifier {
       case StockCategory.antique:
       case StockCategory.other:
         return JewelleryHsn.h7117.code;
+      case StockCategory.silver:
+        // Silver is handled by SilverStockController — should never reach here.
+        return JewelleryHsn.h7113.code;
     }
   }
 
@@ -681,8 +712,7 @@ class AddStockController extends ChangeNotifier {
   }
 
   void removeRow(String rowId) {
-    // ✅ FIX: Allow deleting ANY row including the last one (like POS removeSaleItem).
-    // No minimum row guard — empty state is shown when list is empty.
+    // Allows deleting any row including the last — empty state shows when list is empty.
     _rows.removeWhere((row) => row.id == rowId);
     if (_pendingFocusRowId == rowId) {
       _pendingFocusRowId = null;
@@ -693,7 +723,7 @@ class AddStockController extends ChangeNotifier {
     _emitChange();
   }
 
-  // ✅ FIX: Delete key shortcut support — removes the currently focused row (like POS removeActiveItem)
+  // Delete key shortcut — removes the currently focused row (mirrors POS removeActiveItem).
   void removeActiveRow() {
     if (_activeRowId == null || _rows.isEmpty) return;
     final idToRemove = _activeRowId!;
@@ -1025,6 +1055,8 @@ class AddStockController extends ChangeNotifier {
         return saved;
       }
 
+      // Generic save path — Platinum, Diamond, Antique, Other.
+      // Silver has its own save path in SilverStockController.saveAll().
       int saved = 0;
       for (int index = 0; index < rowsToSave.length; index++) {
         final row = rowsToSave[index];
