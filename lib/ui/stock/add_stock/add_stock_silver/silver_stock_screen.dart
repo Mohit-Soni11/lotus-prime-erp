@@ -14,8 +14,7 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
-import 'package:lotus_erp/logic/stock/add_stock_controller.dart';
-import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
+import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.dart';
 
 // ── ISOLATED SILVER THEME ──────────────────────────────────────
 import '../../../../theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
@@ -34,12 +33,12 @@ class SilverStockScreen extends StatefulWidget {
 }
 
 class _SilverStockScreenState extends State<SilverStockScreen> {
-  late final AddStockController _ctrl;
+  late final SilverStockController _ctrl;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AddStockController(initialMetal: StockCategory.silver);
+    _ctrl = SilverStockController();
   }
 
   @override
@@ -50,7 +49,7 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
 
   // ── BACK INTERCEPT ───────────────────────────────────────────
   Future<bool> _onWillPop() async {
-    if (_ctrl.step == AddStockStep.items) {
+    if (_ctrl.step == SilverAddStockStep.items) {
       _ctrl.prevStep();
       return false;
     }
@@ -212,7 +211,7 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
                 child: child,
               ),
             ),
-            child: _ctrl.step == AddStockStep.purity
+            child: _ctrl.step == SilverAddStockStep.purity
 
                 // ── STEP 1 : PURITY SELECTION ─────────────────────
                 ? SilverPurityStep(

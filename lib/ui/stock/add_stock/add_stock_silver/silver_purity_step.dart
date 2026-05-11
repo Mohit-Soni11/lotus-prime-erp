@@ -11,11 +11,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../logic/stock/add_stock_controller.dart';
+import '../../../../logic/stock/add_stock_silver/silver_stock_controller.dart';
 import '../../../../theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
 
 class SilverPurityStep extends StatefulWidget {
-  final AddStockController ctrl;
+  final SilverStockController ctrl;
 
   const SilverPurityStep({super.key, required this.ctrl});
 

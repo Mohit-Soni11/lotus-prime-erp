@@ -6,21 +6,20 @@
 //               ✅ System Batch ID — auto-generated, read-only display.
 //               ✅ Supplier Invoice ID — manual editable input (B2B / GST).
 //               ✅ Live Date + Time chips via DateCardLogic stream.
-//               ✅ Mirrors PosInvoiceStatusBar card design pattern.
-//               ✅ Animated GST / NORMAL status pill (reads ctrl.gstEnabled).
-//               ✅ 100% Silver-themed — future-proof, zero hardcoded values.
-// DESIGN REF  : PosInvoiceStatusBar (card layout, chips, pill).
+//               ✅ Mirrors PosInvoiceStatusBar card design — POS layout parity.
+//               ✅ Colorful semantic icons from SilverStockColors accent palette.
+//               ✅ 100% Silver-themed — zero Gold/POS color imports.
 // =============================================================================
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../logic/stock/add_stock_controller.dart';
+import '../../../../logic/stock/add_stock_silver/silver_stock_controller.dart';
 import '../../../../logic/dashboard/date_card/date_card_logic.dart';
 import '../../../../theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
 
 class SilverInvoiceCard extends StatefulWidget {
-  final AddStockController ctrl;
+  final SilverStockController ctrl;
 
   const SilverInvoiceCard({super.key, required this.ctrl});
 
@@ -104,17 +103,18 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── HEADER ROW ────────────────────────────────────
+          // ── HEADER: accent lines + title + status pill ────
           _buildHeaderRow(isGst, accentColor),
 
-          const SizedBox(height: 14),
+          // ── FULL-WIDTH DIVIDER (POS style) ────────────────
+          Container(
+            height: 1,
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(vertical: 14),
+            color: SilverStockColors.borderLight,
+          ),
 
-          // ── ACCENT DIVIDER ────────────────────────────────
-          _buildAccentDivider(accentColor),
-
-          const SizedBox(height: 16),
-
-          // ── TOP CONTENT ROW: Icon + Batch ID + Date/Time ──
+          // ── CONTENT: Icon + Batch ID + Date/Time chips ────
           _buildInvoiceRow(ctrl, isGst, accentColor),
 
           const SizedBox(height: 18),
@@ -126,12 +126,12 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
     );
   }
 
-  // ── HEADER ───────────────────────────────────────────────────
+  // ── HEADER (POS-parity: accent lines + title + status pill) ──
   Widget _buildHeaderRow(bool isGst, Color accentColor) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Accent lines block (POS-style)
+        // POS-style accent lines block
         Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,7 +145,7 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
         ),
         const SizedBox(width: 12),
 
-        // Title block
+        // Title + subtitle
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,7 +177,7 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
 
         const SizedBox(width: 16),
 
-        // Status pill (mirrors batch overview card)
+        // Status pill
         AnimatedContainer(
           duration: const Duration(milliseconds: 260),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -226,18 +226,9 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
     );
   }
 
-  // ── ACCENT DIVIDER ───────────────────────────────────────────
-  Widget _buildAccentDivider(Color accentColor) {
-    return Container(
-      height: 1,
-      width: double.infinity,
-      color: SilverStockColors.borderLight,
-    );
-  }
-
-  // ── INVOICE ROW: Icon + Batch ID + Date/Time ─────────────────
+  // ── INVOICE ROW: Icon box + Batch ID + Date/Time ─────────────
   Widget _buildInvoiceRow(
-      AddStockController ctrl, bool isGst, Color accentColor) {
+      SilverStockController ctrl, bool isGst, Color accentColor) {
     return LayoutBuilder(
       builder: (_, constraints) {
         final isNarrow = constraints.maxWidth < 520;
@@ -246,11 +237,8 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Receipt icon box
             _buildIconBox(accentColor),
             const SizedBox(width: 14),
-
-            // Batch ID block
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -302,7 +290,6 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             invoiceBlock,
-            // Vertical rule
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Container(
@@ -340,7 +327,6 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
       ),
       child: Stack(
         children: [
-          // Top shine line
           Positioned(
             top: 0,
             left: 8,
@@ -372,7 +358,6 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
 
   // ── DATE + TIME CHIPS ────────────────────────────────────────
   Widget _buildDateTimeRow(DateCardModel data) {
-    // Format: "12 : 30 PM" clean display
     final timeParts = data.time.split(':');
     final cleanTime =
         timeParts.length >= 2 ? '${timeParts[0]} : ${timeParts[1]}' : data.time;
@@ -382,13 +367,13 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
       children: [
         _buildChip(
           icon: Icons.calendar_today_rounded,
-          iconColor: SilverStockColors.textDark,
+          iconColor: SilverStockColors.accentCompliance, // Amber — was grey
           subLabel: 'DATE',
           value: data.date.toUpperCase(),
           valueColor: SilverStockColors.textDark,
           valueFontSize: 13,
-          chipBg: SilverStockColors.inputBg,
-          chipBorder: SilverStockColors.borderLight,
+          chipBg: SilverStockColors.accentCompliance.withOpacity(0.07),
+          chipBorder: SilverStockColors.accentCompliance.withOpacity(0.25),
         ),
         const SizedBox(width: 8),
         Container(
@@ -402,7 +387,7 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
         const SizedBox(width: 8),
         _buildChip(
           icon: Icons.access_time_rounded,
-          iconColor: SilverStockColors.success,
+          iconColor: SilverStockColors.success, // Green — live time
           subLabel: 'TIME',
           value: cleanTime,
           valueColor: SilverStockColors.success,
@@ -478,19 +463,28 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
 
   // ── SUPPLIER INVOICE INPUT ───────────────────────────────────
   Widget _buildSupplierInvoiceSection(
-      AddStockController ctrl, Color accentColor) {
+      SilverStockController ctrl, Color accentColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Section label row
         Row(
           children: [
-            Icon(
-              SilverStockIcons.invoiceSupplier,
-              size: 14,
-              color: SilverStockColors.textMuted,
+            // Amber tag icon — colorful
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: SilverStockColors.accentCompliance.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(7),
+              ),
+              child: const Icon(
+                SilverStockIcons.invoiceSupplier,
+                size: 13,
+                color: SilverStockColors.accentCompliance,
+              ),
             ),
-            const SizedBox(width: 7),
+            const SizedBox(width: 8),
             Text(
               SilverStockStrings.supplierInvoiceId.toUpperCase(),
               style: GoogleFonts.inter(
@@ -532,10 +526,22 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
             decoration: InputDecoration(
               hintText: 'e.g.  INV-2025-0042  or  SI/24-25/001',
               hintStyle: SilverStockStyles.fieldHint,
-              prefixIcon: Icon(
-                SilverStockIcons.invoiceSystem,
-                size: 18,
-                color: SilverStockColors.textMuted,
+              // Silver-blue QR icon — colorful
+              prefixIcon: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: SilverStockColors.accentBasicInfo.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(
+                    SilverStockIcons.invoiceSystem,
+                    size: 14,
+                    color: SilverStockColors.accentBasicInfo,
+                  ),
+                ),
               ),
               filled: true,
               fillColor: SilverStockColors.inputBg,

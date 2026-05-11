@@ -332,6 +332,35 @@ class SilverStockController extends ChangeNotifier {
   }
 
   // ─────────────────────────────────────────────────────────────
+  // FORWARDING GETTERS  (flat API for UI widgets)
+  // ─────────────────────────────────────────────────────────────
+
+  /// Delegates to [SilverOverviewLogic.gstEnabled].
+  bool get gstEnabled => overview.gstEnabled;
+
+  /// Delegates to [SilverInvoiceLogic.batchCode].
+  String get batchCode => invoice.batchCode;
+
+  /// Delegates to [SilverInvoiceLogic.supplierInvoiceCtrl].
+  TextEditingController get supplierInvoiceCtrl => invoice.supplierInvoiceCtrl;
+
+  /// Total pieces across all entered rows.
+  int get totalQuantity => overview.totalQuantity(enteredRows);
+
+  /// Total gross weight (g) across all entered rows.
+  double get totalGrossWeight => overview.totalGrossWeight(enteredRows);
+
+  /// Total net weight (g) across all entered rows.
+  double get totalNetWeight => overview.totalNetWeight(enteredRows);
+
+  /// Total estimated cost across all entered rows.
+  double get totalEstimatedCost => overview.totalEstimatedCost(enteredRows);
+
+  /// Total estimated selling price across all entered rows.
+  double get totalEstimatedSelling =>
+      overview.totalEstimatedSelling(enteredRows);
+
+  // ─────────────────────────────────────────────────────────────
   // SUPPLIER SESSION
   // ─────────────────────────────────────────────────────────────
   List<SupplierListItemModel> _suppliers = [];

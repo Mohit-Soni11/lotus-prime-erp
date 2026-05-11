@@ -9,12 +9,12 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
-import '/logic/stock/add_stock_controller.dart';
+import '../../../../logic/stock/add_stock_silver/silver_stock_controller.dart';
 import '../../../../theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
 
 class SilverAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
-  final AddStockController ctrl;
+  final SilverStockController ctrl;
 
   const SilverAppBar({
     super.key,

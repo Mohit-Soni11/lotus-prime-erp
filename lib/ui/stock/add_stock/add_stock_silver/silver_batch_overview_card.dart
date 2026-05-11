@@ -3,22 +3,21 @@
 // MODULE      : Stock & Inventory — Silver
 // LAYER       : UI / Component
 // DESCRIPTION : Compact Batch Overview card for Silver Add Stock (Step 2).
-//               ✅ Animated GST / NORMAL toggle pill — matches POS Invoice style.
-//               ✅ Live reactive stats via ListenableBuilder (no polling).
-//               ✅ Shows purity, pieces, gross / net weight, est. cost & sale.
+//               ✅ Animated GST / NORMAL toggle pill.
+//               ✅ Live reactive stats via ListenableBuilder.
+//               ✅ Shows purity, pieces, gross / net weight only.
+//               ✅ Colorful semantic icons from SilverStockColors accent palette.
 //               ✅ 100% Silver-themed — zero Gold/POS color imports.
-//               ✅ Future-proof: all values from AddStockController.
-// DESIGN REF  : PosInvoiceStatusBar (animated pill) + compact card grid.
 // =============================================================================
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../logic/stock/add_stock_controller.dart';
+import '../../../../logic/stock/add_stock_silver/silver_stock_controller.dart';
 import '../../../../theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
 
 class SilverBatchOverviewCard extends StatefulWidget {
-  final AddStockController ctrl;
+  final SilverStockController ctrl;
 
   const SilverBatchOverviewCard({super.key, required this.ctrl});
 
@@ -95,48 +94,38 @@ class _SilverBatchOverviewCardState extends State<SilverBatchOverviewCard>
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── HEADER ROW ─────────────────────────────────────
           _buildHeaderRow(isGst, ctrl),
-
           const SizedBox(height: 14),
-
-          // ── THIN GRADIENT DIVIDER ───────────────────────────
           _buildGradientDivider(isGst),
-
           const SizedBox(height: 14),
-
-          // ── IDENTITY ROW ───────────────────────────────────
           _buildIdentityRow(ctrl),
-
           const SizedBox(height: 16),
-
-          // ── STATS GRID ─────────────────────────────────────
-          _buildStatsGrid(ctrl, isGst),
+          _buildStatsGrid(ctrl),
         ],
       ),
     );
   }
 
   // ── HEADER ───────────────────────────────────────────────────
-  Widget _buildHeaderRow(bool isGst, AddStockController ctrl) {
+  Widget _buildHeaderRow(bool isGst, SilverStockController ctrl) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Icon badge
+        // Icon badge — purple (inventory accent)
         Container(
           width: 34,
           height: 34,
           decoration: BoxDecoration(
-            color: SilverStockColors.brandSilver.withOpacity(0.10),
+            color: SilverStockColors.accentInventory.withOpacity(0.10),
             borderRadius: BorderRadius.circular(9),
             border: Border.all(
-              color: SilverStockColors.brandSilver.withOpacity(0.22),
+              color: SilverStockColors.accentInventory.withOpacity(0.25),
             ),
           ),
           child: const Icon(
             SilverStockIcons.inventory,
             size: 17,
-            color: SilverStockColors.brandSilver,
+            color: SilverStockColors.accentInventory,
           ),
         ),
         const SizedBox(width: 12),
@@ -165,7 +154,7 @@ class _SilverBatchOverviewCardState extends State<SilverBatchOverviewCard>
 
         const SizedBox(width: 12),
 
-        // ── GST / NORMAL Animated Pill Toggle ──────────────
+        // GST / NORMAL toggle pill
         _GstNormalToggle(
           isGst: isGst,
           onToggle: (value) => ctrl.toggleGst(value),
@@ -194,7 +183,7 @@ class _SilverBatchOverviewCardState extends State<SilverBatchOverviewCard>
   }
 
   // ── IDENTITY ROW ─────────────────────────────────────────────
-  Widget _buildIdentityRow(AddStockController ctrl) {
+  Widget _buildIdentityRow(SilverStockController ctrl) {
     final purity = ctrl.purityDisplay.trim().isEmpty
         ? 'Purity Not Set'
         : ctrl.purityDisplay;
@@ -210,10 +199,7 @@ class _SilverBatchOverviewCardState extends State<SilverBatchOverviewCard>
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                Color(0xFFDDE7ED),
-                SilverStockColors.brandSilver,
-              ],
+              colors: [Color(0xFFDDE7ED), SilverStockColors.brandSilver],
             ),
             boxShadow: [
               BoxShadow(
@@ -223,15 +209,11 @@ class _SilverBatchOverviewCardState extends State<SilverBatchOverviewCard>
               ),
             ],
           ),
-          child: const Icon(
-            Icons.water_drop_rounded,
-            size: 14,
-            color: Colors.white,
-          ),
+          child: const Icon(Icons.water_drop_rounded,
+              size: 14, color: Colors.white),
         ),
         const SizedBox(width: 10),
 
-        // Metal label
         Text(
           'Silver',
           style: GoogleFonts.manrope(
@@ -241,7 +223,6 @@ class _SilverBatchOverviewCardState extends State<SilverBatchOverviewCard>
           ),
         ),
 
-        // Dot separator
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Container(
@@ -277,7 +258,6 @@ class _SilverBatchOverviewCardState extends State<SilverBatchOverviewCard>
 
         const Spacer(),
 
-        // Batch count badge
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
@@ -298,97 +278,44 @@ class _SilverBatchOverviewCardState extends State<SilverBatchOverviewCard>
     );
   }
 
-  // ── STATS GRID ───────────────────────────────────────────────
-  Widget _buildStatsGrid(AddStockController ctrl, bool isGst) {
-    final accentColor =
-        isGst ? SilverStockColors.success : SilverStockColors.brandSilver;
+  // ── STATS GRID — 3 tiles only (Est Cost & Est Sale removed) ──
+  Widget _buildStatsGrid(SilverStockController ctrl) {
+    final stats = [
+      _StatTile(
+        label: SilverStockStrings.overviewPieces,
+        value: ctrl.totalQuantity.toString(),
+        icon: SilverStockIcons.quantity,
+        iconColor: SilverStockColors.accentInventory, // Purple
+      ),
+      _StatTile(
+        label: SilverStockStrings.overviewGross,
+        value: '${ctrl.totalGrossWeight.toStringAsFixed(3)} g',
+        icon: SilverStockIcons.weight,
+        iconColor: SilverStockColors.accentMetal, // Steel blue
+      ),
+      _StatTile(
+        label: SilverStockStrings.overviewNet,
+        value: '${ctrl.totalNetWeight.toStringAsFixed(3)} g',
+        icon: SilverStockIcons.netWeight,
+        iconColor: SilverStockColors.accentMetal, // Steel blue
+      ),
+    ];
 
-    return LayoutBuilder(
-      builder: (_, constraints) {
-        final isWide = constraints.maxWidth >= 600;
-
-        final stats = [
-          _StatTile(
-            label: SilverStockStrings.overviewPieces,
-            value: ctrl.totalQuantity.toString(),
-            icon: SilverStockIcons.quantity,
-            accentColor: accentColor,
-          ),
-          _StatTile(
-            label: SilverStockStrings.overviewGross,
-            value: '${ctrl.totalGrossWeight.toStringAsFixed(3)} g',
-            icon: SilverStockIcons.weight,
-            accentColor: accentColor,
-          ),
-          _StatTile(
-            label: SilverStockStrings.overviewNet,
-            value: '${ctrl.totalNetWeight.toStringAsFixed(3)} g',
-            icon: SilverStockIcons.netWeight,
-            accentColor: accentColor,
-          ),
-          _StatTile(
-            label: SilverStockStrings.overviewCost,
-            value: '₹ ${ctrl.totalEstimatedCost.toStringAsFixed(2)}',
-            icon: SilverStockIcons.price,
-            accentColor: SilverStockColors.accentPricing,
-          ),
-          _StatTile(
-            label: SilverStockStrings.overviewSale,
-            value: '₹ ${ctrl.totalEstimatedSelling.toStringAsFixed(2)}',
-            icon: SilverStockIcons.mrp,
-            accentColor: SilverStockColors.accentPricing,
-          ),
-        ];
-
-        if (isWide) {
-          // 5-column single row on wide screens
-          return Row(
-            children: stats
-                .map(
-                  (tile) => Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        right: stats.indexOf(tile) < stats.length - 1 ? 8 : 0,
-                      ),
-                      child: tile,
-                    ),
-                  ),
-                )
-                .toList(),
-          );
-        }
-
-        // 3 + 2 layout on narrow screens
-        return Column(
-          children: [
-            Row(
-              children: [
-                Expanded(child: stats[0]),
-                const SizedBox(width: 8),
-                Expanded(child: stats[1]),
-                const SizedBox(width: 8),
-                Expanded(child: stats[2]),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(child: stats[3]),
-                const SizedBox(width: 8),
-                Expanded(child: stats[4]),
-              ],
-            ),
-          ],
-        );
-      },
+    return Row(
+      children: [
+        Expanded(child: stats[0]),
+        const SizedBox(width: 8),
+        Expanded(child: stats[1]),
+        const SizedBox(width: 8),
+        Expanded(child: stats[2]),
+      ],
     );
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
 // GST / NORMAL ANIMATED TOGGLE PILL
-// Mirrors PosInvoiceStatusBar's animated pill — fully isolated.
-// ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
 class _GstNormalToggle extends StatelessWidget {
   final bool isGst;
   final ValueChanged<bool> onToggle;
@@ -418,7 +345,6 @@ class _GstNormalToggle extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Status dot
             AnimatedContainer(
               duration: const Duration(milliseconds: 260),
               width: 7,
@@ -436,7 +362,6 @@ class _GstNormalToggle extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 7),
-            // Label
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 260),
               style: GoogleFonts.inter(
@@ -448,12 +373,8 @@ class _GstNormalToggle extends StatelessWidget {
               child: Text(isGst ? 'GST BILL' : 'NORMAL'),
             ),
             const SizedBox(width: 7),
-            // Swap icon
-            Icon(
-              Icons.swap_horiz_rounded,
-              size: 14,
-              color: _accentColor.withOpacity(0.7),
-            ),
+            Icon(Icons.swap_horiz_rounded,
+                size: 14, color: _accentColor.withOpacity(0.7)),
           ],
         ),
       ),
@@ -461,21 +382,20 @@ class _GstNormalToggle extends StatelessWidget {
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// STAT TILE
-// Individual compact stat cell used inside the stats grid.
-// ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// STAT TILE — individual compact stat cell
+// ════════════════════════════════════════════════════════════════
 class _StatTile extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
-  final Color accentColor;
+  final Color iconColor; // Specific semantic color per tile
 
   const _StatTile({
     required this.label,
     required this.value,
     required this.icon,
-    required this.accentColor,
+    required this.iconColor,
   });
 
   @override
@@ -493,8 +413,17 @@ class _StatTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 12, color: accentColor.withOpacity(0.7)),
-              const SizedBox(width: 5),
+              // Colored icon mini-badge
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(icon, size: 12, color: iconColor),
+              ),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   label,
