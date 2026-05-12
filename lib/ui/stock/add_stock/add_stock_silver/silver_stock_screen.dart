@@ -1,29 +1,12 @@
-// =============================================================================
-// FILE        : silver_stock_screen.dart
-// MODULE      : Stock & Inventory (Silver)
-// LAYER       : UI / Screen
-// DESCRIPTION : Dedicated Silver Stock entry screen.
-//               ✅ 100% Isolated Silver Theme & App Bar.
-//               ✅ Step 1 → Purity Selection (SilverPurityStep).
-//               ✅ Step 2 → SilverBatchOverviewCard + SilverInvoiceCard
-//                          + Supplier Panel + Items Table (wired in next phase).
-//               ✅ No generic gold/purity stepper used.
-// UPDATED     : SilverBatchConfigPanel replaced by two focused cards:
-//               1. SilverBatchOverviewCard — compact stats + GST toggle.
-//               2. SilverInvoiceCard       — batch ID + supplier invoice + date/time.
-// =============================================================================
-
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lotus_erp/logic/stock/add_stock_controller.dart'
+    show AddStockStep;
 import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.dart';
-
-// ── ISOLATED SILVER THEME ──────────────────────────────────────
-import '../../../../theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
-
-// ── SILVER UI COMPONENTS ───────────────────────────────────────
-import 'silver_app_bar.dart';
-import 'silver_purity_step.dart';
-import 'silver_batch_overview_card.dart';
-import 'silver_invoice_card.dart';
+import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
+import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/add_silver_stock_items_step.dart';
+import 'package:lotus_erp/ui/stock/add_stock/add_stock_app_bar.dart';
+import 'package:lotus_erp/ui/stock/add_stock/add_stock_purity_step.dart';
 
 class SilverStockScreen extends StatefulWidget {
   const SilverStockScreen({super.key});
@@ -47,218 +30,279 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
     super.dispose();
   }
 
-  // ── BACK INTERCEPT ───────────────────────────────────────────
-  Future<bool> _onWillPop() async {
-    if (_ctrl.step == SilverAddStockStep.items) {
-      _ctrl.prevStep();
-      return false;
-    }
-    if (_ctrl.hasAnyInput) {
-      return await _showExitDialog() ?? false;
-    }
-    return true;
-  }
-
-  // ── EXIT DIALOG ──────────────────────────────────────────────
-  Future<bool?> _showExitDialog() {
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: SilverStockColors.cardBg,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text(SilverStockStrings.confirmExitTitle,
-            style: SilverStockStyles.panelHeader),
-        content: Text(SilverStockStrings.confirmExitBody,
-            style: SilverStockStyles.caption),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(SilverStockStrings.btnKeepEditing,
-                style: TextStyle(color: SilverStockColors.brandSilver)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: SilverStockColors.danger,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            child: Text(SilverStockStrings.btnDiscard,
-                style: const TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── RESET DIALOG ─────────────────────────────────────────────
-  Future<void> _showResetDialog() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: SilverStockColors.cardBg,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text(SilverStockStrings.confirmResetTitle,
-            style: SilverStockStyles.panelHeader),
-        content: Text(SilverStockStrings.confirmResetBody,
-            style: SilverStockStyles.caption),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(SilverStockStrings.btnCancel,
-                style: TextStyle(color: SilverStockColors.textMuted)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: SilverStockColors.brandSilver,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            child: Text(SilverStockStrings.btnResetBatch,
-                style: const TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) _ctrl.resetForNewBatch();
-  }
-
-  // ── SAVE ─────────────────────────────────────────────────────
-  Future<void> _onSave() async {
-    await _ctrl.saveAll();
-    if (_ctrl.successMessage != null && mounted) _showSuccessDialog();
-  }
-
-  // ── SUCCESS DIALOG ───────────────────────────────────────────
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: SilverStockColors.cardBg,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Row(children: [
-          const Icon(Icons.check_circle_rounded,
-              color: SilverStockColors.success, size: 22),
-          const SizedBox(width: 8),
-          Text(SilverStockStrings.savedTitle,
-              style: SilverStockStyles.panelHeader),
-        ]),
-        content:
-            Text(_ctrl.successMessage ?? '', style: SilverStockStyles.caption),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              _ctrl.resetAllRows();
-            },
-            child: Text(SilverStockStrings.btnAddMore,
-                style: TextStyle(color: SilverStockColors.brandSilver)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              _ctrl.resetForNewBatch();
-            },
-            child: Text(SilverStockStrings.btnNewBatch,
-                style: TextStyle(color: SilverStockColors.brandSilver)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              Navigator.of(context).pop();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: SilverStockColors.brandSilver,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            child: Text(SilverStockStrings.btnDone,
-                style: const TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── BUILD ────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: _onWillPop,
-      child: Scaffold(
-        backgroundColor: SilverStockColors.bodyBg,
-        appBar: SilverAppBar(
-          ctrl: _ctrl,
-          onBack: () async {
-            final shouldPop = await _onWillPop();
-            if (shouldPop && mounted) Navigator.of(context).pop();
-          },
-        ),
-        body: ListenableBuilder(
-          listenable: _ctrl,
-          builder: (_, __) => AnimatedSwitcher(
-            duration: const Duration(milliseconds: 380),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            transitionBuilder: (child, anim) => FadeTransition(
-              opacity: anim,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.04, 0),
-                  end: Offset.zero,
-                ).animate(anim),
-                child: child,
-              ),
+      onWillPop: _handleExitAttempt,
+      child: ListenableBuilder(
+        listenable: _ctrl,
+        builder: (context, _) {
+          return Scaffold(
+            backgroundColor: AddStockColors.bodyBg,
+            appBar: AddStockAppBar(
+              ctrl: _ctrl,
+              onBack: _handleBackPressed,
             ),
-            child: _ctrl.step == SilverAddStockStep.purity
-
-                // ── STEP 1 : PURITY SELECTION ─────────────────────
-                ? SilverPurityStep(
-                    key: const ValueKey('silver-purity'),
-                    ctrl: _ctrl,
-                  )
-
-                // ── STEP 2 : OVERVIEW + INVOICE + ITEMS ───────────
-                : _buildItemsBody(),
-          ),
-        ),
+            body: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 260),
+              switchInCurve: Curves.easeOutQuart,
+              switchOutCurve: Curves.easeInQuart,
+              child: _ctrl.step == AddStockStep.purity
+                  ? AddStockPurityStep(
+                      key: const ValueKey('silver-purity-step'),
+                      ctrl: _ctrl,
+                    )
+                  : AddSilverStockItemsStep(
+                      key: const ValueKey('silver-items-step'),
+                      ctrl: _ctrl,
+                      onSave: _onSave,
+                      onResetBatch: _showResetDialog,
+                    ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  // ── ITEMS BODY (STEP 2) ──────────────────────────────────────
-  Widget _buildItemsBody() {
-    return Padding(
-      key: const ValueKey('silver-items'),
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-      child: ListView(
-        physics: const BouncingScrollPhysics(),
-        children: [
-          // ── CARD 1 : BATCH OVERVIEW ──────────────────────────
-          // Compact stats — purity, pieces, weights, cost/sale,
-          // and the animated GST / NORMAL toggle pill.
-          SilverBatchOverviewCard(ctrl: _ctrl),
+  Future<void> _handleBackPressed() async {
+    final canLeave = await _handleExitAttempt();
+    if (!mounted || !canLeave) {
+      return;
+    }
+    Navigator.of(context).pop();
+  }
 
-          const SizedBox(height: 16),
+  Future<bool> _handleExitAttempt() async {
+    if (!_ctrl.hasAnyInput || _ctrl.isSaving) {
+      return !_ctrl.isSaving;
+    }
 
-          // ── CARD 2 : INVOICE NUMBER ──────────────────────────
-          // System batch ID (auto), supplier invoice (manual B2B),
-          // and live date / time chips.
-          SilverInvoiceCard(ctrl: _ctrl),
+    final shouldDiscard = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: Text(
+            AddStockStrings.confirmExitTitle,
+            style: AddStockStyles.sectionTitle,
+          ),
+          content: Text(
+            AddStockStrings.confirmExitBody,
+            style: AddStockStyles.caption,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(
+                AddStockStrings.btnKeepEditing,
+                style: GoogleFonts.inter(
+                  color: AddStockColors.textBody,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AddStockColors.danger,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(
+                AddStockStrings.btnDiscard,
+                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        );
+      },
+    );
 
-          const SizedBox(height: 20),
+    return shouldDiscard ?? false;
+  }
 
-          // ── UPCOMING: Supplier Panel ─────────────────────────
-          // SilverSupplierPanel(ctrl: _ctrl),
+  Future<void> _showResetDialog() async {
+    if (_ctrl.isSaving) {
+      return;
+    }
 
-          // ── UPCOMING: Items Entry Table ──────────────────────
-          // SilverEntryTable(ctrl: _ctrl),
+    if (!_ctrl.hasAnyInput) {
+      _ctrl.resetForNewBatch();
+      return;
+    }
 
-          // ── UPCOMING: Payment & Save Panel ──────────────────
-          // SilverPaymentPanel(ctrl: _ctrl, onSave: _onSave),
-        ],
-      ),
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: Text(
+            AddStockStrings.confirmResetTitle,
+            style: AddStockStyles.sectionTitle,
+          ),
+          content: Text(
+            AddStockStrings.confirmResetBody,
+            style: AddStockStyles.caption,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(
+                AddStockStrings.btnCancel,
+                style: GoogleFonts.inter(
+                  color: AddStockColors.textBody,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF748A98),
+                foregroundColor: Colors.white,
+              ),
+              child: Text(
+                AddStockStrings.btnResetBatch,
+                style: GoogleFonts.inter(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      _ctrl.resetForNewBatch();
+    }
+  }
+
+  Future<void> _onSave() async {
+    final success = await _ctrl.saveAll();
+    if (!mounted) {
+      return;
+    }
+
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_ctrl.errorMessage ?? AddStockStrings.errSaveFailed),
+          backgroundColor: AddStockColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    await _showSavedDialog();
+  }
+
+  Future<void> _showSavedDialog() async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
+          content: SizedBox(
+            width: 420,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFDDE7ED), Color(0xFF8BA1AF)],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  AddStockStrings.savedTitle,
+                  style: GoogleFonts.manrope(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AddStockColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _ctrl.successMessage ?? '',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    height: 1.6,
+                    color: AddStockColors.textBody,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _ctrl.resetAllRows();
+              },
+              child: Text(
+                AddStockStrings.btnAddMore,
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF748A98),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            OutlinedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _ctrl.resetForNewBatch();
+              },
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF8BA1AF)),
+              ),
+              child: Text(
+                AddStockStrings.btnNewBatch,
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF748A98),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                if (mounted) {
+                  Navigator.of(context).pop();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF748A98),
+                foregroundColor: Colors.white,
+              ),
+              child: Text(
+                AddStockStrings.btnDone,
+                style: GoogleFonts.inter(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

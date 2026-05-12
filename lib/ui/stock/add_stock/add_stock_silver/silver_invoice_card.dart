@@ -1,354 +1,232 @@
-// =============================================================================
-// FILE        : silver_invoice_card.dart
-// MODULE      : Stock & Inventory — Silver
-// LAYER       : UI / Component
-// DESCRIPTION : Invoice Number card for Silver Add Stock (Step 2).
-//               ✅ System Batch ID — auto-generated, read-only display.
-//               ✅ Supplier Invoice ID — manual editable input (B2B / GST).
-//               ✅ Live Date + Time chips via DateCardLogic stream.
-//               ✅ Mirrors PosInvoiceStatusBar card design — POS layout parity.
-//               ✅ Colorful semantic icons from SilverStockColors accent palette.
-//               ✅ 100% Silver-themed — zero Gold/POS color imports.
-// =============================================================================
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-import '../../../../logic/stock/add_stock_silver/silver_stock_controller.dart';
-import '../../../../logic/dashboard/date_card/date_card_logic.dart';
-import '../../../../theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
+import 'package:lotus_erp/logic/dashboard/date_card/date_card_logic.dart';
+import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.dart';
+import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
+import 'package:lotus_erp/ui/stock/add_stock/stock_metal_ui.dart';
 
 class SilverInvoiceCard extends StatefulWidget {
   final SilverStockController ctrl;
 
-  const SilverInvoiceCard({super.key, required this.ctrl});
+  const SilverInvoiceCard({
+    super.key,
+    required this.ctrl,
+  });
 
   @override
   State<SilverInvoiceCard> createState() => _SilverInvoiceCardState();
 }
 
-class _SilverInvoiceCardState extends State<SilverInvoiceCard>
-    with SingleTickerProviderStateMixin {
+class _SilverInvoiceCardState extends State<SilverInvoiceCard> {
   late final DateCardLogic _dateLogic;
-  late final AnimationController _entryCtrl;
-  late final Animation<double> _fadeAnim;
-  late final Animation<Offset> _slideAnim;
 
   @override
   void initState() {
     super.initState();
-
     _dateLogic = DateCardLogic();
     _dateLogic.init();
-
-    _entryCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 520),
-    );
-    _fadeAnim = CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOutCubic);
-    _slideAnim = Tween<Offset>(
-      begin: const Offset(0, 0.06),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOutCubic));
-
-    Future.microtask(() {
-      if (mounted) _entryCtrl.forward();
-    });
   }
 
   @override
   void dispose() {
     _dateLogic.dispose();
-    _entryCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnim,
-      child: SlideTransition(
-        position: _slideAnim,
-        child: ListenableBuilder(
-          listenable: widget.ctrl,
-          builder: (_, __) => _buildCard(),
-        ),
-      ),
-    );
-  }
-
-  // ── MAIN CARD ────────────────────────────────────────────────
-  Widget _buildCard() {
-    final ctrl = widget.ctrl;
-    final isGst = ctrl.gstEnabled;
-    final accentColor =
-        isGst ? SilverStockColors.success : SilverStockColors.brandSilver;
+    final ui = stockMetalUiFor(widget.ctrl.selectedMetal);
+    final accent = widget.ctrl.gstEnabled ? AddStockColors.success : ui.accent;
 
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       decoration: BoxDecoration(
-        color: SilverStockColors.panelBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: SilverStockColors.borderLight),
+        color: AddStockColors.cardBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AddStockColors.cardBorder),
         boxShadow: const [
           BoxShadow(
-            color: SilverStockColors.shadowLight,
-            blurRadius: 12,
-            offset: Offset(0, 4),
+            color: AddStockColors.shadowLight,
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+          BoxShadow(
+            color: AddStockColors.shadowMedium,
+            blurRadius: 20,
+            offset: Offset(0, 6),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
-          // ── HEADER: accent lines + title + status pill ────
-          _buildHeaderRow(isGst, accentColor),
-
-          // ── FULL-WIDTH DIVIDER (POS style) ────────────────
-          Container(
-            height: 1,
-            width: double.infinity,
-            margin: const EdgeInsets.symmetric(vertical: 14),
-            color: SilverStockColors.borderLight,
-          ),
-
-          // ── CONTENT: Icon + Batch ID + Date/Time chips ────
-          _buildInvoiceRow(ctrl, isGst, accentColor),
-
-          const SizedBox(height: 18),
-
-          // ── SUPPLIER INVOICE INPUT ────────────────────────
-          _buildSupplierInvoiceSection(ctrl, accentColor),
-        ],
-      ),
-    );
-  }
-
-  // ── HEADER (POS-parity: accent lines + title + status pill) ──
-  Widget _buildHeaderRow(bool isGst, Color accentColor) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // POS-style accent lines block
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _accentLine(20, accentColor, 1.0),
-            const SizedBox(height: 3),
-            _accentLine(13, accentColor, 0.45),
-            const SizedBox(height: 3),
-            _accentLine(7, accentColor, 0.18),
-          ],
-        ),
-        const SizedBox(width: 12),
-
-        // Title + subtitle
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                'INVOICE NUMBER',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
-                  color: SilverStockColors.textDark,
-                ),
-              ),
-              const SizedBox(height: 3),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 260),
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: isGst
-                      ? SilverStockColors.success
-                      : SilverStockColors.textMuted,
-                ),
-                child: Text(isGst ? 'Tax Invoice — GST' : 'Standard Estimate'),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(width: 16),
-
-        // Status pill
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 260),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: isGst
-                ? SilverStockColors.success.withOpacity(0.07)
-                : SilverStockColors.inputBgLocked,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isGst
-                  ? SilverStockColors.success.withOpacity(0.35)
-                  : SilverStockColors.borderLight,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 260),
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isGst
-                      ? SilverStockColors.success
-                      : SilverStockColors.textMuted,
-                ),
-              ),
-              const SizedBox(width: 6),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 260),
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.8,
-                  color: isGst
-                      ? SilverStockColors.success
-                      : SilverStockColors.textMuted,
-                ),
-                child: Text(isGst ? 'GST BILL' : 'ESTIMATE'),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ── INVOICE ROW: Icon box + Batch ID + Date/Time ─────────────
-  Widget _buildInvoiceRow(
-      SilverStockController ctrl, bool isGst, Color accentColor) {
-    return LayoutBuilder(
-      builder: (_, constraints) {
-        final isNarrow = constraints.maxWidth < 520;
-
-        final invoiceBlock = Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            _buildIconBox(accentColor),
-            const SizedBox(width: 14),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  SilverStockStrings.systemInvoiceId.toUpperCase(),
-                  style: GoogleFonts.inter(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.4,
-                    color: SilverStockColors.textMuted,
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  ctrl.batchCode,
-                  style: GoogleFonts.manrope(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.4,
-                    color: accentColor,
-                    height: 1,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        );
-
-        final dateTimeBlock = StreamBuilder<DateCardModel>(
-          stream: _dateLogic.timeStream,
-          initialData: _dateLogic.initialData,
-          builder: (_, snap) => _buildDateTimeRow(snap.data!),
-        );
-
-        if (isNarrow) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              invoiceBlock,
-              const SizedBox(height: 12),
-              dateTimeBlock,
-            ],
-          );
-        }
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            invoiceBlock,
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Container(
-                width: 1,
-                height: 36,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      SilverStockColors.borderLight,
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            dateTimeBlock,
-          ],
-        );
-      },
-    );
-  }
-
-  // ── INVOICE ICON BOX ─────────────────────────────────────────
-  Widget _buildIconBox(Color accentColor) {
-    return Container(
-      width: 52,
-      height: 52,
-      decoration: BoxDecoration(
-        color: accentColor.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(11),
-        border: Border.all(color: accentColor.withOpacity(0.25)),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            left: 8,
-            right: 8,
-            child: Container(
-              height: 1,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.transparent,
-                    accentColor.withOpacity(0.55),
-                    Colors.transparent,
+              Expanded(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _accentLine(20, accent, 1.0),
+                        const SizedBox(height: 3),
+                        _accentLine(13, accent, 0.45),
+                        const SizedBox(height: 3),
+                        _accentLine(7, accent, 0.18),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'INVOICE NUMBER',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.2,
+                              color: AddStockColors.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.ctrl.gstEnabled
+                                ? 'Tax Intake Reference'
+                                : 'Standard Stock Intake',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: widget.ctrl.gstEnabled
+                                  ? AddStockColors.success
+                                  : AddStockColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
+              const SizedBox(width: 16),
+              _StatusPill(
+                label: widget.ctrl.gstEnabled ? 'GST BATCH' : 'ESTIMATE',
+                color: accent,
+              ),
+            ],
           ),
-          Center(
-            child: Icon(
-              Icons.receipt_long_outlined,
-              color: accentColor,
-              size: 24,
+          Container(
+            height: 1,
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(vertical: 16),
+            color: AddStockColors.cardBorder,
+          ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final stacked = constraints.maxWidth < 560;
+
+              final invoiceBlock = Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: accent.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: accent.withOpacity(0.25)),
+                    ),
+                    child: Icon(
+                      AddStockIcons.hsn,
+                      color: accent,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'BATCH CODE',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.4,
+                          color: AddStockColors.textMuted,
+                          height: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.ctrl.batchCode,
+                        style: GoogleFonts.manrope(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.0,
+                          color: accent,
+                          height: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+
+              final dateTimeBlock = StreamBuilder<DateCardModel>(
+                stream: _dateLogic.timeStream,
+                initialData: _dateLogic.initialData,
+                builder: (_, snapshot) => _DateTimeRow(
+                  data: snapshot.data ?? DateCardModel.empty(),
+                ),
+              );
+
+              if (stacked) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    invoiceBlock,
+                    const SizedBox(height: 12),
+                    dateTimeBlock,
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  invoiceBlock,
+                  Container(
+                    width: 1,
+                    height: 34,
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          AddStockColors.cardBorder,
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                  Expanded(child: dateTimeBlock),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'This reference is auto-generated once for the current silver intake session and stays stable while you finish the batch.',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              height: 1.5,
+              color: AddStockColors.textHint,
             ),
           ),
         ],
@@ -356,59 +234,122 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
     );
   }
 
-  // ── DATE + TIME CHIPS ────────────────────────────────────────
-  Widget _buildDateTimeRow(DateCardModel data) {
+  Widget _accentLine(double width, Color color, double opacity) {
+    return Container(
+      width: width,
+      height: 3,
+      decoration: BoxDecoration(
+        color: color.withOpacity(opacity),
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _StatusPill({
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.28)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.8,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DateTimeRow extends StatelessWidget {
+  final DateCardModel data;
+
+  const _DateTimeRow({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
     final timeParts = data.time.split(':');
     final cleanTime =
         timeParts.length >= 2 ? '${timeParts[0]} : ${timeParts[1]}' : data.time;
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
       children: [
-        _buildChip(
+        _DateChip(
           icon: Icons.calendar_today_rounded,
-          iconColor: SilverStockColors.accentCompliance, // Amber — was grey
-          subLabel: 'DATE',
+          iconColor: AddStockColors.accentCompliance,
+          label: 'DATE',
           value: data.date.toUpperCase(),
-          valueColor: SilverStockColors.textDark,
-          valueFontSize: 13,
-          chipBg: SilverStockColors.accentCompliance.withOpacity(0.07),
-          chipBorder: SilverStockColors.accentCompliance.withOpacity(0.25),
+          chipBg: AddStockColors.accentCompliance.withOpacity(0.07),
+          chipBorder: AddStockColors.accentCompliance.withOpacity(0.25),
+          valueColor: AddStockColors.textDark,
         ),
-        const SizedBox(width: 8),
-        Container(
-          width: 4,
-          height: 4,
-          decoration: const BoxDecoration(
-            color: SilverStockColors.textMuted,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 8),
-        _buildChip(
+        _DateChip(
           icon: Icons.access_time_rounded,
-          iconColor: SilverStockColors.success, // Green — live time
-          subLabel: 'TIME',
+          iconColor: AddStockColors.success,
+          label: 'TIME',
           value: cleanTime,
-          valueColor: SilverStockColors.success,
-          valueFontSize: 14,
-          chipBg: SilverStockColors.success.withOpacity(0.07),
-          chipBorder: SilverStockColors.success.withOpacity(0.25),
+          chipBg: AddStockColors.success.withOpacity(0.07),
+          chipBorder: AddStockColors.success.withOpacity(0.25),
+          valueColor: AddStockColors.success,
         ),
       ],
     );
   }
+}
 
-  Widget _buildChip({
-    required IconData icon,
-    required Color iconColor,
-    required String subLabel,
-    required String value,
-    required Color valueColor,
-    required double valueFontSize,
-    required Color chipBg,
-    required Color chipBorder,
-  }) {
+class _DateChip extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String value;
+  final Color chipBg;
+  final Color chipBorder;
+  final Color valueColor;
+
+  const _DateChip({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+    required this.chipBg,
+    required this.chipBorder,
+    required this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -435,7 +376,7 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                subLabel,
+                label,
                 style: GoogleFonts.inter(
                   fontSize: 9,
                   fontWeight: FontWeight.w900,
@@ -447,7 +388,7 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
               Text(
                 value,
                 style: GoogleFonts.manrope(
-                  fontSize: valueFontSize,
+                  fontSize: 13,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.3,
                   color: valueColor,
@@ -457,151 +398,6 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard>
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  // ── SUPPLIER INVOICE INPUT ───────────────────────────────────
-  Widget _buildSupplierInvoiceSection(
-      SilverStockController ctrl, Color accentColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Section label row
-        Row(
-          children: [
-            // Amber tag icon — colorful
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: SilverStockColors.accentCompliance.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(7),
-              ),
-              child: const Icon(
-                SilverStockIcons.invoiceSupplier,
-                size: 13,
-                color: SilverStockColors.accentCompliance,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              SilverStockStrings.supplierInvoiceId.toUpperCase(),
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.8,
-                color: SilverStockColors.textMuted,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: SilverStockColors.inputBgLocked,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: SilverStockColors.borderLight),
-              ),
-              child: Text(
-                'OPTIONAL',
-                style: GoogleFonts.inter(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.6,
-                  color: SilverStockColors.textHint,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-
-        // Input field
-        SizedBox(
-          height: 48,
-          child: TextField(
-            controller: ctrl.supplierInvoiceCtrl,
-            style: SilverStockStyles.inputText,
-            textCapitalization: TextCapitalization.characters,
-            decoration: InputDecoration(
-              hintText: 'e.g.  INV-2025-0042  or  SI/24-25/001',
-              hintStyle: SilverStockStyles.fieldHint,
-              // Silver-blue QR icon — colorful
-              prefixIcon: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: SilverStockColors.accentBasicInfo.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Icon(
-                    SilverStockIcons.invoiceSystem,
-                    size: 14,
-                    color: SilverStockColors.accentBasicInfo,
-                  ),
-                ),
-              ),
-              filled: true,
-              fillColor: SilverStockColors.inputBg,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: SilverStockColors.borderLight),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: SilverStockColors.borderLight),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: accentColor, width: 1.5),
-              ),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 8),
-
-        // Compliance note
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(
-              Icons.info_outline_rounded,
-              size: 13,
-              color: SilverStockColors.textHint,
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                'Enter your supplier\'s invoice reference for B2B GST traceability. '
-                'Stored against this batch and available in Purchase records.',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  height: 1.55,
-                  color: SilverStockColors.textHint,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // ── ACCENT LINE HELPER ───────────────────────────────────────
-  Widget _accentLine(double width, Color color, double opacity) {
-    return Container(
-      width: width,
-      height: 3,
-      decoration: BoxDecoration(
-        color: color.withOpacity(opacity),
-        borderRadius: BorderRadius.circular(2),
       ),
     );
   }

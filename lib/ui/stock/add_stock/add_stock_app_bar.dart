@@ -246,11 +246,24 @@ class _HoverBackButton extends StatefulWidget {
 class _HoverBackButtonState extends State<_HoverBackButton> {
   bool _isHovered = false;
 
+  void _updateHover(bool value) {
+    if (_isHovered == value) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isHovered == value) {
+        return;
+      }
+      setState(() => _isHovered = value);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
+      onEnter: (_) => _updateHover(true),
+      onExit: (_) => _updateHover(false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,

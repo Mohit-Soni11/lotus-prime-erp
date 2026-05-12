@@ -507,7 +507,7 @@ class _GoldRateReferenceCard extends StatelessWidget {
                     _rateChip(
                       'Pure / gm',
                       _money(ctrl.pureGoldRatePerGram),
-                      'fine gold',
+                      rateDate,
                     ),
                   ],
                 ),

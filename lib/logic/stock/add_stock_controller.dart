@@ -1,18 +1,3 @@
-// =============================================================================
-// FILE        : add_stock_controller.dart
-// MODULE      : Stock & Inventory
-// LAYER       : Logic / Controller
-// DESCRIPTION : Shared Add Stock controller for Gold, Diamond, Platinum,
-//               Antique, and Other metal categories.
-//
-// ⚠️  SILVER IS NOT HANDLED HERE.
-//     Silver has its own fully isolated controller:
-//     → lib/logic/stock/add_stock_silver/silver_stock_controller.dart
-//
-//     Passing StockCategory.silver to this controller will throw an
-//     AssertionError at construction time.
-// =============================================================================
-
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
@@ -121,28 +106,11 @@ class AddStockController extends ChangeNotifier {
   late final SupplierRepository _supplierRepo;
   late final PurchaseEntryRepository _purchaseRepo;
 
-  // Active row tracking — Delete key support (matches POS activeRowIndex behaviour).
-  String? _activeRowId;
-  String? get activeRowId => _activeRowId;
-
-  void setActiveRow(String rowId) {
-    _activeRowId = rowId;
-  }
-
-  /// Creates the shared Add Stock controller for Gold, Diamond, Platinum, Antique, Other.
-  ///
-  /// ⚠️  Do NOT pass [StockCategory.silver] here.
-  ///     Silver has its own isolated controller:
-  ///     → `lib/logic/stock/add_stock_silver/silver_stock_controller.dart`
   AddStockController({required StockCategory initialMetal}) {
-    assert(
-      initialMetal != StockCategory.silver,
-      'AddStockController does not handle Silver. '
-      'Use SilverStockController (lib/logic/stock/add_stock_silver/) instead.',
-    );
     _supplierRepo = SupplierRepository(_db);
     _purchaseRepo = PurchaseEntryRepository(db: _db);
     _selectedMetal = initialMetal;
+    _rows.add(_buildEmptyRow());
     _loadSuppliers();
     _loadPurityStockSummary();
     if (_selectedMetal == StockCategory.gold) {
@@ -164,8 +132,6 @@ class AddStockController extends ChangeNotifier {
 
   bool get canProceedFromPurity => _purityDisplay.trim().isNotEmpty;
 
-  /// Purity preset options for the selected metal.
-  /// Silver is NOT listed here — it is handled by SilverStockController.
   List<String> get purityOptions {
     switch (_selectedMetal) {
       case StockCategory.gold:
@@ -177,6 +143,8 @@ class AddStockController extends ChangeNotifier {
           '10K (417)',
           'Custom',
         ];
+      case StockCategory.silver:
+        return ['999 (Pure)', '925 (Sterling)', '800', '700', 'Custom'];
       case StockCategory.platinum:
         return ['950 Platinum', '900 Platinum', '850 Platinum', 'Custom'];
       case StockCategory.diamond:
@@ -184,18 +152,13 @@ class AddStockController extends ChangeNotifier {
       case StockCategory.antique:
       case StockCategory.other:
         return ['Standard', 'Custom'];
-      case StockCategory.silver:
-        // Silver is handled by SilverStockController — should never reach here.
-        assert(false, 'Silver purity options are in SilverStockController.');
-        return [];
     }
   }
 
-  /// Default HSN code for the selected metal.
-  /// Silver HSN is managed inside SilverStockController.
   String get defaultHsnCode {
     switch (_selectedMetal) {
       case StockCategory.gold:
+      case StockCategory.silver:
       case StockCategory.platinum:
         return JewelleryHsn.h7113.code;
       case StockCategory.diamond:
@@ -203,9 +166,6 @@ class AddStockController extends ChangeNotifier {
       case StockCategory.antique:
       case StockCategory.other:
         return JewelleryHsn.h7117.code;
-      case StockCategory.silver:
-        // Silver is handled by SilverStockController — should never reach here.
-        return JewelleryHsn.h7113.code;
     }
   }
 
@@ -240,10 +200,6 @@ class AddStockController extends ChangeNotifier {
   final TextEditingController supplierGstCtrl = TextEditingController();
   final TextEditingController gold24kManualCtrl = TextEditingController();
 
-  /// Supplier's own invoice reference — stored per batch for B2B / GST traceability.
-  /// Editable by the operator; not auto-generated. Persisted to Purchase records on save.
-  final TextEditingController supplierInvoiceCtrl = TextEditingController();
-
   String get sessionSupplierName => _sessionSupplierName;
   bool get sameForAll => _sameForAll;
   SupplierModel? get linkedSupplier => _linkedSupplier;
@@ -261,6 +217,7 @@ class AddStockController extends ChangeNotifier {
   double _gold24kRatePer10g = 0.0;
   double _gold22kRatePer10g = 0.0;
   double _gold18kRatePer10g = 0.0;
+  double? _manualGold24kRatePer10g;
   DateTime? _goldRateDate;
   bool _isLoadingGoldRates = false;
 
@@ -274,37 +231,34 @@ class AddStockController extends ChangeNotifier {
 
   double get selectedPurityBasePercent => _resolvePurityPercent(_purityDisplay);
 
+  double get effectiveGold24kRatePer10g {
+    if (_selectedMetal != StockCategory.gold) {
+      return 0.0;
+    }
+
+    if (_manualGold24kRatePer10g != null && _manualGold24kRatePer10g! > 0) {
+      return _manualGold24kRatePer10g!;
+    }
+
+    return _gold24kRatePer10g;
+  }
+
   double get selectedPurityRatePer10g {
     if (_selectedMetal != StockCategory.gold) {
       return 0.0;
     }
 
     final basePercent = selectedPurityBasePercent;
-    if (basePercent <= 0) {
+    final pureRate = effectiveGold24kRatePer10g;
+    if (basePercent <= 0 || pureRate <= 0) {
       return 0.0;
     }
 
-    if (_near(basePercent, 99.9) && _gold24kRatePer10g > 0) {
-      return _gold24kRatePer10g;
-    }
-    if (_near(basePercent, 91.6) && _gold22kRatePer10g > 0) {
-      return _gold22kRatePer10g;
-    }
-    if (_near(basePercent, 75.0) && _gold18kRatePer10g > 0) {
-      return _gold18kRatePer10g;
-    }
-    if (_gold24kRatePer10g > 0) {
-      return _gold24kRatePer10g * (basePercent / 100.0);
-    }
-    return 0.0;
+    return pureRate * (basePercent / 100.0);
   }
 
-  double get pureGoldRatePerGram => _gold24kRatePer10g > 0
-      ? _gold24kRatePer10g / 10.0
-      : (selectedPurityRatePer10g > 0 && selectedPurityBasePercent > 0
-          ? (selectedPurityRatePer10g / 10.0) /
-              (selectedPurityBasePercent / 100)
-          : 0.0);
+  double get pureGoldRatePerGram =>
+      effectiveGold24kRatePer10g > 0 ? effectiveGold24kRatePer10g / 10.0 : 0.0;
 
   double get selectedPurityRatePerGram =>
       selectedPurityRatePer10g > 0 ? selectedPurityRatePer10g / 10.0 : 0.0;
@@ -312,13 +266,8 @@ class AddStockController extends ChangeNotifier {
   bool get hasActiveRateSnapshot =>
       pureGoldRatePerGram > 0 && selectedPurityRatePer10g > 0;
 
-  void setManual24kRate(String value) {
-    final parsed = double.tryParse(value.replaceAll(',', '')) ?? 0.0;
-    _gold24kRatePer10g = parsed;
-    notifyListeners();
-  }
-
   String? _pendingFocusRowId;
+  String? _activeRowId;
 
   int get totalQuantity =>
       enteredRows.fold<int>(0, (sum, row) => sum + row.quantity);
@@ -436,9 +385,6 @@ class AddStockController extends ChangeNotifier {
         _gold22kRatePer10g = _parseRateText(latestRate.gold22k);
         _gold18kRatePer10g = _parseRateText(latestRate.gold18k);
         _goldRateDate = latestRate.rateDate;
-        if (gold24kManualCtrl.text.isEmpty && _gold24kRatePer10g > 0) {
-          gold24kManualCtrl.text = _gold24kRatePer10g.toStringAsFixed(0);
-        }
       } else {
         _gold24kRatePer10g = 0.0;
         _gold22kRatePer10g = 0.0;
@@ -450,6 +396,10 @@ class AddStockController extends ChangeNotifier {
       _gold22kRatePer10g = 0.0;
       _gold18kRatePer10g = 0.0;
       _goldRateDate = null;
+    }
+
+    if (_manualGold24kRatePer10g == null || _manualGold24kRatePer10g! <= 0) {
+      gold24kManualCtrl.text = _formatRateText(_gold24kRatePer10g);
     }
 
     _isLoadingGoldRates = false;
@@ -578,11 +528,7 @@ class AddStockController extends ChangeNotifier {
       _isApplyingSupplierProfile = true;
       supplierNameCtrl.text = fullSupplier.businessName;
       supplierMobileCtrl.text = fullSupplier.mobile;
-      supplierRegionCtrl.text = [
-        fullSupplier.addressLine1 ?? '',
-        fullSupplier.addressLine2 ?? '',
-        fullSupplier.state ?? '',
-      ].where((s) => s.isNotEmpty).join(', ');
+      supplierRegionCtrl.text = fullSupplier.state ?? '';
       supplierPanCtrl.text = fullSupplier.panNumber ?? '';
       supplierGstCtrl.text = fullSupplier.gstNumber ?? '';
       _isApplyingSupplierProfile = false;
@@ -676,7 +622,6 @@ class AddStockController extends ChangeNotifier {
   void addRow({bool requestFocus = false}) {
     final newRow = _buildEmptyRow();
     _rows.add(newRow);
-    _activeRowId = newRow.id;
     if (requestFocus) {
       _pendingFocusRowId = newRow.id;
     }
@@ -711,33 +656,59 @@ class AddStockController extends ChangeNotifier {
     }
   }
 
+  void setManual24kRate(String value) {
+    final normalized = value.replaceAll(',', '').trim();
+
+    if (normalized.isEmpty) {
+      _manualGold24kRatePer10g = null;
+      _emitChange(clearMessages: false);
+      return;
+    }
+
+    final parsed = double.tryParse(normalized);
+    if (parsed == null || parsed <= 0) {
+      _manualGold24kRatePer10g = null;
+      _emitChange(clearMessages: false);
+      return;
+    }
+
+    _manualGold24kRatePer10g = parsed;
+    _emitChange(clearMessages: false);
+  }
+
+  void setActiveRow(String rowId) {
+    _activeRowId = rowId;
+  }
+
+  void removeActiveRow() {
+    if (_rows.length <= 1) {
+      return;
+    }
+
+    final targetRowId =
+        _activeRowId != null && _rows.any((row) => row.id == _activeRowId)
+            ? _activeRowId!
+            : _rows.last.id;
+
+    removeRow(targetRowId);
+  }
+
   void removeRow(String rowId) {
-    // Allows deleting any row including the last — empty state shows when list is empty.
+    if (_rows.length <= 1) {
+      return;
+    }
     _rows.removeWhere((row) => row.id == rowId);
+    if (_rows.isEmpty) {
+      final fallbackRow = _buildEmptyRow();
+      _rows.add(fallbackRow);
+      _activeRowId = fallbackRow.id;
+    } else if (_activeRowId == rowId) {
+      _activeRowId = _rows.last.id;
+    }
     if (_pendingFocusRowId == rowId) {
       _pendingFocusRowId = null;
     }
-    if (_activeRowId == rowId) {
-      _activeRowId = _rows.isNotEmpty ? _rows.last.id : null;
-    }
     _emitChange();
-  }
-
-  // Delete key shortcut — removes the currently focused row (mirrors POS removeActiveItem).
-  void removeActiveRow() {
-    if (_activeRowId == null || _rows.isEmpty) return;
-    final idToRemove = _activeRowId!;
-    final removedIndex = _rows.indexWhere((r) => r.id == idToRemove);
-    removeRow(idToRemove);
-    // Focus previous row after delete
-    Future.delayed(const Duration(milliseconds: 50), () {
-      if (_rows.isEmpty) return;
-      final focusIndex =
-          (removedIndex > 0 ? removedIndex - 1 : 0).clamp(0, _rows.length - 1);
-      _pendingFocusRowId = _rows[focusIndex].id;
-      _activeRowId = _rows[focusIndex].id;
-      notifyListeners();
-    });
   }
 
   void updateItemName(String rowId, String value) {
@@ -1055,8 +1026,6 @@ class AddStockController extends ChangeNotifier {
         return saved;
       }
 
-      // Generic save path — Platinum, Diamond, Antique, Other.
-      // Silver has its own save path in SilverStockController.saveAll().
       int saved = 0;
       for (int index = 0; index < rowsToSave.length; index++) {
         final row = rowsToSave[index];
@@ -1185,7 +1154,6 @@ class AddStockController extends ChangeNotifier {
                 huid: row.huid.trim().isEmpty
                     ? null
                     : row.huid.trim().toUpperCase(),
-                hsnCode: row.hsnCode.trim().isEmpty ? null : row.hsnCode.trim(),
                 labourCharge: row.makingCharges,
                 labourType: row.makingChargesType,
                 purityLabel: composedPurityLabel(row),
@@ -1209,8 +1177,9 @@ class AddStockController extends ChangeNotifier {
   }
 
   void resetAllRows() {
-    _rows.clear();
-    // ✅ FIX: Start empty after reset — user adds rows with F2 (like POS)
+    _rows
+      ..clear()
+      ..add(_buildEmptyRow());
     _pendingFocusRowId = null;
     _activeRowId = null;
     _errorMessage = null;
@@ -1231,15 +1200,30 @@ class AddStockController extends ChangeNotifier {
     supplierRegionCtrl.clear();
     supplierPanCtrl.clear();
     supplierGstCtrl.clear();
-    supplierInvoiceCtrl.clear();
     _gstEnabled = false;
-    // ✅ FIX: Start empty after batch reset — user adds rows with F2 (like POS)
+    _purityDisplay = '';
+    _isCustomPurity = false;
+    _rows
+      ..clear()
+      ..add(_buildEmptyRow());
     _pendingFocusRowId = null;
     _activeRowId = null;
+    _manualGold24kRatePer10g = null;
+    gold24kManualCtrl.text = _formatRateText(_gold24kRatePer10g);
     _errorMessage = null;
     _successMessage = null;
     _step = AddStockStep.purity;
     notifyListeners();
+  }
+
+  String _formatRateText(double value) {
+    if (value <= 0) {
+      return '';
+    }
+
+    return value == value.roundToDouble()
+        ? value.toStringAsFixed(0)
+        : value.toStringAsFixed(2);
   }
 
   double _parseRateText(String raw) {
@@ -1321,7 +1305,6 @@ class AddStockController extends ChangeNotifier {
     supplierPanCtrl.dispose();
     supplierGstCtrl.dispose();
     gold24kManualCtrl.dispose();
-    supplierInvoiceCtrl.dispose();
     super.dispose();
   }
 }

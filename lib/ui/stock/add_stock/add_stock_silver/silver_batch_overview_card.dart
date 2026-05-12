@@ -1,380 +1,257 @@
-// =============================================================================
-// FILE        : silver_batch_overview_card.dart
-// MODULE      : Stock & Inventory — Silver
-// LAYER       : UI / Component
-// DESCRIPTION : Compact Batch Overview card for Silver Add Stock (Step 2).
-//               ✅ Animated GST / NORMAL toggle pill.
-//               ✅ Live reactive stats via ListenableBuilder.
-//               ✅ Shows purity, pieces, gross / net weight only.
-//               ✅ Colorful semantic icons from SilverStockColors accent palette.
-//               ✅ 100% Silver-themed — zero Gold/POS color imports.
-// =============================================================================
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.dart';
+import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
+import 'package:lotus_erp/ui/stock/add_stock/stock_metal_ui.dart';
 
-import '../../../../logic/stock/add_stock_silver/silver_stock_controller.dart';
-import '../../../../theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
-
-class SilverBatchOverviewCard extends StatefulWidget {
+class SilverBatchOverviewCard extends StatelessWidget {
   final SilverStockController ctrl;
 
-  const SilverBatchOverviewCard({super.key, required this.ctrl});
-
-  @override
-  State<SilverBatchOverviewCard> createState() =>
-      _SilverBatchOverviewCardState();
-}
-
-class _SilverBatchOverviewCardState extends State<SilverBatchOverviewCard>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _entryCtrl;
-  late final Animation<double> _fadeAnim;
-  late final Animation<Offset> _slideAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _entryCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 480),
-    );
-    _fadeAnim = CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOutCubic);
-    _slideAnim = Tween<Offset>(
-      begin: const Offset(0, 0.06),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOutCubic));
-
-    Future.microtask(() {
-      if (mounted) _entryCtrl.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _entryCtrl.dispose();
-    super.dispose();
-  }
+  const SilverBatchOverviewCard({
+    super.key,
+    required this.ctrl,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnim,
-      child: SlideTransition(
-        position: _slideAnim,
-        child: ListenableBuilder(
-          listenable: widget.ctrl,
-          builder: (_, __) => _buildCard(),
-        ),
-      ),
-    );
-  }
-
-  // ── MAIN CARD ────────────────────────────────────────────────
-  Widget _buildCard() {
-    final ctrl = widget.ctrl;
-    final isGst = ctrl.gstEnabled;
+    final ui = stockMetalUiFor(ctrl.selectedMetal);
+    final purity = ctrl.purityDisplay.trim().isEmpty
+        ? 'Purity Not Set'
+        : ctrl.purityDisplay.trim();
 
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       decoration: BoxDecoration(
-        color: SilverStockColors.panelBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: SilverStockColors.borderLight),
+        color: AddStockColors.cardBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AddStockColors.cardBorder),
         boxShadow: const [
           BoxShadow(
-            color: SilverStockColors.shadowLight,
-            blurRadius: 12,
-            offset: Offset(0, 4),
+            color: AddStockColors.shadowLight,
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+          BoxShadow(
+            color: AddStockColors.shadowMedium,
+            blurRadius: 20,
+            offset: Offset(0, 6),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildHeaderRow(isGst, ctrl),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _accentLine(20, ui.accent, 1.0),
+                        const SizedBox(height: 3),
+                        _accentLine(13, ui.accent, 0.45),
+                        const SizedBox(height: 3),
+                        _accentLine(7, ui.accent, 0.18),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'BATCH OVERVIEW',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.2,
+                              color: AddStockColors.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${ui.title} intake • ${ctrl.enteredRowCount} entered row${ctrl.enteredRowCount == 1 ? '' : 's'}',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: ctrl.gstEnabled
+                                  ? AddStockColors.success
+                                  : AddStockColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              _GstStatusPill(
+                isGst: ctrl.gstEnabled,
+                accent: ui.accent,
+                onTap: () => ctrl.toggleGst(!ctrl.gstEnabled),
+              ),
+            ],
+          ),
+          Container(
+            height: 1,
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(vertical: 16),
+            color: AddStockColors.cardBorder,
+          ),
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  gradient: ui.gradient,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: ui.accent.withOpacity(0.18),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(ui.icon, color: ui.textOnGradient, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _pill(ui.title.toUpperCase(), ui.accent),
+                    _pill(purity.toUpperCase(), AddStockColors.accentPricing),
+                    _pill('BATCH 1', AddStockColors.textBody),
+                  ],
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 14),
-          _buildGradientDivider(isGst),
-          const SizedBox(height: 14),
-          _buildIdentityRow(ctrl),
-          const SizedBox(height: 16),
-          _buildStatsGrid(ctrl),
+          Row(
+            children: [
+              Expanded(
+                child: _StatTile(
+                  label: 'PIECES',
+                  value: '${ctrl.totalQuantity}',
+                  icon: Icons.tag_rounded,
+                  iconColor: AddStockColors.accentInventory,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _StatTile(
+                  label: 'GROSS WT',
+                  value: '${ctrl.totalGrossWeight.toStringAsFixed(3)} g',
+                  icon: AddStockIcons.weight,
+                  iconColor: ui.accent,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _StatTile(
+                  label: 'NET WT',
+                  value: '${ctrl.totalNetWeight.toStringAsFixed(3)} g',
+                  icon: AddStockIcons.netWeight,
+                  iconColor: AddStockColors.success,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  // ── HEADER ───────────────────────────────────────────────────
-  Widget _buildHeaderRow(bool isGst, SilverStockController ctrl) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Icon badge — purple (inventory accent)
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: SilverStockColors.accentInventory.withOpacity(0.10),
-            borderRadius: BorderRadius.circular(9),
-            border: Border.all(
-              color: SilverStockColors.accentInventory.withOpacity(0.25),
-            ),
-          ),
-          child: const Icon(
-            SilverStockIcons.inventory,
-            size: 17,
-            color: SilverStockColors.accentInventory,
-          ),
-        ),
-        const SizedBox(width: 12),
-
-        // Title + subtitle
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                SilverStockStrings.batchOverview,
-                style: SilverStockStyles.panelHeader,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                SilverStockStrings.batchInsights,
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  color: SilverStockColors.textMuted,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(width: 12),
-
-        // GST / NORMAL toggle pill
-        _GstNormalToggle(
-          isGst: isGst,
-          onToggle: (value) => ctrl.toggleGst(value),
-        ),
-      ],
-    );
-  }
-
-  // ── GRADIENT DIVIDER ─────────────────────────────────────────
-  Widget _buildGradientDivider(bool isGst) {
-    final accentColor =
-        isGst ? SilverStockColors.success : SilverStockColors.brandSilver;
+  Widget _accentLine(double width, Color color, double opacity) {
     return Container(
-      height: 1.5,
-      width: double.infinity,
+      width: width,
+      height: 3,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            accentColor.withOpacity(0.55),
-            accentColor.withOpacity(0.18),
-            Colors.transparent,
-          ],
-        ),
+        color: color.withOpacity(opacity),
+        borderRadius: BorderRadius.circular(2),
       ),
     );
   }
 
-  // ── IDENTITY ROW ─────────────────────────────────────────────
-  Widget _buildIdentityRow(SilverStockController ctrl) {
-    final purity = ctrl.purityDisplay.trim().isEmpty
-        ? 'Purity Not Set'
-        : ctrl.purityDisplay;
-
-    return Row(
-      children: [
-        // Silver circle orb
-        Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFFDDE7ED), SilverStockColors.brandSilver],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: SilverStockColors.brandSilver.withOpacity(0.3),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: const Icon(Icons.water_drop_rounded,
-              size: 14, color: Colors.white),
-        ),
-        const SizedBox(width: 10),
-
-        Text(
-          'Silver',
-          style: GoogleFonts.manrope(
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            color: SilverStockColors.textDark,
-          ),
-        ),
-
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Container(
-            width: 4,
-            height: 4,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: SilverStockColors.textMuted,
-            ),
-          ),
-        ),
-
-        // Purity badge
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: SilverStockColors.brandSilver.withOpacity(0.09),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: SilverStockColors.brandSilver.withOpacity(0.28),
-            ),
-          ),
-          child: Text(
-            purity,
-            style: GoogleFonts.manrope(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: SilverStockColors.brandSilver,
-              letterSpacing: 0.3,
-            ),
-          ),
-        ),
-
-        const Spacer(),
-
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: SilverStockColors.inputBgLocked,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: SilverStockColors.borderLight),
-          ),
-          child: Text(
-            '1 Batch',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: SilverStockColors.textMuted,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ── STATS GRID — 3 tiles only (Est Cost & Est Sale removed) ──
-  Widget _buildStatsGrid(SilverStockController ctrl) {
-    final stats = [
-      _StatTile(
-        label: SilverStockStrings.overviewPieces,
-        value: ctrl.totalQuantity.toString(),
-        icon: SilverStockIcons.quantity,
-        iconColor: SilverStockColors.accentInventory, // Purple
+  Widget _pill(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withOpacity(0.20)),
       ),
-      _StatTile(
-        label: SilverStockStrings.overviewGross,
-        value: '${ctrl.totalGrossWeight.toStringAsFixed(3)} g',
-        icon: SilverStockIcons.weight,
-        iconColor: SilverStockColors.accentMetal, // Steel blue
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+          color: color,
+        ),
       ),
-      _StatTile(
-        label: SilverStockStrings.overviewNet,
-        value: '${ctrl.totalNetWeight.toStringAsFixed(3)} g',
-        icon: SilverStockIcons.netWeight,
-        iconColor: SilverStockColors.accentMetal, // Steel blue
-      ),
-    ];
-
-    return Row(
-      children: [
-        Expanded(child: stats[0]),
-        const SizedBox(width: 8),
-        Expanded(child: stats[1]),
-        const SizedBox(width: 8),
-        Expanded(child: stats[2]),
-      ],
     );
   }
 }
 
-// ════════════════════════════════════════════════════════════════
-// GST / NORMAL ANIMATED TOGGLE PILL
-// ════════════════════════════════════════════════════════════════
-class _GstNormalToggle extends StatelessWidget {
+class _GstStatusPill extends StatelessWidget {
   final bool isGst;
-  final ValueChanged<bool> onToggle;
+  final Color accent;
+  final VoidCallback onTap;
 
-  const _GstNormalToggle({required this.isGst, required this.onToggle});
-
-  Color get _accentColor =>
-      isGst ? SilverStockColors.success : SilverStockColors.brandSilver;
+  const _GstStatusPill({
+    required this.isGst,
+    required this.accent,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => onToggle(!isGst),
+    final activeColor = isGst ? AddStockColors.success : accent;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 260),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        duration: const Duration(milliseconds: 220),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isGst
-              ? SilverStockColors.success.withOpacity(0.07)
-              : SilverStockColors.brandSilver.withOpacity(0.07),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: _accentColor.withOpacity(0.36),
-            width: 1.5,
-          ),
+          color: activeColor.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: activeColor.withOpacity(0.28)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 260),
-              width: 7,
-              height: 7,
+            Container(
+              width: 6,
+              height: 6,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _accentColor,
-                boxShadow: [
-                  BoxShadow(
-                    color: _accentColor.withOpacity(0.45),
-                    blurRadius: 4,
-                    spreadRadius: 1,
-                  ),
-                ],
+                color: activeColor,
               ),
             ),
-            const SizedBox(width: 7),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 260),
+            const SizedBox(width: 6),
+            Text(
+              isGst ? 'GST BILL' : 'NORMAL',
               style: GoogleFonts.inter(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.w900,
-                letterSpacing: 0.9,
-                color: _accentColor,
+                letterSpacing: 0.8,
+                color: activeColor,
               ),
-              child: Text(isGst ? 'GST BILL' : 'NORMAL'),
             ),
-            const SizedBox(width: 7),
-            Icon(Icons.swap_horiz_rounded,
-                size: 14, color: _accentColor.withOpacity(0.7)),
           ],
         ),
       ),
@@ -382,14 +259,11 @@ class _GstNormalToggle extends StatelessWidget {
   }
 }
 
-// ════════════════════════════════════════════════════════════════
-// STAT TILE — individual compact stat cell
-// ════════════════════════════════════════════════════════════════
 class _StatTile extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
-  final Color iconColor; // Specific semantic color per tile
+  final Color iconColor;
 
   const _StatTile({
     required this.label,
@@ -403,17 +277,15 @@ class _StatTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: SilverStockColors.inputBg,
+        color: AddStockColors.inputBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: SilverStockColors.borderLight),
+        border: Border.all(color: AddStockColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
-              // Colored icon mini-badge
               Container(
                 width: 20,
                 height: 20,
@@ -432,7 +304,7 @@ class _StatTile extends StatelessWidget {
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
-                    color: SilverStockColors.textMuted,
+                    color: AddStockColors.textMuted,
                   ),
                 ),
               ),
@@ -444,7 +316,7 @@ class _StatTile extends StatelessWidget {
             style: GoogleFonts.manrope(
               fontSize: 13,
               fontWeight: FontWeight.w800,
-              color: SilverStockColors.textDark,
+              color: AddStockColors.textDark,
               height: 1,
             ),
           ),
