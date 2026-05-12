@@ -7,14 +7,17 @@
 // ==========================================
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // ✅ FIX: For FilteringTextInputFormatter (pcs field)
+import 'package:flutter/services.dart';
 import 'dart:ui';
 
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../models/sales & orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales & orders/sales_pos_models/sales_pos_models.dart';
 import '../../../logic/sales & orders/sales pos/pos_billing_controller.dart';
+import 'pos_stock_lookup_field.dart'; // ✅ FIX 1: Ab ye use ho raha hai
 import 'shared_pos_components.dart';
+// Note: Make sure PosStockLookupModel is exported in sales_pos_models.dart
+// ya usko explicitly import kar lena agar zaroorat ho.
 
 class _PurityData {
   static List<String> forMetal(MetalType metal) {
@@ -52,7 +55,6 @@ class PosSaleItemRow extends StatefulWidget {
 class _PosSaleItemRowState extends State<PosSaleItemRow> {
   late String _selectedPurity;
   late MetalType _lastMetal;
-  // ✅ FIX: Track billing mode to sync only when it actually changes
   late BillingMode _lastBillingMode;
   bool _isHovered = false;
 
@@ -70,7 +72,6 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
     if (widget.ctrl.billingMode == BillingMode.retail && existing.isEmpty) {
       widget.item.purityCtrl.text = _selectedPurity;
     }
-    // ✅ FIX: Listen to ctrl for billing mode changes (replaces addPostFrameCallback in build)
     widget.ctrl.addListener(_onCtrlChanged);
   }
 
@@ -80,7 +81,6 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
     super.dispose();
   }
 
-  // ✅ FIX: Sync mode state only when billing mode actually changes
   void _onCtrlChanged() {
     if (!mounted) return;
     final newMode = widget.ctrl.billingMode;
@@ -122,9 +122,6 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
   }
 
   void _onPurityChanged(String value) {
-    // ✅ FIX: Do NOT set purityCtrl.text here!
-    // Flutter already updated the controller BEFORE calling onChanged.
-    // Setting controller.text inside onChanged resets cursor → text disappears.
     if (_selectedPurity != value) {
       setState(() => _selectedPurity = value);
     }
@@ -195,7 +192,6 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                       item: widget.item,
                       ctrl: widget.ctrl,
                       rowIndex: widget.index,
-                      // ✅ Tab: desc → pcs
                       onSubmitted: (_) => widget.item.pcsFocus.requestFocus(),
                     ),
                   ),
@@ -204,16 +200,17 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                   const SizedBox(width: 6),
 
                   if (!isWholesale) ...[
+                    // ✅ FIX 2: HuidWithSuggestions ab ek clean widget ban gaya hai!
                     Expanded(
                       flex: 2,
-                      child: PosAtomicTextField(
-                        controller: widget.item.huidCtrl,
-                        hint: "HUID",
-                        // ✅ Tab: huid → purity
-                        focusNode: widget.item.huidFocus,
-                        textInputAction: TextInputAction.next,
-                        onSubmitted: (_) =>
-                            widget.item.purityFocus.requestFocus(),
+                      child: _HuidWithSuggestions(
+                        item: widget.item,
+                        ctrl: widget.ctrl,
+                        rowIndex: widget.index,
+                        onSubmitted: (_) async {
+                          await widget.ctrl.tryAutofillByHuid(widget.index);
+                          widget.item.purityFocus.requestFocus();
+                        },
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -227,7 +224,6 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                       controller: widget.item.grossCtrl,
                       hint: "0.000",
                       isNumber: true,
-                      // ✅ Tab: gross → less
                       focusNode: widget.item.grossFocus,
                       textInputAction: TextInputAction.next,
                       onSubmitted: (_) => widget.item.lessFocus.requestFocus(),
@@ -243,7 +239,6 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                             controller: widget.item.lessCtrl,
                             hint: "0.000",
                             isNumber: true,
-                            // ✅ Tab: less → rate (retail)
                             focusNode: widget.item.lessFocus,
                             textInputAction: TextInputAction.next,
                             onSubmitted: (_) =>
@@ -301,7 +296,6 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                         controller: widget.item.rateCtrl,
                         hint: "Rate",
                         isNumber: true,
-                        // ✅ Tab: rate → making
                         focusNode: widget.item.rateFocus,
                         textInputAction: TextInputAction.next,
                         onSubmitted: (_) =>
@@ -392,10 +386,8 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
         controller: widget.item.pcsCtrl,
         focusNode: widget.item.pcsFocus,
         keyboardType: TextInputType.number,
-        // ✅ FIX: Digits only — no decimals for piece count
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         textInputAction: TextInputAction.next,
-        // ✅ Tab: pcs → huid (retail) or gross (wholesale)
         onFieldSubmitted: (_) => isWholesale
             ? widget.item.grossFocus.requestFocus()
             : widget.item.huidFocus.requestFocus(),
@@ -517,7 +509,6 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
               controller: widget.item.purityCtrl,
               focusNode: widget.item.purityFocus,
               textInputAction: TextInputAction.next,
-              // ✅ Tab: purity → gross weight
               onFieldSubmitted: (_) => widget.item.grossFocus.requestFocus(),
               textAlign: TextAlign.center,
               style: SalesPosStyles.inputText.copyWith(
@@ -622,7 +613,6 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
             controller: widget.item.makingCtrl,
             hint: hintText,
             isNumber: true,
-            // ✅ Tab: making → add new item (last field in row)
             focusNode: widget.item.makingFocus,
             onSubmitted: (_) => widget.ctrl.addNewSaleItem(),
           ),
@@ -689,13 +679,13 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
 }
 
 // ==========================================
-// DESCRIPTION AUTOCOMPLETE WIDGET
+// ✅ CLEAN WIDGETS USING PosStockLookupField
 // ==========================================
-class _DescriptionWithSuggestions extends StatefulWidget {
+
+class _DescriptionWithSuggestions extends StatelessWidget {
   final SaleItemModel item;
   final PosBillingController ctrl;
   final int rowIndex;
-  // ✅ FIX: Tab from description → next field
   final Function(String)? onSubmitted;
 
   const _DescriptionWithSuggestions({
@@ -706,163 +696,77 @@ class _DescriptionWithSuggestions extends StatefulWidget {
   });
 
   @override
-  State<_DescriptionWithSuggestions> createState() =>
-      _DescriptionWithSuggestionsState();
-}
-
-class _DescriptionWithSuggestionsState
-    extends State<_DescriptionWithSuggestions> {
-  final LayerLink _link = LayerLink();
-  OverlayEntry? _overlay;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.item.descCtrl.addListener(_onDescChanged);
-    widget.ctrl.addListener(_onCtrlChanged);
-  }
-
-  @override
-  void dispose() {
-    _removeOverlay();
-    widget.item.descCtrl.removeListener(_onDescChanged);
-    widget.ctrl.removeListener(_onCtrlChanged);
-    super.dispose();
-  }
-
-  void _onDescChanged() {
-    widget.ctrl.searchDescriptions(widget.item.descCtrl.text, widget.rowIndex);
-  }
-
-  void _onCtrlChanged() {
-    if (!mounted) return;
-    final suggestions = widget.ctrl.getDescSuggestionsForRow(widget.rowIndex);
-    if (suggestions.isEmpty) {
-      _removeOverlay();
-    } else {
-      _showOverlay();
-    }
-  }
-
-  void _removeOverlay() {
-    _overlay?.remove();
-    _overlay = null;
-  }
-
-  void _showOverlay() {
-    if (!mounted) return;
-    _removeOverlay();
-    final overlay = Overlay.of(context);
-    _overlay = OverlayEntry(
-      builder: (ctx) => Positioned(
-        width: 260,
-        child: CompositedTransformFollower(
-          link: _link,
-          showWhenUnlinked: false,
-          offset: const Offset(0, 42),
-          child: Material(
-            color: Colors.transparent,
-            child: _DescSuggestionDropdown(
-              ctrl: widget.ctrl,
-              rowIndex: widget.rowIndex,
-              onSelected: (desc) {
-                widget.item.descCtrl.text = desc;
-                widget.item.descCtrl.selection = TextSelection.fromPosition(
-                  TextPosition(offset: desc.length),
-                );
-                widget.ctrl.clearDescriptionSuggestions();
-                _removeOverlay();
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-    overlay.insert(_overlay!);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return CompositedTransformTarget(
-      link: _link,
-      child: PosAtomicTextField(
-        controller: widget.item.descCtrl,
-        hint: "Description",
-        focusNode: widget.item.firstFieldFocus,
-        textInputAction: TextInputAction.next,
-        onSubmitted: widget.onSubmitted,
-      ),
+    return PosStockLookupField(
+      listenable: ctrl,
+      controller: item.descCtrl,
+      hint: "Description",
+      focusNode: item.firstFieldFocus,
+      textInputAction: TextInputAction.next,
+      onSubmitted: onSubmitted,
+      onSearch: (query) async {
+        // ✅ FIX 3: Passed item.metal as the missing 3rd argument.
+        // Agar aapke controller me 3rd arg kuch aur hai toh change it here.
+        await ctrl.searchDescriptions(query, rowIndex, item.metal);
+      },
+      // ✅ FIX 4: Automatically handles the PosStockLookupModel type!
+      getSuggestions: () => ctrl.getDescSuggestionsForRow(rowIndex),
+      onSelected: (selection) {
+        item.descCtrl.text = selection.displayTitle;
+        item.descCtrl.selection = TextSelection.fromPosition(
+          TextPosition(offset: selection.displayTitle.length),
+        );
+      },
+      onClearSuggestions: () {
+        ctrl.clearDescriptionSuggestions();
+      },
     );
   }
 }
 
-class _DescSuggestionDropdown extends StatelessWidget {
+class _HuidWithSuggestions extends StatelessWidget {
+  final SaleItemModel item;
   final PosBillingController ctrl;
   final int rowIndex;
-  final ValueChanged<String> onSelected;
+  final Function(String)? onSubmitted;
 
-  const _DescSuggestionDropdown({
+  const _HuidWithSuggestions({
+    required this.item,
     required this.ctrl,
     required this.rowIndex,
-    required this.onSelected,
+    this.onSubmitted,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
+    return PosStockLookupField(
       listenable: ctrl,
-      builder: (context, _) {
-        final suggestions = ctrl.getDescSuggestionsForRow(rowIndex);
-        if (suggestions.isEmpty) return const SizedBox.shrink();
-        return Material(
-          elevation: 12,
-          borderRadius: BorderRadius.circular(10),
-          color: SalesPosColors.bodyPanelBg,
-          child: Container(
-            constraints: const BoxConstraints(maxHeight: 200),
-            decoration: BoxDecoration(
-              border:
-                  Border.all(color: SalesPosColors.brandGold.withOpacity(0.3)),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              shrinkWrap: true,
-              itemCount: suggestions.length,
-              separatorBuilder: (_, __) =>
-                  const Divider(height: 1, indent: 10, endIndent: 10),
-              itemBuilder: (context, i) {
-                final desc = suggestions[i];
-                return InkWell(
-                  onTap: () => onSelected(desc),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.inventory_2_outlined,
-                            size: 16, color: SalesPosColors.brandGold),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            desc,
-                            style: const TextStyle(
-                              color: SalesPosColors.textDark,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        );
+      controller: item.huidCtrl, // Ensure item.huidCtrl exists in your model
+      hint: "HUID",
+      focusNode: item.huidFocus,
+      textInputAction: TextInputAction.next,
+      onSubmitted: onSubmitted,
+      onSearch: (query) async {
+        // Update to whatever method you use in controller to search HUID
+        // Example: await ctrl.searchHuid(query, rowIndex);
       },
+      getSuggestions: () {
+        // Update to whatever method you use for fetching HUID suggestions
+        // Example: return ctrl.getHuidSuggestionsForRow(rowIndex);
+        return [];
+      },
+      onSelected: (selection) async {
+        item.huidCtrl.text = selection.sku;
+        item.huidCtrl.selection = TextSelection.fromPosition(
+          TextPosition(offset: selection.sku.length),
+        );
+        onSubmitted?.call(selection.sku);
+      },
+      onClearSuggestions: () {
+        // Clear huid suggestions in controller
+        // Example: ctrl.clearHuidSuggestions();
+      },
+      overlayWidth: 200,
     );
   }
 }

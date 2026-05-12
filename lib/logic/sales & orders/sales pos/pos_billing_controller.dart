@@ -24,12 +24,15 @@ import 'dart:async'; // ✅ FIX: Timer for debounce
 import '../../../models/sales & orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales & orders/sales_pos_models/sales_pos_models.dart';
 import '../../../models/sales & orders/sales_pos_models/pos_hold_bill_model.dart';
+import '../../../models/sales & orders/sales_pos_models/pos_stock_lookup_model.dart';
 import '../../../database/db/app_database.dart';
 import '../../../models/customer/customer_list/customer_list_ui_model.dart';
 import '../../../models/customer/customer_enums/customer_list_enums.dart';
 
 // ✅ NAYA IMPORT — Fuzzy Search Engine
 import '../../../helpers/search/fuzzy_search_helper.dart';
+import '../../../repositories/sales & orders/pos/pos_hold_repository.dart';
+import '../../../repositories/sales & orders/pos/pos_stock_lookup_repository.dart';
 import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
 import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
 
@@ -49,7 +52,9 @@ class PosBillingController extends ChangeNotifier {
 
   // --- DATABASE ---
   final AppDatabase _db = AppDatabase();
+  final PosHoldRepository _holdRepo = PosHoldRepository();
   final ShopSetupRepository _shopRepo = ShopSetupRepository();
+  final PosStockLookupRepository _stockLookupRepo = PosStockLookupRepository();
 
   Future<void> _initShopName() async {
     try {
@@ -185,58 +190,160 @@ class PosBillingController extends ChangeNotifier {
 
   // ==========================================
   // ITEM DESCRIPTION SUGGESTIONS FEATURE
-  // ✅ UPGRADED: Google-style Fuzzy Search
-  // Per-row: sirf active row mein suggestions dikhti hain
+  // Stock-linked lookup for description and HUID.
+  // Suggestions are filtered by the selected metal and only show available
+  // stock. Selecting one snapshot autofills the row safely.
   // ==========================================
-  List<String> descriptionSuggestions = [];
+  List<PosStockLookupModel> _descriptionSuggestions = [];
+  List<PosStockLookupModel> _huidSuggestions = [];
   int _descSuggestionRowIndex = -1;
-  // ✅ FIX: Debounce timer — DB query only after user stops typing
+  int _huidSuggestionRowIndex = -1;
   Timer? _descSearchTimer;
+  Timer? _huidSearchTimer;
 
-  Future<void> searchDescriptions(String query, int rowIndex) async {
+  Future<void> searchDescriptions(
+    String query,
+    int rowIndex,
+    MetalType metal,
+  ) async {
     _descSearchTimer?.cancel();
     final term = query.toLowerCase().trim();
-    if (term.length < 2) {
-      descriptionSuggestions = [];
+    if (term.isEmpty) {
+      _descriptionSuggestions = [];
       _descSuggestionRowIndex = -1;
       notifyListeners();
       return;
     }
-    // ✅ Wait 300ms after last keystroke before hitting DB
-    _descSearchTimer = Timer(const Duration(milliseconds: 300), () async {
+    _descSearchTimer = Timer(const Duration(milliseconds: 220), () async {
       try {
-        final rows = await _db.select(_db.stockItems).get();
-        final matched = FuzzySearchHelper.searchObjects(
-          items: rows,
+        _descriptionSuggestions = await _stockLookupRepo.searchByDescription(
           query: term,
-          getSearchText: (row) => '${row.itemName} ${row.description ?? ""}',
-          maxResults: 8,
-          threshold: 0.30,
+          metal: metal,
         );
-        final seen = <String>{};
-        descriptionSuggestions = matched
-            .map((r) => r.itemName as String)
-            .where((name) => seen.add(name))
-            .toList();
         _descSuggestionRowIndex = rowIndex;
-      } catch (e) {
-        descriptionSuggestions = [];
+      } catch (_) {
+        _descriptionSuggestions = [];
         _descSuggestionRowIndex = -1;
       }
       notifyListeners();
     });
   }
 
-  // Sirf us row ke liye suggestions return karo
-  List<String> getDescSuggestionsForRow(int rowIndex) {
-    if (_descSuggestionRowIndex == rowIndex) return descriptionSuggestions;
-    return [];
+  Future<void> searchHuids(
+    String query,
+    int rowIndex,
+    MetalType metal,
+  ) async {
+    _huidSearchTimer?.cancel();
+    final term = query.toLowerCase().trim();
+    if (term.isEmpty) {
+      _huidSuggestions = [];
+      _huidSuggestionRowIndex = -1;
+      notifyListeners();
+      return;
+    }
+    _huidSearchTimer = Timer(const Duration(milliseconds: 120), () async {
+      try {
+        _huidSuggestions = await _stockLookupRepo.searchByHuid(
+          query: term,
+          metal: metal,
+        );
+        _huidSuggestionRowIndex = rowIndex;
+      } catch (_) {
+        _huidSuggestions = [];
+        _huidSuggestionRowIndex = -1;
+      }
+      notifyListeners();
+    });
+  }
+
+  List<PosStockLookupModel> getDescSuggestionsForRow(int rowIndex) {
+    if (_descSuggestionRowIndex == rowIndex) return _descriptionSuggestions;
+    return const [];
+  }
+
+  List<PosStockLookupModel> getHuidSuggestionsForRow(int rowIndex) {
+    if (_huidSuggestionRowIndex == rowIndex) return _huidSuggestions;
+    return const [];
   }
 
   void clearDescriptionSuggestions() {
-    descriptionSuggestions = [];
+    _descriptionSuggestions = [];
     _descSuggestionRowIndex = -1;
     notifyListeners();
+  }
+
+  void clearHuidSuggestions() {
+    _huidSuggestions = [];
+    _huidSuggestionRowIndex = -1;
+    notifyListeners();
+  }
+
+  void clearAllStockSuggestions() {
+    _descriptionSuggestions = [];
+    _huidSuggestions = [];
+    _descSuggestionRowIndex = -1;
+    _huidSuggestionRowIndex = -1;
+    notifyListeners();
+  }
+
+  Future<void> tryAutofillByHuid(int rowIndex) async {
+    if (rowIndex < 0 || rowIndex >= saleItems.length) {
+      return;
+    }
+
+    final item = saleItems[rowIndex];
+    final query = item.huidCtrl.text.trim();
+    if (query.isEmpty) {
+      return;
+    }
+
+    final match = await _stockLookupRepo.findExactByHuid(
+      query: query,
+      metal: item.metal,
+    );
+    if (match == null) {
+      return;
+    }
+
+    applyStockSuggestionToRow(
+      rowIndex: rowIndex,
+      suggestion: match,
+    );
+  }
+
+  void applyStockSuggestionToRow({
+    required int rowIndex,
+    required PosStockLookupModel suggestion,
+  }) {
+    if (rowIndex < 0 || rowIndex >= saleItems.length) {
+      return;
+    }
+
+    final item = saleItems[rowIndex];
+    item.updateMetal(suggestion.metal);
+    item.pcsCtrl.text = '1';
+    item.descCtrl.text = suggestion.itemName.trim().isEmpty
+        ? suggestion.sku
+        : suggestion.itemName;
+    item.huidCtrl.text = suggestion.huid?.trim() ?? '';
+    item.purityCtrl.text = suggestion.purity.trim();
+    item.grossCtrl.text = _formatLookupNumber(suggestion.grossWeight);
+    item.lessCtrl.text = _formatLookupNumber(suggestion.lessWeight);
+    item.rateCtrl.clear();
+    item.makingCtrl.clear();
+    activeRowIndex = rowIndex;
+    clearAllStockSuggestions();
+  }
+
+  String _formatLookupNumber(double value) {
+    if (value == value.roundToDouble()) {
+      return value.round().toString();
+    }
+    return value
+        .toStringAsFixed(3)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
   }
 
   // --- CORE STATES ---
@@ -287,7 +394,8 @@ class PosBillingController extends ChangeNotifier {
 
   PosBillingController() {
     // ✅ FIX: Real shop name DB se load karo
-    _initShopName();
+    unawaited(_initShopName());
+    unawaited(_restoreHeldBills());
     discountCtrl.addListener(() {
       _discountInput = _parseSafeNumber(discountCtrl.text);
       notifyListeners();
@@ -669,54 +777,155 @@ class PosBillingController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void holdCurrentBill() {
-    if (saleItems.isEmpty && oldGoldItems.isEmpty) return;
-
-    final newHold = PosHoldBillModel(
-      holdId: DateTime.now().millisecondsSinceEpoch.toString(),
-      holdTime: DateTime.now(),
-      customerName: nameCtrl.text,
-      customerMobile: mobileCtrl.text,
-      totalItems: saleItems.length + oldGoldItems.length,
-      grandTotal: finalPayableAmount,
-      savedSaleItems: List.from(saleItems),
-      savedOldGoldItems: List.from(oldGoldItems),
-    );
-
-    heldBills.add(newHold);
-    clearEntirePOS(isHolding: true);
+  Future<void> _restoreHeldBills() async {
+    final restored = await _holdRepo.loadHeldBills();
+    restored.sort((a, b) => b.holdTime.compareTo(a.holdTime));
+    heldBills
+      ..clear()
+      ..addAll(restored);
     notifyListeners();
   }
 
-  void resumeBill(String holdId) {
-    clearEntirePOS(isHolding: false);
+  Future<void> _persistHeldBills() async {
+    if (heldBills.isEmpty) {
+      await _holdRepo.clear();
+      return;
+    }
+    await _holdRepo.saveHeldBills(heldBills);
+  }
 
+  Future<void> _restoreSelectedCustomer(int? customerId) async {
+    if (customerId == null) {
+      return;
+    }
+
+    try {
+      final row = await (_db.select(_db.customers)
+            ..where((tbl) => tbl.id.equals(customerId)))
+          .getSingleOrNull();
+      if (row == null) {
+        return;
+      }
+
+      selectedCustomer = CustomerListItemModel(
+        id: row.id,
+        name: row.name,
+        mobile: row.mobile,
+        city: row.city ?? '',
+        type: CustomerType.fromString(row.type),
+        billCount: 0,
+        createdAt: row.createdAt,
+        initials: CustomerListItemModel.buildInitials(row.name),
+      );
+      notifyListeners();
+      unawaited(_fetchCustomerHistory(row.id));
+    } catch (_) {
+      selectedCustomer = null;
+    }
+  }
+
+  PosHoldBillModel _buildHoldSnapshot() {
+    return PosHoldBillModel(
+      holdId: DateTime.now().millisecondsSinceEpoch.toString(),
+      holdTime: DateTime.now(),
+      selectedCustomerId: selectedCustomer?.id,
+      customerName: nameCtrl.text,
+      customerMobile: mobileCtrl.text,
+      customerCity: cityCtrl.text,
+      customerPan: panCtrl.text,
+      customerGst: gstCtrl.text,
+      billingMode: billingMode,
+      billType: billType,
+      oldGoldMode: oldGoldMode,
+      discountType: discountType,
+      promiseDate: promiseDate,
+      discountInput: discountCtrl.text,
+      cashInput: cashCtrl.text,
+      upiInput: upiCtrl.text,
+      cardInput: cardCtrl.text,
+      advanceInput: advCtrl.text,
+      goldBhawInput: goldBhawCtrl.text,
+      silverBhawInput: silverBhawCtrl.text,
+      platinumBhawInput: platBhawCtrl.text,
+      diamondBhawInput: diaBhawCtrl.text,
+      grandTotal: finalPayableAmount,
+      savedSaleItems: saleItems
+          .map(PosHoldSaleItemSnapshot.capture)
+          .toList(growable: false),
+      savedOldMetalItems: oldGoldItems
+          .map(PosHoldOldMetalSnapshot.capture)
+          .toList(growable: false),
+    );
+  }
+
+  void _restoreHoldSnapshot(PosHoldBillModel holdBill) {
+    billingMode = holdBill.billingMode;
+    billType = holdBill.billType;
+    oldGoldMode = holdBill.oldGoldMode;
+    discountType = holdBill.discountType;
+    promiseDate = holdBill.promiseDate;
+
+    nameCtrl.text = holdBill.customerName;
+    mobileCtrl.text = holdBill.customerMobile;
+    cityCtrl.text = holdBill.customerCity;
+    panCtrl.text = holdBill.customerPan;
+    gstCtrl.text = holdBill.customerGst;
+
+    discountCtrl.text = holdBill.discountInput;
+    cashCtrl.text = holdBill.cashInput;
+    upiCtrl.text = holdBill.upiInput;
+    cardCtrl.text = holdBill.cardInput;
+    advCtrl.text = holdBill.advanceInput;
+
+    goldBhawCtrl.text = holdBill.goldBhawInput;
+    silverBhawCtrl.text = holdBill.silverBhawInput;
+    platBhawCtrl.text = holdBill.platinumBhawInput;
+    diaBhawCtrl.text = holdBill.diamondBhawInput;
+
+    for (final snapshot in holdBill.savedSaleItems) {
+      final item = snapshot.restore();
+      item.addListener(_onChildItemChanged);
+      saleItems.add(item);
+    }
+
+    for (final snapshot in holdBill.savedOldMetalItems) {
+      final item = snapshot.restore();
+      item.addListener(_onChildItemChanged);
+      oldGoldItems.add(item);
+    }
+
+    activeRowIndex = saleItems.isEmpty ? -1 : 0;
+    unawaited(_restoreSelectedCustomer(holdBill.selectedCustomerId));
+  }
+
+  void holdCurrentBill() {
+    if (saleItems.isEmpty && oldGoldItems.isEmpty) return;
+
+    final newHold = _buildHoldSnapshot();
+    heldBills.insert(0, newHold);
+    clearEntirePOS(isHolding: false);
+    notifyListeners();
+    unawaited(_persistHeldBills());
+  }
+
+  void resumeBill(String holdId) {
     final targetBillIndex = heldBills.indexWhere((b) => b.holdId == holdId);
     if (targetBillIndex == -1) return;
 
     final targetBill = heldBills[targetBillIndex];
 
-    nameCtrl.text = targetBill.customerName;
-    mobileCtrl.text = targetBill.customerMobile;
-
-    saleItems.addAll(targetBill.savedSaleItems);
-    oldGoldItems.addAll(targetBill.savedOldGoldItems);
-
     // ✅ FIX: Re-attach listeners — held items lose their listener on hold
-    for (var item in saleItems) {
-      item.addListener(_onChildItemChanged);
-    }
-    for (var item in oldGoldItems) {
-      item.addListener(_onChildItemChanged);
-    }
-
     heldBills.removeAt(targetBillIndex);
+    clearEntirePOS(isHolding: false);
+    _restoreHoldSnapshot(targetBill);
     notifyListeners();
+    unawaited(_persistHeldBills());
   }
 
   void deleteHeldBill(String holdId) {
     heldBills.removeWhere((b) => b.holdId == holdId);
     notifyListeners();
+    unawaited(_persistHeldBills());
   }
 
   void clearEntirePOS({bool isHolding = false}) {
@@ -726,7 +935,7 @@ class PosBillingController extends ChangeNotifier {
     customerNotFound = false; // ✅ Reset
     customerHistory = null; // ✅ NAYA: History bhi clear karo
     isLoadingHistory = false;
-    descriptionSuggestions = [];
+    clearAllStockSuggestions();
     promiseDate = null; // ✅ Reset promise date
     nameCtrl.clear();
     mobileCtrl.clear();
@@ -764,6 +973,7 @@ class PosBillingController extends ChangeNotifier {
   @override
   void dispose() {
     _descSearchTimer?.cancel(); // ✅ FIX: Cancel any pending debounce
+    _huidSearchTimer?.cancel();
     clearEntirePOS(isHolding: false);
     // ✅ BUG FIX: _db.close() intentionally removed.
     // AppDatabase is a Dart singleton. Calling close() here was shutting
