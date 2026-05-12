@@ -7,15 +7,17 @@ import 'stock_metal_ui.dart';
 class AddStockAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
   final AddStockController ctrl;
+  final bool showStepper;
 
   const AddStockAppBar({
     super.key,
     required this.onBack,
     required this.ctrl,
+    this.showStepper = true,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(114.0);
+  Size get preferredSize => Size.fromHeight(showStepper ? 114.0 : 70.0);
 
   @override
   State<AddStockAppBar> createState() => _AddStockAppBarState();
@@ -114,76 +116,77 @@ class _AddStockAppBarState extends State<AddStockAppBar>
                 ),
 
                 // ══════════════════════════════════════════════════════════════
-                // BOTTOM ROW: Clean Process Stepper
+                // BOTTOM ROW: Clean Process Stepper (hidden when showStepper=false)
                 // ══════════════════════════════════════════════════════════════
-                Container(
-                  height: 44.0,
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  decoration: const BoxDecoration(
-                    color: AddStockColors.shellBg,
-                    border: Border(
-                      top: BorderSide(
-                        color: AddStockColors.shellBorder,
-                        width: 1.0,
-                      ),
-                      bottom: BorderSide(
-                        color: AddStockColors.shellBorder,
-                        width: 1.0,
+                if (widget.showStepper)
+                  Container(
+                    height: 44.0,
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    decoration: const BoxDecoration(
+                      color: AddStockColors.shellBg,
+                      border: Border(
+                        top: BorderSide(
+                          color: AddStockColors.shellBorder,
+                          width: 1.0,
+                        ),
+                        bottom: BorderSide(
+                          color: AddStockColors.shellBorder,
+                          width: 1.0,
+                        ),
                       ),
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      _StepDot(
-                        index: 0,
-                        label: AddStockStrings.stepPurity,
-                        currentStep: widget.ctrl.step,
-                        accentColor: ui.accent,
-                      ),
-                      _StepLine(
-                        done: widget.ctrl.step.index > 0,
-                        accentColor: ui.accent,
-                      ),
-                      _StepDot(
-                        index: 1,
-                        label: AddStockStrings.stepItems,
-                        currentStep: widget.ctrl.step,
-                        accentColor: ui.accent,
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+                    child: Row(
+                      children: [
+                        _StepDot(
+                          index: 0,
+                          label: AddStockStrings.stepPurity,
+                          currentStep: widget.ctrl.step,
+                          accentColor: ui.accent,
                         ),
-                        decoration: BoxDecoration(
-                          color: widget.ctrl.rowsWithErrorsCount == 0
-                              ? AddStockColors.success.withOpacity(0.12)
-                              : AddStockColors.danger.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
+                        _StepLine(
+                          done: widget.ctrl.step.index > 0,
+                          accentColor: ui.accent,
+                        ),
+                        _StepDot(
+                          index: 1,
+                          label: AddStockStrings.stepItems,
+                          currentStep: widget.ctrl.step,
+                          accentColor: ui.accent,
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
                             color: widget.ctrl.rowsWithErrorsCount == 0
-                                ? AddStockColors.success.withOpacity(0.3)
-                                : AddStockColors.danger.withOpacity(0.3),
+                                ? AddStockColors.success.withOpacity(0.12)
+                                : AddStockColors.danger.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: widget.ctrl.rowsWithErrorsCount == 0
+                                  ? AddStockColors.success.withOpacity(0.3)
+                                  : AddStockColors.danger.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Text(
+                            widget.ctrl.rowsWithErrorsCount == 0
+                                ? AddStockStrings.readyToSave
+                                : '${widget.ctrl.rowsWithErrorsCount} ${AddStockStrings.rowsNeedAttention}',
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                              color: widget.ctrl.rowsWithErrorsCount == 0
+                                  ? AddStockColors.success
+                                  : AddStockColors.danger,
+                            ),
                           ),
                         ),
-                        child: Text(
-                          widget.ctrl.rowsWithErrorsCount == 0
-                              ? AddStockStrings.readyToSave
-                              : '${widget.ctrl.rowsWithErrorsCount} ${AddStockStrings.rowsNeedAttention}',
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                            color: widget.ctrl.rowsWithErrorsCount == 0
-                                ? AddStockColors.success
-                                : AddStockColors.danger,
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
               ],
             ),
           ),

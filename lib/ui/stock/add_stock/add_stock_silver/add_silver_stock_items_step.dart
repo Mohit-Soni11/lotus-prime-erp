@@ -97,12 +97,18 @@ class _LeftSilverPane extends StatelessWidget {
                 children: [
                   Expanded(
                     flex: 45,
-                    child: SilverBatchOverviewCard(ctrl: ctrl),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 270),
+                      child: SilverBatchOverviewCard(ctrl: ctrl),
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     flex: 55,
-                    child: SilverInvoiceCard(ctrl: ctrl),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 270),
+                      child: SilverInvoiceCard(ctrl: ctrl),
+                    ),
                   ),
                 ],
               );

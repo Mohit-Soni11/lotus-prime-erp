@@ -221,13 +221,79 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard> {
             },
           ),
           const SizedBox(height: 12),
-          Text(
-            'This reference is auto-generated once for the current silver intake session and stays stable while you finish the batch.',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              height: 1.5,
-              color: AddStockColors.textHint,
-            ),
+          // ── SUPPLIER INVOICE NUMBER INPUT ──
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'SUPPLIER INVOICE NO.',
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.2,
+                  color: AddStockColors.textMuted,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: widget.ctrl.supplierInvoiceNumberCtrl,
+                style: GoogleFonts.manrope(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: AddStockColors.textDark,
+                  letterSpacing: 0.5,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'e.g. INV-2024-00123',
+                  hintStyle: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: AddStockColors.textHint,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: accent.withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      child: Icon(
+                        Icons.receipt_long_rounded,
+                        size: 15,
+                        color: accent,
+                      ),
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: AddStockColors.inputBg,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 13,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: AddStockColors.cardBorder,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: AddStockColors.cardBorder,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: accent,
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

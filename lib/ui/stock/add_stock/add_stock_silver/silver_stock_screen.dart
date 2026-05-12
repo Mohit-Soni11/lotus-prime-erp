@@ -5,7 +5,7 @@ import 'package:lotus_erp/logic/stock/add_stock_controller.dart'
 import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/add_silver_stock_items_step.dart';
-import 'package:lotus_erp/ui/stock/add_stock/add_stock_app_bar.dart';
+import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_app_bar.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_purity_step.dart';
 
 class SilverStockScreen extends StatefulWidget {
@@ -39,7 +39,7 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
         builder: (context, _) {
           return Scaffold(
             backgroundColor: AddStockColors.bodyBg,
-            appBar: AddStockAppBar(
+            appBar: SilverAppBar(
               ctrl: _ctrl,
               onBack: _handleBackPressed,
             ),
