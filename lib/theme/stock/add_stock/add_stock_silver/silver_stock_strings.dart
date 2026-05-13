@@ -46,6 +46,28 @@ class SilverStockStrings {
   static const String noSupplierSaved =
       'No suppliers on record. You may also enter a name manually.';
 
+  // ── SUPPLIER PROFILE PANEL ───────────────────────────────────
+  static const String supplierProfileTitle = 'SUPPLIER PROFILE';
+  static const String supplierProfileDesc =
+      'Search by name or mobile and bind this entire batch to one supplier ledger';
+  static const String ledgerLinked = 'Ledger Linked';
+  static const String lookupReady = 'Lookup Ready';
+  static const String createSupplier = 'Create Supplier';
+  static const String fieldMobileNumber = 'MOBILE NUMBER';
+  static const String fieldSupplierName = 'SUPPLIER NAME';
+  static const String fieldAddress = 'ADDRESS';
+  static const String hintSearchByPhone = 'Search by phone';
+  static const String hintSearchByName = 'Search by supplier name';
+  static const String hintAutoFilled = 'Auto-filled after link';
+  static const String linkedBatchMessage =
+      'This batch will be recorded against the supplier ledger automatically.';
+  static const String notFoundMessage =
+      'No supplier profile matched this lookup. Create the supplier first so this silver batch can be linked to the correct ledger.';
+  static const String contactPrefix = 'Contact: ';
+  static const String sameForAllLabel = 'SAME FOR ALL';
+  static const String gstPrefix = 'GST ';
+  static const String linkedSupplierFallback = 'Linked Supplier';
+
   // ── ITEM TABLE (CART) ────────────────────────────────────────
   static const String tableColSubCategory = 'Sub-Category';
   static const String tableColCompany = 'Company / Supplier';

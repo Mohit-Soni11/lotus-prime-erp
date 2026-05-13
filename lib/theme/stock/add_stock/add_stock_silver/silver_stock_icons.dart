@@ -66,6 +66,15 @@ class SilverStockIcons {
   static const IconData rateChart = Icons.show_chart_rounded;
   static const IconData cashPayment = Icons.payments_outlined;
 
+  // ── SUPPLIER PROFILE PANEL ───────────────────────────────────
+  static const IconData supplierProfile = Icons.account_tree_rounded;
+  static const IconData phone = Icons.phone_android_rounded;
+  static const IconData businessName = Icons.business_center_rounded;
+  static const IconData locationPin = Icons.location_on_outlined;
+  static const IconData createSupplierIcon = Icons.person_add_alt_1_rounded;
+  static const IconData storefront = Icons.storefront_outlined;
+  static const IconData dotIndicator = Icons.circle;
+
   // ── ACTIONS ──────────────────────────────────────────────────
   static const IconData save = Icons.save_alt_rounded;
   static const IconData reset = Icons.restart_alt_rounded;

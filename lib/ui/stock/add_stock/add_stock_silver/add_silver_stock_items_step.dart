@@ -4,9 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_item_row_card.dart';
-import 'package:lotus_erp/ui/stock/add_stock/add_stock_supplier_autocomplete.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_batch_overview_card.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_invoice_card.dart';
+import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_supplier_panel.dart';
 import 'package:lotus_erp/ui/stock/add_stock/stock_metal_ui.dart';
 
 class AddSilverStockItemsStep extends StatelessWidget {
@@ -125,183 +125,11 @@ class _LeftSilverPane extends StatelessWidget {
           },
         ),
         const SizedBox(height: 16),
-        _SilverSupplierSessionCard(ctrl: ctrl),
+        AddSilverStockSupplierPanel(ctrl: ctrl),
         const SizedBox(height: 16),
         _SilverItemsEntryCard(ctrl: ctrl),
         const SizedBox(height: 32),
       ],
-    );
-  }
-}
-
-class _SilverSupplierSessionCard extends StatelessWidget {
-  final SilverStockController ctrl;
-
-  const _SilverSupplierSessionCard({required this.ctrl});
-
-  @override
-  Widget build(BuildContext context) {
-    final ui = stockMetalUiFor(ctrl.selectedMetal);
-    final infoChips = <Widget>[
-      if (ctrl.supplierMobileCtrl.text.trim().isNotEmpty)
-        _miniInfoChip(
-          icon: Icons.phone_iphone_rounded,
-          label: ctrl.supplierMobileCtrl.text.trim(),
-          color: AddStockColors.accentBasicInfo,
-        ),
-      if (ctrl.supplierGstCtrl.text.trim().isNotEmpty)
-        _miniInfoChip(
-          icon: Icons.receipt_long_rounded,
-          label: ctrl.supplierGstCtrl.text.trim(),
-          color: AddStockColors.success,
-        ),
-      if (ctrl.supplierRegionCtrl.text.trim().isNotEmpty)
-        _miniInfoChip(
-          icon: Icons.location_on_outlined,
-          label: ctrl.supplierRegionCtrl.text.trim(),
-          color: ui.accent,
-        ),
-    ];
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AddStockColors.cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AddStockColors.cardBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: AddStockColors.shadowLight,
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: AddStockColors.accentBasicInfo.withOpacity(0.10),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: AddStockColors.accentBasicInfo.withOpacity(0.22),
-                  ),
-                ),
-                child: const Icon(
-                  Icons.storefront_outlined,
-                  size: 18,
-                  color: AddStockColors.accentBasicInfo,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'SUPPLIER SESSION',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.0,
-                        color: AddStockColors.textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      'Choose one supplier for the whole silver batch or unlock item-wise override.',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        height: 1.45,
-                        color: AddStockColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'SAME FOR ALL',
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.7,
-                      color: AddStockColors.textMuted,
-                    ),
-                  ),
-                  Switch.adaptive(
-                    value: ctrl.sameForAll,
-                    onChanged: ctrl.setSameForAll,
-                    activeColor: ui.accent,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          AddStockSupplierAutocomplete(
-            label: AddStockStrings.supplierSession,
-            suppliers: ctrl.suppliers,
-            initialName: ctrl.sessionSupplierName,
-            onSelected: ctrl.setSessionSupplier,
-            onTextChanged: ctrl.setSessionSupplierText,
-          ),
-          if (infoChips.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: infoChips,
-            ),
-          ],
-          if (ctrl.suppliers.isEmpty) ...[
-            const SizedBox(height: 10),
-            Text(
-              AddStockStrings.noSupplierSaved,
-              style: AddStockStyles.caption,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _miniInfoChip({
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.16)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
