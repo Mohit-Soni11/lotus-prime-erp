@@ -1,28 +1,21 @@
-// =============================================================================
-// FILE        : silver_item_row.dart
-// MODULE      : Stock & Inventory — Silver
-// LAYER       : UI / Table Row
-// DESCRIPTION : Single row widget for the Silver Fast-Entry Table.
-//               ✅ Silver-specific columns: RATE/g, QTY, STONE VAL — no touch%, no fine gold.
-//               ✅ F2 to add row, Delete to remove active row (keyboard shortcuts).
-//               ✅ Focus tracking for keyboard navigation (Enter → next row).
-//               ✅ Hover highlight + error highlight + even/odd alternating rows.
-//               ✅ Duplicate + Delete action buttons with tooltips.
-//               ✅ Uses SilverStockColors for consistent silver branding.
-//               ✅ ObjectKey on parent side prevents state mix-up on delete.
-//
-// COLUMNS (in order):
-//   S.NO | SUB CAT | ITEM NAME | HUID | GROSS | LESS | NET WT | RATE/g |
-//   MAKING TYPE | MAKING | QTY | STONE VAL | ROW TOTAL | ACT
-// =============================================================================
+// ==========================================
+// FILE: silver_item_row.dart
+// TYPE: Smart UI Component (SILVER — POS-STYLE)
+// DESCRIPTION: Zero-lag row for Silver Invoice Items Table.
+//              ✅ Exact same design language as PosSaleItemRow.
+//              ✅ Silver branding — SilverStockColors throughout.
+//              ✅ Columns: S.NO | ITEM NAME | HUID | GROSS | LESS | NET WT | RATE | MAKING | TOTAL | ACT
+//              ✅ Hover animation, even/odd rows, focus tracking.
+//              ✅ Making charge toggle: /g ➔ Flat ➔ % (same pattern as POS).
+//              ✅ NET WT + TOTAL auto-calculated from model.
+// ==========================================
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'dart:ui';
+
 import 'package:lotus_erp/logic/stock/add_stock_controller.dart';
 import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.dart';
-import 'package:lotus_erp/models/purchase/purchase_enums/purchase_enums.dart';
 import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_colors.dart';
@@ -44,8 +37,6 @@ class SilverItemRow extends StatefulWidget {
 }
 
 class _SilverItemRowState extends State<SilverItemRow> {
-  bool _isHovered = false;
-
   // ── TEXT CONTROLLERS ─────────────────────────────────────────
   late final TextEditingController _itemCtrl;
   late final TextEditingController _huidCtrl;
@@ -53,11 +44,16 @@ class _SilverItemRowState extends State<SilverItemRow> {
   late final TextEditingController _lessCtrl;
   late final TextEditingController _rateCtrl;
   late final TextEditingController _makingCtrl;
-  late final TextEditingController _qtyCtrl;
-  late final TextEditingController _stoneValCtrl;
 
-  // ── FOCUS NODE ───────────────────────────────────────────────
+  // ── FOCUS NODES ──────────────────────────────────────────────
   late final FocusNode _itemFocus;
+  late final FocusNode _huidFocus;
+  late final FocusNode _grossFocus;
+  late final FocusNode _lessFocus;
+  late final FocusNode _rateFocus;
+  late final FocusNode _makingFocus;
+
+  bool _isHovered = false;
 
   // ─────────────────────────────────────────────────────────────
   // LIFECYCLE
@@ -72,9 +68,13 @@ class _SilverItemRowState extends State<SilverItemRow> {
     _lessCtrl = TextEditingController();
     _rateCtrl = TextEditingController();
     _makingCtrl = TextEditingController();
-    _qtyCtrl = TextEditingController();
-    _stoneValCtrl = TextEditingController();
+
     _itemFocus = FocusNode();
+    _huidFocus = FocusNode();
+    _grossFocus = FocusNode();
+    _lessFocus = FocusNode();
+    _rateFocus = FocusNode();
+    _makingFocus = FocusNode();
 
     _syncControllers();
     _handlePendingFocus();
@@ -95,9 +95,14 @@ class _SilverItemRowState extends State<SilverItemRow> {
     _lessCtrl.dispose();
     _rateCtrl.dispose();
     _makingCtrl.dispose();
-    _qtyCtrl.dispose();
-    _stoneValCtrl.dispose();
+
     _itemFocus.dispose();
+    _huidFocus.dispose();
+    _grossFocus.dispose();
+    _lessFocus.dispose();
+    _rateFocus.dispose();
+    _makingFocus.dispose();
+
     super.dispose();
   }
 
@@ -116,16 +121,12 @@ class _SilverItemRowState extends State<SilverItemRow> {
 
   void _syncControllers() {
     final row = widget.row;
-    final ctrl = widget.ctrl;
-
     _setIfNeeded(_itemCtrl, row.itemName);
     _setIfNeeded(_huidCtrl, row.huid);
     _setIfNeeded(_grossCtrl, _dec(row.grossWeight));
     _setIfNeeded(_lessCtrl, _dec(row.stoneWeight));
     _setIfNeeded(_rateCtrl, _dec(row.purchaseRate));
     _setIfNeeded(_makingCtrl, _dec(row.makingCharges));
-    _setIfNeeded(_qtyCtrl, row.quantity == 1 ? '' : '${row.quantity}');
-    _setIfNeeded(_stoneValCtrl, _dec(row.stoneValue));
   }
 
   void _setIfNeeded(TextEditingController c, String val) {
@@ -150,467 +151,418 @@ class _SilverItemRowState extends State<SilverItemRow> {
   Widget build(BuildContext context) {
     final row = widget.row;
     final ctrl = widget.ctrl;
-    final isEven = widget.index.isEven;
-    final error = ctrl.validateRow(row);
-
-    final background = error != null
-        ? AddStockColors.danger.withOpacity(0.04)
-        : _isHovered
-            ? AddStockColors.cardHoverBg
-            : (isEven ? AddStockColors.cardBg : AddStockColors.bodyBg);
+    final isEven = widget.index % 2 == 0;
 
     return Focus(
       onFocusChange: (hasFocus) {
         if (hasFocus) ctrl.setActiveRow(row.id);
       },
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: background,
-            border: Border(
-              bottom: BorderSide(
-                color: error != null
-                    ? AddStockColors.danger.withOpacity(0.18)
-                    : AddStockColors.cardBorder,
-                width: 1,
+      child: ListenableBuilder(
+        listenable: ctrl,
+        builder: (context, _) {
+          return MouseRegion(
+            onEnter: (_) => setState(() => _isHovered = true),
+            onExit: (_) => setState(() => _isHovered = false),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 140),
+              curve: Curves.easeOut,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                // Same even/odd + hover pattern as POS
+                color: _isHovered
+                    ? SilverStockColors.cardHoverBg
+                    : (isEven
+                        ? SilverStockColors.bodyBg
+                        : SilverStockColors.cardBg),
+                border: const Border(
+                    bottom: BorderSide(
+                        color: SilverStockColors.cardBorder, width: 1)),
               ),
-            ),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // ── S.NO ──────────────────────────────────────────
-              _sNoCell(),
-              const SizedBox(width: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // ── S.NO ────────────────────────────────────────
+                  Expanded(flex: 1, child: _buildSNo()),
+                  const SizedBox(width: 6),
 
-              // ── SUB CATEGORY ──────────────────────────────────
-              _subCategoryCell(row, ctrl),
-              const SizedBox(width: 8),
+                  // ── ITEM NAME ──────────────────────────────────
+                  Expanded(
+                    flex: 4,
+                    child: _SilverAtomicTextField(
+                      controller: _itemCtrl,
+                      hint: 'Item name',
+                      focusNode: _itemFocus,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) => _huidFocus.requestFocus(),
+                      onChanged: (v) => ctrl.updateItemName(row.id, v),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
 
-              // ── ITEM NAME ─────────────────────────────────────
-              _textField(
-                width: 200,
-                controller: _itemCtrl,
-                hint: 'e.g. Payal',
-                focusNode: _itemFocus,
-                onChanged: (v) => ctrl.updateItemName(row.id, v),
-              ),
-              const SizedBox(width: 8),
+                  // ── HUID ──────────────────────────────────────
+                  Expanded(
+                    flex: 2,
+                    child: _SilverAtomicTextField(
+                      controller: _huidCtrl,
+                      hint: 'HUID',
+                      focusNode: _huidFocus,
+                      textInputAction: TextInputAction.next,
+                      textCapitalization: TextCapitalization.characters,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'[a-zA-Z0-9]')),
+                        LengthLimitingTextInputFormatter(6),
+                      ],
+                      onSubmitted: (_) => _grossFocus.requestFocus(),
+                      onChanged: (v) => ctrl.updateHuid(row.id, v),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
 
-              // ── HUID ──────────────────────────────────────────
-              _textField(
-                width: 110,
-                controller: _huidCtrl,
-                hint: 'AB1234',
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-                  LengthLimitingTextInputFormatter(6),
+                  // ── GROSS WEIGHT ──────────────────────────────
+                  Expanded(
+                    flex: 2,
+                    child: _SilverAtomicTextField(
+                      controller: _grossCtrl,
+                      hint: '0.000',
+                      isNumber: true,
+                      focusNode: _grossFocus,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) => _lessFocus.requestFocus(),
+                      onChanged: (v) => ctrl.updateGrossWeight(row.id, v),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+
+                  // ── LESS (stone/deduction) ───────────────────
+                  Expanded(
+                    flex: 2,
+                    child: _SilverAtomicTextField(
+                      controller: _lessCtrl,
+                      hint: '0.000',
+                      isNumber: true,
+                      focusNode: _lessFocus,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) => _rateFocus.requestFocus(),
+                      onChanged: (v) => ctrl.updateStoneWeight(row.id, v),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+
+                  // ── NET WT (auto) ─────────────────────────────
+                  Expanded(
+                    flex: 2,
+                    child: _buildAutoCell(
+                      value: '${row.netWeight.toStringAsFixed(3)} g',
+                      color: SilverStockColors.brandSilver,
+                      align: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+
+                  // ── RATE / g ──────────────────────────────────
+                  Expanded(
+                    flex: 3,
+                    child: _SilverAtomicTextField(
+                      controller: _rateCtrl,
+                      hint: 'Rate',
+                      isNumber: true,
+                      focusNode: _rateFocus,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) => _makingFocus.requestFocus(),
+                      onChanged: (v) => ctrl.updatePurchaseRate(row.id, v),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+
+                  // ── MAKING CHARGE ─────────────────────────────
+                  Expanded(flex: 3, child: _buildMakingField(row, ctrl)),
+                  const SizedBox(width: 6),
+
+                  // ── ROW TOTAL (auto) ──────────────────────────
+                  Expanded(
+                    flex: 3,
+                    child: _buildAutoCell(
+                      value: '₹${ctrl.rowTotalAmount(row).toStringAsFixed(2)}',
+                      color: SilverStockColors.textDark,
+                      align: TextAlign.right,
+                      isBold: true,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+
+                  // ── ACT ───────────────────────────────────────
+                  Expanded(flex: 1, child: _buildDeleteBtn(ctrl, row)),
                 ],
-                textCapitalization: TextCapitalization.characters,
-                onChanged: (v) => ctrl.updateHuid(row.id, v),
               ),
-              const SizedBox(width: 8),
-
-              // ── GROSS WEIGHT ──────────────────────────────────
-              _numField(
-                width: 88,
-                controller: _grossCtrl,
-                hint: '0.000',
-                onChanged: (v) => ctrl.updateGrossWeight(row.id, v),
-              ),
-              const SizedBox(width: 8),
-
-              // ── LESS (stone weight) ───────────────────────────
-              _numField(
-                width: 88,
-                controller: _lessCtrl,
-                hint: '0.000',
-                onChanged: (v) => ctrl.updateStoneWeight(row.id, v),
-              ),
-              const SizedBox(width: 8),
-
-              // ── NET WT (auto) ─────────────────────────────────
-              _autoCell(
-                width: 88,
-                value: '${_wt(row.netWeight)} g',
-                color: AddStockColors.success,
-              ),
-              const SizedBox(width: 8),
-
-              // ── RATE/g ────────────────────────────────────────
-              _numField(
-                width: 110,
-                controller: _rateCtrl,
-                hint: '0.00',
-                onChanged: (v) => ctrl.updatePurchaseRate(row.id, v),
-              ),
-              const SizedBox(width: 8),
-
-              // ── MAKING TYPE ───────────────────────────────────
-              _makingTypeCell(row, ctrl),
-              const SizedBox(width: 8),
-
-              // ── MAKING CHARGES ────────────────────────────────
-              _numField(
-                width: 100,
-                controller: _makingCtrl,
-                hint: '0.00',
-                onChanged: (v) => ctrl.updateMakingCharges(row.id, v),
-              ),
-              const SizedBox(width: 8),
-
-              // ── QTY ───────────────────────────────────────────
-              _numField(
-                width: 72,
-                controller: _qtyCtrl,
-                hint: '1',
-                allowDecimal: false,
-                onChanged: (v) => ctrl.updateQuantity(row.id, v),
-              ),
-              const SizedBox(width: 8),
-
-              // ── STONE VALUE ───────────────────────────────────
-              _numField(
-                width: 110,
-                controller: _stoneValCtrl,
-                hint: '0.00',
-                onChanged: (v) => ctrl.updateStoneValue(row.id, v),
-                // Last editable field → Enter = complete row & jump next
-                textInputAction: TextInputAction.done,
-                onSubmitted: (_) => ctrl.completeRowAndAdvance(row.id),
-              ),
-              const SizedBox(width: 8),
-
-              // ── ROW TOTAL (auto) ──────────────────────────────
-              _autoCell(
-                width: 140,
-                value: _money(ctrl.rowTotalAmount(row)),
-                color: AddStockColors.textDark,
-                alignRight: true,
-                isBold: true,
-              ),
-              const SizedBox(width: 8),
-
-              // ── ACT ───────────────────────────────────────────
-              _actionCell(ctrl, row),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
   // ─────────────────────────────────────────────────────────────
-  // CELLS
+  // S.NO CELL — same design as POS _buildSNo
   // ─────────────────────────────────────────────────────────────
 
-  Widget _sNoCell() {
-    return SizedBox(
-      width: 62,
-      child: Center(
-        child: Container(
-          width: 34,
-          height: 34,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: SilverStockColors.brandSilver.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: SilverStockColors.brandSilver.withOpacity(0.32),
-            ),
-          ),
-          child: Text(
-            '${widget.index + 1}',
-            style: AddStockStyles.fieldInput.copyWith(
-              color: SilverStockColors.brandSilver,
+  Widget _buildSNo() {
+    return Center(
+      child: Container(
+        width: 32,
+        height: 32,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: SilverStockColors.brandSilver.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(7),
+          border: Border.all(
+              color: SilverStockColors.brandSilver.withOpacity(0.35)),
+        ),
+        child: Text(
+          '${widget.index + 1}',
+          style: TextStyle(
               fontSize: 14,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
+              fontWeight: FontWeight.w900,
+              color: SilverStockColors.brandSilver,
+              fontFeatures: const [FontFeature.tabularFigures()]),
         ),
       ),
     );
   }
 
-  Widget _subCategoryCell(StockRowEntry row, SilverStockController ctrl) {
-    return SizedBox(
-      width: 160,
-      child: DropdownButtonFormField<StockSubCategory>(
-        value: row.subCategory,
-        decoration: _inputDecoration(),
-        dropdownColor: Colors.white,
-        style: AddStockStyles.fieldInput.copyWith(
-          fontSize: 13,
-          color: AddStockColors.textDark,
-        ),
-        icon: const Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: AddStockColors.textMuted,
-          size: 18,
-        ),
-        items: StockSubCategory.values
-            .map(
-              (v) => DropdownMenuItem<StockSubCategory>(
-                value: v,
-                child: Text(
-                  v.label,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: AddStockColors.textDark,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            )
-            .toList(),
-        onChanged: (v) {
-          if (v != null) ctrl.updateSubCategory(row.id, v);
-        },
-      ),
-    );
-  }
+  // ─────────────────────────────────────────────────────────────
+  // AUTO CELL — same design as POS _buildAutoCell
+  // ─────────────────────────────────────────────────────────────
 
-  Widget _makingTypeCell(StockRowEntry row, SilverStockController ctrl) {
-    return SizedBox(
-      width: 148,
-      child: DropdownButtonFormField<MakingChargesType>(
-        value: row.makingChargesType,
-        decoration: _inputDecoration(),
-        dropdownColor: Colors.white,
-        style: AddStockStyles.fieldInput.copyWith(
-          fontSize: 13,
-          color: AddStockColors.textDark,
-        ),
-        icon: const Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: AddStockColors.textMuted,
-          size: 18,
-        ),
-        items: MakingChargesType.values
-            .map(
-              (v) => DropdownMenuItem<MakingChargesType>(
-                value: v,
-                child: Text(
-                  v.label,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: AddStockColors.textDark,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            )
-            .toList(),
-        onChanged: (v) {
-          if (v != null) ctrl.updateMakingType(row.id, v);
-        },
-      ),
-    );
-  }
-
-  Widget _textField({
-    required double width,
-    required TextEditingController controller,
-    required String hint,
-    FocusNode? focusNode,
-    TextCapitalization textCapitalization = TextCapitalization.words,
-    List<TextInputFormatter>? inputFormatters,
-    ValueChanged<String>? onChanged,
-  }) {
-    return SizedBox(
-      width: width,
-      height: 40,
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        textCapitalization: textCapitalization,
-        inputFormatters: inputFormatters,
-        textInputAction: TextInputAction.next,
-        style: AddStockStyles.fieldInput.copyWith(fontSize: 14),
-        onChanged: onChanged,
-        decoration: _inputDecoration(hint: hint),
-      ),
-    );
-  }
-
-  Widget _numField({
-    required double width,
-    required TextEditingController controller,
-    required String hint,
-    required ValueChanged<String> onChanged,
-    bool allowDecimal = true,
-    TextInputAction textInputAction = TextInputAction.next,
-    ValueChanged<String>? onSubmitted,
-  }) {
-    return SizedBox(
-      width: width,
-      height: 40,
-      child: TextField(
-        controller: controller,
-        keyboardType: TextInputType.numberWithOptions(decimal: allowDecimal),
-        textAlign: TextAlign.right,
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(
-            allowDecimal ? RegExp(r'^\d*\.?\d*') : RegExp(r'^\d*'),
-          ),
-        ],
-        textInputAction: textInputAction,
-        style: AddStockStyles.fieldInput.copyWith(
-          fontSize: 14,
-          fontFeatures: const [FontFeature.tabularFigures()],
-        ),
-        onChanged: onChanged,
-        onSubmitted: onSubmitted,
-        decoration: _inputDecoration(hint: hint),
-      ),
-    );
-  }
-
-  Widget _autoCell({
-    required double width,
+  Widget _buildAutoCell({
     required String value,
     required Color color,
-    bool alignRight = false,
+    required TextAlign align,
     bool isBold = false,
   }) {
     return Container(
-      width: width,
-      height: 40,
+      height: 38,
       padding: const EdgeInsets.symmetric(horizontal: 10),
-      alignment: alignRight ? Alignment.centerRight : Alignment.centerLeft,
+      alignment:
+          align == TextAlign.center ? Alignment.center : Alignment.centerRight,
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.24)),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.25)),
       ),
       child: Text(
         value,
-        textAlign: alignRight ? TextAlign.right : TextAlign.left,
-        style: AddStockStyles.fieldInput.copyWith(
-          color: color,
-          fontSize: isBold ? 15 : 14,
-          fontFeatures: const [FontFeature.tabularFigures()],
-        ),
+        textAlign: align,
+        style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w900,
+            fontSize: isBold ? 16 : 15,
+            fontFeatures: const [FontFeature.tabularFigures()]),
       ),
     );
   }
 
-  Widget _actionCell(SilverStockController ctrl, StockRowEntry row) {
+  // ─────────────────────────────────────────────────────────────
+  // MAKING FIELD — same toggle pattern as POS _buildMakingField
+  // Silver: /g ➔ Flat ➔ % toggle
+  // ─────────────────────────────────────────────────────────────
+
+  Widget _buildMakingField(StockRowEntry row, SilverStockController ctrl) {
+    String symbol;
+    String hint;
+
+    switch (row.makingChargesType) {
+      case MakingChargesType.perGram:
+        symbol = '/g';
+        hint = 'Rate/g';
+        break;
+      case MakingChargesType.flat:
+        symbol = 'Flat';
+        hint = 'Flat Amt';
+        break;
+      case MakingChargesType.percent:
+        symbol = '%';
+        hint = 'Rate %';
+        break;
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: _SilverAtomicTextField(
+            controller: _makingCtrl,
+            hint: hint,
+            isNumber: true,
+            focusNode: _makingFocus,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => ctrl.completeRowAndAdvance(row.id),
+            onChanged: (v) => ctrl.updateMakingCharges(row.id, v),
+          ),
+        ),
+        const SizedBox(width: 4),
+
+        // Toggle button — same AnimatedContainer style as POS
+        Tooltip(
+          message: 'Toggle: /g ➔ Flat ➔ %',
+          waitDuration: const Duration(milliseconds: 400),
+          child: InkWell(
+            onTap: () => _toggleMakingType(row, ctrl),
+            borderRadius: BorderRadius.circular(8),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              width: 38,
+              height: 38,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: SilverStockColors.brandSilver.withOpacity(0.12),
+                border: Border.all(
+                    color: SilverStockColors.brandSilver.withOpacity(0.40)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                symbol,
+                style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                    color: SilverStockColors.brandSilver),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _toggleMakingType(StockRowEntry row, SilverStockController ctrl) {
+    final next = switch (row.makingChargesType) {
+      MakingChargesType.perGram => MakingChargesType.flat,
+      MakingChargesType.flat => MakingChargesType.percent,
+      MakingChargesType.percent => MakingChargesType.perGram,
+    };
+    ctrl.updateMakingType(row.id, next);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // DELETE BUTTON — same design as POS _buildDeleteBtn
+  // ─────────────────────────────────────────────────────────────
+
+  Widget _buildDeleteBtn(SilverStockController ctrl, StockRowEntry row) {
     final canDelete = ctrl.rows.length > 1;
 
-    return SizedBox(
-      width: 96,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Duplicate
-          Tooltip(
-            message: 'Duplicate row',
-            waitDuration: const Duration(milliseconds: 400),
-            child: InkWell(
-              onTap: () => ctrl.addRow(requestFocus: false),
-              borderRadius: BorderRadius.circular(7),
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: SilverStockColors.brandSilver.withOpacity(0.10),
-                  borderRadius: BorderRadius.circular(7),
-                  border: Border.all(
-                    color: SilverStockColors.brandSilver.withOpacity(0.32),
-                  ),
-                ),
-                child: Icon(
-                  Icons.content_copy_rounded,
-                  color: SilverStockColors.brandSilver,
-                  size: 16,
-                ),
-              ),
+    return Center(
+      child: Tooltip(
+        message: canDelete ? 'Remove item' : 'Cannot remove last item',
+        waitDuration: const Duration(milliseconds: 400),
+        child: InkWell(
+          onTap: canDelete ? () => ctrl.removeRow(row.id) : null,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: canDelete
+                  ? SilverStockColors.danger.withOpacity(0.12)
+                  : SilverStockColors.cardBorder.withOpacity(0.40),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                  color: canDelete
+                      ? SilverStockColors.danger.withOpacity(0.35)
+                      : SilverStockColors.cardBorder),
+            ),
+            child: Icon(
+              Icons.delete_outline_rounded,
+              color: canDelete
+                  ? SilverStockColors.danger
+                  : SilverStockColors.textMuted,
+              size: 18,
             ),
           ),
-          const SizedBox(width: 6),
-          // Delete
-          Tooltip(
-            message: canDelete ? 'Remove row' : 'Cannot remove last row',
-            waitDuration: const Duration(milliseconds: 400),
-            child: InkWell(
-              onTap: canDelete ? () => ctrl.removeRow(row.id) : null,
-              borderRadius: BorderRadius.circular(7),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 140),
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: canDelete
-                      ? AddStockColors.danger.withOpacity(0.10)
-                      : AddStockColors.cardBorder.withOpacity(0.40),
-                  borderRadius: BorderRadius.circular(7),
-                  border: Border.all(
-                    color: canDelete
-                        ? AddStockColors.danger.withOpacity(0.32)
-                        : AddStockColors.cardBorder,
-                  ),
-                ),
-                child: Icon(
-                  Icons.delete_outline_rounded,
-                  color: canDelete
-                      ? AddStockColors.danger
-                      : AddStockColors.textMuted,
-                  size: 17,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration({String? hint}) {
-    return InputDecoration(
-      hintText: hint,
-      isDense: true,
-      filled: true,
-      fillColor: AddStockColors.inputBg,
-      hintStyle: TextStyle(
-        color: AddStockColors.textMuted.withOpacity(0.52),
-        fontSize: 12,
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: AddStockColors.cardBorder),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(
-          color: SilverStockColors.brandSilver,
-          width: 1.6,
         ),
-      ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: AddStockColors.cardBorder),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
+// _SilverAtomicTextField
+// Exact same look as PosAtomicTextField — but silver-branded focus border.
+// Self-contained, zero cross-module import needed.
+// =============================================================================
 
-double _wt(double v) => double.parse(v.toStringAsFixed(3));
+class _SilverAtomicTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final bool isNumber;
+  final FocusNode? focusNode;
+  final TextInputAction textInputAction;
+  final ValueChanged<String>? onSubmitted;
+  final ValueChanged<String>? onChanged;
+  final TextCapitalization textCapitalization;
+  final List<TextInputFormatter>? inputFormatters;
 
-String _money(double amount) => NumberFormat.currency(
-      locale: 'en_IN',
-      symbol: 'Rs ',
-      decimalDigits: 2,
-    ).format(amount);
+  const _SilverAtomicTextField({
+    required this.controller,
+    required this.hint,
+    this.isNumber = false,
+    this.focusNode,
+    this.textInputAction = TextInputAction.next,
+    this.onSubmitted,
+    this.onChanged,
+    this.textCapitalization = TextCapitalization.none,
+    this.inputFormatters,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 38,
+      child: TextFormField(
+        controller: controller,
+        focusNode: focusNode,
+        keyboardType: isNumber
+            ? const TextInputType.numberWithOptions(decimal: true)
+            : TextInputType.text,
+        textCapitalization: textCapitalization,
+        inputFormatters: inputFormatters ??
+            (isNumber
+                ? [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                  ]
+                : null),
+        textInputAction: textInputAction,
+        textAlign: isNumber ? TextAlign.right : TextAlign.left,
+        onFieldSubmitted: onSubmitted,
+        onChanged: onChanged,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: SilverStockColors.textDark,
+          fontFeatures: [FontFeature.tabularFigures()],
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(
+            color: SilverStockColors.textMuted.withOpacity(0.50),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+          filled: true,
+          fillColor: SilverStockColors.inputBg,
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(
+                color: SilverStockColors.cardBorder, width: 1.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide:
+                BorderSide(color: SilverStockColors.brandSilver, width: 2.0),
+          ),
+        ),
+      ),
+    );
+  }
+}

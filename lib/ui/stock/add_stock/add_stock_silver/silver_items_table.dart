@@ -1,30 +1,19 @@
-// =============================================================================
-// FILE        : silver_items_table.dart
-// MODULE      : Stock & Inventory — Silver
-// LAYER       : UI / Table
-// DESCRIPTION : Fast-Entry Table for Silver Stock intake.
-//               ✅ Same UX pattern as GoldEntryTable — inline editing, no card-flip.
-//               ✅ F2 → Add new row.  Delete key → Remove active row.
-//               ✅ Horizontal scroll when viewport < tableWidth.
-//               ✅ Empty state with silver illustration.
-//               ✅ Bottom bar: ADD NEW ITEM [F2] + live batch totals.
-//               ✅ Header + column labels with silver accent branding.
-//               ✅ ListenableBuilder on ctrl — only table re-renders on change.
+// ==========================================
+// FILE: silver_items_table.dart
+// TYPE: Invoice Items Container (SILVER — POS-STYLE)
+// DESCRIPTION: Zero-Lag Silver Cart Table — exact same design as PosSaleItemsTable.
+//              ✅ Silver-branded Colors, Icons, and TextStyles.
+//              ✅ F2 → Add new row.  Delete key → Remove active row.
+//              ✅ Header + Column labels + Empty State + Bottom Bar.
+//              ✅ ListenableBuilder on ctrl — only table re-renders on change.
 //
 // COLUMNS:
-//   S.NO | SUB CAT | ITEM NAME | HUID | GROSS | LESS | NET WT |
-//   RATE/g | MAKING TYPE | MAKING | QTY | STONE VAL | ROW TOTAL | ACT
-//
-// HOW TO USE:
-//   SilverItemsTable(ctrl: ctrl)
-//   (Drop inside a scrollable parent — table renders as fixed height.)
-// =============================================================================
+//   S.NO | ITEM NAME | HUID | GROSS | LESS | NET WT | RATE | MAKING | TOTAL | ACT
+// ==========================================
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
-import 'package:lotus_erp/logic/stock/add_stock_controller.dart';
+
 import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_colors.dart';
@@ -33,283 +22,160 @@ import 'silver_item_row.dart';
 class SilverItemsTable extends StatelessWidget {
   final SilverStockController ctrl;
 
-  const SilverItemsTable({super.key, required this.ctrl});
-
-  // Total fixed width for all columns + gaps
-  // 62+160+200+110+88+88+88+110+148+100+72+110+140+96 = 1572  +  13×8 = 1676
-  static const double _tableWidth = 1676;
+  const SilverItemsTable({
+    super.key,
+    required this.ctrl,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: ctrl,
-      builder: (context, _) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final needsScroll = constraints.maxWidth < _tableWidth;
-
-            return CallbackShortcuts(
-              bindings: {
-                // F2 → add new row and focus item name
-                const SingleActivator(LogicalKeyboardKey.f2): () =>
-                    ctrl.addRow(requestFocus: true),
-                // Delete → remove the currently active row
-                const SingleActivator(LogicalKeyboardKey.delete): () =>
-                    ctrl.removeActiveRow(),
-              },
-              child: Focus(
-                autofocus: true,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AddStockColors.cardBg,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: AddStockColors.cardBorder,
-                      width: 1.5,
-                    ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: AddStockColors.shadowLight,
-                        blurRadius: 10,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ── Table header ──────────────────────────
-                      _buildHeader(needsScroll),
-
-                      // ── Column labels + rows ──────────────────
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        physics: needsScroll
-                            ? const BouncingScrollPhysics()
-                            : const NeverScrollableScrollPhysics(),
-                        child: SizedBox(
-                          width: _tableWidth,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildColumnHeaders(),
-
-                              // Empty state
-                              ctrl.rows.isEmpty
-                                  ? _buildEmptyState()
-                                  : ListView.builder(
-                                      shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      itemCount: ctrl.rows.length,
-                                      itemBuilder: (context, index) =>
-                                          SilverItemRow(
-                                        // ObjectKey prevents state mix-up on row delete
-                                        key: ObjectKey(ctrl.rows[index]),
-                                        index: index,
-                                        row: ctrl.rows[index],
-                                        ctrl: ctrl,
-                                      ),
-                                    ),
-                            ],
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.f2): () =>
+            ctrl.addRow(requestFocus: true),
+        const SingleActivator(LogicalKeyboardKey.delete): () =>
+            ctrl.removeActiveRow(),
+      },
+      child: Focus(
+        autofocus: true,
+        child: ListenableBuilder(
+          listenable: ctrl,
+          builder: (context, _) {
+            return Container(
+              decoration: BoxDecoration(
+                color: SilverStockColors.cardBg,
+                borderRadius: BorderRadius.circular(16),
+                border:
+                    Border.all(color: SilverStockColors.cardBorder, width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                      color: SilverStockColors.shadowLight,
+                      blurRadius: 10,
+                      offset: const Offset(0, 4)),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(),
+                  _buildColumnRow(),
+                  ctrl.rows.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: ctrl.rows.length,
+                          itemBuilder: (_, i) => SilverItemRow(
+                            key: ObjectKey(ctrl.rows[i]),
+                            index: i,
+                            row: ctrl.rows[i],
+                            ctrl: ctrl,
                           ),
                         ),
-                      ),
-
-                      // ── Bottom bar ────────────────────────────
-                      _buildBottomBar(context),
-                    ],
-                  ),
-                ),
+                  _buildBottomBar(),
+                ],
               ),
             );
           },
-        );
-      },
+        ),
+      ),
     );
   }
 
   // ─────────────────────────────────────────────────────────────
-  // TABLE HEADER
+  // TABLE HEADER — exact same layout as PosSaleItemsTable
   // ─────────────────────────────────────────────────────────────
 
-  Widget _buildHeader(bool needsScroll) {
+  Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        color: SilverStockColors.brandSilver.withOpacity(0.04),
+        color: SilverStockColors.brandSilver.withOpacity(0.06),
         border: const Border(
-          bottom: BorderSide(color: AddStockColors.cardBorder, width: 1.5),
-        ),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+            bottom:
+                BorderSide(color: SilverStockColors.cardBorder, width: 1.5)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Icon
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: SilverStockColors.brandSilver.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: SilverStockColors.brandSilver.withOpacity(0.40),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Silver icon badge
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: SilverStockColors.brandSilver.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                    color: SilverStockColors.brandSilver.withOpacity(0.40)),
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.receipt_long_rounded,
+                  color: SilverStockColors.brandSilver,
+                  size: 22,
+                ),
               ),
             ),
-            child: Icon(
-              Icons.table_rows_rounded,
-              color: SilverStockColors.brandSilver,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 14),
+            const SizedBox(width: 14),
 
-          // Title + subtitle
-          Expanded(
-            child: Column(
+            // Title + subtitle
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'FAST SILVER ENTRY TABLE',
-                  style: AddStockStyles.pageTitle.copyWith(
-                    fontSize: 18,
-                    color: SilverStockColors.brandSilver,
-                    letterSpacing: 0.8,
+                  'INVOICE ITEMS',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.4,
+                    color: SilverStockColors.textDark,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Press F2 or click ADD NEW ITEM to add a row. Press Enter in the last field to jump to the next row.',
-                  style: AddStockStyles.caption.copyWith(fontSize: 12),
-                ),
-                if (needsScroll) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    'Scroll horizontally to see all silver-entry columns.',
-                    style: AddStockStyles.caption.copyWith(
-                      color: SilverStockColors.brandSilver,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  'Press F2 to add item or click ADD NEW ITEM below',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: SilverStockColors.textMuted,
                   ),
-                ],
+                ),
               ],
             ),
-          ),
-          const SizedBox(width: 14),
+            const Spacer(),
 
-          // Row count badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: AddStockColors.bodyBg,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AddStockColors.cardBorder, width: 1.5),
-            ),
-            child: Text(
-              'ROWS : ${ctrl.enteredRowCount > 0 ? ctrl.enteredRowCount : ctrl.rows.length}',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 14,
-                color: SilverStockColors.brandSilver,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // COLUMN HEADERS
-  // ─────────────────────────────────────────────────────────────
-
-  Widget _buildColumnHeaders() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: AddStockColors.bodyBg,
-        border: Border(
-          bottom: BorderSide(color: AddStockColors.cardBorder, width: 1.5),
-        ),
-      ),
-      child: const Row(
-        children: [
-          _SilverHeaderCell('S.NO', width: 62, center: true),
-          SizedBox(width: 8),
-          _SilverHeaderCell('SUB CATEGORY', width: 160),
-          SizedBox(width: 8),
-          _SilverHeaderCell('ITEM NAME', width: 200),
-          SizedBox(width: 8),
-          _SilverHeaderCell('HUID', width: 110),
-          SizedBox(width: 8),
-          _SilverHeaderCell('GROSS', width: 88, right: true),
-          SizedBox(width: 8),
-          _SilverHeaderCell('LESS', width: 88, right: true),
-          SizedBox(width: 8),
-          _SilverHeaderCell('NET WT', width: 88, right: true),
-          SizedBox(width: 8),
-          _SilverHeaderCell('RATE / g', width: 110, right: true),
-          SizedBox(width: 8),
-          _SilverHeaderCell('MAKING TYPE', width: 148),
-          SizedBox(width: 8),
-          _SilverHeaderCell('MAKING', width: 100, right: true),
-          SizedBox(width: 8),
-          _SilverHeaderCell('QTY', width: 72, center: true),
-          SizedBox(width: 8),
-          _SilverHeaderCell('STONE VAL', width: 110, right: true),
-          SizedBox(width: 8),
-          _SilverHeaderCell('ROW TOTAL', width: 140, right: true),
-          SizedBox(width: 8),
-          _SilverHeaderCell('ACT', width: 96, center: true),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // EMPTY STATE
-  // ─────────────────────────────────────────────────────────────
-
-  Widget _buildEmptyState() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 56),
-      child: Center(
-        child: Column(
-          children: [
+            // Row count badge — same as POS CART badge
             Container(
-              width: 68,
-              height: 68,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: AddStockColors.bodyBg,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: AddStockColors.cardBorder,
-                  width: 2.0,
-                ),
+                color: SilverStockColors.bodyBg,
+                borderRadius: BorderRadius.circular(8),
+                border:
+                    Border.all(color: SilverStockColors.cardBorder, width: 1.5),
               ),
-              child: Icon(
-                Icons.inventory_2_outlined,
-                color: SilverStockColors.brandSilver,
-                size: 34,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                          color: SilverStockColors.brandSilver,
+                          shape: BoxShape.circle)),
+                  const SizedBox(width: 8),
+                  Text(
+                    'ITEMS : ${ctrl.rows.length}',
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.8,
+                        color: SilverStockColors.textDark),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'NO SILVER ITEMS YET',
-              style: GoogleFonts.manrope(
-                color: AddStockColors.textDark,
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.2,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Click ADD NEW ITEM or press F2 to begin entry',
-              style: AddStockStyles.caption.copyWith(fontSize: 13),
             ),
           ],
         ),
@@ -318,73 +184,188 @@ class SilverItemsTable extends StatelessWidget {
   }
 
   // ─────────────────────────────────────────────────────────────
-  // BOTTOM BAR
+  // COLUMN HEADER ROW — exact same _h() helper as POS
   // ─────────────────────────────────────────────────────────────
 
-  Widget _buildBottomBar(BuildContext context) {
+  Widget _buildColumnRow() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(
+        color: SilverStockColors.bodyBg,
+        border: Border(
+            bottom:
+                BorderSide(color: SilverStockColors.cardBorder, width: 1.5)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          _h('S.NO', flex: 1, center: true),
+          const SizedBox(width: 6),
+          _h('ITEM NAME', flex: 4),
+          const SizedBox(width: 6),
+          _h('HUID', flex: 2),
+          const SizedBox(width: 6),
+          _h('GR. WT', flex: 2),
+          const SizedBox(width: 6),
+          _h('LESS', flex: 2),
+          const SizedBox(width: 6),
+          _h('NET WT', flex: 2, center: true),
+          const SizedBox(width: 6),
+          _h('RATE / g', flex: 3),
+          const SizedBox(width: 6),
+          _h('MAKING', flex: 3),
+          const SizedBox(width: 6),
+          _h('TOTAL', flex: 3, right: true),
+          const SizedBox(width: 6),
+          _h('ACT', flex: 1, center: true),
+        ],
+      ),
+    );
+  }
+
+  // Same _h() helper as PosSaleItemsTable — Expanded flex col header
+  Widget _h(String t,
+          {required int flex, bool right = false, bool center = false}) =>
+      Expanded(
+        flex: flex,
+        child: Text(
+          t,
+          textAlign: right
+              ? TextAlign.right
+              : (center ? TextAlign.center : TextAlign.left),
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: SilverStockColors.textMuted,
+            letterSpacing: 0.7,
+          ),
+        ),
+      );
+
+  // ─────────────────────────────────────────────────────────────
+  // EMPTY STATE — exact same pattern as POS
+  // ─────────────────────────────────────────────────────────────
+
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 60),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: SilverStockColors.bodyBg,
+                borderRadius: BorderRadius.circular(18),
+                border:
+                    Border.all(color: SilverStockColors.cardBorder, width: 2.0),
+              ),
+              child: Icon(
+                Icons.inventory_2_outlined,
+                color: SilverStockColors.brandSilver,
+                size: 36,
+              ),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              'NO SILVER ITEMS YET',
+              style: TextStyle(
+                  color: SilverStockColors.textDark,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.5),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Press F2 or click ADD NEW ITEM to begin entry',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: SilverStockColors.textMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // BOTTOM BAR — exact same layout as POS bottom bar
+  // ─────────────────────────────────────────────────────────────
+
+  Widget _buildBottomBar() {
+    // Live totals
+    double totalNetWt = 0;
+    double totalAmount = 0;
+
+    for (final row in ctrl.rows) {
+      totalNetWt += row.netWeight;
+      totalAmount += ctrl.rowTotalAmount(row);
+    }
+
+    final hasItems = ctrl.rows.isNotEmpty && totalNetWt > 0;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: const BoxDecoration(
-        color: AddStockColors.bodyBg,
+        color: SilverStockColors.bodyBg,
         border: Border(
-          top: BorderSide(color: AddStockColors.cardBorder, width: 1.5),
-        ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(18)),
+            top: BorderSide(color: SilverStockColors.cardBorder, width: 1.5)),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ADD NEW ITEM button — same style as POS & Gold
+          // ADD NEW ITEM — same button as POS
           InkWell(
             onTap: () => ctrl.addRow(requestFocus: true),
             borderRadius: BorderRadius.circular(10),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: AddStockColors.success.withOpacity(0.08),
+                color: SilverStockColors.success.withOpacity(0.08),
                 border: Border.all(
-                  color: AddStockColors.success.withOpacity(0.35),
-                  width: 1.5,
-                ),
+                    color: SilverStockColors.success.withOpacity(0.35),
+                    width: 1.5),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.add_circle_outline_rounded,
-                    color: AddStockColors.success,
+                    color: SilverStockColors.success,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
                   const Text(
                     'ADD NEW ITEM',
                     style: TextStyle(
-                      color: AddStockColors.success,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.8,
-                    ),
+                        color: SilverStockColors.success,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.8),
                   ),
                   const SizedBox(width: 14),
                   // F2 badge
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AddStockColors.success.withOpacity(0.15),
+                      color: SilverStockColors.success.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Text(
                       '[F2]',
                       style: TextStyle(
-                        color: AddStockColors.success,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.0,
-                      ),
+                          color: SilverStockColors.success,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.0),
                     ),
                   ),
                 ],
@@ -392,114 +373,55 @@ class SilverItemsTable extends StatelessWidget {
             ),
           ),
 
-          // Live batch summary chips — visible only when rows are entered
-          if (ctrl.enteredRowCount > 0)
-            Row(
-              children: [
-                _summaryChip(
-                  'Net Weight',
-                  '${_wt(ctrl.totalNetWeight)} g',
-                  SilverStockColors.brandSilver,
-                ),
-                const SizedBox(width: 10),
-                _summaryChip(
-                  'Taxable Amt',
-                  _money(ctrl.totalTaxableAmount),
-                  AddStockColors.accentPricing,
-                ),
-                const SizedBox(width: 10),
-                _summaryChip(
-                  'Batch Total',
-                  _money(ctrl.totalBatchAmount),
-                  AddStockColors.success,
-                ),
-              ],
+          // Live Silver Summary Chips — same as POS metal total boxes
+          if (hasItems)
+            Expanded(
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 12,
+                runSpacing: 10,
+                children: [
+                  _buildSilverTotalBox(
+                    'NET WT',
+                    '${totalNetWt.toStringAsFixed(3)} g',
+                    SilverStockColors.brandSilver,
+                  ),
+                  _buildSilverTotalBox(
+                    'BATCH TOTAL',
+                    '₹ ${totalAmount.toStringAsFixed(2)}',
+                    SilverStockColors.success,
+                  ),
+                ],
+              ),
             ),
         ],
       ),
     );
   }
 
-  Widget _summaryChip(String label, String value, Color color) {
+  // Same pattern as _buildMetalTotalBox in POS — silver branded
+  Widget _buildSilverTotalBox(String label, String value, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.09),
-        border: Border.all(color: color.withOpacity(0.28), width: 1.5),
-        borderRadius: BorderRadius.circular(8),
-      ),
+          color: color.withOpacity(0.1),
+          border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+          borderRadius: BorderRadius.circular(8)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 10,
-              color: color,
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 13,
-              color: color,
-            ),
-          ),
+          Text(label,
+              style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 10,
+                  color: color,
+                  letterSpacing: 1.0)),
+          const SizedBox(height: 4),
+          Text(value,
+              style: TextStyle(
+                  fontWeight: FontWeight.w900, fontSize: 14, color: color)),
         ],
       ),
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// COLUMN HEADER CELL
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _SilverHeaderCell extends StatelessWidget {
-  final String title;
-  final double width;
-  final bool right;
-  final bool center;
-
-  const _SilverHeaderCell(
-    this.title, {
-    required this.width,
-    this.right = false,
-    this.center = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: Text(
-        title,
-        textAlign: center
-            ? TextAlign.center
-            : (right ? TextAlign.right : TextAlign.left),
-        style: GoogleFonts.inter(
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          color: AddStockColors.textMuted,
-          letterSpacing: 0.7,
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-
-double _wt(double v) => double.parse(v.toStringAsFixed(3));
-
-String _money(double amount) => NumberFormat.currency(
-      locale: 'en_IN',
-      symbol: 'Rs ',
-      decimalDigits: 2,
-    ).format(amount);
