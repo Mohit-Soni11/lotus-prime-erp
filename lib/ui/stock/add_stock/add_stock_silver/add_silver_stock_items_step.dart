@@ -3,9 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
-import 'package:lotus_erp/ui/stock/add_stock/add_stock_item_row_card.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_batch_overview_card.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_invoice_card.dart';
+import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_items_table.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_supplier_panel.dart';
 import 'package:lotus_erp/ui/stock/add_stock/stock_metal_ui.dart';
 
@@ -127,147 +127,9 @@ class _LeftSilverPane extends StatelessWidget {
         const SizedBox(height: 16),
         AddSilverStockSupplierPanel(ctrl: ctrl),
         const SizedBox(height: 16),
-        _SilverItemsEntryCard(ctrl: ctrl),
+        SilverItemsTable(ctrl: ctrl),
         const SizedBox(height: 32),
       ],
-    );
-  }
-}
-
-class _SilverItemsEntryCard extends StatelessWidget {
-  final SilverStockController ctrl;
-
-  const _SilverItemsEntryCard({required this.ctrl});
-
-  @override
-  Widget build(BuildContext context) {
-    final ui = stockMetalUiFor(ctrl.selectedMetal);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AddStockColors.cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AddStockColors.cardBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: AddStockColors.shadowLight,
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            child: Row(
-              children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: ui.accent.withOpacity(0.10),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: ui.accent.withOpacity(0.22)),
-                  ),
-                  child: Icon(
-                    Icons.table_rows_rounded,
-                    size: 18,
-                    color: ui.accent,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'INVOICE ITEMS',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.0,
-                          color: AddStockColors.textDark,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        'Add silver articles row by row with pricing, HUID and rack details.',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          height: 1.45,
-                          color: AddStockColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AddStockColors.inputBg,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AddStockColors.cardBorder),
-                  ),
-                  child: Text(
-                    'ROWS : ${ctrl.rows.length}',
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: ui.accent,
-                      letterSpacing: 0.6,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: AddStockColors.cardBorder),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-            child: Column(
-              children: [
-                ...ctrl.rows.asMap().entries.map(
-                      (entry) => AddStockItemRowCard(
-                        index: entry.key + 1,
-                        row: entry.value,
-                        ctrl: ctrl,
-                      ),
-                    ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: ctrl.addRow,
-                    icon: Icon(
-                      Icons.add_circle_outline_rounded,
-                      color: ui.accent,
-                    ),
-                    label: Text(
-                      'ADD NEW ITEM',
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.6,
-                        color: ui.accent,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: ui.accent.withOpacity(0.45)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
