@@ -64,8 +64,6 @@ class _SilverItemRowState extends State<SilverItemRow> {
       child: ListenableBuilder(
         listenable: widget.model,
         builder: (context, _) {
-          final canDelete = widget.ctrl.silverRows.length > 1;
-
           return MouseRegion(
             onEnter: (_) => setState(() => _isHovered = true),
             onExit: (_) => setState(() => _isHovered = false),
@@ -197,7 +195,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
                   const SizedBox(width: 6),
 
                   // ── DELETE ─────────────────────────────────────
-                  Expanded(flex: 1, child: _buildDeleteBtn(canDelete)),
+                  Expanded(flex: 1, child: _buildDeleteBtn()),
                 ],
               ),
             ),
@@ -322,37 +320,30 @@ class _SilverItemRowState extends State<SilverItemRow> {
   }
 
   // ─────────────────────────────────────────────────────────────
-  // DELETE BUTTON — 1:1 copy of POS _buildDeleteBtn
-  // canDelete = false only when this is the LAST remaining row
+  // DELETE BUTTON — POS jaisa: ALWAYS active, koi bhi row delete ho
+  // sakti hai (including last row). Empty state table handle karta hai.
   // ─────────────────────────────────────────────────────────────
-  Widget _buildDeleteBtn(bool canDelete) {
+  Widget _buildDeleteBtn() {
     return Center(
       child: Tooltip(
-        message: canDelete ? 'Remove item' : 'Cannot remove last item',
+        message: 'Remove item',
         waitDuration: const Duration(milliseconds: 400),
         child: InkWell(
-          onTap:
-              canDelete ? () => widget.ctrl.removeRow(widget.model.id) : null,
+          onTap: () => widget.ctrl.removeRow(widget.model.id),
           borderRadius: BorderRadius.circular(8),
           child: Container(
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: canDelete
-                  ? SilverStockColors.danger.withOpacity(0.12)
-                  : SilverStockColors.cardBorder.withOpacity(0.40),
+              color: SilverStockColors.danger.withOpacity(0.12),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: canDelete
-                    ? SilverStockColors.danger.withOpacity(0.35)
-                    : SilverStockColors.cardBorder,
+                color: SilverStockColors.danger.withOpacity(0.35),
               ),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.delete_outline_rounded,
-              color: canDelete
-                  ? SilverStockColors.danger
-                  : SilverStockColors.textMuted,
+              color: SilverStockColors.danger,
               size: 18,
             ),
           ),
