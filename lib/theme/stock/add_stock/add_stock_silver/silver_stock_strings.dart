@@ -61,6 +61,8 @@ class SilverStockStrings {
   static const String hintAutoFilled = 'Auto-filled after link';
   static const String linkedBatchMessage =
       'This batch will be recorded against the supplier ledger automatically.';
+  static const String lookupHelperMessage =
+      'Search by mobile or supplier name to link one supplier ledger. Linked details will appear here automatically.';
   static const String notFoundMessage =
       'No supplier profile matched this lookup. Create the supplier first so this silver batch can be linked to the correct ledger.';
   static const String contactPrefix = 'Contact: ';

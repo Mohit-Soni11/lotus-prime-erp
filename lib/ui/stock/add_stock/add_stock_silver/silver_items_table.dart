@@ -6,14 +6,11 @@ import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_co
 import 'silver_item_row.dart';
 
 class SilverItemsTable extends StatelessWidget {
-  static const double _tableWidth = 1640;
+  static const double _minTableWidth = 1640;
 
   final SilverStockController ctrl;
 
-  const SilverItemsTable({
-    super.key,
-    required this.ctrl,
-  });
+  const SilverItemsTable({super.key, required this.ctrl});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +31,10 @@ class SilverItemsTable extends StatelessWidget {
             return LayoutBuilder(
               builder: (context, constraints) {
                 final needsHorizontalScroll =
-                    constraints.maxWidth < _tableWidth;
+                    constraints.maxWidth < _minTableWidth;
+                final tableWidth = constraints.maxWidth > _minTableWidth
+                    ? constraints.maxWidth
+                    : _minTableWidth;
 
                 return Container(
                   decoration: BoxDecoration(
@@ -62,7 +62,7 @@ class SilverItemsTable extends StatelessWidget {
                             ? const BouncingScrollPhysics()
                             : const NeverScrollableScrollPhysics(),
                         child: SizedBox(
-                          width: _tableWidth,
+                          width: tableWidth,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -310,8 +310,6 @@ class SilverItemsTable extends StatelessWidget {
   }
 
   Widget _buildBottomBar() {
-    final hasItems = ctrl.enteredRowCount > 0;
-
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: const BoxDecoration(
@@ -321,95 +319,127 @@ class SilverItemsTable extends StatelessWidget {
         ),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          InkWell(
-            onTap: () => ctrl.addRow(requestFocus: true),
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: SilverStockColors.success.withOpacity(0.08),
-                border: Border.all(
-                  color: SilverStockColors.success.withOpacity(0.35),
-                  width: 1.5,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final stackFooter = constraints.maxWidth < 980;
+
+          if (stackFooter) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildAddItemButton(),
+                const SizedBox(height: 12),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(children: _buildFooterStats()),
                 ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.add_circle_outline_rounded,
-                    color: SilverStockColors.success,
-                    size: 20,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _buildAddItemButton(),
+              const SizedBox(width: 16),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  reverse: true,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: _buildFooterStats(),
                   ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'ADD NEW ITEM',
-                    style: TextStyle(
-                      color: SilverStockColors.success,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: SilverStockColors.success.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Text(
-                      '[F2]',
-                      style: TextStyle(
-                        color: SilverStockColors.success,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (hasItems)
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                reverse: true,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildTotalBox(
-                      'NET WT',
-                      '${ctrl.totalNetWeight.toStringAsFixed(3)} g',
-                      SilverStockColors.brandSilver,
-                    ),
-                    const SizedBox(width: 12),
-                    _buildTotalBox(
-                      'FINE WT',
-                      '${ctrl.totalFineWeight.toStringAsFixed(3)} g',
-                      SilverStockColors.accentPricing,
-                    ),
-                    const SizedBox(width: 12),
-                    _buildTotalBox(
-                      'BATCH TOTAL',
-                      'Rs ${ctrl.totalEstimatedCost.toStringAsFixed(2)}',
-                      SilverStockColors.success,
-                    ),
-                  ],
                 ),
               ),
-            ),
-        ],
+            ],
+          );
+        },
       ),
     );
+  }
+
+  Widget _buildAddItemButton() {
+    return InkWell(
+      onTap: () => ctrl.addRow(requestFocus: true),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: SilverStockColors.success.withOpacity(0.08),
+          border: Border.all(
+            color: SilverStockColors.success.withOpacity(0.35),
+            width: 1.5,
+          ),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.add_circle_outline_rounded,
+              color: SilverStockColors.success,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'ADD NEW ITEM',
+              style: TextStyle(
+                color: SilverStockColors.success,
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: SilverStockColors.success.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text(
+                '[F2]',
+                style: TextStyle(
+                  color: SilverStockColors.success,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildFooterStats() {
+    return [
+      _buildTotalBox(
+        'ROWS',
+        '${ctrl.enteredRowCount}',
+        SilverStockColors.textDark,
+      ),
+      const SizedBox(width: 12),
+      _buildTotalBox(
+        'NET WT',
+        '${ctrl.totalNetWeight.toStringAsFixed(3)} g',
+        SilverStockColors.brandSilver,
+      ),
+      const SizedBox(width: 12),
+      _buildTotalBox(
+        'FINE WT',
+        '${ctrl.totalFineWeight.toStringAsFixed(3)} g',
+        SilverStockColors.accentPricing,
+      ),
+      const SizedBox(width: 12),
+      _buildTotalBox(
+        'BATCH TOTAL',
+        'Rs ${ctrl.totalEstimatedCost.toStringAsFixed(2)}',
+        SilverStockColors.success,
+      ),
+    ];
   }
 
   Widget _buildTotalBox(String label, String value, Color color) {

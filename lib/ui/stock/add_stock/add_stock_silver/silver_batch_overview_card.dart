@@ -7,10 +7,7 @@ import 'package:lotus_erp/ui/stock/add_stock/stock_metal_ui.dart';
 class SilverBatchOverviewCard extends StatelessWidget {
   final SilverStockController ctrl;
 
-  const SilverBatchOverviewCard({
-    super.key,
-    required this.ctrl,
-  });
+  const SilverBatchOverviewCard({super.key, required this.ctrl});
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +36,7 @@ class SilverBatchOverviewCard extends StatelessWidget {
         ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -137,7 +135,6 @@ class SilverBatchOverviewCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(

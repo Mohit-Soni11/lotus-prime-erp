@@ -1,14 +1,3 @@
-// =============================================================================
-// FILE        : silver_supplier_panel.dart
-// MODULE      : Stock & Inventory (Silver)
-// LAYER       : UI
-// DESCRIPTION : Supplier profile lookup + session binding panel for Silver batch.
-//               Full silver-theme parity with AddGoldStockSupplierPanel.
-//               All colors, icons, styles and strings sourced from
-//               SilverStockColors / SilverStockIcons / SilverStockStyles /
-//               SilverStockStrings — zero hardcoded values.
-// =============================================================================
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.dart';
@@ -29,19 +18,16 @@ class AddSilverStockSupplierPanel extends StatefulWidget {
 class _AddSilverStockSupplierPanelState
     extends State<AddSilverStockSupplierPanel>
     with SingleTickerProviderStateMixin {
-  // ── Animation ────────────────────────────────────────────────
   late final AnimationController _animCtrl;
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
 
-  // ── Overlay links for dropdown positioning ───────────────────
   final LayerLink _mobileSuggestionLink = LayerLink();
   final LayerLink _nameSuggestionLink = LayerLink();
 
   OverlayEntry? _suggestionOverlay;
   bool _isMobileActive = false;
 
-  // ── Lifecycle ────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
@@ -57,12 +43,18 @@ class _AddSilverStockSupplierPanelState
     ).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic));
 
     Future.delayed(const Duration(milliseconds: 40), () {
-      if (mounted) _animCtrl.forward();
+      if (mounted) {
+        _animCtrl.forward();
+      }
     });
 
     widget.ctrl.supplierNameCtrl.addListener(_onNameChanged);
     widget.ctrl.supplierMobileCtrl.addListener(_onMobileChanged);
     widget.ctrl.addListener(_onControllerChanged);
+
+    if (!widget.ctrl.sameForAll) {
+      widget.ctrl.setSameForAll(true);
+    }
   }
 
   @override
@@ -75,13 +67,14 @@ class _AddSilverStockSupplierPanelState
     super.dispose();
   }
 
-  // ── Suggestion computation ───────────────────────────────────
   List<SupplierListItemModel> get _activeSuggestions {
     final query = _isMobileActive
         ? widget.ctrl.supplierMobileCtrl.text.trim().toLowerCase()
         : widget.ctrl.supplierNameCtrl.text.trim().toLowerCase();
 
-    if (query.isEmpty) return const [];
+    if (query.isEmpty) {
+      return const [];
+    }
 
     return widget.ctrl.suppliers
         .where(
@@ -101,27 +94,36 @@ class _AddSilverStockSupplierPanelState
     return text.isNotEmpty && _activeSuggestions.isEmpty;
   }
 
-  // ── Listeners ────────────────────────────────────────────────
   void _onNameChanged() {
-    if (widget.ctrl.isApplyingSupplierProfile) return;
+    if (widget.ctrl.isApplyingSupplierProfile) {
+      return;
+    }
     _isMobileActive = false;
     final linked = widget.ctrl.linkedSupplier;
     final text = widget.ctrl.supplierNameCtrl.text;
-    if (linked != null && linked.businessName == text) return;
+    if (linked != null && linked.businessName == text) {
+      return;
+    }
     widget.ctrl.setSessionSupplierText(text);
   }
 
   void _onMobileChanged() {
-    if (widget.ctrl.isApplyingSupplierProfile) return;
+    if (widget.ctrl.isApplyingSupplierProfile) {
+      return;
+    }
     _isMobileActive = true;
     final linked = widget.ctrl.linkedSupplier;
     final text = widget.ctrl.supplierMobileCtrl.text;
-    if (linked != null && linked.mobile == text) return;
+    if (linked != null && linked.mobile == text) {
+      return;
+    }
     widget.ctrl.updateSupplierMobileText(text);
   }
 
   void _onControllerChanged() {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     setState(() {});
     if (_activeSuggestions.isEmpty) {
       _removeSuggestionOverlay();
@@ -130,14 +132,15 @@ class _AddSilverStockSupplierPanelState
     }
   }
 
-  // ── Overlay management ───────────────────────────────────────
   void _removeSuggestionOverlay() {
     _suggestionOverlay?.remove();
     _suggestionOverlay = null;
   }
 
   void _showSuggestionOverlay() {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     _removeSuggestionOverlay();
 
     final activeLink =
@@ -147,8 +150,8 @@ class _AddSilverStockSupplierPanelState
       builder: (context) {
         final screenWidth = MediaQuery.sizeOf(context).width;
         final width = screenWidth > 430
-            ? 360.0
-            : (screenWidth - 28).clamp(240.0, 360.0).toDouble();
+            ? 340.0
+            : (screenWidth - 28).clamp(240.0, 340.0).toDouble();
 
         return Positioned(
           top: 0,
@@ -179,7 +182,6 @@ class _AddSilverStockSupplierPanelState
     Overlay.of(context).insert(_suggestionOverlay!);
   }
 
-  // ── Navigation ───────────────────────────────────────────────
   Future<void> _openCreateSupplier() async {
     _removeSuggestionOverlay();
     FocusScope.of(context).unfocus();
@@ -194,11 +196,12 @@ class _AddSilverStockSupplierPanelState
       ),
     );
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     await widget.ctrl.reloadSuppliers();
   }
 
-  // ── Build ────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
@@ -206,7 +209,7 @@ class _AddSilverStockSupplierPanelState
       child: SlideTransition(
         position: _slideAnim,
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: SilverStockColors.cardBg,
             borderRadius: BorderRadius.circular(18),
@@ -229,12 +232,11 @@ class _AddSilverStockSupplierPanelState
             ),
           ),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(),
-              const SizedBox(height: 16),
-
-              // Silver gradient divider
+              const SizedBox(height: 14),
               Container(
                 height: 1.5,
                 decoration: BoxDecoration(
@@ -247,20 +249,10 @@ class _AddSilverStockSupplierPanelState
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // Inputs (responsive)
+              const SizedBox(height: 14),
               _buildInputsRow(),
-
-              // SAME FOR ALL toggle
-              const SizedBox(height: 16),
-              _buildSameForAllToggle(),
-
-              // Status card
-              if (widget.ctrl.hasLinkedSupplier || _notFound) ...[
-                const SizedBox(height: 16),
-                _buildStatusCard(),
-              ],
+              const SizedBox(height: 14),
+              _buildStateCard(),
             ],
           ),
         ),
@@ -268,7 +260,6 @@ class _AddSilverStockSupplierPanelState
     );
   }
 
-  // ── Header ───────────────────────────────────────────────────
   Widget _buildHeader() {
     final showCreateCta = _notFound;
 
@@ -314,7 +305,6 @@ class _AddSilverStockSupplierPanelState
         final leadingRow = Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Silver gradient icon box
             Container(
               width: 40,
               height: 40,
@@ -365,7 +355,6 @@ class _AddSilverStockSupplierPanelState
     );
   }
 
-  // ── Inputs row (responsive) ──────────────────────────────────
   Widget _buildInputsRow() {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -398,14 +387,6 @@ class _AddSilverStockSupplierPanelState
                   icon: SilverStockIcons.businessName,
                 ),
               ),
-              const SizedBox(height: 12),
-              _buildInput(
-                label: SilverStockStrings.fieldAddress,
-                hint: SilverStockStrings.hintAutoFilled,
-                controller: widget.ctrl.supplierRegionCtrl,
-                readOnly: true,
-                icon: SilverStockIcons.locationPin,
-              ),
             ],
           );
         }
@@ -413,8 +394,7 @@ class _AddSilverStockSupplierPanelState
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: 190,
+            Expanded(
               child: CompositedTransformTarget(
                 link: _mobileSuggestionLink,
                 child: _buildInput(
@@ -442,74 +422,13 @@ class _AddSilverStockSupplierPanelState
                 ),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildInput(
-                label: SilverStockStrings.fieldAddress,
-                hint: SilverStockStrings.hintAutoFilled,
-                controller: widget.ctrl.supplierRegionCtrl,
-                readOnly: true,
-                icon: SilverStockIcons.locationPin,
-              ),
-            ),
           ],
         );
       },
     );
   }
 
-  // ── Same For All toggle ──────────────────────────────────────
-  Widget _buildSameForAllToggle() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: SilverStockColors.inputBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: SilverStockColors.cardBorder),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            SilverStockIcons.storefront,
-            size: 18,
-            color: SilverStockColors.brandSilver,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              SilverStockStrings.supplierSession,
-              style: SilverStockStyles.fieldLabel.copyWith(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: SilverStockColors.textBody,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            SilverStockStrings.sameForAllLabel,
-            style: SilverStockStyles.caption.copyWith(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.6,
-              color: SilverStockColors.textMuted,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Switch.adaptive(
-            value: widget.ctrl.sameForAll,
-            onChanged: widget.ctrl.setSameForAll,
-            activeColor: SilverStockColors.brandSilver,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Status card ──────────────────────────────────────────────
-  Widget _buildStatusCard() {
-    // Not found state
+  Widget _buildStateCard() {
     if (_notFound) {
       return Container(
         width: double.infinity,
@@ -517,10 +436,12 @@ class _AddSilverStockSupplierPanelState
         decoration: BoxDecoration(
           color: SilverStockColors.warningBg,
           borderRadius: BorderRadius.circular(12),
-          border:
-              Border.all(color: SilverStockColors.warning.withOpacity(0.25)),
+          border: Border.all(
+            color: SilverStockColors.warning.withOpacity(0.25),
+          ),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Icon(
               SilverStockIcons.warning,
@@ -542,14 +463,65 @@ class _AddSilverStockSupplierPanelState
       );
     }
 
-    // Linked state
     final linked = widget.ctrl.linkedSupplier;
+    if (linked == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: SilverStockColors.inputBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: SilverStockColors.cardBorder),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: SilverStockColors.brandSilver.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                SilverStockIcons.locationPin,
+                color: SilverStockColors.brandSilver,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    SilverStockStrings.lookupReady,
+                    style: SilverStockStyles.sectionTitle.copyWith(
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    SilverStockStrings.lookupHelperMessage,
+                    style: SilverStockStyles.caption.copyWith(
+                      color: SilverStockColors.textBody,
+                      fontSize: 12,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final detailParts = [
       widget.ctrl.supplierMobileCtrl.text.trim(),
       widget.ctrl.supplierRegionCtrl.text.trim(),
       if (widget.ctrl.supplierGstCtrl.text.trim().isNotEmpty)
         '${SilverStockStrings.gstPrefix}${widget.ctrl.supplierGstCtrl.text.trim()}',
-    ].where((v) => v.isNotEmpty).toList();
+    ].where((v) => v.isNotEmpty).toList(growable: false);
 
     return Container(
       width: double.infinity,
@@ -595,23 +567,19 @@ class _AddSilverStockSupplierPanelState
                   ),
                 ),
                 if (detailParts.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    detailParts.join(' | '),
-                    style: SilverStockStyles.caption.copyWith(
-                      color: SilverStockColors.textBody,
-                      fontSize: 12,
-                    ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: detailParts
+                        .map((detail) => _buildDetailChip(detail))
+                        .toList(growable: false),
                   ),
                 ],
-                if ((linked?.contactPersonName ?? '').isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    '${SilverStockStrings.contactPrefix}${linked!.contactPersonName}',
-                    style: SilverStockStyles.caption.copyWith(
-                      color: SilverStockColors.textBody,
-                      fontSize: 12,
-                    ),
+                if ((linked.contactPersonName ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _buildDetailChip(
+                    '${SilverStockStrings.contactPrefix}${linked.contactPersonName}',
                   ),
                 ],
               ],
@@ -622,7 +590,25 @@ class _AddSilverStockSupplierPanelState
     );
   }
 
-  // ── Text input builder ───────────────────────────────────────
+  Widget _buildDetailChip(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: SilverStockColors.cardBg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: SilverStockColors.cardBorder),
+      ),
+      child: Text(
+        text,
+        style: SilverStockStyles.caption.copyWith(
+          color: SilverStockColors.textBody,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
   Widget _buildInput({
     required String label,
     required String hint,
@@ -635,7 +621,6 @@ class _AddSilverStockSupplierPanelState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label row with silver dot
         Row(
           children: [
             Container(
@@ -676,11 +661,7 @@ class _AddSilverStockSupplierPanelState
                 fontSize: 13,
               ),
               prefixIcon: icon != null
-                  ? Icon(
-                      icon,
-                      size: 18,
-                      color: SilverStockColors.textMuted,
-                    )
+                  ? Icon(icon, size: 18, color: SilverStockColors.textMuted)
                   : null,
               filled: true,
               fillColor: readOnly
@@ -691,13 +672,15 @@ class _AddSilverStockSupplierPanelState
                 vertical: 0,
               ),
               border: OutlineInputBorder(
-                borderSide:
-                    const BorderSide(color: SilverStockColors.cardBorder),
+                borderSide: const BorderSide(
+                  color: SilverStockColors.cardBorder,
+                ),
                 borderRadius: BorderRadius.circular(10),
               ),
               enabledBorder: OutlineInputBorder(
-                borderSide:
-                    const BorderSide(color: SilverStockColors.cardBorder),
+                borderSide: const BorderSide(
+                  color: SilverStockColors.cardBorder,
+                ),
                 borderRadius: BorderRadius.circular(10),
               ),
               focusedBorder: OutlineInputBorder(
@@ -715,9 +698,6 @@ class _AddSilverStockSupplierPanelState
   }
 }
 
-// =============================================================================
-// PRIVATE WIDGET — Lookup dropdown (silver-themed)
-// =============================================================================
 class _SilverSupplierLookupDropdown extends StatelessWidget {
   final List<SupplierListItemModel> suppliers;
   final ValueChanged<SupplierListItemModel> onSelected;
@@ -770,9 +750,10 @@ class _SilverSupplierLookupDropdown extends StatelessWidget {
               ),
             ),
             subtitle: Text(
-              [supplier.mobile, supplier.supplierType.label]
-                  .where((v) => v.isNotEmpty)
-                  .join(' | '),
+              [
+                supplier.mobile,
+                supplier.supplierType.label,
+              ].where((v) => v.isNotEmpty).join(' | '),
               style: SilverStockStyles.caption.copyWith(fontSize: 12),
             ),
             onTap: () => onSelected(supplier),
@@ -783,9 +764,6 @@ class _SilverSupplierLookupDropdown extends StatelessWidget {
   }
 }
 
-// =============================================================================
-// PRIVATE WIDGET — Primary action chip (Create Supplier CTA)
-// =============================================================================
 class _SilverPrimaryActionChip extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -839,9 +817,6 @@ class _SilverPrimaryActionChip extends StatelessWidget {
   }
 }
 
-// =============================================================================
-// PRIVATE WIDGET — Status badge (Ledger Linked / Lookup Ready)
-// =============================================================================
 class _SilverStatusBadge extends StatelessWidget {
   final String label;
 

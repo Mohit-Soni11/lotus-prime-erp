@@ -9,6 +9,8 @@ import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_items_table
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_supplier_panel.dart';
 import 'package:lotus_erp/ui/stock/add_stock/stock_metal_ui.dart';
 
+const double _silverDesktopTopCardHeight = 352;
+
 class AddSilverStockItemsStep extends StatelessWidget {
   final SilverStockController ctrl;
   final Future<void> Function() onSave;
@@ -81,13 +83,16 @@ class _SilverDesktopWorkspace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: _SilverTopCards(ctrl: ctrl)),
-        const SizedBox(width: 16),
-        SizedBox(width: 360, child: AddSilverStockSupplierPanel(ctrl: ctrl)),
-      ],
+    return SizedBox(
+      height: _silverDesktopTopCardHeight,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: _SilverTopCards(ctrl: ctrl)),
+          const SizedBox(width: 16),
+          SizedBox(width: 360, child: AddSilverStockSupplierPanel(ctrl: ctrl)),
+        ],
+      ),
     );
   }
 }
@@ -105,23 +110,11 @@ class _SilverTopCards extends StatelessWidget {
 
         if (sideBySide) {
           return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                flex: 42,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 270),
-                  child: SilverBatchOverviewCard(ctrl: ctrl),
-                ),
-              ),
+              Expanded(flex: 42, child: SilverBatchOverviewCard(ctrl: ctrl)),
               const SizedBox(width: 16),
-              Expanded(
-                flex: 58,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 270),
-                  child: SilverInvoiceCard(ctrl: ctrl),
-                ),
-              ),
+              Expanded(flex: 58, child: SilverInvoiceCard(ctrl: ctrl)),
             ],
           );
         }
