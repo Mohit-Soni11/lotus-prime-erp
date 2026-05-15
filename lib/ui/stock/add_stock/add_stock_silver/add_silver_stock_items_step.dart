@@ -25,7 +25,7 @@ class AddSilverStockItemsStep extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final desktopShell = constraints.maxWidth >= 1100;
+        final desktopShell = constraints.maxWidth >= 1180;
 
         if (desktopShell) {
           return Padding(
@@ -34,21 +34,24 @@ class AddSilverStockItemsStep extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  flex: 70,
+                  flex: 78,
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
                     child: _LeftSilverPane(ctrl: ctrl),
                   ),
                 ),
                 const SizedBox(width: 18),
-                Expanded(
-                  flex: 30,
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: _SilverSummaryPanel(
-                      ctrl: ctrl,
-                      onSave: onSave,
-                      onResetBatch: onResetBatch,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 340),
+                  child: SizedBox(
+                    width: 340,
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: _SilverSummaryPanel(
+                        ctrl: ctrl,
+                        onSave: onSave,
+                        onResetBatch: onResetBatch,
+                      ),
                     ),
                   ),
                 ),
@@ -89,14 +92,14 @@ class _LeftSilverPane extends StatelessWidget {
       children: [
         LayoutBuilder(
           builder: (context, constraints) {
-            final sideBySide = constraints.maxWidth > 720;
+            final sideBySide = constraints.maxWidth > 760;
 
             if (sideBySide) {
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    flex: 45,
+                    flex: 42,
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(minHeight: 270),
                       child: SilverBatchOverviewCard(ctrl: ctrl),
@@ -104,7 +107,7 @@ class _LeftSilverPane extends StatelessWidget {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    flex: 55,
+                    flex: 58,
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(minHeight: 270),
                       child: SilverInvoiceCard(ctrl: ctrl),

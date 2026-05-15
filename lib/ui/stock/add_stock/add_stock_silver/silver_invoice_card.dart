@@ -295,6 +295,91 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard> {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: widget.ctrl.hasSilverRateSnapshot
+                  ? accent.withOpacity(0.06)
+                  : AddStockColors.warning.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: widget.ctrl.hasSilverRateSnapshot
+                    ? accent.withOpacity(0.20)
+                    : AddStockColors.warning.withOpacity(0.28),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: widget.ctrl.hasSilverRateSnapshot
+                        ? accent.withOpacity(0.10)
+                        : AddStockColors.warning.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.currency_rupee_rounded,
+                    color: widget.ctrl.hasSilverRateSnapshot
+                        ? accent
+                        : AddStockColors.warning,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'APPLIED SILVER RATE',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.1,
+                          color: AddStockColors.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.ctrl.silverRateDisplay,
+                        style: GoogleFonts.manrope(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: widget.ctrl.hasSilverRateSnapshot
+                              ? accent
+                              : AddStockColors.warning,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.ctrl.hasSilverRateSnapshot
+                            ? 'Used for fine-weight total calculation'
+                            : 'Update daily silver jewellery rate to unlock totals',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AddStockColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _StatusPill(
+                  label: widget.ctrl.hasSilverRateSnapshot
+                      ? 'LIVE RATE'
+                      : (widget.ctrl.isLoadingSilverRate
+                          ? 'SYNCING'
+                          : 'RATE MISSING'),
+                  color: widget.ctrl.hasSilverRateSnapshot
+                      ? accent
+                      : AddStockColors.warning,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

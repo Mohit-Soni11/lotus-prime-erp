@@ -14,6 +14,7 @@ class StockRowEntry {
   String itemName = '';
   String description = '';
   StockSubCategory subCategory = StockSubCategory.ring;
+  String subCategoryLabel = '';
   String huid = '';
   String hsnCode;
 
@@ -21,12 +22,14 @@ class StockRowEntry {
   double stoneWeight = 0.0;
   double stoneValue = 0.0;
   double touchPercent = 0.0;
+  String purityLabel = '';
 
   StoneType stoneType = StoneType.none;
   double stoneCarats = 0.0;
   int stonePieces = 0;
 
   double purchaseRate = 0.0;
+  double purchasePriceOverride = 0.0;
   double makingCharges = 0.0;
   MakingChargesType makingChargesType = MakingChargesType.perGram;
   double mrp = 0.0;
@@ -76,9 +79,13 @@ class StockRowEntry {
     return metalCost + stoneValue + making;
   }
 
-  double get totalCostValue => costPrice * quantity;
+  double get resolvedCostPrice =>
+      purchasePriceOverride > 0 ? purchasePriceOverride : costPrice;
 
-  double get totalSellingValue => ((mrp > 0 ? mrp : costPrice) * quantity);
+  double get totalCostValue => resolvedCostPrice * quantity;
+
+  double get totalSellingValue =>
+      ((mrp > 0 ? mrp : resolvedCostPrice) * quantity);
 
   bool get hasAnyInput {
     return itemName.trim().isNotEmpty ||
@@ -888,6 +895,30 @@ class AddStockController extends ChangeNotifier {
     return '$shortLabel • $touchLabel% Touch';
   }
 
+  String resolvedPurityStorageLabel(StockRowEntry row) {
+    final baseLabel = row.purityLabel.trim().isNotEmpty
+        ? row.purityLabel.trim()
+        : _purityDisplay.trim();
+    if (baseLabel.isEmpty) {
+      return '';
+    }
+
+    if (_selectedMetal != StockCategory.silver) {
+      return baseLabel;
+    }
+
+    final touch = row.resolveTouch(selectedPurityBasePercent);
+    final basePercent = _resolvePurityPercent(baseLabel);
+    if (basePercent <= 0 || _near(basePercent, touch)) {
+      return baseLabel;
+    }
+
+    final touchLabel = touch == touch.roundToDouble()
+        ? touch.round().toString()
+        : touch.toStringAsFixed(2);
+    return '$baseLabel • $touchLabel% Touch';
+  }
+
   String? validateRow(StockRowEntry row) {
     if (!row.hasAnyInput) {
       return null;
@@ -924,6 +955,27 @@ class AddStockController extends ChangeNotifier {
         row.stoneValue < 0 ||
         row.mrp < 0) {
       return AddStockStrings.errPriceNeg;
+    }
+    if (_selectedMetal == StockCategory.silver &&
+        row.subCategoryLabel.trim().isEmpty) {
+      return 'Category is required';
+    }
+    if (_selectedMetal == StockCategory.silver) {
+      final purityLabel = row.purityLabel.trim().isNotEmpty
+          ? row.purityLabel.trim()
+          : _purityDisplay.trim();
+      if (purityLabel.isEmpty) {
+        return 'Purity is required';
+      }
+
+      final touch = row.resolveTouch(selectedPurityBasePercent);
+      if (touch <= 0 || touch > 100) {
+        return 'Wastage / fine percent must be between 0 and 100';
+      }
+
+      if (row.purchaseRate <= 0) {
+        return 'Silver daily rate is missing. Update silver jewellery rate before saving.';
+      }
     }
     if (row.gstRate < 0 || row.gstRate > 100) {
       return AddStockStrings.errGstRange;
@@ -1040,14 +1092,21 @@ class AddStockController extends ChangeNotifier {
                       : row.description.trim(),
                 ),
                 category: _selectedMetal.label,
-                subCategory: row.subCategory.label,
+                subCategory: row.subCategoryLabel.trim().isEmpty
+                    ? row.subCategory.label
+                    : row.subCategoryLabel.trim(),
                 metalType: drift.Value(_selectedMetal.label),
                 purity: drift.Value(
-                  _purityDisplay.trim().isEmpty ? null : _purityDisplay.trim(),
+                  resolvedPurityStorageLabel(row).isEmpty
+                      ? null
+                      : resolvedPurityStorageLabel(row),
                 ),
                 grossWeight: drift.Value(row.grossWeight),
                 stoneWeight: drift.Value(row.stoneWeight),
                 netWeight: drift.Value(row.netWeight),
+                wastage: drift.Value(
+                  row.resolveTouch(selectedPurityBasePercent),
+                ),
                 stoneType: drift.Value(row.stoneType.label),
                 stoneCarats: drift.Value(row.stoneCarats),
                 stonePieces: drift.Value(row.stonePieces),
@@ -1055,7 +1114,7 @@ class AddStockController extends ChangeNotifier {
                 purchaseRate: drift.Value(row.purchaseRate),
                 makingCharge: drift.Value(row.makingCharges),
                 makingChargeType: drift.Value(row.makingChargesType.label),
-                purchasePrice: drift.Value(row.costPrice),
+                purchasePrice: drift.Value(row.resolvedCostPrice),
                 mrp: drift.Value(row.mrp),
                 hsnCode: drift.Value(
                   row.hsnCode.trim().isEmpty

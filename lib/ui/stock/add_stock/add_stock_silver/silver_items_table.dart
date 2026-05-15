@@ -1,21 +1,13 @@
-// =============================================================================
-// silver_items_table.dart  —  SILVER INVOICE ITEMS TABLE
-// ✅ POS jaisa: starts with EMPTY STATE ("NO SILVER ITEMS YET")
-// ✅ F2 / ADD NEW ITEM se pehli row aati hai
-// ✅ Sab rows delete hone par empty state wapas aata hai
-// ✅ ctrl.silverRows use karta hai (SilverItemModel list)
-// ✅ Bottom bar totals sirf tab dikhte hain jab rows hain
-// ✅ ITEMS count header me, F2 shortcut, Delete shortcut
-// =============================================================================
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_colors.dart';
+
 import 'silver_item_row.dart';
 
 class SilverItemsTable extends StatelessWidget {
+  static const double _tableWidth = 1640;
+
   final SilverStockController ctrl;
 
   const SilverItemsTable({
@@ -39,48 +31,65 @@ class SilverItemsTable extends StatelessWidget {
           builder: (context, _) {
             final rows = ctrl.silverRows;
 
-            return Container(
-              decoration: BoxDecoration(
-                color: SilverStockColors.cardBg,
-                borderRadius: BorderRadius.circular(16),
-                border:
-                    Border.all(color: SilverStockColors.cardBorder, width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: SilverStockColors.shadowLight,
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final needsHorizontalScroll =
+                    constraints.maxWidth < _tableWidth;
+
+                return Container(
+                  decoration: BoxDecoration(
+                    color: SilverStockColors.cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: SilverStockColors.cardBorder,
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: SilverStockColors.shadowLight,
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── HEADER ──────────────────────────────────
-                  _buildHeader(rows.length),
-
-                  // ── COLUMN LABELS (sirf rows hon tab) ───────
-                  if (rows.isNotEmpty) _buildColumnRow(),
-
-                  // ── EMPTY STATE ya ROWS ──────────────────────
-                  rows.isEmpty
-                      ? _buildEmptyState() // POS jaisa "CART IS EMPTY"
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: rows.length,
-                          itemBuilder: (_, i) => SilverItemRow(
-                            key: ObjectKey(rows[i]), // stable key like POS
-                            index: i,
-                            model: rows[i],
-                            ctrl: ctrl,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(rows.length, needsHorizontalScroll),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: needsHorizontalScroll
+                            ? const BouncingScrollPhysics()
+                            : const NeverScrollableScrollPhysics(),
+                        child: SizedBox(
+                          width: _tableWidth,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (rows.isNotEmpty) _buildColumnRow(),
+                              rows.isEmpty
+                                  ? _buildEmptyState()
+                                  : ListView.builder(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemCount: rows.length,
+                                      itemBuilder: (_, i) => SilverItemRow(
+                                        key: ObjectKey(rows[i]),
+                                        index: i,
+                                        model: rows[i],
+                                        ctrl: ctrl,
+                                      ),
+                                    ),
+                            ],
                           ),
                         ),
-
-                  // ── BOTTOM BAR ───────────────────────────────
-                  _buildBottomBar(),
-                ],
-              ),
+                      ),
+                      _buildBottomBar(),
+                    ],
+                  ),
+                );
+              },
             );
           },
         ),
@@ -88,23 +97,19 @@ class SilverItemsTable extends StatelessWidget {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // HEADER — title + ITEMS count badge
-  // ─────────────────────────────────────────────────────────────
-  Widget _buildHeader(int count) {
+  Widget _buildHeader(int count, bool needsHorizontalScroll) {
     return Container(
       decoration: BoxDecoration(
         color: SilverStockColors.brandSilver.withOpacity(0.06),
         border: const Border(
-            bottom:
-                BorderSide(color: SilverStockColors.cardBorder, width: 1.5)),
+          bottom: BorderSide(color: SilverStockColors.cardBorder, width: 1.5),
+        ),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Icon badge
           Container(
             width: 40,
             height: 40,
@@ -112,21 +117,23 @@ class SilverItemsTable extends StatelessWidget {
               color: SilverStockColors.brandSilver.withOpacity(0.12),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                  color: SilverStockColors.brandSilver.withOpacity(0.40)),
+                color: SilverStockColors.brandSilver.withOpacity(0.40),
+              ),
             ),
-            child: Center(
-              child: Icon(Icons.receipt_long_rounded,
-                  color: SilverStockColors.brandSilver, size: 22),
+            child: const Center(
+              child: Icon(
+                Icons.receipt_long_rounded,
+                color: SilverStockColors.brandSilver,
+                size: 22,
+              ),
             ),
           ),
           const SizedBox(width: 14),
-
-          // Title + hint
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
-            children: const [
-              Text(
+            children: [
+              const Text(
                 'INVOICE ITEMS',
                 style: TextStyle(
                   fontSize: 16,
@@ -135,10 +142,12 @@ class SilverItemsTable extends StatelessWidget {
                   color: SilverStockColors.textDark,
                 ),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
-                'Scan barcode or press F2 to add item',
-                style: TextStyle(
+                needsHorizontalScroll
+                    ? 'Scroll to review all silver columns, or press F2 to add item'
+                    : 'Choose category, capture purity, and press F2 to add item',
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: SilverStockColors.textMuted,
@@ -147,15 +156,15 @@ class SilverItemsTable extends StatelessWidget {
             ],
           ),
           const Spacer(),
-
-          // ITEMS count badge — POS ka "CART : 0" jaisa
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               color: SilverStockColors.bodyBg,
               borderRadius: BorderRadius.circular(8),
-              border:
-                  Border.all(color: SilverStockColors.cardBorder, width: 1.5),
+              border: Border.all(
+                color: SilverStockColors.cardBorder,
+                width: 1.5,
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -186,22 +195,21 @@ class SilverItemsTable extends StatelessWidget {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // COLUMN LABELS ROW
-  // ─────────────────────────────────────────────────────────────
   Widget _buildColumnRow() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: const BoxDecoration(
         color: SilverStockColors.bodyBg,
         border: Border(
-            bottom:
-                BorderSide(color: SilverStockColors.cardBorder, width: 1.5)),
+          bottom: BorderSide(color: SilverStockColors.cardBorder, width: 1.5),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           _h('S.NO', flex: 1, center: true),
+          const SizedBox(width: 6),
+          _h('CATEGORY', flex: 3),
           const SizedBox(width: 6),
           _h('ITEM NAME', flex: 4),
           const SizedBox(width: 6),
@@ -213,7 +221,11 @@ class SilverItemsTable extends StatelessWidget {
           const SizedBox(width: 6),
           _h('NET WT', flex: 2, center: true),
           const SizedBox(width: 6),
-          _h('RATE / g', flex: 3),
+          _h('PURITY', flex: 2, center: true),
+          const SizedBox(width: 6),
+          _h('WASTAGE', flex: 2, center: true),
+          const SizedBox(width: 6),
+          _h('FINE', flex: 2, center: true),
           const SizedBox(width: 6),
           _h('MAKING', flex: 3),
           const SizedBox(width: 6),
@@ -225,27 +237,29 @@ class SilverItemsTable extends StatelessWidget {
     );
   }
 
-  Widget _h(String t,
-          {required int flex, bool right = false, bool center = false}) =>
-      Expanded(
-        flex: flex,
-        child: Text(
-          t,
-          textAlign: right
-              ? TextAlign.right
-              : (center ? TextAlign.center : TextAlign.left),
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            color: SilverStockColors.textMuted,
-            letterSpacing: 0.7,
-          ),
+  Widget _h(
+    String text, {
+    required int flex,
+    bool right = false,
+    bool center = false,
+  }) {
+    return Expanded(
+      flex: flex,
+      child: Text(
+        text,
+        textAlign: right
+            ? TextAlign.right
+            : (center ? TextAlign.center : TextAlign.left),
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: SilverStockColors.textMuted,
+          letterSpacing: 0.7,
         ),
-      );
+      ),
+    );
+  }
 
-  // ─────────────────────────────────────────────────────────────
-  // EMPTY STATE — exact same pattern as POS "CART IS EMPTY"
-  // ─────────────────────────────────────────────────────────────
   Widget _buildEmptyState() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 60),
@@ -253,15 +267,16 @@ class SilverItemsTable extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Icon box — same size as POS (72x72)
             Container(
               width: 72,
               height: 72,
               decoration: BoxDecoration(
                 color: SilverStockColors.bodyBg,
                 borderRadius: BorderRadius.circular(18),
-                border:
-                    Border.all(color: SilverStockColors.cardBorder, width: 2.0),
+                border: Border.all(
+                  color: SilverStockColors.cardBorder,
+                  width: 2.0,
+                ),
               ),
               child: const Icon(
                 Icons.inventory_2_outlined,
@@ -270,8 +285,6 @@ class SilverItemsTable extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
-
-            // "NO SILVER ITEMS YET" — same style as POS "CART IS EMPTY"
             const Text(
               'NO SILVER ITEMS YET',
               style: TextStyle(
@@ -282,10 +295,8 @@ class SilverItemsTable extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-
-            // Subtitle — same as POS "Start typing description..."
             const Text(
-              'Press F2 or click ADD NEW ITEM to begin entry',
+              'Press F2 or click ADD NEW ITEM to begin silver stock entry',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -298,10 +309,6 @@ class SilverItemsTable extends StatelessWidget {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // BOTTOM BAR — ADD button + live totals (sirf rows hon tab)
-  // same layout as POS _buildBottomBar
-  // ─────────────────────────────────────────────────────────────
   Widget _buildBottomBar() {
     final hasItems = ctrl.enteredRowCount > 0;
 
@@ -310,14 +317,14 @@ class SilverItemsTable extends StatelessWidget {
       decoration: const BoxDecoration(
         color: SilverStockColors.bodyBg,
         border: Border(
-            top: BorderSide(color: SilverStockColors.cardBorder, width: 1.5)),
+          top: BorderSide(color: SilverStockColors.cardBorder, width: 1.5),
+        ),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // ── ADD NEW ITEM ─────────────────────────────────────
           InkWell(
             onTap: () => ctrl.addRow(requestFocus: true),
             borderRadius: BorderRadius.circular(10),
@@ -326,15 +333,19 @@ class SilverItemsTable extends StatelessWidget {
               decoration: BoxDecoration(
                 color: SilverStockColors.success.withOpacity(0.08),
                 border: Border.all(
-                    color: SilverStockColors.success.withOpacity(0.35),
-                    width: 1.5),
+                  color: SilverStockColors.success.withOpacity(0.35),
+                  width: 1.5,
+                ),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.add_circle_outline_rounded,
-                      color: SilverStockColors.success, size: 20),
+                  Icon(
+                    Icons.add_circle_outline_rounded,
+                    color: SilverStockColors.success,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   const Text(
                     'ADD NEW ITEM',
@@ -346,7 +357,6 @@ class SilverItemsTable extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 14),
-                  // F2 badge
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -368,31 +378,40 @@ class SilverItemsTable extends StatelessWidget {
               ),
             ),
           ),
-
-          // ── LIVE TOTALS — sirf jab koi entered row ho ────────
           if (hasItems)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildTotalBox(
-                  'NET WT',
-                  '${ctrl.totalNetWeight.toStringAsFixed(3)} g',
-                  SilverStockColors.brandSilver,
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                reverse: true,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildTotalBox(
+                      'NET WT',
+                      '${ctrl.totalNetWeight.toStringAsFixed(3)} g',
+                      SilverStockColors.brandSilver,
+                    ),
+                    const SizedBox(width: 12),
+                    _buildTotalBox(
+                      'FINE WT',
+                      '${ctrl.totalFineWeight.toStringAsFixed(3)} g',
+                      SilverStockColors.accentPricing,
+                    ),
+                    const SizedBox(width: 12),
+                    _buildTotalBox(
+                      'BATCH TOTAL',
+                      'Rs ${ctrl.totalEstimatedCost.toStringAsFixed(2)}',
+                      SilverStockColors.success,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                _buildTotalBox(
-                  'BATCH TOTAL',
-                  '₹ ${ctrl.totalEstimatedCost.toStringAsFixed(2)}',
-                  SilverStockColors.success,
-                ),
-              ],
+              ),
             ),
         ],
       ),
     );
   }
 
-  // same as POS _buildMetalTotalBox
   Widget _buildTotalBox(String label, String value, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),

@@ -1,95 +1,113 @@
-// =============================================================================
-// FILE        : silver_item_model.dart
-// MODULE      : Stock & Inventory — Silver
-// LAYER       : Logic / Data Model
-// DESCRIPTION : Self-contained row model for Silver Invoice Items table.
-//               ✅ EXACT same pattern as SaleItemModel in POS.
-//               ✅ TextEditingControllers + FocusNodes LIVE INSIDE this model.
-//               ✅ No sync required — computed values derive directly from
-//                  controller text, so UI and model are always in sync.
-//               ✅ ChangeNotifier so rows can be individually listened to.
-//               ✅ Computed: netWeight, metalCost, makingAmount, totalAmount.
-//               ✅ Making charge type toggle: /g → Flat → %.
-//               ✅ hasAnyInput guard for dirty-check (save validation).
-//               ✅ disposeAll() releases every controller + focus node.
-//
-// WHY NOT USE StockRowEntry:
-//   StockRowEntry has no controllers or focus nodes. The old SilverItemRow
-//   created them locally in State, which caused sync bugs and broke delete.
-//   This model owns its own widgets — zero sync needed.
-//
-// USAGE (in SilverStockController):
-//   final model = SilverItemModel(id: uniqueId);
-//   model.addListener(notifyListeners); // bubble up for totals
-//   _silverRows.add(model);
-//
-// USAGE (in SilverItemRow):
-//   TextField(controller: model.grossCtrl, focusNode: model.grossFocus, ...)
-//   Text('${model.netWeight.toStringAsFixed(3)} g')
-// =============================================================================
-
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
 
 class SilverItemModel extends ChangeNotifier {
-  // ── IDENTITY ─────────────────────────────────────────────────
+  static const List<String> categoryPresets = [
+    'Anklet / Payal',
+    'Bichhiya / Toe Ring',
+    'Chain',
+    'Bracelet',
+    'Ring',
+    'Bangle',
+    'Kada',
+    'Pendant / Locket',
+    'Necklace / Set',
+    'Earring / Jhumka',
+    'Coin',
+    'Idol / Murti',
+    'Pooja Article',
+    'Utensil',
+    'Gift Item',
+    'Other',
+  ];
+
+  static const List<String> purityPresets = [
+    '999',
+    '925',
+    '800',
+    '700',
+    'Other',
+  ];
+
   final String id;
 
-  // ── TEXT CONTROLLERS (owned by model, not by widget state) ───
+  final TextEditingController categoryCtrl = TextEditingController();
   final TextEditingController itemNameCtrl = TextEditingController();
   final TextEditingController huidCtrl = TextEditingController();
   final TextEditingController grossCtrl = TextEditingController();
   final TextEditingController lessCtrl = TextEditingController();
+  final TextEditingController purityCtrl = TextEditingController();
+  final TextEditingController wastageCtrl = TextEditingController();
   final TextEditingController rateCtrl = TextEditingController();
   final TextEditingController makingCtrl = TextEditingController();
 
-  // ── FOCUS NODES (owned by model, not by widget state) ────────
+  final FocusNode categoryFocus = FocusNode();
   final FocusNode itemNameFocus = FocusNode();
   final FocusNode huidFocus = FocusNode();
   final FocusNode grossFocus = FocusNode();
   final FocusNode lessFocus = FocusNode();
-  final FocusNode rateFocus = FocusNode();
+  final FocusNode purityFocus = FocusNode();
+  final FocusNode wastageFocus = FocusNode();
   final FocusNode makingFocus = FocusNode();
 
-  // ── MAKING CHARGE TYPE ───────────────────────────────────────
   MakingChargesType makingChargesType = MakingChargesType.perGram;
+  String _lastAutoWastageText = '';
 
-  // ─────────────────────────────────────────────────────────────
-  // CONSTRUCTOR
-  // ─────────────────────────────────────────────────────────────
+  SilverItemModel({
+    required this.id,
+    String initialPurityLabel = '',
+    double initialWastagePercent = 0.0,
+    double initialPurchaseRate = 0.0,
+  }) {
+    categoryCtrl.addListener(_fieldChanged);
+    itemNameCtrl.addListener(_fieldChanged);
+    huidCtrl.addListener(_fieldChanged);
+    grossCtrl.addListener(_fieldChanged);
+    lessCtrl.addListener(_fieldChanged);
+    purityCtrl.addListener(_handlePurityChanged);
+    wastageCtrl.addListener(_fieldChanged);
+    rateCtrl.addListener(_fieldChanged);
+    makingCtrl.addListener(_fieldChanged);
 
-  SilverItemModel({required this.id}) {
-    // Wire auto-recalculation on every field change.
-    // Same as POS SaleItemModel — no setState needed in the row widget.
-    grossCtrl.addListener(notifyListeners);
-    lessCtrl.addListener(notifyListeners);
-    rateCtrl.addListener(notifyListeners);
-    makingCtrl.addListener(notifyListeners);
-    itemNameCtrl.addListener(notifyListeners);
+    if (initialPurityLabel.trim().isNotEmpty) {
+      purityCtrl.text = initialPurityLabel.trim().toUpperCase();
+    }
+
+    if (initialWastagePercent > 0) {
+      final text = _formatDecimal(initialWastagePercent, maxFraction: 2);
+      wastageCtrl.text = text;
+      _lastAutoWastageText = text;
+    } else {
+      _syncAutoWastage(force: true);
+    }
+
+    if (initialPurchaseRate > 0) {
+      rateCtrl.text = _formatDecimal(initialPurchaseRate);
+    }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // COMPUTED WEIGHT FIELDS
-  // ─────────────────────────────────────────────────────────────
-
-  double get grossWeight => double.tryParse(grossCtrl.text) ?? 0.0;
-  double get lessWeight => double.tryParse(lessCtrl.text) ?? 0.0;
-
-  /// Net weight = gross − less, clamped to zero.
+  double get grossWeight => _parseNumeric(grossCtrl.text);
+  double get lessWeight => _parseNumeric(lessCtrl.text);
   double get netWeight =>
       (grossWeight - lessWeight).clamp(0.0, double.infinity);
 
-  // ─────────────────────────────────────────────────────────────
-  // COMPUTED PRICE FIELDS
-  // ─────────────────────────────────────────────────────────────
+  String get categoryLabel => categoryCtrl.text.trim();
+  String get itemName => itemNameCtrl.text.trim();
+  String get huid => huidCtrl.text.trim().toUpperCase();
+  String get purityLabel => purityCtrl.text.trim().toUpperCase();
 
-  double get purchaseRate => double.tryParse(rateCtrl.text) ?? 0.0;
-  double get makingValue => double.tryParse(makingCtrl.text) ?? 0.0;
+  double get purityPercent => _purityLabelToPercent(purityLabel);
+  double get wastagePercent => _parseNumeric(wastageCtrl.text);
+  double get effectiveWastagePercent {
+    final percent = wastagePercent > 0 ? wastagePercent : purityPercent;
+    return percent.clamp(0.0, 100.0);
+  }
 
-  /// Metal cost = netWeight × rate per gram.
-  double get metalCost => netWeight * purchaseRate;
+  double get fineWeight => netWeight * (effectiveWastagePercent / 100.0);
+  double get purchaseRate => _parseNumeric(rateCtrl.text);
+  double get makingValue => _parseNumeric(makingCtrl.text);
+  double get metalCost => fineWeight * purchaseRate;
 
-  /// Making charge — computed based on current makingChargesType.
   double get makingAmount {
     return switch (makingChargesType) {
       MakingChargesType.perGram => netWeight * makingValue,
@@ -98,34 +116,57 @@ class SilverItemModel extends ChangeNotifier {
     };
   }
 
-  /// Total = metalCost + makingAmount.
-  /// This is the line-total for one row (single piece, qty=1 for silver stock entry).
   double get totalAmount => metalCost + makingAmount;
 
-  // ─────────────────────────────────────────────────────────────
-  // IDENTITY GETTERS (trimmed & normalised)
-  // ─────────────────────────────────────────────────────────────
-
-  String get itemName => itemNameCtrl.text.trim();
-  String get huid => huidCtrl.text.trim().toUpperCase();
-
-  // ─────────────────────────────────────────────────────────────
-  // DIRTY CHECK
-  // ─────────────────────────────────────────────────────────────
-
-  /// True if the operator has entered anything in this row.
-  /// Empty rows are placeholder rows — not saved, not validated.
   bool get hasAnyInput =>
+      categoryLabel.isNotEmpty ||
       itemName.isNotEmpty ||
       huid.isNotEmpty ||
       grossWeight > 0 ||
       lessWeight > 0 ||
-      purchaseRate > 0 ||
       makingValue > 0;
 
-  // ─────────────────────────────────────────────────────────────
-  // MAKING CHARGE TYPE TOGGLE (/g → Flat → % → /g)
-  // ─────────────────────────────────────────────────────────────
+  void applyPurchaseRate(double rate, {bool onlyIfEmpty = true}) {
+    if (rate <= 0) {
+      return;
+    }
+    if (onlyIfEmpty && purchaseRate > 0) {
+      return;
+    }
+    final next = _formatDecimal(rate);
+    if (rateCtrl.text == next) {
+      return;
+    }
+    rateCtrl.text = next;
+    rateCtrl.selection = TextSelection.fromPosition(
+      TextPosition(offset: next.length),
+    );
+  }
+
+  void applyPurityDefaults(
+    String purityLabel, {
+    required double wastagePercent,
+    bool overwriteWhenBlank = true,
+  }) {
+    final normalizedPurity = purityLabel.trim().toUpperCase();
+    if (normalizedPurity.isNotEmpty &&
+        (!overwriteWhenBlank || this.purityLabel.isEmpty)) {
+      purityCtrl.text = normalizedPurity;
+      purityCtrl.selection = TextSelection.fromPosition(
+        TextPosition(offset: normalizedPurity.length),
+      );
+    }
+
+    if (wastagePercent > 0 &&
+        (!overwriteWhenBlank || wastageCtrl.text.trim().isEmpty)) {
+      final text = _formatDecimal(wastagePercent, maxFraction: 2);
+      wastageCtrl.text = text;
+      wastageCtrl.selection = TextSelection.fromPosition(
+        TextPosition(offset: text.length),
+      );
+      _lastAutoWastageText = text;
+    }
+  }
 
   void toggleMakingType() {
     makingChargesType = switch (makingChargesType) {
@@ -136,7 +177,6 @@ class SilverItemModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Short symbol displayed on the toggle button.
   String get makingTypeSymbol {
     return switch (makingChargesType) {
       MakingChargesType.perGram => '/g',
@@ -145,7 +185,6 @@ class SilverItemModel extends ChangeNotifier {
     };
   }
 
-  /// Placeholder hint inside the making charge text field.
   String get makingHint {
     return switch (makingChargesType) {
       MakingChargesType.perGram => 'Rate/g',
@@ -154,36 +193,106 @@ class SilverItemModel extends ChangeNotifier {
     };
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // LIFECYCLE — must call disposeAll() when the row is removed
-  // ─────────────────────────────────────────────────────────────
-
-  /// Disposes all controllers, focus nodes, and the ChangeNotifier itself.
-  /// Call this from SilverStockController.removeRow() after unlinking the listener.
   void disposeAll() {
-    // Controllers
-    grossCtrl.removeListener(notifyListeners);
-    lessCtrl.removeListener(notifyListeners);
-    rateCtrl.removeListener(notifyListeners);
-    makingCtrl.removeListener(notifyListeners);
-    itemNameCtrl.removeListener(notifyListeners);
+    categoryCtrl.removeListener(_fieldChanged);
+    itemNameCtrl.removeListener(_fieldChanged);
+    huidCtrl.removeListener(_fieldChanged);
+    grossCtrl.removeListener(_fieldChanged);
+    lessCtrl.removeListener(_fieldChanged);
+    purityCtrl.removeListener(_handlePurityChanged);
+    wastageCtrl.removeListener(_fieldChanged);
+    rateCtrl.removeListener(_fieldChanged);
+    makingCtrl.removeListener(_fieldChanged);
 
+    categoryCtrl.dispose();
     itemNameCtrl.dispose();
     huidCtrl.dispose();
     grossCtrl.dispose();
     lessCtrl.dispose();
+    purityCtrl.dispose();
+    wastageCtrl.dispose();
     rateCtrl.dispose();
     makingCtrl.dispose();
 
-    // Focus nodes
+    categoryFocus.dispose();
     itemNameFocus.dispose();
     huidFocus.dispose();
     grossFocus.dispose();
     lessFocus.dispose();
-    rateFocus.dispose();
+    purityFocus.dispose();
+    wastageFocus.dispose();
     makingFocus.dispose();
 
-    // ChangeNotifier
     dispose();
+  }
+
+  void _fieldChanged() => notifyListeners();
+
+  void _handlePurityChanged() {
+    _syncAutoWastage();
+    notifyListeners();
+  }
+
+  void _syncAutoWastage({bool force = false}) {
+    final autoValue = _autoWastageTextFromPurity(purityCtrl.text);
+    if (autoValue == null) {
+      return;
+    }
+
+    final current = wastageCtrl.text.trim();
+    if (force || current.isEmpty || current == _lastAutoWastageText) {
+      if (current != autoValue) {
+        wastageCtrl.text = autoValue;
+        wastageCtrl.selection = TextSelection.fromPosition(
+          TextPosition(offset: autoValue.length),
+        );
+      }
+      _lastAutoWastageText = autoValue;
+    } else {
+      _lastAutoWastageText = autoValue;
+    }
+  }
+
+  String? _autoWastageTextFromPurity(String rawPurity) {
+    final percent = _purityLabelToPercent(rawPurity.trim());
+    if (percent <= 0) {
+      return null;
+    }
+    return _formatDecimal(percent, maxFraction: 2);
+  }
+
+  double _purityLabelToPercent(String rawPurity) {
+    final value = rawPurity.trim().toUpperCase();
+    if (value.isEmpty) {
+      return 0.0;
+    }
+
+    final hallmarkMatch = RegExp(r'\b(999|925|800|700)\b').firstMatch(value);
+    if (hallmarkMatch != null) {
+      final code = double.tryParse(hallmarkMatch.group(1) ?? '');
+      if (code != null) {
+        return code / 10.0;
+      }
+    }
+
+    final percentMatch = RegExp(r'(\d+(?:\.\d+)?)\s*%?').firstMatch(value);
+    if (percentMatch != null) {
+      final parsed = double.tryParse(percentMatch.group(1) ?? '');
+      if (parsed != null) {
+        return parsed > 100 ? parsed / 10.0 : parsed;
+      }
+    }
+
+    return 0.0;
+  }
+
+  double _parseNumeric(String raw) {
+    final normalized = raw.replaceAll(',', '').trim();
+    return double.tryParse(normalized) ?? 0.0;
+  }
+
+  String _formatDecimal(double value, {int maxFraction = 2}) {
+    final fixed = value.toStringAsFixed(maxFraction);
+    return fixed.replaceFirst(RegExp(r'\.?0+$'), '');
   }
 }

@@ -1,17 +1,11 @@
-// =============================================================================
-// silver_item_row.dart  —  INVOICE ITEMS ROW (SILVER)
-// Exact same pattern as PosSaleItemRow — pixel-perfect match.
-// Uses SilverItemModel (owns controllers + focus nodes).
-// NO local state controllers — zero sync bugs.
-// =============================================================================
-
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import '../../../../models/stock/stock_item_model/add_stock_silver/silver_item_model.dart';
 import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_colors.dart';
+
+import '../../../../models/stock/stock_item_model/add_stock_silver/silver_item_model.dart';
 
 class SilverItemRow extends StatefulWidget {
   final int index;
@@ -39,27 +33,33 @@ class _SilverItemRowState extends State<SilverItemRow> {
   }
 
   @override
-  void didUpdateWidget(covariant SilverItemRow old) {
-    super.didUpdateWidget(old);
+  void didUpdateWidget(covariant SilverItemRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
     _handlePendingFocus();
   }
 
   void _handlePendingFocus() {
-    if (!widget.ctrl.shouldRequestSilverFocus(widget.model.id)) return;
+    if (!widget.ctrl.shouldRequestSilverFocus(widget.model.id)) {
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      widget.model.itemNameFocus.requestFocus();
+      if (!mounted) {
+        return;
+      }
+      widget.model.categoryFocus.requestFocus();
       widget.ctrl.clearSilverFocusRequest(widget.model.id);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isEven = widget.index % 2 == 0;
+    final isEven = widget.index.isEven;
 
     return Focus(
       onFocusChange: (hasFocus) {
-        if (hasFocus) widget.ctrl.setSilverActiveRow(widget.model.id);
+        if (hasFocus) {
+          widget.ctrl.setSilverActiveRow(widget.model.id);
+        }
       },
       child: ListenableBuilder(
         listenable: widget.model,
@@ -87,11 +87,10 @@ class _SilverItemRowState extends State<SilverItemRow> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // ── S.NO ──────────────────────────────────────
                   Expanded(flex: 1, child: _buildSNo()),
                   const SizedBox(width: 6),
-
-                  // ── ITEM NAME ──────────────────────────────────
+                  Expanded(flex: 3, child: _buildCategoryField()),
+                  const SizedBox(width: 6),
                   Expanded(
                     flex: 4,
                     child: _SilverTextField(
@@ -103,8 +102,6 @@ class _SilverItemRowState extends State<SilverItemRow> {
                     ),
                   ),
                   const SizedBox(width: 6),
-
-                  // ── HUID ───────────────────────────────────────
                   Expanded(
                     flex: 2,
                     child: _SilverTextField(
@@ -115,7 +112,8 @@ class _SilverItemRowState extends State<SilverItemRow> {
                       textInputAction: TextInputAction.next,
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(
-                            RegExp(r'[a-zA-Z0-9]')),
+                          RegExp(r'[a-zA-Z0-9]'),
+                        ),
                         LengthLimitingTextInputFormatter(6),
                       ],
                       onSubmitted: (_) =>
@@ -123,8 +121,6 @@ class _SilverItemRowState extends State<SilverItemRow> {
                     ),
                   ),
                   const SizedBox(width: 6),
-
-                  // ── GROSS WT ───────────────────────────────────
                   Expanded(
                     flex: 2,
                     child: _SilverTextField(
@@ -137,8 +133,6 @@ class _SilverItemRowState extends State<SilverItemRow> {
                     ),
                   ),
                   const SizedBox(width: 6),
-
-                  // ── LESS ───────────────────────────────────────
                   Expanded(
                     flex: 2,
                     child: _SilverTextField(
@@ -147,12 +141,11 @@ class _SilverItemRowState extends State<SilverItemRow> {
                       hint: '0.000',
                       isNumber: true,
                       textInputAction: TextInputAction.next,
-                      onSubmitted: (_) => widget.model.rateFocus.requestFocus(),
+                      onSubmitted: (_) =>
+                          widget.model.purityFocus.requestFocus(),
                     ),
                   ),
                   const SizedBox(width: 6),
-
-                  // ── NET WT — auto-calculated, silver-tinted ────
                   Expanded(
                     flex: 2,
                     child: _buildAutoCell(
@@ -162,39 +155,50 @@ class _SilverItemRowState extends State<SilverItemRow> {
                     ),
                   ),
                   const SizedBox(width: 6),
-
-                  // ── RATE / g ───────────────────────────────────
+                  Expanded(flex: 2, child: _buildPurityField()),
+                  const SizedBox(width: 6),
                   Expanded(
-                    flex: 3,
+                    flex: 2,
                     child: _SilverTextField(
-                      controller: widget.model.rateCtrl,
-                      focusNode: widget.model.rateFocus,
-                      hint: 'Rate',
+                      controller: widget.model.wastageCtrl,
+                      focusNode: widget.model.wastageFocus,
+                      hint: '%',
                       isNumber: true,
+                      textAlign: TextAlign.center,
                       textInputAction: TextInputAction.next,
                       onSubmitted: (_) =>
                           widget.model.makingFocus.requestFocus(),
                     ),
                   ),
                   const SizedBox(width: 6),
-
-                  // ── MAKING — input + toggle ────────────────────
-                  Expanded(flex: 3, child: _buildMakingField()),
-                  const SizedBox(width: 6),
-
-                  // ── TOTAL — auto-calculated, bold dark ────────
                   Expanded(
-                    flex: 3,
+                    flex: 2,
                     child: _buildAutoCell(
-                      value: '₹${widget.model.totalAmount.toStringAsFixed(2)}',
-                      color: SilverStockColors.textDark,
-                      align: TextAlign.right,
+                      value: widget.model.fineWeight.toStringAsFixed(3),
+                      color: SilverStockColors.success,
+                      align: TextAlign.center,
                       isBold: true,
                     ),
                   ),
                   const SizedBox(width: 6),
-
-                  // ── DELETE ─────────────────────────────────────
+                  Expanded(flex: 3, child: _buildMakingField()),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    flex: 3,
+                    child: Tooltip(
+                      message:
+                          'Fine ${widget.model.fineWeight.toStringAsFixed(3)} g x Rs ${widget.model.purchaseRate.toStringAsFixed(2)}/g',
+                      waitDuration: const Duration(milliseconds: 400),
+                      child: _buildAutoCell(
+                        value:
+                            'Rs ${widget.model.totalAmount.toStringAsFixed(2)}',
+                        color: SilverStockColors.textDark,
+                        align: TextAlign.right,
+                        isBold: true,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
                   Expanded(flex: 1, child: _buildDeleteBtn()),
                 ],
               ),
@@ -205,9 +209,68 @@ class _SilverItemRowState extends State<SilverItemRow> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // S.NO  — silver-tinted badge (exact same as PosSaleItemRow)
-  // ─────────────────────────────────────────────────────────────
+  Widget _buildCategoryField() {
+    return _SilverPopupField(
+      controller: widget.model.categoryCtrl,
+      focusNode: widget.model.categoryFocus,
+      hint: 'Category',
+      popupItems: SilverItemModel.categoryPresets,
+      onSelected: (value) {
+        if (value == 'Other') {
+          if (SilverItemModel.categoryPresets.contains(
+            widget.model.categoryCtrl.text.trim(),
+          )) {
+            widget.model.categoryCtrl.clear();
+          }
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              widget.model.categoryFocus.requestFocus();
+            }
+          });
+          return;
+        }
+
+        _setText(widget.model.categoryCtrl, value);
+        widget.model.itemNameFocus.requestFocus();
+      },
+      textInputAction: TextInputAction.next,
+      onSubmitted: (_) => widget.model.itemNameFocus.requestFocus(),
+    );
+  }
+
+  Widget _buildPurityField() {
+    return _SilverPopupField(
+      controller: widget.model.purityCtrl,
+      focusNode: widget.model.purityFocus,
+      hint: 'Purity',
+      popupItems: SilverItemModel.purityPresets,
+      textAlign: TextAlign.center,
+      onSelected: (value) {
+        if (value == 'Other') {
+          widget.model.purityCtrl.clear();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              widget.model.purityFocus.requestFocus();
+            }
+          });
+          return;
+        }
+
+        _setText(widget.model.purityCtrl, value);
+        widget.model.wastageFocus.requestFocus();
+      },
+      textInputAction: TextInputAction.next,
+      onSubmitted: (_) => widget.model.wastageFocus.requestFocus(),
+    );
+  }
+
+  void _setText(TextEditingController controller, String value) {
+    controller.text = value;
+    controller.selection = TextSelection.fromPosition(
+      TextPosition(offset: value.length),
+    );
+  }
+
   Widget _buildSNo() {
     return Center(
       child: Container(
@@ -218,25 +281,22 @@ class _SilverItemRowState extends State<SilverItemRow> {
           color: SilverStockColors.brandSilver.withOpacity(0.12),
           borderRadius: BorderRadius.circular(7),
           border: Border.all(
-              color: SilverStockColors.brandSilver.withOpacity(0.35)),
+            color: SilverStockColors.brandSilver.withOpacity(0.35),
+          ),
         ),
         child: Text(
           '${widget.index + 1}',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w900,
             color: SilverStockColors.brandSilver,
-            fontFeatures: const [FontFeature.tabularFigures()],
+            fontFeatures: [FontFeature.tabularFigures()],
           ),
         ),
       ),
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // AUTO CELL — read-only computed value (NET WT / TOTAL)
-  // 1:1 copy of POS _buildAutoCell styling
-  // ─────────────────────────────────────────────────────────────
   Widget _buildAutoCell({
     required String value,
     required Color color,
@@ -266,10 +326,6 @@ class _SilverItemRowState extends State<SilverItemRow> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // MAKING FIELD — input + type toggle button
-  // 1:1 copy of POS _buildMakingField layout
-  // ─────────────────────────────────────────────────────────────
   Widget _buildMakingField() {
     return Row(
       children: [
@@ -286,7 +342,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
         ),
         const SizedBox(width: 4),
         Tooltip(
-          message: 'Toggle: /g → Flat → %',
+          message: 'Toggle: /g -> Flat -> %',
           waitDuration: const Duration(milliseconds: 400),
           child: InkWell(
             onTap: widget.model.toggleMakingType,
@@ -306,7 +362,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
               ),
               child: Text(
                 widget.model.makingTypeSymbol,
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 13,
                   color: SilverStockColors.brandSilver,
@@ -319,10 +375,6 @@ class _SilverItemRowState extends State<SilverItemRow> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // DELETE BUTTON — POS jaisa: ALWAYS active, koi bhi row delete ho
-  // sakti hai (including last row). Empty state table handle karta hai.
-  // ─────────────────────────────────────────────────────────────
   Widget _buildDeleteBtn() {
     return Center(
       child: Tooltip(
@@ -353,10 +405,6 @@ class _SilverItemRowState extends State<SilverItemRow> {
   }
 }
 
-// =============================================================================
-// _SilverTextField
-// Same as PosAtomicTextField — silver focused border, same look & feel.
-// =============================================================================
 class _SilverTextField extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode? focusNode;
@@ -366,6 +414,7 @@ class _SilverTextField extends StatelessWidget {
   final ValueChanged<String>? onSubmitted;
   final TextCapitalization textCapitalization;
   final List<TextInputFormatter>? inputFormatters;
+  final TextAlign textAlign;
 
   const _SilverTextField({
     required this.controller,
@@ -376,6 +425,7 @@ class _SilverTextField extends StatelessWidget {
     this.onSubmitted,
     this.textCapitalization = TextCapitalization.none,
     this.inputFormatters,
+    this.textAlign = TextAlign.left,
   });
 
   @override
@@ -394,7 +444,7 @@ class _SilverTextField extends StatelessWidget {
                 ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))]
                 : null),
         textInputAction: textInputAction,
-        textAlign: isNumber ? TextAlign.right : TextAlign.left,
+        textAlign: textAlign,
         onFieldSubmitted: onSubmitted,
         style: const TextStyle(
           fontSize: 14,
@@ -428,6 +478,103 @@ class _SilverTextField extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SilverPopupField extends StatelessWidget {
+  final TextEditingController controller;
+  final FocusNode? focusNode;
+  final String hint;
+  final List<String> popupItems;
+  final ValueChanged<String> onSelected;
+  final TextInputAction textInputAction;
+  final ValueChanged<String>? onSubmitted;
+  final TextAlign textAlign;
+
+  const _SilverPopupField({
+    required this.controller,
+    required this.hint,
+    required this.popupItems,
+    required this.onSelected,
+    this.focusNode,
+    this.textInputAction = TextInputAction.next,
+    this.onSubmitted,
+    this.textAlign = TextAlign.left,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 38,
+      decoration: BoxDecoration(
+        color: SilverStockColors.inputBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: SilverStockColors.cardBorder, width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              controller: controller,
+              focusNode: focusNode,
+              textInputAction: textInputAction,
+              onFieldSubmitted: onSubmitted,
+              textAlign: textAlign,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: SilverStockColors.textDark,
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: TextStyle(
+                  color: SilverStockColors.textMuted.withOpacity(0.50),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+                border: InputBorder.none,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+              ),
+            ),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: SilverStockColors.brandSilver,
+              size: 20,
+            ),
+            color: SilverStockColors.cardBg,
+            position: PopupMenuPosition.under,
+            padding: EdgeInsets.zero,
+            splashRadius: 18,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: const BorderSide(color: SilverStockColors.cardBorder),
+            ),
+            onSelected: onSelected,
+            itemBuilder: (context) => popupItems
+                .map(
+                  (choice) => PopupMenuItem<String>(
+                    value: choice,
+                    height: 38,
+                    child: Text(
+                      choice,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: SilverStockColors.textDark,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+        ],
       ),
     );
   }
