@@ -98,7 +98,24 @@ class _SilverItemRowState extends State<SilverItemRow> {
                       focusNode: widget.model.itemNameFocus,
                       hint: 'Item name',
                       textInputAction: TextInputAction.next,
-                      onSubmitted: (_) => widget.model.huidFocus.requestFocus(),
+                      onSubmitted: (_) =>
+                          widget.model.piecesFocus.requestFocus(),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    flex: 2,
+                    child: _SilverTextField(
+                      controller: widget.model.piecesCtrl,
+                      focusNode: widget.model.piecesFocus,
+                      hint: 'PCS',
+                      isNumber: true,
+                      allowDecimal: false,
+                      textAlign: TextAlign.center,
+                      textInputAction: TextInputAction.next,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      onSubmitted: (_) =>
+                          widget.model.grossFocus.requestFocus(),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -162,12 +179,30 @@ class _SilverItemRowState extends State<SilverItemRow> {
                     child: _SilverTextField(
                       controller: widget.model.wastageCtrl,
                       focusNode: widget.model.wastageFocus,
-                      hint: '%',
+                      hint: '0.00',
                       isNumber: true,
                       textAlign: TextAlign.center,
                       textInputAction: TextInputAction.next,
                       onSubmitted: (_) =>
                           widget.model.makingFocus.requestFocus(),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    flex: 2,
+                    child: Tooltip(
+                      message:
+                          'Total purity = Base purity ${widget.model.basePurityPercent.toStringAsFixed(2)}% + Wastage ${widget.model.wastagePercent.toStringAsFixed(2)}%',
+                      waitDuration: const Duration(milliseconds: 400),
+                      child: _buildAutoCell(
+                        value: widget.model.totalPurityLabel == '--'
+                            ? '--'
+                            : '${widget.model.totalPurityLabel}%',
+                        color: widget.model.hasValidTotalPurity
+                            ? SilverStockColors.brandSilver
+                            : SilverStockColors.danger,
+                        align: TextAlign.center,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -187,7 +222,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
                     flex: 3,
                     child: Tooltip(
                       message:
-                          'Fine ${widget.model.fineWeight.toStringAsFixed(3)} g x Rs ${widget.model.purchaseRate.toStringAsFixed(2)}/g',
+                          'Fine ${widget.model.fineWeight.toStringAsFixed(3)} g at ${widget.model.totalPurityLabel}% purity x Rs ${widget.model.purchaseRate.toStringAsFixed(2)}/g',
                       waitDuration: const Duration(milliseconds: 400),
                       child: _buildAutoCell(
                         value:
@@ -242,7 +277,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
     return _SilverPopupField(
       controller: widget.model.purityCtrl,
       focusNode: widget.model.purityFocus,
-      hint: 'Purity',
+      hint: 'Base',
       popupItems: SilverItemModel.purityPresets,
       textAlign: TextAlign.center,
       onSelected: (value) {
@@ -410,6 +445,7 @@ class _SilverTextField extends StatelessWidget {
   final FocusNode? focusNode;
   final String hint;
   final bool isNumber;
+  final bool allowDecimal;
   final TextInputAction textInputAction;
   final ValueChanged<String>? onSubmitted;
   final TextCapitalization textCapitalization;
@@ -421,6 +457,7 @@ class _SilverTextField extends StatelessWidget {
     required this.hint,
     this.focusNode,
     this.isNumber = false,
+    this.allowDecimal = true,
     this.textInputAction = TextInputAction.next,
     this.onSubmitted,
     this.textCapitalization = TextCapitalization.none,
@@ -436,12 +473,18 @@ class _SilverTextField extends StatelessWidget {
         controller: controller,
         focusNode: focusNode,
         keyboardType: isNumber
-            ? const TextInputType.numberWithOptions(decimal: true)
+            ? TextInputType.numberWithOptions(decimal: allowDecimal)
             : TextInputType.text,
         textCapitalization: textCapitalization,
         inputFormatters: inputFormatters ??
             (isNumber
-                ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))]
+                ? (allowDecimal
+                    ? [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d*\.?\d*'),
+                        ),
+                      ]
+                    : [FilteringTextInputFormatter.digitsOnly])
                 : null),
         textInputAction: textInputAction,
         textAlign: textAlign,
@@ -459,8 +502,10 @@ class _SilverTextField extends StatelessWidget {
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 0,
+          ),
           filled: true,
           fillColor: SilverStockColors.inputBg,
           enabledBorder: OutlineInputBorder(
@@ -536,8 +581,10 @@ class _SilverPopupField extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
                 border: InputBorder.none,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 0,
+                ),
               ),
             ),
           ),

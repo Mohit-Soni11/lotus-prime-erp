@@ -6,7 +6,7 @@ import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_co
 import 'silver_item_row.dart';
 
 class SilverItemsTable extends StatelessWidget {
-  static const double _minTableWidth = 1640;
+  static const double _minTableWidth = 1760;
 
   final SilverStockController ctrl;
 
@@ -145,8 +145,8 @@ class SilverItemsTable extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 needsHorizontalScroll
-                    ? 'Scroll to review all silver columns, or press F2 to add item'
-                    : 'Choose category, capture purity, and press F2 to add item',
+                    ? 'Scroll to review every column. Each row can capture a full silver lot with PCS and transparent purity.'
+                    : 'Enter total pieces and combined lot weight. Total purity = base purity + wastage.',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -213,6 +213,8 @@ class SilverItemsTable extends StatelessWidget {
           const SizedBox(width: 6),
           _h('ITEM NAME', flex: 4),
           const SizedBox(width: 6),
+          _h('PCS', flex: 2, center: true),
+          const SizedBox(width: 6),
           _h('HUID', flex: 2),
           const SizedBox(width: 6),
           _h('GR. WT', flex: 2),
@@ -221,9 +223,11 @@ class SilverItemsTable extends StatelessWidget {
           const SizedBox(width: 6),
           _h('NET WT', flex: 2, center: true),
           const SizedBox(width: 6),
-          _h('PURITY', flex: 2, center: true),
+          _h('BASE PURITY', flex: 2, center: true),
           const SizedBox(width: 6),
-          _h('WASTAGE', flex: 2, center: true),
+          _h('WASTAGE %', flex: 2, center: true),
+          const SizedBox(width: 6),
+          _h('TOTAL PURITY', flex: 2, center: true),
           const SizedBox(width: 6),
           _h('FINE', flex: 2, center: true),
           const SizedBox(width: 6),
@@ -420,6 +424,12 @@ class SilverItemsTable extends StatelessWidget {
         'ROWS',
         '${ctrl.enteredRowCount}',
         SilverStockColors.textDark,
+      ),
+      const SizedBox(width: 12),
+      _buildTotalBox(
+        'PCS',
+        '${ctrl.totalQuantity}',
+        SilverStockColors.accentPricing,
       ),
       const SizedBox(width: 12),
       _buildTotalBox(

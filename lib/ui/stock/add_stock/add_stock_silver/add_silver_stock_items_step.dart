@@ -264,8 +264,8 @@ class _SilverSummaryPanel extends StatelessWidget {
           _summaryRow('Taxable Amount', _money(ctrl.totalTaxableAmount)),
           const SizedBox(height: 10),
           _summaryRow(
-            'Entered Rows',
-            '${ctrl.enteredRowCount} row${ctrl.enteredRowCount == 1 ? '' : 's'}',
+            'Total Pieces',
+            '${ctrl.totalQuantity} pcs across ${ctrl.enteredRowCount} row${ctrl.enteredRowCount == 1 ? '' : 's'}',
           ),
           const SizedBox(height: 12),
           _buildGstCard(),
@@ -320,11 +320,10 @@ class _SilverSummaryPanel extends StatelessWidget {
                 SizedBox(
                   width: tileWidth,
                   child: _summaryMetricTile(
-                    'Entered Rows',
-                    '${ctrl.enteredRowCount}',
-                    caption: ctrl.enteredRowCount == 1
-                        ? 'silver row'
-                        : 'silver rows',
+                    'Total Pieces',
+                    '${ctrl.totalQuantity}',
+                    caption:
+                        '${ctrl.enteredRowCount} invoice row${ctrl.enteredRowCount == 1 ? '' : 's'}',
                     tone: AddStockColors.textBody,
                   ),
                 ),
@@ -452,7 +451,7 @@ class _SilverSummaryPanel extends StatelessWidget {
             ),
             child: Text(
               ctrl.rowsWithErrorsCount == 0
-                  ? 'Ready to save - ${ctrl.enteredRowCount} entered row${ctrl.enteredRowCount == 1 ? '' : 's'}'
+                  ? 'Ready to save - ${ctrl.totalQuantity} pcs across ${ctrl.enteredRowCount} row${ctrl.enteredRowCount == 1 ? '' : 's'}'
                   : '${ctrl.rowsWithErrorsCount} row${ctrl.rowsWithErrorsCount == 1 ? '' : 's'} need attention',
               style: GoogleFonts.inter(
                 fontSize: 12,

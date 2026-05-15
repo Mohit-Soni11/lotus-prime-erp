@@ -33,6 +33,7 @@ class SilverItemModel extends ChangeNotifier {
 
   final TextEditingController categoryCtrl = TextEditingController();
   final TextEditingController itemNameCtrl = TextEditingController();
+  final TextEditingController piecesCtrl = TextEditingController();
   final TextEditingController huidCtrl = TextEditingController();
   final TextEditingController grossCtrl = TextEditingController();
   final TextEditingController lessCtrl = TextEditingController();
@@ -43,6 +44,7 @@ class SilverItemModel extends ChangeNotifier {
 
   final FocusNode categoryFocus = FocusNode();
   final FocusNode itemNameFocus = FocusNode();
+  final FocusNode piecesFocus = FocusNode();
   final FocusNode huidFocus = FocusNode();
   final FocusNode grossFocus = FocusNode();
   final FocusNode lessFocus = FocusNode();
@@ -51,34 +53,35 @@ class SilverItemModel extends ChangeNotifier {
   final FocusNode makingFocus = FocusNode();
 
   MakingChargesType makingChargesType = MakingChargesType.perGram;
-  String _lastAutoWastageText = '';
 
   SilverItemModel({
     required this.id,
     String initialPurityLabel = '',
     double initialWastagePercent = 0.0,
     double initialPurchaseRate = 0.0,
+    int initialPieces = 1,
   }) {
     categoryCtrl.addListener(_fieldChanged);
     itemNameCtrl.addListener(_fieldChanged);
+    piecesCtrl.addListener(_fieldChanged);
     huidCtrl.addListener(_fieldChanged);
     grossCtrl.addListener(_fieldChanged);
     lessCtrl.addListener(_fieldChanged);
-    purityCtrl.addListener(_handlePurityChanged);
+    purityCtrl.addListener(_fieldChanged);
     wastageCtrl.addListener(_fieldChanged);
     rateCtrl.addListener(_fieldChanged);
     makingCtrl.addListener(_fieldChanged);
+
+    if (initialPieces > 0) {
+      piecesCtrl.text = initialPieces.toString();
+    }
 
     if (initialPurityLabel.trim().isNotEmpty) {
       purityCtrl.text = initialPurityLabel.trim().toUpperCase();
     }
 
     if (initialWastagePercent > 0) {
-      final text = _formatDecimal(initialWastagePercent, maxFraction: 2);
-      wastageCtrl.text = text;
-      _lastAutoWastageText = text;
-    } else {
-      _syncAutoWastage(force: true);
+      wastageCtrl.text = _formatDecimal(initialWastagePercent, maxFraction: 2);
     }
 
     if (initialPurchaseRate > 0) {
@@ -93,17 +96,19 @@ class SilverItemModel extends ChangeNotifier {
 
   String get categoryLabel => categoryCtrl.text.trim();
   String get itemName => itemNameCtrl.text.trim();
+  int get pieces => _parseWholeNumber(piecesCtrl.text);
   String get huid => huidCtrl.text.trim().toUpperCase();
   String get purityLabel => purityCtrl.text.trim().toUpperCase();
 
-  double get purityPercent => _purityLabelToPercent(purityLabel);
+  double get basePurityPercent => _purityLabelToPercent(purityLabel);
   double get wastagePercent => _parseNumeric(wastageCtrl.text);
-  double get effectiveWastagePercent {
-    final percent = wastagePercent > 0 ? wastagePercent : purityPercent;
-    return percent.clamp(0.0, 100.0);
-  }
+  double get totalPurityPercent => basePurityPercent + wastagePercent;
+  bool get hasValidTotalPurity =>
+      totalPurityPercent > 0 && totalPurityPercent <= 100;
+  String get totalPurityLabel =>
+      totalPurityPercent <= 0 ? '--' : _formatDecimal(totalPurityPercent);
 
-  double get fineWeight => netWeight * (effectiveWastagePercent / 100.0);
+  double get fineWeight => netWeight * (totalPurityPercent / 100.0);
   double get purchaseRate => _parseNumeric(rateCtrl.text);
   double get makingValue => _parseNumeric(makingCtrl.text);
   double get metalCost => fineWeight * purchaseRate;
@@ -121,10 +126,19 @@ class SilverItemModel extends ChangeNotifier {
   bool get hasAnyInput =>
       categoryLabel.isNotEmpty ||
       itemName.isNotEmpty ||
+      _hasMeaningfulPiecesInput ||
       huid.isNotEmpty ||
       grossWeight > 0 ||
       lessWeight > 0 ||
       makingValue > 0;
+
+  bool get _hasMeaningfulPiecesInput {
+    final raw = piecesCtrl.text.trim();
+    if (raw.isEmpty) {
+      return false;
+    }
+    return pieces != 1;
+  }
 
   void applyPurchaseRate(double rate, {bool onlyIfEmpty = true}) {
     if (rate <= 0) {
@@ -164,7 +178,6 @@ class SilverItemModel extends ChangeNotifier {
       wastageCtrl.selection = TextSelection.fromPosition(
         TextPosition(offset: text.length),
       );
-      _lastAutoWastageText = text;
     }
   }
 
@@ -196,16 +209,18 @@ class SilverItemModel extends ChangeNotifier {
   void disposeAll() {
     categoryCtrl.removeListener(_fieldChanged);
     itemNameCtrl.removeListener(_fieldChanged);
+    piecesCtrl.removeListener(_fieldChanged);
     huidCtrl.removeListener(_fieldChanged);
     grossCtrl.removeListener(_fieldChanged);
     lessCtrl.removeListener(_fieldChanged);
-    purityCtrl.removeListener(_handlePurityChanged);
+    purityCtrl.removeListener(_fieldChanged);
     wastageCtrl.removeListener(_fieldChanged);
     rateCtrl.removeListener(_fieldChanged);
     makingCtrl.removeListener(_fieldChanged);
 
     categoryCtrl.dispose();
     itemNameCtrl.dispose();
+    piecesCtrl.dispose();
     huidCtrl.dispose();
     grossCtrl.dispose();
     lessCtrl.dispose();
@@ -216,6 +231,7 @@ class SilverItemModel extends ChangeNotifier {
 
     categoryFocus.dispose();
     itemNameFocus.dispose();
+    piecesFocus.dispose();
     huidFocus.dispose();
     grossFocus.dispose();
     lessFocus.dispose();
@@ -227,39 +243,6 @@ class SilverItemModel extends ChangeNotifier {
   }
 
   void _fieldChanged() => notifyListeners();
-
-  void _handlePurityChanged() {
-    _syncAutoWastage();
-    notifyListeners();
-  }
-
-  void _syncAutoWastage({bool force = false}) {
-    final autoValue = _autoWastageTextFromPurity(purityCtrl.text);
-    if (autoValue == null) {
-      return;
-    }
-
-    final current = wastageCtrl.text.trim();
-    if (force || current.isEmpty || current == _lastAutoWastageText) {
-      if (current != autoValue) {
-        wastageCtrl.text = autoValue;
-        wastageCtrl.selection = TextSelection.fromPosition(
-          TextPosition(offset: autoValue.length),
-        );
-      }
-      _lastAutoWastageText = autoValue;
-    } else {
-      _lastAutoWastageText = autoValue;
-    }
-  }
-
-  String? _autoWastageTextFromPurity(String rawPurity) {
-    final percent = _purityLabelToPercent(rawPurity.trim());
-    if (percent <= 0) {
-      return null;
-    }
-    return _formatDecimal(percent, maxFraction: 2);
-  }
 
   double _purityLabelToPercent(String rawPurity) {
     final value = rawPurity.trim().toUpperCase();
@@ -289,6 +272,11 @@ class SilverItemModel extends ChangeNotifier {
   double _parseNumeric(String raw) {
     final normalized = raw.replaceAll(',', '').trim();
     return double.tryParse(normalized) ?? 0.0;
+  }
+
+  int _parseWholeNumber(String raw) {
+    final normalized = raw.replaceAll(',', '').trim();
+    return int.tryParse(normalized) ?? 0;
   }
 
   String _formatDecimal(double value, {int maxFraction = 2}) {

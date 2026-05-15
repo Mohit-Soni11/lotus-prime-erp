@@ -43,6 +43,9 @@ class SilverStockController extends AddStockController {
   bool get hasSilverRateSnapshot => silverRatePerGram > 0;
   double get totalFineWeight =>
       enteredSilverRows.fold(0.0, (sum, row) => sum + row.fineWeight);
+  @override
+  int get totalQuantity =>
+      enteredSilverRows.fold(0, (sum, row) => sum + row.pieces);
 
   String get silverRateDisplay {
     if (_isLoadingSilverRate) {
@@ -60,24 +63,31 @@ class SilverStockController extends AddStockController {
     final supplierName = supplierDisplayName;
 
     return enteredSilverRows.map((rowModel) {
+      final pieces = rowModel.pieces;
+      final lotDivisor = pieces > 0 ? pieces : 1;
       final row = StockRowEntry(id: rowModel.id, hsnCode: defaultHsnCode);
       row.itemName = rowModel.itemName;
       row.description = rowModel.categoryLabel;
       row.subCategory = _mapSilverSubCategory(rowModel.categoryLabel);
       row.subCategoryLabel = rowModel.categoryLabel;
       row.huid = rowModel.huid;
-      row.grossWeight = rowModel.grossWeight;
-      row.stoneWeight = rowModel.lessWeight;
-      row.touchPercent = rowModel.effectiveWastagePercent;
+      row.grossWeight = rowModel.grossWeight / lotDivisor;
+      row.stoneWeight = rowModel.lessWeight / lotDivisor;
+      row.touchPercent = rowModel.totalPurityPercent;
       row.purityLabel = rowModel.purityLabel;
       row.purchaseRate = rowModel.purchaseRate;
-      row.purchasePriceOverride = rowModel.totalAmount;
-      row.makingCharges = rowModel.makingValue;
+      row.purchasePriceOverride = rowModel.totalAmount / lotDivisor;
+      row.makingCharges = switch (rowModel.makingChargesType) {
+        MakingChargesType.flat => rowModel.makingValue / lotDivisor,
+        MakingChargesType.perGram ||
+        MakingChargesType.percent =>
+          rowModel.makingValue,
+      };
       row.makingChargesType = rowModel.makingChargesType;
       row.gstRate = gstEnabled ? gstRate : 0.0;
       row.supplierId = supplierId;
       row.supplierName = supplierName;
-      row.quantity = 1;
+      row.quantity = pieces;
       return row;
     }).toList(growable: false);
   }
@@ -144,6 +154,9 @@ class SilverStockController extends AddStockController {
     if (row.itemName.length < 2) {
       return 'Item name must be at least 2 characters';
     }
+    if (row.pieces < 1) {
+      return 'Pieces must be at least 1';
+    }
     if (row.grossWeight <= 0) {
       return 'Gross weight must be greater than 0';
     }
@@ -154,10 +167,10 @@ class SilverStockController extends AddStockController {
       return 'Less weight cannot exceed gross weight';
     }
     if (row.purityLabel.isEmpty) {
-      return 'Purity is required';
+      return 'Base purity is required';
     }
-    if (row.effectiveWastagePercent <= 0 || row.effectiveWastagePercent > 100) {
-      return 'Wastage / fine percent must be between 0 and 100';
+    if (row.totalPurityPercent <= 0 || row.totalPurityPercent > 100) {
+      return 'Total purity must be between 0 and 100';
     }
     if (row.purchaseRate <= 0) {
       return 'Silver daily rate is missing. Update silver jewellery rate first.';
@@ -181,8 +194,9 @@ class SilverStockController extends AddStockController {
     final model = SilverItemModel(
       id: id,
       initialPurityLabel: _defaultSilverPurityLabel(),
-      initialWastagePercent: selectedPurityBasePercent,
+      initialWastagePercent: 0.0,
       initialPurchaseRate: silverRatePerGram,
+      initialPieces: 1,
     );
     model.addListener(notifyListeners);
     _silverRows.add(model);

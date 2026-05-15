@@ -965,12 +965,13 @@ class AddStockController extends ChangeNotifier {
           ? row.purityLabel.trim()
           : _purityDisplay.trim();
       if (purityLabel.isEmpty) {
-        return 'Purity is required';
+        return 'Base purity is required';
       }
 
-      final touch = row.resolveTouch(selectedPurityBasePercent);
+      final touch =
+          row.touchPercent > 0 ? row.touchPercent : selectedPurityBasePercent;
       if (touch <= 0 || touch > 100) {
-        return 'Wastage / fine percent must be between 0 and 100';
+        return 'Total purity must be between 0 and 100';
       }
 
       if (row.purchaseRate <= 0) {
