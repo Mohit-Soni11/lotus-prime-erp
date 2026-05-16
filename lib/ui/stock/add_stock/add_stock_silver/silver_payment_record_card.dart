@@ -10,6 +10,12 @@
 //     • Each enabled mode shows its input field
 //     • Summary footer: Total Bill | Total Paid | Due Amount
 //
+// FIX v2:
+//   ✅ ListenableBuilder added — card now rebuilds on every controller change
+//   ✅ Listenable.merge([payment, ctrl]) — dono ko sunta hai
+//   ✅ Sub-widgets (_CardHeader, _RateSection, etc.) un-consted — parent
+//      rebuild pe fresh values milti hain
+//
 // USAGE:
 //   SilverPaymentRecordCard(
 //     ctrl: silverStockController,
@@ -49,57 +55,64 @@ class SilverPaymentRecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalFine = ctrl.totalFineWeight;
-    final hasFine = totalFine > 0;
+    // ✅ FIX: ListenableBuilder — payment ya ctrl kuch bhi change kare,
+    //         poora card rebuild hoga. Pehle StatelessWidget freeze ho jaata tha.
+    return ListenableBuilder(
+      listenable: Listenable.merge([payment, ctrl]),
+      builder: (context, _) {
+        final totalFine = ctrl.totalFineWeight;
+        final hasFine = totalFine > 0;
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-      decoration: BoxDecoration(
-        color: AddStockColors.cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AddStockColors.cardBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: AddStockColors.shadowLight,
-            blurRadius: 8,
-            offset: Offset(0, 2),
+        return Container(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+          decoration: BoxDecoration(
+            color: AddStockColors.cardBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AddStockColors.cardBorder),
+            boxShadow: const [
+              BoxShadow(
+                color: AddStockColors.shadowLight,
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+              BoxShadow(
+                color: AddStockColors.shadowMedium,
+                blurRadius: 20,
+                offset: Offset(0, 6),
+              ),
+            ],
           ),
-          BoxShadow(
-            color: AddStockColors.shadowMedium,
-            blurRadius: 20,
-            offset: Offset(0, 6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── HEADER ───────────────────────────────────────────────────
+              _CardHeader(payment: payment, totalFine: totalFine),
+
+              _divider(),
+
+              // ── RATE SECTION ─────────────────────────────────────────────
+              _RateSection(payment: payment, totalFine: totalFine),
+
+              if (hasFine && payment.hasRate) ...[
+                const SizedBox(height: 16),
+
+                // ── PAYMENT MODES TOGGLE ROW ────────────────────────────
+                _PaymentModeRow(payment: payment),
+
+                const SizedBox(height: 14),
+
+                // ── ACTIVE PAYMENT FIELDS ───────────────────────────────
+                _ActivePaymentFields(payment: payment, totalFine: totalFine),
+
+                _divider(),
+
+                // ── SUMMARY FOOTER ──────────────────────────────────────
+                _PaymentSummary(payment: payment, totalFine: totalFine),
+              ],
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── HEADER ─────────────────────────────────────────────────────────
-          _CardHeader(payment: payment, totalFine: totalFine),
-
-          _divider(),
-
-          // ── RATE SECTION ───────────────────────────────────────────────────
-          _RateSection(payment: payment, totalFine: totalFine),
-
-          if (hasFine && payment.hasRate) ...[
-            const SizedBox(height: 16),
-
-            // ── PAYMENT MODES TOGGLE ROW ──────────────────────────────────
-            _PaymentModeRow(payment: payment),
-
-            const SizedBox(height: 14),
-
-            // ── ACTIVE PAYMENT FIELDS ─────────────────────────────────────
-            _ActivePaymentFields(payment: payment, totalFine: totalFine),
-
-            _divider(),
-
-            // ── SUMMARY FOOTER ────────────────────────────────────────────
-            _PaymentSummary(payment: payment, totalFine: totalFine),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -222,7 +235,7 @@ class _RateSection extends StatelessWidget {
         ),
         const SizedBox(height: 8),
 
-        // Rate input + live conversion chips row
+        // Rate input + live conversion chip row
         Row(
           children: [
             // Input field
@@ -293,7 +306,7 @@ class _RateSection extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            // Conversion chip
+            // Live conversion chip
             _RateChip(
               topLabel: 'PER GRAM',
               value: payment.ratePerGramDisplay,
@@ -302,7 +315,7 @@ class _RateSection extends StatelessWidget {
           ],
         ),
 
-        // Total Fine + Bill Amount row — only when we have fine and rate
+        // Total Fine × Rate → Total Bill row — only when we have both
         if (totalFine > 0 && payment.hasRate) ...[
           const SizedBox(height: 12),
           Row(
