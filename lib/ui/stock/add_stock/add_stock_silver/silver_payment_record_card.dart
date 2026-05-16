@@ -7,14 +7,16 @@
 //   Shows:
 //     • Rate per KG input → live per-gram + total bill amount
 //     • Payment mode toggles: Metal, Cash, UPI, Banking, Card
-//     • Each enabled mode shows its input field
+//     • Metal to Metal:
+//         → Gross Weight input  (grams)
+//         → Purity % input
+//         → Auto-calculated Fine  (grossWeight × purity ÷ 100)
+//         → Fine value in Rs  (fine × ratePerGram)
+//     • Other modes: plain Rs amount fields
 //     • Summary footer: Total Bill | Total Paid | Due Amount
-//
-// FIX v2:
-//   ✅ ListenableBuilder added — card now rebuilds on every controller change
-//   ✅ Listenable.merge([payment, ctrl]) — dono ko sunta hai
-//   ✅ Sub-widgets (_CardHeader, _RateSection, etc.) un-consted — parent
-//      rebuild pe fresh values milti hain
+//     • Due Settlement toggle (only when due > 0):
+//         → "Fine dena hai" (show grams of fine owed)
+//         → "Paisa dena hai" (show Rs owed)
 //
 // USAGE:
 //   SilverPaymentRecordCard(
@@ -38,6 +40,7 @@ const _kSilverAccent = Color(0xFF748A98);
 const _kDueColor = Color(0xFFD9534F);
 const _kSettledColor = Color(0xFF4CAF80);
 const _kMetalColor = Color(0xFF8BA1AF);
+const _kFineColor = Color(0xFF5B7A8A);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN WIDGET
@@ -55,8 +58,6 @@ class SilverPaymentRecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ FIX: ListenableBuilder — payment ya ctrl kuch bhi change kare,
-    //         poora card rebuild hoga. Pehle StatelessWidget freeze ho jaata tha.
     return ListenableBuilder(
       listenable: Listenable.merge([payment, ctrl]),
       builder: (context, _) {
@@ -108,6 +109,12 @@ class SilverPaymentRecordCard extends StatelessWidget {
 
                 // ── SUMMARY FOOTER ──────────────────────────────────────
                 _PaymentSummary(payment: payment, totalFine: totalFine),
+
+                // ── DUE SETTLEMENT SECTION ──────────────────────────────
+                if (payment.hasDue(totalFine)) ...[
+                  const SizedBox(height: 12),
+                  _DueSettlementSection(payment: payment, totalFine: totalFine),
+                ],
               ],
             ],
           ),
@@ -155,7 +162,6 @@ class _CardHeader extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Accent lines
             Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,7 +229,6 @@ class _RateSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label
         Text(
           'SILVER RATE (PER KG)',
           style: GoogleFonts.inter(
@@ -234,11 +239,8 @@ class _RateSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-
-        // Rate input + live conversion chip row
         Row(
           children: [
-            // Input field
             Expanded(
               flex: 2,
               child: TextFormField(
@@ -306,7 +308,6 @@ class _RateSection extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            // Live conversion chip
             _RateChip(
               topLabel: 'PER GRAM',
               value: payment.ratePerGramDisplay,
@@ -314,8 +315,6 @@ class _RateSection extends StatelessWidget {
             ),
           ],
         ),
-
-        // Total Fine × Rate → Total Bill row — only when we have both
         if (totalFine > 0 && payment.hasRate) ...[
           const SizedBox(height: 12),
           Row(
@@ -436,11 +435,9 @@ class _ActivePaymentFields extends StatelessWidget {
       children: activeModes.map((mode) {
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
-          child: _PaymentField(
-            mode: mode,
-            payment: payment,
-            totalFine: totalFine,
-          ),
+          child: mode == SilverPaymentMode.metalToMetal
+              ? _MetalToMetalField(payment: payment)
+              : _CashPaymentField(mode: mode, payment: payment),
         );
       }).toList(),
     );
@@ -448,42 +445,341 @@ class _ActivePaymentFields extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SINGLE PAYMENT FIELD
+// METAL TO METAL — NEW TWO-STEP FIELD
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _PaymentField extends StatelessWidget {
+class _MetalToMetalField extends StatelessWidget {
+  final SilverPaymentController payment;
+
+  const _MetalToMetalField({required this.payment});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasCalc = payment.hasMetalCalculation;
+    final fine = payment.metalFineCalculated;
+    final cashEquiv = payment.metalFineEquivalentCash;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _kFineColor.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _kFineColor.withOpacity(0.20)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Section label ──────────────────────────────────────────────
+          Row(
+            children: [
+              Icon(Icons.balance_rounded, size: 14, color: _kFineColor),
+              const SizedBox(width: 6),
+              Text(
+                'METAL TO METAL',
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.2,
+                  color: _kFineColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // ── Step 1: Gross Weight ───────────────────────────────────────
+          Row(
+            children: [
+              Expanded(
+                child: _MetalInputField(
+                  controller: payment.metalGrossWeightCtrl,
+                  label: 'GROSS WEIGHT',
+                  hint: 'e.g. 100.500',
+                  suffix: 'g',
+                  icon: Icons.scale_rounded,
+                ),
+              ),
+              const SizedBox(width: 10),
+              // ── Step 2: Purity ─────────────────────────────────────────
+              Expanded(
+                child: _MetalInputField(
+                  controller: payment.metalPurityCtrl,
+                  label: 'PURITY',
+                  hint: 'e.g. 92.5',
+                  suffix: '%',
+                  icon: Icons.auto_awesome_rounded,
+                ),
+              ),
+            ],
+          ),
+
+          // ── Auto-calculated Fine ───────────────────────────────────────
+          if (hasCalc) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: _kFineColor.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _kFineColor.withOpacity(0.25)),
+              ),
+              child: Column(
+                children: [
+                  // ── Fine weight row ──────────────────────────────────
+                  Row(
+                    children: [
+                      _calcStepChip(
+                        label: payment.metalGrossWeight.toStringAsFixed(3),
+                        unit: 'g',
+                        color: _kMetalColor,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '×',
+                        style: GoogleFonts.manrope(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: _kFineColor,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      _calcStepChip(
+                        label: payment.metalPurity.toStringAsFixed(2),
+                        unit: '%',
+                        color: _kMetalColor,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '÷ 100 =',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: _kFineColor,
+                        ),
+                      ),
+                      const Spacer(),
+                      // Result: fine weight
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'FINE',
+                            style: GoogleFonts.inter(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.8,
+                              color: _kFineColor.withOpacity(0.6),
+                            ),
+                          ),
+                          Text(
+                            '${fine.toStringAsFixed(3)} g',
+                            style: GoogleFonts.manrope(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: _kFineColor,
+                              height: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  // ── Cash equivalent row (only if rate set) ──────────
+                  if (payment.hasRate) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      height: 1,
+                      color: _kFineColor.withOpacity(0.15),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Icon(Icons.currency_rupee_rounded,
+                            size: 13, color: _kFineColor.withOpacity(0.6)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${fine.toStringAsFixed(3)} g  ×  ${payment.ratePerGramDisplay}',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: _kFineColor.withOpacity(0.7),
+                          ),
+                        ),
+                        const Spacer(),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'VALUE',
+                              style: GoogleFonts.inter(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.8,
+                                color: _kSettledColor.withOpacity(0.7),
+                              ),
+                            ),
+                            Text(
+                              'Rs ${cashEquiv.toStringAsFixed(2)}',
+                              style: GoogleFonts.manrope(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                                color: _kSettledColor,
+                                height: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _calcStepChip(
+      {required String label, required String unit, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withOpacity(0.22)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.manrope(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 2),
+          Text(
+            unit,
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: color.withOpacity(0.6),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// METAL INPUT FIELD (reusable for gross weight + purity)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _MetalInputField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final String hint;
+  final String suffix;
+  final IconData icon;
+
+  const _MetalInputField({
+    required this.controller,
+    required this.label,
+    required this.hint,
+    required this.suffix,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[\d,.]')),
+      ],
+      style: GoogleFonts.manrope(
+        fontSize: 15,
+        fontWeight: FontWeight.w800,
+        color: AddStockColors.textDark,
+      ),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: GoogleFonts.inter(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: _kFineColor,
+        ),
+        hintText: hint,
+        hintStyle: GoogleFonts.inter(
+          fontSize: 12,
+          color: AddStockColors.textHint,
+        ),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(
+              color: _kFineColor.withOpacity(0.10),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(icon, size: 13, color: _kFineColor),
+          ),
+        ),
+        suffixText: suffix,
+        suffixStyle: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: AddStockColors.textMuted,
+        ),
+        filled: true,
+        fillColor: AddStockColors.inputBg,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(9),
+          borderSide: BorderSide(color: _kFineColor.withOpacity(0.25)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(9),
+          borderSide: BorderSide(color: _kFineColor.withOpacity(0.25)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(9),
+          borderSide: const BorderSide(color: _kFineColor, width: 1.5),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CASH PAYMENT FIELD (Cash, UPI, Banking, Card)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _CashPaymentField extends StatelessWidget {
   final SilverPaymentMode mode;
   final SilverPaymentController payment;
-  final double totalFine;
 
-  const _PaymentField({
-    required this.mode,
-    required this.payment,
-    required this.totalFine,
-  });
+  const _CashPaymentField({required this.mode, required this.payment});
 
   TextEditingController get _ctrl {
     return switch (mode) {
-      SilverPaymentMode.metalToMetal => payment.metalFineCtrl,
+      SilverPaymentMode.metalToMetal => payment.metalGrossWeightCtrl,
       SilverPaymentMode.cash => payment.cashCtrl,
       SilverPaymentMode.upi => payment.upiCtrl,
       SilverPaymentMode.banking => payment.bankingCtrl,
       SilverPaymentMode.card => payment.cardCtrl,
     };
-  }
-
-  bool get _isMetal => mode == SilverPaymentMode.metalToMetal;
-
-  String get _suffix => _isMetal ? 'g (fine)' : '₹';
-
-  String get _hint => _isMetal ? 'Fine weight given' : 'Amount paid';
-
-  String? get _helperText {
-    if (!_isMetal) return null;
-    final given = payment.metalFineGiven;
-    if (given <= 0) return null;
-    final equiv = payment.metalFineEquivalentCash;
-    return '= ₹ ${equiv.toStringAsFixed(2)} (${given.toStringAsFixed(3)} g × ${payment.ratePerGramDisplay})';
   }
 
   @override
@@ -506,16 +802,10 @@ class _PaymentField extends StatelessWidget {
           fontWeight: FontWeight.w700,
           color: AddStockColors.textMuted,
         ),
-        hintText: _hint,
+        hintText: 'Amount paid',
         hintStyle: GoogleFonts.inter(
           fontSize: 13,
           color: AddStockColors.textHint,
-        ),
-        helperText: _helperText,
-        helperStyle: GoogleFonts.inter(
-          fontSize: 11,
-          color: _kMetalColor,
-          fontWeight: FontWeight.w600,
         ),
         prefixIcon: Padding(
           padding: const EdgeInsets.all(10),
@@ -529,7 +819,7 @@ class _PaymentField extends StatelessWidget {
             child: Icon(mode.icon, size: 15, color: _kSilverAccent),
           ),
         ),
-        suffixText: _suffix,
+        suffixText: 'Rs',
         suffixStyle: GoogleFonts.inter(
           fontSize: 12,
           fontWeight: FontWeight.w700,
@@ -582,7 +872,7 @@ class _PaymentSummary extends StatelessWidget {
             Expanded(
               child: _SummaryTile(
                 label: 'TOTAL BILL',
-                value: '₹ ${bill.toStringAsFixed(2)}',
+                value: 'Rs ${bill.toStringAsFixed(2)}',
                 color: AddStockColors.textDark,
                 bgColor: AddStockColors.inputBg,
               ),
@@ -591,7 +881,7 @@ class _PaymentSummary extends StatelessWidget {
             Expanded(
               child: _SummaryTile(
                 label: 'TOTAL PAID',
-                value: '₹ ${paid.toStringAsFixed(2)}',
+                value: 'Rs ${paid.toStringAsFixed(2)}',
                 color: _kSettledColor,
                 bgColor: _kSettledColor.withOpacity(0.06),
               ),
@@ -599,7 +889,6 @@ class _PaymentSummary extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        // Due amount — full width highlighted
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
@@ -652,7 +941,7 @@ class _PaymentSummary extends StatelessWidget {
                     Text(
                       isSettled
                           ? 'Payment complete'
-                          : '₹ ${due.toStringAsFixed(2)} pending on this batch',
+                          : 'Rs ${due.toStringAsFixed(2)} pending on this batch',
                       style: GoogleFonts.manrope(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
@@ -671,6 +960,242 @@ class _PaymentSummary extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DUE SETTLEMENT SECTION — NEW
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _DueSettlementSection extends StatelessWidget {
+  final SilverPaymentController payment;
+  final double totalFine;
+
+  const _DueSettlementSection({required this.payment, required this.totalFine});
+
+  @override
+  Widget build(BuildContext context) {
+    final due = payment.dueAmount(totalFine);
+    final dueAsFineg = payment.dueAmountAsFine(totalFine);
+    final mode = payment.dueSettleMode;
+    final isFineMode = mode == DueSettleMode.asFine;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _kDueColor.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _kDueColor.withOpacity(0.20)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Label ─────────────────────────────────────────────────────
+          Row(
+            children: [
+              Icon(Icons.info_outline_rounded,
+                  size: 13, color: _kDueColor.withOpacity(0.7)),
+              const SizedBox(width: 6),
+              Text(
+                'DUE SETTLEMENT — Kaise settle karoge?',
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
+                  color: _kDueColor.withOpacity(0.8),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // ── Toggle buttons ─────────────────────────────────────────────
+          Row(
+            children: [
+              Expanded(
+                child: _DueModeButton(
+                  label: 'Fine Dena Hai',
+                  subLabel: 'Metal (grams)',
+                  icon: Icons.balance_rounded,
+                  isSelected: isFineMode,
+                  onTap: () => payment.setDueSettleMode(DueSettleMode.asFine),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _DueModeButton(
+                  label: 'Paisa Dena Hai',
+                  subLabel: 'Cash / UPI / Bank',
+                  icon: Icons.currency_rupee_rounded,
+                  isSelected: !isFineMode,
+                  onTap: () => payment.setDueSettleMode(DueSettleMode.asCash),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // ── Result display ─────────────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: isFineMode
+                  ? _kFineColor.withOpacity(0.07)
+                  : _kDueColor.withOpacity(0.07),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isFineMode
+                    ? _kFineColor.withOpacity(0.22)
+                    : _kDueColor.withOpacity(0.22),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isFineMode
+                      ? Icons.balance_rounded
+                      : Icons.currency_rupee_rounded,
+                  size: 22,
+                  color: isFineMode ? _kFineColor : _kDueColor,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isFineMode
+                            ? 'SUPPLIER KO DENA HAI (FINE)'
+                            : 'SUPPLIER KO DENA HAI (PAISA)',
+                        style: GoogleFonts.inter(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.8,
+                          color: (isFineMode ? _kFineColor : _kDueColor)
+                              .withOpacity(0.6),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isFineMode
+                            ? '${dueAsFineg.toStringAsFixed(3)} g fine'
+                            : 'Rs ${due.toStringAsFixed(2)}',
+                        style: GoogleFonts.manrope(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: isFineMode ? _kFineColor : _kDueColor,
+                          height: 1,
+                        ),
+                      ),
+                      if (isFineMode && payment.hasRate) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          '= Rs ${due.toStringAsFixed(2)} (${dueAsFineg.toStringAsFixed(3)} g × ${payment.ratePerGramDisplay})',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: _kFineColor.withOpacity(0.6),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DUE MODE BUTTON
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _DueModeButton extends StatelessWidget {
+  final String label;
+  final String subLabel;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _DueModeButton({
+    required this.label,
+    required this.subLabel,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isSelected ? _kDueColor : AddStockColors.textMuted;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? _kDueColor.withOpacity(0.08)
+              : AddStockColors.inputBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected
+                ? _kDueColor.withOpacity(0.40)
+                : AddStockColors.cardBorder,
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                    ),
+                  ),
+                  Text(
+                    subLabel,
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: color.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _kDueColor,
+                ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  size: 10,
+                  color: Colors.white,
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
