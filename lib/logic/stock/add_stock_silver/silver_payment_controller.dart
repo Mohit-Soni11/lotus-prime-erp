@@ -1,47 +1,6 @@
-// =============================================================================
-// FILE        : silver_payment_controller.dart
-// MODULE      : Stock & Inventory — Silver
-// LAYER       : Logic / Payment
-// DESCRIPTION : Payment Record logic for Silver Add Stock.
-//
-//   ✅ Rate per KG input → auto-converts to per gram
-//   ✅ Total Bill Amount = totalFine × ratePerGram
-//   ✅ Payment Modes:
-//        — Metal to Metal  → Gross Weight + Purity % → Fine auto-calculated
-//        — Cash
-//        — UPI
-//        — Banking Transfer
-//        — Credit Card
-//   ✅ Metal to Metal: Fine = grossWeight × purity / 100
-//   ✅ Fine equivalent cash = fine × ratePerGram
-//   ✅ Due Settlement Mode: asFine (grams) OR asCash (₹)
-//   ✅ Due Amount = totalBillAmount − totalPaid
-//   ✅ Full lifecycle: init, reset, dispose
-//
-// HOW TO USE:
-//   1. Create in SilverStockController:
-//        final payment = SilverPaymentController();
-//   2. In dispose():
-//        payment.dispose();
-//   3. In resetForNewBatch():
-//        payment.reset();
-//   4. Pass to SilverPaymentRecordCard:
-//        SilverPaymentRecordCard(ctrl: _ctrl, payment: _ctrl.payment)
-// =============================================================================
-
 import 'package:flutter/material.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PAYMENT MODE ENUM
-// ─────────────────────────────────────────────────────────────────────────────
-
-enum SilverPaymentMode {
-  metalToMetal,
-  cash,
-  upi,
-  banking,
-  card,
-}
+enum SilverPaymentMode { metalToMetal, cash, upi, banking, card }
 
 extension SilverPaymentModeLabel on SilverPaymentMode {
   String get label {
@@ -75,20 +34,13 @@ extension SilverPaymentModeLabel on SilverPaymentMode {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DUE SETTLEMENT MODE ENUM
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// Jab due amount bacha ho — usse kaise settle karna hai?
-/// [asFine]  → supplier fine weight (grams) dega baad mein
-/// [asCash]  → supplier cash/UPI/bank se paisa dega baad mein
 enum DueSettleMode { asFine, asCash }
 
 extension DueSettleModeLabel on DueSettleMode {
   String get label {
     return switch (this) {
-      DueSettleMode.asFine => 'Fine dena hai (Metal)',
-      DueSettleMode.asCash => 'Paisa dena hai (Cash)',
+      DueSettleMode.asFine => 'Fine Due',
+      DueSettleMode.asCash => 'Cash Due',
     };
   }
 
@@ -100,42 +52,40 @@ extension DueSettleModeLabel on DueSettleMode {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SILVER PAYMENT CONTROLLER
-// ─────────────────────────────────────────────────────────────────────────────
+enum ExcessSettleMode { returnMetal, returnCashValue }
+
+extension ExcessSettleModeLabel on ExcessSettleMode {
+  String get label {
+    return switch (this) {
+      ExcessSettleMode.returnMetal => 'Return Metal',
+      ExcessSettleMode.returnCashValue => 'Return Value',
+    };
+  }
+
+  IconData get icon {
+    return switch (this) {
+      ExcessSettleMode.returnMetal => Icons.reply_all_rounded,
+      ExcessSettleMode.returnCashValue => Icons.currency_exchange_rounded,
+    };
+  }
+}
 
 class SilverPaymentController extends ChangeNotifier {
-  // ── RATE INPUT ────────────────────────────────────────────────────────────
-  /// Operator enters rate in Rs/kg  (e.g. 90000 for Rs 90,000 per kg)
+  static const double metalGstRatePercent = 5.0;
+  static const double cashGstRatePercent = 3.0;
+
   final TextEditingController ratePerKgCtrl = TextEditingController();
-
-  // ── METAL TO METAL — TWO-STEP INPUT ──────────────────────────────────────
-
-  /// Step 1: Gross weight of silver given by supplier (grams)
   final TextEditingController metalGrossWeightCtrl = TextEditingController();
-
-  /// Step 2: Purity percentage (e.g. 92.5 for 92.5% pure)
   final TextEditingController metalPurityCtrl = TextEditingController();
-
-  // ── OTHER PAYMENT MODE CONTROLLERS ───────────────────────────────────────
-
-  /// Cash paid — in Rs
   final TextEditingController cashCtrl = TextEditingController();
-
-  /// UPI paid — in Rs
   final TextEditingController upiCtrl = TextEditingController();
-
-  /// Banking / NEFT / RTGS / IMPS — in Rs
   final TextEditingController bankingCtrl = TextEditingController();
-
-  /// Credit / Debit card — in Rs
   final TextEditingController cardCtrl = TextEditingController();
 
-  // ── ENABLED PAYMENT MODES ─────────────────────────────────────────────────
   final Set<SilverPaymentMode> _enabledModes = {};
 
-  // ── DUE SETTLEMENT MODE ───────────────────────────────────────────────────
   DueSettleMode _dueSettleMode = DueSettleMode.asCash;
+  ExcessSettleMode _excessSettleMode = ExcessSettleMode.returnCashValue;
 
   SilverPaymentController() {
     ratePerKgCtrl.addListener(_onChange);
@@ -149,72 +99,60 @@ class SilverPaymentController extends ChangeNotifier {
 
   void _onChange() => notifyListeners();
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // RATE COMPUTED GETTERS
-  // ─────────────────────────────────────────────────────────────────────────
-
-  /// Rate per KG as entered by the operator
   double get ratePerKg => _parseNum(ratePerKgCtrl.text);
-
-  /// Converted rate per gram (ratePerKg / 1000)
   double get ratePerGram => ratePerKg > 0 ? ratePerKg / 1000.0 : 0.0;
-
-  /// Whether a valid rate has been entered
   bool get hasRate => ratePerGram > 0;
 
-  /// Display string for rate per gram
+  String get ratePerKgDisplay =>
+      hasRate ? 'Rs ${ratePerKg.toStringAsFixed(2)} / kg' : '--';
+
   String get ratePerGramDisplay =>
-      hasRate ? 'Rs ${ratePerGram.toStringAsFixed(2)} / g' : '—';
+      hasRate ? 'Rs ${ratePerGram.toStringAsFixed(2)} / g' : '--';
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // METAL TO METAL — FINE CALCULATION
-  // ─────────────────────────────────────────────────────────────────────────
-
-  /// Gross weight of silver given (grams)
-  double get metalGrossWeight => _parseNum(metalGrossWeightCtrl.text);
-
-  /// Purity percentage (0–100)
-  double get metalPurity => _parseNum(metalPurityCtrl.text);
-
-  /// Fine weight = grossWeight * purity / 100
-  double get metalFineCalculated {
-    if (metalGrossWeight <= 0 || metalPurity <= 0) return 0.0;
-    return (metalGrossWeight * metalPurity) / 100.0;
+  void seedRatePerGram(double perGram, {bool onlyIfEmpty = true}) {
+    if (perGram <= 0) {
+      return;
+    }
+    if (onlyIfEmpty && ratePerKg > 0) {
+      return;
+    }
+    final next = _formatDecimal(perGram * 1000.0);
+    if (ratePerKgCtrl.text == next) {
+      return;
+    }
+    ratePerKgCtrl.text = next;
+    ratePerKgCtrl.selection = TextSelection.fromPosition(
+      TextPosition(offset: next.length),
+    );
   }
 
-  /// Cash equivalent of fine = fine * ratePerGram
-  double get metalFineEquivalentCash => metalFineCalculated * ratePerGram;
+  double get metalGrossWeight => _parseNum(metalGrossWeightCtrl.text);
+  double get metalPurity => _parseNum(metalPurityCtrl.text);
+  bool get hasMetalInput => metalGrossWeight > 0 || metalPurity > 0;
 
-  /// Whether metal inputs are valid enough to show calculation
   bool get hasMetalCalculation =>
       metalGrossWeight > 0 && metalPurity > 0 && metalPurity <= 100;
 
-  /// Helper text for metal calculation display
+  double get metalFineCalculated {
+    if (!hasMetalCalculation) {
+      return 0.0;
+    }
+    return (metalGrossWeight * metalPurity) / 100.0;
+  }
+
+  double get metalFineEquivalentCash => metalFineCalculated * ratePerGram;
+
   String get metalCalcHelperText {
-    if (!hasMetalCalculation) return '';
+    if (!hasMetalCalculation) {
+      return '';
+    }
     final fine = metalFineCalculated;
     final cash = metalFineEquivalentCash;
-    final cashStr = hasRate ? ' = Rs ${cash.toStringAsFixed(2)}' : '';
-    return '${metalGrossWeight.toStringAsFixed(3)} g x ${metalPurity.toStringAsFixed(2)}% = ${fine.toStringAsFixed(3)} g fine$cashStr';
+    final cashText = hasRate ? ' = Rs ${cash.toStringAsFixed(2)}' : '';
+    return '${metalGrossWeight.toStringAsFixed(3)} g x '
+        '${metalPurity.toStringAsFixed(2)}% = '
+        '${fine.toStringAsFixed(3)} g fine$cashText';
   }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // BILL AMOUNT COMPUTED FROM FINE
-  // ─────────────────────────────────────────────────────────────────────────
-
-  /// Total bill amount = totalFineWeight (grams) * ratePerGram
-  /// Pass totalFineWeight from SilverStockController
-  double totalBillAmount(double totalFineGrams) => totalFineGrams * ratePerGram;
-
-  /// Display string for total bill amount
-  String totalBillAmountDisplay(double totalFineGrams) {
-    if (!hasRate) return '—';
-    return 'Rs ${totalBillAmount(totalFineGrams).toStringAsFixed(2)}';
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // PAYMENT MODE TOGGLE
-  // ─────────────────────────────────────────────────────────────────────────
 
   bool isModeEnabled(SilverPaymentMode mode) => _enabledModes.contains(mode);
 
@@ -244,75 +182,310 @@ class SilverPaymentController extends ChangeNotifier {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // PAYMENT AMOUNTS
-  // ─────────────────────────────────────────────────────────────────────────
-
   double get cashPaid => _parseNum(cashCtrl.text);
   double get upiPaid => _parseNum(upiCtrl.text);
   double get bankingPaid => _parseNum(bankingCtrl.text);
   double get cardPaid => _parseNum(cardCtrl.text);
 
-  /// Total of all payments (metal fine cash equiv + all cash modes)
-  double get totalPaid =>
-      metalFineEquivalentCash + cashPaid + upiPaid + bankingPaid + cardPaid;
+  double get totalCashPaid => cashPaid + upiPaid + bankingPaid + cardPaid;
+  double get totalPaidValue => metalFineEquivalentCash + totalCashPaid;
 
-  /// Due amount = total bill − total paid
-  double dueAmount(double totalFineGrams) =>
-      (totalBillAmount(totalFineGrams) - totalPaid).clamp(0.0, double.infinity);
+  double fineAmount(double totalFineGrams) => totalFineGrams * ratePerGram;
 
-  /// Due amount expressed as fine grams (if settling as fine)
-  double dueAmountAsFine(double totalFineGrams) {
-    if (!hasRate) return 0.0;
-    return dueAmount(totalFineGrams) / ratePerGram;
+  double makingInclusiveSubtotal({
+    required double totalFineGrams,
+    required double makingAmount,
+  }) {
+    return fineAmount(totalFineGrams) + makingAmount;
   }
 
-  /// Whether there is any remaining due
-  bool hasDue(double totalFineGrams) => dueAmount(totalFineGrams) > 0;
+  double matchedMetalFineGrams(double totalFineGrams) {
+    if (!hasMetalCalculation) {
+      return 0.0;
+    }
+    return metalFineCalculated <= totalFineGrams
+        ? metalFineCalculated
+        : totalFineGrams;
+  }
 
-  /// Whether payment is fully settled
-  bool isSettled(double totalFineGrams) => dueAmount(totalFineGrams) == 0;
+  double matchedMetalValue(double totalFineGrams) {
+    if (!hasRate) {
+      return 0.0;
+    }
+    return matchedMetalFineGrams(totalFineGrams) * ratePerGram;
+  }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // DUE SETTLEMENT MODE
-  // ─────────────────────────────────────────────────────────────────────────
+  double shortFineGrams(double totalFineGrams) {
+    return _positive(totalFineGrams - metalFineCalculated);
+  }
+
+  double shortFineValue(double totalFineGrams) {
+    return shortFineGrams(totalFineGrams) * ratePerGram;
+  }
+
+  double extraFineGrams(double totalFineGrams) {
+    return _positive(metalFineCalculated - totalFineGrams);
+  }
+
+  double extraFineValue(double totalFineGrams) {
+    return extraFineGrams(totalFineGrams) * ratePerGram;
+  }
+
+  double metalGstAmount({
+    required bool gstEnabled,
+    required double totalFineGrams,
+  }) {
+    if (!gstEnabled) {
+      return 0.0;
+    }
+    return matchedMetalValue(totalFineGrams) * (metalGstRatePercent / 100.0);
+  }
+
+  double cashTaxableBase({
+    required double totalFineGrams,
+    required double makingAmount,
+  }) {
+    return shortFineValue(totalFineGrams) + makingAmount;
+  }
+
+  double cashGstAmount({
+    required bool gstEnabled,
+    required double totalFineGrams,
+    required double makingAmount,
+  }) {
+    if (!gstEnabled) {
+      return 0.0;
+    }
+    return cashTaxableBase(
+          totalFineGrams: totalFineGrams,
+          makingAmount: makingAmount,
+        ) *
+        (cashGstRatePercent / 100.0);
+  }
+
+  double totalBillAmount({
+    required double totalFineGrams,
+    required double makingAmount,
+    required bool gstEnabled,
+  }) {
+    return makingInclusiveSubtotal(
+          totalFineGrams: totalFineGrams,
+          makingAmount: makingAmount,
+        ) +
+        metalGstAmount(gstEnabled: gstEnabled, totalFineGrams: totalFineGrams) +
+        cashGstAmount(
+          gstEnabled: gstEnabled,
+          totalFineGrams: totalFineGrams,
+          makingAmount: makingAmount,
+        );
+  }
+
+  double balanceAmount({
+    required double totalFineGrams,
+    required double makingAmount,
+    required bool gstEnabled,
+  }) {
+    return totalPaidValue -
+        totalBillAmount(
+          totalFineGrams: totalFineGrams,
+          makingAmount: makingAmount,
+          gstEnabled: gstEnabled,
+        );
+  }
+
+  double dueAmount({
+    required double totalFineGrams,
+    required double makingAmount,
+    required bool gstEnabled,
+  }) {
+    return _positive(
+      -balanceAmount(
+        totalFineGrams: totalFineGrams,
+        makingAmount: makingAmount,
+        gstEnabled: gstEnabled,
+      ),
+    );
+  }
+
+  double returnAmount({
+    required double totalFineGrams,
+    required double makingAmount,
+    required bool gstEnabled,
+  }) {
+    return _positive(
+      balanceAmount(
+        totalFineGrams: totalFineGrams,
+        makingAmount: makingAmount,
+        gstEnabled: gstEnabled,
+      ),
+    );
+  }
+
+  double dueAmountAsFine({
+    required double totalFineGrams,
+    required double makingAmount,
+    required bool gstEnabled,
+  }) {
+    if (!hasRate) {
+      return 0.0;
+    }
+    return dueAmount(
+          totalFineGrams: totalFineGrams,
+          makingAmount: makingAmount,
+          gstEnabled: gstEnabled,
+        ) /
+        ratePerGram;
+  }
+
+  double returnAmountAsFine({
+    required double totalFineGrams,
+    required double makingAmount,
+    required bool gstEnabled,
+  }) {
+    if (!hasRate) {
+      return 0.0;
+    }
+    return returnAmount(
+          totalFineGrams: totalFineGrams,
+          makingAmount: makingAmount,
+          gstEnabled: gstEnabled,
+        ) /
+        ratePerGram;
+  }
+
+  bool hasDue({
+    required double totalFineGrams,
+    required double makingAmount,
+    required bool gstEnabled,
+  }) {
+    return dueAmount(
+          totalFineGrams: totalFineGrams,
+          makingAmount: makingAmount,
+          gstEnabled: gstEnabled,
+        ) >
+        0;
+  }
+
+  bool hasReturn({
+    required double totalFineGrams,
+    required double makingAmount,
+    required bool gstEnabled,
+  }) {
+    return returnAmount(
+          totalFineGrams: totalFineGrams,
+          makingAmount: makingAmount,
+          gstEnabled: gstEnabled,
+        ) >
+        0;
+  }
+
+  bool isSettled({
+    required double totalFineGrams,
+    required double makingAmount,
+    required bool gstEnabled,
+  }) {
+    return !hasDue(
+          totalFineGrams: totalFineGrams,
+          makingAmount: makingAmount,
+          gstEnabled: gstEnabled,
+        ) &&
+        !hasReturn(
+          totalFineGrams: totalFineGrams,
+          makingAmount: makingAmount,
+          gstEnabled: gstEnabled,
+        );
+  }
 
   DueSettleMode get dueSettleMode => _dueSettleMode;
 
   void setDueSettleMode(DueSettleMode mode) {
+    if (_dueSettleMode == mode) {
+      return;
+    }
     _dueSettleMode = mode;
     notifyListeners();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // PAYMENT SUMMARY SNAPSHOT
-  // ─────────────────────────────────────────────────────────────────────────
+  ExcessSettleMode get excessSettleMode => _excessSettleMode;
 
-  SilverPaymentSnapshot buildSnapshot(double totalFineGrams) {
-    final bill = totalBillAmount(totalFineGrams);
-    final due = (bill - totalPaid).clamp(0.0, double.infinity);
+  void setExcessSettleMode(ExcessSettleMode mode) {
+    if (_excessSettleMode == mode) {
+      return;
+    }
+    _excessSettleMode = mode;
+    notifyListeners();
+  }
+
+  SilverPaymentSnapshot buildSnapshot({
+    required double totalFineGrams,
+    required double makingAmount,
+    required bool gstEnabled,
+  }) {
+    final fineBase = fineAmount(totalFineGrams);
+    final matchedFine = matchedMetalFineGrams(totalFineGrams);
+    final matchedValue = matchedMetalValue(totalFineGrams);
+    final shortFine = shortFineGrams(totalFineGrams);
+    final shortValue = shortFineValue(totalFineGrams);
+    final extraFine = extraFineGrams(totalFineGrams);
+    final extraValue = extraFineValue(totalFineGrams);
+    final metalGst = metalGstAmount(
+      gstEnabled: gstEnabled,
+      totalFineGrams: totalFineGrams,
+    );
+    final cashGst = cashGstAmount(
+      gstEnabled: gstEnabled,
+      totalFineGrams: totalFineGrams,
+      makingAmount: makingAmount,
+    );
+    final grandTotal = totalBillAmount(
+      totalFineGrams: totalFineGrams,
+      makingAmount: makingAmount,
+      gstEnabled: gstEnabled,
+    );
+    final due = dueAmount(
+      totalFineGrams: totalFineGrams,
+      makingAmount: makingAmount,
+      gstEnabled: gstEnabled,
+    );
+    final refund = returnAmount(
+      totalFineGrams: totalFineGrams,
+      makingAmount: makingAmount,
+      gstEnabled: gstEnabled,
+    );
+
     return SilverPaymentSnapshot(
       ratePerKg: ratePerKg,
       ratePerGram: ratePerGram,
       totalFineGrams: totalFineGrams,
-      totalBillAmount: bill,
+      fineAmount: fineBase,
+      makingAmount: makingAmount,
+      subtotalAmount: fineBase + makingAmount,
       metalGrossWeight: metalGrossWeight,
       metalPurity: metalPurity,
       metalFineCalculated: metalFineCalculated,
       metalFineEquivalentCash: metalFineEquivalentCash,
+      matchedMetalFineGrams: matchedFine,
+      matchedMetalValue: matchedValue,
+      shortFineGrams: shortFine,
+      shortFineValue: shortValue,
+      extraFineGrams: extraFine,
+      extraFineValue: extraValue,
+      metalGstAmount: metalGst,
+      cashGstAmount: cashGst,
       cashPaid: cashPaid,
       upiPaid: upiPaid,
       bankingPaid: bankingPaid,
       cardPaid: cardPaid,
-      totalPaid: totalPaid,
+      totalCashPaid: totalCashPaid,
+      totalPaidValue: totalPaidValue,
+      totalBillAmount: grandTotal,
       dueAmount: due,
+      returnAmount: refund,
       dueSettleMode: _dueSettleMode,
+      excessSettleMode: _excessSettleMode,
+      gstEnabled: gstEnabled,
     );
   }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // LIFECYCLE
-  // ─────────────────────────────────────────────────────────────────────────
 
   void reset() {
     ratePerKgCtrl.clear();
@@ -324,6 +497,7 @@ class SilverPaymentController extends ChangeNotifier {
     cardCtrl.clear();
     _enabledModes.clear();
     _dueSettleMode = DueSettleMode.asCash;
+    _excessSettleMode = ExcessSettleMode.returnCashValue;
     notifyListeners();
   }
 
@@ -348,81 +522,102 @@ class SilverPaymentController extends ChangeNotifier {
     super.dispose();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // PRIVATE HELPERS
-  // ─────────────────────────────────────────────────────────────────────────
-
   double _parseNum(String raw) {
     final normalized = raw.replaceAll(',', '').trim();
     return double.tryParse(normalized) ?? 0.0;
   }
-}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PAYMENT SNAPSHOT  (immutable — passed to UI / persistence)
-// ─────────────────────────────────────────────────────────────────────────────
+  String _formatDecimal(double value, {int maxFraction = 2}) {
+    final fixed = value.toStringAsFixed(maxFraction);
+    return fixed.replaceFirst(RegExp(r'\.?0+$'), '');
+  }
+
+  double _positive(double value) => value > 0 ? value : 0.0;
+}
 
 class SilverPaymentSnapshot {
   final double ratePerKg;
   final double ratePerGram;
   final double totalFineGrams;
-  final double totalBillAmount;
-
-  // Metal to Metal
+  final double fineAmount;
+  final double makingAmount;
+  final double subtotalAmount;
   final double metalGrossWeight;
   final double metalPurity;
   final double metalFineCalculated;
   final double metalFineEquivalentCash;
-
+  final double matchedMetalFineGrams;
+  final double matchedMetalValue;
+  final double shortFineGrams;
+  final double shortFineValue;
+  final double extraFineGrams;
+  final double extraFineValue;
+  final double metalGstAmount;
+  final double cashGstAmount;
   final double cashPaid;
   final double upiPaid;
   final double bankingPaid;
   final double cardPaid;
-  final double totalPaid;
+  final double totalCashPaid;
+  final double totalPaidValue;
+  final double totalBillAmount;
   final double dueAmount;
+  final double returnAmount;
   final DueSettleMode dueSettleMode;
+  final ExcessSettleMode excessSettleMode;
+  final bool gstEnabled;
 
   const SilverPaymentSnapshot({
     required this.ratePerKg,
     required this.ratePerGram,
     required this.totalFineGrams,
-    required this.totalBillAmount,
+    required this.fineAmount,
+    required this.makingAmount,
+    required this.subtotalAmount,
     required this.metalGrossWeight,
     required this.metalPurity,
     required this.metalFineCalculated,
     required this.metalFineEquivalentCash,
+    required this.matchedMetalFineGrams,
+    required this.matchedMetalValue,
+    required this.shortFineGrams,
+    required this.shortFineValue,
+    required this.extraFineGrams,
+    required this.extraFineValue,
+    required this.metalGstAmount,
+    required this.cashGstAmount,
     required this.cashPaid,
     required this.upiPaid,
     required this.bankingPaid,
     required this.cardPaid,
-    required this.totalPaid,
+    required this.totalCashPaid,
+    required this.totalPaidValue,
+    required this.totalBillAmount,
     required this.dueAmount,
+    required this.returnAmount,
     required this.dueSettleMode,
+    required this.excessSettleMode,
+    required this.gstEnabled,
   });
 
-  bool get isSettled => dueAmount <= 0;
+  bool get isSettled => dueAmount <= 0 && returnAmount <= 0;
   bool get hasMetalPayment => metalFineCalculated > 0;
-  bool get hasCashPayment => cashPaid > 0;
-  bool get hasUpiPayment => upiPaid > 0;
-  bool get hasBankingPayment => bankingPaid > 0;
-  bool get hasCardPayment => cardPaid > 0;
+  bool get hasCashPayment => totalCashPaid > 0;
+  bool get hasDue => dueAmount > 0;
+  bool get hasReturn => returnAmount > 0;
 
   double get dueAmountAsFine => ratePerGram > 0 ? dueAmount / ratePerGram : 0.0;
+  double get returnAmountAsFine =>
+      ratePerGram > 0 ? returnAmount / ratePerGram : 0.0;
 
-  String get ratePerKgDisplay => 'Rs ${ratePerKg.toStringAsFixed(0)} / kg';
+  String get ratePerKgDisplay => 'Rs ${ratePerKg.toStringAsFixed(2)} / kg';
   String get ratePerGramDisplay => 'Rs ${ratePerGram.toStringAsFixed(2)} / g';
   String get totalFineDisplay => '${totalFineGrams.toStringAsFixed(3)} g';
+  String get fineAmountDisplay => 'Rs ${fineAmount.toStringAsFixed(2)}';
+  String get makingDisplay => 'Rs ${makingAmount.toStringAsFixed(2)}';
+  String get subtotalDisplay => 'Rs ${subtotalAmount.toStringAsFixed(2)}';
   String get totalBillDisplay => 'Rs ${totalBillAmount.toStringAsFixed(2)}';
-  String get metalGrossDisplay => '${metalGrossWeight.toStringAsFixed(3)} g';
-  String get metalPurityDisplay => '${metalPurity.toStringAsFixed(2)}%';
-  String get metalFineDisplay => '${metalFineCalculated.toStringAsFixed(3)} g';
-  String get metalCashEquivDisplay =>
-      'Rs ${metalFineEquivalentCash.toStringAsFixed(2)}';
-  String get cashDisplay => 'Rs ${cashPaid.toStringAsFixed(2)}';
-  String get upiDisplay => 'Rs ${upiPaid.toStringAsFixed(2)}';
-  String get bankingDisplay => 'Rs ${bankingPaid.toStringAsFixed(2)}';
-  String get cardDisplay => 'Rs ${cardPaid.toStringAsFixed(2)}';
-  String get totalPaidDisplay => 'Rs ${totalPaid.toStringAsFixed(2)}';
+  String get totalPaidDisplay => 'Rs ${totalPaidValue.toStringAsFixed(2)}';
   String get dueDisplay => 'Rs ${dueAmount.toStringAsFixed(2)}';
-  String get dueAsFineDisplay => '${dueAmountAsFine.toStringAsFixed(3)} g fine';
+  String get returnDisplay => 'Rs ${returnAmount.toStringAsFixed(2)}';
 }

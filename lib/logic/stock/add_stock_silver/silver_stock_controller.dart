@@ -47,6 +47,8 @@ class SilverStockController extends AddStockController {
   bool get hasSilverRateSnapshot => silverRatePerGram > 0;
   double get totalFineWeight =>
       enteredSilverRows.fold(0.0, (sum, row) => sum + row.fineWeight);
+  double get totalMakingAmount =>
+      enteredSilverRows.fold(0.0, (sum, row) => sum + row.makingAmount);
   @override
   int get totalQuantity =>
       enteredSilverRows.fold(0, (sum, row) => sum + row.pieces);
@@ -328,6 +330,8 @@ class SilverStockController extends AddStockController {
         _silverRatePer10g = 0.0;
         _silverRateDate = null;
       }
+
+      payment.seedRatePerGram(silverRatePerGram);
 
       for (final row in _silverRows) {
         row.applyPurchaseRate(silverRatePerGram);
