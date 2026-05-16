@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/logic/stock/add_stock_controller.dart';
+import 'package:lotus_erp/logic/stock/add_stock_silver/silver_payment_controller.dart';
 import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
 
 import '../../../models/stock/stock_item_model/add_stock_silver/silver_item_model.dart';
@@ -9,6 +10,9 @@ import '../../../models/stock/stock_item_model/add_stock_silver/silver_item_mode
 class SilverStockController extends AddStockController {
   String _silverBatchCode;
   final AppDatabase _rateDb = AppDatabase();
+
+  /// ✅ Payment controller — wired to this batch lifecycle
+  final SilverPaymentController payment = SilverPaymentController();
 
   final TextEditingController supplierInvoiceNumberCtrl =
       TextEditingController();
@@ -277,6 +281,7 @@ class SilverStockController extends AddStockController {
   void resetForNewBatch() {
     _silverBatchCode = _generateSilverBatchCode();
     supplierInvoiceNumberCtrl.clear();
+    payment.reset(); // ✅ payment fields bhi reset
     _clearSilverRows();
     super.resetForNewBatch();
     _loadSilverRateSnapshot();
@@ -295,6 +300,7 @@ class SilverStockController extends AddStockController {
   @override
   void dispose() {
     supplierInvoiceNumberCtrl.dispose();
+    payment.dispose(); // ✅ payment controller dispose
     for (final row in _silverRows) {
       row.removeListener(notifyListeners);
       row.disposeAll();

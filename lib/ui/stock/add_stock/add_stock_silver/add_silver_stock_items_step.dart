@@ -6,6 +6,7 @@ import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_batch_overview_card.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_invoice_card.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_items_table.dart';
+import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_payment_record_card.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_supplier_panel.dart';
 import 'package:lotus_erp/ui/stock/add_stock/stock_metal_ui.dart';
 
@@ -40,6 +41,12 @@ class AddSilverStockItemsStep extends StatelessWidget {
                 const SizedBox(height: 16),
                 SilverItemsTable(ctrl: ctrl),
                 const SizedBox(height: 16),
+                // ✅ Payment Record Card — desktop mein bhi
+                SilverPaymentRecordCard(
+                  ctrl: ctrl,
+                  payment: ctrl.payment,
+                ),
+                const SizedBox(height: 16),
                 _SilverSummaryPanel(
                   ctrl: ctrl,
                   onSave: onSave,
@@ -62,6 +69,12 @@ class AddSilverStockItemsStep extends StatelessWidget {
               AddSilverStockSupplierPanel(ctrl: ctrl),
               const SizedBox(height: 16),
               SilverItemsTable(ctrl: ctrl),
+              const SizedBox(height: 16),
+              // ✅ Payment Record Card — ab screen mein show hoga
+              SilverPaymentRecordCard(
+                ctrl: ctrl,
+                payment: ctrl.payment,
+              ),
               const SizedBox(height: 18),
               _SilverSummaryPanel(
                 ctrl: ctrl,
