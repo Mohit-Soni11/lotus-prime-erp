@@ -6,10 +6,10 @@ import 'package:lotus_erp/logic/stock/add_stock_silver/silver_payment_controller
 import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 
-const _kSilverAccent = Color(0xFF71889A);
-const _kFineTone = Color(0xFF476C7D);
-const _kReturnTone = Color(0xFF0F9D8A);
-const _kDueTone = Color(0xFFE05D44);
+const _kSilverAccent = Color(0xFF72889A);
+const _kFineTone = Color(0xFF4E6F80);
+const _kDueTone = Color(0xFFD65A3F);
+const _kReturnTone = Color(0xFF15967D);
 const _kNeutralTone = Color(0xFF64748B);
 
 final _moneyFormatter = NumberFormat.currency(
@@ -33,31 +33,13 @@ class SilverPaymentRecordCard extends StatelessWidget {
     return ListenableBuilder(
       listenable: Listenable.merge([payment, ctrl]),
       builder: (context, _) {
-        final totalFine = ctrl.totalFineWeight;
-        final making = ctrl.totalMakingAmount;
-        final gstEnabled = ctrl.gstEnabled;
-        final totalBill = payment.totalBillAmount(
-          totalFineGrams: totalFine,
-          makingAmount: making,
-          gstEnabled: gstEnabled,
+        final snapshot = payment.buildSnapshot(
+          totalFineGrams: ctrl.totalFineWeight,
+          makingAmount: ctrl.totalMakingAmount,
+          gstEnabled: ctrl.gstEnabled,
         );
-        final due = payment.dueAmount(
-          totalFineGrams: totalFine,
-          makingAmount: making,
-          gstEnabled: gstEnabled,
-        );
-        final refund = payment.returnAmount(
-          totalFineGrams: totalFine,
-          makingAmount: making,
-          gstEnabled: gstEnabled,
-        );
-        final hasSettlementBase = totalFine > 0 && payment.hasRate;
-        final status = _statusFor(
-          hasSettlementBase: hasSettlementBase,
-          totalPaid: payment.totalPaidValue,
-          due: due,
-          refund: refund,
-        );
+        final hasBase = ctrl.totalFineWeight > 0 && payment.hasRate;
+        final status = _statusForSnapshot(snapshot: snapshot, hasBase: hasBase);
 
         return Container(
           padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
@@ -81,58 +63,40 @@ class SilverPaymentRecordCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _CardHeader(status: status, gstEnabled: gstEnabled),
+              _CardHeader(status: status, gstEnabled: ctrl.gstEnabled),
               _divider(),
-              _TodayRateSection(ctrl: ctrl, payment: payment),
-              if (!hasSettlementBase) ...[
-                const SizedBox(height: 16),
-                _SetupPrompt(hasFine: totalFine > 0, hasRate: payment.hasRate),
+              _BillDefinitionCard(
+                ctrl: ctrl,
+                payment: payment,
+                snapshot: snapshot,
+              ),
+              if (!hasBase) ...[
+                const SizedBox(height: 14),
+                const _InfoNote(
+                  tone: _kSilverAccent,
+                  text:
+                      'Pehle rate aur invoice fine ready karo. Uske baad payment collection aur final settlement neeche clearly show ho jayega.',
+                ),
               ] else ...[
-                const SizedBox(height: 16),
-                _InvoiceBreakdownSection(
-                  payment: payment,
-                  totalFine: totalFine,
-                  making: making,
-                  gstEnabled: gstEnabled,
-                ),
-                const SizedBox(height: 16),
-                _PaymentModeSection(payment: payment),
                 const SizedBox(height: 14),
-                _SettlementInputSection(payment: payment, totalFine: totalFine),
+                _ModeSelectorCard(payment: payment),
                 const SizedBox(height: 14),
-                _GstBreakdownSection(
-                  payment: payment,
-                  totalFine: totalFine,
-                  making: making,
-                  gstEnabled: gstEnabled,
-                ),
-                const SizedBox(height: 14),
-                _SettlementSummarySection(
-                  payment: payment,
-                  totalFine: totalFine,
-                  making: making,
-                  gstEnabled: gstEnabled,
-                  totalBill: totalBill,
-                  due: due,
-                  refund: refund,
-                ),
-                if (refund > 0) ...[
-                  const SizedBox(height: 14),
-                  _ReturnDecisionSection(
+                if (payment.hasAnyModeEnabled)
+                  _CollectionCard(
                     payment: payment,
-                    totalFine: totalFine,
-                    making: making,
-                    gstEnabled: gstEnabled,
+                    snapshot: snapshot,
+                  )
+                else
+                  const _InfoNote(
+                    tone: _kNeutralTone,
+                    text:
+                        'Payment collect karne ke liye upar se ek ya zyada mode select karo.',
                   ),
-                ] else if (due > 0) ...[
-                  const SizedBox(height: 14),
-                  _DueDecisionSection(
-                    payment: payment,
-                    totalFine: totalFine,
-                    making: making,
-                    gstEnabled: gstEnabled,
-                  ),
-                ],
+                const SizedBox(height: 14),
+                _SettlementCard(
+                  payment: payment,
+                  snapshot: snapshot,
+                ),
               ],
             ],
           ),
@@ -153,54 +117,37 @@ class _CardHeader extends StatelessWidget {
   final _StatusMeta status;
   final bool gstEnabled;
 
-  const _CardHeader({required this.status, required this.gstEnabled});
+  const _CardHeader({
+    required this.status,
+    required this.gstEnabled,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _accentLine(22, _kSilverAccent, 1.0),
-                  const SizedBox(height: 3),
-                  _accentLine(14, _kSilverAccent, 0.42),
-                  const SizedBox(height: 3),
-                  _accentLine(8, _kSilverAccent, 0.18),
-                ],
+              Text(
+                'PAYMENT RECORD',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.2,
+                  color: AddStockColors.textDark,
+                ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'PAYMENT RECORD',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
-                        color: AddStockColors.textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      gstEnabled
-                          ? 'GST settlement with metal 5% and cash 3% logic'
-                          : 'Non-GST settlement with metal and cash balancing',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AddStockColors.textMuted,
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 4),
+              Text(
+                gstEnabled
+                    ? 'Defined GST bill and clean settlement view'
+                    : 'Defined normal bill and clean settlement view',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AddStockColors.textMuted,
                 ),
               ),
             ],
@@ -210,627 +157,432 @@ class _CardHeader extends StatelessWidget {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          alignment: WrapAlignment.end,
           children: [
-            _BadgePill(
-              label: gstEnabled ? 'GST MODE' : 'WITHOUT GST',
+            _StatusPill(
+              label: gstEnabled ? 'GST BILL' : 'NORMAL BILL',
               color: gstEnabled ? AddStockColors.success : _kSilverAccent,
             ),
-            _BadgePill(label: status.label, color: status.color),
+            _StatusPill(label: status.label, color: status.color),
           ],
         ),
       ],
     );
   }
-
-  Widget _accentLine(double width, Color color, double opacity) => Container(
-        width: width,
-        height: 3,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: opacity),
-          borderRadius: BorderRadius.circular(2),
-        ),
-      );
 }
 
-class _TodayRateSection extends StatelessWidget {
+class _BillDefinitionCard extends StatelessWidget {
   final SilverStockController ctrl;
   final SilverPaymentController payment;
+  final SilverPaymentSnapshot snapshot;
 
-  const _TodayRateSection({required this.ctrl, required this.payment});
-
-  @override
-  Widget build(BuildContext context) {
-    final marketDate = ctrl.silverRateDate == null
-        ? 'Snapshot unavailable'
-        : 'Snapshot ${DateFormat('dd MMM yyyy').format(ctrl.silverRateDate!)}';
-    final snapshotRate = ctrl.hasSilverRateSnapshot
-        ? 'Market ref ${_money(ctrl.silverRatePerGram)} / g'
-        : 'Enter today\'s silver rate manually';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _SectionTitle(
-          title: 'TODAY\'S SILVER RATE',
-          subtitle: '$marketDate  -  $snapshotRate',
-        ),
-        const SizedBox(height: 10),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final stacked = constraints.maxWidth < 700;
-            final rateField = _NumberInputField(
-              controller: payment.ratePerKgCtrl,
-              label: 'PER KG',
-              hint: ctrl.hasSilverRateSnapshot
-                  ? (ctrl.silverRatePerGram * 1000).toStringAsFixed(0)
-                  : '90000',
-              prefixIcon: Icons.currency_rupee_rounded,
-              suffix: '/ kg',
-            );
-
-            final perGram = _MetricTile(
-              label: 'PER GRAM',
-              value: payment.ratePerGramDisplay,
-              caption: 'Auto-calculated',
-              tone: _kSilverAccent,
-              icon: Icons.scale_rounded,
-            );
-
-            final market = _MetricTile(
-              label: 'MARKET SNAPSHOT',
-              value: ctrl.hasSilverRateSnapshot
-                  ? '${_money(ctrl.silverRatePerGram)} / g'
-                  : '--',
-              caption: ctrl.hasSilverRateSnapshot
-                  ? 'Loaded from daily rate table'
-                  : 'No stored market rate',
-              tone: AddStockColors.accentCompliance,
-              icon: Icons.track_changes_rounded,
-            );
-
-            if (stacked) {
-              return Column(
-                children: [
-                  rateField,
-                  const SizedBox(height: 10),
-                  perGram,
-                  const SizedBox(height: 10),
-                  market,
-                ],
-              );
-            }
-
-            return Row(
-              children: [
-                Expanded(flex: 4, child: rateField),
-                const SizedBox(width: 10),
-                Expanded(flex: 3, child: perGram),
-                const SizedBox(width: 10),
-                Expanded(flex: 3, child: market),
-              ],
-            );
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class _SetupPrompt extends StatelessWidget {
-  final bool hasFine;
-  final bool hasRate;
-
-  const _SetupPrompt({required this.hasFine, required this.hasRate});
-
-  @override
-  Widget build(BuildContext context) {
-    String text;
-    if (!hasFine && !hasRate) {
-      text = 'Invoice items fill karte hi total fine aayega. Uske baad per kg '
-          'rate ready rahega aur yahi card full payment settlement dikhaega.';
-    } else if (!hasFine) {
-      text = 'Rate ready hai. Ab invoice items add karte hi total fine, making '
-          'aur total bill yahan calculate ho jayega.';
-    } else {
-      text = 'Total fine ready hai. Final settlement dekhne ke liye per kg '
-          'rate confirm karo.';
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AddStockColors.inputBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AddStockColors.cardBorder),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: _kSilverAccent.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.insights_rounded,
-              size: 18,
-              color: _kSilverAccent,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                height: 1.55,
-                fontWeight: FontWeight.w600,
-                color: AddStockColors.textBody,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InvoiceBreakdownSection extends StatelessWidget {
-  final SilverPaymentController payment;
-  final double totalFine;
-  final double making;
-  final bool gstEnabled;
-
-  const _InvoiceBreakdownSection({
+  const _BillDefinitionCard({
+    required this.ctrl,
     required this.payment,
-    required this.totalFine,
-    required this.making,
-    required this.gstEnabled,
+    required this.snapshot,
   });
 
   @override
   Widget build(BuildContext context) {
-    final fineAmount = payment.fineAmount(totalFine);
-    final totalBill = payment.totalBillAmount(
-      totalFineGrams: totalFine,
-      makingAmount: making,
-      gstEnabled: gstEnabled,
-    );
-    final gstAmount = payment.metalGstAmount(
-          gstEnabled: gstEnabled,
-          totalFineGrams: totalFine,
-        ) +
-        payment.cashGstAmount(
-          gstEnabled: gstEnabled,
-          totalFineGrams: totalFine,
-          makingAmount: making,
-        );
+    final snapshotDate = ctrl.silverRateDate == null
+        ? 'Market snapshot unavailable'
+        : 'Market snapshot ${DateFormat('dd MMM yyyy').format(ctrl.silverRateDate!)}';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _SectionTitle(
-          title: 'INVOICE SETTLEMENT PREVIEW',
-          subtitle:
-              'Total fine, rate, making aur final bill amount ek jagah par',
-        ),
-        const SizedBox(height: 10),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final columns = constraints.maxWidth >= 980
-                ? 5
-                : constraints.maxWidth >= 680
-                    ? 3
-                    : 1;
-            final spacing = 10.0;
-            final width =
-                (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
-
-            final tiles = [
-              _MetricTile(
-                label: 'TOTAL FINE',
-                value: '${totalFine.toStringAsFixed(3)} g',
-                caption: 'Combined from invoice items',
-                tone: _kFineTone,
-                icon: Icons.balance_rounded,
-              ),
-              _MetricTile(
-                label: 'FINE VALUE',
-                value: _money(fineAmount),
-                caption:
-                    '${totalFine.toStringAsFixed(3)} g x ${payment.ratePerGramDisplay}',
-                tone: _kSilverAccent,
-                icon: Icons.currency_rupee_rounded,
-              ),
-              _MetricTile(
-                label: 'RATE / G',
-                value: payment.ratePerGramDisplay,
-                caption: payment.ratePerKgDisplay,
-                tone: AddStockColors.accentCompliance,
-                icon: Icons.sell_rounded,
-              ),
-              _MetricTile(
-                label: 'MAKING',
-                value: _money(making),
-                caption: 'Invoice making total',
-                tone: AddStockColors.accentPricing,
-                icon: Icons.build_circle_rounded,
-              ),
-              _MetricTile(
-                label: gstEnabled ? 'TOTAL BILL' : 'TOTAL BILL',
-                value: _money(totalBill),
-                caption: gstEnabled
-                    ? 'Incl. GST ${_money(gstAmount)}'
-                    : 'Without GST adjustment',
-                tone: AddStockColors.success,
-                icon: Icons.receipt_long_rounded,
-                highlighted: true,
-              ),
-            ];
-
-            return Wrap(
-              spacing: spacing,
-              runSpacing: spacing,
-              children: tiles
-                  .map((tile) => SizedBox(width: width, child: tile))
-                  .toList(growable: false),
-            );
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class _PaymentModeSection extends StatelessWidget {
-  final SilverPaymentController payment;
-
-  const _PaymentModeSection({required this.payment});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _SectionTitle(
-          title: 'SETTLEMENT MODES',
-          subtitle:
-              'Metal adjustment aur cash/UPI/bank/card split ko select karo',
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: SilverPaymentMode.values
-              .map(
-                (mode) => _ModeToggleChip(
-                  mode: mode,
-                  isEnabled: payment.isModeEnabled(mode),
-                  onTap: () => payment.toggleMode(mode),
-                ),
-              )
-              .toList(growable: false),
-        ),
-      ],
-    );
-  }
-}
-
-class _SettlementInputSection extends StatelessWidget {
-  final SilverPaymentController payment;
-  final double totalFine;
-
-  const _SettlementInputSection({
-    required this.payment,
-    required this.totalFine,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final enabledCashModes = SilverPaymentMode.values
-        .where((mode) => mode != SilverPaymentMode.metalToMetal)
-        .where(payment.isModeEnabled)
-        .toList(growable: false);
-    final metalEnabled = payment.isModeEnabled(SilverPaymentMode.metalToMetal);
-
-    if (!metalEnabled && enabledCashModes.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AddStockColors.inputBg,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AddStockColors.cardBorder),
-        ),
-        child: Text(
-          'Upar se ek ya zyada settlement mode select karo. Metal to Metal se '
-          'fine adjust hoga aur cash modes se residual payment record hoga.',
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            height: 1.5,
-            fontWeight: FontWeight.w600,
-            color: AddStockColors.textBody,
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        if (metalEnabled) ...[
-          _MetalAdjustmentSection(payment: payment, totalFine: totalFine),
-          if (enabledCashModes.isNotEmpty) const SizedBox(height: 12),
-        ],
-        if (enabledCashModes.isNotEmpty)
-          _CashSettlementSection(
-            payment: payment,
-            enabledModes: enabledCashModes,
-          ),
-      ],
-    );
-  }
-}
-
-class _MetalAdjustmentSection extends StatelessWidget {
-  final SilverPaymentController payment;
-  final double totalFine;
-
-  const _MetalAdjustmentSection({
-    required this.payment,
-    required this.totalFine,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final extraFine = payment.extraFineGrams(totalFine);
-    final shortFine = payment.shortFineGrams(totalFine);
-    final matchedFine = payment.matchedMetalFineGrams(totalFine);
-    final matchedValue = payment.matchedMetalValue(totalFine);
-    final statusColor = extraFine > 0
-        ? _kReturnTone
-        : shortFine > 0
-            ? _kDueTone
-            : AddStockColors.success;
-    final statusText = extraFine > 0
-        ? 'EXTRA FINE'
-        : shortFine > 0
-            ? 'SHORT FINE'
-            : 'FINE MATCHED';
-    final statusCaption = extraFine > 0
-        ? '${extraFine.toStringAsFixed(3)} g above target'
-        : shortFine > 0
-            ? '${shortFine.toStringAsFixed(3)} g still pending'
-            : 'Metal fine matched the invoice target';
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: _kSilverAccent.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kSilverAccent.withValues(alpha: 0.18)),
-      ),
+    return _SectionCard(
+      title: 'Bill Definition',
+      subtitle: 'Rate, GST aur final bill yahan clearly define hota hai.',
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionTitle(
-            title: 'METAL TO METAL ADJUSTMENT',
-            subtitle:
-                'Yahan woh metal dalo jo supplier payment me diya ja raha hai',
-          ),
-          const SizedBox(height: 12),
           LayoutBuilder(
             builder: (context, constraints) {
-              final stacked = constraints.maxWidth < 720;
-              final grossField = _NumberInputField(
-                controller: payment.metalGrossWeightCtrl,
-                label: 'METAL GIVEN',
-                hint: '0.000',
-                prefixIcon: Icons.balance_rounded,
-                suffix: 'gram',
+              final stacked = constraints.maxWidth < 760;
+              final rateField = _NumberInputField(
+                controller: payment.ratePerKgCtrl,
+                label: 'Today Silver Rate',
+                hint: ctrl.hasSilverRateSnapshot
+                    ? (ctrl.silverRatePerGram * 1000).toStringAsFixed(0)
+                    : '90000',
+                prefixIcon: Icons.currency_rupee_rounded,
+                suffix: '/ kg',
               );
-              final purityField = _NumberInputField(
-                controller: payment.metalPurityCtrl,
-                label: 'PURITY',
-                hint: '92.5',
-                prefixIcon: Icons.percent_rounded,
-                suffix: '%',
+
+              final rateStats = Column(
+                children: [
+                  _CompactStatTile(
+                    label: 'Per Gram',
+                    value: payment.ratePerGramDisplay,
+                    tone: _kSilverAccent,
+                  ),
+                  const SizedBox(height: 10),
+                  _CompactStatTile(
+                    label: 'Market Ref',
+                    value: ctrl.hasSilverRateSnapshot
+                        ? '${_money(ctrl.silverRatePerGram)} / g'
+                        : '--',
+                    tone: AddStockColors.accentCompliance,
+                    caption: snapshotDate,
+                  ),
+                ],
               );
 
               if (stacked) {
                 return Column(
                   children: [
-                    grossField,
-                    const SizedBox(height: 10),
-                    purityField,
+                    rateField,
+                    const SizedBox(height: 12),
+                    rateStats,
                   ],
                 );
               }
 
               return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: grossField),
-                  const SizedBox(width: 10),
-                  Expanded(child: purityField),
+                  Expanded(flex: 6, child: rateField),
+                  const SizedBox(width: 12),
+                  Expanded(flex: 4, child: rateStats),
                 ],
               );
             },
           ),
-          if (payment.hasMetalCalculation) ...[
-            const SizedBox(height: 12),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final columns = constraints.maxWidth >= 860 ? 4 : 2;
-                final spacing = 10.0;
-                final width =
-                    (constraints.maxWidth - ((columns - 1) * spacing)) /
-                        columns;
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 920
+                  ? 4
+                  : constraints.maxWidth >= 520
+                      ? 2
+                      : 1;
+              const gap = 10.0;
+              final width =
+                  (constraints.maxWidth - ((columns - 1) * gap)) / columns;
 
-                final tiles = [
-                  _MetricTile(
-                    label: 'FINE REQUIRED',
-                    value: '${totalFine.toStringAsFixed(3)} g',
-                    caption: 'Invoice target',
-                    tone: _kFineTone,
-                    icon: Icons.flag_rounded,
-                  ),
-                  _MetricTile(
-                    label: 'FINE GIVEN',
-                    value:
-                        '${payment.metalFineCalculated.toStringAsFixed(3)} g',
-                    caption:
-                        '${payment.metalGrossWeight.toStringAsFixed(3)} g x ${payment.metalPurity.toStringAsFixed(2)}%',
-                    tone: _kSilverAccent,
-                    icon: Icons.auto_graph_rounded,
-                  ),
-                  _MetricTile(
-                    label: 'METAL VALUE',
-                    value: _money(payment.metalFineEquivalentCash),
-                    caption:
-                        'Matched ${matchedFine.toStringAsFixed(3)} g = ${_money(matchedValue)}',
-                    tone: AddStockColors.accentPricing,
-                    icon: Icons.payments_rounded,
-                  ),
-                  _MetricTile(
-                    label: statusText,
-                    value: extraFine > 0
-                        ? '+${extraFine.toStringAsFixed(3)} g'
-                        : shortFine > 0
-                            ? '-${shortFine.toStringAsFixed(3)} g'
-                            : '0.000 g',
-                    caption: statusCaption,
-                    tone: statusColor,
-                    icon: extraFine > 0
-                        ? Icons.trending_up_rounded
-                        : shortFine > 0
-                            ? Icons.trending_down_rounded
-                            : Icons.check_circle_rounded,
-                    highlighted: true,
-                  ),
-                ];
-
-                return Wrap(
-                  spacing: spacing,
-                  runSpacing: spacing,
-                  children: tiles
-                      .map((tile) => SizedBox(width: width, child: tile))
-                      .toList(growable: false),
-                );
-              },
-            ),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.07),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: statusColor.withValues(alpha: 0.18)),
-              ),
-              child: Text(
-                extraFine > 0
-                    ? 'Metal payment fine bill se zyada gaya hai. Extra fine '
-                        '${extraFine.toStringAsFixed(3)} g '
-                        '(${_money(payment.extraFineValue(totalFine))}) show ho raha hai.'
-                    : shortFine > 0
-                        ? 'Metal payment se abhi bhi ${shortFine.toStringAsFixed(3)} g '
-                            '(${_money(payment.shortFineValue(totalFine))}) fine equivalent '
-                            'short hai.'
-                        : 'Fine side perfectly adjust ho gaya hai. Ab making, GST aur cash side '
-                            'summary neeche dekho.',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  height: 1.55,
-                  fontWeight: FontWeight.w600,
-                  color: statusColor,
+              final tiles = [
+                _CompactStatTile(
+                  label: 'Total Fine',
+                  value: '${snapshot.totalFineGrams.toStringAsFixed(3)} g',
+                  tone: _kFineTone,
                 ),
-              ),
+                _CompactStatTile(
+                  label: 'Fine Value',
+                  value: _money(snapshot.fineAmount),
+                  tone: _kSilverAccent,
+                ),
+                _CompactStatTile(
+                  label: 'Making',
+                  value: _money(snapshot.makingAmount),
+                  tone: AddStockColors.accentPricing,
+                ),
+                _CompactStatTile(
+                  label: 'Bill Type',
+                  value: ctrl.gstEnabled ? 'GST Applied' : 'Without GST',
+                  tone: ctrl.gstEnabled
+                      ? AddStockColors.success
+                      : AddStockColors.textBody,
+                ),
+              ];
+
+              return Wrap(
+                spacing: gap,
+                runSpacing: gap,
+                children: tiles
+                    .map((tile) => SizedBox(width: width, child: tile))
+                    .toList(growable: false),
+              );
+            },
+          ),
+          const SizedBox(height: 14),
+          if (ctrl.gstEnabled) ...[
+            const _SectionDivider(label: 'GST Setup'),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _ChoiceButton(
+                    label: 'Auto GST',
+                    caption: 'Metal 5% + cash 3%',
+                    icon: Icons.auto_mode_rounded,
+                    selected: !payment.useManualGst,
+                    tone: AddStockColors.success,
+                    onTap: () => payment.setUseManualGst(false),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ChoiceButton(
+                    label: 'Manual GST',
+                    caption: 'GST amount khud likho',
+                    icon: Icons.edit_note_rounded,
+                    selected: payment.useManualGst,
+                    tone: AddStockColors.success,
+                    onTap: () => payment.setUseManualGst(true),
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 10),
+            if (payment.useManualGst)
+              _NumberInputField(
+                controller: payment.manualGstAmountCtrl,
+                label: 'Manual GST Amount',
+                hint: snapshot.autoGstAmount.toStringAsFixed(2),
+                prefixIcon: Icons.receipt_long_rounded,
+                suffix: 'Rs',
+              )
+            else
+              _InfoNote(
+                tone: AddStockColors.success,
+                text:
+                    'Auto GST abhi ${_money(snapshot.autoGstAmount)} hai. Ye total bill me add ho raha hai.',
+              ),
+            const SizedBox(height: 14),
+          ] else ...[
+            const _InfoNote(
+              tone: _kNeutralTone,
+              text:
+                  'Normal bill mode me GST add nahi hoga. Final amount sirf fine value + making se banega.',
+            ),
+            const SizedBox(height: 14),
           ],
+          const _SectionDivider(label: 'Bill Summary'),
+          const SizedBox(height: 10),
+          _SummaryRow(
+            label: 'Total Fine',
+            value: '${snapshot.totalFineGrams.toStringAsFixed(3)} g',
+          ),
+          _SummaryRow(
+            label: 'Rate Per Gram',
+            value: payment.ratePerGramDisplay,
+          ),
+          _SummaryRow(
+            label: 'Fine Amount',
+            value: _money(snapshot.fineAmount),
+          ),
+          _SummaryRow(
+            label: 'Making Amount',
+            value: _money(snapshot.makingAmount),
+          ),
+          _SummaryRow(
+            label: 'GST Amount',
+            value: _money(snapshot.appliedGstAmount),
+            caption: ctrl.gstEnabled
+                ? payment.useManualGst
+                    ? 'Manual GST added in bill'
+                    : 'Auto GST added in bill'
+                : 'No GST in normal bill',
+          ),
+          _SummaryRow(
+            label: 'Final Bill Amount',
+            value: _money(snapshot.totalBillAmount),
+            highlight: true,
+            valueColor: AddStockColors.success,
+          ),
         ],
       ),
     );
   }
 }
 
-class _CashSettlementSection extends StatelessWidget {
+class _ModeSelectorCard extends StatelessWidget {
   final SilverPaymentController payment;
-  final List<SilverPaymentMode> enabledModes;
 
-  const _CashSettlementSection({
+  const _ModeSelectorCard({required this.payment});
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      title: 'Payment Modes',
+      subtitle: 'Jo payment liya hai uska mode select karo.',
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: SilverPaymentMode.values
+            .map(
+              (mode) => _ModeChip(
+                mode: mode,
+                selected: payment.isModeEnabled(mode),
+                onTap: () => payment.toggleMode(mode),
+              ),
+            )
+            .toList(growable: false),
+      ),
+    );
+  }
+}
+
+class _CollectionCard extends StatelessWidget {
+  final SilverPaymentController payment;
+  final SilverPaymentSnapshot snapshot;
+
+  const _CollectionCard({
     required this.payment,
-    required this.enabledModes,
+    required this.snapshot,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AddStockColors.inputBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AddStockColors.cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionTitle(
-            title: 'CASH SIDE SETTLEMENT',
-            subtitle:
-                'Residual amount ko cash, UPI, bank ya card me split karo',
-          ),
-          const SizedBox(height: 10),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final columns = constraints.maxWidth >= 860
-                  ? 4
-                  : constraints.maxWidth >= 520
-                      ? 2
-                      : 1;
-              final spacing = 10.0;
-              final width =
-                  (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
+    final cashModes = SilverPaymentMode.values
+        .where((mode) => mode != SilverPaymentMode.metalToMetal)
+        .where(payment.isModeEnabled)
+        .toList(growable: false);
+    final metalSelected = payment.isModeEnabled(SilverPaymentMode.metalToMetal);
 
-              return Wrap(
-                spacing: spacing,
-                runSpacing: spacing,
-                children: enabledModes
-                    .map(
-                      (mode) => SizedBox(
-                        width: width,
-                        child: _NumberInputField(
-                          controller: _controllerFor(mode),
-                          label: mode.shortLabel,
-                          hint: '0.00',
-                          prefixIcon: mode.icon,
-                          suffix: 'Rs',
+    return _SectionCard(
+      title: 'Payment Collection',
+      subtitle: 'Metal aur cash side ki collection yahan clearly enter karo.',
+      child: Column(
+        children: [
+          if (metalSelected) ...[
+            const _SubSectionHeading(
+              title: 'Metal Adjustment',
+              subtitle:
+                  'Supplier ne jo metal diya hai uska fine yahan niklega.',
+            ),
+            const SizedBox(height: 10),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final stacked = constraints.maxWidth < 700;
+                final grossField = _NumberInputField(
+                  controller: payment.metalGrossWeightCtrl,
+                  label: 'Metal Given',
+                  hint: '0.000',
+                  prefixIcon: Icons.balance_rounded,
+                  suffix: 'gram',
+                );
+                final purityField = _NumberInputField(
+                  controller: payment.metalPurityCtrl,
+                  label: 'Purity',
+                  hint: '92.5',
+                  prefixIcon: Icons.percent_rounded,
+                  suffix: '%',
+                );
+
+                if (stacked) {
+                  return Column(
+                    children: [
+                      grossField,
+                      const SizedBox(height: 10),
+                      purityField,
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: grossField),
+                    const SizedBox(width: 10),
+                    Expanded(child: purityField),
+                  ],
+                );
+              },
+            ),
+            if (payment.hasMetalCalculation) ...[
+              const SizedBox(height: 10),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final columns = constraints.maxWidth >= 920
+                      ? 4
+                      : constraints.maxWidth >= 520
+                          ? 2
+                          : 1;
+                  const gap = 10.0;
+                  final width =
+                      (constraints.maxWidth - ((columns - 1) * gap)) / columns;
+                  final balanceLabel = snapshot.extraFineGrams > 0
+                      ? 'Extra Fine'
+                      : snapshot.shortFineGrams > 0
+                          ? 'Short Fine'
+                          : 'Fine Match';
+                  final balanceValue = snapshot.extraFineGrams > 0
+                      ? '+${snapshot.extraFineGrams.toStringAsFixed(3)} g'
+                      : snapshot.shortFineGrams > 0
+                          ? '-${snapshot.shortFineGrams.toStringAsFixed(3)} g'
+                          : '0.000 g';
+                  final balanceTone = snapshot.extraFineGrams > 0
+                      ? _kReturnTone
+                      : snapshot.shortFineGrams > 0
+                          ? _kDueTone
+                          : AddStockColors.success;
+
+                  final tiles = [
+                    _CompactStatTile(
+                      label: 'Invoice Fine',
+                      value: '${snapshot.totalFineGrams.toStringAsFixed(3)} g',
+                      tone: _kFineTone,
+                    ),
+                    _CompactStatTile(
+                      label: 'Metal Fine',
+                      value:
+                          '${snapshot.metalFineCalculated.toStringAsFixed(3)} g',
+                      tone: _kSilverAccent,
+                    ),
+                    _CompactStatTile(
+                      label: 'Metal Value',
+                      value: _money(snapshot.metalFineEquivalentCash),
+                      tone: AddStockColors.accentPricing,
+                    ),
+                    _CompactStatTile(
+                      label: balanceLabel,
+                      value: balanceValue,
+                      tone: balanceTone,
+                    ),
+                  ];
+
+                  return Wrap(
+                    spacing: gap,
+                    runSpacing: gap,
+                    children: tiles
+                        .map((tile) => SizedBox(width: width, child: tile))
+                        .toList(growable: false),
+                  );
+                },
+              ),
+            ],
+            if (cashModes.isNotEmpty) const SizedBox(height: 14),
+          ],
+          if (cashModes.isNotEmpty) ...[
+            const _SubSectionHeading(
+              title: 'Cash Collection',
+              subtitle: 'Residual amount ko cash, UPI, bank ya card me bharo.',
+            ),
+            const SizedBox(height: 10),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = constraints.maxWidth >= 920
+                    ? 4
+                    : constraints.maxWidth >= 520
+                        ? 2
+                        : 1;
+                const gap = 10.0;
+                final width =
+                    (constraints.maxWidth - ((columns - 1) * gap)) / columns;
+
+                return Wrap(
+                  spacing: gap,
+                  runSpacing: gap,
+                  children: cashModes
+                      .map(
+                        (mode) => SizedBox(
+                          width: width,
+                          child: _NumberInputField(
+                            controller: _controllerForMode(mode),
+                            label: mode.label,
+                            hint: '0.00',
+                            prefixIcon: mode.icon,
+                            suffix: 'Rs',
+                          ),
                         ),
-                      ),
-                    )
-                    .toList(growable: false),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          _MetricTile(
-            label: 'TOTAL CASH PAID',
-            value: _money(payment.totalCashPaid),
-            caption: 'Cash + UPI + Bank + Card',
-            tone: AddStockColors.accentPricing,
-            icon: Icons.account_balance_wallet_rounded,
-            highlighted: true,
-          ),
+                      )
+                      .toList(growable: false),
+                );
+              },
+            ),
+          ],
         ],
       ),
     );
   }
 
-  TextEditingController _controllerFor(SilverPaymentMode mode) {
+  TextEditingController _controllerForMode(SilverPaymentMode mode) {
     return switch (mode) {
       SilverPaymentMode.cash => payment.cashCtrl,
       SilverPaymentMode.upi => payment.upiCtrl,
@@ -841,419 +593,215 @@ class _CashSettlementSection extends StatelessWidget {
   }
 }
 
-class _GstBreakdownSection extends StatelessWidget {
+class _SettlementCard extends StatelessWidget {
   final SilverPaymentController payment;
-  final double totalFine;
-  final double making;
-  final bool gstEnabled;
+  final SilverPaymentSnapshot snapshot;
 
-  const _GstBreakdownSection({
+  const _SettlementCard({
     required this.payment,
-    required this.totalFine,
-    required this.making,
-    required this.gstEnabled,
+    required this.snapshot,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (!gstEnabled) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: AddStockColors.inputBgLocked,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AddStockColors.cardBorder),
-        ),
-        child: Text(
-          'WITHOUT GST: is settlement me GST add nahi ho raha. Fine bill + making hi final base hai.',
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: AddStockColors.textMuted,
-          ),
-        ),
-      );
-    }
-
-    final metalBase = payment.matchedMetalValue(totalFine);
-    final cashBase = payment.cashTaxableBase(
-      totalFineGrams: totalFine,
-      makingAmount: making,
-    );
-    final metalGst = payment.metalGstAmount(
-      gstEnabled: true,
-      totalFineGrams: totalFine,
-    );
-    final cashGst = payment.cashGstAmount(
-      gstEnabled: true,
-      totalFineGrams: totalFine,
-      makingAmount: making,
-    );
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AddStockColors.successBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AddStockColors.successBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionTitle(
-            title: 'GST BREAKUP',
-            subtitle:
-                'Metal side 5% aur cash side 3% according to your silver flow',
-          ),
-          const SizedBox(height: 10),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final columns = constraints.maxWidth >= 760 ? 2 : 1;
-              final spacing = 10.0;
-              final width =
-                  (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
-
-              final tiles = [
-                _MetricTile(
-                  label: 'METAL GST 5%',
-                  value: _money(metalGst),
-                  caption: '${_money(metalBase)} matched metal value',
-                  tone: AddStockColors.success,
-                  icon: Icons.precision_manufacturing_rounded,
-                ),
-                _MetricTile(
-                  label: 'CASH GST 3%',
-                  value: _money(cashGst),
-                  caption: '${_money(cashBase)} residual cash base',
-                  tone: AddStockColors.accentCompliance,
-                  icon: Icons.currency_exchange_rounded,
-                ),
-              ];
-
-              return Wrap(
-                spacing: spacing,
-                runSpacing: spacing,
-                children: tiles
-                    .map((tile) => SizedBox(width: width, child: tile))
-                    .toList(growable: false),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SettlementSummarySection extends StatelessWidget {
-  final SilverPaymentController payment;
-  final double totalFine;
-  final double making;
-  final bool gstEnabled;
-  final double totalBill;
-  final double due;
-  final double refund;
-
-  const _SettlementSummarySection({
-    required this.payment,
-    required this.totalFine,
-    required this.making,
-    required this.gstEnabled,
-    required this.totalBill,
-    required this.due,
-    required this.refund,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final balanceLabel = refund > 0
-        ? 'SUPPLIER RETURN'
-        : due > 0
-            ? 'AMOUNT DUE'
-            : 'BALANCED';
-    final balanceValue = refund > 0
-        ? _money(refund)
-        : due > 0
-            ? _money(due)
-            : 'Settled';
-    final balanceTone = refund > 0
+    final resultTone = snapshot.hasReturn
         ? _kReturnTone
-        : due > 0
+        : snapshot.hasDue
             ? _kDueTone
             : AddStockColors.success;
+    final resultLabel = snapshot.hasReturn
+        ? 'Return Pending'
+        : snapshot.hasDue
+            ? 'Due Pending'
+            : 'Settlement Complete';
+    final resultValue = snapshot.hasReturn
+        ? snapshot.returnDisplay
+        : snapshot.hasDue
+            ? snapshot.dueDisplay
+            : 'Settled';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _SectionTitle(
-          title: 'FINAL SETTLEMENT SUMMARY',
-          subtitle:
-              'Metal value fine side ko adjust karta hai, cash side baaki total ko settle karta hai',
-        ),
-        const SizedBox(height: 10),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final columns = constraints.maxWidth >= 980
-                ? 4
-                : constraints.maxWidth >= 680
-                    ? 2
-                    : 1;
-            final spacing = 10.0;
-            final width =
-                (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
-
-            final tiles = [
-              _MetricTile(
-                label: 'TOTAL BILL',
-                value: _money(totalBill),
-                caption: gstEnabled ? 'Fine + making + GST' : 'Fine + making',
-                tone: _kSilverAccent,
-                icon: Icons.receipt_rounded,
-              ),
-              _MetricTile(
-                label: 'METAL VALUE PAID',
-                value: _money(payment.metalFineEquivalentCash),
-                caption: payment.hasMetalCalculation
-                    ? '${payment.metalFineCalculated.toStringAsFixed(3)} g fine paid'
-                    : 'No metal adjustment',
-                tone: _kFineTone,
-                icon: Icons.balance_rounded,
-              ),
-              _MetricTile(
-                label: 'CASH PAID',
-                value: _money(payment.totalCashPaid),
-                caption: 'Cash + UPI + bank + card',
-                tone: AddStockColors.accentPricing,
-                icon: Icons.payments_rounded,
-              ),
-              _MetricTile(
-                label: balanceLabel,
-                value: balanceValue,
-                caption: refund > 0
-                    ? 'Supplier should return this balance'
-                    : due > 0
-                        ? 'This amount is still pending'
-                        : 'No due and no return pending',
-                tone: balanceTone,
-                icon: refund > 0
-                    ? Icons.reply_rounded
-                    : due > 0
-                        ? Icons.pending_actions_rounded
-                        : Icons.verified_rounded,
-                highlighted: true,
-              ),
-            ];
-
-            return Wrap(
-              spacing: spacing,
-              runSpacing: spacing,
-              children: tiles
-                  .map((tile) => SizedBox(width: width, child: tile))
-                  .toList(growable: false),
-            );
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class _DueDecisionSection extends StatelessWidget {
-  final SilverPaymentController payment;
-  final double totalFine;
-  final double making;
-  final bool gstEnabled;
-
-  const _DueDecisionSection({
-    required this.payment,
-    required this.totalFine,
-    required this.making,
-    required this.gstEnabled,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final due = payment.dueAmount(
-      totalFineGrams: totalFine,
-      makingAmount: making,
-      gstEnabled: gstEnabled,
-    );
-    final dueAsFine = payment.dueAmountAsFine(
-      totalFineGrams: totalFine,
-      makingAmount: making,
-      gstEnabled: gstEnabled,
-    );
-    final shortFine = payment.shortFineGrams(totalFine);
-    final fineMode = payment.dueSettleMode == DueSettleMode.asFine;
-
-    return _DecisionCard(
-      title: 'DUE DECISION',
-      subtitle:
-          'Bacha hua balance fine due rakhna hai ya cash due, yahan decide karo',
-      tone: _kDueTone,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _ChoiceButton(
-                label: 'Fine Due',
-                caption: 'Equivalent fine record',
-                icon: Icons.balance_rounded,
-                selected: fineMode,
-                tone: _kDueTone,
-                onTap: () => payment.setDueSettleMode(DueSettleMode.asFine),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _ChoiceButton(
-                label: 'Cash Due',
-                caption: 'Rupee receivable',
-                icon: Icons.currency_rupee_rounded,
-                selected: !fineMode,
-                tone: _kDueTone,
-                onTap: () => payment.setDueSettleMode(DueSettleMode.asCash),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _DecisionResultBand(
-          tone: _kDueTone,
-          title: fineMode ? 'SUPPLIER DUE IN FINE' : 'SUPPLIER DUE IN CASH',
-          value: fineMode ? '${dueAsFine.toStringAsFixed(3)} g' : _money(due),
-          caption: fineMode
-              ? 'Equivalent value ${_money(due)} at today\'s rate'
-              : 'Equivalent fine ${dueAsFine.toStringAsFixed(3)} g at today\'s rate',
-        ),
-        if (shortFine > 0) ...[
-          const SizedBox(height: 10),
-          Text(
-            'Metal side par abhi bhi ${shortFine.toStringAsFixed(3)} g fine short hai. '
-            'Final due amount above making aur GST ko bhi include karta hai.',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              height: 1.5,
-              fontWeight: FontWeight.w600,
-              color: _kDueTone,
-            ),
+    return _SectionCard(
+      title: 'Final Settlement',
+      subtitle: 'Ab bill aur received amount ka clean final result dekho.',
+      child: Column(
+        children: [
+          _SummaryRow(
+              label: 'Final Bill Amount', value: snapshot.totalBillDisplay),
+          _SummaryRow(
+            label: 'Metal Value Received',
+            value: _money(snapshot.metalFineEquivalentCash),
           ),
-        ],
-      ],
-    );
-  }
-}
-
-class _ReturnDecisionSection extends StatelessWidget {
-  final SilverPaymentController payment;
-  final double totalFine;
-  final double making;
-  final bool gstEnabled;
-
-  const _ReturnDecisionSection({
-    required this.payment,
-    required this.totalFine,
-    required this.making,
-    required this.gstEnabled,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final refund = payment.returnAmount(
-      totalFineGrams: totalFine,
-      makingAmount: making,
-      gstEnabled: gstEnabled,
-    );
-    final refundAsFine = payment.returnAmountAsFine(
-      totalFineGrams: totalFine,
-      makingAmount: making,
-      gstEnabled: gstEnabled,
-    );
-    final extraFine = payment.extraFineGrams(totalFine);
-    final allowMetalReturn = extraFine > 0 && payment.hasRate;
-    final returnMetal =
-        payment.excessSettleMode == ExcessSettleMode.returnMetal;
-
-    return _DecisionCard(
-      title: 'RETURN DECISION',
-      subtitle:
-          'Extra settlement aaya hai. Return metal karna hai ya uska value settle karna hai?',
-      tone: _kReturnTone,
-      children: [
-        if (allowMetalReturn) ...[
-          Row(
-            children: [
-              Expanded(
-                child: _ChoiceButton(
-                  label: 'Return Metal',
-                  caption: 'Metal wapas lena hai',
-                  icon: Icons.reply_all_rounded,
-                  selected: returnMetal,
-                  tone: _kReturnTone,
-                  onTap: () =>
-                      payment.setExcessSettleMode(ExcessSettleMode.returnMetal),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ChoiceButton(
-                  label: 'Return Value',
-                  caption: 'Cash value lena hai',
-                  icon: Icons.currency_exchange_rounded,
-                  selected: !returnMetal,
-                  tone: _kReturnTone,
-                  onTap: () => payment.setExcessSettleMode(
-                    ExcessSettleMode.returnCashValue,
-                  ),
-                ),
-              ),
-            ],
+          _SummaryRow(
+            label: 'Cash Value Received',
+            value: _money(snapshot.totalCashPaid),
+          ),
+          _SummaryRow(
+            label: 'Total Received',
+            value: snapshot.totalPaidDisplay,
+            highlight: true,
           ),
           const SizedBox(height: 12),
-        ],
-        _DecisionResultBand(
-          tone: _kReturnTone,
-          title: allowMetalReturn && returnMetal
-              ? 'SUPPLIER SHOULD RETURN METAL'
-              : 'SUPPLIER SHOULD RETURN VALUE',
-          value: allowMetalReturn && returnMetal
-              ? '${refundAsFine.toStringAsFixed(3)} g'
-              : _money(refund),
-          caption: allowMetalReturn && returnMetal
-              ? 'Equivalent value ${_money(refund)}'
-              : 'Equivalent metal ${refundAsFine.toStringAsFixed(3)} g',
-        ),
-        if (extraFine > 0) ...[
-          const SizedBox(height: 10),
-          Text(
-            'Fine comparison par extra ${extraFine.toStringAsFixed(3)} g show ho raha hai. '
-            'Final refundable balance above making aur GST absorb hone ke baad ka net amount hai.',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              height: 1.5,
-              fontWeight: FontWeight.w600,
-              color: _kReturnTone,
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: resultTone.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: resultTone.withValues(alpha: 0.22)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  resultLabel.toUpperCase(),
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.9,
+                    color: resultTone,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  resultValue,
+                  style: GoogleFonts.manrope(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: resultTone,
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  snapshot.hasReturn
+                      ? 'Supplier se return lena baaki hai.'
+                      : snapshot.hasDue
+                          ? 'Supplier par abhi balance due baaki hai.'
+                          : 'Bill aur received amount dono balance ho chuke hain.',
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: resultTone.withValues(alpha: 0.82),
+                  ),
+                ),
+              ],
             ),
           ),
+          if (snapshot.hasDue) ...[
+            const SizedBox(height: 12),
+            const _SubSectionHeading(
+              title: 'Due Handling',
+              subtitle:
+                  'Due ko fine me rakhna hai ya cash me, yahan choose karo.',
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _ChoiceButton(
+                    label: 'Fine Due',
+                    caption: 'Grams equivalent',
+                    icon: Icons.balance_rounded,
+                    selected: payment.dueSettleMode == DueSettleMode.asFine,
+                    tone: _kDueTone,
+                    onTap: () => payment.setDueSettleMode(DueSettleMode.asFine),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ChoiceButton(
+                    label: 'Cash Due',
+                    caption: 'Rupee due amount',
+                    icon: Icons.currency_rupee_rounded,
+                    selected: payment.dueSettleMode == DueSettleMode.asCash,
+                    tone: _kDueTone,
+                    onTap: () => payment.setDueSettleMode(DueSettleMode.asCash),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _ResultNote(
+              tone: _kDueTone,
+              title: payment.dueSettleMode == DueSettleMode.asFine
+                  ? 'Due in Fine'
+                  : 'Due in Cash',
+              value: payment.dueSettleMode == DueSettleMode.asFine
+                  ? '${snapshot.dueAmountAsFine.toStringAsFixed(3)} g'
+                  : snapshot.dueDisplay,
+              caption: payment.dueSettleMode == DueSettleMode.asFine
+                  ? 'Equivalent cash ${snapshot.dueDisplay}'
+                  : 'Equivalent fine ${snapshot.dueAmountAsFine.toStringAsFixed(3)} g',
+            ),
+          ],
+          if (snapshot.hasReturn) ...[
+            const SizedBox(height: 12),
+            const _SubSectionHeading(
+              title: 'Return Handling',
+              subtitle:
+                  'Extra settlement ko metal return rakhna hai ya value return, yahan choose karo.',
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _ChoiceButton(
+                    label: 'Return Metal',
+                    caption: 'Metal wapas lo',
+                    icon: Icons.reply_all_rounded,
+                    selected: payment.excessSettleMode ==
+                        ExcessSettleMode.returnMetal,
+                    tone: _kReturnTone,
+                    onTap: () => payment.setExcessSettleMode(
+                      ExcessSettleMode.returnMetal,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ChoiceButton(
+                    label: 'Return Value',
+                    caption: 'Cash value lo',
+                    icon: Icons.currency_exchange_rounded,
+                    selected: payment.excessSettleMode ==
+                        ExcessSettleMode.returnCashValue,
+                    tone: _kReturnTone,
+                    onTap: () => payment.setExcessSettleMode(
+                      ExcessSettleMode.returnCashValue,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _ResultNote(
+              tone: _kReturnTone,
+              title: payment.excessSettleMode == ExcessSettleMode.returnMetal
+                  ? 'Return in Metal'
+                  : 'Return in Cash',
+              value: payment.excessSettleMode == ExcessSettleMode.returnMetal
+                  ? '${snapshot.returnAmountAsFine.toStringAsFixed(3)} g'
+                  : snapshot.returnDisplay,
+              caption: payment.excessSettleMode == ExcessSettleMode.returnMetal
+                  ? 'Equivalent cash ${snapshot.returnDisplay}'
+                  : 'Equivalent fine ${snapshot.returnAmountAsFine.toStringAsFixed(3)} g',
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }
 
-class _DecisionCard extends StatelessWidget {
+class _SectionCard extends StatelessWidget {
   final String title;
   final String subtitle;
-  final Color tone;
-  final List<Widget> children;
+  final Widget child;
 
-  const _DecisionCard({
+  const _SectionCard({
     required this.title,
     required this.subtitle,
-    required this.tone,
-    required this.children,
+    required this.child,
   });
 
   @override
@@ -1262,87 +810,48 @@ class _DecisionCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: tone.withValues(alpha: 0.05),
+        color: AddStockColors.inputBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: tone.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionTitle(title: title, subtitle: subtitle),
-          const SizedBox(height: 10),
-          ...children,
-        ],
-      ),
-    );
-  }
-}
-
-class _DecisionResultBand extends StatelessWidget {
-  final Color tone;
-  final String title;
-  final String value;
-  final String caption;
-
-  const _DecisionResultBand({
-    required this.tone,
-    required this.title,
-    required this.value,
-    required this.caption,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: tone.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: tone.withValues(alpha: 0.20)),
+        border: Border.all(color: AddStockColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
+            title.toUpperCase(),
             style: GoogleFonts.inter(
               fontSize: 10,
               fontWeight: FontWeight.w900,
-              letterSpacing: 0.9,
-              color: tone.withValues(alpha: 0.85),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: GoogleFonts.manrope(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: tone,
-              height: 1,
+              letterSpacing: 1.0,
+              color: AddStockColors.textMuted,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            caption,
+            subtitle,
             style: GoogleFonts.inter(
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: tone.withValues(alpha: 0.78),
+              color: AddStockColors.textBody,
+              height: 1.45,
             ),
           ),
+          const SizedBox(height: 14),
+          child,
         ],
       ),
     );
   }
 }
 
-class _SectionTitle extends StatelessWidget {
+class _SubSectionHeading extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const _SectionTitle({required this.title, required this.subtitle});
+  const _SubSectionHeading({
+    required this.title,
+    required this.subtitle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1352,20 +861,18 @@ class _SectionTitle extends StatelessWidget {
         Text(
           title,
           style: GoogleFonts.inter(
-            fontSize: 10,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1.2,
-            color: AddStockColors.textMuted,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: AddStockColors.textDark,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 3),
         Text(
           subtitle,
           style: GoogleFonts.inter(
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: AddStockColors.textBody,
-            height: 1.45,
+            color: AddStockColors.textMuted,
           ),
         ),
       ],
@@ -1373,187 +880,243 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _BadgePill extends StatelessWidget {
+class _SectionDivider extends StatelessWidget {
+  final String label;
+
+  const _SectionDivider({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: Container(height: 1, color: AddStockColors.cardBorder)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Text(
+            label.toUpperCase(),
+            style: GoogleFonts.inter(
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.8,
+              color: AddStockColors.textMuted,
+            ),
+          ),
+        ),
+        Expanded(child: Container(height: 1, color: AddStockColors.cardBorder)),
+      ],
+    );
+  }
+}
+
+class _CompactStatTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color tone;
+  final String? caption;
+
+  const _CompactStatTile({
+    required this.label,
+    required this.value,
+    required this.tone,
+    this.caption,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: tone.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: GoogleFonts.inter(
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.8,
+              color: tone,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: GoogleFonts.manrope(
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              color: AddStockColors.textDark,
+              height: 1,
+            ),
+          ),
+          if (caption != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              caption!,
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: AddStockColors.textMuted,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final String? caption;
+  final bool highlight;
+  final Color? valueColor;
+
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    this.caption,
+    this.highlight = false,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg =
+        highlight ? _kSilverAccent.withValues(alpha: 0.07) : Colors.white;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AddStockColors.cardBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AddStockColors.textBody,
+                  ),
+                ),
+                if (caption != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    caption!,
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: AddStockColors.textMuted,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            value,
+            style: GoogleFonts.manrope(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: valueColor ?? AddStockColors.textDark,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _BadgePill({required this.label, required this.color});
+  const _StatusPill({
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.09),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: color.withValues(alpha: 0.24)),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-          ),
-          const SizedBox(width: 7),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.8,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricTile extends StatelessWidget {
-  final String label;
-  final String value;
-  final String caption;
-  final Color tone;
-  final IconData icon;
-  final bool highlighted;
-
-  const _MetricTile({
-    required this.label,
-    required this.value,
-    required this.caption,
-    required this.tone,
-    required this.icon,
-    this.highlighted = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color:
-            highlighted ? tone.withValues(alpha: 0.08) : AddStockColors.inputBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: highlighted
-              ? tone.withValues(alpha: 0.24)
-              : AddStockColors.cardBorder,
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.8,
+          color: color,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 14, color: tone),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
-                    color: tone,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.manrope(
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              color: highlighted ? tone : AddStockColors.textDark,
-              height: 1,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            caption,
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: AddStockColors.textMuted,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
 
-class _ModeToggleChip extends StatelessWidget {
+class _ModeChip extends StatelessWidget {
   final SilverPaymentMode mode;
-  final bool isEnabled;
+  final bool selected;
   final VoidCallback onTap;
 
-  const _ModeToggleChip({
+  const _ModeChip({
     required this.mode,
-    required this.isEnabled,
+    required this.selected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = isEnabled
-        ? _kSilverAccent.withValues(alpha: 0.10)
-        : AddStockColors.inputBg;
-    final borderColor = isEnabled
-        ? _kSilverAccent.withValues(alpha: 0.30)
+    final bg = selected
+        ? _kSilverAccent.withValues(alpha: 0.09)
+        : AddStockColors.cardBg;
+    final border = selected
+        ? _kSilverAccent.withValues(alpha: 0.28)
         : AddStockColors.cardBorder;
-    final textColor = isEnabled ? _kSilverAccent : AddStockColors.textMuted;
+    final color = selected ? _kSilverAccent : AddStockColors.textMuted;
 
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+      child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: bgColor,
+          color: bg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor),
+          border: Border.all(color: border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(mode.icon, size: 15, color: textColor),
+            Icon(mode.icon, size: 15, color: color),
             const SizedBox(width: 8),
             Text(
               mode.label,
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: textColor,
+                color: color,
               ),
             ),
-            if (isEnabled) ...[
-              const SizedBox(width: 8),
-              Container(
-                width: 16,
-                height: 16,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _kSilverAccent,
-                ),
-                child: const Icon(
-                  Icons.check_rounded,
-                  size: 10,
-                  color: Colors.white,
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -1580,27 +1143,24 @@ class _ChoiceButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor =
-        selected ? tone.withValues(alpha: 0.32) : AddStockColors.cardBorder;
+    final bg = selected ? tone.withValues(alpha: 0.09) : Colors.white;
+    final border =
+        selected ? tone.withValues(alpha: 0.28) : AddStockColors.cardBorder;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+      child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color:
-              selected ? tone.withValues(alpha: 0.09) : AddStockColors.inputBg,
+          color: bg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor, width: selected ? 1.4 : 1.0),
+          border: Border.all(color: border),
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 17,
-              color: selected ? tone : AddStockColors.textMuted,
-            ),
+            Icon(icon,
+                size: 17, color: selected ? tone : AddStockColors.textMuted),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -1620,26 +1180,104 @@ class _ChoiceButton extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: selected
-                          ? tone.withValues(alpha: 0.8)
-                          : AddStockColors.textMuted,
+                      color: AddStockColors.textMuted,
                     ),
                   ),
                 ],
               ),
             ),
-            if (selected)
-              Container(
-                width: 18,
-                height: 18,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: tone),
-                child: const Icon(
-                  Icons.check_rounded,
-                  size: 11,
-                  color: Colors.white,
-                ),
-              ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ResultNote extends StatelessWidget {
+  final Color tone;
+  final String title;
+  final String value;
+  final String caption;
+
+  const _ResultNote({
+    required this.tone,
+    required this.title,
+    required this.value,
+    required this.caption,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: tone.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.8,
+              color: tone,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: GoogleFonts.manrope(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: tone,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            caption,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: tone.withValues(alpha: 0.82),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoNote extends StatelessWidget {
+  final Color tone;
+  final String text;
+
+  const _InfoNote({
+    required this.tone,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: tone.withValues(alpha: 0.18)),
+      ),
+      child: Text(
+        text,
+        style: GoogleFonts.inter(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          height: 1.5,
+          color: tone,
         ),
       ),
     );
@@ -1667,11 +1305,11 @@ class _NumberInputField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
+          label.toUpperCase(),
           style: GoogleFonts.inter(
             fontSize: 10,
             fontWeight: FontWeight.w900,
-            letterSpacing: 1.0,
+            letterSpacing: 0.9,
             color: AddStockColors.textMuted,
           ),
         ),
@@ -1713,11 +1351,9 @@ class _NumberInputField extends StatelessWidget {
               color: AddStockColors.textMuted,
             ),
             filled: true,
-            fillColor: AddStockColors.inputBg,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 14,
-            ),
+            fillColor: Colors.white,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: AddStockColors.cardBorder),
@@ -1744,25 +1380,23 @@ class _StatusMeta {
   const _StatusMeta(this.label, this.color);
 }
 
-_StatusMeta _statusFor({
-  required bool hasSettlementBase,
-  required double totalPaid,
-  required double due,
-  required double refund,
+_StatusMeta _statusForSnapshot({
+  required SilverPaymentSnapshot snapshot,
+  required bool hasBase,
 }) {
-  if (!hasSettlementBase) {
+  if (!hasBase) {
     return const _StatusMeta('PENDING', _kNeutralTone);
   }
-  if (refund > 0) {
+  if (snapshot.hasReturn) {
     return const _StatusMeta('RETURN', _kReturnTone);
   }
-  if (due > 0 && totalPaid > 0) {
+  if (snapshot.hasDue && snapshot.totalPaidValue > 0) {
     return const _StatusMeta('PARTIAL', _kDueTone);
   }
-  if (due > 0) {
+  if (snapshot.hasDue) {
     return const _StatusMeta('READY', _kSilverAccent);
   }
-  if (totalPaid > 0) {
+  if (snapshot.totalPaidValue > 0) {
     return const _StatusMeta('SETTLED', AddStockColors.success);
   }
   return const _StatusMeta('READY', _kSilverAccent);

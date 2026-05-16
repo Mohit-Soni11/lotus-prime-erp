@@ -75,6 +75,7 @@ class SilverPaymentController extends ChangeNotifier {
   static const double cashGstRatePercent = 3.0;
 
   final TextEditingController ratePerKgCtrl = TextEditingController();
+  final TextEditingController manualGstAmountCtrl = TextEditingController();
   final TextEditingController metalGrossWeightCtrl = TextEditingController();
   final TextEditingController metalPurityCtrl = TextEditingController();
   final TextEditingController cashCtrl = TextEditingController();
@@ -84,11 +85,13 @@ class SilverPaymentController extends ChangeNotifier {
 
   final Set<SilverPaymentMode> _enabledModes = {};
 
+  bool _useManualGst = false;
   DueSettleMode _dueSettleMode = DueSettleMode.asCash;
   ExcessSettleMode _excessSettleMode = ExcessSettleMode.returnCashValue;
 
   SilverPaymentController() {
     ratePerKgCtrl.addListener(_onChange);
+    manualGstAmountCtrl.addListener(_onChange);
     metalGrossWeightCtrl.addListener(_onChange);
     metalPurityCtrl.addListener(_onChange);
     cashCtrl.addListener(_onChange);
@@ -98,6 +101,9 @@ class SilverPaymentController extends ChangeNotifier {
   }
 
   void _onChange() => notifyListeners();
+
+  Set<SilverPaymentMode> get enabledModes => Set.unmodifiable(_enabledModes);
+  bool get hasAnyModeEnabled => _enabledModes.isNotEmpty;
 
   double get ratePerKg => _parseNum(ratePerKgCtrl.text);
   double get ratePerGram => ratePerKg > 0 ? ratePerKg / 1000.0 : 0.0;
@@ -126,9 +132,19 @@ class SilverPaymentController extends ChangeNotifier {
     );
   }
 
+  bool get useManualGst => _useManualGst;
+  double get manualGstAmount => _positive(_parseNum(manualGstAmountCtrl.text));
+
+  void setUseManualGst(bool value) {
+    if (_useManualGst == value) {
+      return;
+    }
+    _useManualGst = value;
+    notifyListeners();
+  }
+
   double get metalGrossWeight => _parseNum(metalGrossWeightCtrl.text);
   double get metalPurity => _parseNum(metalPurityCtrl.text);
-  bool get hasMetalInput => metalGrossWeight > 0 || metalPurity > 0;
 
   bool get hasMetalCalculation =>
       metalGrossWeight > 0 && metalPurity > 0 && metalPurity <= 100;
@@ -141,18 +157,6 @@ class SilverPaymentController extends ChangeNotifier {
   }
 
   double get metalFineEquivalentCash => metalFineCalculated * ratePerGram;
-
-  String get metalCalcHelperText {
-    if (!hasMetalCalculation) {
-      return '';
-    }
-    final fine = metalFineCalculated;
-    final cash = metalFineEquivalentCash;
-    final cashText = hasRate ? ' = Rs ${cash.toStringAsFixed(2)}' : '';
-    return '${metalGrossWeight.toStringAsFixed(3)} g x '
-        '${metalPurity.toStringAsFixed(2)}% = '
-        '${fine.toStringAsFixed(3)} g fine$cashText';
-  }
 
   bool isModeEnabled(SilverPaymentMode mode) => _enabledModes.contains(mode);
 
@@ -171,14 +175,19 @@ class SilverPaymentController extends ChangeNotifier {
       case SilverPaymentMode.metalToMetal:
         metalGrossWeightCtrl.clear();
         metalPurityCtrl.clear();
+        return;
       case SilverPaymentMode.cash:
         cashCtrl.clear();
+        return;
       case SilverPaymentMode.upi:
         upiCtrl.clear();
+        return;
       case SilverPaymentMode.banking:
         bankingCtrl.clear();
+        return;
       case SilverPaymentMode.card:
         cardCtrl.clear();
+        return;
     }
   }
 
@@ -192,7 +201,7 @@ class SilverPaymentController extends ChangeNotifier {
 
   double fineAmount(double totalFineGrams) => totalFineGrams * ratePerGram;
 
-  double makingInclusiveSubtotal({
+  double subtotalAmount({
     required double totalFineGrams,
     required double makingAmount,
   }) {
@@ -263,17 +272,53 @@ class SilverPaymentController extends ChangeNotifier {
         (cashGstRatePercent / 100.0);
   }
 
+  double autoGstAmount({
+    required bool gstEnabled,
+    required double totalFineGrams,
+    required double makingAmount,
+  }) {
+    if (!gstEnabled) {
+      return 0.0;
+    }
+    return metalGstAmount(
+          gstEnabled: gstEnabled,
+          totalFineGrams: totalFineGrams,
+        ) +
+        cashGstAmount(
+          gstEnabled: gstEnabled,
+          totalFineGrams: totalFineGrams,
+          makingAmount: makingAmount,
+        );
+  }
+
+  double appliedGstAmount({
+    required bool gstEnabled,
+    required double totalFineGrams,
+    required double makingAmount,
+  }) {
+    if (!gstEnabled) {
+      return 0.0;
+    }
+    if (_useManualGst) {
+      return manualGstAmount;
+    }
+    return autoGstAmount(
+      gstEnabled: gstEnabled,
+      totalFineGrams: totalFineGrams,
+      makingAmount: makingAmount,
+    );
+  }
+
   double totalBillAmount({
     required double totalFineGrams,
     required double makingAmount,
     required bool gstEnabled,
   }) {
-    return makingInclusiveSubtotal(
+    return subtotalAmount(
           totalFineGrams: totalFineGrams,
           makingAmount: makingAmount,
         ) +
-        metalGstAmount(gstEnabled: gstEnabled, totalFineGrams: totalFineGrams) +
-        cashGstAmount(
+        appliedGstAmount(
           gstEnabled: gstEnabled,
           totalFineGrams: totalFineGrams,
           makingAmount: makingAmount,
@@ -353,49 +398,6 @@ class SilverPaymentController extends ChangeNotifier {
         ratePerGram;
   }
 
-  bool hasDue({
-    required double totalFineGrams,
-    required double makingAmount,
-    required bool gstEnabled,
-  }) {
-    return dueAmount(
-          totalFineGrams: totalFineGrams,
-          makingAmount: makingAmount,
-          gstEnabled: gstEnabled,
-        ) >
-        0;
-  }
-
-  bool hasReturn({
-    required double totalFineGrams,
-    required double makingAmount,
-    required bool gstEnabled,
-  }) {
-    return returnAmount(
-          totalFineGrams: totalFineGrams,
-          makingAmount: makingAmount,
-          gstEnabled: gstEnabled,
-        ) >
-        0;
-  }
-
-  bool isSettled({
-    required double totalFineGrams,
-    required double makingAmount,
-    required bool gstEnabled,
-  }) {
-    return !hasDue(
-          totalFineGrams: totalFineGrams,
-          makingAmount: makingAmount,
-          gstEnabled: gstEnabled,
-        ) &&
-        !hasReturn(
-          totalFineGrams: totalFineGrams,
-          makingAmount: makingAmount,
-          gstEnabled: gstEnabled,
-        );
-  }
-
   DueSettleMode get dueSettleMode => _dueSettleMode;
 
   void setDueSettleMode(DueSettleMode mode) {
@@ -428,11 +430,16 @@ class SilverPaymentController extends ChangeNotifier {
     final shortValue = shortFineValue(totalFineGrams);
     final extraFine = extraFineGrams(totalFineGrams);
     final extraValue = extraFineValue(totalFineGrams);
-    final metalGst = metalGstAmount(
+    final subtotal = subtotalAmount(
+      totalFineGrams: totalFineGrams,
+      makingAmount: makingAmount,
+    );
+    final autoGst = autoGstAmount(
       gstEnabled: gstEnabled,
       totalFineGrams: totalFineGrams,
+      makingAmount: makingAmount,
     );
-    final cashGst = cashGstAmount(
+    final appliedGst = appliedGstAmount(
       gstEnabled: gstEnabled,
       totalFineGrams: totalFineGrams,
       makingAmount: makingAmount,
@@ -459,7 +466,11 @@ class SilverPaymentController extends ChangeNotifier {
       totalFineGrams: totalFineGrams,
       fineAmount: fineBase,
       makingAmount: makingAmount,
-      subtotalAmount: fineBase + makingAmount,
+      subtotalAmount: subtotal,
+      manualGstAmount: manualGstAmount,
+      autoGstAmount: autoGst,
+      appliedGstAmount: appliedGst,
+      isManualGstApplied: gstEnabled && _useManualGst,
       metalGrossWeight: metalGrossWeight,
       metalPurity: metalPurity,
       metalFineCalculated: metalFineCalculated,
@@ -470,8 +481,6 @@ class SilverPaymentController extends ChangeNotifier {
       shortFineValue: shortValue,
       extraFineGrams: extraFine,
       extraFineValue: extraValue,
-      metalGstAmount: metalGst,
-      cashGstAmount: cashGst,
       cashPaid: cashPaid,
       upiPaid: upiPaid,
       bankingPaid: bankingPaid,
@@ -489,6 +498,7 @@ class SilverPaymentController extends ChangeNotifier {
 
   void reset() {
     ratePerKgCtrl.clear();
+    manualGstAmountCtrl.clear();
     metalGrossWeightCtrl.clear();
     metalPurityCtrl.clear();
     cashCtrl.clear();
@@ -496,6 +506,7 @@ class SilverPaymentController extends ChangeNotifier {
     bankingCtrl.clear();
     cardCtrl.clear();
     _enabledModes.clear();
+    _useManualGst = false;
     _dueSettleMode = DueSettleMode.asCash;
     _excessSettleMode = ExcessSettleMode.returnCashValue;
     notifyListeners();
@@ -504,6 +515,7 @@ class SilverPaymentController extends ChangeNotifier {
   @override
   void dispose() {
     ratePerKgCtrl.removeListener(_onChange);
+    manualGstAmountCtrl.removeListener(_onChange);
     metalGrossWeightCtrl.removeListener(_onChange);
     metalPurityCtrl.removeListener(_onChange);
     cashCtrl.removeListener(_onChange);
@@ -512,6 +524,7 @@ class SilverPaymentController extends ChangeNotifier {
     cardCtrl.removeListener(_onChange);
 
     ratePerKgCtrl.dispose();
+    manualGstAmountCtrl.dispose();
     metalGrossWeightCtrl.dispose();
     metalPurityCtrl.dispose();
     cashCtrl.dispose();
@@ -542,6 +555,10 @@ class SilverPaymentSnapshot {
   final double fineAmount;
   final double makingAmount;
   final double subtotalAmount;
+  final double manualGstAmount;
+  final double autoGstAmount;
+  final double appliedGstAmount;
+  final bool isManualGstApplied;
   final double metalGrossWeight;
   final double metalPurity;
   final double metalFineCalculated;
@@ -552,8 +569,6 @@ class SilverPaymentSnapshot {
   final double shortFineValue;
   final double extraFineGrams;
   final double extraFineValue;
-  final double metalGstAmount;
-  final double cashGstAmount;
   final double cashPaid;
   final double upiPaid;
   final double bankingPaid;
@@ -574,6 +589,10 @@ class SilverPaymentSnapshot {
     required this.fineAmount,
     required this.makingAmount,
     required this.subtotalAmount,
+    required this.manualGstAmount,
+    required this.autoGstAmount,
+    required this.appliedGstAmount,
+    required this.isManualGstApplied,
     required this.metalGrossWeight,
     required this.metalPurity,
     required this.metalFineCalculated,
@@ -584,8 +603,6 @@ class SilverPaymentSnapshot {
     required this.shortFineValue,
     required this.extraFineGrams,
     required this.extraFineValue,
-    required this.metalGstAmount,
-    required this.cashGstAmount,
     required this.cashPaid,
     required this.upiPaid,
     required this.bankingPaid,
@@ -601,8 +618,6 @@ class SilverPaymentSnapshot {
   });
 
   bool get isSettled => dueAmount <= 0 && returnAmount <= 0;
-  bool get hasMetalPayment => metalFineCalculated > 0;
-  bool get hasCashPayment => totalCashPaid > 0;
   bool get hasDue => dueAmount > 0;
   bool get hasReturn => returnAmount > 0;
 
@@ -610,13 +625,9 @@ class SilverPaymentSnapshot {
   double get returnAmountAsFine =>
       ratePerGram > 0 ? returnAmount / ratePerGram : 0.0;
 
-  String get ratePerKgDisplay => 'Rs ${ratePerKg.toStringAsFixed(2)} / kg';
-  String get ratePerGramDisplay => 'Rs ${ratePerGram.toStringAsFixed(2)} / g';
-  String get totalFineDisplay => '${totalFineGrams.toStringAsFixed(3)} g';
-  String get fineAmountDisplay => 'Rs ${fineAmount.toStringAsFixed(2)}';
-  String get makingDisplay => 'Rs ${makingAmount.toStringAsFixed(2)}';
-  String get subtotalDisplay => 'Rs ${subtotalAmount.toStringAsFixed(2)}';
   String get totalBillDisplay => 'Rs ${totalBillAmount.toStringAsFixed(2)}';
+  String get appliedGstDisplay => 'Rs ${appliedGstAmount.toStringAsFixed(2)}';
+  String get autoGstDisplay => 'Rs ${autoGstAmount.toStringAsFixed(2)}';
   String get totalPaidDisplay => 'Rs ${totalPaidValue.toStringAsFixed(2)}';
   String get dueDisplay => 'Rs ${dueAmount.toStringAsFixed(2)}';
   String get returnDisplay => 'Rs ${returnAmount.toStringAsFixed(2)}';
