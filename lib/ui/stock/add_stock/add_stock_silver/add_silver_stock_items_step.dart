@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:lotus_erp/logic/stock/add_stock_silver/silver_invoice_summary_logic.dart';
 import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
+import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_batch_overview_card.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_invoice_card.dart';
+import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_invoice_summary_panel.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_items_table.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_payment_record_card.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_supplier_panel.dart';
-import 'package:lotus_erp/ui/stock/add_stock/stock_metal_ui.dart';
 
 const double _silverDesktopTopCardHeight = 352;
 
@@ -30,53 +31,25 @@ class AddSilverStockItemsStep extends StatelessWidget {
       builder: (context, constraints) {
         final desktopShell = constraints.maxWidth >= 1180;
 
-        if (desktopShell) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _SilverDesktopWorkspace(ctrl: ctrl),
-                const SizedBox(height: 16),
-                SilverItemsTable(ctrl: ctrl),
-                const SizedBox(height: 16),
-                // ✅ Payment Record Card — desktop mein bhi
-                SilverPaymentRecordCard(
-                  ctrl: ctrl,
-                  payment: ctrl.payment,
-                ),
-                const SizedBox(height: 16),
-                _SilverSummaryPanel(
-                  ctrl: ctrl,
-                  onSave: onSave,
-                  onResetBatch: onResetBatch,
-                  docked: true,
-                ),
-              ],
-            ),
-          );
-        }
-
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           physics: const BouncingScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _SilverTopCards(ctrl: ctrl),
-              const SizedBox(height: 16),
-              AddSilverStockSupplierPanel(ctrl: ctrl),
+              if (desktopShell)
+                _SilverDesktopWorkspace(ctrl: ctrl)
+              else ...[
+                _SilverTopCards(ctrl: ctrl),
+                const SizedBox(height: 16),
+                AddSilverStockSupplierPanel(ctrl: ctrl),
+              ],
               const SizedBox(height: 16),
               SilverItemsTable(ctrl: ctrl),
               const SizedBox(height: 16),
-              // ✅ Payment Record Card — ab screen mein show hoga
-              SilverPaymentRecordCard(
-                ctrl: ctrl,
-                payment: ctrl.payment,
-              ),
-              const SizedBox(height: 18),
-              _SilverSummaryPanel(
+              _SilverSettlementWorkspace(ctrl: ctrl, desktop: desktopShell),
+              const SizedBox(height: 16),
+              _SilverBatchActionsPanel(
                 ctrl: ctrl,
                 onSave: onSave,
                 onResetBatch: onResetBatch,
@@ -145,442 +118,332 @@ class _SilverTopCards extends StatelessWidget {
   }
 }
 
-class _SilverSummaryPanel extends StatelessWidget {
+class _SilverSettlementWorkspace extends StatelessWidget {
+  final SilverStockController ctrl;
+  final bool desktop;
+
+  const _SilverSettlementWorkspace({required this.ctrl, required this.desktop});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!desktop) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SilverPaymentRecordCard(ctrl: ctrl, payment: ctrl.payment),
+          const SizedBox(height: 16),
+          SilverInvoiceSummaryPanel(ctrl: ctrl),
+        ],
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final sideBySide = constraints.maxWidth >= 1340;
+
+        if (!sideBySide) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SilverPaymentRecordCard(ctrl: ctrl, payment: ctrl.payment),
+              const SizedBox(height: 16),
+              SilverInvoiceSummaryPanel(ctrl: ctrl),
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 58,
+              child: SilverPaymentRecordCard(ctrl: ctrl, payment: ctrl.payment),
+            ),
+            const SizedBox(width: 16),
+            Expanded(flex: 42, child: SilverInvoiceSummaryPanel(ctrl: ctrl)),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SilverBatchActionsPanel extends StatelessWidget {
   final SilverStockController ctrl;
   final Future<void> Function() onSave;
   final VoidCallback onResetBatch;
-  final bool docked;
 
-  const _SilverSummaryPanel({
+  const _SilverBatchActionsPanel({
     required this.ctrl,
     required this.onSave,
     required this.onResetBatch,
-    this.docked = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final ui = stockMetalUiFor(ctrl.selectedMetal);
-    final accent = ctrl.gstEnabled ? AddStockColors.success : ui.accent;
+    return ListenableBuilder(
+      listenable: Listenable.merge([ctrl, ctrl.payment]),
+      builder: (context, _) {
+        final summary = ctrl.invoiceSummary;
+        final accent = ctrl.gstEnabled
+            ? SilverStockColors.success
+            : SilverStockColors.paymentPrimary;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AddStockColors.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AddStockColors.cardBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: AddStockColors.shadowLight,
-            blurRadius: 12,
-            offset: Offset(0, 4),
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: SilverStockColors.cardBg,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: SilverStockColors.cardBorder),
+            boxShadow: const [
+              BoxShadow(
+                color: SilverStockColors.shadowLight,
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-            child: Row(
-              children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: accent.withOpacity(0.10),
-                    borderRadius: BorderRadius.circular(9),
-                    border: Border.all(color: accent.withOpacity(0.25)),
-                  ),
-                  child: Icon(
-                    Icons.receipt_long_rounded,
-                    size: 17,
-                    color: accent,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'INVOICE SUMMARY',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.0,
-                          color: AddStockColors.textDark,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        docked
-                            ? 'Full-width batch totals and save controls'
-                            : 'Silver batch totals and save controls',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: AddStockColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: AddStockColors.cardBorder),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final splitActions = docked && constraints.maxWidth >= 960;
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final stacked = constraints.maxWidth < 980;
 
-                if (splitActions) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 62, child: _buildMetricsSection(accent)),
-                      const SizedBox(width: 16),
-                      Expanded(flex: 38, child: _buildActionsSection(accent)),
-                    ],
-                  );
-                }
-
+              if (stacked) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildMetricsSection(accent),
+                    _SummaryBand(ctrl: ctrl, summary: summary, accent: accent),
                     const SizedBox(height: 14),
-                    _buildActionsSection(accent),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetricsSection(Color accent) {
-    if (!docked) {
-      return Column(
-        children: [
-          _summaryRow(
-            'Gross Value',
-            _money(ctrl.totalEstimatedCost),
-            valueBold: true,
-          ),
-          const SizedBox(height: 10),
-          _summaryRow('Estimated Sale', _money(ctrl.totalEstimatedSelling)),
-          const SizedBox(height: 10),
-          _summaryRow('Taxable Amount', _money(ctrl.totalTaxableAmount)),
-          const SizedBox(height: 10),
-          _summaryRow(
-            'Total Pieces',
-            '${ctrl.totalQuantity} pcs across ${ctrl.enteredRowCount} row${ctrl.enteredRowCount == 1 ? '' : 's'}',
-          ),
-          const SizedBox(height: 12),
-          _buildGstCard(),
-          const SizedBox(height: 12),
-          _buildTotalBand(accent),
-        ],
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final columns = constraints.maxWidth >= 880
-                ? 4
-                : constraints.maxWidth >= 520
-                    ? 2
-                    : 1;
-            final gap = 12.0;
-            final tileWidth =
-                (constraints.maxWidth - ((columns - 1) * gap)) / columns;
-
-            return Wrap(
-              spacing: gap,
-              runSpacing: gap,
-              children: [
-                SizedBox(
-                  width: tileWidth,
-                  child: _summaryMetricTile(
-                    'Gross Value',
-                    _money(ctrl.totalEstimatedCost),
-                    tone: AddStockColors.accentPricing,
-                  ),
-                ),
-                SizedBox(
-                  width: tileWidth,
-                  child: _summaryMetricTile(
-                    'Estimated Sale',
-                    _money(ctrl.totalEstimatedSelling),
-                    tone: AddStockColors.accentInventory,
-                  ),
-                ),
-                SizedBox(
-                  width: tileWidth,
-                  child: _summaryMetricTile(
-                    'Taxable Amount',
-                    _money(ctrl.totalTaxableAmount),
-                    tone: accent,
-                  ),
-                ),
-                SizedBox(
-                  width: tileWidth,
-                  child: _summaryMetricTile(
-                    'Total Pieces',
-                    '${ctrl.totalQuantity}',
-                    caption:
-                        '${ctrl.enteredRowCount} invoice row${ctrl.enteredRowCount == 1 ? '' : 's'}',
-                    tone: AddStockColors.textBody,
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 12),
-        _buildGstCard(),
-        const SizedBox(height: 12),
-        _buildTotalBand(accent),
-      ],
-    );
-  }
-
-  Widget _buildGstCard() {
-    if (ctrl.gstEnabled) {
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AddStockColors.success.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AddStockColors.success.withOpacity(0.20)),
-        ),
-        child: Column(
-          children: [
-            _summaryRow('GST Rate', '${ctrl.gstRate.toStringAsFixed(1)}%'),
-            const SizedBox(height: 8),
-            _summaryRow(
-              'CGST',
-              _money(ctrl.cgstAmount),
-              labelColor: AddStockColors.success,
-              valueColor: AddStockColors.success,
-            ),
-            const SizedBox(height: 4),
-            _summaryRow(
-              'SGST',
-              _money(ctrl.sgstAmount),
-              labelColor: AddStockColors.success,
-              valueColor: AddStockColors.success,
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-      decoration: BoxDecoration(
-        color: AddStockColors.inputBgLocked,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AddStockColors.cardBorder),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        'NORMAL BATCH - NO GST APPLIED',
-        style: GoogleFonts.inter(
-          fontSize: 10,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 0.7,
-          color: AddStockColors.textMuted,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTotalBand(Color accent) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: accent.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accent.withOpacity(0.22)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'BATCH TOTAL',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.9,
-              color: accent,
-            ),
-          ),
-          Text(
-            _money(ctrl.totalBatchAmount),
-            style: GoogleFonts.manrope(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: accent,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionsSection(Color accent) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: docked ? AddStockColors.bodyBg : accent.withOpacity(0.03),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AddStockColors.cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: ctrl.rowsWithErrorsCount == 0
-                  ? accent.withOpacity(0.08)
-                  : AddStockColors.dangerBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: ctrl.rowsWithErrorsCount == 0
-                    ? accent.withOpacity(0.18)
-                    : AddStockColors.danger.withOpacity(0.20),
-              ),
-            ),
-            child: Text(
-              ctrl.rowsWithErrorsCount == 0
-                  ? 'Ready to save - ${ctrl.totalQuantity} pcs across ${ctrl.enteredRowCount} row${ctrl.enteredRowCount == 1 ? '' : 's'}'
-                  : '${ctrl.rowsWithErrorsCount} row${ctrl.rowsWithErrorsCount == 1 ? '' : 's'} need attention',
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: ctrl.rowsWithErrorsCount == 0
-                    ? accent
-                    : AddStockColors.danger,
-              ),
-            ),
-          ),
-          if (ctrl.errorMessage != null) ...[
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AddStockColors.danger.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AddStockColors.danger.withOpacity(0.25),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.error_outline_rounded,
-                    size: 14,
-                    color: AddStockColors.danger,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      ctrl.errorMessage!,
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: AddStockColors.danger,
-                        height: 1.4,
-                      ),
+                    _ActionColumn(
+                      ctrl: ctrl,
+                      onSave: onSave,
+                      onResetBatch: onResetBatch,
+                      accent: accent,
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 10),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final stackButtons = constraints.maxWidth < 280;
-
-              if (stackButtons) {
-                return Column(
-                  children: [
-                    _backButton(accent),
-                    const SizedBox(height: 10),
-                    _resetButton(),
                   ],
                 );
               }
 
               return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: _backButton(accent)),
-                  const SizedBox(width: 10),
-                  Expanded(child: _resetButton()),
+                  Expanded(
+                    flex: 58,
+                    child: _SummaryBand(
+                      ctrl: ctrl,
+                      summary: summary,
+                      accent: accent,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 42,
+                    child: _ActionColumn(
+                      ctrl: ctrl,
+                      onSave: onSave,
+                      onResetBatch: onResetBatch,
+                      accent: accent,
+                    ),
+                  ),
                 ],
               );
             },
           ),
+        );
+      },
+    );
+  }
+}
+
+class _SummaryBand extends StatelessWidget {
+  final SilverStockController ctrl;
+  final SilverInvoiceSummaryData summary;
+  final Color accent;
+
+  const _SummaryBand({
+    required this.ctrl,
+    required this.summary,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final snapshot = ctrl.paymentSnapshot;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          SilverStockStrings.readyToSave.toUpperCase(),
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.9,
+            color: SilverStockColors.textMuted,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            _ActionMetric(
+              label: SilverStockStrings.itemSnapshotTotalLabel,
+              value: _money(summary.itemSnapshotAmount),
+              tone: SilverStockColors.accentPricing,
+            ),
+            _ActionMetric(
+              label: SilverStockStrings.finalBillAmountLabel,
+              value: _money(snapshot.totalBillAmount),
+              tone: accent,
+            ),
+            _ActionMetric(
+              label: SilverStockStrings.totalReceivedLabel,
+              value: _money(snapshot.totalPaidValue),
+              tone: SilverStockColors.paymentFine,
+            ),
+            _ActionMetric(
+              label: snapshot.hasReturn
+                  ? SilverStockStrings.supplierReturnLabel
+                  : SilverStockStrings.currentDueLabel,
+              value: snapshot.hasReturn
+                  ? _money(snapshot.returnAmount)
+                  : _money(snapshot.dueAmount),
+              tone: snapshot.hasReturn
+                  ? SilverStockColors.paymentReturn
+                  : snapshot.hasDue
+                      ? SilverStockColors.paymentDue
+                      : SilverStockColors.success,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionColumn extends StatelessWidget {
+  final SilverStockController ctrl;
+  final Future<void> Function() onSave;
+  final VoidCallback onResetBatch;
+  final Color accent;
+
+  const _ActionColumn({
+    required this.ctrl,
+    required this.onSave,
+    required this.onResetBatch,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: ctrl.rowsWithErrorsCount == 0
+                ? accent.withValues(alpha: 0.08)
+                : AddStockColors.dangerBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: ctrl.rowsWithErrorsCount == 0
+                  ? accent.withValues(alpha: 0.18)
+                  : AddStockColors.danger.withValues(alpha: 0.20),
+            ),
+          ),
+          child: Text(
+            ctrl.rowsWithErrorsCount == 0
+                ? 'Ready to save ${ctrl.totalQuantity} pcs in ${ctrl.enteredRowCount} row${ctrl.enteredRowCount == 1 ? '' : 's'}'
+                : '${ctrl.rowsWithErrorsCount} row${ctrl.rowsWithErrorsCount == 1 ? '' : 's'} need attention',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: ctrl.rowsWithErrorsCount == 0
+                  ? accent
+                  : AddStockColors.danger,
+            ),
+          ),
+        ),
+        if (ctrl.errorMessage != null) ...[
           const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: ctrl.isSaving ? null : onSave,
-              icon: ctrl.isSaving
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(
-                      Icons.inventory_2_rounded,
-                      size: 18,
-                      color: Colors.white,
-                    ),
-              label: Text(
-                ctrl.isSaving ? AddStockStrings.btnSaving : 'SAVE SILVER BATCH',
-                style: GoogleFonts.manrope(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.5,
-                  color: Colors.white,
-                ),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AddStockColors.danger.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AddStockColors.danger.withValues(alpha: 0.18),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accent,
-                disabledBackgroundColor: accent.withOpacity(0.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
+            ),
+            child: Text(
+              ctrl.errorMessage!,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AddStockColors.danger,
+                height: 1.45,
               ),
             ),
           ),
         ],
-      ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(child: _backButton()),
+            const SizedBox(width: 10),
+            Expanded(child: _resetButton()),
+          ],
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: ctrl.isSaving ? null : onSave,
+            icon: ctrl.isSaving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(
+                    SilverStockIcons.save,
+                    size: 18,
+                    color: Colors.white,
+                  ),
+            label: Text(
+              ctrl.isSaving ? AddStockStrings.btnSaving : 'SAVE SILVER BATCH',
+              style: GoogleFonts.manrope(
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
+                color: Colors.white,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: accent,
+              disabledBackgroundColor: accent.withValues(alpha: 0.5),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _backButton(Color accent) {
+  Widget _backButton() {
     return OutlinedButton(
       onPressed: ctrl.prevStep,
       style: OutlinedButton.styleFrom(
-        side: BorderSide(color: accent.withOpacity(0.35)),
+        side: BorderSide(color: accent.withValues(alpha: 0.35)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         padding: const EdgeInsets.symmetric(vertical: 14),
       ),
@@ -608,25 +471,34 @@ class _SilverSummaryPanel extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _summaryMetricTile(
-    String title,
-    String value, {
-    required Color tone,
-    String? caption,
-  }) {
+class _ActionMetric extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color tone;
+
+  const _ActionMetric({
+    required this.label,
+    required this.value,
+    required this.tone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
+      width: 180,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: tone.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: tone.withOpacity(0.16)),
+        color: tone.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: tone.withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title.toUpperCase(),
+            label.toUpperCase(),
             style: GoogleFonts.inter(
               fontSize: 10,
               fontWeight: FontWeight.w900,
@@ -640,61 +512,15 @@ class _SilverSummaryPanel extends StatelessWidget {
             style: GoogleFonts.manrope(
               fontSize: 18,
               fontWeight: FontWeight.w900,
-              color: AddStockColors.textDark,
+              color: SilverStockColors.textDark,
             ),
           ),
-          if (caption != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              caption,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AddStockColors.textMuted,
-              ),
-            ),
-          ],
         ],
       ),
-    );
-  }
-
-  Widget _summaryRow(
-    String label,
-    String value, {
-    bool valueBold = false,
-    Color? labelColor,
-    Color? valueColor,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: labelColor ?? AddStockColors.textBody,
-          ),
-        ),
-        Text(
-          value,
-          style: GoogleFonts.manrope(
-            fontSize: valueBold ? 15 : 13,
-            fontWeight: valueBold ? FontWeight.w800 : FontWeight.w700,
-            color: valueColor ?? AddStockColors.textDark,
-          ),
-        ),
-      ],
     );
   }
 }
 
 String _money(double amount) {
-  final formatter = NumberFormat.currency(
-    locale: 'en_IN',
-    symbol: 'Rs ',
-    decimalDigits: 2,
-  );
-  return formatter.format(amount);
+  return 'Rs ${amount.toStringAsFixed(2)}';
 }

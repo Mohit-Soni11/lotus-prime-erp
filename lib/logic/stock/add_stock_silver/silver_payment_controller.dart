@@ -88,6 +88,7 @@ class SilverPaymentController extends ChangeNotifier {
   bool _useManualGst = false;
   DueSettleMode _dueSettleMode = DueSettleMode.asCash;
   ExcessSettleMode _excessSettleMode = ExcessSettleMode.returnCashValue;
+  DateTime? _promiseDate;
 
   SilverPaymentController() {
     ratePerKgCtrl.addListener(_onChange);
@@ -103,6 +104,9 @@ class SilverPaymentController extends ChangeNotifier {
   void _onChange() => notifyListeners();
 
   Set<SilverPaymentMode> get enabledModes => Set.unmodifiable(_enabledModes);
+  List<SilverPaymentMode> get enabledModesOrdered => SilverPaymentMode.values
+      .where(_enabledModes.contains)
+      .toList(growable: false);
   bool get hasAnyModeEnabled => _enabledModes.isNotEmpty;
 
   double get ratePerKg => _parseNum(ratePerKgCtrl.text);
@@ -418,6 +422,50 @@ class SilverPaymentController extends ChangeNotifier {
     notifyListeners();
   }
 
+  DateTime? get promiseDate => _promiseDate;
+
+  void setPromiseDate(DateTime? value) {
+    final current = _promiseDate;
+    final isSameDay = current?.year == value?.year &&
+        current?.month == value?.month &&
+        current?.day == value?.day;
+    if (isSameDay) {
+      return;
+    }
+    _promiseDate = value;
+    notifyListeners();
+  }
+
+  Map<String, dynamic> buildPersistenceMap({
+    required SilverPaymentSnapshot snapshot,
+  }) {
+    return {
+      'ratePerKg': ratePerKg,
+      'ratePerGram': ratePerGram,
+      'gstEnabled': snapshot.gstEnabled,
+      'gstMode': useManualGst ? 'MANUAL' : 'AUTO',
+      'manualGstAmount': manualGstAmount,
+      'autoGstAmount': snapshot.autoGstAmount,
+      'appliedGstAmount': snapshot.appliedGstAmount,
+      'enabledModes': enabledModesOrdered.map((mode) => mode.name).toList(),
+      'metalGrossWeight': metalGrossWeight,
+      'metalPurity': metalPurity,
+      'metalFineCalculated': snapshot.metalFineCalculated,
+      'metalFineEquivalentCash': snapshot.metalFineEquivalentCash,
+      'cashPaid': cashPaid,
+      'upiPaid': upiPaid,
+      'bankPaid': bankingPaid,
+      'cardPaid': cardPaid,
+      'totalCashPaid': snapshot.totalCashPaid,
+      'totalPaidValue': snapshot.totalPaidValue,
+      'dueAmount': snapshot.dueAmount,
+      'returnAmount': snapshot.returnAmount,
+      'dueMode': dueSettleMode.name,
+      'excessMode': excessSettleMode.name,
+      'promiseDate': _promiseDate?.toIso8601String(),
+    };
+  }
+
   SilverPaymentSnapshot buildSnapshot({
     required double totalFineGrams,
     required double makingAmount,
@@ -509,6 +557,7 @@ class SilverPaymentController extends ChangeNotifier {
     _useManualGst = false;
     _dueSettleMode = DueSettleMode.asCash;
     _excessSettleMode = ExcessSettleMode.returnCashValue;
+    _promiseDate = null;
     notifyListeners();
   }
 

@@ -1,9 +1,14 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/logic/stock/add_stock_controller.dart';
+import 'package:lotus_erp/logic/stock/add_stock_silver/silver_invoice_summary_logic.dart';
 import 'package:lotus_erp/logic/stock/add_stock_silver/silver_payment_controller.dart';
+import 'package:lotus_erp/models/purchase/purchase_enums/purchase_enums.dart';
 import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
+import 'package:lotus_erp/repositories/purchase/purchase_entry_repository.dart';
 
 import '../../../models/stock/stock_item_model/add_stock_silver/silver_item_model.dart';
 
@@ -49,6 +54,13 @@ class SilverStockController extends AddStockController {
       enteredSilverRows.fold(0.0, (sum, row) => sum + row.fineWeight);
   double get totalMakingAmount =>
       enteredSilverRows.fold(0.0, (sum, row) => sum + row.makingAmount);
+  SilverPaymentSnapshot get paymentSnapshot => payment.buildSnapshot(
+        totalFineGrams: totalFineWeight,
+        makingAmount: totalMakingAmount,
+        gstEnabled: gstEnabled,
+      );
+  SilverInvoiceSummaryData get invoiceSummary =>
+      SilverInvoiceSummaryData.fromController(this);
   @override
   int get totalQuantity =>
       enteredSilverRows.fold(0, (sum, row) => sum + row.pieces);
@@ -188,6 +200,124 @@ class SilverStockController extends AddStockController {
       return 'HUID must be exactly 6 characters';
     }
     return null;
+  }
+
+  @override
+  Future<String?> validateCustomBatch(List<StockRowEntry> rowsToSave) async {
+    if (rowsToSave.isEmpty) {
+      return null;
+    }
+    if (!payment.hasRate) {
+      return 'Enter the silver invoice rate before saving this batch.';
+    }
+    return null;
+  }
+
+  @override
+  Future<PurchaseVoucherDraft?> buildPurchaseVoucherDraft(
+    List<StockRowEntry> rowsToSave,
+  ) async {
+    if (rowsToSave.isEmpty) {
+      return null;
+    }
+
+    final snapshot = paymentSnapshot;
+    final sequenceNo = await getNextPurchaseSequence();
+    final supplierName = supplierDisplayName.trim().isNotEmpty
+        ? supplierDisplayName.trim()
+        : supplierNameCtrl.text.trim();
+
+    return PurchaseVoucherDraft(
+      sequenceNo: sequenceNo,
+      voucherNo:
+          'SSTOCK-${DateTime.now().year}-${sequenceNo.toString().padLeft(4, '0')}',
+      supplierInvoiceNo: supplierInvoiceNumberCtrl.text.trim().isEmpty
+          ? null
+          : supplierInvoiceNumberCtrl.text.trim(),
+      source: PurchaseSource.fromSupplier,
+      taxType: gstEnabled ? PurchaseTaxType.gst : PurchaseTaxType.normal,
+      discountType: PurchaseDiscountType.flatAmount,
+      discountValue: 0.0,
+      discountAmount: 0.0,
+      grossAmount: invoiceSummary.itemSnapshotAmount,
+      taxableAmount: snapshot.subtotalAmount,
+      gstAmount: snapshot.appliedGstAmount,
+      cgstAmount: gstEnabled ? snapshot.appliedGstAmount / 2.0 : 0.0,
+      sgstAmount: gstEnabled ? snapshot.appliedGstAmount / 2.0 : 0.0,
+      grandTotal: snapshot.totalBillAmount,
+      cashPaid: snapshot.cashPaid,
+      upiPaid: snapshot.upiPaid,
+      bankPaid: snapshot.bankingPaid,
+      cardPaid: snapshot.cardPaid,
+      totalPaid: snapshot.totalPaidValue,
+      balanceDue: snapshot.dueAmount,
+      ratePerKg: snapshot.ratePerKg,
+      metalPaidGrossWeight: snapshot.metalGrossWeight,
+      metalPaidPurity: snapshot.metalPurity,
+      metalPaidFine: snapshot.metalFineCalculated,
+      metalPaidValue: snapshot.metalFineEquivalentCash,
+      dueMode: snapshot.hasDue ? payment.dueSettleMode.name : null,
+      excessMode: snapshot.hasReturn ? payment.excessSettleMode.name : null,
+      promiseDate: snapshot.hasDue ? payment.promiseDate : null,
+      paymentMeta: jsonEncode(payment.buildPersistenceMap(snapshot: snapshot)),
+      party: PurchaseVoucherPartyDraft(
+        supplierId: linkedSupplier?.id ?? sessionSupplierId,
+        name: supplierName.isEmpty ? 'Walk-in Supplier' : supplierName,
+        mobile: supplierMobileCtrl.text.trim().isEmpty
+            ? null
+            : supplierMobileCtrl.text.trim(),
+        city: supplierRegionCtrl.text.trim().isEmpty
+            ? null
+            : supplierRegionCtrl.text.trim(),
+        panNumber: supplierPanCtrl.text.trim().isEmpty
+            ? null
+            : supplierPanCtrl.text.trim(),
+        gstNumber: supplierGstCtrl.text.trim().isEmpty
+            ? null
+            : supplierGstCtrl.text.trim(),
+        contactName: linkedSupplier?.contactPersonName,
+      ),
+      items: rowsToSave
+          .map(
+            (row) => PurchaseVoucherItemDraft(
+              metal: PurchaseMetalType.silver,
+              description: row.itemName.trim(),
+              quantity: row.quantity,
+              grossWeight: row.grossWeight,
+              lessWeight: row.lessWeight,
+              netWeight: row.netWeight,
+              purity: row.resolveTouch(selectedPurityBasePercent),
+              fineWeight: row.fineWeight(selectedPurityBasePercent),
+              rate: snapshot.ratePerGram > 0
+                  ? snapshot.ratePerGram
+                  : row.purchaseRate,
+              lineAmount: row.totalCostValue,
+              subCategory: row.subCategoryLabel.trim().isEmpty
+                  ? row.subCategory.label
+                  : row.subCategoryLabel.trim(),
+              huid: row.huid.trim().isEmpty
+                  ? null
+                  : row.huid.trim().toUpperCase(),
+              hsnCode: row.hsnCode.trim().isEmpty
+                  ? defaultHsnCode
+                  : row.hsnCode.trim(),
+              labourCharge: row.makingCharges,
+              labourType: row.makingChargesType,
+              purityLabel: resolvedPurityStorageLabel(row),
+              effectiveRatePerGram: row.purchaseRate,
+              gstRate: gstEnabled ? gstRate : 0.0,
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  @override
+  String buildPurchaseSuccessMessage(
+    PurchaseSaveResult result,
+    List<StockRowEntry> rowsToSave,
+  ) {
+    return '${rowsToSave.length} silver row${rowsToSave.length == 1 ? '' : 's'} saved under voucher ${result.voucherNo}. Payment split and supplier settlement have been linked to this batch.';
   }
 
   @override

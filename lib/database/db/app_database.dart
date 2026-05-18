@@ -74,7 +74,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase._internal() : super(_openConnection());
 
   @override
-  int get schemaVersion => 16;
+  int get schemaVersion => 17;
 
   // ✅ DAO getter — directly use karo: AppDatabase().taxGstDao.fetchConfig()
   TaxGstConfigDao get taxGstDao => TaxGstConfigDao(this);
@@ -165,7 +165,9 @@ class AppDatabase extends _$AppDatabase {
           if (from < 12) {
             await customStatement(_createPurchaseVouchersTableSql);
             await customStatement(_createPurchaseVoucherItemsTableSql);
-            for (final s in _purchaseVoucherIndexSql) await customStatement(s);
+            for (final s in _purchaseVoucherIndexSql) {
+              await customStatement(s);
+            }
           }
           if (from < 14) {
             try {
@@ -182,6 +184,31 @@ class AppDatabase extends _$AppDatabase {
           if (from < 16) {
             await m.createTable(taxGstConfigs);
             debugPrint('v16: TaxGstConfigs table created ✅');
+          }
+
+          if (from < 17) {
+            final purchaseVoucherUpgradeSql = <String>[
+              'ALTER TABLE "purchase_vouchers" ADD COLUMN "supplier_invoice_no" TEXT',
+              'ALTER TABLE "purchase_vouchers" ADD COLUMN "upi_paid" REAL NOT NULL DEFAULT 0.0',
+              'ALTER TABLE "purchase_vouchers" ADD COLUMN "rate_per_kg" REAL NOT NULL DEFAULT 0.0',
+              'ALTER TABLE "purchase_vouchers" ADD COLUMN "metal_paid_gross_weight" REAL NOT NULL DEFAULT 0.0',
+              'ALTER TABLE "purchase_vouchers" ADD COLUMN "metal_paid_purity" REAL NOT NULL DEFAULT 0.0',
+              'ALTER TABLE "purchase_vouchers" ADD COLUMN "metal_paid_fine" REAL NOT NULL DEFAULT 0.0',
+              'ALTER TABLE "purchase_vouchers" ADD COLUMN "metal_paid_value" REAL NOT NULL DEFAULT 0.0',
+              'ALTER TABLE "purchase_vouchers" ADD COLUMN "due_mode" TEXT',
+              'ALTER TABLE "purchase_vouchers" ADD COLUMN "excess_mode" TEXT',
+              'ALTER TABLE "purchase_vouchers" ADD COLUMN "promise_date" INTEGER',
+              'ALTER TABLE "purchase_vouchers" ADD COLUMN "payment_meta" TEXT',
+              'ALTER TABLE "purchase_voucher_items" ADD COLUMN "quantity" INTEGER NOT NULL DEFAULT 1',
+            ];
+
+            for (final statement in purchaseVoucherUpgradeSql) {
+              try {
+                await customStatement(statement);
+              } catch (_) {}
+            }
+
+            debugPrint('v17: Purchase voucher payment metadata upgraded ✅');
           }
         },
         beforeOpen: (details) async {
@@ -272,7 +299,9 @@ class AppDatabase extends _$AppDatabase {
           ''');
           await customStatement(_createPurchaseVouchersTableSql);
           await customStatement(_createPurchaseVoucherItemsTableSql);
-          for (final s in _purchaseVoucherIndexSql) await customStatement(s);
+          for (final s in _purchaseVoucherIndexSql) {
+            await customStatement(s);
+          }
 
           debugPrint('Safety net bootstrap complete.');
         },
@@ -296,6 +325,7 @@ const String _createPurchaseVouchersTableSql = '''
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "voucher_no" TEXT NOT NULL UNIQUE,
     "sequence_no" INTEGER NOT NULL,
+    "supplier_invoice_no" TEXT,
     "source_type" TEXT NOT NULL,
     "customer_id" INTEGER,
     "supplier_id" INTEGER,
@@ -316,10 +346,20 @@ const String _createPurchaseVouchersTableSql = '''
     "sgst_amount" REAL NOT NULL DEFAULT 0.0,
     "grand_total" REAL NOT NULL DEFAULT 0.0,
     "cash_paid" REAL NOT NULL DEFAULT 0.0,
+    "upi_paid" REAL NOT NULL DEFAULT 0.0,
     "bank_paid" REAL NOT NULL DEFAULT 0.0,
     "card_paid" REAL NOT NULL DEFAULT 0.0,
     "total_paid" REAL NOT NULL DEFAULT 0.0,
     "balance_due" REAL NOT NULL DEFAULT 0.0,
+    "rate_per_kg" REAL NOT NULL DEFAULT 0.0,
+    "metal_paid_gross_weight" REAL NOT NULL DEFAULT 0.0,
+    "metal_paid_purity" REAL NOT NULL DEFAULT 0.0,
+    "metal_paid_fine" REAL NOT NULL DEFAULT 0.0,
+    "metal_paid_value" REAL NOT NULL DEFAULT 0.0,
+    "due_mode" TEXT,
+    "excess_mode" TEXT,
+    "promise_date" INTEGER,
+    "payment_meta" TEXT,
     "payment_status" TEXT NOT NULL DEFAULT 'UNPAID',
     "stock_entry_count" INTEGER NOT NULL DEFAULT 0,
     "status" TEXT NOT NULL DEFAULT 'SAVED',
@@ -344,6 +384,7 @@ const String _createPurchaseVoucherItemsTableSql = '''
     "purity" REAL NOT NULL DEFAULT 0.0,
     "fine_weight" REAL NOT NULL DEFAULT 0.0,
     "rate" REAL NOT NULL DEFAULT 0.0,
+    "quantity" INTEGER NOT NULL DEFAULT 1,
     "line_amount" REAL NOT NULL DEFAULT 0.0,
     "created_at" INTEGER NOT NULL,
     FOREIGN KEY ("purchase_voucher_id") REFERENCES "purchase_vouchers" ("id") ON DELETE CASCADE

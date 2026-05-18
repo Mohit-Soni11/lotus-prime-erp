@@ -208,6 +208,7 @@ class AddStockController extends ChangeNotifier {
   final TextEditingController gold24kManualCtrl = TextEditingController();
 
   String get sessionSupplierName => _sessionSupplierName;
+  int? get sessionSupplierId => _sessionSupplierId;
   bool get sameForAll => _sameForAll;
   SupplierModel? get linkedSupplier => _linkedSupplier;
   bool get hasLinkedSupplier => _sessionSupplierId != null;
@@ -1006,6 +1007,11 @@ class AddStockController extends ChangeNotifier {
       }
     }
 
+    final customValidation = await validateCustomBatch(rowsToSave);
+    if (customValidation != null) {
+      return customValidation;
+    }
+
     final seenBatchHuids = <String>{};
     for (int index = 0; index < rowsToSave.length; index++) {
       final row = rowsToSave[index];
@@ -1051,6 +1057,29 @@ class AddStockController extends ChangeNotifier {
     return '$prefix-$datePart-${uniquePart + index}';
   }
 
+  @protected
+  Future<String?> validateCustomBatch(List<StockRowEntry> rowsToSave) async {
+    return null;
+  }
+
+  @protected
+  Future<int> getNextPurchaseSequence() => _purchaseRepo.getNextSequence();
+
+  @protected
+  Future<PurchaseVoucherDraft?> buildPurchaseVoucherDraft(
+    List<StockRowEntry> rowsToSave,
+  ) async {
+    return null;
+  }
+
+  @protected
+  String buildPurchaseSuccessMessage(
+    PurchaseSaveResult result,
+    List<StockRowEntry> rowsToSave,
+  ) {
+    return '${rowsToSave.length} ${_selectedMetal.label} item${rowsToSave.length > 1 ? 's' : ''} saved under voucher ${result.voucherNo}.';
+  }
+
   Future<bool> saveAll() async {
     if (_isSaving) {
       return false;
@@ -1077,6 +1106,23 @@ class AddStockController extends ChangeNotifier {
         _isSaving = false;
         notifyListeners();
         return saved;
+      }
+
+      final purchaseDraft = await buildPurchaseVoucherDraft(rowsToSave);
+      if (purchaseDraft != null) {
+        final result = await _purchaseRepo.savePurchase(purchaseDraft);
+        if (result == null) {
+          _errorMessage =
+              '${_selectedMetal.label} stock batch could not be saved. Please review the rows and try again.';
+          _isSaving = false;
+          notifyListeners();
+          return false;
+        }
+
+        _successMessage = buildPurchaseSuccessMessage(result, rowsToSave);
+        _isSaving = false;
+        notifyListeners();
+        return true;
       }
 
       int saved = 0;

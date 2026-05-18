@@ -87,4 +87,20 @@ class SilverStockIcons {
   static const IconData huidVerified = Icons.verified_rounded;
   static const IconData netWeight = Icons.calculate_outlined;
   static const IconData dropDown = Icons.keyboard_arrow_down_rounded;
+  static const IconData editNote = Icons.edit_note_rounded;
+
+  static const IconData paymentHub = Icons.account_balance_wallet_rounded;
+  static const IconData paymentStatement = Icons.receipt_long_rounded;
+  static const IconData promiseDate = Icons.event_available_rounded;
+  static const IconData fineWeight = Icons.brightness_medium_rounded;
+  static const IconData payable = Icons.request_quote_rounded;
+  static const IconData amountReceived = Icons.payments_rounded;
+  static const IconData dueBalance = Icons.schedule_send_rounded;
+  static const IconData returnBalance = Icons.assignment_return_rounded;
+  static const IconData metalAdjust = Icons.balance_rounded;
+  static const IconData upi = Icons.qr_code_rounded;
+  static const IconData bank = Icons.account_balance_rounded;
+  static const IconData cardPayment = Icons.credit_card_rounded;
+  static const IconData invoiceSummary = Icons.summarize_rounded;
+  static const IconData lineSnapshot = Icons.view_timeline_rounded;
 }

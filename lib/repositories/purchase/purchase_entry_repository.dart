@@ -32,6 +32,7 @@ class PurchaseVoucherPartyDraft {
 class PurchaseVoucherItemDraft {
   final PurchaseMetalType metal;
   final String description;
+  final int quantity;
   final double grossWeight;
   final double lessWeight;
   final double netWeight;
@@ -51,6 +52,7 @@ class PurchaseVoucherItemDraft {
   const PurchaseVoucherItemDraft({
     required this.metal,
     required this.description,
+    this.quantity = 1,
     required this.grossWeight,
     required this.lessWeight,
     required this.netWeight,
@@ -72,6 +74,7 @@ class PurchaseVoucherItemDraft {
 class PurchaseVoucherDraft {
   final int sequenceNo;
   final String voucherNo;
+  final String? supplierInvoiceNo;
   final PurchaseSource source;
   final PurchaseTaxType taxType;
   final PurchaseDiscountType discountType;
@@ -84,16 +87,27 @@ class PurchaseVoucherDraft {
   final double sgstAmount;
   final double grandTotal;
   final double cashPaid;
+  final double upiPaid;
   final double bankPaid;
   final double cardPaid;
   final double totalPaid;
   final double balanceDue;
+  final double ratePerKg;
+  final double metalPaidGrossWeight;
+  final double metalPaidPurity;
+  final double metalPaidFine;
+  final double metalPaidValue;
+  final String? dueMode;
+  final String? excessMode;
+  final DateTime? promiseDate;
+  final String? paymentMeta;
   final PurchaseVoucherPartyDraft party;
   final List<PurchaseVoucherItemDraft> items;
 
   const PurchaseVoucherDraft({
     required this.sequenceNo,
     required this.voucherNo,
+    this.supplierInvoiceNo,
     required this.source,
     required this.taxType,
     required this.discountType,
@@ -106,10 +120,20 @@ class PurchaseVoucherDraft {
     required this.sgstAmount,
     required this.grandTotal,
     required this.cashPaid,
+    this.upiPaid = 0.0,
     required this.bankPaid,
     required this.cardPaid,
     required this.totalPaid,
     required this.balanceDue,
+    this.ratePerKg = 0.0,
+    this.metalPaidGrossWeight = 0.0,
+    this.metalPaidPurity = 0.0,
+    this.metalPaidFine = 0.0,
+    this.metalPaidValue = 0.0,
+    this.dueMode,
+    this.excessMode,
+    this.promiseDate,
+    this.paymentMeta,
     required this.party,
     required this.items,
   });
@@ -163,6 +187,7 @@ class PurchaseEntryRepository {
           INSERT INTO purchase_vouchers (
             voucher_no,
             sequence_no,
+            supplier_invoice_no,
             source_type,
             customer_id,
             supplier_id,
@@ -183,20 +208,31 @@ class PurchaseEntryRepository {
             sgst_amount,
             grand_total,
             cash_paid,
+            upi_paid,
             bank_paid,
             card_paid,
             total_paid,
             balance_due,
+            rate_per_kg,
+            metal_paid_gross_weight,
+            metal_paid_purity,
+            metal_paid_fine,
+            metal_paid_value,
+            due_mode,
+            excess_mode,
+            promise_date,
+            payment_meta,
             payment_status,
             stock_entry_count,
             status,
             created_at,
             updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ''',
           [
             draft.voucherNo,
             draft.sequenceNo,
+            draft.supplierInvoiceNo,
             draft.source == PurchaseSource.fromCustomer
                 ? 'CUSTOMER'
                 : 'SUPPLIER',
@@ -221,10 +257,20 @@ class PurchaseEntryRepository {
             draft.sgstAmount,
             draft.grandTotal,
             draft.cashPaid,
+            draft.upiPaid,
             draft.bankPaid,
             draft.cardPaid,
             draft.totalPaid,
             draft.balanceDue,
+            draft.ratePerKg,
+            draft.metalPaidGrossWeight,
+            draft.metalPaidPurity,
+            draft.metalPaidFine,
+            draft.metalPaidValue,
+            draft.dueMode,
+            draft.excessMode,
+            draft.promiseDate?.millisecondsSinceEpoch,
+            draft.paymentMeta,
             paymentStatus,
             draft.items.length,
             'SAVED',
@@ -257,9 +303,10 @@ class PurchaseEntryRepository {
               purity,
               fine_weight,
               rate,
+              quantity,
               line_amount,
               created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''',
             [
               voucherId,
@@ -273,6 +320,7 @@ class PurchaseEntryRepository {
               item.purity,
               item.fineWeight,
               item.rate,
+              item.quantity,
               item.lineAmount,
               createdAtMs,
             ],
@@ -319,8 +367,12 @@ class PurchaseEntryRepository {
                   ),
                   makingCharge: drift.Value(item.labourCharge),
                   makingChargeType: drift.Value(item.labourType.label),
-                  purchasePrice: drift.Value(item.lineAmount),
-                  mrp: drift.Value(item.lineAmount),
+                  purchasePrice: drift.Value(
+                    item.lineAmount / (item.quantity > 0 ? item.quantity : 1),
+                  ),
+                  mrp: drift.Value(
+                    item.lineAmount / (item.quantity > 0 ? item.quantity : 1),
+                  ),
                   huid: drift.Value(item.huid),
                   hsnCode: drift.Value(
                     item.hsnCode?.trim().isEmpty ?? true ? null : item.hsnCode,
@@ -331,7 +383,7 @@ class PurchaseEntryRepository {
                   supplierName: drift.Value(
                     isSupplierPurchase ? draft.party.name : null,
                   ),
-                  quantity: const drift.Value(1),
+                  quantity: drift.Value(item.quantity > 0 ? item.quantity : 1),
                   status: drift.Value(StockStatus.available.label),
                   gstRate: drift.Value(item.gstRate),
                 ),
@@ -355,7 +407,7 @@ class PurchaseEntryRepository {
             await _insertBankExpense(
               accountId: bankAccountId,
               amount: draft.bankPaid,
-              paymentMode: BankPaymentMode.upi,
+              paymentMode: BankPaymentMode.neft,
               voucherNo: draft.voucherNo,
               partyName: draft.party.name,
               txnDate: now,
@@ -363,6 +415,27 @@ class PurchaseEntryRepository {
           } else {
             await _insertCashExpense(
               amount: draft.bankPaid,
+              paymentMode: PaymentMode.bank,
+              voucherNo: draft.voucherNo,
+              partyName: draft.party.name,
+              txnDate: now,
+            );
+          }
+        }
+
+        if (draft.upiPaid > 0) {
+          if (bankAccountId != null) {
+            await _insertBankExpense(
+              accountId: bankAccountId,
+              amount: draft.upiPaid,
+              paymentMode: BankPaymentMode.upi,
+              voucherNo: draft.voucherNo,
+              partyName: draft.party.name,
+              txnDate: now,
+            );
+          } else {
+            await _insertCashExpense(
+              amount: draft.upiPaid,
               paymentMode: PaymentMode.upi,
               voucherNo: draft.voucherNo,
               partyName: draft.party.name,

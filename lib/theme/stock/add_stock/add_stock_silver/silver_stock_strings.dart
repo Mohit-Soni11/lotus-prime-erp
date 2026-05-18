@@ -219,4 +219,58 @@ class SilverStockStrings {
   static const String errDuplicateHuidInBatch =
       'Duplicate HUID within current batch';
   static const String errDuplicateHuidInStock = 'HUID already exists in stock';
+
+  static const String paymentRecordTitle = 'Payment Record';
+  static const String paymentRecordSubtitle =
+      'Live bill definition and supplier settlement';
+  static const String paymentStatementTitle = 'Payment Statement';
+  static const String paymentStatementSubtitle =
+      'See every rupee and metal adjustment without extra scrolling.';
+  static const String paymentModesTitle = 'Payment Modes';
+  static const String paymentModesSubtitle =
+      'Choose how this silver batch is being settled.';
+  static const String paymentCollectionTitle = 'Collection Entry';
+  static const String paymentCollectionSubtitle =
+      'Enter metal adjustment and the remaining payment split.';
+  static const String finalSettlementTitle = 'Final Settlement';
+  static const String finalSettlementSubtitle =
+      'Due, return and settlement direction are resolved here.';
+  static const String invoiceSummaryTitle = 'Invoice Summary';
+  static const String invoiceSummarySubtitle =
+      'Item snapshot, fine total, making and final payable.';
+  static const String invoiceSnapshotTitle = 'Item Snapshot';
+  static const String invoiceSnapshotSubtitle =
+      'Every entered silver line is listed exactly as it will be billed.';
+  static const String promiseDateLabel = 'Promise Date';
+  static const String promiseDateHint = 'Tap to set follow-up date';
+  static const String clearPromiseDate = 'Clear Date';
+  static const String gstIncludedLabel = 'GST Included';
+  static const String gstExcludedLabel = 'No GST Applied';
+  static const String rateVarianceNote =
+      'Invoice rate differs from one or more item rates, so snapshot total and payable may not fully match.';
+  static const String totalFineLabel = 'Total Fine';
+  static const String makingTotalLabel = 'Making Total';
+  static const String itemSnapshotTotalLabel = 'Item Snapshot Total';
+  static const String invoiceSubtotalLabel = 'Invoice Subtotal';
+  static const String finalBillAmountLabel = 'Final Bill Amount';
+  static const String totalReceivedLabel = 'Total Received';
+  static const String currentDueLabel = 'Current Due';
+  static const String supplierReturnLabel = 'Supplier Return';
+  static const String cashLabel = 'Cash';
+  static const String upiLabel = 'UPI';
+  static const String bankLabel = 'Bank Transfer';
+  static const String cardLabel = 'Card';
+  static const String metalLabel = 'Metal Adjust';
+  static const String perGramLabel = 'Per Gram';
+  static const String marketRefLabel = 'Market Reference';
+  static const String todaySilverRateLabel = 'Today Silver Rate';
+  static const String manualGstLabel = 'Manual GST';
+  static const String autoGstLabel = 'Auto GST';
+  static const String settlementCompleteLabel = 'Settlement Complete';
+  static const String duePendingLabel = 'Due Pending';
+  static const String returnPendingLabel = 'Return Pending';
+  static const String cashCollectionLabel = 'Cash Collection';
+  static const String metalAdjustmentLabel = 'Metal Adjustment';
+  static const String lineTotalLabel = 'Line Total';
+  static const String purityLabelShort = 'Purity';
 }

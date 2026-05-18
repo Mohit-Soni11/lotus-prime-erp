@@ -247,8 +247,9 @@ class PurchaseEntryController extends ChangeNotifier {
     supplierSuggestions = [];
     counterpartNotFound = false;
 
-    final fullRow = await (_db.select(_db.customers)
-          ..where((tbl) => tbl.id.equals(customer.id)))
+    final fullRow = await (_db.select(
+      _db.customers,
+    )..where((tbl) => tbl.id.equals(customer.id)))
         .getSingleOrNull();
 
     nameCtrl.text = customer.name;
@@ -393,7 +394,8 @@ class PurchaseEntryController extends ChangeNotifier {
           sgstAmount: sgst,
           grandTotal: grandTotal,
           cashPaid: cashPaid,
-          bankPaid: upiPaid,
+          upiPaid: upiPaid,
+          bankPaid: 0.0,
           cardPaid: cardPaid,
           totalPaid: totalPaid,
           balanceDue: balanceDue,
