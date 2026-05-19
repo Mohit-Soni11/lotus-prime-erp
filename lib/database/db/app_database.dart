@@ -2,12 +2,14 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../../config/db_config.dart';
+import '../../config/env_config.dart';
+import '../../core/logging/app_logger.dart';
 import '../tables/bill_items.dart';
+import '../tables/bill_old_gold_items.dart';
 import '../tables/bills.dart';
 import '../tables/customers.dart';
 import '../tables/daily_rates/daily_rates.dart';
@@ -44,6 +46,7 @@ part 'app_database.g.dart';
     ShopProfiles,
     Bills,
     BillItems,
+    BillOldGoldItems,
     SalesOrders,
     OrderAdvances,
     Loans,
@@ -74,7 +77,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase._internal() : super(_openConnection());
 
   @override
-  int get schemaVersion => 17;
+  int get schemaVersion => DbConfig.schemaVersion;
 
   // ✅ DAO getter — directly use karo: AppDatabase().taxGstDao.fetchConfig()
   TaxGstConfigDao get taxGstDao => TaxGstConfigDao(this);
@@ -85,7 +88,7 @@ class AppDatabase extends _$AppDatabase {
           await m.createAll();
         },
         onUpgrade: (Migrator m, int from, int to) async {
-          debugPrint('Migrating DB from $from to $to');
+          AppLogger.info('Migrating database from v$from to v$to');
 
           if (from < 2) {
             await m.createTable(dailyRates);
@@ -183,7 +186,7 @@ class AppDatabase extends _$AppDatabase {
           // ✅ v16 — Tax & GST table
           if (from < 16) {
             await m.createTable(taxGstConfigs);
-            debugPrint('v16: TaxGstConfigs table created ✅');
+            AppLogger.info('v16 migration applied for TaxGstConfigs.');
           }
 
           if (from < 17) {
@@ -208,12 +211,105 @@ class AppDatabase extends _$AppDatabase {
               } catch (_) {}
             }
 
-            debugPrint('v17: Purchase voucher payment metadata upgraded ✅');
+            AppLogger.info('v17 purchase voucher migration applied.');
+          }
+
+          if (from < 18) {
+            try {
+              await m.addColumn(bills, bills.billingMode);
+            } catch (_) {}
+            try {
+              await m.addColumn(bills, bills.billType);
+            } catch (_) {}
+            try {
+              await m.addColumn(bills, bills.paymentStatus);
+            } catch (_) {}
+            try {
+              await m.addColumn(bills, bills.taxableAmount);
+            } catch (_) {}
+            try {
+              await m.addColumn(bills, bills.cgstAmount);
+            } catch (_) {}
+            try {
+              await m.addColumn(bills, bills.sgstAmount);
+            } catch (_) {}
+            try {
+              await m.addColumn(bills, bills.gstAmount);
+            } catch (_) {}
+            try {
+              await m.addColumn(bills, bills.makingTotal);
+            } catch (_) {}
+            try {
+              await m.addColumn(bills, bills.cashPaid);
+            } catch (_) {}
+            try {
+              await m.addColumn(bills, bills.upiPaid);
+            } catch (_) {}
+            try {
+              await m.addColumn(bills, bills.cardPaid);
+            } catch (_) {}
+            try {
+              await m.addColumn(bills, bills.advancePaid);
+            } catch (_) {}
+            try {
+              await m.addColumn(bills, bills.dueAmount);
+            } catch (_) {}
+            try {
+              await m.addColumn(bills, bills.oldGoldDeduction);
+            } catch (_) {}
+            try {
+              await m.addColumn(bills, bills.oldGoldMode);
+            } catch (_) {}
+            try {
+              await m.addColumn(bills, bills.promiseDate);
+            } catch (_) {}
+
+            try {
+              await m.addColumn(billItems, billItems.lineNo);
+            } catch (_) {}
+            try {
+              await m.addColumn(billItems, billItems.metalType);
+            } catch (_) {}
+            try {
+              await m.addColumn(billItems, billItems.quantity);
+            } catch (_) {}
+            try {
+              await m.addColumn(billItems, billItems.lessWeight);
+            } catch (_) {}
+            try {
+              await m.addColumn(billItems, billItems.lessWeightPerPiece);
+            } catch (_) {}
+            try {
+              await m.addColumn(billItems, billItems.fineWeight);
+            } catch (_) {}
+            try {
+              await m.addColumn(billItems, billItems.makingChargeType);
+            } catch (_) {}
+            try {
+              await m.addColumn(billItems, billItems.makingChargeInput);
+            } catch (_) {}
+            try {
+              await m.addColumn(billItems, billItems.linkedStockItemId);
+            } catch (_) {}
+            try {
+              await m.addColumn(billItems, billItems.linkedStockSku);
+            } catch (_) {}
+
+            try {
+              await m.createTable(billOldGoldItems);
+            } catch (_) {}
+
+            AppLogger.info('v18 sales audit migration applied.');
           }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
-          if (kDebugMode) debugPrint('Database opened: v${details.versionNow}');
+          await customStatement(
+            'PRAGMA busy_timeout = ${DbConfig.busyTimeout.inMilliseconds}',
+          );
+          if (EnvConfig.enableVerboseLogs) {
+            AppLogger.debug('Database opened at schema v${details.versionNow}');
+          }
 
           await customStatement('''
             CREATE TABLE IF NOT EXISTS "bank_accounts" (
@@ -303,7 +399,9 @@ class AppDatabase extends _$AppDatabase {
             await customStatement(s);
           }
 
-          debugPrint('Safety net bootstrap complete.');
+          if (EnvConfig.enableVerboseLogs) {
+            AppLogger.debug('Database bootstrap safety net complete.');
+          }
         },
       );
 }
@@ -314,8 +412,14 @@ LazyDatabase _openConnection() {
     final file = File(p.join(dbFolder.path, DbConfig.dbName));
     return NativeDatabase(
       file,
-      logStatements: kDebugMode,
-      setup: (db) => db.execute('PRAGMA journal_mode=WAL;'),
+      logStatements: EnvConfig.enableSqlLogging,
+      setup: (db) {
+        if (DbConfig.enableWal) {
+          db.execute('PRAGMA journal_mode=WAL;');
+        }
+        db.execute(
+            'PRAGMA busy_timeout = ${DbConfig.busyTimeout.inMilliseconds};');
+      },
     );
   });
 }

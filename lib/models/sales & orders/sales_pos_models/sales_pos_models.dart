@@ -49,6 +49,8 @@ class SaleItemModel extends ChangeNotifier {
   MetalType _metal;
   MakingChargeType _makingChargeType;
   bool _isLessPerPiece;
+  int? _linkedStockItemId;
+  String? _linkedStockSku;
 
   final TextEditingController descCtrl = TextEditingController();
   final TextEditingController pcsCtrl = TextEditingController(text: '1');
@@ -141,6 +143,9 @@ class SaleItemModel extends ChangeNotifier {
   MetalType get metal => _metal;
   MakingChargeType get makingChargeType => _makingChargeType;
   bool get isLessPerPiece => _isLessPerPiece;
+  int? get linkedStockItemId => _linkedStockItemId;
+  String? get linkedStockSku => _linkedStockSku;
+  bool get hasLinkedStock => _linkedStockItemId != null;
 
   // --- CORE WEIGHT LOGIC ---
   int get pcs => _pcs;
@@ -214,6 +219,29 @@ class SaleItemModel extends ChangeNotifier {
         _makingChargeType = MakingChargeType.perGram;
       }
     }
+    notifyListeners();
+  }
+
+  void attachStockReference({
+    required int stockItemId,
+    required String sku,
+  }) {
+    final normalizedSku = sku.trim();
+    final didChange =
+        _linkedStockItemId != stockItemId || _linkedStockSku != normalizedSku;
+    _linkedStockItemId = stockItemId;
+    _linkedStockSku = normalizedSku;
+    if (didChange) {
+      notifyListeners();
+    }
+  }
+
+  void clearStockReference() {
+    if (_linkedStockItemId == null && _linkedStockSku == null) {
+      return;
+    }
+    _linkedStockItemId = null;
+    _linkedStockSku = null;
     notifyListeners();
   }
 

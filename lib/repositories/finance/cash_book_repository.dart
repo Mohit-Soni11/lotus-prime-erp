@@ -17,14 +17,13 @@ import '../../models/finance/cash_book/cash_transaction_model.dart';
 import '../../models/finance/cash_book/cash_book_summary_model.dart';
 
 class CashBookRepository {
-
   final AppDatabase _db;
   CashBookRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
 
   // ── Formatter ─────────────────────────────────────────────────────────────
   static final _currencyFmt = NumberFormat.currency(
-    locale:        'en_IN',
-    symbol:        '₹ ',
+    locale: 'en_IN',
+    symbol: '₹ ',
     decimalDigits: 2,
   );
   static String _fmt(double v) => _currencyFmt.format(v);
@@ -34,10 +33,10 @@ class CashBookRepository {
   // ==========================================================================
 
   Future<List<CashTransactionModel>> fetchTransactions({
-    required DateTime    from,
-    required DateTime    to,
+    required DateTime from,
+    required DateTime to,
     CashBookFilter filter = CashBookFilter.all,
-    String?        searchQuery,
+    String? searchQuery,
   }) async {
     try {
       var query = _db.select(_db.cashTransactions)
@@ -53,20 +52,19 @@ class CashBookRepository {
           ..where((t) => t.type.equals(CashTransactionType.expense.dbValue));
       }
 
-      final rows = await (query
-            ..orderBy([(t) => OrderingTerm.desc(t.txnDate)]))
-          .get();
+      final rows =
+          await (query..orderBy([(t) => OrderingTerm.desc(t.txnDate)])).get();
 
       var models = rows.map(_rowToModel).toList();
 
       if (searchQuery != null && searchQuery.trim().isNotEmpty) {
         final q = searchQuery.trim().toLowerCase();
         models = models.where((m) {
-          return m.categoryLabel.toLowerCase().contains(q)            ||
-                 (m.partyName?.toLowerCase().contains(q)   ?? false)  ||
-                 (m.description?.toLowerCase().contains(q) ?? false)  ||
-                 (m.customLabel?.toLowerCase().contains(q) ?? false)  ||
-                 m.txnId.toLowerCase().contains(q);
+          return m.categoryLabel.toLowerCase().contains(q) ||
+              (m.partyName?.toLowerCase().contains(q) ?? false) ||
+              (m.description?.toLowerCase().contains(q) ?? false) ||
+              (m.customLabel?.toLowerCase().contains(q) ?? false) ||
+              m.txnId.toLowerCase().contains(q);
         }).toList();
       }
 
@@ -101,9 +99,9 @@ class CashBookRepository {
   // ==========================================================================
 
   Stream<double> watchTodayExpenseTotal() {
-    final now      = DateTime.now();
+    final now = DateTime.now();
     final dayStart = DateTime(now.year, now.month, now.day);
-    final dayEnd   = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final dayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
     return (_db.select(_db.cashTransactions)
           ..where((t) => t.isVoided.equals(false))
@@ -136,12 +134,12 @@ class CashBookRepository {
         openingBalance = shop?.openingCashBalance ?? 0.0;
       } catch (_) {}
 
-      double totalIncome  = 0.0;
+      double totalIncome = 0.0;
       double totalExpense = 0.0;
-      int    incomeCount  = 0;
-      int    expenseCount = 0;
+      int incomeCount = 0;
+      int expenseCount = 0;
 
-      final Map<String, double> incomeByCategory  = {};
+      final Map<String, double> incomeByCategory = {};
       final Map<String, double> expenseByCategory = {};
 
       for (final row in rows) {
@@ -159,7 +157,7 @@ class CashBookRepository {
       }
 
       final closingBalance = openingBalance + totalIncome - totalExpense;
-      final netFlow        = totalIncome - totalExpense;
+      final netFlow = totalIncome - totalExpense;
 
       final incomeBreakdown = _buildBreakdown(
           incomeByCategory, CashTransactionType.income, totalIncome, rows);
@@ -167,21 +165,21 @@ class CashBookRepository {
           expenseByCategory, CashTransactionType.expense, totalExpense, rows);
 
       return CashBookSummaryModel(
-        openingBalance:    openingBalance,
-        totalIncome:       totalIncome,
-        totalExpense:      totalExpense,
-        closingBalance:    closingBalance,
-        netFlow:           netFlow,
+        openingBalance: openingBalance,
+        totalIncome: totalIncome,
+        totalExpense: totalExpense,
+        closingBalance: closingBalance,
+        netFlow: netFlow,
         openingBalanceStr: _fmt(openingBalance),
-        totalIncomeStr:    _fmt(totalIncome),
-        totalExpenseStr:   _fmt(totalExpense),
+        totalIncomeStr: _fmt(totalIncome),
+        totalExpenseStr: _fmt(totalExpense),
         closingBalanceStr: _fmt(closingBalance),
-        netFlowStr:        _fmt(netFlow.abs()),
-        incomeBreakdown:   incomeBreakdown,
-        expenseBreakdown:  expenseBreakdown,
+        netFlowStr: _fmt(netFlow.abs()),
+        incomeBreakdown: incomeBreakdown,
+        expenseBreakdown: expenseBreakdown,
         totalTransactions: rows.length,
-        incomeCount:       incomeCount,
-        expenseCount:      expenseCount,
+        incomeCount: incomeCount,
+        expenseCount: expenseCount,
       );
     } catch (e) {
       debugPrint('❌ CashBookRepository.computeSummary: $e');
@@ -196,7 +194,7 @@ class CashBookRepository {
   Future<void> syncBillsToIncome(DateTime date) async {
     try {
       final dayStart = DateTime(date.year, date.month, date.day);
-      final dayEnd   = DateTime(date.year, date.month, date.day, 23, 59, 59);
+      final dayEnd = DateTime(date.year, date.month, date.day, 23, 59, 59);
 
       final bills = await (_db.select(_db.bills)
             ..where((t) => t.billDate.isBiggerOrEqualValue(dayStart))
@@ -206,31 +204,31 @@ class CashBookRepository {
 
       for (final bill in bills) {
         final existing = await (_db.select(_db.cashTransactions)
-              ..where((t) => t.referenceId.equals(bill.billNo))
+              ..where((t) => t.referenceId.like('${bill.billNo}%'))
               ..where((t) => t.referenceType.equals('BILL')))
-            .getSingleOrNull();
+            .get();
 
-        if (existing != null) continue;
+        if (existing.isNotEmpty) continue;
         if (bill.paidAmount <= 0) continue;
 
         final txnId = await _generateTxnId();
 
         await _db.into(_db.cashTransactions).insert(
-          CashTransactionsCompanion.insert(
-            txnId:           txnId,
-            txnDate:         bill.billDate,
-            type:            CashTransactionType.income.dbValue,
-            category:        IncomeCategory.sale.dbValue,
-            amount:          Value(bill.paidAmount),
-            paymentMode:     Value(PaymentMode.cash.dbValue),
-            description:     Value('Sale — ${bill.billNo}'),
-            referenceId:     Value(bill.billNo),
-            referenceType:   const Value('BILL'),
-            partyName:       Value(bill.customerName),
-            isAutoGenerated: const Value(true),
-            isVoided:        const Value(false),
-          ),
-        );
+              CashTransactionsCompanion.insert(
+                txnId: txnId,
+                txnDate: bill.billDate,
+                type: CashTransactionType.income.dbValue,
+                category: IncomeCategory.sale.dbValue,
+                amount: Value(bill.paidAmount),
+                paymentMode: Value(PaymentMode.cash.dbValue),
+                description: Value('Sale — ${bill.billNo}'),
+                referenceId: Value(bill.billNo),
+                referenceType: const Value('BILL'),
+                partyName: Value(bill.customerName),
+                isAutoGenerated: const Value(true),
+                isVoided: const Value(false),
+              ),
+            );
       }
     } catch (e) {
       debugPrint('❌ CashBookRepository.syncBillsToIncome: $e');
@@ -243,33 +241,33 @@ class CashBookRepository {
 
   Future<bool> saveTransaction({
     required CashTransactionType type,
-    required String              categoryDbValue,
-    required double              amount,
-    required PaymentMode         paymentMode,
-    required DateTime            txnDate,
-    String?                      customLabel,
-    String?                      description,
-    String?                      partyName,
+    required String categoryDbValue,
+    required double amount,
+    required PaymentMode paymentMode,
+    required DateTime txnDate,
+    String? customLabel,
+    String? description,
+    String? partyName,
   }) async {
     try {
       final txnId = await _generateTxnId();
 
       await _db.into(_db.cashTransactions).insert(
-        CashTransactionsCompanion.insert(
-          txnId:           txnId,
-          txnDate:         txnDate,
-          type:            type.dbValue,
-          category:        categoryDbValue,
-          amount:          Value(amount),
-          paymentMode:     Value(paymentMode.dbValue),
-          customLabel:     Value(customLabel),
-          description:     Value(description),
-          partyName:       Value(partyName),
-          referenceType:   const Value('MANUAL'),
-          isAutoGenerated: const Value(false),
-          isVoided:        const Value(false),
-        ),
-      );
+            CashTransactionsCompanion.insert(
+              txnId: txnId,
+              txnDate: txnDate,
+              type: type.dbValue,
+              category: categoryDbValue,
+              amount: Value(amount),
+              paymentMode: Value(paymentMode.dbValue),
+              customLabel: Value(customLabel),
+              description: Value(description),
+              partyName: Value(partyName),
+              referenceType: const Value('MANUAL'),
+              isAutoGenerated: const Value(false),
+              isVoided: const Value(false),
+            ),
+          );
       return true;
     } catch (e) {
       debugPrint('❌ CashBookRepository.saveTransaction: $e');
@@ -283,10 +281,9 @@ class CashBookRepository {
 
   Future<bool> voidTransaction(int id, String reason) async {
     try {
-      await (_db.update(_db.cashTransactions)
-            ..where((t) => t.id.equals(id)))
+      await (_db.update(_db.cashTransactions)..where((t) => t.id.equals(id)))
           .write(CashTransactionsCompanion(
-        isVoided:   const Value(true),
+        isVoided: const Value(true),
         voidReason: Value(reason),
       ));
       return true;
@@ -306,8 +303,7 @@ class CashBookRepository {
           await (_db.select(_db.shopProfiles)..limit(1)).getSingleOrNull();
       if (shop == null) return false;
 
-      await (_db.update(_db.shopProfiles)
-            ..where((t) => t.id.equals(shop.id)))
+      await (_db.update(_db.shopProfiles)..where((t) => t.id.equals(shop.id)))
           .write(ShopProfilesCompanion(
         openingCashBalance: Value(amount),
       ));
@@ -324,7 +320,7 @@ class CashBookRepository {
 
   Future<String> _generateTxnId() async {
     final count = await _db.cashTransactions.count().getSingle();
-    final year  = DateTime.now().year;
+    final year = DateTime.now().year;
     return 'TXN-$year-${(count + 1).toString().padLeft(4, '0')}';
   }
 
@@ -333,36 +329,36 @@ class CashBookRepository {
 
     // Resolve category label — handles 'Other' custom labels
     final categoryLabel = resolveDisplayLabel(
-      type:            type,
+      type: type,
       categoryDbValue: row.category,
-      customLabel:     row.customLabel,
+      customLabel: row.customLabel,
     );
 
     return CashTransactionModel(
-      id:              row.id,
-      txnId:           row.txnId,
-      txnDate:         row.txnDate,
-      type:            type,
+      id: row.id,
+      txnId: row.txnId,
+      txnDate: row.txnDate,
+      type: type,
       categoryDbValue: row.category,
-      categoryLabel:   categoryLabel,
-      amount:          row.amount,
+      categoryLabel: categoryLabel,
+      amount: row.amount,
       amountFormatted: _fmt(row.amount),
-      paymentMode:     PaymentMode.fromDb(row.paymentMode),
-      customLabel:     row.customLabel,
-      description:     row.description,
-      referenceId:     row.referenceId,
-      referenceType:   row.referenceType,
-      partyName:       row.partyName,
+      paymentMode: PaymentMode.fromDb(row.paymentMode),
+      customLabel: row.customLabel,
+      description: row.description,
+      referenceId: row.referenceId,
+      referenceType: row.referenceType,
+      partyName: row.partyName,
       isAutoGenerated: row.isAutoGenerated,
-      isVoided:        row.isVoided,
+      isVoided: row.isVoided,
     );
   }
 
   List<CategoryBreakdownItem> _buildBreakdown(
-    Map<String, double>      map,
-    CashTransactionType      type,
-    double                   total,
-    List<CashTransaction>    allRows,
+    Map<String, double> map,
+    CashTransactionType type,
+    double total,
+    List<CashTransaction> allRows,
   ) {
     final items = map.entries.map((e) {
       final pct = total > 0 ? (e.value / total) * 100 : 0.0;
@@ -389,18 +385,18 @@ class CashBookRepository {
             : 'Other';
       } else {
         label = resolveDisplayLabel(
-          type:            type,
+          type: type,
           categoryDbValue: e.key,
         );
       }
 
       return CategoryBreakdownItem(
-        label:           label,
+        label: label,
         categoryDbValue: e.key,
-        type:            type,
-        amount:          e.value,
+        type: type,
+        amount: e.value,
         amountFormatted: _fmt(e.value),
-        percentage:      pct,
+        percentage: pct,
       );
     }).toList();
 

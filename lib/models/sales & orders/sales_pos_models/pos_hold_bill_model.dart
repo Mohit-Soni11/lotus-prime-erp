@@ -172,6 +172,8 @@ class PosHoldSaleItemSnapshot {
   final MetalType metal;
   final MakingChargeType makingChargeType;
   final bool isLessPerPiece;
+  final int? stockItemId;
+  final String stockSku;
   final String description;
   final String pcsInput;
   final String huid;
@@ -185,6 +187,8 @@ class PosHoldSaleItemSnapshot {
     required this.metal,
     required this.makingChargeType,
     required this.isLessPerPiece,
+    required this.stockItemId,
+    required this.stockSku,
     required this.description,
     required this.pcsInput,
     required this.huid,
@@ -200,6 +204,8 @@ class PosHoldSaleItemSnapshot {
       metal: item.metal,
       makingChargeType: item.makingChargeType,
       isLessPerPiece: item.isLessPerPiece,
+      stockItemId: item.linkedStockItemId,
+      stockSku: item.linkedStockSku ?? '',
       description: item.descCtrl.text,
       pcsInput: item.pcsCtrl.text,
       huid: item.huidCtrl.text,
@@ -216,6 +222,8 @@ class PosHoldSaleItemSnapshot {
       'metal': metal.name,
       'makingChargeType': makingChargeType.name,
       'isLessPerPiece': isLessPerPiece,
+      'stockItemId': stockItemId,
+      'stockSku': stockSku,
       'description': description,
       'pcsInput': pcsInput,
       'huid': huid,
@@ -238,6 +246,8 @@ class PosHoldSaleItemSnapshot {
         orElse: () => MakingChargeType.perGram,
       ),
       isLessPerPiece: json['isLessPerPiece'] == true,
+      stockItemId: (json['stockItemId'] as num?)?.toInt(),
+      stockSku: (json['stockSku'] ?? '').toString(),
       description: (json['description'] ?? '').toString(),
       pcsInput: (json['pcsInput'] ?? '1').toString(),
       huid: (json['huid'] ?? '').toString(),
@@ -263,6 +273,12 @@ class PosHoldSaleItemSnapshot {
     item.lessCtrl.text = lessInput;
     item.rateCtrl.text = rateInput;
     item.makingCtrl.text = makingInput;
+    if (stockItemId != null && stockSku.trim().isNotEmpty) {
+      item.attachStockReference(
+        stockItemId: stockItemId!,
+        sku: stockSku,
+      );
+    }
     return item;
   }
 }

@@ -202,7 +202,7 @@ class DayBookRepository {
     try {
       final rows = await (_db.select(_db.bills)
             ..where((b) =>
-                b.billNo.like('EST-%') &
+                (b.billNo.like('INV-%') | b.billNo.like('EST-%')) &
                 b.status.equals('ACTIVE') &
                 b.billDate.isBiggerOrEqualValue(start) &
                 b.billDate.isSmallerOrEqualValue(end)))
@@ -504,16 +504,26 @@ class DayBookRepository {
   Future<PaymentBreakup> _fetchPaymentBreakup(
       DateTime start, DateTime end) async {
     try {
-      final rows = await (_db.select(_db.cashTransactions)
+      final cashRows = await (_db.select(_db.cashTransactions)
             ..where((t) =>
                 t.type.equals('INCOME') &
                 t.isVoided.equals(false) &
+                t.referenceType.equals('BILL') &
+                t.txnDate.isBiggerOrEqualValue(start) &
+                t.txnDate.isSmallerOrEqualValue(end)))
+          .get();
+
+      final bankRows = await (_db.select(_db.bankTransactions)
+            ..where((t) =>
+                t.type.equals('CREDIT') &
+                t.isVoided.equals(false) &
+                t.referenceType.equals('BILL') &
                 t.txnDate.isBiggerOrEqualValue(start) &
                 t.txnDate.isSmallerOrEqualValue(end)))
           .get();
 
       double cash = 0, upi = 0, card = 0, bank = 0, cheque = 0;
-      for (final r in rows) {
+      for (final r in cashRows) {
         switch (r.paymentMode.toUpperCase()) {
           case 'CASH':
             cash += r.amount;
@@ -529,6 +539,23 @@ class DayBookRepository {
             break;
           case 'CHEQUE':
             cheque += r.amount;
+            break;
+        }
+      }
+
+      for (final r in bankRows) {
+        switch (r.paymentMode.toUpperCase()) {
+          case 'UPI':
+            upi += r.amount;
+            break;
+          case 'CARD':
+            card += r.amount;
+            break;
+          case 'CHEQUE':
+            cheque += r.amount;
+            break;
+          default:
+            bank += r.amount;
             break;
         }
       }
@@ -614,11 +641,41 @@ class DayBookRepository {
     final start = DateTime(now.year, now.month, now.day, 0, 0, 0);
     final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
-    return (_db.select(_db.cashTransactions)
-          ..where((t) =>
-              t.txnDate.isBiggerOrEqualValue(start) &
-              t.txnDate.isSmallerOrEqualValue(end)))
+    return _db
+        .customSelect(
+          '''
+          SELECT id FROM cash_transactions
+          WHERE txn_date >= ? AND txn_date <= ?
+          UNION ALL
+          SELECT id FROM bank_transactions
+          WHERE txn_date >= ? AND txn_date <= ?
+          UNION ALL
+          SELECT id FROM bills
+          WHERE bill_date >= ? AND bill_date <= ?
+          UNION ALL
+          SELECT bill_items.id
+          FROM bill_items
+          INNER JOIN bills ON bills.id = bill_items.bill_id
+          WHERE bills.bill_date >= ? AND bills.bill_date <= ?
+          ''',
+          variables: [
+            Variable.withDateTime(start),
+            Variable.withDateTime(end),
+            Variable.withDateTime(start),
+            Variable.withDateTime(end),
+            Variable.withDateTime(start),
+            Variable.withDateTime(end),
+            Variable.withDateTime(start),
+            Variable.withDateTime(end),
+          ],
+          readsFrom: {
+            _db.cashTransactions,
+            _db.bankTransactions,
+            _db.bills,
+            _db.billItems,
+          },
+        )
         .watch()
-        .map((_) => null);
+        .asyncMap((_) async {});
   }
 }

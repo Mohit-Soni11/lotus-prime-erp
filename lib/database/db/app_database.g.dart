@@ -4537,6 +4537,30 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
   late final GeneratedColumn<String> mobile = GeneratedColumn<String>(
       'mobile', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _billingModeMeta =
+      const VerificationMeta('billingMode');
+  @override
+  late final GeneratedColumn<String> billingMode = GeneratedColumn<String>(
+      'billing_mode', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('RETAIL'));
+  static const VerificationMeta _billTypeMeta =
+      const VerificationMeta('billType');
+  @override
+  late final GeneratedColumn<String> billType = GeneratedColumn<String>(
+      'bill_type', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('NORMAL'));
+  static const VerificationMeta _paymentStatusMeta =
+      const VerificationMeta('paymentStatus');
+  @override
+  late final GeneratedColumn<String> paymentStatus = GeneratedColumn<String>(
+      'payment_status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('PAID'));
   static const VerificationMeta _totalAmountMeta =
       const VerificationMeta('totalAmount');
   @override
@@ -4550,6 +4574,46 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
   @override
   late final GeneratedColumn<double> discount = GeneratedColumn<double>(
       'discount', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _taxableAmountMeta =
+      const VerificationMeta('taxableAmount');
+  @override
+  late final GeneratedColumn<double> taxableAmount = GeneratedColumn<double>(
+      'taxable_amount', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _cgstAmountMeta =
+      const VerificationMeta('cgstAmount');
+  @override
+  late final GeneratedColumn<double> cgstAmount = GeneratedColumn<double>(
+      'cgst_amount', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _sgstAmountMeta =
+      const VerificationMeta('sgstAmount');
+  @override
+  late final GeneratedColumn<double> sgstAmount = GeneratedColumn<double>(
+      'sgst_amount', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _gstAmountMeta =
+      const VerificationMeta('gstAmount');
+  @override
+  late final GeneratedColumn<double> gstAmount = GeneratedColumn<double>(
+      'gst_amount', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _makingTotalMeta =
+      const VerificationMeta('makingTotal');
+  @override
+  late final GeneratedColumn<double> makingTotal = GeneratedColumn<double>(
+      'making_total', aliasedName, false,
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
@@ -4569,6 +4633,62 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
+  static const VerificationMeta _cashPaidMeta =
+      const VerificationMeta('cashPaid');
+  @override
+  late final GeneratedColumn<double> cashPaid = GeneratedColumn<double>(
+      'cash_paid', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _upiPaidMeta =
+      const VerificationMeta('upiPaid');
+  @override
+  late final GeneratedColumn<double> upiPaid = GeneratedColumn<double>(
+      'upi_paid', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _cardPaidMeta =
+      const VerificationMeta('cardPaid');
+  @override
+  late final GeneratedColumn<double> cardPaid = GeneratedColumn<double>(
+      'card_paid', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _advancePaidMeta =
+      const VerificationMeta('advancePaid');
+  @override
+  late final GeneratedColumn<double> advancePaid = GeneratedColumn<double>(
+      'advance_paid', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _dueAmountMeta =
+      const VerificationMeta('dueAmount');
+  @override
+  late final GeneratedColumn<double> dueAmount = GeneratedColumn<double>(
+      'due_amount', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _oldGoldDeductionMeta =
+      const VerificationMeta('oldGoldDeduction');
+  @override
+  late final GeneratedColumn<double> oldGoldDeduction = GeneratedColumn<double>(
+      'old_gold_deduction', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _oldGoldModeMeta =
+      const VerificationMeta('oldGoldMode');
+  @override
+  late final GeneratedColumn<String> oldGoldMode = GeneratedColumn<String>(
+      'old_gold_mode', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('CASH_ADJUST'));
   static const VerificationMeta _billDateMeta =
       const VerificationMeta('billDate');
   @override
@@ -4577,6 +4697,12 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
       type: DriftSqlType.dateTime,
       requiredDuringInsert: false,
       defaultValue: currentDateAndTime);
+  static const VerificationMeta _promiseDateMeta =
+      const VerificationMeta('promiseDate');
+  @override
+  late final GeneratedColumn<DateTime> promiseDate = GeneratedColumn<DateTime>(
+      'promise_date', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
@@ -4593,11 +4719,27 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
         customerId,
         customerName,
         mobile,
+        billingMode,
+        billType,
+        paymentStatus,
         totalAmount,
         discount,
+        taxableAmount,
+        cgstAmount,
+        sgstAmount,
+        gstAmount,
+        makingTotal,
         finalAmount,
         paidAmount,
+        cashPaid,
+        upiPaid,
+        cardPaid,
+        advancePaid,
+        dueAmount,
+        oldGoldDeduction,
+        oldGoldMode,
         billDate,
+        promiseDate,
         status
       ];
   @override
@@ -4643,6 +4785,22 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
       context.handle(_mobileMeta,
           mobile.isAcceptableOrUnknown(data['mobile']!, _mobileMeta));
     }
+    if (data.containsKey('billing_mode')) {
+      context.handle(
+          _billingModeMeta,
+          billingMode.isAcceptableOrUnknown(
+              data['billing_mode']!, _billingModeMeta));
+    }
+    if (data.containsKey('bill_type')) {
+      context.handle(_billTypeMeta,
+          billType.isAcceptableOrUnknown(data['bill_type']!, _billTypeMeta));
+    }
+    if (data.containsKey('payment_status')) {
+      context.handle(
+          _paymentStatusMeta,
+          paymentStatus.isAcceptableOrUnknown(
+              data['payment_status']!, _paymentStatusMeta));
+    }
     if (data.containsKey('total_amount')) {
       context.handle(
           _totalAmountMeta,
@@ -4652,6 +4810,34 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
     if (data.containsKey('discount')) {
       context.handle(_discountMeta,
           discount.isAcceptableOrUnknown(data['discount']!, _discountMeta));
+    }
+    if (data.containsKey('taxable_amount')) {
+      context.handle(
+          _taxableAmountMeta,
+          taxableAmount.isAcceptableOrUnknown(
+              data['taxable_amount']!, _taxableAmountMeta));
+    }
+    if (data.containsKey('cgst_amount')) {
+      context.handle(
+          _cgstAmountMeta,
+          cgstAmount.isAcceptableOrUnknown(
+              data['cgst_amount']!, _cgstAmountMeta));
+    }
+    if (data.containsKey('sgst_amount')) {
+      context.handle(
+          _sgstAmountMeta,
+          sgstAmount.isAcceptableOrUnknown(
+              data['sgst_amount']!, _sgstAmountMeta));
+    }
+    if (data.containsKey('gst_amount')) {
+      context.handle(_gstAmountMeta,
+          gstAmount.isAcceptableOrUnknown(data['gst_amount']!, _gstAmountMeta));
+    }
+    if (data.containsKey('making_total')) {
+      context.handle(
+          _makingTotalMeta,
+          makingTotal.isAcceptableOrUnknown(
+              data['making_total']!, _makingTotalMeta));
     }
     if (data.containsKey('final_amount')) {
       context.handle(
@@ -4665,9 +4851,49 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
           paidAmount.isAcceptableOrUnknown(
               data['paid_amount']!, _paidAmountMeta));
     }
+    if (data.containsKey('cash_paid')) {
+      context.handle(_cashPaidMeta,
+          cashPaid.isAcceptableOrUnknown(data['cash_paid']!, _cashPaidMeta));
+    }
+    if (data.containsKey('upi_paid')) {
+      context.handle(_upiPaidMeta,
+          upiPaid.isAcceptableOrUnknown(data['upi_paid']!, _upiPaidMeta));
+    }
+    if (data.containsKey('card_paid')) {
+      context.handle(_cardPaidMeta,
+          cardPaid.isAcceptableOrUnknown(data['card_paid']!, _cardPaidMeta));
+    }
+    if (data.containsKey('advance_paid')) {
+      context.handle(
+          _advancePaidMeta,
+          advancePaid.isAcceptableOrUnknown(
+              data['advance_paid']!, _advancePaidMeta));
+    }
+    if (data.containsKey('due_amount')) {
+      context.handle(_dueAmountMeta,
+          dueAmount.isAcceptableOrUnknown(data['due_amount']!, _dueAmountMeta));
+    }
+    if (data.containsKey('old_gold_deduction')) {
+      context.handle(
+          _oldGoldDeductionMeta,
+          oldGoldDeduction.isAcceptableOrUnknown(
+              data['old_gold_deduction']!, _oldGoldDeductionMeta));
+    }
+    if (data.containsKey('old_gold_mode')) {
+      context.handle(
+          _oldGoldModeMeta,
+          oldGoldMode.isAcceptableOrUnknown(
+              data['old_gold_mode']!, _oldGoldModeMeta));
+    }
     if (data.containsKey('bill_date')) {
       context.handle(_billDateMeta,
           billDate.isAcceptableOrUnknown(data['bill_date']!, _billDateMeta));
+    }
+    if (data.containsKey('promise_date')) {
+      context.handle(
+          _promiseDateMeta,
+          promiseDate.isAcceptableOrUnknown(
+              data['promise_date']!, _promiseDateMeta));
     }
     if (data.containsKey('status')) {
       context.handle(_statusMeta,
@@ -4696,16 +4922,48 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
           .read(DriftSqlType.string, data['${effectivePrefix}customer_name']),
       mobile: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}mobile']),
+      billingMode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}billing_mode'])!,
+      billType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}bill_type'])!,
+      paymentStatus: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}payment_status'])!,
       totalAmount: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}total_amount'])!,
       discount: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}discount'])!,
+      taxableAmount: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}taxable_amount'])!,
+      cgstAmount: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}cgst_amount'])!,
+      sgstAmount: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}sgst_amount'])!,
+      gstAmount: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}gst_amount'])!,
+      makingTotal: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}making_total'])!,
       finalAmount: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}final_amount'])!,
       paidAmount: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}paid_amount'])!,
+      cashPaid: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}cash_paid'])!,
+      upiPaid: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}upi_paid'])!,
+      cardPaid: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}card_paid'])!,
+      advancePaid: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}advance_paid'])!,
+      dueAmount: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}due_amount'])!,
+      oldGoldDeduction: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}old_gold_deduction'])!,
+      oldGoldMode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}old_gold_mode'])!,
       billDate: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}bill_date'])!,
+      promiseDate: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}promise_date']),
       status: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
     );
@@ -4725,11 +4983,27 @@ class Bill extends DataClass implements Insertable<Bill> {
   final int? customerId;
   final String? customerName;
   final String? mobile;
+  final String billingMode;
+  final String billType;
+  final String paymentStatus;
   final double totalAmount;
   final double discount;
+  final double taxableAmount;
+  final double cgstAmount;
+  final double sgstAmount;
+  final double gstAmount;
+  final double makingTotal;
   final double finalAmount;
   final double paidAmount;
+  final double cashPaid;
+  final double upiPaid;
+  final double cardPaid;
+  final double advancePaid;
+  final double dueAmount;
+  final double oldGoldDeduction;
+  final String oldGoldMode;
   final DateTime billDate;
+  final DateTime? promiseDate;
   final String status;
   const Bill(
       {required this.id,
@@ -4739,11 +5013,27 @@ class Bill extends DataClass implements Insertable<Bill> {
       this.customerId,
       this.customerName,
       this.mobile,
+      required this.billingMode,
+      required this.billType,
+      required this.paymentStatus,
       required this.totalAmount,
       required this.discount,
+      required this.taxableAmount,
+      required this.cgstAmount,
+      required this.sgstAmount,
+      required this.gstAmount,
+      required this.makingTotal,
       required this.finalAmount,
       required this.paidAmount,
+      required this.cashPaid,
+      required this.upiPaid,
+      required this.cardPaid,
+      required this.advancePaid,
+      required this.dueAmount,
+      required this.oldGoldDeduction,
+      required this.oldGoldMode,
       required this.billDate,
+      this.promiseDate,
       required this.status});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4763,11 +5053,29 @@ class Bill extends DataClass implements Insertable<Bill> {
     if (!nullToAbsent || mobile != null) {
       map['mobile'] = Variable<String>(mobile);
     }
+    map['billing_mode'] = Variable<String>(billingMode);
+    map['bill_type'] = Variable<String>(billType);
+    map['payment_status'] = Variable<String>(paymentStatus);
     map['total_amount'] = Variable<double>(totalAmount);
     map['discount'] = Variable<double>(discount);
+    map['taxable_amount'] = Variable<double>(taxableAmount);
+    map['cgst_amount'] = Variable<double>(cgstAmount);
+    map['sgst_amount'] = Variable<double>(sgstAmount);
+    map['gst_amount'] = Variable<double>(gstAmount);
+    map['making_total'] = Variable<double>(makingTotal);
     map['final_amount'] = Variable<double>(finalAmount);
     map['paid_amount'] = Variable<double>(paidAmount);
+    map['cash_paid'] = Variable<double>(cashPaid);
+    map['upi_paid'] = Variable<double>(upiPaid);
+    map['card_paid'] = Variable<double>(cardPaid);
+    map['advance_paid'] = Variable<double>(advancePaid);
+    map['due_amount'] = Variable<double>(dueAmount);
+    map['old_gold_deduction'] = Variable<double>(oldGoldDeduction);
+    map['old_gold_mode'] = Variable<String>(oldGoldMode);
     map['bill_date'] = Variable<DateTime>(billDate);
+    if (!nullToAbsent || promiseDate != null) {
+      map['promise_date'] = Variable<DateTime>(promiseDate);
+    }
     map['status'] = Variable<String>(status);
     return map;
   }
@@ -4788,11 +5096,29 @@ class Bill extends DataClass implements Insertable<Bill> {
           : Value(customerName),
       mobile:
           mobile == null && nullToAbsent ? const Value.absent() : Value(mobile),
+      billingMode: Value(billingMode),
+      billType: Value(billType),
+      paymentStatus: Value(paymentStatus),
       totalAmount: Value(totalAmount),
       discount: Value(discount),
+      taxableAmount: Value(taxableAmount),
+      cgstAmount: Value(cgstAmount),
+      sgstAmount: Value(sgstAmount),
+      gstAmount: Value(gstAmount),
+      makingTotal: Value(makingTotal),
       finalAmount: Value(finalAmount),
       paidAmount: Value(paidAmount),
+      cashPaid: Value(cashPaid),
+      upiPaid: Value(upiPaid),
+      cardPaid: Value(cardPaid),
+      advancePaid: Value(advancePaid),
+      dueAmount: Value(dueAmount),
+      oldGoldDeduction: Value(oldGoldDeduction),
+      oldGoldMode: Value(oldGoldMode),
       billDate: Value(billDate),
+      promiseDate: promiseDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(promiseDate),
       status: Value(status),
     );
   }
@@ -4808,11 +5134,27 @@ class Bill extends DataClass implements Insertable<Bill> {
       customerId: serializer.fromJson<int?>(json['customerId']),
       customerName: serializer.fromJson<String?>(json['customerName']),
       mobile: serializer.fromJson<String?>(json['mobile']),
+      billingMode: serializer.fromJson<String>(json['billingMode']),
+      billType: serializer.fromJson<String>(json['billType']),
+      paymentStatus: serializer.fromJson<String>(json['paymentStatus']),
       totalAmount: serializer.fromJson<double>(json['totalAmount']),
       discount: serializer.fromJson<double>(json['discount']),
+      taxableAmount: serializer.fromJson<double>(json['taxableAmount']),
+      cgstAmount: serializer.fromJson<double>(json['cgstAmount']),
+      sgstAmount: serializer.fromJson<double>(json['sgstAmount']),
+      gstAmount: serializer.fromJson<double>(json['gstAmount']),
+      makingTotal: serializer.fromJson<double>(json['makingTotal']),
       finalAmount: serializer.fromJson<double>(json['finalAmount']),
       paidAmount: serializer.fromJson<double>(json['paidAmount']),
+      cashPaid: serializer.fromJson<double>(json['cashPaid']),
+      upiPaid: serializer.fromJson<double>(json['upiPaid']),
+      cardPaid: serializer.fromJson<double>(json['cardPaid']),
+      advancePaid: serializer.fromJson<double>(json['advancePaid']),
+      dueAmount: serializer.fromJson<double>(json['dueAmount']),
+      oldGoldDeduction: serializer.fromJson<double>(json['oldGoldDeduction']),
+      oldGoldMode: serializer.fromJson<String>(json['oldGoldMode']),
       billDate: serializer.fromJson<DateTime>(json['billDate']),
+      promiseDate: serializer.fromJson<DateTime?>(json['promiseDate']),
       status: serializer.fromJson<String>(json['status']),
     );
   }
@@ -4827,11 +5169,27 @@ class Bill extends DataClass implements Insertable<Bill> {
       'customerId': serializer.toJson<int?>(customerId),
       'customerName': serializer.toJson<String?>(customerName),
       'mobile': serializer.toJson<String?>(mobile),
+      'billingMode': serializer.toJson<String>(billingMode),
+      'billType': serializer.toJson<String>(billType),
+      'paymentStatus': serializer.toJson<String>(paymentStatus),
       'totalAmount': serializer.toJson<double>(totalAmount),
       'discount': serializer.toJson<double>(discount),
+      'taxableAmount': serializer.toJson<double>(taxableAmount),
+      'cgstAmount': serializer.toJson<double>(cgstAmount),
+      'sgstAmount': serializer.toJson<double>(sgstAmount),
+      'gstAmount': serializer.toJson<double>(gstAmount),
+      'makingTotal': serializer.toJson<double>(makingTotal),
       'finalAmount': serializer.toJson<double>(finalAmount),
       'paidAmount': serializer.toJson<double>(paidAmount),
+      'cashPaid': serializer.toJson<double>(cashPaid),
+      'upiPaid': serializer.toJson<double>(upiPaid),
+      'cardPaid': serializer.toJson<double>(cardPaid),
+      'advancePaid': serializer.toJson<double>(advancePaid),
+      'dueAmount': serializer.toJson<double>(dueAmount),
+      'oldGoldDeduction': serializer.toJson<double>(oldGoldDeduction),
+      'oldGoldMode': serializer.toJson<String>(oldGoldMode),
       'billDate': serializer.toJson<DateTime>(billDate),
+      'promiseDate': serializer.toJson<DateTime?>(promiseDate),
       'status': serializer.toJson<String>(status),
     };
   }
@@ -4844,11 +5202,27 @@ class Bill extends DataClass implements Insertable<Bill> {
           Value<int?> customerId = const Value.absent(),
           Value<String?> customerName = const Value.absent(),
           Value<String?> mobile = const Value.absent(),
+          String? billingMode,
+          String? billType,
+          String? paymentStatus,
           double? totalAmount,
           double? discount,
+          double? taxableAmount,
+          double? cgstAmount,
+          double? sgstAmount,
+          double? gstAmount,
+          double? makingTotal,
           double? finalAmount,
           double? paidAmount,
+          double? cashPaid,
+          double? upiPaid,
+          double? cardPaid,
+          double? advancePaid,
+          double? dueAmount,
+          double? oldGoldDeduction,
+          String? oldGoldMode,
           DateTime? billDate,
+          Value<DateTime?> promiseDate = const Value.absent(),
           String? status}) =>
       Bill(
         id: id ?? this.id,
@@ -4859,11 +5233,27 @@ class Bill extends DataClass implements Insertable<Bill> {
         customerName:
             customerName.present ? customerName.value : this.customerName,
         mobile: mobile.present ? mobile.value : this.mobile,
+        billingMode: billingMode ?? this.billingMode,
+        billType: billType ?? this.billType,
+        paymentStatus: paymentStatus ?? this.paymentStatus,
         totalAmount: totalAmount ?? this.totalAmount,
         discount: discount ?? this.discount,
+        taxableAmount: taxableAmount ?? this.taxableAmount,
+        cgstAmount: cgstAmount ?? this.cgstAmount,
+        sgstAmount: sgstAmount ?? this.sgstAmount,
+        gstAmount: gstAmount ?? this.gstAmount,
+        makingTotal: makingTotal ?? this.makingTotal,
         finalAmount: finalAmount ?? this.finalAmount,
         paidAmount: paidAmount ?? this.paidAmount,
+        cashPaid: cashPaid ?? this.cashPaid,
+        upiPaid: upiPaid ?? this.upiPaid,
+        cardPaid: cardPaid ?? this.cardPaid,
+        advancePaid: advancePaid ?? this.advancePaid,
+        dueAmount: dueAmount ?? this.dueAmount,
+        oldGoldDeduction: oldGoldDeduction ?? this.oldGoldDeduction,
+        oldGoldMode: oldGoldMode ?? this.oldGoldMode,
         billDate: billDate ?? this.billDate,
+        promiseDate: promiseDate.present ? promiseDate.value : this.promiseDate,
         status: status ?? this.status,
       );
   Bill copyWithCompanion(BillsCompanion data) {
@@ -4878,14 +5268,43 @@ class Bill extends DataClass implements Insertable<Bill> {
           ? data.customerName.value
           : this.customerName,
       mobile: data.mobile.present ? data.mobile.value : this.mobile,
+      billingMode:
+          data.billingMode.present ? data.billingMode.value : this.billingMode,
+      billType: data.billType.present ? data.billType.value : this.billType,
+      paymentStatus: data.paymentStatus.present
+          ? data.paymentStatus.value
+          : this.paymentStatus,
       totalAmount:
           data.totalAmount.present ? data.totalAmount.value : this.totalAmount,
       discount: data.discount.present ? data.discount.value : this.discount,
+      taxableAmount: data.taxableAmount.present
+          ? data.taxableAmount.value
+          : this.taxableAmount,
+      cgstAmount:
+          data.cgstAmount.present ? data.cgstAmount.value : this.cgstAmount,
+      sgstAmount:
+          data.sgstAmount.present ? data.sgstAmount.value : this.sgstAmount,
+      gstAmount: data.gstAmount.present ? data.gstAmount.value : this.gstAmount,
+      makingTotal:
+          data.makingTotal.present ? data.makingTotal.value : this.makingTotal,
       finalAmount:
           data.finalAmount.present ? data.finalAmount.value : this.finalAmount,
       paidAmount:
           data.paidAmount.present ? data.paidAmount.value : this.paidAmount,
+      cashPaid: data.cashPaid.present ? data.cashPaid.value : this.cashPaid,
+      upiPaid: data.upiPaid.present ? data.upiPaid.value : this.upiPaid,
+      cardPaid: data.cardPaid.present ? data.cardPaid.value : this.cardPaid,
+      advancePaid:
+          data.advancePaid.present ? data.advancePaid.value : this.advancePaid,
+      dueAmount: data.dueAmount.present ? data.dueAmount.value : this.dueAmount,
+      oldGoldDeduction: data.oldGoldDeduction.present
+          ? data.oldGoldDeduction.value
+          : this.oldGoldDeduction,
+      oldGoldMode:
+          data.oldGoldMode.present ? data.oldGoldMode.value : this.oldGoldMode,
       billDate: data.billDate.present ? data.billDate.value : this.billDate,
+      promiseDate:
+          data.promiseDate.present ? data.promiseDate.value : this.promiseDate,
       status: data.status.present ? data.status.value : this.status,
     );
   }
@@ -4900,31 +5319,64 @@ class Bill extends DataClass implements Insertable<Bill> {
           ..write('customerId: $customerId, ')
           ..write('customerName: $customerName, ')
           ..write('mobile: $mobile, ')
+          ..write('billingMode: $billingMode, ')
+          ..write('billType: $billType, ')
+          ..write('paymentStatus: $paymentStatus, ')
           ..write('totalAmount: $totalAmount, ')
           ..write('discount: $discount, ')
+          ..write('taxableAmount: $taxableAmount, ')
+          ..write('cgstAmount: $cgstAmount, ')
+          ..write('sgstAmount: $sgstAmount, ')
+          ..write('gstAmount: $gstAmount, ')
+          ..write('makingTotal: $makingTotal, ')
           ..write('finalAmount: $finalAmount, ')
           ..write('paidAmount: $paidAmount, ')
+          ..write('cashPaid: $cashPaid, ')
+          ..write('upiPaid: $upiPaid, ')
+          ..write('cardPaid: $cardPaid, ')
+          ..write('advancePaid: $advancePaid, ')
+          ..write('dueAmount: $dueAmount, ')
+          ..write('oldGoldDeduction: $oldGoldDeduction, ')
+          ..write('oldGoldMode: $oldGoldMode, ')
           ..write('billDate: $billDate, ')
+          ..write('promiseDate: $promiseDate, ')
           ..write('status: $status')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      id,
-      createdAt,
-      updatedAt,
-      billNo,
-      customerId,
-      customerName,
-      mobile,
-      totalAmount,
-      discount,
-      finalAmount,
-      paidAmount,
-      billDate,
-      status);
+  int get hashCode => Object.hashAll([
+        id,
+        createdAt,
+        updatedAt,
+        billNo,
+        customerId,
+        customerName,
+        mobile,
+        billingMode,
+        billType,
+        paymentStatus,
+        totalAmount,
+        discount,
+        taxableAmount,
+        cgstAmount,
+        sgstAmount,
+        gstAmount,
+        makingTotal,
+        finalAmount,
+        paidAmount,
+        cashPaid,
+        upiPaid,
+        cardPaid,
+        advancePaid,
+        dueAmount,
+        oldGoldDeduction,
+        oldGoldMode,
+        billDate,
+        promiseDate,
+        status
+      ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4936,11 +5388,27 @@ class Bill extends DataClass implements Insertable<Bill> {
           other.customerId == this.customerId &&
           other.customerName == this.customerName &&
           other.mobile == this.mobile &&
+          other.billingMode == this.billingMode &&
+          other.billType == this.billType &&
+          other.paymentStatus == this.paymentStatus &&
           other.totalAmount == this.totalAmount &&
           other.discount == this.discount &&
+          other.taxableAmount == this.taxableAmount &&
+          other.cgstAmount == this.cgstAmount &&
+          other.sgstAmount == this.sgstAmount &&
+          other.gstAmount == this.gstAmount &&
+          other.makingTotal == this.makingTotal &&
           other.finalAmount == this.finalAmount &&
           other.paidAmount == this.paidAmount &&
+          other.cashPaid == this.cashPaid &&
+          other.upiPaid == this.upiPaid &&
+          other.cardPaid == this.cardPaid &&
+          other.advancePaid == this.advancePaid &&
+          other.dueAmount == this.dueAmount &&
+          other.oldGoldDeduction == this.oldGoldDeduction &&
+          other.oldGoldMode == this.oldGoldMode &&
           other.billDate == this.billDate &&
+          other.promiseDate == this.promiseDate &&
           other.status == this.status);
 }
 
@@ -4952,11 +5420,27 @@ class BillsCompanion extends UpdateCompanion<Bill> {
   final Value<int?> customerId;
   final Value<String?> customerName;
   final Value<String?> mobile;
+  final Value<String> billingMode;
+  final Value<String> billType;
+  final Value<String> paymentStatus;
   final Value<double> totalAmount;
   final Value<double> discount;
+  final Value<double> taxableAmount;
+  final Value<double> cgstAmount;
+  final Value<double> sgstAmount;
+  final Value<double> gstAmount;
+  final Value<double> makingTotal;
   final Value<double> finalAmount;
   final Value<double> paidAmount;
+  final Value<double> cashPaid;
+  final Value<double> upiPaid;
+  final Value<double> cardPaid;
+  final Value<double> advancePaid;
+  final Value<double> dueAmount;
+  final Value<double> oldGoldDeduction;
+  final Value<String> oldGoldMode;
   final Value<DateTime> billDate;
+  final Value<DateTime?> promiseDate;
   final Value<String> status;
   const BillsCompanion({
     this.id = const Value.absent(),
@@ -4966,11 +5450,27 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     this.customerId = const Value.absent(),
     this.customerName = const Value.absent(),
     this.mobile = const Value.absent(),
+    this.billingMode = const Value.absent(),
+    this.billType = const Value.absent(),
+    this.paymentStatus = const Value.absent(),
     this.totalAmount = const Value.absent(),
     this.discount = const Value.absent(),
+    this.taxableAmount = const Value.absent(),
+    this.cgstAmount = const Value.absent(),
+    this.sgstAmount = const Value.absent(),
+    this.gstAmount = const Value.absent(),
+    this.makingTotal = const Value.absent(),
     this.finalAmount = const Value.absent(),
     this.paidAmount = const Value.absent(),
+    this.cashPaid = const Value.absent(),
+    this.upiPaid = const Value.absent(),
+    this.cardPaid = const Value.absent(),
+    this.advancePaid = const Value.absent(),
+    this.dueAmount = const Value.absent(),
+    this.oldGoldDeduction = const Value.absent(),
+    this.oldGoldMode = const Value.absent(),
     this.billDate = const Value.absent(),
+    this.promiseDate = const Value.absent(),
     this.status = const Value.absent(),
   });
   BillsCompanion.insert({
@@ -4981,11 +5481,27 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     this.customerId = const Value.absent(),
     this.customerName = const Value.absent(),
     this.mobile = const Value.absent(),
+    this.billingMode = const Value.absent(),
+    this.billType = const Value.absent(),
+    this.paymentStatus = const Value.absent(),
     this.totalAmount = const Value.absent(),
     this.discount = const Value.absent(),
+    this.taxableAmount = const Value.absent(),
+    this.cgstAmount = const Value.absent(),
+    this.sgstAmount = const Value.absent(),
+    this.gstAmount = const Value.absent(),
+    this.makingTotal = const Value.absent(),
     this.finalAmount = const Value.absent(),
     this.paidAmount = const Value.absent(),
+    this.cashPaid = const Value.absent(),
+    this.upiPaid = const Value.absent(),
+    this.cardPaid = const Value.absent(),
+    this.advancePaid = const Value.absent(),
+    this.dueAmount = const Value.absent(),
+    this.oldGoldDeduction = const Value.absent(),
+    this.oldGoldMode = const Value.absent(),
     this.billDate = const Value.absent(),
+    this.promiseDate = const Value.absent(),
     this.status = const Value.absent(),
   }) : billNo = Value(billNo);
   static Insertable<Bill> custom({
@@ -4996,11 +5512,27 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     Expression<int>? customerId,
     Expression<String>? customerName,
     Expression<String>? mobile,
+    Expression<String>? billingMode,
+    Expression<String>? billType,
+    Expression<String>? paymentStatus,
     Expression<double>? totalAmount,
     Expression<double>? discount,
+    Expression<double>? taxableAmount,
+    Expression<double>? cgstAmount,
+    Expression<double>? sgstAmount,
+    Expression<double>? gstAmount,
+    Expression<double>? makingTotal,
     Expression<double>? finalAmount,
     Expression<double>? paidAmount,
+    Expression<double>? cashPaid,
+    Expression<double>? upiPaid,
+    Expression<double>? cardPaid,
+    Expression<double>? advancePaid,
+    Expression<double>? dueAmount,
+    Expression<double>? oldGoldDeduction,
+    Expression<String>? oldGoldMode,
     Expression<DateTime>? billDate,
+    Expression<DateTime>? promiseDate,
     Expression<String>? status,
   }) {
     return RawValuesInsertable({
@@ -5011,11 +5543,27 @@ class BillsCompanion extends UpdateCompanion<Bill> {
       if (customerId != null) 'customer_id': customerId,
       if (customerName != null) 'customer_name': customerName,
       if (mobile != null) 'mobile': mobile,
+      if (billingMode != null) 'billing_mode': billingMode,
+      if (billType != null) 'bill_type': billType,
+      if (paymentStatus != null) 'payment_status': paymentStatus,
       if (totalAmount != null) 'total_amount': totalAmount,
       if (discount != null) 'discount': discount,
+      if (taxableAmount != null) 'taxable_amount': taxableAmount,
+      if (cgstAmount != null) 'cgst_amount': cgstAmount,
+      if (sgstAmount != null) 'sgst_amount': sgstAmount,
+      if (gstAmount != null) 'gst_amount': gstAmount,
+      if (makingTotal != null) 'making_total': makingTotal,
       if (finalAmount != null) 'final_amount': finalAmount,
       if (paidAmount != null) 'paid_amount': paidAmount,
+      if (cashPaid != null) 'cash_paid': cashPaid,
+      if (upiPaid != null) 'upi_paid': upiPaid,
+      if (cardPaid != null) 'card_paid': cardPaid,
+      if (advancePaid != null) 'advance_paid': advancePaid,
+      if (dueAmount != null) 'due_amount': dueAmount,
+      if (oldGoldDeduction != null) 'old_gold_deduction': oldGoldDeduction,
+      if (oldGoldMode != null) 'old_gold_mode': oldGoldMode,
       if (billDate != null) 'bill_date': billDate,
+      if (promiseDate != null) 'promise_date': promiseDate,
       if (status != null) 'status': status,
     });
   }
@@ -5028,11 +5576,27 @@ class BillsCompanion extends UpdateCompanion<Bill> {
       Value<int?>? customerId,
       Value<String?>? customerName,
       Value<String?>? mobile,
+      Value<String>? billingMode,
+      Value<String>? billType,
+      Value<String>? paymentStatus,
       Value<double>? totalAmount,
       Value<double>? discount,
+      Value<double>? taxableAmount,
+      Value<double>? cgstAmount,
+      Value<double>? sgstAmount,
+      Value<double>? gstAmount,
+      Value<double>? makingTotal,
       Value<double>? finalAmount,
       Value<double>? paidAmount,
+      Value<double>? cashPaid,
+      Value<double>? upiPaid,
+      Value<double>? cardPaid,
+      Value<double>? advancePaid,
+      Value<double>? dueAmount,
+      Value<double>? oldGoldDeduction,
+      Value<String>? oldGoldMode,
       Value<DateTime>? billDate,
+      Value<DateTime?>? promiseDate,
       Value<String>? status}) {
     return BillsCompanion(
       id: id ?? this.id,
@@ -5042,11 +5606,27 @@ class BillsCompanion extends UpdateCompanion<Bill> {
       customerId: customerId ?? this.customerId,
       customerName: customerName ?? this.customerName,
       mobile: mobile ?? this.mobile,
+      billingMode: billingMode ?? this.billingMode,
+      billType: billType ?? this.billType,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
       totalAmount: totalAmount ?? this.totalAmount,
       discount: discount ?? this.discount,
+      taxableAmount: taxableAmount ?? this.taxableAmount,
+      cgstAmount: cgstAmount ?? this.cgstAmount,
+      sgstAmount: sgstAmount ?? this.sgstAmount,
+      gstAmount: gstAmount ?? this.gstAmount,
+      makingTotal: makingTotal ?? this.makingTotal,
       finalAmount: finalAmount ?? this.finalAmount,
       paidAmount: paidAmount ?? this.paidAmount,
+      cashPaid: cashPaid ?? this.cashPaid,
+      upiPaid: upiPaid ?? this.upiPaid,
+      cardPaid: cardPaid ?? this.cardPaid,
+      advancePaid: advancePaid ?? this.advancePaid,
+      dueAmount: dueAmount ?? this.dueAmount,
+      oldGoldDeduction: oldGoldDeduction ?? this.oldGoldDeduction,
+      oldGoldMode: oldGoldMode ?? this.oldGoldMode,
       billDate: billDate ?? this.billDate,
+      promiseDate: promiseDate ?? this.promiseDate,
       status: status ?? this.status,
     );
   }
@@ -5075,11 +5655,35 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     if (mobile.present) {
       map['mobile'] = Variable<String>(mobile.value);
     }
+    if (billingMode.present) {
+      map['billing_mode'] = Variable<String>(billingMode.value);
+    }
+    if (billType.present) {
+      map['bill_type'] = Variable<String>(billType.value);
+    }
+    if (paymentStatus.present) {
+      map['payment_status'] = Variable<String>(paymentStatus.value);
+    }
     if (totalAmount.present) {
       map['total_amount'] = Variable<double>(totalAmount.value);
     }
     if (discount.present) {
       map['discount'] = Variable<double>(discount.value);
+    }
+    if (taxableAmount.present) {
+      map['taxable_amount'] = Variable<double>(taxableAmount.value);
+    }
+    if (cgstAmount.present) {
+      map['cgst_amount'] = Variable<double>(cgstAmount.value);
+    }
+    if (sgstAmount.present) {
+      map['sgst_amount'] = Variable<double>(sgstAmount.value);
+    }
+    if (gstAmount.present) {
+      map['gst_amount'] = Variable<double>(gstAmount.value);
+    }
+    if (makingTotal.present) {
+      map['making_total'] = Variable<double>(makingTotal.value);
     }
     if (finalAmount.present) {
       map['final_amount'] = Variable<double>(finalAmount.value);
@@ -5087,8 +5691,32 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     if (paidAmount.present) {
       map['paid_amount'] = Variable<double>(paidAmount.value);
     }
+    if (cashPaid.present) {
+      map['cash_paid'] = Variable<double>(cashPaid.value);
+    }
+    if (upiPaid.present) {
+      map['upi_paid'] = Variable<double>(upiPaid.value);
+    }
+    if (cardPaid.present) {
+      map['card_paid'] = Variable<double>(cardPaid.value);
+    }
+    if (advancePaid.present) {
+      map['advance_paid'] = Variable<double>(advancePaid.value);
+    }
+    if (dueAmount.present) {
+      map['due_amount'] = Variable<double>(dueAmount.value);
+    }
+    if (oldGoldDeduction.present) {
+      map['old_gold_deduction'] = Variable<double>(oldGoldDeduction.value);
+    }
+    if (oldGoldMode.present) {
+      map['old_gold_mode'] = Variable<String>(oldGoldMode.value);
+    }
     if (billDate.present) {
       map['bill_date'] = Variable<DateTime>(billDate.value);
+    }
+    if (promiseDate.present) {
+      map['promise_date'] = Variable<DateTime>(promiseDate.value);
     }
     if (status.present) {
       map['status'] = Variable<String>(status.value);
@@ -5106,11 +5734,27 @@ class BillsCompanion extends UpdateCompanion<Bill> {
           ..write('customerId: $customerId, ')
           ..write('customerName: $customerName, ')
           ..write('mobile: $mobile, ')
+          ..write('billingMode: $billingMode, ')
+          ..write('billType: $billType, ')
+          ..write('paymentStatus: $paymentStatus, ')
           ..write('totalAmount: $totalAmount, ')
           ..write('discount: $discount, ')
+          ..write('taxableAmount: $taxableAmount, ')
+          ..write('cgstAmount: $cgstAmount, ')
+          ..write('sgstAmount: $sgstAmount, ')
+          ..write('gstAmount: $gstAmount, ')
+          ..write('makingTotal: $makingTotal, ')
           ..write('finalAmount: $finalAmount, ')
           ..write('paidAmount: $paidAmount, ')
+          ..write('cashPaid: $cashPaid, ')
+          ..write('upiPaid: $upiPaid, ')
+          ..write('cardPaid: $cardPaid, ')
+          ..write('advancePaid: $advancePaid, ')
+          ..write('dueAmount: $dueAmount, ')
+          ..write('oldGoldDeduction: $oldGoldDeduction, ')
+          ..write('oldGoldMode: $oldGoldMode, ')
           ..write('billDate: $billDate, ')
+          ..write('promiseDate: $promiseDate, ')
           ..write('status: $status')
           ..write(')'))
         .toString();
@@ -5154,6 +5798,21 @@ class $BillItemsTable extends BillItems
       requiredDuringInsert: true,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'REFERENCES bills (id) ON DELETE CASCADE'));
+  static const VerificationMeta _lineNoMeta = const VerificationMeta('lineNo');
+  @override
+  late final GeneratedColumn<int> lineNo = GeneratedColumn<int>(
+      'line_no', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  static const VerificationMeta _metalTypeMeta =
+      const VerificationMeta('metalType');
+  @override
+  late final GeneratedColumn<String> metalType = GeneratedColumn<String>(
+      'metal_type', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('GOLD'));
   static const VerificationMeta _itemNameMeta =
       const VerificationMeta('itemName');
   @override
@@ -5172,6 +5831,14 @@ class $BillItemsTable extends BillItems
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant("22K"));
+  static const VerificationMeta _quantityMeta =
+      const VerificationMeta('quantity');
+  @override
+  late final GeneratedColumn<int> quantity = GeneratedColumn<int>(
+      'quantity', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
   static const VerificationMeta _grossWeightMeta =
       const VerificationMeta('grossWeight');
   @override
@@ -5180,11 +5847,37 @@ class $BillItemsTable extends BillItems
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
+  static const VerificationMeta _lessWeightMeta =
+      const VerificationMeta('lessWeight');
+  @override
+  late final GeneratedColumn<double> lessWeight = GeneratedColumn<double>(
+      'less_weight', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _lessWeightPerPieceMeta =
+      const VerificationMeta('lessWeightPerPiece');
+  @override
+  late final GeneratedColumn<bool> lessWeightPerPiece = GeneratedColumn<bool>(
+      'less_weight_per_piece', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("less_weight_per_piece" IN (0, 1))'),
+      defaultValue: const Constant(false));
   static const VerificationMeta _netWeightMeta =
       const VerificationMeta('netWeight');
   @override
   late final GeneratedColumn<double> netWeight = GeneratedColumn<double>(
       'net_weight', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _fineWeightMeta =
+      const VerificationMeta('fineWeight');
+  @override
+  late final GeneratedColumn<double> fineWeight = GeneratedColumn<double>(
+      'fine_weight', aliasedName, false,
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
@@ -5195,6 +5888,22 @@ class $BillItemsTable extends BillItems
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
+  static const VerificationMeta _makingChargeTypeMeta =
+      const VerificationMeta('makingChargeType');
+  @override
+  late final GeneratedColumn<String> makingChargeType = GeneratedColumn<String>(
+      'making_charge_type', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('PER_GRAM'));
+  static const VerificationMeta _makingChargeInputMeta =
+      const VerificationMeta('makingChargeInput');
+  @override
+  late final GeneratedColumn<double> makingChargeInput =
+      GeneratedColumn<double>('making_charge_input', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0.0));
   static const VerificationMeta _makingChargeMeta =
       const VerificationMeta('makingCharge');
   @override
@@ -5211,20 +5920,42 @@ class $BillItemsTable extends BillItems
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
+  static const VerificationMeta _linkedStockItemIdMeta =
+      const VerificationMeta('linkedStockItemId');
+  @override
+  late final GeneratedColumn<int> linkedStockItemId = GeneratedColumn<int>(
+      'linked_stock_item_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _linkedStockSkuMeta =
+      const VerificationMeta('linkedStockSku');
+  @override
+  late final GeneratedColumn<String> linkedStockSku = GeneratedColumn<String>(
+      'linked_stock_sku', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
         createdAt,
         updatedAt,
         billId,
+        lineNo,
+        metalType,
         itemName,
         huid,
         purity,
+        quantity,
         grossWeight,
+        lessWeight,
+        lessWeightPerPiece,
         netWeight,
+        fineWeight,
         rate,
+        makingChargeType,
+        makingChargeInput,
         makingCharge,
-        itemTotal
+        itemTotal,
+        linkedStockItemId,
+        linkedStockSku
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -5253,6 +5984,14 @@ class $BillItemsTable extends BillItems
     } else if (isInserting) {
       context.missing(_billIdMeta);
     }
+    if (data.containsKey('line_no')) {
+      context.handle(_lineNoMeta,
+          lineNo.isAcceptableOrUnknown(data['line_no']!, _lineNoMeta));
+    }
+    if (data.containsKey('metal_type')) {
+      context.handle(_metalTypeMeta,
+          metalType.isAcceptableOrUnknown(data['metal_type']!, _metalTypeMeta));
+    }
     if (data.containsKey('item_name')) {
       context.handle(_itemNameMeta,
           itemName.isAcceptableOrUnknown(data['item_name']!, _itemNameMeta));
@@ -5267,19 +6006,53 @@ class $BillItemsTable extends BillItems
       context.handle(_purityMeta,
           purity.isAcceptableOrUnknown(data['purity']!, _purityMeta));
     }
+    if (data.containsKey('quantity')) {
+      context.handle(_quantityMeta,
+          quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta));
+    }
     if (data.containsKey('gross_weight')) {
       context.handle(
           _grossWeightMeta,
           grossWeight.isAcceptableOrUnknown(
               data['gross_weight']!, _grossWeightMeta));
     }
+    if (data.containsKey('less_weight')) {
+      context.handle(
+          _lessWeightMeta,
+          lessWeight.isAcceptableOrUnknown(
+              data['less_weight']!, _lessWeightMeta));
+    }
+    if (data.containsKey('less_weight_per_piece')) {
+      context.handle(
+          _lessWeightPerPieceMeta,
+          lessWeightPerPiece.isAcceptableOrUnknown(
+              data['less_weight_per_piece']!, _lessWeightPerPieceMeta));
+    }
     if (data.containsKey('net_weight')) {
       context.handle(_netWeightMeta,
           netWeight.isAcceptableOrUnknown(data['net_weight']!, _netWeightMeta));
     }
+    if (data.containsKey('fine_weight')) {
+      context.handle(
+          _fineWeightMeta,
+          fineWeight.isAcceptableOrUnknown(
+              data['fine_weight']!, _fineWeightMeta));
+    }
     if (data.containsKey('rate')) {
       context.handle(
           _rateMeta, rate.isAcceptableOrUnknown(data['rate']!, _rateMeta));
+    }
+    if (data.containsKey('making_charge_type')) {
+      context.handle(
+          _makingChargeTypeMeta,
+          makingChargeType.isAcceptableOrUnknown(
+              data['making_charge_type']!, _makingChargeTypeMeta));
+    }
+    if (data.containsKey('making_charge_input')) {
+      context.handle(
+          _makingChargeInputMeta,
+          makingChargeInput.isAcceptableOrUnknown(
+              data['making_charge_input']!, _makingChargeInputMeta));
     }
     if (data.containsKey('making_charge')) {
       context.handle(
@@ -5290,6 +6063,18 @@ class $BillItemsTable extends BillItems
     if (data.containsKey('item_total')) {
       context.handle(_itemTotalMeta,
           itemTotal.isAcceptableOrUnknown(data['item_total']!, _itemTotalMeta));
+    }
+    if (data.containsKey('linked_stock_item_id')) {
+      context.handle(
+          _linkedStockItemIdMeta,
+          linkedStockItemId.isAcceptableOrUnknown(
+              data['linked_stock_item_id']!, _linkedStockItemIdMeta));
+    }
+    if (data.containsKey('linked_stock_sku')) {
+      context.handle(
+          _linkedStockSkuMeta,
+          linkedStockSku.isAcceptableOrUnknown(
+              data['linked_stock_sku']!, _linkedStockSkuMeta));
     }
     return context;
   }
@@ -5308,22 +6093,42 @@ class $BillItemsTable extends BillItems
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
       billId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}bill_id'])!,
+      lineNo: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}line_no'])!,
+      metalType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}metal_type'])!,
       itemName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}item_name'])!,
       huid: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}huid']),
       purity: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}purity'])!,
+      quantity: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}quantity'])!,
       grossWeight: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}gross_weight'])!,
+      lessWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}less_weight'])!,
+      lessWeightPerPiece: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}less_weight_per_piece'])!,
       netWeight: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}net_weight'])!,
+      fineWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}fine_weight'])!,
       rate: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}rate'])!,
+      makingChargeType: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}making_charge_type'])!,
+      makingChargeInput: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}making_charge_input'])!,
       makingCharge: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}making_charge'])!,
       itemTotal: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}item_total'])!,
+      linkedStockItemId: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}linked_stock_item_id']),
+      linkedStockSku: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}linked_stock_sku']),
     );
   }
 
@@ -5338,27 +6143,47 @@ class BillItem extends DataClass implements Insertable<BillItem> {
   final DateTime createdAt;
   final DateTime? updatedAt;
   final int billId;
+  final int lineNo;
+  final String metalType;
   final String itemName;
   final String? huid;
   final String purity;
+  final int quantity;
   final double grossWeight;
+  final double lessWeight;
+  final bool lessWeightPerPiece;
   final double netWeight;
+  final double fineWeight;
   final double rate;
+  final String makingChargeType;
+  final double makingChargeInput;
   final double makingCharge;
   final double itemTotal;
+  final int? linkedStockItemId;
+  final String? linkedStockSku;
   const BillItem(
       {required this.id,
       required this.createdAt,
       this.updatedAt,
       required this.billId,
+      required this.lineNo,
+      required this.metalType,
       required this.itemName,
       this.huid,
       required this.purity,
+      required this.quantity,
       required this.grossWeight,
+      required this.lessWeight,
+      required this.lessWeightPerPiece,
       required this.netWeight,
+      required this.fineWeight,
       required this.rate,
+      required this.makingChargeType,
+      required this.makingChargeInput,
       required this.makingCharge,
-      required this.itemTotal});
+      required this.itemTotal,
+      this.linkedStockItemId,
+      this.linkedStockSku});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -5368,16 +6193,30 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       map['updated_at'] = Variable<DateTime>(updatedAt);
     }
     map['bill_id'] = Variable<int>(billId);
+    map['line_no'] = Variable<int>(lineNo);
+    map['metal_type'] = Variable<String>(metalType);
     map['item_name'] = Variable<String>(itemName);
     if (!nullToAbsent || huid != null) {
       map['huid'] = Variable<String>(huid);
     }
     map['purity'] = Variable<String>(purity);
+    map['quantity'] = Variable<int>(quantity);
     map['gross_weight'] = Variable<double>(grossWeight);
+    map['less_weight'] = Variable<double>(lessWeight);
+    map['less_weight_per_piece'] = Variable<bool>(lessWeightPerPiece);
     map['net_weight'] = Variable<double>(netWeight);
+    map['fine_weight'] = Variable<double>(fineWeight);
     map['rate'] = Variable<double>(rate);
+    map['making_charge_type'] = Variable<String>(makingChargeType);
+    map['making_charge_input'] = Variable<double>(makingChargeInput);
     map['making_charge'] = Variable<double>(makingCharge);
     map['item_total'] = Variable<double>(itemTotal);
+    if (!nullToAbsent || linkedStockItemId != null) {
+      map['linked_stock_item_id'] = Variable<int>(linkedStockItemId);
+    }
+    if (!nullToAbsent || linkedStockSku != null) {
+      map['linked_stock_sku'] = Variable<String>(linkedStockSku);
+    }
     return map;
   }
 
@@ -5389,14 +6228,28 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           ? const Value.absent()
           : Value(updatedAt),
       billId: Value(billId),
+      lineNo: Value(lineNo),
+      metalType: Value(metalType),
       itemName: Value(itemName),
       huid: huid == null && nullToAbsent ? const Value.absent() : Value(huid),
       purity: Value(purity),
+      quantity: Value(quantity),
       grossWeight: Value(grossWeight),
+      lessWeight: Value(lessWeight),
+      lessWeightPerPiece: Value(lessWeightPerPiece),
       netWeight: Value(netWeight),
+      fineWeight: Value(fineWeight),
       rate: Value(rate),
+      makingChargeType: Value(makingChargeType),
+      makingChargeInput: Value(makingChargeInput),
       makingCharge: Value(makingCharge),
       itemTotal: Value(itemTotal),
+      linkedStockItemId: linkedStockItemId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(linkedStockItemId),
+      linkedStockSku: linkedStockSku == null && nullToAbsent
+          ? const Value.absent()
+          : Value(linkedStockSku),
     );
   }
 
@@ -5408,14 +6261,24 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       billId: serializer.fromJson<int>(json['billId']),
+      lineNo: serializer.fromJson<int>(json['lineNo']),
+      metalType: serializer.fromJson<String>(json['metalType']),
       itemName: serializer.fromJson<String>(json['itemName']),
       huid: serializer.fromJson<String?>(json['huid']),
       purity: serializer.fromJson<String>(json['purity']),
+      quantity: serializer.fromJson<int>(json['quantity']),
       grossWeight: serializer.fromJson<double>(json['grossWeight']),
+      lessWeight: serializer.fromJson<double>(json['lessWeight']),
+      lessWeightPerPiece: serializer.fromJson<bool>(json['lessWeightPerPiece']),
       netWeight: serializer.fromJson<double>(json['netWeight']),
+      fineWeight: serializer.fromJson<double>(json['fineWeight']),
       rate: serializer.fromJson<double>(json['rate']),
+      makingChargeType: serializer.fromJson<String>(json['makingChargeType']),
+      makingChargeInput: serializer.fromJson<double>(json['makingChargeInput']),
       makingCharge: serializer.fromJson<double>(json['makingCharge']),
       itemTotal: serializer.fromJson<double>(json['itemTotal']),
+      linkedStockItemId: serializer.fromJson<int?>(json['linkedStockItemId']),
+      linkedStockSku: serializer.fromJson<String?>(json['linkedStockSku']),
     );
   }
   @override
@@ -5426,14 +6289,24 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'billId': serializer.toJson<int>(billId),
+      'lineNo': serializer.toJson<int>(lineNo),
+      'metalType': serializer.toJson<String>(metalType),
       'itemName': serializer.toJson<String>(itemName),
       'huid': serializer.toJson<String?>(huid),
       'purity': serializer.toJson<String>(purity),
+      'quantity': serializer.toJson<int>(quantity),
       'grossWeight': serializer.toJson<double>(grossWeight),
+      'lessWeight': serializer.toJson<double>(lessWeight),
+      'lessWeightPerPiece': serializer.toJson<bool>(lessWeightPerPiece),
       'netWeight': serializer.toJson<double>(netWeight),
+      'fineWeight': serializer.toJson<double>(fineWeight),
       'rate': serializer.toJson<double>(rate),
+      'makingChargeType': serializer.toJson<String>(makingChargeType),
+      'makingChargeInput': serializer.toJson<double>(makingChargeInput),
       'makingCharge': serializer.toJson<double>(makingCharge),
       'itemTotal': serializer.toJson<double>(itemTotal),
+      'linkedStockItemId': serializer.toJson<int?>(linkedStockItemId),
+      'linkedStockSku': serializer.toJson<String?>(linkedStockSku),
     };
   }
 
@@ -5442,27 +6315,50 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           DateTime? createdAt,
           Value<DateTime?> updatedAt = const Value.absent(),
           int? billId,
+          int? lineNo,
+          String? metalType,
           String? itemName,
           Value<String?> huid = const Value.absent(),
           String? purity,
+          int? quantity,
           double? grossWeight,
+          double? lessWeight,
+          bool? lessWeightPerPiece,
           double? netWeight,
+          double? fineWeight,
           double? rate,
+          String? makingChargeType,
+          double? makingChargeInput,
           double? makingCharge,
-          double? itemTotal}) =>
+          double? itemTotal,
+          Value<int?> linkedStockItemId = const Value.absent(),
+          Value<String?> linkedStockSku = const Value.absent()}) =>
       BillItem(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
         billId: billId ?? this.billId,
+        lineNo: lineNo ?? this.lineNo,
+        metalType: metalType ?? this.metalType,
         itemName: itemName ?? this.itemName,
         huid: huid.present ? huid.value : this.huid,
         purity: purity ?? this.purity,
+        quantity: quantity ?? this.quantity,
         grossWeight: grossWeight ?? this.grossWeight,
+        lessWeight: lessWeight ?? this.lessWeight,
+        lessWeightPerPiece: lessWeightPerPiece ?? this.lessWeightPerPiece,
         netWeight: netWeight ?? this.netWeight,
+        fineWeight: fineWeight ?? this.fineWeight,
         rate: rate ?? this.rate,
+        makingChargeType: makingChargeType ?? this.makingChargeType,
+        makingChargeInput: makingChargeInput ?? this.makingChargeInput,
         makingCharge: makingCharge ?? this.makingCharge,
         itemTotal: itemTotal ?? this.itemTotal,
+        linkedStockItemId: linkedStockItemId.present
+            ? linkedStockItemId.value
+            : this.linkedStockItemId,
+        linkedStockSku:
+            linkedStockSku.present ? linkedStockSku.value : this.linkedStockSku,
       );
   BillItem copyWithCompanion(BillItemsCompanion data) {
     return BillItem(
@@ -5470,17 +6366,39 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       billId: data.billId.present ? data.billId.value : this.billId,
+      lineNo: data.lineNo.present ? data.lineNo.value : this.lineNo,
+      metalType: data.metalType.present ? data.metalType.value : this.metalType,
       itemName: data.itemName.present ? data.itemName.value : this.itemName,
       huid: data.huid.present ? data.huid.value : this.huid,
       purity: data.purity.present ? data.purity.value : this.purity,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
       grossWeight:
           data.grossWeight.present ? data.grossWeight.value : this.grossWeight,
+      lessWeight:
+          data.lessWeight.present ? data.lessWeight.value : this.lessWeight,
+      lessWeightPerPiece: data.lessWeightPerPiece.present
+          ? data.lessWeightPerPiece.value
+          : this.lessWeightPerPiece,
       netWeight: data.netWeight.present ? data.netWeight.value : this.netWeight,
+      fineWeight:
+          data.fineWeight.present ? data.fineWeight.value : this.fineWeight,
       rate: data.rate.present ? data.rate.value : this.rate,
+      makingChargeType: data.makingChargeType.present
+          ? data.makingChargeType.value
+          : this.makingChargeType,
+      makingChargeInput: data.makingChargeInput.present
+          ? data.makingChargeInput.value
+          : this.makingChargeInput,
       makingCharge: data.makingCharge.present
           ? data.makingCharge.value
           : this.makingCharge,
       itemTotal: data.itemTotal.present ? data.itemTotal.value : this.itemTotal,
+      linkedStockItemId: data.linkedStockItemId.present
+          ? data.linkedStockItemId.value
+          : this.linkedStockItemId,
+      linkedStockSku: data.linkedStockSku.present
+          ? data.linkedStockSku.value
+          : this.linkedStockSku,
     );
   }
 
@@ -5491,21 +6409,53 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('billId: $billId, ')
+          ..write('lineNo: $lineNo, ')
+          ..write('metalType: $metalType, ')
           ..write('itemName: $itemName, ')
           ..write('huid: $huid, ')
           ..write('purity: $purity, ')
+          ..write('quantity: $quantity, ')
           ..write('grossWeight: $grossWeight, ')
+          ..write('lessWeight: $lessWeight, ')
+          ..write('lessWeightPerPiece: $lessWeightPerPiece, ')
           ..write('netWeight: $netWeight, ')
+          ..write('fineWeight: $fineWeight, ')
           ..write('rate: $rate, ')
+          ..write('makingChargeType: $makingChargeType, ')
+          ..write('makingChargeInput: $makingChargeInput, ')
           ..write('makingCharge: $makingCharge, ')
-          ..write('itemTotal: $itemTotal')
+          ..write('itemTotal: $itemTotal, ')
+          ..write('linkedStockItemId: $linkedStockItemId, ')
+          ..write('linkedStockSku: $linkedStockSku')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, createdAt, updatedAt, billId, itemName,
-      huid, purity, grossWeight, netWeight, rate, makingCharge, itemTotal);
+  int get hashCode => Object.hashAll([
+        id,
+        createdAt,
+        updatedAt,
+        billId,
+        lineNo,
+        metalType,
+        itemName,
+        huid,
+        purity,
+        quantity,
+        grossWeight,
+        lessWeight,
+        lessWeightPerPiece,
+        netWeight,
+        fineWeight,
+        rate,
+        makingChargeType,
+        makingChargeInput,
+        makingCharge,
+        itemTotal,
+        linkedStockItemId,
+        linkedStockSku
+      ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5514,14 +6464,24 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.billId == this.billId &&
+          other.lineNo == this.lineNo &&
+          other.metalType == this.metalType &&
           other.itemName == this.itemName &&
           other.huid == this.huid &&
           other.purity == this.purity &&
+          other.quantity == this.quantity &&
           other.grossWeight == this.grossWeight &&
+          other.lessWeight == this.lessWeight &&
+          other.lessWeightPerPiece == this.lessWeightPerPiece &&
           other.netWeight == this.netWeight &&
+          other.fineWeight == this.fineWeight &&
           other.rate == this.rate &&
+          other.makingChargeType == this.makingChargeType &&
+          other.makingChargeInput == this.makingChargeInput &&
           other.makingCharge == this.makingCharge &&
-          other.itemTotal == this.itemTotal);
+          other.itemTotal == this.itemTotal &&
+          other.linkedStockItemId == this.linkedStockItemId &&
+          other.linkedStockSku == this.linkedStockSku);
 }
 
 class BillItemsCompanion extends UpdateCompanion<BillItem> {
@@ -5529,41 +6489,71 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
   final Value<DateTime> createdAt;
   final Value<DateTime?> updatedAt;
   final Value<int> billId;
+  final Value<int> lineNo;
+  final Value<String> metalType;
   final Value<String> itemName;
   final Value<String?> huid;
   final Value<String> purity;
+  final Value<int> quantity;
   final Value<double> grossWeight;
+  final Value<double> lessWeight;
+  final Value<bool> lessWeightPerPiece;
   final Value<double> netWeight;
+  final Value<double> fineWeight;
   final Value<double> rate;
+  final Value<String> makingChargeType;
+  final Value<double> makingChargeInput;
   final Value<double> makingCharge;
   final Value<double> itemTotal;
+  final Value<int?> linkedStockItemId;
+  final Value<String?> linkedStockSku;
   const BillItemsCompanion({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.billId = const Value.absent(),
+    this.lineNo = const Value.absent(),
+    this.metalType = const Value.absent(),
     this.itemName = const Value.absent(),
     this.huid = const Value.absent(),
     this.purity = const Value.absent(),
+    this.quantity = const Value.absent(),
     this.grossWeight = const Value.absent(),
+    this.lessWeight = const Value.absent(),
+    this.lessWeightPerPiece = const Value.absent(),
     this.netWeight = const Value.absent(),
+    this.fineWeight = const Value.absent(),
     this.rate = const Value.absent(),
+    this.makingChargeType = const Value.absent(),
+    this.makingChargeInput = const Value.absent(),
     this.makingCharge = const Value.absent(),
     this.itemTotal = const Value.absent(),
+    this.linkedStockItemId = const Value.absent(),
+    this.linkedStockSku = const Value.absent(),
   });
   BillItemsCompanion.insert({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     required int billId,
+    this.lineNo = const Value.absent(),
+    this.metalType = const Value.absent(),
     required String itemName,
     this.huid = const Value.absent(),
     this.purity = const Value.absent(),
+    this.quantity = const Value.absent(),
     this.grossWeight = const Value.absent(),
+    this.lessWeight = const Value.absent(),
+    this.lessWeightPerPiece = const Value.absent(),
     this.netWeight = const Value.absent(),
+    this.fineWeight = const Value.absent(),
     this.rate = const Value.absent(),
+    this.makingChargeType = const Value.absent(),
+    this.makingChargeInput = const Value.absent(),
     this.makingCharge = const Value.absent(),
     this.itemTotal = const Value.absent(),
+    this.linkedStockItemId = const Value.absent(),
+    this.linkedStockSku = const Value.absent(),
   })  : billId = Value(billId),
         itemName = Value(itemName);
   static Insertable<BillItem> custom({
@@ -5571,28 +6561,49 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? billId,
+    Expression<int>? lineNo,
+    Expression<String>? metalType,
     Expression<String>? itemName,
     Expression<String>? huid,
     Expression<String>? purity,
+    Expression<int>? quantity,
     Expression<double>? grossWeight,
+    Expression<double>? lessWeight,
+    Expression<bool>? lessWeightPerPiece,
     Expression<double>? netWeight,
+    Expression<double>? fineWeight,
     Expression<double>? rate,
+    Expression<String>? makingChargeType,
+    Expression<double>? makingChargeInput,
     Expression<double>? makingCharge,
     Expression<double>? itemTotal,
+    Expression<int>? linkedStockItemId,
+    Expression<String>? linkedStockSku,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (billId != null) 'bill_id': billId,
+      if (lineNo != null) 'line_no': lineNo,
+      if (metalType != null) 'metal_type': metalType,
       if (itemName != null) 'item_name': itemName,
       if (huid != null) 'huid': huid,
       if (purity != null) 'purity': purity,
+      if (quantity != null) 'quantity': quantity,
       if (grossWeight != null) 'gross_weight': grossWeight,
+      if (lessWeight != null) 'less_weight': lessWeight,
+      if (lessWeightPerPiece != null)
+        'less_weight_per_piece': lessWeightPerPiece,
       if (netWeight != null) 'net_weight': netWeight,
+      if (fineWeight != null) 'fine_weight': fineWeight,
       if (rate != null) 'rate': rate,
+      if (makingChargeType != null) 'making_charge_type': makingChargeType,
+      if (makingChargeInput != null) 'making_charge_input': makingChargeInput,
       if (makingCharge != null) 'making_charge': makingCharge,
       if (itemTotal != null) 'item_total': itemTotal,
+      if (linkedStockItemId != null) 'linked_stock_item_id': linkedStockItemId,
+      if (linkedStockSku != null) 'linked_stock_sku': linkedStockSku,
     });
   }
 
@@ -5601,27 +6612,47 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
       Value<DateTime>? createdAt,
       Value<DateTime?>? updatedAt,
       Value<int>? billId,
+      Value<int>? lineNo,
+      Value<String>? metalType,
       Value<String>? itemName,
       Value<String?>? huid,
       Value<String>? purity,
+      Value<int>? quantity,
       Value<double>? grossWeight,
+      Value<double>? lessWeight,
+      Value<bool>? lessWeightPerPiece,
       Value<double>? netWeight,
+      Value<double>? fineWeight,
       Value<double>? rate,
+      Value<String>? makingChargeType,
+      Value<double>? makingChargeInput,
       Value<double>? makingCharge,
-      Value<double>? itemTotal}) {
+      Value<double>? itemTotal,
+      Value<int?>? linkedStockItemId,
+      Value<String?>? linkedStockSku}) {
     return BillItemsCompanion(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       billId: billId ?? this.billId,
+      lineNo: lineNo ?? this.lineNo,
+      metalType: metalType ?? this.metalType,
       itemName: itemName ?? this.itemName,
       huid: huid ?? this.huid,
       purity: purity ?? this.purity,
+      quantity: quantity ?? this.quantity,
       grossWeight: grossWeight ?? this.grossWeight,
+      lessWeight: lessWeight ?? this.lessWeight,
+      lessWeightPerPiece: lessWeightPerPiece ?? this.lessWeightPerPiece,
       netWeight: netWeight ?? this.netWeight,
+      fineWeight: fineWeight ?? this.fineWeight,
       rate: rate ?? this.rate,
+      makingChargeType: makingChargeType ?? this.makingChargeType,
+      makingChargeInput: makingChargeInput ?? this.makingChargeInput,
       makingCharge: makingCharge ?? this.makingCharge,
       itemTotal: itemTotal ?? this.itemTotal,
+      linkedStockItemId: linkedStockItemId ?? this.linkedStockItemId,
+      linkedStockSku: linkedStockSku ?? this.linkedStockSku,
     );
   }
 
@@ -5640,6 +6671,12 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     if (billId.present) {
       map['bill_id'] = Variable<int>(billId.value);
     }
+    if (lineNo.present) {
+      map['line_no'] = Variable<int>(lineNo.value);
+    }
+    if (metalType.present) {
+      map['metal_type'] = Variable<String>(metalType.value);
+    }
     if (itemName.present) {
       map['item_name'] = Variable<String>(itemName.value);
     }
@@ -5649,20 +6686,44 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     if (purity.present) {
       map['purity'] = Variable<String>(purity.value);
     }
+    if (quantity.present) {
+      map['quantity'] = Variable<int>(quantity.value);
+    }
     if (grossWeight.present) {
       map['gross_weight'] = Variable<double>(grossWeight.value);
+    }
+    if (lessWeight.present) {
+      map['less_weight'] = Variable<double>(lessWeight.value);
+    }
+    if (lessWeightPerPiece.present) {
+      map['less_weight_per_piece'] = Variable<bool>(lessWeightPerPiece.value);
     }
     if (netWeight.present) {
       map['net_weight'] = Variable<double>(netWeight.value);
     }
+    if (fineWeight.present) {
+      map['fine_weight'] = Variable<double>(fineWeight.value);
+    }
     if (rate.present) {
       map['rate'] = Variable<double>(rate.value);
+    }
+    if (makingChargeType.present) {
+      map['making_charge_type'] = Variable<String>(makingChargeType.value);
+    }
+    if (makingChargeInput.present) {
+      map['making_charge_input'] = Variable<double>(makingChargeInput.value);
     }
     if (makingCharge.present) {
       map['making_charge'] = Variable<double>(makingCharge.value);
     }
     if (itemTotal.present) {
       map['item_total'] = Variable<double>(itemTotal.value);
+    }
+    if (linkedStockItemId.present) {
+      map['linked_stock_item_id'] = Variable<int>(linkedStockItemId.value);
+    }
+    if (linkedStockSku.present) {
+      map['linked_stock_sku'] = Variable<String>(linkedStockSku.value);
     }
     return map;
   }
@@ -5674,14 +6735,689 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('billId: $billId, ')
+          ..write('lineNo: $lineNo, ')
+          ..write('metalType: $metalType, ')
           ..write('itemName: $itemName, ')
           ..write('huid: $huid, ')
           ..write('purity: $purity, ')
+          ..write('quantity: $quantity, ')
           ..write('grossWeight: $grossWeight, ')
+          ..write('lessWeight: $lessWeight, ')
+          ..write('lessWeightPerPiece: $lessWeightPerPiece, ')
           ..write('netWeight: $netWeight, ')
+          ..write('fineWeight: $fineWeight, ')
           ..write('rate: $rate, ')
+          ..write('makingChargeType: $makingChargeType, ')
+          ..write('makingChargeInput: $makingChargeInput, ')
           ..write('makingCharge: $makingCharge, ')
-          ..write('itemTotal: $itemTotal')
+          ..write('itemTotal: $itemTotal, ')
+          ..write('linkedStockItemId: $linkedStockItemId, ')
+          ..write('linkedStockSku: $linkedStockSku')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $BillOldGoldItemsTable extends BillOldGoldItems
+    with TableInfo<$BillOldGoldItemsTable, BillOldGoldItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BillOldGoldItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _billIdMeta = const VerificationMeta('billId');
+  @override
+  late final GeneratedColumn<int> billId = GeneratedColumn<int>(
+      'bill_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES bills (id) ON DELETE CASCADE'));
+  static const VerificationMeta _lineNoMeta = const VerificationMeta('lineNo');
+  @override
+  late final GeneratedColumn<int> lineNo = GeneratedColumn<int>(
+      'line_no', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  static const VerificationMeta _metalTypeMeta =
+      const VerificationMeta('metalType');
+  @override
+  late final GeneratedColumn<String> metalType = GeneratedColumn<String>(
+      'metal_type', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('GOLD'));
+  static const VerificationMeta _itemDescriptionMeta =
+      const VerificationMeta('itemDescription');
+  @override
+  late final GeneratedColumn<String> itemDescription = GeneratedColumn<String>(
+      'item_description', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(''));
+  static const VerificationMeta _grossWeightMeta =
+      const VerificationMeta('grossWeight');
+  @override
+  late final GeneratedColumn<double> grossWeight = GeneratedColumn<double>(
+      'gross_weight', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _lessWeightMeta =
+      const VerificationMeta('lessWeight');
+  @override
+  late final GeneratedColumn<double> lessWeight = GeneratedColumn<double>(
+      'less_weight', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _netWeightMeta =
+      const VerificationMeta('netWeight');
+  @override
+  late final GeneratedColumn<double> netWeight = GeneratedColumn<double>(
+      'net_weight', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _purityMeta = const VerificationMeta('purity');
+  @override
+  late final GeneratedColumn<double> purity = GeneratedColumn<double>(
+      'purity', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _fineWeightMeta =
+      const VerificationMeta('fineWeight');
+  @override
+  late final GeneratedColumn<double> fineWeight = GeneratedColumn<double>(
+      'fine_weight', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _rateMeta = const VerificationMeta('rate');
+  @override
+  late final GeneratedColumn<double> rate = GeneratedColumn<double>(
+      'rate', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _lineAmountMeta =
+      const VerificationMeta('lineAmount');
+  @override
+  late final GeneratedColumn<double> lineAmount = GeneratedColumn<double>(
+      'line_amount', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        billId,
+        lineNo,
+        metalType,
+        itemDescription,
+        grossWeight,
+        lessWeight,
+        netWeight,
+        purity,
+        fineWeight,
+        rate,
+        lineAmount
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'bill_old_gold_items';
+  @override
+  VerificationContext validateIntegrity(Insertable<BillOldGoldItem> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('bill_id')) {
+      context.handle(_billIdMeta,
+          billId.isAcceptableOrUnknown(data['bill_id']!, _billIdMeta));
+    } else if (isInserting) {
+      context.missing(_billIdMeta);
+    }
+    if (data.containsKey('line_no')) {
+      context.handle(_lineNoMeta,
+          lineNo.isAcceptableOrUnknown(data['line_no']!, _lineNoMeta));
+    }
+    if (data.containsKey('metal_type')) {
+      context.handle(_metalTypeMeta,
+          metalType.isAcceptableOrUnknown(data['metal_type']!, _metalTypeMeta));
+    }
+    if (data.containsKey('item_description')) {
+      context.handle(
+          _itemDescriptionMeta,
+          itemDescription.isAcceptableOrUnknown(
+              data['item_description']!, _itemDescriptionMeta));
+    }
+    if (data.containsKey('gross_weight')) {
+      context.handle(
+          _grossWeightMeta,
+          grossWeight.isAcceptableOrUnknown(
+              data['gross_weight']!, _grossWeightMeta));
+    }
+    if (data.containsKey('less_weight')) {
+      context.handle(
+          _lessWeightMeta,
+          lessWeight.isAcceptableOrUnknown(
+              data['less_weight']!, _lessWeightMeta));
+    }
+    if (data.containsKey('net_weight')) {
+      context.handle(_netWeightMeta,
+          netWeight.isAcceptableOrUnknown(data['net_weight']!, _netWeightMeta));
+    }
+    if (data.containsKey('purity')) {
+      context.handle(_purityMeta,
+          purity.isAcceptableOrUnknown(data['purity']!, _purityMeta));
+    }
+    if (data.containsKey('fine_weight')) {
+      context.handle(
+          _fineWeightMeta,
+          fineWeight.isAcceptableOrUnknown(
+              data['fine_weight']!, _fineWeightMeta));
+    }
+    if (data.containsKey('rate')) {
+      context.handle(
+          _rateMeta, rate.isAcceptableOrUnknown(data['rate']!, _rateMeta));
+    }
+    if (data.containsKey('line_amount')) {
+      context.handle(
+          _lineAmountMeta,
+          lineAmount.isAcceptableOrUnknown(
+              data['line_amount']!, _lineAmountMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BillOldGoldItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BillOldGoldItem(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      billId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}bill_id'])!,
+      lineNo: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}line_no'])!,
+      metalType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}metal_type'])!,
+      itemDescription: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}item_description'])!,
+      grossWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}gross_weight'])!,
+      lessWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}less_weight'])!,
+      netWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}net_weight'])!,
+      purity: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}purity'])!,
+      fineWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}fine_weight'])!,
+      rate: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}rate'])!,
+      lineAmount: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}line_amount'])!,
+    );
+  }
+
+  @override
+  $BillOldGoldItemsTable createAlias(String alias) {
+    return $BillOldGoldItemsTable(attachedDatabase, alias);
+  }
+}
+
+class BillOldGoldItem extends DataClass implements Insertable<BillOldGoldItem> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final int billId;
+  final int lineNo;
+  final String metalType;
+  final String itemDescription;
+  final double grossWeight;
+  final double lessWeight;
+  final double netWeight;
+  final double purity;
+  final double fineWeight;
+  final double rate;
+  final double lineAmount;
+  const BillOldGoldItem(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.billId,
+      required this.lineNo,
+      required this.metalType,
+      required this.itemDescription,
+      required this.grossWeight,
+      required this.lessWeight,
+      required this.netWeight,
+      required this.purity,
+      required this.fineWeight,
+      required this.rate,
+      required this.lineAmount});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['bill_id'] = Variable<int>(billId);
+    map['line_no'] = Variable<int>(lineNo);
+    map['metal_type'] = Variable<String>(metalType);
+    map['item_description'] = Variable<String>(itemDescription);
+    map['gross_weight'] = Variable<double>(grossWeight);
+    map['less_weight'] = Variable<double>(lessWeight);
+    map['net_weight'] = Variable<double>(netWeight);
+    map['purity'] = Variable<double>(purity);
+    map['fine_weight'] = Variable<double>(fineWeight);
+    map['rate'] = Variable<double>(rate);
+    map['line_amount'] = Variable<double>(lineAmount);
+    return map;
+  }
+
+  BillOldGoldItemsCompanion toCompanion(bool nullToAbsent) {
+    return BillOldGoldItemsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      billId: Value(billId),
+      lineNo: Value(lineNo),
+      metalType: Value(metalType),
+      itemDescription: Value(itemDescription),
+      grossWeight: Value(grossWeight),
+      lessWeight: Value(lessWeight),
+      netWeight: Value(netWeight),
+      purity: Value(purity),
+      fineWeight: Value(fineWeight),
+      rate: Value(rate),
+      lineAmount: Value(lineAmount),
+    );
+  }
+
+  factory BillOldGoldItem.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BillOldGoldItem(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      billId: serializer.fromJson<int>(json['billId']),
+      lineNo: serializer.fromJson<int>(json['lineNo']),
+      metalType: serializer.fromJson<String>(json['metalType']),
+      itemDescription: serializer.fromJson<String>(json['itemDescription']),
+      grossWeight: serializer.fromJson<double>(json['grossWeight']),
+      lessWeight: serializer.fromJson<double>(json['lessWeight']),
+      netWeight: serializer.fromJson<double>(json['netWeight']),
+      purity: serializer.fromJson<double>(json['purity']),
+      fineWeight: serializer.fromJson<double>(json['fineWeight']),
+      rate: serializer.fromJson<double>(json['rate']),
+      lineAmount: serializer.fromJson<double>(json['lineAmount']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'billId': serializer.toJson<int>(billId),
+      'lineNo': serializer.toJson<int>(lineNo),
+      'metalType': serializer.toJson<String>(metalType),
+      'itemDescription': serializer.toJson<String>(itemDescription),
+      'grossWeight': serializer.toJson<double>(grossWeight),
+      'lessWeight': serializer.toJson<double>(lessWeight),
+      'netWeight': serializer.toJson<double>(netWeight),
+      'purity': serializer.toJson<double>(purity),
+      'fineWeight': serializer.toJson<double>(fineWeight),
+      'rate': serializer.toJson<double>(rate),
+      'lineAmount': serializer.toJson<double>(lineAmount),
+    };
+  }
+
+  BillOldGoldItem copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          int? billId,
+          int? lineNo,
+          String? metalType,
+          String? itemDescription,
+          double? grossWeight,
+          double? lessWeight,
+          double? netWeight,
+          double? purity,
+          double? fineWeight,
+          double? rate,
+          double? lineAmount}) =>
+      BillOldGoldItem(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        billId: billId ?? this.billId,
+        lineNo: lineNo ?? this.lineNo,
+        metalType: metalType ?? this.metalType,
+        itemDescription: itemDescription ?? this.itemDescription,
+        grossWeight: grossWeight ?? this.grossWeight,
+        lessWeight: lessWeight ?? this.lessWeight,
+        netWeight: netWeight ?? this.netWeight,
+        purity: purity ?? this.purity,
+        fineWeight: fineWeight ?? this.fineWeight,
+        rate: rate ?? this.rate,
+        lineAmount: lineAmount ?? this.lineAmount,
+      );
+  BillOldGoldItem copyWithCompanion(BillOldGoldItemsCompanion data) {
+    return BillOldGoldItem(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      billId: data.billId.present ? data.billId.value : this.billId,
+      lineNo: data.lineNo.present ? data.lineNo.value : this.lineNo,
+      metalType: data.metalType.present ? data.metalType.value : this.metalType,
+      itemDescription: data.itemDescription.present
+          ? data.itemDescription.value
+          : this.itemDescription,
+      grossWeight:
+          data.grossWeight.present ? data.grossWeight.value : this.grossWeight,
+      lessWeight:
+          data.lessWeight.present ? data.lessWeight.value : this.lessWeight,
+      netWeight: data.netWeight.present ? data.netWeight.value : this.netWeight,
+      purity: data.purity.present ? data.purity.value : this.purity,
+      fineWeight:
+          data.fineWeight.present ? data.fineWeight.value : this.fineWeight,
+      rate: data.rate.present ? data.rate.value : this.rate,
+      lineAmount:
+          data.lineAmount.present ? data.lineAmount.value : this.lineAmount,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BillOldGoldItem(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('billId: $billId, ')
+          ..write('lineNo: $lineNo, ')
+          ..write('metalType: $metalType, ')
+          ..write('itemDescription: $itemDescription, ')
+          ..write('grossWeight: $grossWeight, ')
+          ..write('lessWeight: $lessWeight, ')
+          ..write('netWeight: $netWeight, ')
+          ..write('purity: $purity, ')
+          ..write('fineWeight: $fineWeight, ')
+          ..write('rate: $rate, ')
+          ..write('lineAmount: $lineAmount')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      createdAt,
+      updatedAt,
+      billId,
+      lineNo,
+      metalType,
+      itemDescription,
+      grossWeight,
+      lessWeight,
+      netWeight,
+      purity,
+      fineWeight,
+      rate,
+      lineAmount);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BillOldGoldItem &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.billId == this.billId &&
+          other.lineNo == this.lineNo &&
+          other.metalType == this.metalType &&
+          other.itemDescription == this.itemDescription &&
+          other.grossWeight == this.grossWeight &&
+          other.lessWeight == this.lessWeight &&
+          other.netWeight == this.netWeight &&
+          other.purity == this.purity &&
+          other.fineWeight == this.fineWeight &&
+          other.rate == this.rate &&
+          other.lineAmount == this.lineAmount);
+}
+
+class BillOldGoldItemsCompanion extends UpdateCompanion<BillOldGoldItem> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<int> billId;
+  final Value<int> lineNo;
+  final Value<String> metalType;
+  final Value<String> itemDescription;
+  final Value<double> grossWeight;
+  final Value<double> lessWeight;
+  final Value<double> netWeight;
+  final Value<double> purity;
+  final Value<double> fineWeight;
+  final Value<double> rate;
+  final Value<double> lineAmount;
+  const BillOldGoldItemsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.billId = const Value.absent(),
+    this.lineNo = const Value.absent(),
+    this.metalType = const Value.absent(),
+    this.itemDescription = const Value.absent(),
+    this.grossWeight = const Value.absent(),
+    this.lessWeight = const Value.absent(),
+    this.netWeight = const Value.absent(),
+    this.purity = const Value.absent(),
+    this.fineWeight = const Value.absent(),
+    this.rate = const Value.absent(),
+    this.lineAmount = const Value.absent(),
+  });
+  BillOldGoldItemsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required int billId,
+    this.lineNo = const Value.absent(),
+    this.metalType = const Value.absent(),
+    this.itemDescription = const Value.absent(),
+    this.grossWeight = const Value.absent(),
+    this.lessWeight = const Value.absent(),
+    this.netWeight = const Value.absent(),
+    this.purity = const Value.absent(),
+    this.fineWeight = const Value.absent(),
+    this.rate = const Value.absent(),
+    this.lineAmount = const Value.absent(),
+  }) : billId = Value(billId);
+  static Insertable<BillOldGoldItem> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? billId,
+    Expression<int>? lineNo,
+    Expression<String>? metalType,
+    Expression<String>? itemDescription,
+    Expression<double>? grossWeight,
+    Expression<double>? lessWeight,
+    Expression<double>? netWeight,
+    Expression<double>? purity,
+    Expression<double>? fineWeight,
+    Expression<double>? rate,
+    Expression<double>? lineAmount,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (billId != null) 'bill_id': billId,
+      if (lineNo != null) 'line_no': lineNo,
+      if (metalType != null) 'metal_type': metalType,
+      if (itemDescription != null) 'item_description': itemDescription,
+      if (grossWeight != null) 'gross_weight': grossWeight,
+      if (lessWeight != null) 'less_weight': lessWeight,
+      if (netWeight != null) 'net_weight': netWeight,
+      if (purity != null) 'purity': purity,
+      if (fineWeight != null) 'fine_weight': fineWeight,
+      if (rate != null) 'rate': rate,
+      if (lineAmount != null) 'line_amount': lineAmount,
+    });
+  }
+
+  BillOldGoldItemsCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<int>? billId,
+      Value<int>? lineNo,
+      Value<String>? metalType,
+      Value<String>? itemDescription,
+      Value<double>? grossWeight,
+      Value<double>? lessWeight,
+      Value<double>? netWeight,
+      Value<double>? purity,
+      Value<double>? fineWeight,
+      Value<double>? rate,
+      Value<double>? lineAmount}) {
+    return BillOldGoldItemsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      billId: billId ?? this.billId,
+      lineNo: lineNo ?? this.lineNo,
+      metalType: metalType ?? this.metalType,
+      itemDescription: itemDescription ?? this.itemDescription,
+      grossWeight: grossWeight ?? this.grossWeight,
+      lessWeight: lessWeight ?? this.lessWeight,
+      netWeight: netWeight ?? this.netWeight,
+      purity: purity ?? this.purity,
+      fineWeight: fineWeight ?? this.fineWeight,
+      rate: rate ?? this.rate,
+      lineAmount: lineAmount ?? this.lineAmount,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (billId.present) {
+      map['bill_id'] = Variable<int>(billId.value);
+    }
+    if (lineNo.present) {
+      map['line_no'] = Variable<int>(lineNo.value);
+    }
+    if (metalType.present) {
+      map['metal_type'] = Variable<String>(metalType.value);
+    }
+    if (itemDescription.present) {
+      map['item_description'] = Variable<String>(itemDescription.value);
+    }
+    if (grossWeight.present) {
+      map['gross_weight'] = Variable<double>(grossWeight.value);
+    }
+    if (lessWeight.present) {
+      map['less_weight'] = Variable<double>(lessWeight.value);
+    }
+    if (netWeight.present) {
+      map['net_weight'] = Variable<double>(netWeight.value);
+    }
+    if (purity.present) {
+      map['purity'] = Variable<double>(purity.value);
+    }
+    if (fineWeight.present) {
+      map['fine_weight'] = Variable<double>(fineWeight.value);
+    }
+    if (rate.present) {
+      map['rate'] = Variable<double>(rate.value);
+    }
+    if (lineAmount.present) {
+      map['line_amount'] = Variable<double>(lineAmount.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BillOldGoldItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('billId: $billId, ')
+          ..write('lineNo: $lineNo, ')
+          ..write('metalType: $metalType, ')
+          ..write('itemDescription: $itemDescription, ')
+          ..write('grossWeight: $grossWeight, ')
+          ..write('lessWeight: $lessWeight, ')
+          ..write('netWeight: $netWeight, ')
+          ..write('purity: $purity, ')
+          ..write('fineWeight: $fineWeight, ')
+          ..write('rate: $rate, ')
+          ..write('lineAmount: $lineAmount')
           ..write(')'))
         .toString();
   }
@@ -24783,6 +26519,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ShopProfilesTable shopProfiles = $ShopProfilesTable(this);
   late final $BillsTable bills = $BillsTable(this);
   late final $BillItemsTable billItems = $BillItemsTable(this);
+  late final $BillOldGoldItemsTable billOldGoldItems =
+      $BillOldGoldItemsTable(this);
   late final $SalesOrdersTable salesOrders = $SalesOrdersTable(this);
   late final $OrderAdvancesTable orderAdvances = $OrderAdvancesTable(this);
   late final $LoansTable loans = $LoansTable(this);
@@ -24831,6 +26569,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       'CREATE INDEX idx_bills_customer ON bills (customer_id)');
   late final Index idxBillItemsBill = Index('idx_bill_items_bill',
       'CREATE INDEX idx_bill_items_bill ON bill_items (bill_id)');
+  late final Index idxBillOldGoldBill = Index('idx_bill_old_gold_bill',
+      'CREATE INDEX idx_bill_old_gold_bill ON bill_old_gold_items (bill_id)');
   late final Index idxOrdersStatus = Index('idx_orders_status',
       'CREATE INDEX idx_orders_status ON sales_orders (status)');
   late final Index idxAdvancesOrder = Index('idx_advances_order',
@@ -24931,6 +26671,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         shopProfiles,
         bills,
         billItems,
+        billOldGoldItems,
         salesOrders,
         orderAdvances,
         loans,
@@ -24962,6 +26703,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         idxBillsDate,
         idxBillsCustomer,
         idxBillItemsBill,
+        idxBillOldGoldBill,
         idxOrdersStatus,
         idxAdvancesOrder,
         idxLoansCustomer,
@@ -25023,6 +26765,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
                 limitUpdateKind: UpdateKind.delete),
             result: [
               TableUpdate('bill_items', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('bills',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('bill_old_gold_items', kind: UpdateKind.delete),
             ],
           ),
           WritePropagation(
@@ -27359,11 +29108,27 @@ typedef $$BillsTableCreateCompanionBuilder = BillsCompanion Function({
   Value<int?> customerId,
   Value<String?> customerName,
   Value<String?> mobile,
+  Value<String> billingMode,
+  Value<String> billType,
+  Value<String> paymentStatus,
   Value<double> totalAmount,
   Value<double> discount,
+  Value<double> taxableAmount,
+  Value<double> cgstAmount,
+  Value<double> sgstAmount,
+  Value<double> gstAmount,
+  Value<double> makingTotal,
   Value<double> finalAmount,
   Value<double> paidAmount,
+  Value<double> cashPaid,
+  Value<double> upiPaid,
+  Value<double> cardPaid,
+  Value<double> advancePaid,
+  Value<double> dueAmount,
+  Value<double> oldGoldDeduction,
+  Value<String> oldGoldMode,
   Value<DateTime> billDate,
+  Value<DateTime?> promiseDate,
   Value<String> status,
 });
 typedef $$BillsTableUpdateCompanionBuilder = BillsCompanion Function({
@@ -27374,11 +29139,27 @@ typedef $$BillsTableUpdateCompanionBuilder = BillsCompanion Function({
   Value<int?> customerId,
   Value<String?> customerName,
   Value<String?> mobile,
+  Value<String> billingMode,
+  Value<String> billType,
+  Value<String> paymentStatus,
   Value<double> totalAmount,
   Value<double> discount,
+  Value<double> taxableAmount,
+  Value<double> cgstAmount,
+  Value<double> sgstAmount,
+  Value<double> gstAmount,
+  Value<double> makingTotal,
   Value<double> finalAmount,
   Value<double> paidAmount,
+  Value<double> cashPaid,
+  Value<double> upiPaid,
+  Value<double> cardPaid,
+  Value<double> advancePaid,
+  Value<double> dueAmount,
+  Value<double> oldGoldDeduction,
+  Value<String> oldGoldMode,
   Value<DateTime> billDate,
+  Value<DateTime?> promiseDate,
   Value<String> status,
 });
 
@@ -27412,6 +29193,23 @@ final class $$BillsTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$BillOldGoldItemsTable, List<BillOldGoldItem>>
+      _billOldGoldItemsRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.billOldGoldItems,
+              aliasName: $_aliasNameGenerator(
+                  db.bills.id, db.billOldGoldItems.billId));
+
+  $$BillOldGoldItemsTableProcessedTableManager get billOldGoldItemsRefs {
+    final manager =
+        $$BillOldGoldItemsTableTableManager($_db, $_db.billOldGoldItems)
+            .filter((f) => f.billId.id($_item.id));
+
+    final cache =
+        $_typedResult.readTableOrNull(_billOldGoldItemsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$BillsTableFilterComposer extends Composer<_$AppDatabase, $BillsTable> {
@@ -27440,11 +29238,35 @@ class $$BillsTableFilterComposer extends Composer<_$AppDatabase, $BillsTable> {
   ColumnFilters<String> get mobile => $composableBuilder(
       column: $table.mobile, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get billingMode => $composableBuilder(
+      column: $table.billingMode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get billType => $composableBuilder(
+      column: $table.billType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get paymentStatus => $composableBuilder(
+      column: $table.paymentStatus, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<double> get totalAmount => $composableBuilder(
       column: $table.totalAmount, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get discount => $composableBuilder(
       column: $table.discount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get taxableAmount => $composableBuilder(
+      column: $table.taxableAmount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get cgstAmount => $composableBuilder(
+      column: $table.cgstAmount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get sgstAmount => $composableBuilder(
+      column: $table.sgstAmount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get gstAmount => $composableBuilder(
+      column: $table.gstAmount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get makingTotal => $composableBuilder(
+      column: $table.makingTotal, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get finalAmount => $composableBuilder(
       column: $table.finalAmount, builder: (column) => ColumnFilters(column));
@@ -27452,8 +29274,33 @@ class $$BillsTableFilterComposer extends Composer<_$AppDatabase, $BillsTable> {
   ColumnFilters<double> get paidAmount => $composableBuilder(
       column: $table.paidAmount, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<double> get cashPaid => $composableBuilder(
+      column: $table.cashPaid, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get upiPaid => $composableBuilder(
+      column: $table.upiPaid, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get cardPaid => $composableBuilder(
+      column: $table.cardPaid, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get advancePaid => $composableBuilder(
+      column: $table.advancePaid, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get dueAmount => $composableBuilder(
+      column: $table.dueAmount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get oldGoldDeduction => $composableBuilder(
+      column: $table.oldGoldDeduction,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get oldGoldMode => $composableBuilder(
+      column: $table.oldGoldMode, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<DateTime> get billDate => $composableBuilder(
       column: $table.billDate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get promiseDate => $composableBuilder(
+      column: $table.promiseDate, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get status => $composableBuilder(
       column: $table.status, builder: (column) => ColumnFilters(column));
@@ -27498,6 +29345,27 @@ class $$BillsTableFilterComposer extends Composer<_$AppDatabase, $BillsTable> {
             ));
     return f(composer);
   }
+
+  Expression<bool> billOldGoldItemsRefs(
+      Expression<bool> Function($$BillOldGoldItemsTableFilterComposer f) f) {
+    final $$BillOldGoldItemsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.billOldGoldItems,
+        getReferencedColumn: (t) => t.billId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$BillOldGoldItemsTableFilterComposer(
+              $db: $db,
+              $table: $db.billOldGoldItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$BillsTableOrderingComposer
@@ -27528,11 +29396,37 @@ class $$BillsTableOrderingComposer
   ColumnOrderings<String> get mobile => $composableBuilder(
       column: $table.mobile, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get billingMode => $composableBuilder(
+      column: $table.billingMode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get billType => $composableBuilder(
+      column: $table.billType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get paymentStatus => $composableBuilder(
+      column: $table.paymentStatus,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<double> get totalAmount => $composableBuilder(
       column: $table.totalAmount, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get discount => $composableBuilder(
       column: $table.discount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get taxableAmount => $composableBuilder(
+      column: $table.taxableAmount,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get cgstAmount => $composableBuilder(
+      column: $table.cgstAmount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get sgstAmount => $composableBuilder(
+      column: $table.sgstAmount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get gstAmount => $composableBuilder(
+      column: $table.gstAmount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get makingTotal => $composableBuilder(
+      column: $table.makingTotal, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get finalAmount => $composableBuilder(
       column: $table.finalAmount, builder: (column) => ColumnOrderings(column));
@@ -27540,8 +29434,33 @@ class $$BillsTableOrderingComposer
   ColumnOrderings<double> get paidAmount => $composableBuilder(
       column: $table.paidAmount, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<double> get cashPaid => $composableBuilder(
+      column: $table.cashPaid, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get upiPaid => $composableBuilder(
+      column: $table.upiPaid, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get cardPaid => $composableBuilder(
+      column: $table.cardPaid, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get advancePaid => $composableBuilder(
+      column: $table.advancePaid, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get dueAmount => $composableBuilder(
+      column: $table.dueAmount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get oldGoldDeduction => $composableBuilder(
+      column: $table.oldGoldDeduction,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get oldGoldMode => $composableBuilder(
+      column: $table.oldGoldMode, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get billDate => $composableBuilder(
       column: $table.billDate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get promiseDate => $composableBuilder(
+      column: $table.promiseDate, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get status => $composableBuilder(
       column: $table.status, builder: (column) => ColumnOrderings(column));
@@ -27594,11 +29513,35 @@ class $$BillsTableAnnotationComposer
   GeneratedColumn<String> get mobile =>
       $composableBuilder(column: $table.mobile, builder: (column) => column);
 
+  GeneratedColumn<String> get billingMode => $composableBuilder(
+      column: $table.billingMode, builder: (column) => column);
+
+  GeneratedColumn<String> get billType =>
+      $composableBuilder(column: $table.billType, builder: (column) => column);
+
+  GeneratedColumn<String> get paymentStatus => $composableBuilder(
+      column: $table.paymentStatus, builder: (column) => column);
+
   GeneratedColumn<double> get totalAmount => $composableBuilder(
       column: $table.totalAmount, builder: (column) => column);
 
   GeneratedColumn<double> get discount =>
       $composableBuilder(column: $table.discount, builder: (column) => column);
+
+  GeneratedColumn<double> get taxableAmount => $composableBuilder(
+      column: $table.taxableAmount, builder: (column) => column);
+
+  GeneratedColumn<double> get cgstAmount => $composableBuilder(
+      column: $table.cgstAmount, builder: (column) => column);
+
+  GeneratedColumn<double> get sgstAmount => $composableBuilder(
+      column: $table.sgstAmount, builder: (column) => column);
+
+  GeneratedColumn<double> get gstAmount =>
+      $composableBuilder(column: $table.gstAmount, builder: (column) => column);
+
+  GeneratedColumn<double> get makingTotal => $composableBuilder(
+      column: $table.makingTotal, builder: (column) => column);
 
   GeneratedColumn<double> get finalAmount => $composableBuilder(
       column: $table.finalAmount, builder: (column) => column);
@@ -27606,8 +29549,32 @@ class $$BillsTableAnnotationComposer
   GeneratedColumn<double> get paidAmount => $composableBuilder(
       column: $table.paidAmount, builder: (column) => column);
 
+  GeneratedColumn<double> get cashPaid =>
+      $composableBuilder(column: $table.cashPaid, builder: (column) => column);
+
+  GeneratedColumn<double> get upiPaid =>
+      $composableBuilder(column: $table.upiPaid, builder: (column) => column);
+
+  GeneratedColumn<double> get cardPaid =>
+      $composableBuilder(column: $table.cardPaid, builder: (column) => column);
+
+  GeneratedColumn<double> get advancePaid => $composableBuilder(
+      column: $table.advancePaid, builder: (column) => column);
+
+  GeneratedColumn<double> get dueAmount =>
+      $composableBuilder(column: $table.dueAmount, builder: (column) => column);
+
+  GeneratedColumn<double> get oldGoldDeduction => $composableBuilder(
+      column: $table.oldGoldDeduction, builder: (column) => column);
+
+  GeneratedColumn<String> get oldGoldMode => $composableBuilder(
+      column: $table.oldGoldMode, builder: (column) => column);
+
   GeneratedColumn<DateTime> get billDate =>
       $composableBuilder(column: $table.billDate, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get promiseDate => $composableBuilder(
+      column: $table.promiseDate, builder: (column) => column);
 
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
@@ -27652,6 +29619,27 @@ class $$BillsTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> billOldGoldItemsRefs<T extends Object>(
+      Expression<T> Function($$BillOldGoldItemsTableAnnotationComposer a) f) {
+    final $$BillOldGoldItemsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.billOldGoldItems,
+        getReferencedColumn: (t) => t.billId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$BillOldGoldItemsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.billOldGoldItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$BillsTableTableManager extends RootTableManager<
@@ -27665,7 +29653,8 @@ class $$BillsTableTableManager extends RootTableManager<
     $$BillsTableUpdateCompanionBuilder,
     (Bill, $$BillsTableReferences),
     Bill,
-    PrefetchHooks Function({bool customerId, bool billItemsRefs})> {
+    PrefetchHooks Function(
+        {bool customerId, bool billItemsRefs, bool billOldGoldItemsRefs})> {
   $$BillsTableTableManager(_$AppDatabase db, $BillsTable table)
       : super(TableManagerState(
           db: db,
@@ -27684,11 +29673,27 @@ class $$BillsTableTableManager extends RootTableManager<
             Value<int?> customerId = const Value.absent(),
             Value<String?> customerName = const Value.absent(),
             Value<String?> mobile = const Value.absent(),
+            Value<String> billingMode = const Value.absent(),
+            Value<String> billType = const Value.absent(),
+            Value<String> paymentStatus = const Value.absent(),
             Value<double> totalAmount = const Value.absent(),
             Value<double> discount = const Value.absent(),
+            Value<double> taxableAmount = const Value.absent(),
+            Value<double> cgstAmount = const Value.absent(),
+            Value<double> sgstAmount = const Value.absent(),
+            Value<double> gstAmount = const Value.absent(),
+            Value<double> makingTotal = const Value.absent(),
             Value<double> finalAmount = const Value.absent(),
             Value<double> paidAmount = const Value.absent(),
+            Value<double> cashPaid = const Value.absent(),
+            Value<double> upiPaid = const Value.absent(),
+            Value<double> cardPaid = const Value.absent(),
+            Value<double> advancePaid = const Value.absent(),
+            Value<double> dueAmount = const Value.absent(),
+            Value<double> oldGoldDeduction = const Value.absent(),
+            Value<String> oldGoldMode = const Value.absent(),
             Value<DateTime> billDate = const Value.absent(),
+            Value<DateTime?> promiseDate = const Value.absent(),
             Value<String> status = const Value.absent(),
           }) =>
               BillsCompanion(
@@ -27699,11 +29704,27 @@ class $$BillsTableTableManager extends RootTableManager<
             customerId: customerId,
             customerName: customerName,
             mobile: mobile,
+            billingMode: billingMode,
+            billType: billType,
+            paymentStatus: paymentStatus,
             totalAmount: totalAmount,
             discount: discount,
+            taxableAmount: taxableAmount,
+            cgstAmount: cgstAmount,
+            sgstAmount: sgstAmount,
+            gstAmount: gstAmount,
+            makingTotal: makingTotal,
             finalAmount: finalAmount,
             paidAmount: paidAmount,
+            cashPaid: cashPaid,
+            upiPaid: upiPaid,
+            cardPaid: cardPaid,
+            advancePaid: advancePaid,
+            dueAmount: dueAmount,
+            oldGoldDeduction: oldGoldDeduction,
+            oldGoldMode: oldGoldMode,
             billDate: billDate,
+            promiseDate: promiseDate,
             status: status,
           ),
           createCompanionCallback: ({
@@ -27714,11 +29735,27 @@ class $$BillsTableTableManager extends RootTableManager<
             Value<int?> customerId = const Value.absent(),
             Value<String?> customerName = const Value.absent(),
             Value<String?> mobile = const Value.absent(),
+            Value<String> billingMode = const Value.absent(),
+            Value<String> billType = const Value.absent(),
+            Value<String> paymentStatus = const Value.absent(),
             Value<double> totalAmount = const Value.absent(),
             Value<double> discount = const Value.absent(),
+            Value<double> taxableAmount = const Value.absent(),
+            Value<double> cgstAmount = const Value.absent(),
+            Value<double> sgstAmount = const Value.absent(),
+            Value<double> gstAmount = const Value.absent(),
+            Value<double> makingTotal = const Value.absent(),
             Value<double> finalAmount = const Value.absent(),
             Value<double> paidAmount = const Value.absent(),
+            Value<double> cashPaid = const Value.absent(),
+            Value<double> upiPaid = const Value.absent(),
+            Value<double> cardPaid = const Value.absent(),
+            Value<double> advancePaid = const Value.absent(),
+            Value<double> dueAmount = const Value.absent(),
+            Value<double> oldGoldDeduction = const Value.absent(),
+            Value<String> oldGoldMode = const Value.absent(),
             Value<DateTime> billDate = const Value.absent(),
+            Value<DateTime?> promiseDate = const Value.absent(),
             Value<String> status = const Value.absent(),
           }) =>
               BillsCompanion.insert(
@@ -27729,21 +29766,43 @@ class $$BillsTableTableManager extends RootTableManager<
             customerId: customerId,
             customerName: customerName,
             mobile: mobile,
+            billingMode: billingMode,
+            billType: billType,
+            paymentStatus: paymentStatus,
             totalAmount: totalAmount,
             discount: discount,
+            taxableAmount: taxableAmount,
+            cgstAmount: cgstAmount,
+            sgstAmount: sgstAmount,
+            gstAmount: gstAmount,
+            makingTotal: makingTotal,
             finalAmount: finalAmount,
             paidAmount: paidAmount,
+            cashPaid: cashPaid,
+            upiPaid: upiPaid,
+            cardPaid: cardPaid,
+            advancePaid: advancePaid,
+            dueAmount: dueAmount,
+            oldGoldDeduction: oldGoldDeduction,
+            oldGoldMode: oldGoldMode,
             billDate: billDate,
+            promiseDate: promiseDate,
             status: status,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) =>
                   (e.readTable(table), $$BillsTableReferences(db, table, e)))
               .toList(),
-          prefetchHooksCallback: ({customerId = false, billItemsRefs = false}) {
+          prefetchHooksCallback: (
+              {customerId = false,
+              billItemsRefs = false,
+              billOldGoldItemsRefs = false}) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [if (billItemsRefs) db.billItems],
+              explicitlyWatchedTables: [
+                if (billItemsRefs) db.billItems,
+                if (billOldGoldItemsRefs) db.billOldGoldItems
+              ],
               addJoins: <
                   T extends TableManagerState<
                       dynamic,
@@ -27782,6 +29841,18 @@ class $$BillsTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem: (item,
                                 referencedItems) =>
                             referencedItems.where((e) => e.billId == item.id),
+                        typedResults: items),
+                  if (billOldGoldItemsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$BillsTableReferences
+                            ._billOldGoldItemsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$BillsTableReferences(db, table, p0)
+                                .billOldGoldItemsRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.billId == item.id),
                         typedResults: items)
                 ];
               },
@@ -27801,34 +29872,55 @@ typedef $$BillsTableProcessedTableManager = ProcessedTableManager<
     $$BillsTableUpdateCompanionBuilder,
     (Bill, $$BillsTableReferences),
     Bill,
-    PrefetchHooks Function({bool customerId, bool billItemsRefs})>;
+    PrefetchHooks Function(
+        {bool customerId, bool billItemsRefs, bool billOldGoldItemsRefs})>;
 typedef $$BillItemsTableCreateCompanionBuilder = BillItemsCompanion Function({
   Value<int> id,
   Value<DateTime> createdAt,
   Value<DateTime?> updatedAt,
   required int billId,
+  Value<int> lineNo,
+  Value<String> metalType,
   required String itemName,
   Value<String?> huid,
   Value<String> purity,
+  Value<int> quantity,
   Value<double> grossWeight,
+  Value<double> lessWeight,
+  Value<bool> lessWeightPerPiece,
   Value<double> netWeight,
+  Value<double> fineWeight,
   Value<double> rate,
+  Value<String> makingChargeType,
+  Value<double> makingChargeInput,
   Value<double> makingCharge,
   Value<double> itemTotal,
+  Value<int?> linkedStockItemId,
+  Value<String?> linkedStockSku,
 });
 typedef $$BillItemsTableUpdateCompanionBuilder = BillItemsCompanion Function({
   Value<int> id,
   Value<DateTime> createdAt,
   Value<DateTime?> updatedAt,
   Value<int> billId,
+  Value<int> lineNo,
+  Value<String> metalType,
   Value<String> itemName,
   Value<String?> huid,
   Value<String> purity,
+  Value<int> quantity,
   Value<double> grossWeight,
+  Value<double> lessWeight,
+  Value<bool> lessWeightPerPiece,
   Value<double> netWeight,
+  Value<double> fineWeight,
   Value<double> rate,
+  Value<String> makingChargeType,
+  Value<double> makingChargeInput,
   Value<double> makingCharge,
   Value<double> itemTotal,
+  Value<int?> linkedStockItemId,
+  Value<String?> linkedStockSku,
 });
 
 final class $$BillItemsTableReferences
@@ -27867,6 +29959,12 @@ class $$BillItemsTableFilterComposer
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<int> get lineNo => $composableBuilder(
+      column: $table.lineNo, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get metalType => $composableBuilder(
+      column: $table.metalType, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<String> get itemName => $composableBuilder(
       column: $table.itemName, builder: (column) => ColumnFilters(column));
 
@@ -27876,20 +29974,49 @@ class $$BillItemsTableFilterComposer
   ColumnFilters<String> get purity => $composableBuilder(
       column: $table.purity, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<int> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<double> get grossWeight => $composableBuilder(
       column: $table.grossWeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get lessWeight => $composableBuilder(
+      column: $table.lessWeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get lessWeightPerPiece => $composableBuilder(
+      column: $table.lessWeightPerPiece,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get netWeight => $composableBuilder(
       column: $table.netWeight, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<double> get fineWeight => $composableBuilder(
+      column: $table.fineWeight, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<double> get rate => $composableBuilder(
       column: $table.rate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get makingChargeType => $composableBuilder(
+      column: $table.makingChargeType,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get makingChargeInput => $composableBuilder(
+      column: $table.makingChargeInput,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get makingCharge => $composableBuilder(
       column: $table.makingCharge, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get itemTotal => $composableBuilder(
       column: $table.itemTotal, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get linkedStockItemId => $composableBuilder(
+      column: $table.linkedStockItemId,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get linkedStockSku => $composableBuilder(
+      column: $table.linkedStockSku,
+      builder: (column) => ColumnFilters(column));
 
   $$BillsTableFilterComposer get billId {
     final $$BillsTableFilterComposer composer = $composerBuilder(
@@ -27930,6 +30057,12 @@ class $$BillItemsTableOrderingComposer
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get lineNo => $composableBuilder(
+      column: $table.lineNo, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get metalType => $composableBuilder(
+      column: $table.metalType, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get itemName => $composableBuilder(
       column: $table.itemName, builder: (column) => ColumnOrderings(column));
 
@@ -27939,14 +30072,35 @@ class $$BillItemsTableOrderingComposer
   ColumnOrderings<String> get purity => $composableBuilder(
       column: $table.purity, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<double> get grossWeight => $composableBuilder(
       column: $table.grossWeight, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get lessWeight => $composableBuilder(
+      column: $table.lessWeight, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get lessWeightPerPiece => $composableBuilder(
+      column: $table.lessWeightPerPiece,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get netWeight => $composableBuilder(
       column: $table.netWeight, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<double> get fineWeight => $composableBuilder(
+      column: $table.fineWeight, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<double> get rate => $composableBuilder(
       column: $table.rate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get makingChargeType => $composableBuilder(
+      column: $table.makingChargeType,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get makingChargeInput => $composableBuilder(
+      column: $table.makingChargeInput,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get makingCharge => $composableBuilder(
       column: $table.makingCharge,
@@ -27954,6 +30108,14 @@ class $$BillItemsTableOrderingComposer
 
   ColumnOrderings<double> get itemTotal => $composableBuilder(
       column: $table.itemTotal, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get linkedStockItemId => $composableBuilder(
+      column: $table.linkedStockItemId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get linkedStockSku => $composableBuilder(
+      column: $table.linkedStockSku,
+      builder: (column) => ColumnOrderings(column));
 
   $$BillsTableOrderingComposer get billId {
     final $$BillsTableOrderingComposer composer = $composerBuilder(
@@ -27994,6 +30156,12 @@ class $$BillItemsTableAnnotationComposer
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
+  GeneratedColumn<int> get lineNo =>
+      $composableBuilder(column: $table.lineNo, builder: (column) => column);
+
+  GeneratedColumn<String> get metalType =>
+      $composableBuilder(column: $table.metalType, builder: (column) => column);
+
   GeneratedColumn<String> get itemName =>
       $composableBuilder(column: $table.itemName, builder: (column) => column);
 
@@ -28003,20 +30171,44 @@ class $$BillItemsTableAnnotationComposer
   GeneratedColumn<String> get purity =>
       $composableBuilder(column: $table.purity, builder: (column) => column);
 
+  GeneratedColumn<int> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+
   GeneratedColumn<double> get grossWeight => $composableBuilder(
       column: $table.grossWeight, builder: (column) => column);
+
+  GeneratedColumn<double> get lessWeight => $composableBuilder(
+      column: $table.lessWeight, builder: (column) => column);
+
+  GeneratedColumn<bool> get lessWeightPerPiece => $composableBuilder(
+      column: $table.lessWeightPerPiece, builder: (column) => column);
 
   GeneratedColumn<double> get netWeight =>
       $composableBuilder(column: $table.netWeight, builder: (column) => column);
 
+  GeneratedColumn<double> get fineWeight => $composableBuilder(
+      column: $table.fineWeight, builder: (column) => column);
+
   GeneratedColumn<double> get rate =>
       $composableBuilder(column: $table.rate, builder: (column) => column);
+
+  GeneratedColumn<String> get makingChargeType => $composableBuilder(
+      column: $table.makingChargeType, builder: (column) => column);
+
+  GeneratedColumn<double> get makingChargeInput => $composableBuilder(
+      column: $table.makingChargeInput, builder: (column) => column);
 
   GeneratedColumn<double> get makingCharge => $composableBuilder(
       column: $table.makingCharge, builder: (column) => column);
 
   GeneratedColumn<double> get itemTotal =>
       $composableBuilder(column: $table.itemTotal, builder: (column) => column);
+
+  GeneratedColumn<int> get linkedStockItemId => $composableBuilder(
+      column: $table.linkedStockItemId, builder: (column) => column);
+
+  GeneratedColumn<String> get linkedStockSku => $composableBuilder(
+      column: $table.linkedStockSku, builder: (column) => column);
 
   $$BillsTableAnnotationComposer get billId {
     final $$BillsTableAnnotationComposer composer = $composerBuilder(
@@ -28066,56 +30258,96 @@ class $$BillItemsTableTableManager extends RootTableManager<
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
             Value<int> billId = const Value.absent(),
+            Value<int> lineNo = const Value.absent(),
+            Value<String> metalType = const Value.absent(),
             Value<String> itemName = const Value.absent(),
             Value<String?> huid = const Value.absent(),
             Value<String> purity = const Value.absent(),
+            Value<int> quantity = const Value.absent(),
             Value<double> grossWeight = const Value.absent(),
+            Value<double> lessWeight = const Value.absent(),
+            Value<bool> lessWeightPerPiece = const Value.absent(),
             Value<double> netWeight = const Value.absent(),
+            Value<double> fineWeight = const Value.absent(),
             Value<double> rate = const Value.absent(),
+            Value<String> makingChargeType = const Value.absent(),
+            Value<double> makingChargeInput = const Value.absent(),
             Value<double> makingCharge = const Value.absent(),
             Value<double> itemTotal = const Value.absent(),
+            Value<int?> linkedStockItemId = const Value.absent(),
+            Value<String?> linkedStockSku = const Value.absent(),
           }) =>
               BillItemsCompanion(
             id: id,
             createdAt: createdAt,
             updatedAt: updatedAt,
             billId: billId,
+            lineNo: lineNo,
+            metalType: metalType,
             itemName: itemName,
             huid: huid,
             purity: purity,
+            quantity: quantity,
             grossWeight: grossWeight,
+            lessWeight: lessWeight,
+            lessWeightPerPiece: lessWeightPerPiece,
             netWeight: netWeight,
+            fineWeight: fineWeight,
             rate: rate,
+            makingChargeType: makingChargeType,
+            makingChargeInput: makingChargeInput,
             makingCharge: makingCharge,
             itemTotal: itemTotal,
+            linkedStockItemId: linkedStockItemId,
+            linkedStockSku: linkedStockSku,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
             required int billId,
+            Value<int> lineNo = const Value.absent(),
+            Value<String> metalType = const Value.absent(),
             required String itemName,
             Value<String?> huid = const Value.absent(),
             Value<String> purity = const Value.absent(),
+            Value<int> quantity = const Value.absent(),
             Value<double> grossWeight = const Value.absent(),
+            Value<double> lessWeight = const Value.absent(),
+            Value<bool> lessWeightPerPiece = const Value.absent(),
             Value<double> netWeight = const Value.absent(),
+            Value<double> fineWeight = const Value.absent(),
             Value<double> rate = const Value.absent(),
+            Value<String> makingChargeType = const Value.absent(),
+            Value<double> makingChargeInput = const Value.absent(),
             Value<double> makingCharge = const Value.absent(),
             Value<double> itemTotal = const Value.absent(),
+            Value<int?> linkedStockItemId = const Value.absent(),
+            Value<String?> linkedStockSku = const Value.absent(),
           }) =>
               BillItemsCompanion.insert(
             id: id,
             createdAt: createdAt,
             updatedAt: updatedAt,
             billId: billId,
+            lineNo: lineNo,
+            metalType: metalType,
             itemName: itemName,
             huid: huid,
             purity: purity,
+            quantity: quantity,
             grossWeight: grossWeight,
+            lessWeight: lessWeight,
+            lessWeightPerPiece: lessWeightPerPiece,
             netWeight: netWeight,
+            fineWeight: fineWeight,
             rate: rate,
+            makingChargeType: makingChargeType,
+            makingChargeInput: makingChargeInput,
             makingCharge: makingCharge,
             itemTotal: itemTotal,
+            linkedStockItemId: linkedStockItemId,
+            linkedStockSku: linkedStockSku,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
@@ -28172,6 +30404,412 @@ typedef $$BillItemsTableProcessedTableManager = ProcessedTableManager<
     $$BillItemsTableUpdateCompanionBuilder,
     (BillItem, $$BillItemsTableReferences),
     BillItem,
+    PrefetchHooks Function({bool billId})>;
+typedef $$BillOldGoldItemsTableCreateCompanionBuilder
+    = BillOldGoldItemsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required int billId,
+  Value<int> lineNo,
+  Value<String> metalType,
+  Value<String> itemDescription,
+  Value<double> grossWeight,
+  Value<double> lessWeight,
+  Value<double> netWeight,
+  Value<double> purity,
+  Value<double> fineWeight,
+  Value<double> rate,
+  Value<double> lineAmount,
+});
+typedef $$BillOldGoldItemsTableUpdateCompanionBuilder
+    = BillOldGoldItemsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<int> billId,
+  Value<int> lineNo,
+  Value<String> metalType,
+  Value<String> itemDescription,
+  Value<double> grossWeight,
+  Value<double> lessWeight,
+  Value<double> netWeight,
+  Value<double> purity,
+  Value<double> fineWeight,
+  Value<double> rate,
+  Value<double> lineAmount,
+});
+
+final class $$BillOldGoldItemsTableReferences extends BaseReferences<
+    _$AppDatabase, $BillOldGoldItemsTable, BillOldGoldItem> {
+  $$BillOldGoldItemsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $BillsTable _billIdTable(_$AppDatabase db) => db.bills.createAlias(
+      $_aliasNameGenerator(db.billOldGoldItems.billId, db.bills.id));
+
+  $$BillsTableProcessedTableManager? get billId {
+    if ($_item.billId == null) return null;
+    final manager = $$BillsTableTableManager($_db, $_db.bills)
+        .filter((f) => f.id($_item.billId!));
+    final item = $_typedResult.readTableOrNull(_billIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$BillOldGoldItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $BillOldGoldItemsTable> {
+  $$BillOldGoldItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get lineNo => $composableBuilder(
+      column: $table.lineNo, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get metalType => $composableBuilder(
+      column: $table.metalType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get itemDescription => $composableBuilder(
+      column: $table.itemDescription,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get grossWeight => $composableBuilder(
+      column: $table.grossWeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get lessWeight => $composableBuilder(
+      column: $table.lessWeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get netWeight => $composableBuilder(
+      column: $table.netWeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get purity => $composableBuilder(
+      column: $table.purity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get fineWeight => $composableBuilder(
+      column: $table.fineWeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get rate => $composableBuilder(
+      column: $table.rate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get lineAmount => $composableBuilder(
+      column: $table.lineAmount, builder: (column) => ColumnFilters(column));
+
+  $$BillsTableFilterComposer get billId {
+    final $$BillsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.billId,
+        referencedTable: $db.bills,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$BillsTableFilterComposer(
+              $db: $db,
+              $table: $db.bills,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$BillOldGoldItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $BillOldGoldItemsTable> {
+  $$BillOldGoldItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get lineNo => $composableBuilder(
+      column: $table.lineNo, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get metalType => $composableBuilder(
+      column: $table.metalType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get itemDescription => $composableBuilder(
+      column: $table.itemDescription,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get grossWeight => $composableBuilder(
+      column: $table.grossWeight, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get lessWeight => $composableBuilder(
+      column: $table.lessWeight, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get netWeight => $composableBuilder(
+      column: $table.netWeight, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get purity => $composableBuilder(
+      column: $table.purity, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get fineWeight => $composableBuilder(
+      column: $table.fineWeight, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get rate => $composableBuilder(
+      column: $table.rate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get lineAmount => $composableBuilder(
+      column: $table.lineAmount, builder: (column) => ColumnOrderings(column));
+
+  $$BillsTableOrderingComposer get billId {
+    final $$BillsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.billId,
+        referencedTable: $db.bills,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$BillsTableOrderingComposer(
+              $db: $db,
+              $table: $db.bills,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$BillOldGoldItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BillOldGoldItemsTable> {
+  $$BillOldGoldItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get lineNo =>
+      $composableBuilder(column: $table.lineNo, builder: (column) => column);
+
+  GeneratedColumn<String> get metalType =>
+      $composableBuilder(column: $table.metalType, builder: (column) => column);
+
+  GeneratedColumn<String> get itemDescription => $composableBuilder(
+      column: $table.itemDescription, builder: (column) => column);
+
+  GeneratedColumn<double> get grossWeight => $composableBuilder(
+      column: $table.grossWeight, builder: (column) => column);
+
+  GeneratedColumn<double> get lessWeight => $composableBuilder(
+      column: $table.lessWeight, builder: (column) => column);
+
+  GeneratedColumn<double> get netWeight =>
+      $composableBuilder(column: $table.netWeight, builder: (column) => column);
+
+  GeneratedColumn<double> get purity =>
+      $composableBuilder(column: $table.purity, builder: (column) => column);
+
+  GeneratedColumn<double> get fineWeight => $composableBuilder(
+      column: $table.fineWeight, builder: (column) => column);
+
+  GeneratedColumn<double> get rate =>
+      $composableBuilder(column: $table.rate, builder: (column) => column);
+
+  GeneratedColumn<double> get lineAmount => $composableBuilder(
+      column: $table.lineAmount, builder: (column) => column);
+
+  $$BillsTableAnnotationComposer get billId {
+    final $$BillsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.billId,
+        referencedTable: $db.bills,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$BillsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.bills,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$BillOldGoldItemsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $BillOldGoldItemsTable,
+    BillOldGoldItem,
+    $$BillOldGoldItemsTableFilterComposer,
+    $$BillOldGoldItemsTableOrderingComposer,
+    $$BillOldGoldItemsTableAnnotationComposer,
+    $$BillOldGoldItemsTableCreateCompanionBuilder,
+    $$BillOldGoldItemsTableUpdateCompanionBuilder,
+    (BillOldGoldItem, $$BillOldGoldItemsTableReferences),
+    BillOldGoldItem,
+    PrefetchHooks Function({bool billId})> {
+  $$BillOldGoldItemsTableTableManager(
+      _$AppDatabase db, $BillOldGoldItemsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BillOldGoldItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BillOldGoldItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BillOldGoldItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<int> billId = const Value.absent(),
+            Value<int> lineNo = const Value.absent(),
+            Value<String> metalType = const Value.absent(),
+            Value<String> itemDescription = const Value.absent(),
+            Value<double> grossWeight = const Value.absent(),
+            Value<double> lessWeight = const Value.absent(),
+            Value<double> netWeight = const Value.absent(),
+            Value<double> purity = const Value.absent(),
+            Value<double> fineWeight = const Value.absent(),
+            Value<double> rate = const Value.absent(),
+            Value<double> lineAmount = const Value.absent(),
+          }) =>
+              BillOldGoldItemsCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            billId: billId,
+            lineNo: lineNo,
+            metalType: metalType,
+            itemDescription: itemDescription,
+            grossWeight: grossWeight,
+            lessWeight: lessWeight,
+            netWeight: netWeight,
+            purity: purity,
+            fineWeight: fineWeight,
+            rate: rate,
+            lineAmount: lineAmount,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required int billId,
+            Value<int> lineNo = const Value.absent(),
+            Value<String> metalType = const Value.absent(),
+            Value<String> itemDescription = const Value.absent(),
+            Value<double> grossWeight = const Value.absent(),
+            Value<double> lessWeight = const Value.absent(),
+            Value<double> netWeight = const Value.absent(),
+            Value<double> purity = const Value.absent(),
+            Value<double> fineWeight = const Value.absent(),
+            Value<double> rate = const Value.absent(),
+            Value<double> lineAmount = const Value.absent(),
+          }) =>
+              BillOldGoldItemsCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            billId: billId,
+            lineNo: lineNo,
+            metalType: metalType,
+            itemDescription: itemDescription,
+            grossWeight: grossWeight,
+            lessWeight: lessWeight,
+            netWeight: netWeight,
+            purity: purity,
+            fineWeight: fineWeight,
+            rate: rate,
+            lineAmount: lineAmount,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$BillOldGoldItemsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({billId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (billId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.billId,
+                    referencedTable:
+                        $$BillOldGoldItemsTableReferences._billIdTable(db),
+                    referencedColumn:
+                        $$BillOldGoldItemsTableReferences._billIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$BillOldGoldItemsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $BillOldGoldItemsTable,
+    BillOldGoldItem,
+    $$BillOldGoldItemsTableFilterComposer,
+    $$BillOldGoldItemsTableOrderingComposer,
+    $$BillOldGoldItemsTableAnnotationComposer,
+    $$BillOldGoldItemsTableCreateCompanionBuilder,
+    $$BillOldGoldItemsTableUpdateCompanionBuilder,
+    (BillOldGoldItem, $$BillOldGoldItemsTableReferences),
+    BillOldGoldItem,
     PrefetchHooks Function({bool billId})>;
 typedef $$SalesOrdersTableCreateCompanionBuilder = SalesOrdersCompanion
     Function({
@@ -38164,6 +40802,8 @@ class $AppDatabaseManager {
       $$BillsTableTableManager(_db, _db.bills);
   $$BillItemsTableTableManager get billItems =>
       $$BillItemsTableTableManager(_db, _db.billItems);
+  $$BillOldGoldItemsTableTableManager get billOldGoldItems =>
+      $$BillOldGoldItemsTableTableManager(_db, _db.billOldGoldItems);
   $$SalesOrdersTableTableManager get salesOrders =>
       $$SalesOrdersTableTableManager(_db, _db.salesOrders);
   $$OrderAdvancesTableTableManager get orderAdvances =>

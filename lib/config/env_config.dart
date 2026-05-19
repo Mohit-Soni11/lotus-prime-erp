@@ -1,46 +1,67 @@
-// =============================================================================
-// FILE        : env_config.dart
-// LAYER       : Config
-// DESCRIPTION : Environment configuration — dev/prod toggle + API keys
-//
-//
-// HOW TO GET FREE API KEY:
-//   1. https://aistudio.google.com/app/apikey
-//   2. "Create API Key" click karo — FREE hai!
-//
-// HOW TO RUN:
-//   flutter run --dart-define=GEMINI_API_KEY=AIzaXXXXXXXXXXXXXXXXXXXXXXXX
-//
-// VS CODE — launch.json mein add karo:
-//   "args": ["--dart-define=GEMINI_API_KEY=AIzaXXXXXXXXXXXXXXXXXXXXXXXX"]
-//
-// ANDROID STUDIO — Run > Edit Configurations > Additional run args:
-//   --dart-define=GEMINI_API_KEY=AIzaXXXXXXXXXXXXXXXXXXXXXXXX
-//
-//   ✅ 15 requests/minute
-//   ✅ 1500 requests/day
-//   ✅ 1 million tokens/minute
-//   ✅ Cost = ZERO Rs.!
-// =============================================================================
+import 'package:flutter/foundation.dart';
 
-enum Environment { dev, prod }
+enum Environment {
+  dev,
+  staging,
+  prod,
+}
 
 class EnvConfig {
-  // ── Current Environment ───────────────────────────────────────────────────
-  static const Environment currentEnv = Environment.dev;
+  EnvConfig._();
 
-  // ── Debug Mode ────────────────────────────────────────────────────────────
-  static bool get isDebug => currentEnv == Environment.dev;
+  static const String _envName = String.fromEnvironment(
+    'APP_ENV',
+    defaultValue: '',
+  );
 
-  // ── Future API URLs (Cloud Sync ke liye) ──────────────────────────────────
-  static String get apiUrl {
-    if (currentEnv == Environment.dev) {
-      return 'https://dev-api.lotuserp.com';
+  static Environment get currentEnv {
+    switch (_envName.toLowerCase()) {
+      case 'prod':
+      case 'production':
+        return Environment.prod;
+      case 'staging':
+        return Environment.staging;
+      case 'dev':
+      case 'development':
+        return Environment.dev;
+      default:
+        return kReleaseMode ? Environment.prod : Environment.dev;
     }
-    return 'https://api.lotuserp.com';
   }
-  // Key lene ke liye: https://aistudio.google.com/app/apikey
-  // Run: flutter run --dart-define=GEMINI_API_KEY=AIzaXXXXXX
 
-  // Key valid hai ya nahi
+  static bool get isDebug => currentEnv == Environment.dev;
+  static bool get isProduction => currentEnv == Environment.prod;
+  static bool get enableVerboseLogs =>
+      !kReleaseMode && currentEnv != Environment.prod;
+
+  static bool get enableDemoSeed {
+    if (kReleaseMode || isProduction) {
+      return false;
+    }
+    return const bool.fromEnvironment(
+      'APP_ENABLE_DEMO_SEED',
+      defaultValue: true,
+    );
+  }
+
+  static bool get enableSqlLogging {
+    if (kReleaseMode || isProduction) {
+      return false;
+    }
+    return const bool.fromEnvironment(
+      'APP_SQL_LOGGING',
+      defaultValue: false,
+    );
+  }
+
+  static String get apiUrl {
+    switch (currentEnv) {
+      case Environment.dev:
+        return 'https://dev-api.lotuserp.com';
+      case Environment.staging:
+        return 'https://staging-api.lotuserp.com';
+      case Environment.prod:
+        return 'https://api.lotuserp.com';
+    }
+  }
 }

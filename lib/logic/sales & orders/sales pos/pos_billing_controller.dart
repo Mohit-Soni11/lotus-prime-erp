@@ -332,6 +332,10 @@ class PosBillingController extends ChangeNotifier {
     item.lessCtrl.text = _formatLookupNumber(suggestion.lessWeight);
     item.rateCtrl.clear();
     item.makingCtrl.clear();
+    item.attachStockReference(
+      stockItemId: suggestion.stockItemId,
+      sku: suggestion.sku,
+    );
     activeRowIndex = rowIndex;
     clearAllStockSuggestions();
   }
@@ -453,6 +457,17 @@ class PosBillingController extends ChangeNotifier {
       _committedInvoiceNumber ??
       "$invoicePrefix-$shopInitials-$currentFinancialYear-${nextSequence.toString().padLeft(4, '0')}";
   bool get isCurrentSaleCommitted => _committedInvoiceNumber != null;
+
+  void updateInvoiceSequencePreview(int sequence) {
+    final sanitizedSequence = sequence < 1 ? 1 : sequence;
+    if (nextSequence == sanitizedSequence) {
+      return;
+    }
+    nextSequence = sanitizedSequence;
+    if (!isCurrentSaleCommitted) {
+      notifyListeners();
+    }
+  }
 
   void markCurrentSaleCommitted(String invoiceNumber) {
     _committedInvoiceNumber ??= invoiceNumber;

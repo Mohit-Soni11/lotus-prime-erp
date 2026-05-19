@@ -92,6 +92,7 @@ class PosInvoiceModel {
   final String customerCity;
   final String customerPan;
   final String customerGstin;
+  final OldGoldAdjustMode oldGoldMode;
 
   final List<SaleItemModel> saleItems;
   final List<OldGoldItemModel> oldGoldItems;
@@ -140,6 +141,7 @@ class PosInvoiceModel {
     required this.customerCity,
     required this.customerPan,
     required this.customerGstin,
+    required this.oldGoldMode,
     required this.saleItems,
     required this.oldGoldItems,
     required this.grossAmount,

@@ -20,13 +20,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
 
 // ✅ DB SAVE IMPORTS
-import 'package:drift/drift.dart' show Value;
 import '../../../database/db/app_database.dart';
 
 import '../../../logic/sales & orders/sales pos/pos_billing_controller.dart';
 import '../../../models/sales & orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../models/sales & orders/sales_pos_models/sales_pos_models.dart';
 import '../../../models/sales & orders/sales_pos_enums/sales_pos_enums.dart';
+import '../../../repositories/sales & orders/pos/pos_checkout_repository.dart';
 import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
 import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
 
@@ -65,6 +65,7 @@ class PosInvoiceController extends ChangeNotifier {
   bool isSavedToDb = false;
   int? savedBillDbId;
   final AppDatabase _db = AppDatabase();
+  final PosCheckoutRepository _checkoutRepo = PosCheckoutRepository();
 
   PrintFormat selectedFormat = PrintFormat.a4;
   int printCopies = 1;
@@ -209,6 +210,7 @@ class PosInvoiceController extends ChangeNotifier {
       customerCity: billing.cityCtrl.text,
       customerPan: billing.panCtrl.text,
       customerGstin: billing.gstCtrl.text,
+      oldGoldMode: billing.oldGoldMode,
       saleItems: List.from(billing.saleItems),
       oldGoldItems: List.from(billing.oldGoldItems),
       grossAmount: billing.grossAmount,
@@ -234,18 +236,65 @@ class PosInvoiceController extends ChangeNotifier {
   // ✅ FIX: .count() nahi hota table pe —
   //         select().get() se list lo, .length lo
   // ==========================================
-  Future<void> _initSequenceFromDb() async {
+  Future<void> _syncNextInvoicePreview() async {
+    if (billing.isCurrentSaleCommitted) {
+      return;
+    }
+
     try {
-      final bills = await _db.select(_db.bills).get();
-      billing.nextSequence = bills.length + 1;
+      final nextSequence = await _checkoutRepo.fetchNextInvoiceSequence(
+        invoicePrefix: billing.invoicePrefix,
+        shopInitials: billing.shopInitials,
+        financialYear: billing.currentFinancialYear,
+      );
+      billing.updateInvoiceSequencePreview(nextSequence);
     } catch (_) {
-      // fallback: jo bhi memory mein hai wo chalega
+      // fallback: jo preview memory mein hai wahi chalega
     }
   }
 
   // ==========================================
   // ✅ STEP 2: Bill + Items ko DB mein save karo
   // ==========================================
+  PosInvoiceModel _copyInvoiceWithNumber(
+    PosInvoiceModel source,
+    String invoiceNumber,
+  ) {
+    return PosInvoiceModel(
+      invoiceNumber: invoiceNumber,
+      invoiceDate: source.invoiceDate,
+      billType: source.billType,
+      billingMode: source.billingMode,
+      shopName: source.shopName,
+      shopAddress: source.shopAddress,
+      shopPhone: source.shopPhone,
+      shopGstin: source.shopGstin,
+      customerName: source.customerName,
+      customerMobile: source.customerMobile,
+      customerCity: source.customerCity,
+      customerPan: source.customerPan,
+      customerGstin: source.customerGstin,
+      oldGoldMode: source.oldGoldMode,
+      saleItems: source.saleItems,
+      oldGoldItems: source.oldGoldItems,
+      grossAmount: source.grossAmount,
+      discountAmount: source.discountAmount,
+      taxableAmount: source.taxableAmount,
+      cgst: source.cgst,
+      sgst: source.sgst,
+      totalGst: source.totalGst,
+      totalOldGoldDeduction: source.totalOldGoldDeduction,
+      grandTotal: source.grandTotal,
+      cashPaid: source.cashPaid,
+      upiPaid: source.upiPaid,
+      cardPaid: source.cardPaid,
+      advancePaid: source.advancePaid,
+      balanceDue: source.balanceDue,
+      totalMakingCharge: source.totalMakingCharge,
+      promiseDate: source.promiseDate,
+    );
+  }
+
   Future<void> _saveBillToDatabase(PosInvoiceModel inv) async {
     if (isSavedToDb) return;
 
@@ -259,25 +308,15 @@ class PosInvoiceController extends ChangeNotifier {
     }
 
     // --- BILLS TABLE mein master record insert karo ---
-    final billId = await _db.into(_db.bills).insert(
-          BillsCompanion(
-            billNo: Value(inv.invoiceNumber),
-            customerId: Value(billing.selectedCustomer?.id),
-            customerName:
-                Value(inv.customerName.isNotEmpty ? inv.customerName : null),
-            mobile: Value(
-                inv.customerMobile.isNotEmpty ? inv.customerMobile : null),
-            totalAmount: Value(inv.grossAmount),
-            discount: Value(inv.discountAmount),
-            finalAmount: Value(inv.netPayable),
-            paidAmount: Value(inv.totalPaid),
-            billDate: Value(inv.invoiceDate),
-            status: const Value('ACTIVE'),
-          ),
-        );
-    savedBillDbId = billId;
+    final result = await _checkoutRepo.finalizeSale(
+      invoice: inv,
+      customerId: billing.selectedCustomer?.id,
+    );
+
+    savedBillDbId = result.billId;
 
     // --- BILL_ITEMS TABLE mein har sale item insert karo ---
+    /*
     for (final item in billing.saleItems) {
       final grossWt = double.tryParse(item.grossCtrl.text) ?? 0.0;
       final itemName = item.descCtrl.text.isNotEmpty
@@ -301,8 +340,15 @@ class PosInvoiceController extends ChangeNotifier {
           );
     }
 
-    billing.markCurrentSaleCommitted(inv.invoiceNumber);
-    billing.nextSequence++;
+    */
+    billing.markCurrentSaleCommitted(result.invoiceNumber);
+    billing.updateInvoiceSequencePreview(result.invoiceSequence + 1);
+
+    if (result.invoiceNumber != inv.invoiceNumber) {
+      invoice = _copyInvoiceWithNumber(inv, result.invoiceNumber);
+      pdfBytes = await _buildPdf(invoice!, selectedFormat);
+    }
+
     isSavedToDb = true;
   }
 
@@ -311,18 +357,28 @@ class PosInvoiceController extends ChangeNotifier {
       await generateInvoice();
     }
     if (invoice == null) return;
-    await _saveBillToDatabase(invoice!);
+    try {
+      await _saveBillToDatabase(invoice!);
+    } catch (e) {
+      errorMessage = e.toString();
+      genState = InvoiceGenState.error;
+      notifyListeners();
+      rethrow;
+    }
   }
 
   Future<void> generateInvoice() async {
     genState = InvoiceGenState.generating;
-    isSavedToDb = false;
-    savedBillDbId = null;
+    errorMessage = null;
+    if (!billing.isCurrentSaleCommitted) {
+      isSavedToDb = false;
+      savedBillDbId = null;
+    }
     notifyListeners();
     try {
       await Future.wait([
         _fetchRealShopData(),
-        _initSequenceFromDb(),
+        _syncNextInvoicePreview(),
       ]);
 
       dueDate = billing.promiseDate;
@@ -477,60 +533,65 @@ class PosInvoiceController extends ChangeNotifier {
     final isWholesale = inv.billingMode == BillingMode.wholesale;
     final activeConfig = getActiveConfig(inv.billingMode, inv.billType);
 
-    return pw
-        .Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-      if (inv.saleItems.isNotEmpty) ...[
-        pw.Table(
-          border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
-          children: [
-            pw.TableRow(
-              decoration: const pw.BoxDecoration(color: PdfColors.amber50),
+    return pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          if (inv.saleItems.isNotEmpty) ...[
+            pw.Table(
+              border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
               children: [
-                _th("#"),
-                _th("Item Description"),
-                _th("Purity"),
-                if (activeConfig.showGrossWt) _th("Gross(g)"),
-                if (activeConfig.showLessWt) _th("Less(g)"),
-                _th(isWholesale ? "Fine(g)" : "Net(g)"),
-                _th("Rate"),
-                if (activeConfig.showMaking)
-                  _th(isWholesale ? "Labour" : "Making"),
-                _th("Amount"),
+                pw.TableRow(
+                  decoration: const pw.BoxDecoration(color: PdfColors.amber50),
+                  children: [
+                    _th("#"),
+                    _th("Item Description"),
+                    _th("Purity"),
+                    if (activeConfig.showGrossWt) _th("Gross(g)"),
+                    if (activeConfig.showLessWt) _th("Less(g)"),
+                    _th(isWholesale ? "Fine(g)" : "Net(g)"),
+                    _th("Rate"),
+                    if (activeConfig.showMaking)
+                      _th(isWholesale ? "Labour" : "Making"),
+                    _th("Amount"),
+                  ],
+                ),
+                ...inv.saleItems.asMap().entries.map((e) {
+                  final i = e.value;
+                  String desc = i.descCtrl.text.isNotEmpty
+                      ? i.descCtrl.text
+                      : "${i.metal.name.toUpperCase()} ITEM";
+                  if (activeConfig.showHuid && i.huidCtrl.text.isNotEmpty) {
+                    desc += "\n[HUID: ${i.huidCtrl.text}]";
+                  }
+                  if (activeConfig.showPcs && i.pcs > 1) {
+                    desc += " (${i.pcs} pcs)";
+                  }
+
+                  return pw.TableRow(children: [
+                    _cell("${e.key + 1}"),
+                    _cell(desc),
+                    _cell(_formatPurity(i)),
+                    if (activeConfig.showGrossWt)
+                      _cell(i.grossCtrl.text.isNotEmpty
+                          ? i.grossCtrl.text
+                          : "0.000"),
+                    if (activeConfig.showLessWt)
+                      _cell(i.totalLessWt.toStringAsFixed(3)),
+                    _cell(isWholesale
+                        ? i.fineWt.toStringAsFixed(3)
+                        : i.netWt.toStringAsFixed(3)),
+                    _cell(i.rate.toStringAsFixed(0)),
+                    if (activeConfig.showMaking)
+                      _cell(isWholesale
+                          ? i.wholesaleLabourAmt.toStringAsFixed(0)
+                          : i.makingAmt.toStringAsFixed(0)),
+                    _cell(i.totalValue.toStringAsFixed(2)),
+                  ]);
+                }),
               ],
             ),
-            ...inv.saleItems.asMap().entries.map((e) {
-              final i = e.value;
-              String desc = i.descCtrl.text.isNotEmpty
-                  ? i.descCtrl.text
-                  : "${i.metal.name.toUpperCase()} ITEM";
-              if (activeConfig.showHuid && i.huidCtrl.text.isNotEmpty)
-                desc += "\n[HUID: ${i.huidCtrl.text}]";
-              if (activeConfig.showPcs && i.pcs > 1) desc += " (${i.pcs} pcs)";
-
-              return pw.TableRow(children: [
-                _cell("${e.key + 1}"),
-                _cell(desc),
-                _cell(_formatPurity(i)),
-                if (activeConfig.showGrossWt)
-                  _cell(
-                      i.grossCtrl.text.isNotEmpty ? i.grossCtrl.text : "0.000"),
-                if (activeConfig.showLessWt)
-                  _cell(i.totalLessWt.toStringAsFixed(3)),
-                _cell(isWholesale
-                    ? i.fineWt.toStringAsFixed(3)
-                    : i.netWt.toStringAsFixed(3)),
-                _cell(i.rate.toStringAsFixed(0)),
-                if (activeConfig.showMaking)
-                  _cell(isWholesale
-                      ? i.wholesaleLabourAmt.toStringAsFixed(0)
-                      : i.makingAmt.toStringAsFixed(0)),
-                _cell(i.totalValue.toStringAsFixed(2)),
-              ]);
-            }),
           ],
-        ),
-      ],
-    ]);
+        ]);
   }
 
   pw.Widget _th(String text) => pw.Padding(
@@ -759,8 +820,10 @@ class PosInvoiceController extends ChangeNotifier {
                     text: pw.TextSpan(children: [
                       pw.TextSpan(
                         text: "${p['label']}:  ",
-                        style:
-                            pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+                        style: const pw.TextStyle(
+                          fontSize: 9,
+                          color: PdfColors.grey600,
+                        ),
                       ),
                       pw.TextSpan(
                         text:
@@ -784,7 +847,8 @@ class PosInvoiceController extends ChangeNotifier {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text("Total Paid",
-                    style: pw.TextStyle(fontSize: 9, color: PdfColors.grey600)),
+                    style: const pw.TextStyle(
+                        fontSize: 9, color: PdfColors.grey600)),
                 pw.Text("Rs ${totalCashPaid.toStringAsFixed(2)}",
                     style: pw.TextStyle(
                         fontSize: 9, fontWeight: pw.FontWeight.bold)),
@@ -830,7 +894,8 @@ class PosInvoiceController extends ChangeNotifier {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text("Balance Outstanding",
-                    style: pw.TextStyle(fontSize: 9, color: PdfColors.grey600)),
+                    style: const pw.TextStyle(
+                        fontSize: 9, color: PdfColors.grey600)),
                 pw.Text("Nil",
                     style: pw.TextStyle(
                         fontSize: 9,
@@ -985,6 +1050,7 @@ class PosInvoiceController extends ChangeNotifier {
         customerCity: invoice!.customerCity,
         customerPan: invoice!.customerPan,
         customerGstin: invoice!.customerGstin,
+        oldGoldMode: invoice!.oldGoldMode,
         saleItems: invoice!.saleItems,
         oldGoldItems: invoice!.oldGoldItems,
         grossAmount: invoice!.grossAmount,

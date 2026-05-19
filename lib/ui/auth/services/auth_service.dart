@@ -1,32 +1,61 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../../../core/logging/app_logger.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // --- GET CURRENT USER ---
   User? get currentUser => _auth.currentUser;
 
-  // ===========================================================================
-  // 🔐 1. CORE AUTHENTICATION (Login/Logout)
-  // ===========================================================================
+  Future<String> loginUser({
+    required String email,
+    required String password,
+  }) async {
+    final normalizedEmail = email.trim().toLowerCase();
 
-  Future<String> loginUser({required String email, required String password}) async {
     try {
-      // 1. Attempt Login
-      UserCredential cred = await _auth.signInWithEmailAndPassword(
-        email: email,
+      final credential = await _auth.signInWithEmailAndPassword(
+        email: normalizedEmail,
         password: password,
       );
 
-      // 2. Security Check: Is User Active?
-      DocumentSnapshot userDoc = await _firestore.collection('users').doc(cred.user!.uid).get();
-      
+      final user = credential.user;
+      if (user == null) {
+        return "Unable to sign in right now. Please try again.";
+      }
+
+      await user.reload();
+      final activeUser = _auth.currentUser;
+      if (activeUser == null) {
+        return "Session expired during sign in. Please try again.";
+      }
+
+      final userDoc =
+          await _firestore.collection('users').doc(activeUser.uid).get();
       if (!userDoc.exists) {
         await _auth.signOut();
         return "User record not found. Contact Admin.";
       }
+
+      final userData = userDoc.data() ?? const <String, dynamic>{};
+      final isActive = userData['isActive'] as bool? ?? true;
+      if (!isActive) {
+        await _auth.signOut();
+        return "This account is inactive. Contact Admin.";
+      }
+
+      if (!activeUser.emailVerified) {
+        await _auth.signOut();
+        return "Please verify your email before signing in.";
+      }
+
+      await _firestore.collection('users').doc(activeUser.uid).set({
+        'email': normalizedEmail,
+        'isEmailVerified': true,
+        'lastLoginAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       return "SUCCESS";
     } on FirebaseAuthException catch (e) {
@@ -35,26 +64,24 @@ class AuthService {
       if (e.code == 'invalid-credential') return "Invalid Credentials.";
       if (e.code == 'too-many-requests') return "Too many attempts. Try later.";
       return e.message ?? "Login Failed";
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Login failed unexpectedly.',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return "System Error: $e";
     }
   }
 
-  // 🔥 UPDATED: LOGOUT FUNCTION (Ye TopBar ke liye zaroori hai)
-  // Humne 'signOut' ko bhi rakha hai aur 'logout' bhi bana diya hai taaki error na aaye.
   Future<void> logout() async {
     await _auth.signOut();
   }
 
-  // Existing signOut (isko bhi rehne diya hai backup ke liye)
   Future<void> signOut() async {
     await _auth.signOut();
   }
 
-  // ===========================================================================
-  // 🏗️ 2. REGISTRATION TRANSACTION (Company + Unit + User)
-  // ===========================================================================
-  
   Future<String> registerOwner({
     required String email,
     required String password,
@@ -62,75 +89,96 @@ class AuthService {
     required String mobile,
     required String companyName,
   }) async {
+    final normalizedEmail = email.trim().toLowerCase();
+    final normalizedOwnerName = ownerName.trim();
+    final normalizedCompanyName = companyName.trim();
+    final normalizedMobile = mobile.trim();
+
     try {
-      // 1. Create Auth User
-      UserCredential userCred = await _auth.createUserWithEmailAndPassword(
-        email: email,
+      final userCredential = await _auth.createUserWithEmailAndPassword(
+        email: normalizedEmail,
         password: password,
       );
-      User? user = userCred.user;
-      if (user == null) return "User creation failed";
+      final user = userCredential.user;
+      if (user == null) {
+        return "User creation failed";
+      }
 
-      // 2. Send Verification Email
-      try { await user.sendEmailVerification(); } catch (_) {}
+      final companyId = "CMP_${DateTime.now().millisecondsSinceEpoch}";
+      final headOfficeId = "UNIT_${DateTime.now().millisecondsSinceEpoch}_HO";
 
-      // 3. Generate IDs
-      String companyId = "CMP_${DateTime.now().millisecondsSinceEpoch}";
-      String headOfficeId = "UNIT_${DateTime.now().millisecondsSinceEpoch}_HO";
+      try {
+        await _firestore.runTransaction((transaction) async {
+          transaction.set(_firestore.collection('companies').doc(companyId), {
+            'companyId': companyId,
+            'name': normalizedCompanyName,
+            'ownerId': user.uid,
+            'createdAt': FieldValue.serverTimestamp(),
+            'plan': 'Enterprise',
+            'isActive': true,
+          });
 
-      // 4. Atomic Transaction
-      await _firestore.runTransaction((transaction) async {
-        // A. Company Doc
-        transaction.set(_firestore.collection('companies').doc(companyId), {
-          'companyId': companyId,
-          'name': companyName,
-          'ownerId': user.uid,
-          'createdAt': FieldValue.serverTimestamp(),
-          'plan': 'Enterprise',
-          'isActive': true,
+          transaction.set(_firestore.collection('units').doc(headOfficeId), {
+            'unitId': headOfficeId,
+            'companyId': companyId,
+            'name': '$normalizedCompanyName (Head Office)',
+            'type': 'HEAD_OFFICE',
+            'city': 'Main Location',
+            'isActive': true,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+          transaction.set(_firestore.collection('users').doc(user.uid), {
+            'uid': user.uid,
+            'name': normalizedOwnerName,
+            'email': normalizedEmail,
+            'mobile': normalizedMobile,
+            'role': 'OWNER',
+            'companyId': companyId,
+            'assignedUnits': ['ALL'],
+            'createdAt': FieldValue.serverTimestamp(),
+            'isActive': true,
+            'isEmailVerified': false,
+          });
         });
+      } catch (e, stackTrace) {
+        AppLogger.error(
+          'Registration transaction failed. Rolling back auth user.',
+          error: e,
+          stackTrace: stackTrace,
+        );
+        await user.delete();
+        return "Account setup failed. Please try again.";
+      }
 
-        // B. Head Office Unit
-        transaction.set(_firestore.collection('units').doc(headOfficeId), {
-          'unitId': headOfficeId,
-          'companyId': companyId,
-          'name': '$companyName (Head Office)',
-          'type': 'HEAD_OFFICE',
-          'city': 'Main Location',
-          'isActive': true,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-
-        // C. User Profile
-        transaction.set(_firestore.collection('users').doc(user.uid), {
-          'uid': user.uid,
-          'name': ownerName,
-          'email': email,
-          'mobile': mobile,
-          'role': 'OWNER',
-          'companyId': companyId,
-          'assignedUnits': ['ALL'],
-          'createdAt': FieldValue.serverTimestamp(),
-          'isEmailVerified': false, 
-        });
-      });
+      try {
+        await user.sendEmailVerification();
+      } catch (e, stackTrace) {
+        AppLogger.warning(
+          'Verification email could not be sent after registration.',
+          error: e,
+          stackTrace: stackTrace,
+        );
+      }
 
       return "SUCCESS";
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'email-already-in-use') return "Email is already registered.";
+      if (e.code == 'email-already-in-use')
+        return "Email is already registered.";
       if (e.code == 'weak-password') return "Password is too weak.";
       return e.message ?? "Registration Error";
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Registration failed unexpectedly.',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return "Database Error: $e";
     }
   }
 
-  // ===========================================================================
-  // 📧 3. VERIFICATION UTILS
-  // ===========================================================================
-  
   Future<bool> checkEmailVerified() async {
-    User? user = _auth.currentUser;
+    final user = _auth.currentUser;
     if (user != null) {
       await user.reload();
       return user.emailVerified;
@@ -140,51 +188,56 @@ class AuthService {
 
   Future<String> resendVerificationEmail() async {
     try {
-      User? user = _auth.currentUser;
+      final user = _auth.currentUser;
       if (user != null && !user.emailVerified) {
         await user.sendEmailVerification();
         return "SUCCESS";
       }
       return "ALREADY_VERIFIED";
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.warning(
+        'Verification email resend failed.',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return "Error: $e";
     }
   }
 
-  // ===========================================================================
-  // 🛠️ 4. UTILITY FEATURES
-  // ===========================================================================
-
   Future<String> resetPassword(String email) async {
     try {
-      await _auth.sendPasswordResetEmail(email: email);
+      await _auth.sendPasswordResetEmail(email: email.trim().toLowerCase());
       return "SUCCESS";
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') return "No user found with this email.";
       return e.message ?? "Error sending reset link.";
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.warning(
+        'Password reset request failed.',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return e.toString();
     }
   }
 
   Future<Map<String, dynamic>?> getUserDetails() async {
     try {
-      User? user = _auth.currentUser;
+      final user = _auth.currentUser;
       if (user != null) {
-        DocumentSnapshot doc = await _firestore.collection('users').doc(user.uid).get();
+        final doc = await _firestore.collection('users').doc(user.uid).get();
         if (doc.exists) {
-          return doc.data() as Map<String, dynamic>?;
+          return doc.data();
         }
       }
-    } catch (e) {
-      print("Error fetching user data: $e");
-      // ✅ FIX: Firestore permission denied ya koi bhi error aaye,
-      // tab bhi Firebase Auth se basic user info return karo.
-      // Isse profile screen loading mein nahi atkegi.
+    } catch (e, stackTrace) {
+      AppLogger.warning(
+        'User profile fetch failed. Falling back to Firebase Auth cache.',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
 
-    // ✅ FALLBACK: Firestore se data na mile to Firebase Auth ka
-    // locally available data return karo — screen load hogi.
     final user = _auth.currentUser;
     if (user != null) {
       return {

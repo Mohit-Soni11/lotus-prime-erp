@@ -1,13 +1,8 @@
 class DbConfig {
-  // Database Name
+  DbConfig._();
+
   static const String dbName = "lotus_erp_pro.sqlite";
-  
-  // Database Version (Migration ke liye zaroori)
-  static const int dbVersion = 1;
-  
-  // Future Proof: Log SQL Statements in Debug Mode?
-  static const bool logStatements = true;
-  
-  // Performance Tweaks (Defaults)
-  static const int timeoutSeconds = 5;
+  static const int schemaVersion = 18;
+  static const bool enableWal = true;
+  static const Duration busyTimeout = Duration(seconds: 5);
 }

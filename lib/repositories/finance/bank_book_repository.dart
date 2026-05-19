@@ -27,7 +27,6 @@ import '../../models/finance/bank_book/bank_account_model.dart';
 import '../../models/finance/bank_book/bank_book_summary_model.dart';
 
 class BankBookRepository {
-
   final AppDatabase _db;
 
   BankBookRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
@@ -35,8 +34,8 @@ class BankBookRepository {
   // ── Currency Formatter ────────────────────────────────────────────────────
 
   static final _currencyFmt = NumberFormat.currency(
-    locale:        'en_IN',
-    symbol:        '₹ ',
+    locale: 'en_IN',
+    symbol: '₹ ',
     decimalDigits: 2,
   );
 
@@ -53,16 +52,18 @@ class BankBookRepository {
       if (activeOnly) {
         query = query..where((t) => t.isActive.equals(true));
       }
-      query = query..orderBy([
-        (t) => OrderingTerm.desc(t.isPrimary),
-        (t) => OrderingTerm.asc(t.accountName),
-      ]);
+      query = query
+        ..orderBy([
+          (t) => OrderingTerm.desc(t.isPrimary),
+          (t) => OrderingTerm.asc(t.accountName),
+        ]);
 
       final rows = await query.get();
       final models = <BankAccountModel>[];
 
       for (final row in rows) {
-        final balance = await _computeAccountBalance(row.id, row.openingBalance);
+        final balance =
+            await _computeAccountBalance(row.id, row.openingBalance);
         models.add(_rowToAccountModel(row, balance));
       }
 
@@ -83,47 +84,49 @@ class BankBookRepository {
           ]))
         .watch()
         .asyncMap((rows) async {
-          final models = <BankAccountModel>[];
-          for (final row in rows) {
-            final balance = await _computeAccountBalance(row.id, row.openingBalance);
-            models.add(_rowToAccountModel(row, balance));
-          }
-          return models;
-        });
+      final models = <BankAccountModel>[];
+      for (final row in rows) {
+        final balance =
+            await _computeAccountBalance(row.id, row.openingBalance);
+        models.add(_rowToAccountModel(row, balance));
+      }
+      return models;
+    });
   }
 
   /// Save new bank account — returns id
   Future<int?> saveAccount({
-    required String          accountName,
-    required String          bankName,
-    required String          accountNumber,
+    required String accountName,
+    required String bankName,
+    required String accountNumber,
     required BankAccountType accountType,
-    String?                  holderName,
-    String?                  ifscCode,
-    String?                  branchName,
-    String?                  upiId,
-    double                   openingBalance = 0.0,
-    bool                     isPrimary      = false,
-    String?                  colorHex,
+    String? holderName,
+    String? ifscCode,
+    String? branchName,
+    String? upiId,
+    double openingBalance = 0.0,
+    bool isPrimary = false,
+    String? colorHex,
   }) async {
     try {
       final id = await _db.into(_db.bankAccounts).insert(
-        BankAccountsCompanion.insert(
-          accountName:    accountName,
-          bankName:       bankName,
-          accountNumber:  accountNumber,
-          accountType:    Value(accountType.dbValue), // ✅ FIX: Wrapped in Value()
-          holderName:     Value(holderName),
-          ifscCode:       Value(ifscCode),
-          branchName:     Value(branchName),
-          upiId:          Value(upiId),
-          openingBalance: Value(openingBalance),
-          isPrimary:      Value(isPrimary),
-          isActive:       const Value(true),
-          colorHex:       Value(colorHex),
-          activeSince:    Value(DateTime.now()),
-        ),
-      );
+            BankAccountsCompanion.insert(
+              accountName: accountName,
+              bankName: bankName,
+              accountNumber: accountNumber,
+              accountType:
+                  Value(accountType.dbValue), // ✅ FIX: Wrapped in Value()
+              holderName: Value(holderName),
+              ifscCode: Value(ifscCode),
+              branchName: Value(branchName),
+              upiId: Value(upiId),
+              openingBalance: Value(openingBalance),
+              isPrimary: Value(isPrimary),
+              isActive: const Value(true),
+              colorHex: Value(colorHex),
+              activeSince: Value(DateTime.now()),
+            ),
+          );
       return id;
     } catch (e) {
       debugPrint('❌ BankBookRepository.saveAccount: $e');
@@ -134,8 +137,7 @@ class BankBookRepository {
   /// Update opening balance for an account
   Future<bool> updateOpeningBalance(int accountId, double amount) async {
     try {
-      await (_db.update(_db.bankAccounts)
-            ..where((t) => t.id.equals(accountId)))
+      await (_db.update(_db.bankAccounts)..where((t) => t.id.equals(accountId)))
           .write(BankAccountsCompanion(openingBalance: Value(amount)));
       return true;
     } catch (e) {
@@ -149,8 +151,7 @@ class BankBookRepository {
     try {
       await (_db.update(_db.bankAccounts))
           .write(const BankAccountsCompanion(isPrimary: Value(false)));
-      await (_db.update(_db.bankAccounts)
-            ..where((t) => t.id.equals(accountId)))
+      await (_db.update(_db.bankAccounts)..where((t) => t.id.equals(accountId)))
           .write(const BankAccountsCompanion(isPrimary: Value(true)));
     } catch (e) {
       debugPrint('❌ BankBookRepository.setPrimaryAccount: $e');
@@ -163,11 +164,11 @@ class BankBookRepository {
 
   /// Fetch transactions for a given account and date range
   Future<List<BankTransactionModel>> fetchTransactions({
-    required int      accountId,
+    required int accountId,
     required DateTime from,
     required DateTime to,
-    BankBookFilter    filter      = BankBookFilter.all,
-    String?           searchQuery,
+    BankBookFilter filter = BankBookFilter.all,
+    String? searchQuery,
   }) async {
     try {
       var query = _db.select(_db.bankTransactions)
@@ -178,27 +179,30 @@ class BankBookRepository {
         ..orderBy([(t) => OrderingTerm.desc(t.txnDate)]);
 
       if (filter == BankBookFilter.creditOnly) {
-        query = query..where((t) => t.type.equals(BankTransactionType.credit.dbValue));
+        query = query
+          ..where((t) => t.type.equals(BankTransactionType.credit.dbValue));
       } else if (filter == BankBookFilter.debitOnly) {
-        query = query..where((t) => t.type.equals(BankTransactionType.debit.dbValue));
+        query = query
+          ..where((t) => t.type.equals(BankTransactionType.debit.dbValue));
       } else if (filter == BankBookFilter.chequeOnly) {
-        query = query..where((t) => t.paymentMode.equals(BankPaymentMode.cheque.dbValue));
+        query = query
+          ..where((t) => t.paymentMode.equals(BankPaymentMode.cheque.dbValue));
       } else if (filter == BankBookFilter.pendingReconciliation) {
         query = query..where((t) => t.isReconciled.equals(false));
       }
 
-      final rows        = await query.get();
+      final rows = await query.get();
       final accountName = await _getAccountName(accountId);
-      var   models      = rows.map((r) => _rowToTxnModel(r, accountName)).toList();
+      var models = rows.map((r) => _rowToTxnModel(r, accountName)).toList();
 
       if (searchQuery != null && searchQuery.trim().isNotEmpty) {
         final q = searchQuery.trim().toLowerCase();
         models = models.where((m) {
-          return m.categoryLabel.toLowerCase().contains(q)          ||
-                 (m.partyName?.toLowerCase().contains(q) ?? false)  ||
-                 (m.description?.toLowerCase().contains(q) ?? false)||
-                 m.txnId.toLowerCase().contains(q)                  ||
-                 (m.chequeNumber?.toLowerCase().contains(q) ?? false);
+          return m.categoryLabel.toLowerCase().contains(q) ||
+              (m.partyName?.toLowerCase().contains(q) ?? false) ||
+              (m.description?.toLowerCase().contains(q) ?? false) ||
+              m.txnId.toLowerCase().contains(q) ||
+              (m.chequeNumber?.toLowerCase().contains(q) ?? false);
         }).toList();
       }
 
@@ -211,7 +215,7 @@ class BankBookRepository {
 
   /// Watch transactions — live stream for real-time updates
   Stream<List<BankTransactionModel>> watchTransactions({
-    required int      accountId,
+    required int accountId,
     required DateTime from,
     required DateTime to,
   }) {
@@ -223,9 +227,9 @@ class BankBookRepository {
           ..orderBy([(t) => OrderingTerm.desc(t.txnDate)]))
         .watch()
         .asyncMap((rows) async {
-          final accountName = await _getAccountName(accountId);
-          return rows.map((r) => _rowToTxnModel(r, accountName)).toList();
-        });
+      final accountName = await _getAccountName(accountId);
+      return rows.map((r) => _rowToTxnModel(r, accountName)).toList();
+    });
   }
 
   // ==========================================================================
@@ -233,7 +237,7 @@ class BankBookRepository {
   // ==========================================================================
 
   Future<BankBookSummaryModel> computeSummary({
-    required int      accountId,
+    required int accountId,
     required DateTime from,
     required DateTime to,
   }) async {
@@ -254,21 +258,21 @@ class BankBookRepository {
           .get();
 
       double totalCredit = 0;
-      double totalDebit  = 0;
-      int    creditCount = 0;
-      int    debitCount  = 0;
-      int    reconciledCount   = 0;
-      int    unreconciledCount = 0;
+      double totalDebit = 0;
+      int creditCount = 0;
+      int debitCount = 0;
+      int reconciledCount = 0;
+      int unreconciledCount = 0;
 
       final Map<String, double> creditByCategory = {};
-      final Map<String, int>    creditCountByCategory = {};
-      final Map<String, double> debitByCategory  = {};
-      final Map<String, int>    debitCountByCategory  = {};
+      final Map<String, int> creditCountByCategory = {};
+      final Map<String, double> debitByCategory = {};
+      final Map<String, int> debitCountByCategory = {};
 
       // Cheque tracking
-      int    totalIssued   = 0;
-      int    totalCleared  = 0;
-      int    totalBounced  = 0;
+      int totalIssued = 0;
+      int totalCleared = 0;
+      int totalBounced = 0;
       double pendingAmount = 0;
 
       for (final row in rows) {
@@ -298,8 +302,8 @@ class BankBookRepository {
         if (row.paymentMode == BankPaymentMode.cheque.dbValue) {
           totalIssued++;
           final status = row.chequeStatus;
-          if (status == ChequeStatus.cleared.dbValue)  totalCleared++;
-          if (status == ChequeStatus.bounced.dbValue)  totalBounced++;
+          if (status == ChequeStatus.cleared.dbValue) totalCleared++;
+          if (status == ChequeStatus.bounced.dbValue) totalBounced++;
           if (status != ChequeStatus.cleared.dbValue &&
               status != ChequeStatus.bounced.dbValue) {
             pendingAmount += row.amount;
@@ -308,40 +312,38 @@ class BankBookRepository {
       }
 
       final closingBalance = openingBalance + totalCredit - totalDebit;
-      final netFlow        = totalCredit - totalDebit;
+      final netFlow = totalCredit - totalDebit;
       final pendingCheques = totalIssued - totalCleared - totalBounced;
 
-      final creditBreakdown = _buildBreakdown(
-        creditByCategory, creditCountByCategory,
-        BankTransactionType.credit, totalCredit);
-      final debitBreakdown = _buildBreakdown(
-        debitByCategory, debitCountByCategory,
-        BankTransactionType.debit, totalDebit);
+      final creditBreakdown = _buildBreakdown(creditByCategory,
+          creditCountByCategory, BankTransactionType.credit, totalCredit);
+      final debitBreakdown = _buildBreakdown(debitByCategory,
+          debitCountByCategory, BankTransactionType.debit, totalDebit);
 
       return BankBookSummaryModel(
-        openingBalance:    openingBalance,
-        totalCredit:       totalCredit,
-        totalDebit:        totalDebit,
-        closingBalance:    closingBalance,
-        netFlow:           netFlow,
+        openingBalance: openingBalance,
+        totalCredit: totalCredit,
+        totalDebit: totalDebit,
+        closingBalance: closingBalance,
+        netFlow: netFlow,
         openingBalanceStr: _fmt(openingBalance),
-        totalCreditStr:    _fmt(totalCredit),
-        totalDebitStr:     _fmt(totalDebit),
+        totalCreditStr: _fmt(totalCredit),
+        totalDebitStr: _fmt(totalDebit),
         closingBalanceStr: _fmt(closingBalance),
-        netFlowStr:        _fmt(netFlow.abs()),
-        creditBreakdown:   creditBreakdown,
-        debitBreakdown:    debitBreakdown,
+        netFlowStr: _fmt(netFlow.abs()),
+        creditBreakdown: creditBreakdown,
+        debitBreakdown: debitBreakdown,
         totalTransactions: rows.length,
-        creditCount:       creditCount,
-        debitCount:        debitCount,
-        reconciledCount:   reconciledCount,
+        creditCount: creditCount,
+        debitCount: debitCount,
+        reconciledCount: reconciledCount,
         unreconciledCount: unreconciledCount,
         chequeSummary: ChequeSummary(
-          totalIssued:            totalIssued,
-          totalCleared:           totalCleared,
-          totalBounced:           totalBounced,
-          totalPending:           pendingCheques,
-          pendingAmount:          pendingAmount,
+          totalIssued: totalIssued,
+          totalCleared: totalCleared,
+          totalBounced: totalBounced,
+          totalPending: pendingCheques,
+          pendingAmount: pendingAmount,
           pendingAmountFormatted: _fmt(pendingAmount),
         ),
       );
@@ -356,20 +358,20 @@ class BankBookRepository {
   // ==========================================================================
 
   Future<bool> saveTransaction({
-    required int                  accountId,
-    required BankTransactionType  type,
-    required String               categoryDbValue,
-    required double               amount,
-    required BankPaymentMode      paymentMode,
-    required DateTime             txnDate,
-    DateTime?                     valueDate,
-    String?                       chequeNumber,
-    ChequeStatus?                 chequeStatus,
-    DateTime?                     chequeDate,
-    String?                       description,
-    String?                       partyName,
-    String?                       referenceId,
-    String?                       referenceType,
+    required int accountId,
+    required BankTransactionType type,
+    required String categoryDbValue,
+    required double amount,
+    required BankPaymentMode paymentMode,
+    required DateTime txnDate,
+    DateTime? valueDate,
+    String? chequeNumber,
+    ChequeStatus? chequeStatus,
+    DateTime? chequeDate,
+    String? description,
+    String? partyName,
+    String? referenceId,
+    String? referenceType,
   }) async {
     try {
       final txnId = await _generateTxnId();
@@ -380,26 +382,26 @@ class BankBookRepository {
           : null;
 
       await _db.into(_db.bankTransactions).insert(
-        BankTransactionsCompanion.insert(
-          txnId:          txnId,
-          accountId:      accountId,
-          txnDate:        txnDate,
-          type:           type.dbValue,
-          category:       categoryDbValue,
-          amount:         Value(amount),
-          paymentMode:    Value(paymentMode.dbValue),
-          valueDate:      Value(valueDate),
-          chequeNumber:   Value(chequeNumber),
-          chequeStatus:   Value(finalChequeStatus),
-          chequeDate:     Value(chequeDate),
-          description:    Value(description),
-          partyName:      Value(partyName),
-          referenceId:    Value(referenceId),
-          referenceType:  Value(referenceType ?? 'MANUAL'),
-          isAutoGenerated: const Value(false),
-          isVoided:       const Value(false),
-        ),
-      );
+            BankTransactionsCompanion.insert(
+              txnId: txnId,
+              accountId: accountId,
+              txnDate: txnDate,
+              type: type.dbValue,
+              category: categoryDbValue,
+              amount: Value(amount),
+              paymentMode: Value(paymentMode.dbValue),
+              valueDate: Value(valueDate),
+              chequeNumber: Value(chequeNumber),
+              chequeStatus: Value(finalChequeStatus),
+              chequeDate: Value(chequeDate),
+              description: Value(description),
+              partyName: Value(partyName),
+              referenceId: Value(referenceId),
+              referenceType: Value(referenceType ?? 'MANUAL'),
+              isAutoGenerated: const Value(false),
+              isVoided: const Value(false),
+            ),
+          );
       return true;
     } catch (e) {
       debugPrint('❌ BankBookRepository.saveTransaction: $e');
@@ -412,13 +414,13 @@ class BankBookRepository {
   // ==========================================================================
 
   Future<int> syncBillsToBank({
-    required int      accountId,
+    required int accountId,
     required DateTime date,
   }) async {
     try {
       int synced = 0;
       final dayStart = DateTime(date.year, date.month, date.day);
-      final dayEnd   = DateTime(date.year, date.month, date.day, 23, 59, 59);
+      final dayEnd = DateTime(date.year, date.month, date.day, 23, 59, 59);
 
       final bills = await (_db.select(_db.bills)
             ..where((t) => t.billDate.isBiggerOrEqualValue(dayStart))
@@ -428,35 +430,36 @@ class BankBookRepository {
 
       for (final bill in bills) {
         // Only sync bank-mode payments — skip pure cash bills
-        final bankPortion = bill.paidAmount; // Adjust if you track payment split
+        final bankPortion =
+            bill.paidAmount; // Adjust if you track payment split
         if (bankPortion <= 0) continue;
 
         // Skip if already synced for this bill
         final existing = await (_db.select(_db.bankTransactions)
-              ..where((t) => t.referenceId.equals(bill.billNo))
+              ..where((t) => t.referenceId.like('${bill.billNo}%'))
               ..where((t) => t.accountId.equals(accountId)))
-            .getSingleOrNull();
-        if (existing != null) continue;
+            .get();
+        if (existing.isNotEmpty) continue;
 
         final txnId = await _generateTxnId();
 
         await _db.into(_db.bankTransactions).insert(
-          BankTransactionsCompanion.insert(
-            txnId:           txnId,
-            accountId:       accountId,
-            txnDate:         bill.billDate,
-            type:            BankTransactionType.credit.dbValue,
-            category:        BankCreditCategory.salePayment.dbValue,
-            amount:          Value(bankPortion),
-            paymentMode:     const Value('UPI'),
-            description:     Value('Sale — ${bill.billNo}'),
-            referenceId:     Value(bill.billNo),
-            referenceType:   const Value('BILL'),
-            partyName:       Value(bill.customerName),
-            isAutoGenerated: const Value(true),
-            isVoided:        const Value(false),
-          ),
-        );
+              BankTransactionsCompanion.insert(
+                txnId: txnId,
+                accountId: accountId,
+                txnDate: bill.billDate,
+                type: BankTransactionType.credit.dbValue,
+                category: BankCreditCategory.salePayment.dbValue,
+                amount: Value(bankPortion),
+                paymentMode: const Value('UPI'),
+                description: Value('Sale — ${bill.billNo}'),
+                referenceId: Value(bill.billNo),
+                referenceType: const Value('BILL'),
+                partyName: Value(bill.customerName),
+                isAutoGenerated: const Value(true),
+                isVoided: const Value(false),
+              ),
+            );
         synced++;
       }
       return synced;
@@ -472,11 +475,10 @@ class BankBookRepository {
 
   Future<bool> updateChequeStatus(int txnId, ChequeStatus status) async {
     try {
-      await (_db.update(_db.bankTransactions)
-            ..where((t) => t.id.equals(txnId)))
+      await (_db.update(_db.bankTransactions)..where((t) => t.id.equals(txnId)))
           .write(BankTransactionsCompanion(
         chequeStatus: Value(status.dbValue),
-        valueDate:    status == ChequeStatus.cleared
+        valueDate: status == ChequeStatus.cleared
             ? Value(DateTime.now())
             : const Value.absent(),
       ));
@@ -493,10 +495,9 @@ class BankBookRepository {
 
   Future<bool> markReconciled(int txnId, {String? note}) async {
     try {
-      await (_db.update(_db.bankTransactions)
-            ..where((t) => t.id.equals(txnId)))
+      await (_db.update(_db.bankTransactions)..where((t) => t.id.equals(txnId)))
           .write(BankTransactionsCompanion(
-        isReconciled:      const Value(true),
+        isReconciled: const Value(true),
         reconciliationNote: Value(note),
       ));
       return true;
@@ -512,10 +513,9 @@ class BankBookRepository {
 
   Future<bool> voidTransaction(int id, String reason) async {
     try {
-      await (_db.update(_db.bankTransactions)
-            ..where((t) => t.id.equals(id)))
+      await (_db.update(_db.bankTransactions)..where((t) => t.id.equals(id)))
           .write(BankTransactionsCompanion(
-        isVoided:  const Value(true),
+        isVoided: const Value(true),
         voidReason: Value(reason),
       ));
       return true;
@@ -537,7 +537,7 @@ class BankBookRepository {
           .get();
 
       double credit = 0;
-      double debit  = 0;
+      double debit = 0;
       for (final r in rows) {
         if (r.type == BankTransactionType.credit.dbValue) {
           credit += r.amount;
@@ -564,7 +564,7 @@ class BankBookRepository {
 
   Future<String> _generateTxnId() async {
     final count = await _db.bankTransactions.count().getSingle();
-    final year  = DateTime.now().year;
+    final year = DateTime.now().year;
     return 'BTXN-$year-${(count + 1).toString().padLeft(4, '0')}';
   }
 
@@ -573,26 +573,27 @@ class BankBookRepository {
     double currentBalance,
   ) {
     return BankAccountModel(
-      id:                     row.id,
-      accountName:            row.accountName,
-      holderName:             row.holderName,
-      bankName:               row.bankName,
-      accountNumber:          row.accountNumber,
-      accountNumberMasked:    BankAccountModel.maskAccountNumber(row.accountNumber),
-      ifscCode:               row.ifscCode,
-      branchName:             row.branchName,
-      accountType:            BankAccountType.fromDb(row.accountType),
-      upiId:                  row.upiId,
-      openingBalance:         row.openingBalance,
+      id: row.id,
+      accountName: row.accountName,
+      holderName: row.holderName,
+      bankName: row.bankName,
+      accountNumber: row.accountNumber,
+      accountNumberMasked:
+          BankAccountModel.maskAccountNumber(row.accountNumber),
+      ifscCode: row.ifscCode,
+      branchName: row.branchName,
+      accountType: BankAccountType.fromDb(row.accountType),
+      upiId: row.upiId,
+      openingBalance: row.openingBalance,
       openingBalanceFormatted: _fmt(row.openingBalance),
-      activeSince:            row.activeSince,
-      isActive:               row.isActive,
-      isPrimary:              row.isPrimary,
-      colorHex:               row.colorHex,
-      currentBalance:         currentBalance,
+      activeSince: row.activeSince,
+      isActive: row.isActive,
+      isPrimary: row.isPrimary,
+      colorHex: row.colorHex,
+      currentBalance: currentBalance,
       currentBalanceFormatted: _fmt(currentBalance),
-      totalCredit:            0, // computed separately in summary
-      totalDebit:             0,
+      totalCredit: 0, // computed separately in summary
+      totalDebit: 0,
     );
   }
 
@@ -604,53 +605,53 @@ class BankBookRepository {
         : BankDebitCategory.fromDb(row.category).displayLabel;
 
     return BankTransactionModel(
-      id:              row.id,
-      txnId:           row.txnId,
-      accountId:       row.accountId,
-      accountName:     accountName,
-      txnDate:         row.txnDate,
-      valueDate:       row.valueDate,
-      type:            type,
+      id: row.id,
+      txnId: row.txnId,
+      accountId: row.accountId,
+      accountName: accountName,
+      txnDate: row.txnDate,
+      valueDate: row.valueDate,
+      type: type,
       categoryDbValue: row.category,
-      categoryLabel:   categoryLabel,
-      amount:          row.amount,
+      categoryLabel: categoryLabel,
+      amount: row.amount,
       amountFormatted: _fmt(row.amount),
-      paymentMode:     BankPaymentMode.fromDb(row.paymentMode),
-      chequeNumber:    row.chequeNumber,
-      chequeStatus:    row.chequeStatus != null
+      paymentMode: BankPaymentMode.fromDb(row.paymentMode),
+      chequeNumber: row.chequeNumber,
+      chequeStatus: row.chequeStatus != null
           ? ChequeStatus.fromDb(row.chequeStatus!)
           : null,
-      chequeDate:      row.chequeDate,
-      description:     row.description,
-      referenceId:     row.referenceId,
-      referenceType:   row.referenceType,
-      partyName:       row.partyName,
-      isReconciled:    row.isReconciled,
+      chequeDate: row.chequeDate,
+      description: row.description,
+      referenceId: row.referenceId,
+      referenceType: row.referenceType,
+      partyName: row.partyName,
+      isReconciled: row.isReconciled,
       isAutoGenerated: row.isAutoGenerated,
-      isVoided:        row.isVoided,
+      isVoided: row.isVoided,
     );
   }
 
   List<BankCategoryBreakdownItem> _buildBreakdown(
-    Map<String, double>          amountMap,
-    Map<String, int>             countMap,
-    BankTransactionType          type,
-    double                       total,
+    Map<String, double> amountMap,
+    Map<String, int> countMap,
+    BankTransactionType type,
+    double total,
   ) {
     final items = amountMap.entries.map((e) {
-      final pct   = total > 0 ? (e.value / total) * 100 : 0.0;
+      final pct = total > 0 ? (e.value / total) * 100 : 0.0;
       final label = type == BankTransactionType.credit
           ? BankCreditCategory.fromDb(e.key).displayLabel
           : BankDebitCategory.fromDb(e.key).displayLabel;
 
       return BankCategoryBreakdownItem(
-        label:           label,
+        label: label,
         categoryDbValue: e.key,
-        type:            type,
-        amount:          e.value,
+        type: type,
+        amount: e.value,
         amountFormatted: _fmt(e.value),
-        percentage:      pct,
-        count:           countMap[e.key] ?? 0,
+        percentage: pct,
+        count: countMap[e.key] ?? 0,
       );
     }).toList();
 
