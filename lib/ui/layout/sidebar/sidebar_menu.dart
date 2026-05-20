@@ -23,7 +23,6 @@ class SidebarItem {
 
 class SidebarMenu {
   static List<SidebarItem> menuItems = [
-
     // ── Customer ────────────────────────────────────────────────
     SidebarItem(
       title: 'Customer',
@@ -125,12 +124,12 @@ class SidebarMenu {
       title: 'Reports & Analytics',
       icon: Icons.assessment_outlined,
       subItems: [
-        MenuItemData(AppRoutes.dayBookRoute),        // Daily Activity
-        MenuItemData(AppRoutes.salesReportRoute),    // Trading
+        MenuItemData(AppRoutes.dayBookRoute), // Daily Activity
+        MenuItemData(AppRoutes.salesReportRoute), // Trading
         MenuItemData(AppRoutes.purchaseReportRoute), // Trading
-        MenuItemData(AppRoutes.stockSummaryRoute),   // Trading
-        MenuItemData(AppRoutes.profitLossRoute),     // Financials
-        MenuItemData(AppRoutes.gstReportRoute),      // Taxation
+        MenuItemData(AppRoutes.stockSummaryRoute), // Trading
+        MenuItemData(AppRoutes.profitLossRoute), // Financials
+        MenuItemData(AppRoutes.gstReportRoute), // Taxation
       ],
     ),
 

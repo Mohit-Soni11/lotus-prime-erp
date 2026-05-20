@@ -22,7 +22,6 @@ import 'package:flutter/foundation.dart';
 import '../../../models/dashboard/counter_security_model.dart';
 
 class CounterSecurityLogic extends ChangeNotifier {
-
   CounterSecurityModel _data = const CounterSecurityModel();
   CounterSecurityModel get data => _data;
 
@@ -54,8 +53,8 @@ class CounterSecurityLogic extends ChangeNotifier {
     if (wt == null || wt <= 0) return 'Valid weight dalo (e.g. 15.250)';
 
     _data = _data.copyWith(
-      state:       SecuritySessionState.locked,
-      issuePcs:    pcs,
+      state: SecuritySessionState.locked,
+      issuePcs: pcs,
       issueWeight: _round3(wt),
     );
     notifyListeners();
@@ -78,19 +77,18 @@ class CounterSecurityLogic extends ChangeNotifier {
     final double? retWt = double.tryParse(weightStr.trim());
     if (retWt == null || retWt < 0) return 'Valid weight dalo';
 
-    final int    diffPcs = _data.issuePcs - retPcs;
-    final double diffWt  = _round3(_data.issueWeight - _round3(retWt));
+    final int diffPcs = _data.issuePcs - retPcs;
+    final double diffWt = _round3(_data.issueWeight - _round3(retWt));
 
-    final bool matched =
-        diffPcs == 0 && diffWt.abs() <= 0.0005;
+    final bool matched = diffPcs == 0 && diffWt.abs() <= 0.0005;
 
     _data = _data.copyWith(
-      state:        SecuritySessionState.result,
-      returnPcs:    retPcs,
+      state: SecuritySessionState.result,
+      returnPcs: retPcs,
       returnWeight: _round3(retWt),
-      result:       matched ? SecurityResult.matched : SecurityResult.mismatch,
-      diffPcs:      diffPcs,
-      diffWeight:   diffWt,
+      result: matched ? SecurityResult.matched : SecurityResult.mismatch,
+      diffPcs: diffPcs,
+      diffWeight: diffWt,
     );
     notifyListeners();
     return null;

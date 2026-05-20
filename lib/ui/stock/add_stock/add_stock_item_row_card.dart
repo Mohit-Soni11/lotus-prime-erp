@@ -143,7 +143,7 @@ class _AddStockItemRowCardState extends State<AddStockItemRowCard> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: error != null
-              ? AddStockColors.danger.withOpacity(0.45)
+              ? AddStockColors.danger.withValues(alpha: 0.45)
               : AddStockColors.cardBorder,
         ),
         boxShadow: const [
@@ -259,7 +259,7 @@ class _AddStockItemRowCardState extends State<AddStockItemRowCard> {
                   color: AddStockColors.dangerBg,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AddStockColors.danger.withOpacity(0.2),
+                    color: AddStockColors.danger.withValues(alpha: 0.2),
                   ),
                 ),
                 child: Row(
@@ -575,7 +575,7 @@ class _AddStockItemRowCardState extends State<AddStockItemRowCard> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: accent.withOpacity(0.12),
+                  color: accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, size: 16, color: accent),
@@ -634,9 +634,9 @@ class _AddStockItemRowCardState extends State<AddStockItemRowCard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.08),
+        color: accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accent.withOpacity(0.18)),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -687,9 +687,9 @@ class _AddStockItemRowCardState extends State<AddStockItemRowCard> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.08),
+        color: accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accent.withOpacity(0.18)),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -771,9 +771,9 @@ class _AddStockItemRowCardState extends State<AddStockItemRowCard> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.06),
+        color: accent.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accent.withOpacity(0.16)),
+        border: Border.all(color: accent.withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -803,7 +803,7 @@ class _AddStockItemRowCardState extends State<AddStockItemRowCard> {
     required ValueChanged<T?> onChanged,
   }) {
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       isExpanded: true,
       onChanged: onChanged,
       style: AddStockStyles.fieldInput,

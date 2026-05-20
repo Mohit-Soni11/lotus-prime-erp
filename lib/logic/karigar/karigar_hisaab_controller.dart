@@ -16,46 +16,44 @@ import '../../models/karigar/karigar_stats_model.dart';
 import '../../repositories/karigar/karigar_repository.dart';
 
 class KarigarHisaabController extends ChangeNotifier {
-
   final KarigarRepository _repo;
 
-  KarigarHisaabController(AppDatabase db)
-      : _repo = KarigarRepository(db);
+  KarigarHisaabController(AppDatabase db) : _repo = KarigarRepository(db);
 
   // ── STATE ──────────────────────────────────────────────────────────────────
 
-  bool    _isLoadingKarigars   = false;
-  bool    _isLoadingLedger     = false;
+  bool _isLoadingKarigars = false;
+  bool _isLoadingLedger = false;
   String? _errorMessage;
 
   // Left panel — karigar list
-  List<KarigarMaster> _allKarigars      = [];
+  List<KarigarMaster> _allKarigars = [];
   List<KarigarMaster> _filteredKarigars = [];
-  String              _karigarSearch    = '';
+  String _karigarSearch = '';
 
   // Right panel — selected karigar
-  KarigarMaster?         _selectedKarigar;
-  List<KarigarTxnEntry>  _ledgerEntries   = [];
-  KarigarStatsModel      _stats           = KarigarStatsModel.empty();
+  KarigarMaster? _selectedKarigar;
+  List<KarigarTxnEntry> _ledgerEntries = [];
+  KarigarStatsModel _stats = KarigarStatsModel.empty();
 
   // ── GETTERS ────────────────────────────────────────────────────────────────
 
-  bool    get isLoadingKarigars => _isLoadingKarigars;
-  bool    get isLoadingLedger   => _isLoadingLedger;
-  String? get errorMessage      => _errorMessage;
+  bool get isLoadingKarigars => _isLoadingKarigars;
+  bool get isLoadingLedger => _isLoadingLedger;
+  String? get errorMessage => _errorMessage;
 
-  List<KarigarMaster>    get filteredKarigars => _filteredKarigars;
-  KarigarMaster?         get selectedKarigar  => _selectedKarigar;
-  List<KarigarTxnEntry>  get ledgerEntries    => _ledgerEntries;
-  KarigarStatsModel      get stats            => _stats;
-  bool                   get hasKarigar       => _selectedKarigar != null;
-  bool                   get hasEntries       => _ledgerEntries.isNotEmpty;
+  List<KarigarMaster> get filteredKarigars => _filteredKarigars;
+  KarigarMaster? get selectedKarigar => _selectedKarigar;
+  List<KarigarTxnEntry> get ledgerEntries => _ledgerEntries;
+  KarigarStatsModel get stats => _stats;
+  bool get hasKarigar => _selectedKarigar != null;
+  bool get hasEntries => _ledgerEntries.isNotEmpty;
 
   // ── LOAD KARIGAR LIST ──────────────────────────────────────────────────────
 
   Future<void> loadKarigars() async {
     _isLoadingKarigars = true;
-    _errorMessage      = null;
+    _errorMessage = null;
     notifyListeners();
 
     try {
@@ -80,18 +78,19 @@ class KarigarHisaabController extends ChangeNotifier {
 
   Future<void> selectKarigar(KarigarMaster karigar) async {
     _selectedKarigar = karigar;
-    _isLoadingLedger  = true;
-    _ledgerEntries    = [];
-    _stats            = KarigarStatsModel.empty();
+    _isLoadingLedger = true;
+    _ledgerEntries = [];
+    _stats = KarigarStatsModel.empty();
     notifyListeners();
 
     try {
       final results = await Future.wait([
         _repo.getKarigarLedger(karigar.id),
-        _repo.getKarigarStats(karigar.id, openingBalance: karigar.openingBalance),
+        _repo.getKarigarStats(karigar.id,
+            openingBalance: karigar.openingBalance),
       ]);
       _ledgerEntries = results[0] as List<KarigarTxnEntry>;
-      _stats         = results[1] as KarigarStatsModel;
+      _stats = results[1] as KarigarStatsModel;
     } catch (e) {
       debugPrint('KarigarHisaabController.selectKarigar error: $e');
       _errorMessage = 'Failed to load ledger for ${karigar.name}.';

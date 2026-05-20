@@ -11,17 +11,17 @@ import 'karigar_enums/karigar_enums.dart';
 /// Wraps a Drift KarigarMaster with computed display helpers.
 /// Pure Dart — zero Flutter dependency.
 class KarigarMasterModel {
-  final int     id;
-  final String  name;
-  final String  phone;
+  final int id;
+  final String name;
+  final String phone;
   final String? alternatePhone;
-  final String  specialization;
-  final String  rateType;
-  final double  rateAmount;
+  final String specialization;
+  final String rateType;
+  final double rateAmount;
   final String? address;
   final String? city;
-  final double  openingBalance;
-  final bool    isActive;
+  final double openingBalance;
+  final bool isActive;
   final String? notes;
   final DateTime createdAt;
 
@@ -62,9 +62,12 @@ class KarigarMasterModel {
   String get rateDisplay {
     final formatted = rateAmount.toStringAsFixed(2);
     switch (KarigarRateType.fromLabel(rateType)) {
-      case KarigarRateType.perGram:  return '₹$formatted / gram';
-      case KarigarRateType.perPiece: return '₹$formatted / piece';
-      case KarigarRateType.percent:  return '$formatted%';
+      case KarigarRateType.perGram:
+        return '₹$formatted / gram';
+      case KarigarRateType.perPiece:
+        return '₹$formatted / piece';
+      case KarigarRateType.percent:
+        return '$formatted%';
     }
   }
 }

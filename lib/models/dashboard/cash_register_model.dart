@@ -38,25 +38,25 @@ class CashRegisterModel {
   });
 
   factory CashRegisterModel.loading() => const CashRegisterModel(
-    openingBalance:    0,
-    totalReceived:     0,
-    totalPaidOut:      0,
-    netCashDrawer:     0,
-    openingBalanceStr: '--',
-    totalReceivedStr:  '--',
-    totalPaidOutStr:   '--',
-    netCashDrawerStr:  '--',
-    isLoading:         true,
-  );
+        openingBalance: 0,
+        totalReceived: 0,
+        totalPaidOut: 0,
+        netCashDrawer: 0,
+        openingBalanceStr: '--',
+        totalReceivedStr: '--',
+        totalPaidOutStr: '--',
+        netCashDrawerStr: '--',
+        isLoading: true,
+      );
 
   factory CashRegisterModel.zero() => const CashRegisterModel(
-    openingBalance:    0,
-    totalReceived:     0,
-    totalPaidOut:      0,
-    netCashDrawer:     0,
-    openingBalanceStr: '₹0',
-    totalReceivedStr:  '₹0',
-    totalPaidOutStr:   '₹0',
-    netCashDrawerStr:  '₹0',
-  );
+        openingBalance: 0,
+        totalReceived: 0,
+        totalPaidOut: 0,
+        netCashDrawer: 0,
+        openingBalanceStr: '₹0',
+        totalReceivedStr: '₹0',
+        totalPaidOutStr: '₹0',
+        netCashDrawerStr: '₹0',
+      );
 }

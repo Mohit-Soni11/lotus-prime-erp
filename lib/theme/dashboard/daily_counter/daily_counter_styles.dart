@@ -8,77 +8,79 @@ import 'package:flutter/material.dart';
 import 'daily_counter_colors.dart';
 
 class DailyCounterStyles {
-
-  // ── DIMENSIONS ────────────────────────────────────────────────────────────
-  static const double cardBorderRadius  = 20.0;
+  // â”€â”€ DIMENSIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  static const double cardBorderRadius = 20.0;
   static const double groupBorderRadius = 16.0;
-  static const double innerBoxRadius    = 12.0;
-  static const double iconBoxSize       = 36.0;
-  static const double iconSize          = 18.0;
-  static const double bigIconSize       = 30.0;
+  static const double innerBoxRadius = 12.0;
+  static const double iconBoxSize = 36.0;
+  static const double iconSize = 18.0;
+  static const double bigIconSize = 30.0;
 
-  static const EdgeInsets cardPadding  = EdgeInsets.all(20.0);
+  static const EdgeInsets cardPadding = EdgeInsets.all(20.0);
   static const EdgeInsets groupPadding = EdgeInsets.all(16.0);
-  static const EdgeInsets boxPadding   = EdgeInsets.all(14.0);
+  static const EdgeInsets boxPadding = EdgeInsets.all(14.0);
 
-  // ── OUTER CARD DECORATION ─────────────────────────────────────────────────
+  // â”€â”€ OUTER CARD DECORATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get cardDecoration => BoxDecoration(
-    gradient: const LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [DailyCounterColors.cardBgStart, DailyCounterColors.cardBgEnd],
-    ),
-    borderRadius: BorderRadius.circular(cardBorderRadius),
-    border: Border.all(color: Colors.white.withOpacity(0.08)),
-    boxShadow: const [
-      BoxShadow(
-        color: Colors.black45,
-        blurRadius: 25,
-        offset: Offset(0, 15),
-        spreadRadius: -5,
-      ),
-    ],
-  );
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            DailyCounterColors.cardBgStart,
+            DailyCounterColors.cardBgEnd
+          ],
+        ),
+        borderRadius: BorderRadius.circular(cardBorderRadius),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black45,
+            blurRadius: 25,
+            offset: Offset(0, 15),
+            spreadRadius: -5,
+          ),
+        ],
+      );
 
-  // ── GROUP CONTAINER ───────────────────────────────────────────────────────
+  // â”€â”€ GROUP CONTAINER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get groupDecoration => BoxDecoration(
-    color: DailyCounterColors.groupBg,
-    borderRadius: BorderRadius.circular(groupBorderRadius),
-    border: Border.all(color: DailyCounterColors.groupBorder),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.2),
-        blurRadius: 8,
-        offset: const Offset(0, 4),
-      ),
-    ],
-  );
+        color: DailyCounterColors.groupBg,
+        borderRadius: BorderRadius.circular(groupBorderRadius),
+        border: Border.all(color: DailyCounterColors.groupBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      );
 
-  // ── INNER BOX DECORATION ──────────────────────────────────────────────────
+  // â”€â”€ INNER BOX DECORATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration innerBox(Color accent) => BoxDecoration(
-    color: accent.withOpacity(0.07),
-    borderRadius: BorderRadius.circular(innerBoxRadius),
-    border: Border.all(color: accent.withOpacity(0.2)),
-  );
+        color: accent.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(innerBoxRadius),
+        border: Border.all(color: accent.withValues(alpha: 0.2)),
+      );
 
-  // ── ICON BOX ──────────────────────────────────────────────────────────────
+  // â”€â”€ ICON BOX â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration iconBox(Color iconBg, Color accent) => BoxDecoration(
-    color: iconBg,
-    borderRadius: BorderRadius.circular(8),
-    border: Border.all(color: accent.withOpacity(0.3)),
-    boxShadow: [
-      BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4),
-    ],
-  );
+        color: iconBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: accent.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4),
+        ],
+      );
 
-  // ── AMOUNT PILL ───────────────────────────────────────────────────────────
+  // â”€â”€ AMOUNT PILL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration amountPill(Color accent) => BoxDecoration(
-    color: DailyCounterColors.amountBoxBg,
-    borderRadius: BorderRadius.circular(8),
-    border: Border.all(color: accent.withOpacity(0.25)),
-  );
+        color: DailyCounterColors.amountBoxBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: accent.withValues(alpha: 0.25)),
+      );
 
-  // ── TEXT STYLES ───────────────────────────────────────────────────────────
+  // â”€â”€ TEXT STYLES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle headerStyle = TextStyle(
     fontSize: 13.0,
     fontWeight: FontWeight.w700,
@@ -131,11 +133,11 @@ class DailyCounterStyles {
   );
 
   static TextStyle amountStyle(Color accent) => TextStyle(
-    fontSize: 16.0,
-    fontWeight: FontWeight.w800,
-    color: accent,
-    letterSpacing: -0.3,
-  );
+        fontSize: 16.0,
+        fontWeight: FontWeight.w800,
+        color: accent,
+        letterSpacing: -0.3,
+      );
 
   static const TextStyle dateStyle = TextStyle(
     fontSize: 11.0,

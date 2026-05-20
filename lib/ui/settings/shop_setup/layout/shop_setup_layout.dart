@@ -8,10 +8,10 @@ import '../layout/layout_ui/setup_footer.dart';
 
 class ShopSetupLayout extends StatelessWidget {
   // --- DATA INPUTS ---
-  final Widget child;                 
-  final List<ShopStepModel> steps;    
-  final int currentStep;              
-  
+  final Widget child;
+  final List<ShopStepModel> steps;
+  final int currentStep;
+
   // --- ACTIONS ---
   final VoidCallback onBack;
   final VoidCallback onNext;
@@ -31,14 +31,11 @@ class ShopSetupLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeStepData = steps.firstWhere(
-      (s) => s.id == currentStep, 
-      orElse: () => steps[0]
-    );
+    final activeStepData =
+        steps.firstWhere((s) => s.id == currentStep, orElse: () => steps[0]);
 
     return Scaffold(
       backgroundColor: LayoutColors.scaffoldBg,
-      
       body: Column(
         children: [
           // 1. FIXED HEADER
@@ -58,8 +55,9 @@ class ShopSetupLayout extends StatelessWidget {
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 50), 
-                    child: child, 
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 40, horizontal: 50),
+                    child: child,
                   ),
                 ),
               ],

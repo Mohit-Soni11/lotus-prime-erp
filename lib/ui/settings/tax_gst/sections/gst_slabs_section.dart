@@ -1,6 +1,6 @@
 // ============================================================
 // FILE    : lib/ui/settings/tax_gst/sections/gst_slabs_section.dart
-// MODULE  : Tax & GST — Card 02
+// MODULE  : Tax & GST â€” Card 02
 // ============================================================
 import 'package:flutter/material.dart';
 import '../../../../theme/settings/tax_gst/tax_gst_theme.dart';
@@ -18,20 +18,19 @@ class GstSlabsSection extends StatelessWidget {
       listenable: logic,
       builder: (context, _) {
         final e = logic.isEditing;
-        final a = TaxGstColors.card02Accent;
+        const a = TaxGstColors.card02Accent;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             TaxGstSectionHeader(
-              title:       TaxGstStrings.card02SectionTitle,
-              subtitle:    TaxGstStrings.card02SectionSub,
+              title: TaxGstStrings.card02SectionTitle,
+              subtitle: TaxGstStrings.card02SectionSub,
               accentColor: a,
-              isEditing:   e,
-              isSaving:    logic.isSaving,
-              onEdit:      logic.beginEdit,
-              onCancel:    logic.cancelEdit,
+              isEditing: e,
+              isSaving: logic.isSaving,
+              onEdit: logic.beginEdit,
+              onCancel: logic.cancelEdit,
               onSave: () async {
                 final ok = await logic.save();
                 if (context.mounted) _snack(context, ok);
@@ -42,17 +41,17 @@ class GstSlabsSection extends StatelessWidget {
 
             // Slab rows
             ...logic.slabs.asMap().entries.map((entry) {
-              final i    = entry.key;
+              final i = entry.key;
               final slab = entry.value;
               return Padding(
-                padding: const EdgeInsets.only(
-                    bottom: TaxGstStyles.spaceXS + 4),
+                padding:
+                    const EdgeInsets.only(bottom: TaxGstStyles.spaceXS + 4),
                 child: _SlabRow(
-                  category:  slab.category,
-                  rate:      slab.rate,
-                  accent:    a,
+                  category: slab.category,
+                  rate: slab.rate,
+                  accent: a,
                   isEditing: e,
-                  isEven:    i.isEven,
+                  isEven: i.isEven,
                   onChanged: (rate) => logic.updateRate(i, rate),
                 ),
               );
@@ -60,9 +59,9 @@ class GstSlabsSection extends StatelessWidget {
 
             const SizedBox(height: TaxGstStyles.spaceMD),
 
-            TaxGstInfoBanner(
+            const TaxGstInfoBanner(
               accentColor: a,
-              message:     TaxGstStrings.infoSlabs,
+              message: TaxGstStrings.infoSlabs,
             ),
           ],
         );
@@ -81,11 +80,11 @@ class _SlabRow extends StatelessWidget {
     required this.onChanged,
   });
 
-  final String   category;
-  final String   rate;
-  final Color    accent;
-  final bool     isEditing;
-  final bool     isEven;
+  final String category;
+  final String rate;
+  final Color accent;
+  final bool isEditing;
+  final bool isEven;
   final ValueChanged<String> onChanged;
 
   @override
@@ -94,14 +93,12 @@ class _SlabRow extends StatelessWidget {
       duration: TaxGstStyles.animFast,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: isEven
-            ? TaxGstColors.inputSurface
-            : TaxGstColors.cardSurface,
+        color: isEven ? TaxGstColors.inputSurface : TaxGstColors.cardSurface,
         borderRadius: BorderRadius.circular(TaxGstStyles.radiusChip + 2),
         border: Border.all(
           color: isEditing
-              ? accent.withOpacity(0.25)
-              : TaxGstColors.cardBorder.withOpacity(0.6),
+              ? accent.withValues(alpha: 0.25)
+              : TaxGstColors.cardBorder.withValues(alpha: 0.6),
         ),
       ),
       child: Row(
@@ -128,26 +125,25 @@ class _SlabRow extends StatelessWidget {
             SizedBox(
               width: 110,
               child: DropdownButtonFormField<String>(
-                value: rate,
+                initialValue: rate,
                 isDense: true,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(9),
-                    borderSide: BorderSide(
-                        color: accent.withOpacity(0.5)),
+                    borderSide:
+                        BorderSide(color: accent.withValues(alpha: 0.5)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(9),
-                    borderSide: BorderSide(
-                        color: accent.withOpacity(0.5)),
+                    borderSide:
+                        BorderSide(color: accent.withValues(alpha: 0.5)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(9),
-                    borderSide:
-                        BorderSide(color: accent, width: 1.5),
+                    borderSide: BorderSide(color: accent, width: 1.5),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 8),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   fillColor: TaxGstColors.cardSurface,
                   filled: true,
                 ),
@@ -155,14 +151,13 @@ class _SlabRow extends StatelessWidget {
                     .map((r) => DropdownMenuItem(
                           value: r,
                           child: Text(r,
-                              style: TaxGstStyles.hsnRate(context,
-                                  color: accent)),
+                              style:
+                                  TaxGstStyles.hsnRate(context, color: accent)),
                         ))
                     .toList(),
                 onChanged: (v) => onChanged(v ?? '3%'),
                 dropdownColor: TaxGstColors.cardSurface,
-                icon: Icon(TaxGstIcons.dropdownArrow,
-                    size: 18, color: accent),
+                icon: Icon(TaxGstIcons.dropdownArrow, size: 18, color: accent),
               ),
             ),
         ],
@@ -175,15 +170,12 @@ void _snack(BuildContext context, bool ok) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(
-      content: Text(ok
-          ? TaxGstStrings.snackSaved
-          : TaxGstStrings.snackSaveError),
-      backgroundColor:
-          ok ? TaxGstColors.btnSave : TaxGstColors.statusDanger,
+      content:
+          Text(ok ? TaxGstStrings.snackSaved : TaxGstStrings.snackSaveError),
+      backgroundColor: ok ? TaxGstColors.btnSave : TaxGstColors.statusDanger,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(TaxGstStyles.radiusButton)),
+          borderRadius: BorderRadius.circular(TaxGstStyles.radiusButton)),
       margin: const EdgeInsets.all(16),
     ));
 }

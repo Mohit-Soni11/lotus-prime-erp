@@ -24,63 +24,80 @@ class BookingItemModel extends ChangeNotifier {
   MetalType _metal;
   MakingChargeType _makingChargeType;
 
-  final TextEditingController descCtrl   = TextEditingController();
-  final TextEditingController pcsCtrl    = TextEditingController(text: '1');
+  final TextEditingController descCtrl = TextEditingController();
+  final TextEditingController pcsCtrl = TextEditingController(text: '1');
   final TextEditingController purityCtrl = TextEditingController();
-  final TextEditingController grossCtrl  = TextEditingController();
-  final TextEditingController lessCtrl   = TextEditingController();
-  final TextEditingController rateCtrl   = TextEditingController();
+  final TextEditingController grossCtrl = TextEditingController();
+  final TextEditingController lessCtrl = TextEditingController();
+  final TextEditingController rateCtrl = TextEditingController();
   final TextEditingController makingCtrl = TextEditingController();
 
   final FocusNode firstFieldFocus = FocusNode();
 
-  int    _pcs     = 1;
+  int _pcs = 1;
   double _grossWt = 0.0;
-  double _lessWt  = 0.0;
-  double _rate    = 0.0;
-  double _making  = 0.0;
-  double _tunch   = 0.0;
+  double _lessWt = 0.0;
+  double _rate = 0.0;
+  double _making = 0.0;
+  double _tunch = 0.0;
 
   BookingItemModel({
     MetalType metal = MetalType.gold,
     MakingChargeType makingChargeType = MakingChargeType.perGram,
   })  : _metal = metal,
         _makingChargeType = makingChargeType {
-
     pcsCtrl.addListener(() {
       final v = int.tryParse(pcsCtrl.text) ?? 1;
-      if (_pcs != v) { _pcs = v; notifyListeners(); }
+      if (_pcs != v) {
+        _pcs = v;
+        notifyListeners();
+      }
     });
     grossCtrl.addListener(() {
       final v = _parse(grossCtrl.text);
-      if (_grossWt != v) { _grossWt = v; notifyListeners(); }
+      if (_grossWt != v) {
+        _grossWt = v;
+        notifyListeners();
+      }
     });
     lessCtrl.addListener(() {
       final v = _parse(lessCtrl.text);
-      if (_lessWt != v) { _lessWt = v; notifyListeners(); }
+      if (_lessWt != v) {
+        _lessWt = v;
+        notifyListeners();
+      }
     });
     rateCtrl.addListener(() {
       final v = _parse(rateCtrl.text);
-      if (_rate != v) { _rate = v; notifyListeners(); }
+      if (_rate != v) {
+        _rate = v;
+        notifyListeners();
+      }
     });
     makingCtrl.addListener(() {
       final v = _parse(makingCtrl.text);
-      if (_making != v) { _making = v; notifyListeners(); }
+      if (_making != v) {
+        _making = v;
+        notifyListeners();
+      }
     });
     purityCtrl.addListener(() {
       final v = _parse(purityCtrl.text);
-      if (_tunch != v) { _tunch = v; notifyListeners(); }
+      if (_tunch != v) {
+        _tunch = v;
+        notifyListeners();
+      }
     });
   }
 
   // ── GETTERS ───────────────────────────────────────────────────────────────
-  MetalType        get metal            => _metal;
+  MetalType get metal => _metal;
   MakingChargeType get makingChargeType => _makingChargeType;
 
-  int    get pcs    => _pcs;
-  double get netWt  => _grossWt - _lessWt;
-  double get rate   => _rate;
-  double get tunch  => _tunch;
+  int get pcs => _pcs;
+  double get netWt => _grossWt - _lessWt;
+  double get rate => _rate;
+  double get tunch => _tunch;
   double get fineWt => netWt * (_tunch / 100);
 
   double get makingAmt {
@@ -154,44 +171,56 @@ class BookingItemModel extends ChangeNotifier {
 class BookingScrapModel extends ChangeNotifier {
   MetalType _metal;
 
-  final TextEditingController descCtrl   = TextEditingController();
-  final TextEditingController grossCtrl  = TextEditingController();
-  final TextEditingController lessCtrl   = TextEditingController();
+  final TextEditingController descCtrl = TextEditingController();
+  final TextEditingController grossCtrl = TextEditingController();
+  final TextEditingController lessCtrl = TextEditingController();
   final TextEditingController purityCtrl = TextEditingController();
-  final TextEditingController rateCtrl   = TextEditingController();
+  final TextEditingController rateCtrl = TextEditingController();
 
   final FocusNode firstFieldFocus = FocusNode();
 
   double _grossWt = 0.0;
-  double _lessWt  = 0.0;
-  double _purity  = 100.0;
-  double _rate    = 0.0;
+  double _lessWt = 0.0;
+  double _purity = 100.0;
+  double _rate = 0.0;
 
   BookingScrapModel({MetalType metal = MetalType.gold}) : _metal = metal {
     purityCtrl.text = '100';
 
     grossCtrl.addListener(() {
       final v = _parse(grossCtrl.text);
-      if (_grossWt != v) { _grossWt = v; notifyListeners(); }
+      if (_grossWt != v) {
+        _grossWt = v;
+        notifyListeners();
+      }
     });
     lessCtrl.addListener(() {
       final v = _parse(lessCtrl.text);
-      if (_lessWt != v) { _lessWt = v; notifyListeners(); }
+      if (_lessWt != v) {
+        _lessWt = v;
+        notifyListeners();
+      }
     });
     purityCtrl.addListener(() {
       final v = _parse(purityCtrl.text);
-      if (_purity != v) { _purity = v; notifyListeners(); }
+      if (_purity != v) {
+        _purity = v;
+        notifyListeners();
+      }
     });
     rateCtrl.addListener(() {
       final v = _parse(rateCtrl.text);
-      if (_rate != v) { _rate = v; notifyListeners(); }
+      if (_rate != v) {
+        _rate = v;
+        notifyListeners();
+      }
     });
   }
 
   // ── GETTERS ───────────────────────────────────────────────────────────────
-  MetalType get metal  => _metal;
-  double    get netWt  => _grossWt - _lessWt;
-  double    get rate   => _rate;
+  MetalType get metal => _metal;
+  double get netWt => _grossWt - _lessWt;
+  double get rate => _rate;
 
   double get fineWt {
     // Silver without purity entry → treated as 100% fine

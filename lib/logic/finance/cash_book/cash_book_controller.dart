@@ -17,7 +17,6 @@ import '../../../models/finance/cash_book/cash_book_summary_model.dart';
 import '../../../repositories/finance/cash_book_repository.dart';
 
 class CashBookController extends ChangeNotifier {
-
   CashBookController() {
     _init();
   }
@@ -25,47 +24,47 @@ class CashBookController extends ChangeNotifier {
   final CashBookRepository _repository = CashBookRepository();
 
   // ── View State ────────────────────────────────────────────────────────────
-  CashBookViewMode _viewMode   = CashBookViewMode.daily;
-  CashBookFilter   _filter     = CashBookFilter.all;
-  DateTime         _activeDate = DateTime.now();
+  CashBookViewMode _viewMode = CashBookViewMode.daily;
+  CashBookFilter _filter = CashBookFilter.all;
+  DateTime _activeDate = DateTime.now();
 
-  CashBookViewMode get viewMode   => _viewMode;
-  CashBookFilter   get filter     => _filter;
-  DateTime         get activeDate => _activeDate;
+  CashBookViewMode get viewMode => _viewMode;
+  CashBookFilter get filter => _filter;
+  DateTime get activeDate => _activeDate;
 
   // ── Data State ────────────────────────────────────────────────────────────
-  CashBookSummaryModel       _summary      = CashBookSummaryModel.loading();
-  List<CashTransactionGroup> _groups       = [];
-  List<CashTransactionModel> _allTxns      = [];
-  bool                       _isLoading    = true;
-  String?                    _errorMessage;
+  CashBookSummaryModel _summary = CashBookSummaryModel.loading();
+  List<CashTransactionGroup> _groups = [];
+  List<CashTransactionModel> _allTxns = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
-  CashBookSummaryModel       get summary      => _summary;
-  List<CashTransactionGroup> get groups        => _groups;
-  bool                       get isLoading     => _isLoading;
-  String?                    get errorMessage  => _errorMessage;
+  CashBookSummaryModel get summary => _summary;
+  List<CashTransactionGroup> get groups => _groups;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
 
   // ── Search ────────────────────────────────────────────────────────────────
   final TextEditingController searchCtrl = TextEditingController();
   String _searchQuery = '';
 
   // ── Entry Form ────────────────────────────────────────────────────────────
-  final TextEditingController amountCtrl      = TextEditingController();
+  final TextEditingController amountCtrl = TextEditingController();
   final TextEditingController descriptionCtrl = TextEditingController();
-  final TextEditingController partyNameCtrl   = TextEditingController();
+  final TextEditingController partyNameCtrl = TextEditingController();
   final TextEditingController customLabelCtrl = TextEditingController(); // ✅ v2
 
-  CashTransactionType _entryType     = CashTransactionType.income;
-  String              _entryCategory = IncomeCategory.sale.dbValue;
-  PaymentMode         _entryMode     = PaymentMode.cash;
-  DateTime            _entryDate     = DateTime.now();
-  bool                _isSaving      = false;
+  CashTransactionType _entryType = CashTransactionType.income;
+  String _entryCategory = IncomeCategory.sale.dbValue;
+  PaymentMode _entryMode = PaymentMode.cash;
+  DateTime _entryDate = DateTime.now();
+  bool _isSaving = false;
 
-  CashTransactionType get entryType     => _entryType;
-  String              get entryCategory => _entryCategory;
-  PaymentMode         get entryMode     => _entryMode;
-  DateTime            get entryDate     => _entryDate;
-  bool                get isSaving      => _isSaving;
+  CashTransactionType get entryType => _entryType;
+  String get entryCategory => _entryCategory;
+  PaymentMode get entryMode => _entryMode;
+  DateTime get entryDate => _entryDate;
+  bool get isSaving => _isSaving;
 
   /// Whether the currently selected category requires a custom label
   bool get entryNeedsCustomLabel {
@@ -100,9 +99,8 @@ class CashBookController extends ChangeNotifier {
     _watchSub?.cancel();
     final range = _dateRange;
 
-    _watchSub = _repository
-        .watchTransactions(from: range.start, to: range.end)
-        .listen(
+    _watchSub =
+        _repository.watchTransactions(from: range.start, to: range.end).listen(
       (txns) async {
         _allTxns = txns;
         await _refreshSummary();
@@ -111,7 +109,7 @@ class CashBookController extends ChangeNotifier {
       onError: (e) {
         debugPrint('❌ CashBookController watch error: $e');
         _errorMessage = 'Failed to load transactions.';
-        _isLoading    = false;
+        _isLoading = false;
         notifyListeners();
       },
     );
@@ -125,9 +123,9 @@ class CashBookController extends ChangeNotifier {
     final range = _dateRange;
     _summary = await _repository.computeSummary(
       from: range.start,
-      to:   range.end,
+      to: range.end,
     );
-    _isLoading    = false;
+    _isLoading = false;
     _errorMessage = null;
   }
 
@@ -147,11 +145,11 @@ class CashBookController extends ChangeNotifier {
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
       txns = txns.where((t) {
-        return t.categoryLabel.toLowerCase().contains(q)            ||
-               (t.partyName?.toLowerCase().contains(q)   ?? false)  ||
-               (t.description?.toLowerCase().contains(q) ?? false)  ||
-               (t.customLabel?.toLowerCase().contains(q) ?? false)  ||
-               t.txnId.toLowerCase().contains(q);
+        return t.categoryLabel.toLowerCase().contains(q) ||
+            (t.partyName?.toLowerCase().contains(q) ?? false) ||
+            (t.description?.toLowerCase().contains(q) ?? false) ||
+            (t.customLabel?.toLowerCase().contains(q) ?? false) ||
+            t.txnId.toLowerCase().contains(q);
       }).toList();
     }
 
@@ -168,18 +166,20 @@ class CashBookController extends ChangeNotifier {
     }
 
     final groups = map.entries.map((e) {
-      final list    = e.value;
-      final income  = list.where((t) => t.isIncome).fold(0.0, (s, t) => s + t.amount);
-      final expense = list.where((t) => t.isExpense).fold(0.0, (s, t) => s + t.amount);
-      final date    = DateFormat('yyyy-MM-dd').parse(e.key);
+      final list = e.value;
+      final income =
+          list.where((t) => t.isIncome).fold(0.0, (s, t) => s + t.amount);
+      final expense =
+          list.where((t) => t.isExpense).fold(0.0, (s, t) => s + t.amount);
+      final date = DateFormat('yyyy-MM-dd').parse(e.key);
 
       return CashTransactionGroup(
-        date:         date,
-        dateLabel:    _buildDateLabel(date),
+        date: date,
+        dateLabel: _buildDateLabel(date),
         transactions: list,
-        groupIncome:  income,
+        groupIncome: income,
         groupExpense: expense,
-        groupNet:     income - expense,
+        groupNet: income - expense,
       );
     }).toList();
 
@@ -188,9 +188,9 @@ class CashBookController extends ChangeNotifier {
   }
 
   String _buildDateLabel(DateTime date) {
-    final now   = DateTime.now();
+    final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final d     = DateTime(date.year, date.month, date.day);
+    final d = DateTime(date.year, date.month, date.day);
 
     if (d == today) {
       return 'Today — ${DateFormat('d MMM yyyy').format(date)}';
@@ -207,7 +207,7 @@ class CashBookController extends ChangeNotifier {
 
   void setViewMode(CashBookViewMode mode) {
     if (_viewMode == mode) return;
-    _viewMode  = mode;
+    _viewMode = mode;
     _isLoading = true;
     notifyListeners();
     _startWatch();
@@ -220,7 +220,7 @@ class CashBookController extends ChangeNotifier {
 
   void navigatePrevious() {
     _activeDate = _shift(-1);
-    _isLoading  = true;
+    _isLoading = true;
     notifyListeners();
     _startWatch();
   }
@@ -229,14 +229,14 @@ class CashBookController extends ChangeNotifier {
     final shifted = _shift(1);
     if (shifted.isAfter(DateTime.now())) return;
     _activeDate = shifted;
-    _isLoading  = true;
+    _isLoading = true;
     notifyListeners();
     _startWatch();
   }
 
   void jumpToToday() {
     _activeDate = DateTime.now();
-    _isLoading  = true;
+    _isLoading = true;
     notifyListeners();
     _startWatch();
   }
@@ -254,7 +254,7 @@ class CashBookController extends ChangeNotifier {
   // ==========================================================================
 
   void setEntryType(CashTransactionType type) {
-    _entryType     = type;
+    _entryType = type;
     _entryCategory = type == CashTransactionType.income
         ? IncomeCategory.sale.dbValue
         : ExpenseCategory.shopRent.dbValue;
@@ -283,10 +283,10 @@ class CashBookController extends ChangeNotifier {
     descriptionCtrl.clear();
     partyNameCtrl.clear();
     customLabelCtrl.clear();
-    _entryType     = CashTransactionType.income;
+    _entryType = CashTransactionType.income;
     _entryCategory = IncomeCategory.sale.dbValue;
-    _entryMode     = PaymentMode.cash;
-    _entryDate     = DateTime.now();
+    _entryMode = PaymentMode.cash;
+    _entryDate = DateTime.now();
     notifyListeners();
   }
 
@@ -306,20 +306,17 @@ class CashBookController extends ChangeNotifier {
     notifyListeners();
 
     final success = await _repository.saveTransaction(
-      type:            _entryType,
+      type: _entryType,
       categoryDbValue: _entryCategory,
-      amount:          amount,
-      paymentMode:     _entryMode,
-      txnDate:         _entryDate,
-      customLabel:     entryNeedsCustomLabel
-                           ? customLabelCtrl.text.trim()
-                           : null,
-      description:     descriptionCtrl.text.trim().isEmpty
-                           ? null
-                           : descriptionCtrl.text.trim(),
-      partyName:       partyNameCtrl.text.trim().isEmpty
-                           ? null
-                           : partyNameCtrl.text.trim(),
+      amount: amount,
+      paymentMode: _entryMode,
+      txnDate: _entryDate,
+      customLabel: entryNeedsCustomLabel ? customLabelCtrl.text.trim() : null,
+      description: descriptionCtrl.text.trim().isEmpty
+          ? null
+          : descriptionCtrl.text.trim(),
+      partyName:
+          partyNameCtrl.text.trim().isEmpty ? null : partyNameCtrl.text.trim(),
     );
 
     _isSaving = false;
@@ -346,10 +343,10 @@ class CashBookController extends ChangeNotifier {
   String get activeDateLabel {
     switch (_viewMode) {
       case CashBookViewMode.daily:
-        final now   = DateTime.now();
+        final now = DateTime.now();
         final today = DateTime(now.year, now.month, now.day);
-        final d     = DateTime(
-            _activeDate.year, _activeDate.month, _activeDate.day);
+        final d =
+            DateTime(_activeDate.year, _activeDate.month, _activeDate.day);
         if (d == today) return 'Today';
         if (d == today.subtract(const Duration(days: 1))) return 'Yesterday';
         return DateFormat('d MMM yyyy').format(_activeDate);
@@ -362,9 +359,9 @@ class CashBookController extends ChangeNotifier {
 
   bool get isToday {
     final now = DateTime.now();
-    return _activeDate.year  == now.year &&
-           _activeDate.month == now.month &&
-           _activeDate.day   == now.day;
+    return _activeDate.year == now.year &&
+        _activeDate.month == now.month &&
+        _activeDate.day == now.day;
   }
 
   List<String> get availableCategories {
@@ -394,16 +391,16 @@ class CashBookController extends ChangeNotifier {
               _activeDate.year, _activeDate.month, _activeDate.day, 23, 59, 59),
         );
       case CashBookViewMode.monthly:
-        final last = DateTime(
-            _activeDate.year, _activeDate.month + 1, 0, 23, 59, 59);
+        final last =
+            DateTime(_activeDate.year, _activeDate.month + 1, 0, 23, 59, 59);
         return (
           start: DateTime(_activeDate.year, _activeDate.month, 1),
-          end:   last,
+          end: last,
         );
       case CashBookViewMode.yearly:
         return (
           start: DateTime(_activeDate.year, 1, 1),
-          end:   DateTime(_activeDate.year, 12, 31, 23, 59, 59),
+          end: DateTime(_activeDate.year, 12, 31, 23, 59, 59),
         );
     }
   }
@@ -413,8 +410,7 @@ class CashBookController extends ChangeNotifier {
       case CashBookViewMode.daily:
         return _activeDate.add(Duration(days: delta));
       case CashBookViewMode.monthly:
-        return DateTime(
-            _activeDate.year, _activeDate.month + delta, 1);
+        return DateTime(_activeDate.year, _activeDate.month + delta, 1);
       case CashBookViewMode.yearly:
         return DateTime(_activeDate.year + delta, 1, 1);
     }

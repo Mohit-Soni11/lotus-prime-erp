@@ -15,8 +15,7 @@ enum SupplierType {
   final String label;
   const SupplierType(this.label);
 
-  static SupplierType fromLabel(String l) =>
-      SupplierType.values.firstWhere(
+  static SupplierType fromLabel(String l) => SupplierType.values.firstWhere(
         (e) => e.label == l,
         orElse: () => SupplierType.manufacturer,
       );
@@ -32,8 +31,7 @@ enum SupplierStatus {
   final String label;
   const SupplierStatus(this.label);
 
-  static SupplierStatus fromLabel(String l) =>
-      SupplierStatus.values.firstWhere(
+  static SupplierStatus fromLabel(String l) => SupplierStatus.values.firstWhere(
         (e) => e.label == l,
         orElse: () => SupplierStatus.active,
       );

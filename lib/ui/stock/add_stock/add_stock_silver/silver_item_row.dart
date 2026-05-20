@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.dart';
@@ -313,10 +311,10 @@ class _SilverItemRowState extends State<SilverItemRow> {
         height: 32,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: SilverStockColors.brandSilver.withOpacity(0.12),
+          color: SilverStockColors.brandSilver.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(7),
           border: Border.all(
-            color: SilverStockColors.brandSilver.withOpacity(0.35),
+            color: SilverStockColors.brandSilver.withValues(alpha: 0.35),
           ),
         ),
         child: Text(
@@ -344,9 +342,9 @@ class _SilverItemRowState extends State<SilverItemRow> {
       alignment:
           align == TextAlign.center ? Alignment.center : Alignment.centerRight,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Text(
         value,
@@ -389,9 +387,9 @@ class _SilverItemRowState extends State<SilverItemRow> {
               height: 38,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: SilverStockColors.brandSilver.withOpacity(0.12),
+                color: SilverStockColors.brandSilver.withValues(alpha: 0.12),
                 border: Border.all(
-                  color: SilverStockColors.brandSilver.withOpacity(0.40),
+                  color: SilverStockColors.brandSilver.withValues(alpha: 0.40),
                 ),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -422,10 +420,10 @@ class _SilverItemRowState extends State<SilverItemRow> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: SilverStockColors.danger.withOpacity(0.12),
+              color: SilverStockColors.danger.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: SilverStockColors.danger.withOpacity(0.35),
+                color: SilverStockColors.danger.withValues(alpha: 0.35),
               ),
             ),
             child: const Icon(
@@ -498,7 +496,7 @@ class _SilverTextField extends StatelessWidget {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(
-            color: SilverStockColors.textMuted.withOpacity(0.50),
+            color: SilverStockColors.textMuted.withValues(alpha: 0.50),
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
@@ -576,7 +574,7 @@ class _SilverPopupField extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: hint,
                 hintStyle: TextStyle(
-                  color: SilverStockColors.textMuted.withOpacity(0.50),
+                  color: SilverStockColors.textMuted.withValues(alpha: 0.50),
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),

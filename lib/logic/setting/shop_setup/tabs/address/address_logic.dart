@@ -10,11 +10,11 @@
 import 'package:flutter/foundation.dart';
 
 class AddressFormLogic {
-  
   // --- 🚀 UPGRADE: GRANULAR STATE NOTIFIERS ---
   final ValueNotifier<bool> isAddressLocked = ValueNotifier(true);
   final ValueNotifier<bool> isSaving = ValueNotifier(false);
-  final ValueNotifier<String> selectedAddressType = ValueNotifier("Head Office");
+  final ValueNotifier<String> selectedAddressType =
+      ValueNotifier("Head Office");
 
   // --- ACTIONS ---
 
@@ -48,17 +48,17 @@ class AddressFormLogic {
   // --- ASYNC SAVE LOGIC ---
   Future<bool> saveAddress(List<String> errors) async {
     if (errors.isNotEmpty) {
-      return false; 
+      return false;
     }
 
     isSaving.value = true;
-    
+
     // Fast Micro-Interaction (Simulated API Call)
     await Future.delayed(const Duration(milliseconds: 300));
 
     isSaving.value = false;
     isAddressLocked.value = true;
-    return true; 
+    return true;
   }
 
   // --- MEMORY MANAGEMENT ---

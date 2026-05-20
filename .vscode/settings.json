@@ -1,3 +1,5 @@
-{
-    "cmake.sourceDirectory": "D:/lotus-prime-erp/linux"
+﻿{
+  "cmake.configureOnOpen": false,
+  "cmake.sourceDirectory": "${workspaceFolder}/windows",
+  "cmake.buildDirectory": "${workspaceFolder}/build/windows/cmake"
 }

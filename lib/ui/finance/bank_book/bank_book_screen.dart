@@ -1,31 +1,31 @@
 // =============================================================================
 // FILE        : bank_book_screen.dart
 // MODULE      : Finance & Ledgers / Bank Book
-// LAYER       : UI — Master Screen Assembly
+// LAYER       : UI â€” Master Screen Assembly
 // DESCRIPTION : Top-level shell connecting all Bank Book components.
 //               Follows the exact same pattern as CashBookScreen.
 //
 //               LAYOUT:
-//               ┌──────────────────────────────────────────────────────────┐
-//               │  DARK APP BAR (module title, sync, add entry, add acct)  │
-//               ├───────────────────┬──────────────────────────────────────┤
-//               │  LEFT PANEL 330px │  CENTER PANEL (flex)                 │
-//               │  ─────────────── │  ───────────────────────────────────  │
-//               │  Account Selector │  Search Bar + Filter Chips            │
-//               │  View Toggle      │  Grouped Transaction List             │
-//               │  Date Navigator   │  (hover for actions, void, reconcile) │
-//               │  Summary Cards    │                                        │
-//               │  Reconciliation   │                                        │
-//               │  Cheque Summary   │                                        │
-//               │  Breakdown        │                                        │
-//               └───────────────────┴──────────────────────────────────────┘
+//               â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//               â”‚  DARK APP BAR (module title, sync, add entry, add acct)  â”‚
+//               â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+//               â”‚  LEFT PANEL 330px â”‚  CENTER PANEL (flex)                 â”‚
+//               â”‚  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ â”‚  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  â”‚
+//               â”‚  Account Selector â”‚  Search Bar + Filter Chips            â”‚
+//               â”‚  View Toggle      â”‚  Grouped Transaction List             â”‚
+//               â”‚  Date Navigator   â”‚  (hover for actions, void, reconcile) â”‚
+//               â”‚  Summary Cards    â”‚                                        â”‚
+//               â”‚  Reconciliation   â”‚                                        â”‚
+//               â”‚  Cheque Summary   â”‚                                        â”‚
+//               â”‚  Breakdown        â”‚                                        â”‚
+//               â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
-//               ✅ Dark AppBar + Cream body (matches Cash Book / POS)
-//               ✅ Left panel fixed 330px | Right panel flex
-//               ✅ ListenableBuilder — zero setState in UI layer
-//               ✅ Entry dialog — slide-up animated
-//               ✅ Add Account dialog — slide-up animated
-//               ✅ Auto-sync on screen open
+//               âœ… Dark AppBar + Cream body (matches Cash Book / POS)
+//               âœ… Left panel fixed 330px | Right panel flex
+//               âœ… ListenableBuilder â€” zero setState in UI layer
+//               âœ… Entry dialog â€” slide-up animated
+//               âœ… Add Account dialog â€” slide-up animated
+//               âœ… Auto-sync on screen open
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -45,7 +45,6 @@ class BankBookScreen extends StatefulWidget {
 }
 
 class _BankBookScreenState extends State<BankBookScreen> {
-
   late final BankBookController _ctrl;
 
   @override
@@ -65,7 +64,7 @@ class _BankBookScreenState extends State<BankBookScreen> {
     super.dispose();
   }
 
-  // ── Show Add Entry Dialog ─────────────────────────────────────────────────
+  // â”€â”€ Show Add Entry Dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _showAddEntryDialog() {
     if (_ctrl.selectedAccount == null) {
@@ -74,8 +73,8 @@ class _BankBookScreenState extends State<BankBookScreen> {
           content: const Text('Please add or select a bank account first'),
           backgroundColor: BankBookColors.chequeAccent,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           margin: const EdgeInsets.all(16),
         ),
       );
@@ -83,25 +82,25 @@ class _BankBookScreenState extends State<BankBookScreen> {
     }
 
     showDialog(
-      context:            context,
+      context: context,
       barrierDismissible: true,
-      barrierColor:       Colors.black.withOpacity(0.45),
+      barrierColor: Colors.black.withValues(alpha: 0.45),
       builder: (_) => BankBookEntryDialog(ctrl: _ctrl),
     );
   }
 
-  // ── Show Add Account Dialog ───────────────────────────────────────────────
+  // â”€â”€ Show Add Account Dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _showAddAccountDialog() {
     showDialog(
-      context:            context,
+      context: context,
       barrierDismissible: true,
-      barrierColor:       Colors.black.withOpacity(0.45),
+      barrierColor: Colors.black.withValues(alpha: 0.45),
       builder: (_) => BankBookAddAccountDialog(ctrl: _ctrl),
     );
   }
 
-  // ── Sync Bills ────────────────────────────────────────────────────────────
+  // â”€â”€ Sync Bills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> _onSyncBills() async {
     final count = await _ctrl.syncTodaysBills();
@@ -118,16 +117,15 @@ class _BankBookScreenState extends State<BankBookScreen> {
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         backgroundColor: BankBookColors.creditAccent,
-        behavior:        SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10)),
-        margin:   const EdgeInsets.all(16),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
         duration: const Duration(seconds: 2),
       ),
     );
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Build â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   @override
   Widget build(BuildContext context) {
@@ -136,36 +134,35 @@ class _BankBookScreenState extends State<BankBookScreen> {
       child: Scaffold(
         backgroundColor: BankBookColors.bodyBg,
 
-        // ── Dark App Bar ───────────────────────────────────────────────────
+        // â”€â”€ Dark App Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         appBar: BankBookAppBar(
-          onBack:        () => Navigator.pop(context),
-          ctrl:          _ctrl,
-          onAddEntry:    _showAddEntryDialog,
-          onSyncBills:   _onSyncBills,
-          onAddAccount:  _showAddAccountDialog,
+          onBack: () => Navigator.pop(context),
+          ctrl: _ctrl,
+          onAddEntry: _showAddEntryDialog,
+          onSyncBills: _onSyncBills,
+          onAddAccount: _showAddAccountDialog,
         ),
 
         body: SafeArea(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-              // ── LEFT PANEL — Accounts + Summary ───────────────────────────
+              // â”€â”€ LEFT PANEL â€” Accounts + Summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               BankBookLeftPanel(
-                ctrl:         _ctrl,
+                ctrl: _ctrl,
                 onAddAccount: _showAddAccountDialog,
               ),
 
-              // ── Vertical Divider ───────────────────────────────────────────
+              // â”€â”€ Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Container(
                 width: 1,
                 color: BankBookColors.bodyBorder,
               ),
 
-              // ── CENTER PANEL — Transaction List ────────────────────────────
+              // â”€â”€ CENTER PANEL â€” Transaction List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Expanded(
                 child: BankBookTransactionList(
-                  ctrl:       _ctrl,
+                  ctrl: _ctrl,
                   onAddEntry: _showAddEntryDialog,
                 ),
               ),

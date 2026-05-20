@@ -26,7 +26,7 @@ class TaxGstInfoBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 14, color: accentColor.withOpacity(0.85)),
+          Icon(icon, size: 14, color: accentColor.withValues(alpha: 0.85)),
           const SizedBox(width: 9),
           Expanded(
             child: Text(

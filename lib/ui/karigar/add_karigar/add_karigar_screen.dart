@@ -1,6 +1,6 @@
 // =============================================================================
 // FILE        : add_karigar_screen.dart
-// MODULE      : Karigar → Add Karigar
+// MODULE      : Karigar â†’ Add Karigar
 // LAYER       : UI / Screen
 // DESCRIPTION : Full production Add Karigar screen.
 //               Matches AddCustomerScreen pattern exactly.
@@ -12,7 +12,7 @@
 //               5. Address
 //               6. Financial Setup
 //               7. Notes & Status
-//               ListenableBuilder — zero setState in UI.
+//               ListenableBuilder â€” zero setState in UI.
 // =============================================================================
 
 import 'dart:io';
@@ -46,7 +46,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
   late final List<Animation<double>> _fades;
   late final List<Animation<Offset>> _slides;
 
-  // ── Text Controllers ────────────────────────────────────────────────────
+  // â”€â”€ Text Controllers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   final _firstNameCtrl = TextEditingController();
   final _lastNameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
@@ -57,7 +57,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
   final _balanceCtrl = TextEditingController(text: '0.00');
   final _notesCtrl = TextEditingController();
 
-  // ── Focus Nodes ─────────────────────────────────────────────────────────
+  // â”€â”€ Focus Nodes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   final _firstNameFocus = FocusNode();
   final _lastNameFocus = FocusNode();
   final _phoneFocus = FocusNode();
@@ -103,7 +103,9 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
     _logic
       ..removeListener(_rebuild)
       ..dispose();
-    for (final a in _anims) a.dispose();
+    for (final a in _anims) {
+      a.dispose();
+    }
     for (final c in [
       _firstNameCtrl,
       _lastNameCtrl,
@@ -133,7 +135,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
     super.dispose();
   }
 
-  // ── ACTIONS ───────────────────────────────────────────────────────────────
+  // â”€â”€ ACTIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> _pickImage() async {
     final src = await showModalBottomSheet<ImageSource>(
@@ -207,7 +209,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
         child: SlideTransition(position: _slides[i], child: child),
       );
 
-  // ── BUILD ──────────────────────────────────────────────────────────────────
+  // â”€â”€ BUILD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   @override
   Widget build(BuildContext context) {
@@ -321,9 +323,9 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION CARD SHELL
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildSectionCard({
     required IconData icon,
@@ -354,10 +356,10 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.20),
+                color: Colors.white.withValues(alpha: 0.20),
                 borderRadius: BorderRadius.circular(10),
-                border:
-                    Border.all(color: Colors.white.withOpacity(0.30), width: 1),
+                border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.30), width: 1),
               ),
               child: Center(
                   child: Text(
@@ -375,7 +377,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
+                  color: Colors.white.withValues(alpha: 0.18),
                   shape: BoxShape.circle),
               child: Icon(icon, color: Colors.white, size: 19),
             ),
@@ -409,9 +411,9 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION 0: PHOTO
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildPhotoSection() {
     final imagePath = _logic.form.profileImagePath;
@@ -419,18 +421,19 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AddKarigarColors.brandGold.withOpacity(0.14),
-            AddKarigarColors.brandGold.withOpacity(0.04),
+            AddKarigarColors.brandGold.withValues(alpha: 0.14),
+            AddKarigarColors.brandGold.withValues(alpha: 0.04),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: AddKarigarColors.brandGold.withOpacity(0.30), width: 1.5),
+            color: AddKarigarColors.brandGold.withValues(alpha: 0.30),
+            width: 1.5),
         boxShadow: [
           BoxShadow(
-              color: AddKarigarColors.brandGold.withOpacity(0.12),
+              color: AddKarigarColors.brandGold.withValues(alpha: 0.12),
               blurRadius: 20,
               offset: const Offset(0, 6))
         ],
@@ -447,12 +450,12 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
                 shape: BoxShape.circle,
                 gradient: SweepGradient(colors: [
                   AddKarigarColors.brandGold,
-                  AddKarigarColors.brandGold.withOpacity(0.4),
+                  AddKarigarColors.brandGold.withValues(alpha: 0.4),
                   AddKarigarColors.brandGold,
                 ]),
                 boxShadow: [
                   BoxShadow(
-                      color: AddKarigarColors.brandGold.withOpacity(0.40),
+                      color: AddKarigarColors.brandGold.withValues(alpha: 0.40),
                       blurRadius: 16,
                       spreadRadius: 2)
                 ],
@@ -485,7 +488,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
                 border: Border.all(color: Colors.white, width: 2),
                 boxShadow: [
                   BoxShadow(
-                      color: AddKarigarColors.brandGold.withOpacity(0.5),
+                      color: AddKarigarColors.brandGold.withValues(alpha: 0.5),
                       blurRadius: 8,
                       offset: const Offset(0, 2))
                 ],
@@ -535,7 +538,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
                 icon: Icons.delete_outline_rounded,
                 bg: AddKarigarColors.errorBg,
                 fg: AddKarigarColors.error,
-                border: AddKarigarColors.error.withOpacity(0.3),
+                border: AddKarigarColors.error.withValues(alpha: 0.3),
                 onTap: () => _logic.setProfileImagePath(null),
               ),
             ],
@@ -564,7 +567,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
           boxShadow: bg == AddKarigarColors.brandGold
               ? [
                   BoxShadow(
-                      color: AddKarigarColors.brandGold.withOpacity(0.30),
+                      color: AddKarigarColors.brandGold.withValues(alpha: 0.30),
                       blurRadius: 6,
                       offset: const Offset(0, 2))
                 ]
@@ -581,9 +584,9 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION 1: IDENTITY
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildIdentitySection() {
     return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -615,9 +618,9 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
     ]);
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION 2: CONTACT
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildContactSection() {
     return Column(children: [
@@ -655,9 +658,9 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
     ]);
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION 3: PROFESSIONAL
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildProfessionalSection() {
     return Column(children: [
@@ -693,7 +696,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
         icon: AddKarigarIcons.rateAmount,
         ctrl: _rateAmountCtrl,
         focus: _rateAmountFocus,
-        prefix: '₹',
+        prefix: 'â‚¹',
         onChanged: _logic.onRateAmountChanged,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         formatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
@@ -701,9 +704,9 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
     ]);
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION 4: ADDRESS
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildAddressSection() {
     return Column(children: [
@@ -731,9 +734,9 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
     ]);
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION 5: FINANCIAL
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildFinancialSection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -744,7 +747,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
         ctrl: _balanceCtrl,
         focus: _balanceFocus,
         next: _notesFocus,
-        prefix: '₹',
+        prefix: 'â‚¹',
         onChanged: _logic.onOpeningBalanceChanged,
         keyboardType:
             const TextInputType.numberWithOptions(decimal: true, signed: true),
@@ -763,9 +766,9 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
     ]);
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION 6: NOTES + STATUS
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildNotesSection() {
     return Column(children: [
@@ -824,8 +827,9 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           decoration: BoxDecoration(
-            color:
-                isSelected ? color.withOpacity(0.08) : const Color(0xFFF3F4F6),
+            color: isSelected
+                ? color.withValues(alpha: 0.08)
+                : const Color(0xFFF3F4F6),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected ? color : const Color(0xFFE5E7EB),
@@ -834,7 +838,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: color.withOpacity(0.12),
+                      color: color.withValues(alpha: 0.12),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     )
@@ -846,7 +850,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
               padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? color.withOpacity(0.12)
+                    ? color.withValues(alpha: 0.12)
                     : const Color(0xFFE9ECEF),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -878,9 +882,9 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // ACTION BUTTONS
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildActionButtons() {
     final canSave = _logic.canSave;
@@ -912,7 +916,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
           boxShadow: canSave
               ? [
                   BoxShadow(
-                    color: AddKarigarColors.saveBtnBg.withOpacity(0.40),
+                    color: AddKarigarColors.saveBtnBg.withValues(alpha: 0.40),
                     blurRadius: 16,
                     offset: const Offset(0, 5),
                   )
@@ -948,9 +952,9 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
     ]);
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // REUSABLE FIELD BUILDER
-  // ══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _field({
     required String label,
@@ -1011,7 +1015,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
           boxShadow: hasFocus
               ? [
                   BoxShadow(
-                    color: AddKarigarColors.brandGold.withOpacity(0.12),
+                    color: AddKarigarColors.brandGold.withValues(alpha: 0.12),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   )
@@ -1019,7 +1023,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
               : hasError
                   ? [
                       BoxShadow(
-                        color: AddKarigarColors.error.withOpacity(0.08),
+                        color: AddKarigarColors.error.withValues(alpha: 0.08),
                         blurRadius: 6,
                       )
                     ]
@@ -1031,11 +1035,11 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
             height: maxLines > 1 ? 54 : double.infinity,
             decoration: BoxDecoration(
               color: hasFocus
-                  ? AddKarigarColors.brandGold.withOpacity(0.12)
+                  ? AddKarigarColors.brandGold.withValues(alpha: 0.12)
                   : hasError
-                      ? AddKarigarColors.error.withOpacity(0.08)
+                      ? AddKarigarColors.error.withValues(alpha: 0.08)
                       : hasValue
-                          ? Colors.black.withOpacity(0.03)
+                          ? Colors.black.withValues(alpha: 0.03)
                           : const Color(0xFFF0EDE8),
               borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(11),
@@ -1043,7 +1047,7 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
               border: Border(
                   right: BorderSide(
                       color: hasFocus
-                          ? AddKarigarColors.brandGold.withOpacity(0.3)
+                          ? AddKarigarColors.brandGold.withValues(alpha: 0.3)
                           : AddKarigarColors.inputBorder,
                       width: 1)),
             ),
@@ -1078,10 +1082,11 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
             textInputAction:
                 next != null ? TextInputAction.next : TextInputAction.done,
             onFieldSubmitted: (_) {
-              if (next != null)
+              if (next != null) {
                 FocusScope.of(context).requestFocus(next);
-              else
+              } else {
                 FocusScope.of(context).unfocus();
+              }
             },
             decoration: InputDecoration(
               hintText: hint,
@@ -1126,21 +1131,22 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
       Container(
         height: 54,
         decoration: BoxDecoration(
-          color: AddKarigarColors.brandGold.withOpacity(0.04),
+          color: AddKarigarColors.brandGold.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-              color: AddKarigarColors.brandGold.withOpacity(0.4), width: 1.5),
+              color: AddKarigarColors.brandGold.withValues(alpha: 0.4),
+              width: 1.5),
         ),
         child: Row(children: [
           Container(
             width: 54,
             height: 54,
             decoration: BoxDecoration(
-              color: AddKarigarColors.brandGold.withOpacity(0.10),
+              color: AddKarigarColors.brandGold.withValues(alpha: 0.10),
               borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(11),
                   bottomLeft: Radius.circular(11)),
-              border: Border(
+              border: const Border(
                   right: BorderSide(color: AddKarigarColors.inputBorder)),
             ),
             child: Icon(icon, size: 20, color: AddKarigarColors.brandGold),
@@ -1173,9 +1179,9 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // IMAGE SOURCE SHEET
-// ══════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 class _ImageSourceSheet extends StatelessWidget {
   @override

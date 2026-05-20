@@ -33,12 +33,12 @@ class NewGirviScreen extends StatefulWidget {
 
 class _NewGirviScreenState extends State<NewGirviScreen>
     with TickerProviderStateMixin {
-  // ── Controller ────────────────────────────────────────────────────────────
+  // â”€â”€ Controller â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   late final NewGirviController _ctrl;
   final AppDatabase _db = AppDatabase();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  // ── Text Controllers ──────────────────────────────────────────────────────
+  // â”€â”€ Text Controllers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   final _itemDescCtrl = TextEditingController();
   final _grossWtCtrl = TextEditingController();
   final _stoneWtCtrl = TextEditingController();
@@ -49,7 +49,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   final _idProofNoCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
 
-  // ── Focus Nodes ───────────────────────────────────────────────────────────
+  // â”€â”€ Focus Nodes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   final _itemDescFocus = FocusNode();
   final _grossWtFocus = FocusNode();
   final _stoneWtFocus = FocusNode();
@@ -59,7 +59,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   final _durationFocus = FocusNode();
   final _idProofNoFocus = FocusNode();
 
-  // ── Animations ────────────────────────────────────────────────────────────
+  // â”€â”€ Animations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const int _sectionCount = 9;
   late final List<AnimationController> _sectionAnim;
   late final List<Animation<double>> _sectionFade;
@@ -92,7 +92,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       });
     }
 
-    // Wire text → controller
+    // Wire text â†’ controller
     _grossWtCtrl
         .addListener(() => _ctrl.onGrossWeightChanged(_grossWtCtrl.text));
     _stoneWtCtrl
@@ -133,7 +133,9 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       _durationCtrl,
       _idProofNoCtrl,
       _notesCtrl,
-    ]) c.dispose();
+    ]) {
+      c.dispose();
+    }
     for (final f in [
       _itemDescFocus,
       _grossWtFocus,
@@ -143,12 +145,16 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       _interestFocus,
       _durationFocus,
       _idProofNoFocus,
-    ]) f.dispose();
-    for (final a in _sectionAnim) a.dispose();
+    ]) {
+      f.dispose();
+    }
+    for (final a in _sectionAnim) {
+      a.dispose();
+    }
     super.dispose();
   }
 
-  // ── ACTIONS ───────────────────────────────────────────────────────────────
+  // â”€â”€ ACTIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> _onSave() async {
     FocusScope.of(context).unfocus();
@@ -184,7 +190,9 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       _loanAmtCtrl,
       _idProofNoCtrl,
       _notesCtrl,
-    ]) c.clear();
+    ]) {
+      c.clear();
+    }
     _interestCtrl.text = '2.0';
     _durationCtrl.text = '12';
     await _ctrl.resetForm();
@@ -262,7 +270,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
         child: SlideTransition(position: _sectionSlide[i], child: child),
       );
 
-  // ── BUILD ─────────────────────────────────────────────────────────────────
+  // â”€â”€ BUILD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   @override
   Widget build(BuildContext context) {
@@ -280,10 +288,10 @@ class _NewGirviScreenState extends State<NewGirviScreen>
             child: CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
-                // ── Ticket Banner ──────────────────────────────────────────
+                // â”€â”€ Ticket Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 SliverToBoxAdapter(child: _buildTicketBanner()),
 
-                // ── Error Banner ───────────────────────────────────────────
+                // â”€â”€ Error Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 if (_ctrl.errorMessage != null)
                   SliverToBoxAdapter(
                     child: Padding(
@@ -292,7 +300,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
                     ),
                   ),
 
-                // ── Sections ───────────────────────────────────────────────
+                // â”€â”€ Sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
                   sliver: SliverList(
@@ -323,12 +331,12 @@ class _NewGirviScreenState extends State<NewGirviScreen>
         },
       ),
 
-      // ── Bottom Action Bar ─────────────────────────────────────────────────
+      // â”€â”€ Bottom Action Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       bottomNavigationBar: _buildBottomBar(),
     );
   }
 
-  // ── TICKET BANNER ─────────────────────────────────────────────────────────
+  // â”€â”€ TICKET BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildTicketBanner() {
     return Container(
@@ -337,10 +345,10 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       decoration: BoxDecoration(
         color: GirviColors.shellBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: GirviColors.brandGold.withOpacity(0.3)),
+        border: Border.all(color: GirviColors.brandGold.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
-            color: GirviColors.brandGold.withOpacity(0.08),
+            color: GirviColors.brandGold.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           )
@@ -353,7 +361,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
             gradient: LinearGradient(
               colors: [
                 GirviColors.brandGold,
-                GirviColors.brandGold.withOpacity(0.7)
+                GirviColors.brandGold.withValues(alpha: 0.7)
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -382,9 +390,10 @@ class _NewGirviScreenState extends State<NewGirviScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: GirviColors.warning.withOpacity(0.1),
+            color: GirviColors.warning.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: GirviColors.warning.withOpacity(0.3)),
+            border:
+                Border.all(color: GirviColors.warning.withValues(alpha: 0.3)),
           ),
           child: Text('DRAFT',
               style: GoogleFonts.inter(
@@ -397,7 +406,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     );
   }
 
-  // ── SECTION 0: CUSTOMER ───────────────────────────────────────────────────
+  // â”€â”€ SECTION 0: CUSTOMER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildSection0Customer() {
     return GirviSectionCard(
@@ -414,7 +423,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     );
   }
 
-  // ── SECTION 1: ITEM DETAILS ───────────────────────────────────────────────
+  // â”€â”€ SECTION 1: ITEM DETAILS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildSection1ItemDetails() {
     return GirviSectionCard(
@@ -480,7 +489,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     );
   }
 
-  // ── SECTION 2: WEIGHT ─────────────────────────────────────────────────────
+  // â”€â”€ SECTION 2: WEIGHT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildSection2Weight() {
     final netWt = _ctrl.netWeight;
@@ -534,7 +543,8 @@ class _NewGirviScreenState extends State<NewGirviScreen>
             decoration: BoxDecoration(
               color: GirviColors.infoBg,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: GirviColors.info.withOpacity(0.3)),
+              border:
+                  Border.all(color: GirviColors.info.withValues(alpha: 0.3)),
             ),
             child: Row(children: [
               const Icon(GirviIcons.info, color: GirviColors.info, size: 14),
@@ -554,7 +564,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     );
   }
 
-  // ── SECTION 3: VALUATION ──────────────────────────────────────────────────
+  // â”€â”€ SECTION 3: VALUATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildSection3Valuation() {
     return GirviSectionCard(
@@ -564,7 +574,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       accent: GirviColors.accentValuation,
       child: Column(children: [
         GirviInputField(
-          label: 'Market Rate (₹/gram) *',
+          label: 'Market Rate (â‚¹/gram) *',
           hint: '0.00',
           icon: GirviIcons.valuation,
           controller: _rateCtrl,
@@ -574,14 +584,14 @@ class _NewGirviScreenState extends State<NewGirviScreen>
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
           ],
-          prefixText: '₹ ',
+          prefixText: 'â‚¹ ',
           validator: _ctrl.validateRatePerGram,
         ),
         const SizedBox(height: 14),
         // Computed total value
         GirviReadOnlyField(
           label: 'Total Item Value',
-          value: '₹ ${_fmt.format(_ctrl.totalValue)}',
+          value: 'â‚¹ ${_fmt.format(_ctrl.totalValue)}',
           highlighted: _ctrl.totalValue > 0,
         ),
         if (_ctrl.totalValue > 0) ...[
@@ -598,7 +608,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     );
   }
 
-  // ── SECTION 4: LOAN TERMS ─────────────────────────────────────────────────
+  // â”€â”€ SECTION 4: LOAN TERMS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildSection4LoanTerms() {
     return GirviSectionCard(
@@ -608,7 +618,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       accent: GirviColors.accentLoan,
       child: Column(children: [
         GirviInputField(
-          label: 'Loan Amount (₹) *',
+          label: 'Loan Amount (â‚¹) *',
           hint: '0.00',
           icon: GirviIcons.loanTerms,
           controller: _loanAmtCtrl,
@@ -618,7 +628,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
           ],
-          prefixText: '₹ ',
+          prefixText: 'â‚¹ ',
           validator: _ctrl.validateLoanAmount,
         ),
         const SizedBox(height: 8),
@@ -673,7 +683,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     );
   }
 
-  // ── SECTION 5: DISBURSEMENT ───────────────────────────────────────────────
+  // â”€â”€ SECTION 5: DISBURSEMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildSection5Disbursement() {
     return GirviSectionCard(
@@ -693,7 +703,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     );
   }
 
-  // ── SECTION 6: DATES ──────────────────────────────────────────────────────
+  // â”€â”€ SECTION 6: DATES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildSection6Dates() {
     return GirviSectionCard(
@@ -742,7 +752,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     );
   }
 
-  // ── SECTION 7: KYC ────────────────────────────────────────────────────────
+  // â”€â”€ SECTION 7: KYC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildSection7KYC() {
     return GirviSectionCard(
@@ -764,7 +774,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
             const SizedBox(width: 8),
             Expanded(
                 child: Text(
-                    'RBI guidelines require ID proof for pawn loans above ₹1000.',
+                    'RBI guidelines require ID proof for pawn loans above â‚¹1000.',
                     style: GoogleFonts.inter(
                         color: GirviColors.danger,
                         fontSize: 11,
@@ -778,7 +788,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
           value: _ctrl.idProofType,
           items: [
             const DropdownMenuItem(
-                value: null, child: Text('— Select ID Type —')),
+                value: null, child: Text('â€” Select ID Type â€”')),
             ...GirviIdProofType.values.map((e) => DropdownMenuItem(
                   value: e,
                   child: Text(e.displayName),
@@ -800,7 +810,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     );
   }
 
-  // ── SECTION 8: NOTES ──────────────────────────────────────────────────────
+  // â”€â”€ SECTION 8: NOTES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildSection8Notes() {
     return GirviSectionCard(
@@ -819,17 +829,17 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     );
   }
 
-  // ── BOTTOM ACTION BAR ─────────────────────────────────────────────────────
+  // â”€â”€ BOTTOM ACTION BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildBottomBar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       decoration: BoxDecoration(
         color: GirviColors.cardBg,
-        border: Border(top: BorderSide(color: GirviColors.cardBorder)),
+        border: const Border(top: BorderSide(color: GirviColors.cardBorder)),
         boxShadow: [
           BoxShadow(
-            color: GirviColors.shellBg.withOpacity(0.08),
+            color: GirviColors.shellBg.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, -4),
           )
@@ -869,7 +879,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
                     gradient: LinearGradient(
                       colors: [
                         GirviColors.brandGold,
-                        GirviColors.brandGold.withOpacity(0.85)
+                        GirviColors.brandGold.withValues(alpha: 0.85)
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -877,7 +887,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: GirviColors.brandGold.withOpacity(0.35),
+                        color: GirviColors.brandGold.withValues(alpha: 0.35),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       )
@@ -931,7 +941,7 @@ class _SelectedCustomerCard extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: GirviColors.success.withOpacity(0.15),
+            color: GirviColors.success.withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
           child: const Icon(GirviIcons.customer,
@@ -990,12 +1000,12 @@ class _SelectCustomerButton extends StatelessWidget {
           color: GirviColors.inputBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: GirviColors.brandGold.withOpacity(0.4),
+            color: GirviColors.brandGold.withValues(alpha: 0.4),
             style: BorderStyle.solid,
           ),
         ),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(GirviIcons.search, color: GirviColors.brandGold, size: 18),
+          const Icon(GirviIcons.search, color: GirviColors.brandGold, size: 18),
           const SizedBox(width: 10),
           Text(GirviStrings.selectCustomerHint,
               style: GoogleFonts.inter(
@@ -1098,7 +1108,7 @@ class _LtvSuggestionRow extends StatelessWidget {
                       color: GirviColors.brandGoldLight,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                          color: GirviColors.brandGold.withOpacity(0.3)),
+                          color: GirviColors.brandGold.withValues(alpha: 0.3)),
                     ),
                     child: Column(children: [
                       Text('${ltv.toInt()}% LTV',
@@ -1106,7 +1116,7 @@ class _LtvSuggestionRow extends StatelessWidget {
                               color: GirviColors.brandDeep,
                               fontSize: 10,
                               fontWeight: FontWeight.w700)),
-                      Text('₹${fmt.format(amt)}',
+                      Text('â‚¹${fmt.format(amt)}',
                           style: GoogleFonts.manrope(
                               color: GirviColors.textDark,
                               fontSize: 11,
@@ -1140,9 +1150,9 @@ class _LtvIndicator extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _color.withOpacity(0.06),
+        color: _color.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _color.withOpacity(0.2)),
+        border: Border.all(color: _color.withValues(alpha: 0.2)),
       ),
       child: Column(children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -1157,7 +1167,7 @@ class _LtvIndicator extends StatelessWidget {
             activeTrackColor: _color,
             thumbColor: _color,
             inactiveTrackColor: GirviColors.divider,
-            overlayColor: _color.withOpacity(0.2),
+            overlayColor: _color.withValues(alpha: 0.2),
             trackHeight: 4,
           ),
           child: Slider(
@@ -1201,7 +1211,7 @@ class _InterestPreviewCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [
             GirviColors.shellBg,
             GirviColors.shellPanelBg,
@@ -1210,7 +1220,7 @@ class _InterestPreviewCard extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: GirviColors.brandGold.withOpacity(0.2)),
+        border: Border.all(color: GirviColors.brandGold.withValues(alpha: 0.2)),
       ),
       child: Column(children: [
         Row(children: [
@@ -1240,11 +1250,11 @@ class _InterestPreviewCard extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _PreviewStat('Monthly Interest', '₹ ${fmt.format(monthly)}',
+            _PreviewStat('Monthly Interest', 'â‚¹ ${fmt.format(monthly)}',
                 GirviColors.warning),
-            _PreviewStat(
-                'Total Interest', '₹ ${fmt.format(total)}', GirviColors.danger),
-            _PreviewStat('Total Due', '₹ ${fmt.format(totalDue)}',
+            _PreviewStat('Total Interest', 'â‚¹ ${fmt.format(total)}',
+                GirviColors.danger),
+            _PreviewStat('Total Due', 'â‚¹ ${fmt.format(totalDue)}',
                 GirviColors.brandGold),
           ],
         ),
@@ -1292,7 +1302,7 @@ class _PaymentModeSelector extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: isSelected
-                  ? GirviColors.brandGold.withOpacity(0.12)
+                  ? GirviColors.brandGold.withValues(alpha: 0.12)
                   : GirviColors.inputBg,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(

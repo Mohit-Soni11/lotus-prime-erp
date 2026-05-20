@@ -2,10 +2,10 @@
 // FILE        : bank_book_left_panel.dart
 // MODULE      : Finance & Ledgers / Bank Book
 // LAYER       : UI
-// DESCRIPTION : Fixed left panel (330px) — Account selector cards,
+// DESCRIPTION : Fixed left panel (330px) â€” Account selector cards,
 //               view-mode toggle, date navigator, summary cards,
 //               reconciliation status, cheque summary, category breakdown.
-//               ListenableBuilder — zero setState in UI layer.
+//               ListenableBuilder â€” zero setState in UI layer.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -20,7 +20,7 @@ import '../../../theme/finance/bank_book/bank_book_theme.dart';
 
 class BankBookLeftPanel extends StatelessWidget {
   final BankBookController ctrl;
-  final VoidCallback       onAddAccount;
+  final VoidCallback onAddAccount;
 
   const BankBookLeftPanel({
     super.key,
@@ -34,21 +34,19 @@ class BankBookLeftPanel extends StatelessWidget {
       listenable: ctrl,
       builder: (_, __) {
         return Container(
-          width:  330,
+          width: 330,
           height: double.infinity,
-          color:  BankBookColors.bodyBg,
+          color: BankBookColors.bodyBg,
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-
                 // 1. Account Selector
                 _AccountSelector(ctrl: ctrl, onAddAccount: onAddAccount),
                 const SizedBox(height: 16),
 
                 if (ctrl.selectedAccount != null) ...[
-
                   // 2. View Mode Toggle
                   _ViewModeToggle(ctrl: ctrl),
                   const SizedBox(height: 12),
@@ -86,9 +84,9 @@ class BankBookLeftPanel extends StatelessWidget {
                   // 10. Credit Breakdown
                   if (ctrl.summary.creditBreakdown.isNotEmpty)
                     _BreakdownSection(
-                      title:   BankBookStrings.creditBreakdown,
-                      items:   ctrl.summary.creditBreakdown,
-                      color:   BankBookColors.creditAccent,
+                      title: BankBookStrings.creditBreakdown,
+                      items: ctrl.summary.creditBreakdown,
+                      color: BankBookColors.creditAccent,
                       bgColor: BankBookColors.creditBg,
                     ),
 
@@ -98,9 +96,9 @@ class BankBookLeftPanel extends StatelessWidget {
                   // 11. Debit Breakdown
                   if (ctrl.summary.debitBreakdown.isNotEmpty)
                     _BreakdownSection(
-                      title:   BankBookStrings.debitBreakdown,
-                      items:   ctrl.summary.debitBreakdown,
-                      color:   BankBookColors.debitAccent,
+                      title: BankBookStrings.debitBreakdown,
+                      items: ctrl.summary.debitBreakdown,
+                      color: BankBookColors.debitAccent,
                       bgColor: BankBookColors.debitBg,
                     ),
 
@@ -115,11 +113,11 @@ class BankBookLeftPanel extends StatelessWidget {
   }
 }
 
-// ── Account Selector ──────────────────────────────────────────────────────────
+// â”€â”€ Account Selector â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _AccountSelector extends StatelessWidget {
   final BankBookController ctrl;
-  final VoidCallback       onAddAccount;
+  final VoidCallback onAddAccount;
   const _AccountSelector({required this.ctrl, required this.onAddAccount});
 
   @override
@@ -134,9 +132,10 @@ class _AccountSelector extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color:        BankBookColors.brandGoldLight,
+            color: BankBookColors.brandGoldLight,
             borderRadius: BorderRadius.circular(12),
-            border:       Border.all(color: BankBookColors.brandGold.withOpacity(0.3)),
+            border: Border.all(
+                color: BankBookColors.brandGold.withValues(alpha: 0.3)),
           ),
           child: Column(children: [
             const Icon(BankBookIcons.addAccount,
@@ -147,8 +146,7 @@ class _AccountSelector extends StatelessWidget {
                 textAlign: TextAlign.center),
             const SizedBox(height: 4),
             Text(BankBookStrings.noAccountsHint,
-                style: BankBookStyles.labelMuted,
-                textAlign: TextAlign.center),
+                style: BankBookStyles.labelMuted, textAlign: TextAlign.center),
           ]),
         ),
       );
@@ -166,20 +164,21 @@ class _AccountSelector extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color:        BankBookColors.brandGoldLight,
+                  color: BankBookColors.brandGoldLight,
                   borderRadius: BorderRadius.circular(6),
-                  border:       Border.all(
-                      color: BankBookColors.brandGold.withOpacity(0.3)),
+                  border: Border.all(
+                      color: BankBookColors.brandGold.withValues(alpha: 0.3)),
                 ),
                 child: const Row(children: [
                   Icon(BankBookIcons.addAccount,
                       size: 12, color: BankBookColors.brandGold),
                   SizedBox(width: 4),
-                  Text('Add', style: TextStyle(
-                    fontSize:   11,
-                    fontWeight: FontWeight.w700,
-                    color:      BankBookColors.brandGold,
-                  )),
+                  Text('Add',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: BankBookColors.brandGold,
+                      )),
                 ]),
               ),
             ),
@@ -187,13 +186,13 @@ class _AccountSelector extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         ...ctrl.accounts.map((acc) => Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: _AccountCard(
-            account:    acc,
-            isSelected: ctrl.selectedAccount?.id == acc.id,
-            onTap:      () => ctrl.selectAccount(acc),
-          ),
-        )),
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _AccountCard(
+                account: acc,
+                isSelected: ctrl.selectedAccount?.id == acc.id,
+                onTap: () => ctrl.selectAccount(acc),
+              ),
+            )),
       ],
     );
   }
@@ -201,8 +200,8 @@ class _AccountSelector extends StatelessWidget {
 
 class _AccountCard extends StatefulWidget {
   final BankAccountModel account;
-  final bool             isSelected;
-  final VoidCallback     onTap;
+  final bool isSelected;
+  final VoidCallback onTap;
 
   const _AccountCard({
     required this.account,
@@ -219,18 +218,18 @@ class _AccountCardState extends State<_AccountCard> {
 
   @override
   Widget build(BuildContext context) {
-    final acc    = widget.account;
-    final isPos  = acc.currentBalance >= 0;
+    final acc = widget.account;
+    final isPos = acc.currentBalance >= 0;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
-      cursor:  SystemMouseCursors.click,
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding:  const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: widget.isSelected
                 ? BankBookColors.accountCardSelected
@@ -256,19 +255,20 @@ class _AccountCardState extends State<_AccountCard> {
                 ),
                 if (acc.isPrimary)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color:        BankBookColors.brandGoldLight,
+                      color: BankBookColors.brandGoldLight,
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(
-                          color: BankBookColors.brandGold.withOpacity(0.3)),
+                          color:
+                              BankBookColors.brandGold.withValues(alpha: 0.3)),
                     ),
                     child: const Text(BankBookStrings.primaryBadge,
                         style: TextStyle(
-                          fontSize:   9,
+                          fontSize: 9,
                           fontWeight: FontWeight.w800,
-                          color:      BankBookColors.brandGold,
+                          color: BankBookColors.brandGold,
                           letterSpacing: 0.5,
                         )),
                   ),
@@ -302,7 +302,7 @@ class _AccountCardState extends State<_AccountCard> {
   }
 }
 
-// ── View Mode Toggle ───────────────────────────────────────────────────────────
+// â”€â”€ View Mode Toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ViewModeToggle extends StatelessWidget {
   final BankBookController ctrl;
@@ -313,17 +313,17 @@ class _ViewModeToggle extends StatelessWidget {
     return Container(
       height: 40,
       decoration: BoxDecoration(
-        color:        BankBookColors.toggleInactiveBg,
+        color: BankBookColors.toggleInactiveBg,
         borderRadius: BorderRadius.circular(10),
-        border:       Border.all(color: BankBookColors.bodyBorder),
+        border: Border.all(color: BankBookColors.bodyBorder),
       ),
       child: Row(
         children: BankBookViewMode.values.map((mode) {
           final isActive = ctrl.viewMode == mode;
           final label = switch (mode) {
-            BankBookViewMode.daily   => BankBookStrings.viewDaily,
+            BankBookViewMode.daily => BankBookStrings.viewDaily,
             BankBookViewMode.monthly => BankBookStrings.viewMonthly,
-            BankBookViewMode.yearly  => BankBookStrings.viewYearly,
+            BankBookViewMode.yearly => BankBookStrings.viewYearly,
           };
 
           return Expanded(
@@ -333,23 +333,25 @@ class _ViewModeToggle extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color:        isActive
+                  color: isActive
                       ? BankBookColors.toggleActiveBg
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(7),
-                  boxShadow: isActive ? [
-                    BoxShadow(
-                      color:      Colors.black.withOpacity(0.08),
-                      blurRadius: 4,
-                      offset:     const Offset(0, 2),
-                    ),
-                  ] : [],
+                  boxShadow: isActive
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : [],
                 ),
                 child: Center(
                   child: Text(label,
-                    style: isActive
-                        ? BankBookStyles.toggleActive
-                        : BankBookStyles.toggleInactive),
+                      style: isActive
+                          ? BankBookStyles.toggleActive
+                          : BankBookStyles.toggleInactive),
                 ),
               ),
             ),
@@ -360,7 +362,7 @@ class _ViewModeToggle extends StatelessWidget {
   }
 }
 
-// ── Date Navigator ─────────────────────────────────────────────────────────────
+// â”€â”€ Date Navigator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _DateNavigator extends StatelessWidget {
   final BankBookController ctrl;
@@ -371,14 +373,16 @@ class _DateNavigator extends StatelessWidget {
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color:        BankBookColors.cardBg,
+        color: BankBookColors.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border:       Border.all(color: BankBookColors.cardBorderLight),
-        boxShadow: [BoxShadow(
-          color:      BankBookColors.cardShadow,
-          blurRadius: 8,
-          offset:     const Offset(0, 2),
-        )],
+        border: Border.all(color: BankBookColors.cardBorderLight),
+        boxShadow: const [
+          BoxShadow(
+            color: BankBookColors.cardShadow,
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          )
+        ],
       ),
       child: Row(children: [
         _NavBtn(icon: BankBookIcons.previous, onTap: ctrl.navigatePrevious),
@@ -393,10 +397,9 @@ class _DateNavigator extends StatelessWidget {
           ),
         ),
         _NavBtn(
-          icon:     BankBookIcons.next,
-          onTap:    ctrl.navigateNext,
-          disabled: ctrl.isToday &&
-              ctrl.viewMode == BankBookViewMode.daily,
+          icon: BankBookIcons.next,
+          onTap: ctrl.navigateNext,
+          disabled: ctrl.isToday && ctrl.viewMode == BankBookViewMode.daily,
         ),
       ]),
     );
@@ -404,10 +407,11 @@ class _DateNavigator extends StatelessWidget {
 }
 
 class _NavBtn extends StatefulWidget {
-  final IconData     icon;
+  final IconData icon;
   final VoidCallback onTap;
-  final bool         disabled;
-  const _NavBtn({required this.icon, required this.onTap, this.disabled = false});
+  final bool disabled;
+  const _NavBtn(
+      {required this.icon, required this.onTap, this.disabled = false});
 
   @override
   State<_NavBtn> createState() => _NavBtnState();
@@ -419,31 +423,34 @@ class _NavBtnState extends State<_NavBtn> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown:   widget.disabled ? null : (_) => setState(() => _pressed = true),
-      onTapUp:     widget.disabled ? null : (_) => setState(() => _pressed = false),
+      onTapDown:
+          widget.disabled ? null : (_) => setState(() => _pressed = true),
+      onTapUp: widget.disabled ? null : (_) => setState(() => _pressed = false),
       onTapCancel: () => setState(() => _pressed = false),
-      onTap:       widget.disabled ? null : widget.onTap,
+      onTap: widget.disabled ? null : widget.onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        width:  44,
+        width: 44,
         height: double.infinity,
         decoration: BoxDecoration(
-          color: _pressed ? BankBookColors.toggleInactiveBg : Colors.transparent,
+          color:
+              _pressed ? BankBookColors.toggleInactiveBg : Colors.transparent,
           borderRadius: const BorderRadius.only(
-            topLeft:    Radius.circular(12),
+            topLeft: Radius.circular(12),
             bottomLeft: Radius.circular(12),
           ),
         ),
-        child: Icon(widget.icon, size: 18,
-          color: widget.disabled
-              ? BankBookColors.textMuted
-              : BankBookColors.textSecondary),
+        child: Icon(widget.icon,
+            size: 18,
+            color: widget.disabled
+                ? BankBookColors.textMuted
+                : BankBookColors.textSecondary),
       ),
     );
   }
 }
 
-// ── Opening Balance Card ───────────────────────────────────────────────────────
+// â”€â”€ Opening Balance Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _OpeningBalanceCard extends StatelessWidget {
   final BankBookController ctrl;
@@ -455,12 +462,13 @@ class _OpeningBalanceCard extends StatelessWidget {
     return _Card(
       child: Row(children: [
         Container(
-          width: 38, height: 38,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(
-            color:        BankBookColors.brandGoldLight,
+            color: BankBookColors.brandGoldLight,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-                color: BankBookColors.brandGold.withOpacity(0.3)),
+                color: BankBookColors.brandGold.withValues(alpha: 0.3)),
           ),
           child: const Icon(BankBookIcons.openingBalance,
               size: 18, color: BankBookColors.brandGold),
@@ -475,7 +483,8 @@ class _OpeningBalanceCard extends StatelessWidget {
               const SizedBox(height: 2),
               s.isLoading
                   ? _shimmerText(100)
-                  : Text(s.openingBalanceStr, style: BankBookStyles.amountSmall),
+                  : Text(s.openingBalanceStr,
+                      style: BankBookStyles.amountSmall),
             ],
           ),
         ),
@@ -483,9 +492,10 @@ class _OpeningBalanceCard extends StatelessWidget {
         GestureDetector(
           onTap: () => _showEditDialog(context),
           child: Container(
-            width: 30, height: 30,
+            width: 30,
+            height: 30,
             decoration: BoxDecoration(
-              color:        BankBookColors.toggleInactiveBg,
+              color: BankBookColors.toggleInactiveBg,
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(BankBookIcons.edit,
@@ -511,24 +521,24 @@ class _OpeningBalanceCard extends StatelessWidget {
         title: Text(BankBookStrings.editOpeningBalance,
             style: BankBookStyles.labelPrimary),
         content: TextField(
-          controller:   txtCtrl,
+          controller: txtCtrl,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          style:        BankBookStyles.inputText,
+          style: BankBookStyles.inputText,
           decoration: InputDecoration(
-            hintText:   BankBookStrings.openingBalanceHint,
-            prefixText: '₹ ',
-            filled:     true,
-            fillColor:  BankBookColors.toggleInactiveBg,
+            hintText: BankBookStrings.openingBalanceHint,
+            prefixText: 'â‚¹ ',
+            filled: true,
+            fillColor: BankBookColors.toggleInactiveBg,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide:   const BorderSide(color: BankBookColors.bodyBorder),
+              borderSide: const BorderSide(color: BankBookColors.bodyBorder),
             ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(BankBookStrings.cancel,
+            child: const Text(BankBookStrings.cancel,
                 style: TextStyle(color: BankBookColors.textSecondary)),
           ),
           ElevatedButton(
@@ -544,13 +554,12 @@ class _OpeningBalanceCard extends StatelessWidget {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                      content:
-                          Text(BankBookStrings.openingBalanceSaved)),
+                      content: Text(BankBookStrings.openingBalanceSaved)),
                 );
               }
             },
-            child: const Text('Save',
-                style: TextStyle(color: Color(0xFF111827))),
+            child:
+                const Text('Save', style: TextStyle(color: Color(0xFF111827))),
           ),
         ],
       ),
@@ -558,7 +567,7 @@ class _OpeningBalanceCard extends StatelessWidget {
   }
 }
 
-// ── Credit / Debit Row ─────────────────────────────────────────────────────────
+// â”€â”€ Credit / Debit Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _CreditDebitRow extends StatelessWidget {
   final BankBookController ctrl;
@@ -568,23 +577,25 @@ class _CreditDebitRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = ctrl.summary;
     return Row(children: [
-      Expanded(child: _StatBlock(
-        label:   '↓  Credit',
-        value:   s.totalCreditStr,
-        count:   s.creditCount,
-        color:   BankBookColors.creditAccent,
-        bg:      BankBookColors.creditBg,
-        border:  BankBookColors.creditBorder,
+      Expanded(
+          child: _StatBlock(
+        label: 'â†“  Credit',
+        value: s.totalCreditStr,
+        count: s.creditCount,
+        color: BankBookColors.creditAccent,
+        bg: BankBookColors.creditBg,
+        border: BankBookColors.creditBorder,
         loading: s.isLoading,
       )),
       const SizedBox(width: 8),
-      Expanded(child: _StatBlock(
-        label:   '↑  Debit',
-        value:   s.totalDebitStr,
-        count:   s.debitCount,
-        color:   BankBookColors.debitAccent,
-        bg:      BankBookColors.debitBg,
-        border:  BankBookColors.debitBorder,
+      Expanded(
+          child: _StatBlock(
+        label: 'â†‘  Debit',
+        value: s.totalDebitStr,
+        count: s.debitCount,
+        color: BankBookColors.debitAccent,
+        bg: BankBookColors.debitBg,
+        border: BankBookColors.debitBorder,
         loading: s.isLoading,
       )),
     ]);
@@ -594,11 +605,11 @@ class _CreditDebitRow extends StatelessWidget {
 class _StatBlock extends StatelessWidget {
   final String label;
   final String value;
-  final int    count;
-  final Color  color;
-  final Color  bg;
-  final Color  border;
-  final bool   loading;
+  final int count;
+  final Color color;
+  final Color bg;
+  final Color border;
+  final bool loading;
 
   const _StatBlock({
     required this.label,
@@ -615,26 +626,26 @@ class _StatBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color:        bg,
+        color: bg,
         borderRadius: BorderRadius.circular(12),
-        border:       Border.all(color: border),
+        border: Border.all(color: border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(
-            fontSize:      11,
-            fontWeight:    FontWeight.w700,
-            color:         color,
-            letterSpacing: 0.5,
-          )),
+          Text(label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: color,
+                letterSpacing: 0.5,
+              )),
           const SizedBox(height: 6),
           loading
               ? _shimmerText(80)
-              : Text(value, style: GoogleFonts.inter(
-                  fontSize:   14,
-                  fontWeight: FontWeight.w700,
-                  color:      color)),
+              : Text(value,
+                  style: GoogleFonts.inter(
+                      fontSize: 14, fontWeight: FontWeight.w700, color: color)),
           const SizedBox(height: 4),
           Text('$count entries', style: BankBookStyles.labelMuted),
         ],
@@ -643,7 +654,7 @@ class _StatBlock extends StatelessWidget {
   }
 }
 
-// ── Closing Balance Card ───────────────────────────────────────────────────────
+// â”€â”€ Closing Balance Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ClosingBalanceCard extends StatelessWidget {
   final BankBookController ctrl;
@@ -651,26 +662,29 @@ class _ClosingBalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s   = ctrl.summary;
+    final s = ctrl.summary;
     final pos = s.isPositive;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      padding:  const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color:        pos ? BankBookColors.netPositiveBg : BankBookColors.netNegativeBg,
+        color:
+            pos ? BankBookColors.netPositiveBg : BankBookColors.netNegativeBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: pos ? BankBookColors.creditBorder : BankBookColors.debitBorder,
           width: 1.5,
         ),
-        boxShadow: [BoxShadow(
-          color: (pos
-              ? BankBookColors.creditAccent
-              : BankBookColors.debitAccent).withOpacity(0.12),
-          blurRadius: 12,
-          offset:     const Offset(0, 4),
-        )],
+        boxShadow: [
+          BoxShadow(
+            color:
+                (pos ? BankBookColors.creditAccent : BankBookColors.debitAccent)
+                    .withValues(alpha: 0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -700,20 +714,17 @@ class _ClosingBalanceCard extends StatelessWidget {
           Row(children: [
             Icon(
               pos ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-              size:  12,
-              color: pos
-                  ? BankBookColors.creditChip
-                  : BankBookColors.debitChip,
+              size: 12,
+              color: pos ? BankBookColors.creditChip : BankBookColors.debitChip,
             ),
             const SizedBox(width: 4),
             Text(
               '${pos ? '+' : '-'} ${s.netFlowStr} net flow',
               style: TextStyle(
-                fontSize:   11,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: pos
-                    ? BankBookColors.creditChip
-                    : BankBookColors.debitChip,
+                color:
+                    pos ? BankBookColors.creditChip : BankBookColors.debitChip,
               ),
             ),
           ]),
@@ -723,7 +734,7 @@ class _ClosingBalanceCard extends StatelessWidget {
   }
 }
 
-// ── Count Pill Row ─────────────────────────────────────────────────────────────
+// â”€â”€ Count Pill Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _CountRow extends StatelessWidget {
   final BankBookController ctrl;
@@ -733,11 +744,11 @@ class _CountRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = ctrl.summary;
     return Row(children: [
-      _Pill('${s.totalTransactions}', 'Total',  BankBookColors.textSecondary),
+      _Pill('${s.totalTransactions}', 'Total', BankBookColors.textSecondary),
       const SizedBox(width: 8),
-      _Pill('${s.creditCount}',       'Credit', BankBookColors.creditAccent),
+      _Pill('${s.creditCount}', 'Credit', BankBookColors.creditAccent),
       const SizedBox(width: 8),
-      _Pill('${s.debitCount}',        'Debit',  BankBookColors.debitAccent),
+      _Pill('${s.debitCount}', 'Debit', BankBookColors.debitAccent),
     ]);
   }
 }
@@ -745,7 +756,7 @@ class _CountRow extends StatelessWidget {
 class _Pill extends StatelessWidget {
   final String value;
   final String label;
-  final Color  color;
+  final Color color;
   const _Pill(this.value, this.label, this.color);
 
   @override
@@ -754,16 +765,17 @@ class _Pill extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color:        color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(8),
-          border:       Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Column(children: [
-          Text(value, style: TextStyle(
-            fontSize:   16,
-            fontWeight: FontWeight.w800,
-            color:      color,
-          )),
+          Text(value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: color,
+              )),
           Text(label, style: BankBookStyles.labelMuted),
         ]),
       ),
@@ -771,7 +783,7 @@ class _Pill extends StatelessWidget {
   }
 }
 
-// ── Reconciliation Card ────────────────────────────────────────────────────────
+// â”€â”€ Reconciliation Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ReconciliationCard extends StatelessWidget {
   final BankBookController ctrl;
@@ -788,18 +800,20 @@ class _ReconciliationCard extends StatelessWidget {
               style: BankBookStyles.sectionTitle),
           const SizedBox(height: 12),
           Row(children: [
-            Expanded(child: _ReconcilePill(
+            Expanded(
+                child: _ReconcilePill(
               value: s.reconciledCount,
               label: BankBookStrings.reconciled,
               color: BankBookColors.reconciledText,
-              bg:    BankBookColors.reconciledBg,
+              bg: BankBookColors.reconciledBg,
             )),
             const SizedBox(width: 8),
-            Expanded(child: _ReconcilePill(
+            Expanded(
+                child: _ReconcilePill(
               value: s.unreconciledCount,
               label: BankBookStrings.unreconciled,
               color: BankBookColors.pendingText,
-              bg:    BankBookColors.pendingBg,
+              bg: BankBookColors.pendingBg,
             )),
           ]),
         ],
@@ -809,10 +823,10 @@ class _ReconciliationCard extends StatelessWidget {
 }
 
 class _ReconcilePill extends StatelessWidget {
-  final int    value;
+  final int value;
   final String label;
-  final Color  color;
-  final Color  bg;
+  final Color color;
+  final Color bg;
   const _ReconcilePill({
     required this.value,
     required this.label,
@@ -825,23 +839,24 @@ class _ReconcilePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color:        bg,
+        color: bg,
         borderRadius: BorderRadius.circular(8),
-        border:       Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(children: [
-        Text('$value', style: TextStyle(
-          fontSize:   18,
-          fontWeight: FontWeight.w800,
-          color:      color,
-        )),
+        Text('$value',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: color,
+            )),
         Text(label, style: BankBookStyles.labelMuted),
       ]),
     );
   }
 }
 
-// ── Cheque Summary Card ────────────────────────────────────────────────────────
+// â”€â”€ Cheque Summary Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ChequeSummaryCard extends StatelessWidget {
   final BankBookController ctrl;
@@ -863,35 +878,38 @@ class _ChequeSummaryCard extends StatelessWidget {
           ]),
           const SizedBox(height: 12),
           Row(children: [
-            _ChequeStatChip(cs.totalIssued,  BankBookStrings.chequeIssued,  BankBookColors.chequeAccent),
+            _ChequeStatChip(cs.totalIssued, BankBookStrings.chequeIssued,
+                BankBookColors.chequeAccent),
             const SizedBox(width: 6),
-            _ChequeStatChip(cs.totalCleared, BankBookStrings.chequeCleared, BankBookColors.creditAccent),
+            _ChequeStatChip(cs.totalCleared, BankBookStrings.chequeCleared,
+                BankBookColors.creditAccent),
             const SizedBox(width: 6),
-            _ChequeStatChip(cs.totalBounced, BankBookStrings.chequeBounced, BankBookColors.debitAccent),
+            _ChequeStatChip(cs.totalBounced, BankBookStrings.chequeBounced,
+                BankBookColors.debitAccent),
           ]),
           if (cs.totalPending > 0) ...[
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color:        BankBookColors.chequeBg,
+                color: BankBookColors.chequeBg,
                 borderRadius: BorderRadius.circular(8),
-                border:       Border.all(color: BankBookColors.chequeBorder),
+                border: Border.all(color: BankBookColors.chequeBorder),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('${cs.totalPending} pending',
-                      style: TextStyle(
-                        fontSize:   12,
+                      style: const TextStyle(
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color:      BankBookColors.chequeText,
+                        color: BankBookColors.chequeText,
                       )),
                   Text(cs.pendingAmountFormatted,
-                      style: TextStyle(
-                        fontSize:   13,
+                      style: const TextStyle(
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color:      BankBookColors.chequeText,
+                        color: BankBookColors.chequeText,
                       )),
                 ],
               ),
@@ -904,9 +922,9 @@ class _ChequeSummaryCard extends StatelessWidget {
 }
 
 class _ChequeStatChip extends StatelessWidget {
-  final int    value;
+  final int value;
   final String label;
-  final Color  color;
+  final Color color;
   const _ChequeStatChip(this.value, this.label, this.color);
 
   @override
@@ -915,15 +933,16 @@ class _ChequeStatChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 6),
         decoration: BoxDecoration(
-          color:        color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(6),
         ),
         child: Column(children: [
-          Text('$value', style: TextStyle(
-            fontSize:   15,
-            fontWeight: FontWeight.w800,
-            color:      color,
-          )),
+          Text('$value',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: color,
+              )),
           Text(label, style: BankBookStyles.labelMuted.copyWith(fontSize: 10)),
         ]),
       ),
@@ -931,13 +950,13 @@ class _ChequeStatChip extends StatelessWidget {
   }
 }
 
-// ── Breakdown Section ──────────────────────────────────────────────────────────
+// â”€â”€ Breakdown Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _BreakdownSection extends StatelessWidget {
-  final String                       title;
+  final String title;
   final List<BankCategoryBreakdownItem> items;
-  final Color                        color;
-  final Color                        bgColor;
+  final Color color;
+  final Color bgColor;
 
   const _BreakdownSection({
     required this.title,
@@ -955,50 +974,50 @@ class _BreakdownSection extends StatelessWidget {
           Text(title.toUpperCase(), style: BankBookStyles.sectionTitle),
           const SizedBox(height: 12),
           ...items.take(5).map((item) => Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Flexible(
-                      child: Text(item.label,
-                          style: BankBookStyles.txnSubtitle,
-                          overflow: TextOverflow.ellipsis),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(item.amountFormatted,
-                            style: BankBookStyles.amountSmall
-                                .copyWith(color: color)),
-                        Text('${item.count} entries',
-                            style: BankBookStyles.labelMuted),
+                        Flexible(
+                          child: Text(item.label,
+                              style: BankBookStyles.txnSubtitle,
+                              overflow: TextOverflow.ellipsis),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(item.amountFormatted,
+                                style: BankBookStyles.amountSmall
+                                    .copyWith(color: color)),
+                            Text('${item.count} entries',
+                                style: BankBookStyles.labelMuted),
+                          ],
+                        ),
                       ],
+                    ),
+                    const SizedBox(height: 4),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: item.percentage / 100,
+                        minHeight: 4,
+                        backgroundColor: color.withValues(alpha: 0.12),
+                        valueColor: AlwaysStoppedAnimation<Color>(color),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value:           item.percentage / 100,
-                    minHeight:       4,
-                    backgroundColor: color.withOpacity(0.12),
-                    valueColor:      AlwaysStoppedAnimation<Color>(color),
-                  ),
-                ),
-              ],
-            ),
-          )),
+              )),
         ],
       ),
     );
   }
 }
 
-// ── Shared Helpers ─────────────────────────────────────────────────────────────
+// â”€â”€ Shared Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _Card extends StatelessWidget {
   final Widget child;
@@ -1009,14 +1028,16 @@ class _Card extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color:        BankBookColors.cardBg,
+        color: BankBookColors.cardBg,
         borderRadius: BorderRadius.circular(14),
-        border:       Border.all(color: BankBookColors.cardBorderLight),
-        boxShadow: [BoxShadow(
-          color:      BankBookColors.cardShadow,
-          blurRadius: 8,
-          offset:     const Offset(0, 2),
-        )],
+        border: Border.all(color: BankBookColors.cardBorderLight),
+        boxShadow: const [
+          BoxShadow(
+            color: BankBookColors.cardShadow,
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          )
+        ],
       ),
       child: child,
     );
@@ -1025,13 +1046,13 @@ class _Card extends StatelessWidget {
 
 Widget _shimmerText(double width) {
   return Shimmer.fromColors(
-    baseColor:      const Color(0xFFE8E3D8),
+    baseColor: const Color(0xFFE8E3D8),
     highlightColor: const Color(0xFFF5F0E8),
     child: Container(
-      width:  width,
+      width: width,
       height: 16,
       decoration: BoxDecoration(
-        color:        Colors.white,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(4),
       ),
     ),
@@ -1040,12 +1061,12 @@ Widget _shimmerText(double width) {
 
 Widget _shimmerBox({double height = 80}) {
   return Shimmer.fromColors(
-    baseColor:      const Color(0xFFE8E3D8),
+    baseColor: const Color(0xFFE8E3D8),
     highlightColor: const Color(0xFFF5F0E8),
     child: Container(
       height: height,
       decoration: BoxDecoration(
-        color:        Colors.white,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
       ),
     ),

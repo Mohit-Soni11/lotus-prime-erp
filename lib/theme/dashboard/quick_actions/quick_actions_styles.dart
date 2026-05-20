@@ -35,7 +35,7 @@ class QuickActionsStyles {
         ),
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
-          color: Colors.white.withOpacity(0.07),
+          color: Colors.white.withValues(alpha: 0.07),
           width: 1,
         ),
         boxShadow: const [
@@ -48,13 +48,13 @@ class QuickActionsStyles {
       );
 
   // ==========================================
-  // BUTTON DECORATION — Normal State
+  // BUTTON DECORATION â€” Normal State
   // ==========================================
   static BoxDecoration btnNormal(Color accentColor) => BoxDecoration(
         color: QuickActionsColors.btnBg,
         borderRadius: BorderRadius.circular(buttonBorderRadius),
         border: Border.all(
-          color: accentColor.withOpacity(0.25),
+          color: accentColor.withValues(alpha: 0.25),
           width: 1.2,
         ),
         boxShadow: [
@@ -66,34 +66,34 @@ class QuickActionsStyles {
         ],
       );
 
-  // BUTTON DECORATION — Pressed State
+  // BUTTON DECORATION â€” Pressed State
   static BoxDecoration btnPressed(Color accentColor) => BoxDecoration(
         color: QuickActionsColors.btnBgPressed,
         borderRadius: BorderRadius.circular(buttonBorderRadius),
         border: Border.all(
-          color: accentColor.withOpacity(0.7),
+          color: accentColor.withValues(alpha: 0.7),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withOpacity(0.2),
+            color: accentColor.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
       );
 
-  // BUTTON DECORATION — Hover State
+  // BUTTON DECORATION â€” Hover State
   static BoxDecoration btnHover(Color accentColor) => BoxDecoration(
         color: QuickActionsColors.btnBgHover,
         borderRadius: BorderRadius.circular(buttonBorderRadius),
         border: Border.all(
-          color: accentColor.withOpacity(0.45),
+          color: accentColor.withValues(alpha: 0.45),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withOpacity(0.15),
+            color: accentColor.withValues(alpha: 0.15),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -102,7 +102,7 @@ class QuickActionsStyles {
 
   // Icon circle bg decoration
   static BoxDecoration iconCircle(Color accentColor) => BoxDecoration(
-        color: accentColor.withOpacity(0.12),
+        color: accentColor.withValues(alpha: 0.12),
         shape: BoxShape.circle,
       );
 

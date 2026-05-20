@@ -22,7 +22,6 @@ import '../../../models/finance/expense/expense_summary_model.dart';
 import '../../../repositories/finance/expense_repository.dart';
 
 class ExpenseController extends ChangeNotifier {
-
   ExpenseController() {
     _init();
   }
@@ -30,48 +29,48 @@ class ExpenseController extends ChangeNotifier {
   final ExpenseRepository _repository = ExpenseRepository();
 
   // ── View State ────────────────────────────────────────────────────────────
-  ExpenseViewMode _viewMode   = ExpenseViewMode.daily;
-  ExpenseFilter   _filter     = ExpenseFilter.all;
+  ExpenseViewMode _viewMode = ExpenseViewMode.daily;
+  ExpenseFilter _filter = ExpenseFilter.all;
   ExpenseSortOrder _sortOrder = ExpenseSortOrder.dateDesc;
-  DateTime        _activeDate = DateTime.now();
+  DateTime _activeDate = DateTime.now();
 
-  ExpenseViewMode  get viewMode   => _viewMode;
-  ExpenseFilter    get filter     => _filter;
-  ExpenseSortOrder get sortOrder  => _sortOrder;
-  DateTime         get activeDate => _activeDate;
+  ExpenseViewMode get viewMode => _viewMode;
+  ExpenseFilter get filter => _filter;
+  ExpenseSortOrder get sortOrder => _sortOrder;
+  DateTime get activeDate => _activeDate;
 
   // ── Data State ────────────────────────────────────────────────────────────
-  ExpenseSummaryModel    _summary   = ExpenseSummaryModel.loading();
-  List<ExpenseGroup>     _groups    = [];
-  List<ExpenseModel>     _allItems  = [];
-  bool                   _isLoading = true;
-  String?                _errorMessage;
+  ExpenseSummaryModel _summary = ExpenseSummaryModel.loading();
+  List<ExpenseGroup> _groups = [];
+  List<ExpenseModel> _allItems = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
-  ExpenseSummaryModel    get summary      => _summary;
-  List<ExpenseGroup>     get groups       => _groups;
-  bool                   get isLoading    => _isLoading;
-  String?                get errorMessage => _errorMessage;
-  int                    get totalCount   => _allItems.length;
+  ExpenseSummaryModel get summary => _summary;
+  List<ExpenseGroup> get groups => _groups;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+  int get totalCount => _allItems.length;
 
   // ── Search ────────────────────────────────────────────────────────────────
   final TextEditingController searchCtrl = TextEditingController();
   String _searchQuery = '';
 
   // ── Entry Form ────────────────────────────────────────────────────────────
-  final TextEditingController amountCtrl      = TextEditingController();
+  final TextEditingController amountCtrl = TextEditingController();
   final TextEditingController descriptionCtrl = TextEditingController();
-  final TextEditingController partyNameCtrl   = TextEditingController();
+  final TextEditingController partyNameCtrl = TextEditingController();
   final TextEditingController customLabelCtrl = TextEditingController();
 
   ExpenseCategory _entryCategory = ExpenseCategory.shopRent;
-  PaymentMode     _entryMode     = PaymentMode.cash;
-  DateTime        _entryDate     = DateTime.now();
-  bool            _isSaving      = false;
+  PaymentMode _entryMode = PaymentMode.cash;
+  DateTime _entryDate = DateTime.now();
+  bool _isSaving = false;
 
   ExpenseCategory get entryCategory => _entryCategory;
-  PaymentMode     get entryMode     => _entryMode;
-  DateTime        get entryDate     => _entryDate;
-  bool            get isSaving      => _isSaving;
+  PaymentMode get entryMode => _entryMode;
+  DateTime get entryDate => _entryDate;
+  bool get isSaving => _isSaving;
 
   bool get entryNeedsCustomLabel =>
       _entryCategory == ExpenseCategory.otherExpense;
@@ -99,9 +98,8 @@ class ExpenseController extends ChangeNotifier {
     _watchSub?.cancel();
     final range = _dateRange;
 
-    _watchSub = _repository
-        .watchExpenses(from: range.start, to: range.end)
-        .listen(
+    _watchSub =
+        _repository.watchExpenses(from: range.start, to: range.end).listen(
       (expenses) async {
         _allItems = expenses;
         await _refreshSummary();
@@ -110,7 +108,7 @@ class ExpenseController extends ChangeNotifier {
       onError: (e) {
         debugPrint('❌ ExpenseController watch error: $e');
         _errorMessage = 'Failed to load expenses.';
-        _isLoading    = false;
+        _isLoading = false;
         notifyListeners();
       },
     );
@@ -121,16 +119,16 @@ class ExpenseController extends ChangeNotifier {
   // ==========================================================================
 
   void setViewMode(ExpenseViewMode mode) {
-    _viewMode   = mode;
+    _viewMode = mode;
     _activeDate = DateTime.now();
-    _isLoading  = true;
+    _isLoading = true;
     notifyListeners();
     _startWatch();
   }
 
   void goToPrevious() {
     _activeDate = _shift(-1);
-    _isLoading  = true;
+    _isLoading = true;
     notifyListeners();
     _startWatch();
   }
@@ -139,14 +137,14 @@ class ExpenseController extends ChangeNotifier {
     final shifted = _shift(1);
     if (shifted.isAfter(DateTime.now())) return;
     _activeDate = shifted;
-    _isLoading  = true;
+    _isLoading = true;
     notifyListeners();
     _startWatch();
   }
 
   void goToToday() {
     _activeDate = DateTime.now();
-    _isLoading  = true;
+    _isLoading = true;
     notifyListeners();
     _startWatch();
   }
@@ -154,26 +152,22 @@ class ExpenseController extends ChangeNotifier {
   bool get isAtToday {
     final now = DateTime.now();
     return switch (_viewMode) {
-      ExpenseViewMode.daily   => _activeDate.year == now.year &&
-                                  _activeDate.month == now.month &&
-                                  _activeDate.day == now.day,
-      ExpenseViewMode.monthly => _activeDate.year == now.year &&
-                                  _activeDate.month == now.month,
-      ExpenseViewMode.yearly  => _activeDate.year == now.year,
+      ExpenseViewMode.daily => _activeDate.year == now.year &&
+          _activeDate.month == now.month &&
+          _activeDate.day == now.day,
+      ExpenseViewMode.monthly =>
+        _activeDate.year == now.year && _activeDate.month == now.month,
+      ExpenseViewMode.yearly => _activeDate.year == now.year,
     };
   }
 
   DateTime _shift(int delta) {
     return switch (_viewMode) {
-      ExpenseViewMode.daily   => _activeDate.add(Duration(days: delta)),
-      ExpenseViewMode.monthly => DateTime(
-                                   _activeDate.year,
-                                   _activeDate.month + delta,
-                                   1),
-      ExpenseViewMode.yearly  => DateTime(
-                                   _activeDate.year + delta,
-                                   _activeDate.month,
-                                   1),
+      ExpenseViewMode.daily => _activeDate.add(Duration(days: delta)),
+      ExpenseViewMode.monthly =>
+        DateTime(_activeDate.year, _activeDate.month + delta, 1),
+      ExpenseViewMode.yearly =>
+        DateTime(_activeDate.year + delta, _activeDate.month, 1),
     };
   }
 
@@ -182,26 +176,27 @@ class ExpenseController extends ChangeNotifier {
   ({DateTime start, DateTime end}) get _dateRange {
     final d = _activeDate;
     return switch (_viewMode) {
-      ExpenseViewMode.daily   => (
+      ExpenseViewMode.daily => (
           start: DateTime(d.year, d.month, d.day),
-          end:   DateTime(d.year, d.month, d.day, 23, 59, 59)),
+          end: DateTime(d.year, d.month, d.day, 23, 59, 59)
+        ),
       ExpenseViewMode.monthly => (
           start: DateTime(d.year, d.month, 1),
-          end:   DateTime(d.year, d.month + 1, 0, 23, 59, 59)),
-      ExpenseViewMode.yearly  => (
+          end: DateTime(d.year, d.month + 1, 0, 23, 59, 59)
+        ),
+      ExpenseViewMode.yearly => (
           start: DateTime(d.year, 1, 1),
-          end:   DateTime(d.year, 12, 31, 23, 59, 59)),
+          end: DateTime(d.year, 12, 31, 23, 59, 59)
+        ),
     };
   }
 
   String get headerLabel {
     return switch (_viewMode) {
-      ExpenseViewMode.daily   =>
+      ExpenseViewMode.daily =>
         DateFormat('EEEE, d MMM yyyy').format(_activeDate),
-      ExpenseViewMode.monthly =>
-        DateFormat('MMMM yyyy').format(_activeDate),
-      ExpenseViewMode.yearly  =>
-        DateFormat('yyyy').format(_activeDate),
+      ExpenseViewMode.monthly => DateFormat('MMMM yyyy').format(_activeDate),
+      ExpenseViewMode.yearly => DateFormat('yyyy').format(_activeDate),
     };
   }
 
@@ -237,11 +232,11 @@ class ExpenseController extends ChangeNotifier {
     if (_searchQuery.trim().isNotEmpty) {
       final q = _searchQuery.trim().toLowerCase();
       items = items.where((e) {
-        return e.categoryLabel.toLowerCase().contains(q)              ||
-               (e.partyName?.toLowerCase().contains(q)   ?? false)   ||
-               (e.description?.toLowerCase().contains(q) ?? false)   ||
-               (e.customLabel?.toLowerCase().contains(q) ?? false)   ||
-               e.expenseId.toLowerCase().contains(q);
+        return e.categoryLabel.toLowerCase().contains(q) ||
+            (e.partyName?.toLowerCase().contains(q) ?? false) ||
+            (e.description?.toLowerCase().contains(q) ?? false) ||
+            (e.customLabel?.toLowerCase().contains(q) ?? false) ||
+            e.expenseId.toLowerCase().contains(q);
       }).toList();
     }
 
@@ -257,7 +252,7 @@ class ExpenseController extends ChangeNotifier {
         items.sort((a, b) => a.amount.compareTo(b.amount));
     }
 
-    _groups    = _buildGroups(items);
+    _groups = _buildGroups(items);
     _isLoading = false;
     notifyListeners();
   }
@@ -269,24 +264,28 @@ class ExpenseController extends ChangeNotifier {
       map.putIfAbsent(key, () => []).add(item);
     }
 
-    final now       = DateTime.now();
-    final today     = DateTime(now.year, now.month, now.day);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
 
     return map.entries.map((e) {
-      final date  = DateTime.parse(e.key);
+      final date = DateTime.parse(e.key);
       final total = e.value.fold(0.0, (s, x) => s + x.amount);
 
       String headerLabel;
-      if (date == today)     { headerLabel = 'Today'; }
-      else if (date == yesterday) { headerLabel = 'Yesterday'; }
-      else { headerLabel = DateFormat('d MMMM yyyy').format(date); }
+      if (date == today) {
+        headerLabel = 'Today';
+      } else if (date == yesterday) {
+        headerLabel = 'Yesterday';
+      } else {
+        headerLabel = DateFormat('d MMMM yyyy').format(date);
+      }
 
       return ExpenseGroup(
-        headerLabel:         headerLabel,
-        date:                date,
-        entries:             e.value,
-        groupTotal:          total,
+        headerLabel: headerLabel,
+        date: date,
+        entries: e.value,
+        groupTotal: total,
         groupTotalFormatted: ExpenseModel.formatAmount(total),
       );
     }).toList()
@@ -299,8 +298,8 @@ class ExpenseController extends ChangeNotifier {
 
   Future<void> _refreshSummary() async {
     final range = _dateRange;
-    _summary = await _repository.computeSummary(
-        from: range.start, to: range.end);
+    _summary =
+        await _repository.computeSummary(from: range.start, to: range.end);
   }
 
   // ==========================================================================
@@ -313,9 +312,9 @@ class ExpenseController extends ChangeNotifier {
     partyNameCtrl.clear();
     customLabelCtrl.clear();
     _entryCategory = ExpenseCategory.shopRent;
-    _entryMode     = PaymentMode.cash;
-    _entryDate     = DateTime.now();
-    _isSaving      = false;
+    _entryMode = PaymentMode.cash;
+    _entryDate = DateTime.now();
+    _isSaving = false;
   }
 
   void setEntryCategory(ExpenseCategory cat) {
@@ -336,7 +335,7 @@ class ExpenseController extends ChangeNotifier {
 
   Future<bool> saveExpense() async {
     final amountText = amountCtrl.text.trim();
-    final amount     = double.tryParse(amountText) ?? 0.0;
+    final amount = double.tryParse(amountText) ?? 0.0;
 
     if (amount <= 0) return false;
     if (entryNeedsCustomLabel && customLabelCtrl.text.trim().isEmpty) {
@@ -347,8 +346,8 @@ class ExpenseController extends ChangeNotifier {
     notifyListeners();
 
     final ok = await _repository.saveExpense(
-      category:    _entryCategory,
-      amount:      amount,
+      category: _entryCategory,
+      amount: amount,
       paymentMode: _entryMode,
       expenseDate: _entryDate,
       customLabel: customLabelCtrl.text.trim().isEmpty
@@ -357,9 +356,8 @@ class ExpenseController extends ChangeNotifier {
       description: descriptionCtrl.text.trim().isEmpty
           ? null
           : descriptionCtrl.text.trim(),
-      partyName:   partyNameCtrl.text.trim().isEmpty
-          ? null
-          : partyNameCtrl.text.trim(),
+      partyName:
+          partyNameCtrl.text.trim().isEmpty ? null : partyNameCtrl.text.trim(),
     );
 
     _isSaving = false;

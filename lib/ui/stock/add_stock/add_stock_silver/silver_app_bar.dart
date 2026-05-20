@@ -3,9 +3,9 @@
 // MODULE      : Stock & Inventory (Silver)
 // LAYER       : UI / Components
 // DESCRIPTION : Premium App Bar for Silver Stock module.
-//               ✅ 100% Isolated Silver Theme.
-//               ✅ Stepper Removed completely (Purity/Items/Save).
-//               ✅ SYSTEM ONLINE green dot radar widget.
+//               âœ… 100% Isolated Silver Theme.
+//               âœ… Stepper Removed completely (Purity/Items/Save).
+//               âœ… SYSTEM ONLINE green dot radar widget.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -66,11 +66,11 @@ class _SilverAppBarState extends State<SilverAppBar>
       ),
       child: Row(
         children: [
-          // ── BACK BUTTON ──
+          // â”€â”€ BACK BUTTON â”€â”€
           _buildBackButton(),
           const SizedBox(width: 16),
 
-          // ── TITLE ──
+          // â”€â”€ TITLE â”€â”€
           Text(
             SilverStockStrings.headerTitle,
             style: SilverStockStyles.shellTitle,
@@ -78,7 +78,7 @@ class _SilverAppBarState extends State<SilverAppBar>
 
           const Spacer(),
 
-          // ── SYSTEM ONLINE RADAR ──
+          // â”€â”€ SYSTEM ONLINE RADAR â”€â”€
           _buildSystemOnlineBadge(),
         ],
       ),
@@ -91,17 +91,17 @@ class _SilverAppBarState extends State<SilverAppBar>
       child: InkWell(
         onTap: widget.onBack,
         borderRadius: BorderRadius.circular(10),
-        splashColor: SilverStockColors.brandSilver.withOpacity(0.2),
-        highlightColor: SilverStockColors.brandSilver.withOpacity(0.1),
+        splashColor: SilverStockColors.brandSilver.withValues(alpha: 0.2),
+        highlightColor: SilverStockColors.brandSilver.withValues(alpha: 0.1),
         child: Container(
           width: 42,
           height: 42,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: SilverStockColors.silverSurfaceBg.withOpacity(0.1),
+            color: SilverStockColors.silverSurfaceBg.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: SilverStockColors.borderLight.withOpacity(0.2),
+              color: SilverStockColors.borderLight.withValues(alpha: 0.2),
             ),
           ),
           child: const Icon(
@@ -121,7 +121,7 @@ class _SilverAppBarState extends State<SilverAppBar>
         color: SilverStockColors.shellBg,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: SilverStockColors.success.withOpacity(0.3),
+          color: SilverStockColors.success.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -181,7 +181,7 @@ class _SilverAppBarState extends State<SilverAppBar>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: SilverStockColors.success.withOpacity(0.5),
+                  color: SilverStockColors.success.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),

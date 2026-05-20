@@ -3,7 +3,6 @@ import '../../../models/dashboard/shop_profile_model.dart';
 import '../../dashboard/dashboard_repository.dart'; // ✅ Import Repository
 
 class ShopCardLogic extends ChangeNotifier {
-  
   // Dependencies
   final DashboardRepository _repository; // ✅ Dependency Injection
 
@@ -34,9 +33,8 @@ class ShopCardLogic extends ChangeNotifier {
     try {
       // ✅ Ab ye Repository se asli data layega
       final result = await _repository.fetchFullShopDetails();
-      
+
       _data = result;
-      
     } catch (e) {
       debugPrint("🔴 Error in Logic: $e");
       _errorMessage = "Unable to load profile. Please check connection.";
@@ -45,7 +43,7 @@ class ShopCardLogic extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   void retryFetch() {
     _fetchShopData();
   }

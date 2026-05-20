@@ -95,7 +95,7 @@ class PosBillingController extends ChangeNotifier {
     final term = query.toLowerCase().trim();
 
     // ✅ FIX: 1 character se hi search shuru ho
-    if (term.length < 1) {
+    if (term.isEmpty) {
       customerSuggestions = [];
       customerNotFound = false;
       notifyListeners();
@@ -715,9 +715,10 @@ class PosBillingController extends ChangeNotifier {
     notifyListeners();
 
     Future.delayed(const Duration(milliseconds: 100), () {
-      if (tableScrollCtrl.hasClients)
+      if (tableScrollCtrl.hasClients) {
         tableScrollCtrl.animateTo(tableScrollCtrl.position.maxScrollExtent,
             duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+      }
       newItem.firstFieldFocus.requestFocus();
     });
   }
@@ -727,8 +728,9 @@ class PosBillingController extends ChangeNotifier {
     saleItems[index].removeListener(_onChildItemChanged);
     saleItems[index].dispose();
     saleItems.removeAt(index);
-    if (activeRowIndex >= saleItems.length)
+    if (activeRowIndex >= saleItems.length) {
       activeRowIndex = saleItems.length - 1;
+    }
     notifyListeners();
   }
 

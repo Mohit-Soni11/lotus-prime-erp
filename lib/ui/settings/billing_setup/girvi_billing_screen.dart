@@ -1,6 +1,6 @@
 // =============================================================================
 // FILE        : lib/ui/settings/billing_setup/girvi/girvi_billing_screen.dart
-// MODULE      : Billing Setup → Girvi
+// MODULE      : Billing Setup â†’ Girvi
 // DESCRIPTION : Single scrollable screen. 4 sections:
 //               Voucher | Interest | Notice Period | Terms & Print
 //               One Save button. No lock/unlock.
@@ -58,7 +58,9 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
       _noticeCtrl,
       _termsCtrl,
       _footerCtrl,
-    ]) c.dispose();
+    ]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -144,7 +146,7 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  // ── Section 1: Voucher Numbering ─────────────────────────
+                  // â”€â”€ Section 1: Voucher Numbering â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
                     title: 'Girvi Voucher Numbering',
                     subtitle: 'Ticket prefix aur starting number',
@@ -176,7 +178,7 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // ── Section 2: Interest Rules ────────────────────────────
+                  // â”€â”€ Section 2: Interest Rules â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
                     title: 'Interest Rules',
                     subtitle: 'Loan par interest ka calculation',
@@ -233,7 +235,7 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // ── Section 3: Reminder & Notice ─────────────────────────
+                  // â”€â”€ Section 3: Reminder & Notice â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
                     title: 'Reminder & Notice Period',
                     subtitle: 'Customer ko reminder aur notice kab bhejein',
@@ -271,7 +273,7 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // ── Section 4: Terms & Print ──────────────────────────────
+                  // â”€â”€ Section 4: Terms & Print â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
                     title: 'Terms & Print',
                     subtitle: 'Girvi ticket ke neeche print hoga',
@@ -317,14 +319,14 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
                           value: _model.autoPrint,
                           onChanged: (v) => setState(
                               () => _model = _model.copyWith(autoPrint: v)),
-                          activeColor: BillingSetupColors.grvTerms,
+                          activeThumbColor: BillingSetupColors.grvTerms,
                         ),
                       ]),
                     ],
                   ),
                   const SizedBox(height: 32),
 
-                  // ── Save Button ───────────────────────────────────────────
+                  // â”€â”€ Save Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   SizedBox(
                     width: double.infinity,
                     height: 52,
@@ -391,7 +393,7 @@ class _SectionCard extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -403,7 +405,7 @@ class _SectionCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: accent.withOpacity(0.04),
+              color: accent.withValues(alpha: 0.04),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(14)),
               border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
@@ -412,7 +414,7 @@ class _SectionCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: accent.withOpacity(0.10),
+                  color: accent.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, size: 18, color: accent),
@@ -485,7 +487,7 @@ class _InputField extends StatelessWidget {
               )),
           if (subtitle != null) ...[
             const SizedBox(width: 6),
-            Text('· $subtitle',
+            Text('Â· $subtitle',
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   color: const Color(0xFF9CA3AF),
@@ -554,7 +556,7 @@ class _DropdownField extends StatelessWidget {
             )),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
-          value: items.contains(value) ? value : items.first,
+          initialValue: items.contains(value) ? value : items.first,
           items: items
               .map((e) => DropdownMenuItem(value: e, child: Text(e)))
               .toList(),

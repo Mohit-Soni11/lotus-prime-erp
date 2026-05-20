@@ -11,9 +11,9 @@ import 'metal_costing_colors.dart';
 class MetalCostingStyles {
   MetalCostingStyles._();
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // TYPOGRAPHY
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   static TextStyle get shellTitle => GoogleFonts.inter(
         fontSize: 17,
@@ -74,9 +74,9 @@ class MetalCostingStyles {
         color: MetalCostingColors.textHint,
       );
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // DIMENSIONS
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   static const double rCard = 16.0;
   static const double rInner = 10.0;
@@ -85,9 +85,9 @@ class MetalCostingStyles {
   static const EdgeInsets pagePadding = EdgeInsets.fromLTRB(20, 0, 20, 50);
   static const EdgeInsets cardPadding = EdgeInsets.all(18);
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // DECORATIONS
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   static const BoxDecoration shellDecoration = BoxDecoration(
     color: MetalCostingColors.shellPanelBg,
@@ -117,14 +117,15 @@ class MetalCostingStyles {
         color: MetalCostingColors.cardBg,
         borderRadius: BorderRadius.circular(rCard),
         border: Border.all(
-          color:
-              hovered ? accent.withOpacity(0.7) : MetalCostingColors.cardBorder,
+          color: hovered
+              ? accent.withValues(alpha: 0.7)
+              : MetalCostingColors.cardBorder,
           width: hovered ? 1.5 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
             color: hovered
-                ? accent.withOpacity(0.15)
+                ? accent.withValues(alpha: 0.15)
                 : MetalCostingColors.shadowLight,
             blurRadius: hovered ? 20 : 8,
             offset: const Offset(0, 4),
@@ -135,10 +136,10 @@ class MetalCostingStyles {
   static BoxDecoration purityCard(Color accent) => BoxDecoration(
         color: MetalCostingColors.cardBg,
         borderRadius: BorderRadius.circular(rCard),
-        border: Border.all(color: accent.withOpacity(0.4), width: 1.5),
+        border: Border.all(color: accent.withValues(alpha: 0.4), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: accent.withOpacity(0.08),
+            color: accent.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),

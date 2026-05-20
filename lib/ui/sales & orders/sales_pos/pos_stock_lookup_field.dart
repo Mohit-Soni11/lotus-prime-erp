@@ -174,7 +174,7 @@ class _StockSuggestionDropdown extends StatelessWidget {
         border: Border.all(color: SalesPosColors.bodyBorder, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.14),
+            color: Colors.black.withValues(alpha: 0.14),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -205,7 +205,7 @@ class _StockSuggestionDropdown extends StatelessWidget {
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: SalesPosColors.brandGold.withOpacity(0.12),
+                        color: SalesPosColors.brandGold.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(

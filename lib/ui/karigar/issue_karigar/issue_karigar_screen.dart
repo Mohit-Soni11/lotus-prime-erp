@@ -8,7 +8,7 @@
 //               - Cream body background (#F9F6F0)
 //               - White cards with colored accent borders
 //               - Staggered fade + slide section entry animations
-//               - ListenableBuilder — zero setState in UI
+//               - ListenableBuilder â€” zero setState in UI
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -35,30 +35,30 @@ class IssueKarigarScreen extends StatefulWidget {
 
 class _IssueKarigarScreenState extends State<IssueKarigarScreen>
     with TickerProviderStateMixin {
-  // ── Controllers ──────────────────────────────────────────────────────────
+  // â”€â”€ Controllers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   late final IssueKarigarController _ctrl;
   late final KarigarMasterController _masterCtrl;
   final AppDatabase _db = AppDatabase();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  // ── Text Controllers ─────────────────────────────────────────────────────
+  // â”€â”€ Text Controllers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   final _descCtrl = TextEditingController();
   final _grossWtCtrl = TextEditingController();
   final _stoneWtCtrl = TextEditingController();
   final _qtyCtrl = TextEditingController(text: '1');
   final _notesCtrl = TextEditingController();
 
-  // ── Focus Nodes ──────────────────────────────────────────────────────────
+  // â”€â”€ Focus Nodes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   final _descFocus = FocusNode();
   final _grossWtFocus = FocusNode();
   final _stoneWtFocus = FocusNode();
   final _qtyFocus = FocusNode();
 
-  // ── Date state ───────────────────────────────────────────────────────────
+  // â”€â”€ Date state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   DateTime _issueDate = DateTime.now();
   DateTime? _expectedDelivery;
 
-  // ── Section Animations ───────────────────────────────────────────────────
+  // â”€â”€ Section Animations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const int _sectionCount = 5;
   late final List<AnimationController> _sectionAnim;
   late final List<Animation<double>> _sectionFade;
@@ -116,11 +116,13 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
     for (final f in [_descFocus, _grossWtFocus, _stoneWtFocus, _qtyFocus]) {
       f.dispose();
     }
-    for (final a in _sectionAnim) a.dispose();
+    for (final a in _sectionAnim) {
+      a.dispose();
+    }
     super.dispose();
   }
 
-  // ── ACTIONS ───────────────────────────────────────────────────────────────
+  // â”€â”€ ACTIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> _onSave() async {
     FocusScope.of(context).unfocus();
@@ -208,7 +210,7 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
         child: SlideTransition(position: _sectionSlide[i], child: child),
       );
 
-  // ── BUILD ──────────────────────────────────────────────────────────────────
+  // â”€â”€ BUILD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   @override
   Widget build(BuildContext context) {
@@ -241,7 +243,7 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
                             onDismiss: _ctrl.clearMessages,
                           ),
 
-                        // ── Section 1: Select Karigar ──────────────────
+                        // â”€â”€ Section 1: Select Karigar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                         _animated(
                             0,
                             KarigarSectionCard(
@@ -253,7 +255,7 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
                             )),
                         const SizedBox(height: 20),
 
-                        // ── Section 2: Issue Details ───────────────────
+                        // â”€â”€ Section 2: Issue Details â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                         _animated(
                             1,
                             KarigarSectionCard(
@@ -265,7 +267,7 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
                             )),
                         const SizedBox(height: 20),
 
-                        // ── Section 3: Metal Details ───────────────────
+                        // â”€â”€ Section 3: Metal Details â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                         _animated(
                             2,
                             KarigarSectionCard(
@@ -277,7 +279,7 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
                             )),
                         const SizedBox(height: 20),
 
-                        // ── Section 4: Delivery Timeline ───────────────
+                        // â”€â”€ Section 4: Delivery Timeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                         _animated(
                             3,
                             KarigarSectionCard(
@@ -289,7 +291,7 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
                             )),
                         const SizedBox(height: 20),
 
-                        // ── Section 5: Notes ───────────────────────────
+                        // â”€â”€ Section 5: Notes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                         _animated(
                             4,
                             KarigarSectionCard(
@@ -301,7 +303,7 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
                             )),
                         const SizedBox(height: 28),
 
-                        // ── Action Buttons ─────────────────────────────
+                        // â”€â”€ Action Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                         _buildActionButtons(),
                         const SizedBox(height: 40),
                       ],
@@ -316,9 +318,9 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION BUILDERS
-  // ════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildKarigarSection() {
     return ListenableBuilder(
@@ -451,7 +453,7 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
                     if (v != null) _ctrl.setPurity(v);
                   },
                 )
-              : KarigarDisabledField(
+              : const KarigarDisabledField(
                   label: KarigarStrings.lblPurity,
                   icon: KarigarIcons.purity,
                   value: 'N/A for this metal',
@@ -557,8 +559,8 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
     return Row(children: [
       OutlinedButton.icon(
         onPressed: _ctrl.isSaving ? null : _resetAll,
-        icon:
-            Icon(KarigarIcons.reset, size: 18, color: KarigarColors.textMuted),
+        icon: const Icon(KarigarIcons.reset,
+            size: 18, color: KarigarColors.textMuted),
         label:
             Text(KarigarStrings.btnReset, style: KarigarStyles.resetButtonText),
         style: OutlinedButton.styleFrom(
@@ -579,7 +581,8 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
                   height: 18,
                   child: CircularProgressIndicator(
                       strokeWidth: 2, color: Colors.white))
-              : Icon(KarigarIcons.save, size: 18, color: KarigarColors.shellBg),
+              : const Icon(KarigarIcons.save,
+                  size: 18, color: KarigarColors.shellBg),
           label: Text(
             _ctrl.isSaving
                 ? KarigarStrings.btnSaving
@@ -589,7 +592,8 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
           style: ElevatedButton.styleFrom(
             backgroundColor: KarigarColors.brandGold,
             foregroundColor: KarigarColors.shellBg,
-            disabledBackgroundColor: KarigarColors.brandGold.withOpacity(0.5),
+            disabledBackgroundColor:
+                KarigarColors.brandGold.withValues(alpha: 0.5),
             padding: const EdgeInsets.symmetric(vertical: 15),
             elevation: 0,
             shape:
@@ -613,9 +617,9 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // PRIVATE SUB-WIDGETS
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 class _SelectedKarigarCard extends StatelessWidget {
   final KarigarMaster karigar;
@@ -627,14 +631,14 @@ class _SelectedKarigarCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: KarigarColors.brandGold.withOpacity(0.06),
+        color: KarigarColors.brandGold.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-            color: KarigarColors.brandGold.withOpacity(0.35), width: 1.5),
+            color: KarigarColors.brandGold.withValues(alpha: 0.35), width: 1.5),
       ),
       child: Row(children: [
         CircleAvatar(
-          backgroundColor: KarigarColors.brandGold.withOpacity(0.15),
+          backgroundColor: KarigarColors.brandGold.withValues(alpha: 0.15),
           radius: 22,
           child: Text(
             _initials(karigar.name),
@@ -653,12 +657,12 @@ class _SelectedKarigarCard extends StatelessWidget {
             Text(karigar.name, style: KarigarStyles.sectionTitle),
             const SizedBox(height: 2),
             Row(children: [
-              Icon(KarigarIcons.phone,
+              const Icon(KarigarIcons.phone,
                   size: 11, color: KarigarColors.textMuted),
               const SizedBox(width: 4),
               Text(karigar.phone, style: KarigarStyles.caption),
               const SizedBox(width: 12),
-              Icon(KarigarIcons.speciality,
+              const Icon(KarigarIcons.speciality,
                   size: 11, color: KarigarColors.textMuted),
               const SizedBox(width: 4),
               Text(karigar.specialization, style: KarigarStyles.caption),
@@ -677,8 +681,9 @@ class _SelectedKarigarCard extends StatelessWidget {
 
   String _initials(String name) {
     final parts = name.trim().split(' ');
-    if (parts.length >= 2)
+    if (parts.length >= 2) {
       return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+    }
     return name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
   }
 }
@@ -829,7 +834,7 @@ class _KarigarPickerSheet extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(KarigarIcons.emptyKarigar,
+                      const Icon(KarigarIcons.emptyKarigar,
                           size: 48, color: KarigarColors.textHint),
                       const SizedBox(height: 12),
                       Text(KarigarStrings.emptyKarigarTitle,
@@ -879,7 +884,7 @@ class _KarigarPickerSheet extends StatelessWidget {
                           children: [
                             Text(k.name, style: KarigarStyles.jobTitle),
                             const SizedBox(height: 2),
-                            Text('${k.phone} • ${k.specialization}',
+                            Text('${k.phone} â€¢ ${k.specialization}',
                                 style: KarigarStyles.caption),
                           ],
                         )),
@@ -899,8 +904,9 @@ class _KarigarPickerSheet extends StatelessWidget {
 
   String _initials(String name) {
     final parts = name.trim().split(' ');
-    if (parts.length >= 2)
+    if (parts.length >= 2) {
       return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+    }
     return name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
   }
 }

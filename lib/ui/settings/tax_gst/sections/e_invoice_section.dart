@@ -1,6 +1,6 @@
 // ============================================================
 // FILE  : lib/ui/settings/tax_gst/sections/e_invoice_section.dart
-// MODULE: Tax & GST — Card 06
+// MODULE: Tax & GST â€” Card 06
 // ============================================================
 import 'package:flutter/material.dart';
 import '../../../../theme/settings/tax_gst/tax_gst_theme.dart';
@@ -19,7 +19,7 @@ class EInvoiceSection extends StatelessWidget {
       listenable: logic,
       builder: (context, _) {
         final e = logic.isEditing;
-        final a = TaxGstColors.card06Accent;
+        const a = TaxGstColors.card06Accent;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,13 +52,13 @@ class EInvoiceSection extends StatelessWidget {
               onChanged: logic.setEnabled,
             ),
 
-            // IRP & threshold — only when e-invoicing is on
+            // IRP & threshold â€” only when e-invoicing is on
             if (logic.eInvoicingEnabled) ...[
               const SizedBox(height: TaxGstStyles.fieldGapV),
 
               // Turnover limit dropdown
               DropdownButtonFormField<String>(
-                value: logic.turnoverLimit,
+                initialValue: logic.turnoverLimit,
                 style: TaxGstStyles.inputText(context),
                 decoration: TaxGstStyles.inputDecoration(
                   context,
@@ -71,7 +71,7 @@ class EInvoiceSection extends StatelessWidget {
                     .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                     .toList(),
                 onChanged:
-                    e ? (v) => logic.setTurnoverLimit(v ?? '₹5 Crore') : null,
+                    e ? (v) => logic.setTurnoverLimit(v ?? 'â‚¹5 Crore') : null,
                 dropdownColor: TaxGstColors.cardSurface,
                 borderRadius: BorderRadius.circular(TaxGstStyles.radiusInput),
                 icon: Icon(TaxGstIcons.dropdownArrow,
@@ -114,7 +114,7 @@ class EInvoiceSection extends StatelessWidget {
                                   ? TaxGstIcons.passwordVisible
                                   : TaxGstIcons.passwordHidden,
                               size: 17,
-                              color: a.withOpacity(0.7),
+                              color: a.withValues(alpha: 0.7),
                             ),
                             onPressed: logic.togglePassVisibility,
                           )

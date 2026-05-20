@@ -1,8 +1,8 @@
 class CustomerStatsModel {
-  final String count;       // e.g. "12"
-  final String status;      // "High Growth" or "Stable"
-  final bool isHighGrowth;  // Logic ke liye flag
-  final String syncTime;    
+  final String count; // e.g. "12"
+  final String status; // "High Growth" or "Stable"
+  final bool isHighGrowth; // Logic ke liye flag
+  final String syncTime;
 
   const CustomerStatsModel({
     required this.count,

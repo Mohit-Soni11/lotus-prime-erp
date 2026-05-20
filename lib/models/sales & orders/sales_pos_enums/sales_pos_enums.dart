@@ -18,10 +18,14 @@ enum MetalType {
 extension MetalTypeExtension on MetalType {
   String get displayName {
     switch (this) {
-      case MetalType.gold: return 'GOLD';
-      case MetalType.silver: return 'SILVER';
-      case MetalType.platinum: return 'PLATINUM';
-      case MetalType.diamond: return 'DIAMOND';
+      case MetalType.gold:
+        return 'GOLD';
+      case MetalType.silver:
+        return 'SILVER';
+      case MetalType.platinum:
+        return 'PLATINUM';
+      case MetalType.diamond:
+        return 'DIAMOND';
     }
   }
 
@@ -33,17 +37,21 @@ extension MetalTypeExtension on MetalType {
 enum MakingChargeType {
   percentage,
   perGram,
-  perKg, 
+  perKg,
   perPiece,
 }
 
 extension MakingChargeTypeExtension on MakingChargeType {
   String get symbol {
     switch (this) {
-      case MakingChargeType.percentage: return '%';
-      case MakingChargeType.perGram: return '/g';
-      case MakingChargeType.perKg: return '/kg'; 
-      case MakingChargeType.perPiece: return '/pc';
+      case MakingChargeType.percentage:
+        return '%';
+      case MakingChargeType.perGram:
+        return '/g';
+      case MakingChargeType.perKg:
+        return '/kg';
+      case MakingChargeType.perPiece:
+        return '/pc';
     }
   }
 }
@@ -79,8 +87,10 @@ enum DiscountType {
 extension DiscountTypeExtension on DiscountType {
   String get symbol {
     switch (this) {
-      case DiscountType.flatAmount: return '₹';
-      case DiscountType.percentage: return '%';
+      case DiscountType.flatAmount:
+        return '₹';
+      case DiscountType.percentage:
+        return '%';
     }
   }
 }
@@ -118,8 +128,10 @@ enum RefundMethod {
 extension RefundMethodExtension on RefundMethod {
   String get displayName {
     switch (this) {
-      case RefundMethod.cash: return 'CASH';
-      case RefundMethod.upi: return 'UPI';
+      case RefundMethod.cash:
+        return 'CASH';
+      case RefundMethod.upi:
+        return 'UPI';
     }
   }
 }
@@ -135,10 +147,14 @@ enum PaymentMode {
 extension PaymentModeExtension on PaymentMode {
   String get displayName {
     switch (this) {
-      case PaymentMode.cash: return 'CASH';
-      case PaymentMode.upi: return 'UPI / BANK';
-      case PaymentMode.card: return 'CARD';
-      case PaymentMode.advance: return 'ADVANCE';
+      case PaymentMode.cash:
+        return 'CASH';
+      case PaymentMode.upi:
+        return 'UPI / BANK';
+      case PaymentMode.card:
+        return 'CARD';
+      case PaymentMode.advance:
+        return 'ADVANCE';
     }
   }
 }

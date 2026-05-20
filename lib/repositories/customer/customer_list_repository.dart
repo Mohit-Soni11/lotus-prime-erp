@@ -3,18 +3,18 @@
 // MODULE: Customer → Customer List
 // DESCRIPTION: Data access layer. Fetches from Drift DB and maps to UI models.
 // -----------------------------------------------------------------------------
- 
+
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/customer/customer_list/customer_list_ui_model.dart';
 import '../../models/customer/customer_enums/customer_list_enums.dart';
- 
+
 class CustomerListRepository {
   final AppDatabase _db;
- 
+
   CustomerListRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
- 
+
   // ──────────────────────────────────────────────────────────────────────────
   // 1. LIVE STREAM: All Customers (watches DB changes in real-time)
   // ──────────────────────────────────────────────────────────────────────────
@@ -29,7 +29,7 @@ class CustomerListRepository {
       return result;
     });
   }
- 
+
   // ──────────────────────────────────────────────────────────────────────────
   // 2. SEARCH: Filter by name or mobile
   // ──────────────────────────────────────────────────────────────────────────
@@ -37,12 +37,13 @@ class CustomerListRepository {
     try {
       final term = query.toLowerCase().trim();
       if (term.isEmpty) return getAllCustomers();
- 
+
       final rows = await (_db.select(_db.customers)
-        ..where((tbl) => tbl.name.contains(term) | tbl.mobile.contains(term))
-        ..orderBy([(t) => OrderingTerm(expression: t.name)])
-      ).get();
- 
+            ..where(
+                (tbl) => tbl.name.contains(term) | tbl.mobile.contains(term))
+            ..orderBy([(t) => OrderingTerm(expression: t.name)]))
+          .get();
+
       List<CustomerListItemModel> result = [];
       for (final row in rows) {
         final billCount = await _getBillCount(row.id);
@@ -54,7 +55,7 @@ class CustomerListRepository {
       return [];
     }
   }
- 
+
   // ──────────────────────────────────────────────────────────────────────────
   // 3. FETCH ALL with optional filter
   // ──────────────────────────────────────────────────────────────────────────
@@ -64,7 +65,7 @@ class CustomerListRepository {
   }) async {
     try {
       final query = _db.select(_db.customers);
- 
+
       // Apply filter
       switch (filter) {
         case CustomerFilter.vip:
@@ -81,17 +82,22 @@ class CustomerListRepository {
         case CustomerFilter.all:
           break;
       }
- 
+
       // Apply sort
       switch (sort) {
         case CustomerSort.nameAsc:
           query.orderBy([(t) => OrderingTerm(expression: t.name)]);
           break;
         case CustomerSort.nameDesc:
-          query.orderBy([(t) => OrderingTerm(expression: t.name, mode: OrderingMode.desc)]);
+          query.orderBy([
+            (t) => OrderingTerm(expression: t.name, mode: OrderingMode.desc)
+          ]);
           break;
         case CustomerSort.newest:
-          query.orderBy([(t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc)]);
+          query.orderBy([
+            (t) =>
+                OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc)
+          ]);
           break;
         case CustomerSort.oldest:
           query.orderBy([(t) => OrderingTerm(expression: t.createdAt)]);
@@ -100,26 +106,26 @@ class CustomerListRepository {
           // Will sort after fetching bill counts
           break;
       }
- 
+
       final rows = await query.get();
       List<CustomerListItemModel> result = [];
       for (final row in rows) {
         final billCount = await _getBillCount(row.id);
         result.add(_mapToUiModel(row, billCount));
       }
- 
+
       // Post-sort for mostBills
       if (sort == CustomerSort.mostBills) {
         result.sort((a, b) => b.billCount.compareTo(a.billCount));
       }
- 
+
       return result;
     } catch (e) {
       debugPrint("❌ Fetch Error: $e");
       return [];
     }
   }
- 
+
   // ──────────────────────────────────────────────────────────────────────────
   // 4. STATS
   // ──────────────────────────────────────────────────────────────────────────
@@ -128,11 +134,11 @@ class CustomerListRepository {
       final all = await _db.select(_db.customers).get();
       final total = all.length;
       final vip = all.where((c) => c.type == 'VIP').length;
- 
+
       final today = DateTime.now();
       final start = DateTime(today.year, today.month, today.day);
       final todayNew = all.where((c) => c.createdAt.isAfter(start)).length;
- 
+
       return CustomerListStatsModel(
         totalCount: total,
         todayCount: todayNew,
@@ -143,7 +149,7 @@ class CustomerListRepository {
       return CustomerListStatsModel.empty();
     }
   }
- 
+
   // ──────────────────────────────────────────────────────────────────────────
   // PRIVATE HELPERS
   // ──────────────────────────────────────────────────────────────────────────
@@ -159,7 +165,7 @@ class CustomerListRepository {
       return 0;
     }
   }
- 
+
   CustomerListItemModel _mapToUiModel(dynamic row, int billCount) {
     final name = row.name as String? ?? "Unknown";
     return CustomerListItemModel(

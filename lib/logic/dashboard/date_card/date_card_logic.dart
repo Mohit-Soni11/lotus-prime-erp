@@ -20,7 +20,8 @@ class DateCardModel {
 
 // ✅ LOGIC CONTROLLER
 class DateCardLogic {
-  final StreamController<DateCardModel> _controller = StreamController<DateCardModel>.broadcast();
+  final StreamController<DateCardModel> _controller =
+      StreamController<DateCardModel>.broadcast();
   Timer? _timer;
 
   Stream<DateCardModel> get timeStream => _controller.stream;
@@ -45,10 +46,11 @@ class DateCardLogic {
       if (_controller.isClosed) return;
 
       final DateTime now = DateTime.now();
-      
+
       final model = DateCardModel(
         day: DateFormat('EEEE').format(now).toUpperCase(),
-        date: DateFormat('dd MMM yyyy').format(now), // Short Month (Feb) looks better
+        date: DateFormat('dd MMM yyyy')
+            .format(now), // Short Month (Feb) looks better
         time: DateFormat('hh:mm a').format(now),
       );
 

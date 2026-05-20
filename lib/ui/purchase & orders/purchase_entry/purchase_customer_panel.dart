@@ -192,7 +192,8 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: PurchaseEntryColors.purchaseAccent.withOpacity(0.10),
+                color:
+                    PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.10),
                 blurRadius: 20,
                 spreadRadius: 2,
                 offset: const Offset(0, 4),
@@ -204,7 +205,7 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
               ),
             ],
             border: Border.all(
-              color: PurchaseEntryColors.purchaseAccent.withOpacity(0.25),
+              color: PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.25),
               width: 1.5,
             ),
           ),
@@ -219,8 +220,8 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      PurchaseEntryColors.purchaseAccent.withOpacity(0.5),
-                      PurchaseEntryColors.purchaseAccent.withOpacity(0.1),
+                      PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.5),
+                      PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.1),
                       Colors.transparent,
                     ],
                   ),
@@ -353,10 +354,11 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
         : Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: PurchaseEntryColors.purchaseAccent.withOpacity(0.10),
+              color: PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: PurchaseEntryColors.purchaseAccent.withOpacity(0.3),
+                color:
+                    PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
@@ -426,7 +428,8 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: PurchaseEntryColors.purchaseAccent.withOpacity(0.4),
+                    color: PurchaseEntryColors.purchaseAccent
+                        .withValues(alpha: 0.4),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -508,10 +511,10 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: PurchaseEntryColors.warning.withOpacity(0.08),
+          color: PurchaseEntryColors.warning.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: PurchaseEntryColors.warning.withOpacity(0.25),
+            color: PurchaseEntryColors.warning.withValues(alpha: 0.25),
           ),
         ),
         child: Row(
@@ -551,10 +554,10 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: PurchaseEntryColors.success.withOpacity(0.08),
+        color: PurchaseEntryColors.success.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: PurchaseEntryColors.success.withOpacity(0.25),
+          color: PurchaseEntryColors.success.withValues(alpha: 0.25),
         ),
       ),
       child: Row(
@@ -564,7 +567,7 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: PurchaseEntryColors.success.withOpacity(0.12),
+              color: PurchaseEntryColors.success.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -659,7 +662,7 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
               counterText: '',
               hintText: hint,
               hintStyle: TextStyle(
-                color: PurchaseEntryColors.textMuted.withOpacity(0.6),
+                color: PurchaseEntryColors.textMuted.withValues(alpha: 0.6),
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -739,7 +742,7 @@ class _PurchaseLookupDropdown extends StatelessWidget {
               dense: true,
               leading: CircleAvatar(
                 backgroundColor:
-                    PurchaseEntryColors.purchaseAccent.withOpacity(0.12),
+                    PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.12),
                 child: Text(
                   customer.initials,
                   style: const TextStyle(
@@ -770,7 +773,7 @@ class _PurchaseLookupDropdown extends StatelessWidget {
             dense: true,
             leading: CircleAvatar(
               backgroundColor:
-                  PurchaseEntryColors.purchaseAccent.withOpacity(0.12),
+                  PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.12),
               child: Text(
                 supplier.avatarInitial,
                 style: const TextStyle(
@@ -840,19 +843,19 @@ class _ActionButtonState extends State<_ActionButton> {
           height: 44,
           decoration: BoxDecoration(
             color: _isHovered
-                ? background.withOpacity(widget.isPrimary ? 0.92 : 1)
+                ? background.withValues(alpha: widget.isPrimary ? 0.92 : 1)
                 : background,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: widget.isPrimary
                   ? PurchaseEntryColors.purchaseAccent
-                  : PurchaseEntryColors.purchaseAccent.withOpacity(0.25),
+                  : PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.25),
             ),
             boxShadow: _isHovered && widget.isPrimary
                 ? [
                     BoxShadow(
-                      color:
-                          PurchaseEntryColors.purchaseAccent.withOpacity(0.24),
+                      color: PurchaseEntryColors.purchaseAccent
+                          .withValues(alpha: 0.24),
                       blurRadius: 14,
                       offset: const Offset(0, 4),
                     ),
@@ -906,7 +909,7 @@ class _PrimaryActionChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: PurchaseEntryColors.purchaseAccent.withOpacity(0.28),
+              color: PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.28),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),

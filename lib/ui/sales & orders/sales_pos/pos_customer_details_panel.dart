@@ -2,17 +2,17 @@
 // FILE: pos_customer_details_panel.dart
 // TYPE: Smart UI Component (UPGRADED v3)
 // DESCRIPTION: Premium customer entry form.
-//              ✅ Customer name suggestions from DB
-//              ✅ Fuzzy search — name field + mobile field dono pe
-//              ✅ Overlay sahi field ke neeche dikhta hai
-//              ✅ "New Customer" redirects to add customer screen
-//              ✅ Zero hardcoded colors, icons, or styles.
+//              âœ… Customer name suggestions from DB
+//              âœ… Fuzzy search â€” name field + mobile field dono pe
+//              âœ… Overlay sahi field ke neeche dikhta hai
+//              âœ… "New Customer" redirects to add customer screen
+//              âœ… Zero hardcoded colors, icons, or styles.
 //
 // BUG FIX v3:
-//   ❌ BUG — CompositedTransformTarget sirf Mobile field pe tha.
+//   âŒ BUG â€” CompositedTransformTarget sirf Mobile field pe tha.
 //            Name field mein type karne pe overlay galat jagah
 //            ya bilkul nahi dikhta tha.
-//   ✅ FIX — Alag-alag LayerLink banaya Name aur Mobile ke liye.
+//   âœ… FIX â€” Alag-alag LayerLink banaya Name aur Mobile ke liye.
 //            Jo field active ho, overlay usi ke neeche dikhe.
 // ==========================================
 
@@ -41,13 +41,13 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
 
-  // ✅ FIX: Dono fields ke liye alag-alag LayerLink
+  // âœ… FIX: Dono fields ke liye alag-alag LayerLink
   final LayerLink _mobileSuggestionLink = LayerLink();
   final LayerLink _nameSuggestionLink = LayerLink();
 
   OverlayEntry? _suggestionOverlay;
 
-  // Kaunsa field active hai — mobile ya name?
+  // Kaunsa field active hai â€” mobile ya name?
   bool _isMobileActive = false;
 
   @override
@@ -84,10 +84,11 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
 
   void _onNameChanged() {
     _isMobileActive = false;
-    // ✅ FIX: selectedCustomer ho aur name match kare to search mat karo
+    // âœ… FIX: selectedCustomer ho aur name match kare to search mat karo
     if (widget.ctrl.selectedCustomer != null) {
-      if (widget.ctrl.nameCtrl.text == widget.ctrl.selectedCustomer!.name)
+      if (widget.ctrl.nameCtrl.text == widget.ctrl.selectedCustomer!.name) {
         return;
+      }
       widget.ctrl.selectedCustomer = null; // Customer deselect hua
     }
     widget.ctrl.searchCustomersByName(widget.ctrl.nameCtrl.text);
@@ -95,15 +96,16 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
 
   void _onMobileChanged() {
     _isMobileActive = true;
-    // ✅ FIX: selectedCustomer ho aur mobile match kare to search mat karo
+    // âœ… FIX: selectedCustomer ho aur mobile match kare to search mat karo
     if (widget.ctrl.selectedCustomer != null) {
-      if (widget.ctrl.mobileCtrl.text == widget.ctrl.selectedCustomer!.mobile)
+      if (widget.ctrl.mobileCtrl.text == widget.ctrl.selectedCustomer!.mobile) {
         return;
+      }
       widget.ctrl.selectedCustomer = null; // Customer deselect hua
     }
     final mobile = widget.ctrl.mobileCtrl.text.trim();
-    // ✅ FIX: 1 character se hi search
-    if (mobile.length >= 1) {
+    // âœ… FIX: 1 character se hi search
+    if (mobile.isNotEmpty) {
       widget.ctrl.searchCustomersByName(mobile);
     } else {
       widget.ctrl.clearCustomerSuggestions();
@@ -113,7 +115,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
   void _onControllerChanged() {
     if (!mounted) return;
 
-    // ✅ FIX: setState zaroori hai — jab selectedCustomer change ho
+    // âœ… FIX: setState zaroori hai â€” jab selectedCustomer change ho
     //         (select ya deselect), widget rebuild ho aur history card
     //         dikhe ya chhuppe. Bina setState ke build() mein
     //         selectedCustomer != null check kaam nahi karta.
@@ -138,7 +140,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
     if (!mounted) return;
     _removeSuggestionOverlay();
 
-    // ✅ FIX: Jo field active hai, usi ka LayerLink use karo
+    // âœ… FIX: Jo field active hai, usi ka LayerLink use karo
     final activeLink =
         _isMobileActive ? _mobileSuggestionLink : _nameSuggestionLink;
 
@@ -184,20 +186,20 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: SalesPosColors.brandGold.withOpacity(0.12),
+                    color: SalesPosColors.brandGold.withValues(alpha: 0.12),
                     blurRadius: 20,
                     spreadRadius: 2,
                     offset: const Offset(0, 4),
                   ),
-                  BoxShadow(
+                  const BoxShadow(
                     color: SalesPosColors.shadowDark,
                     blurRadius: 10,
                     spreadRadius: 0,
-                    offset: const Offset(0, 2),
+                    offset: Offset(0, 2),
                   ),
                 ],
                 border: Border.all(
-                  color: SalesPosColors.brandGold.withOpacity(0.3),
+                  color: SalesPosColors.brandGold.withValues(alpha: 0.3),
                   width: 1.5,
                 ),
               ),
@@ -223,7 +225,8 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
-                              color: SalesPosColors.brandGold.withOpacity(0.4),
+                              color: SalesPosColors.brandGold
+                                  .withValues(alpha: 0.4),
                               blurRadius: 10,
                               offset: const Offset(0, 3),
                             ),
@@ -255,7 +258,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
 
                       const Spacer(),
 
-                      // ── "NEW CUSTOMER" BANNER IF NOT FOUND ──
+                      // â”€â”€ "NEW CUSTOMER" BANNER IF NOT FOUND â”€â”€
                       ListenableBuilder(
                         listenable: widget.ctrl,
                         builder: (context, _) {
@@ -264,12 +267,12 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color:
-                                    SalesPosColors.brandGold.withOpacity(0.15),
+                                color: SalesPosColors.brandGold
+                                    .withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color:
-                                      SalesPosColors.brandGold.withOpacity(0.4),
+                                  color: SalesPosColors.brandGold
+                                      .withValues(alpha: 0.4),
                                   width: 1,
                                 ),
                               ),
@@ -321,7 +324,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                                 boxShadow: [
                                   BoxShadow(
                                     color: SalesPosColors.brandGold
-                                        .withOpacity(0.4),
+                                        .withValues(alpha: 0.4),
                                     blurRadius: 10,
                                     offset: const Offset(0, 3),
                                   ),
@@ -359,8 +362,8 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          SalesPosColors.brandGold.withOpacity(0.5),
-                          SalesPosColors.brandGold.withOpacity(0.1),
+                          SalesPosColors.brandGold.withValues(alpha: 0.5),
+                          SalesPosColors.brandGold.withValues(alpha: 0.1),
                           Colors.transparent,
                         ],
                       ),
@@ -373,7 +376,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      // ── MOBILE FIELD — apna LayerLink ──
+                      // â”€â”€ MOBILE FIELD â€” apna LayerLink â”€â”€
                       Expanded(
                         flex: 2,
                         child: CompositedTransformTarget(
@@ -389,7 +392,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                       ),
                       const SizedBox(width: 12),
 
-                      // ── NAME FIELD — apna LayerLink ✅ ──
+                      // â”€â”€ NAME FIELD â€” apna LayerLink âœ… â”€â”€
                       Expanded(
                         flex: 3,
                         child: CompositedTransformTarget(
@@ -439,7 +442,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                       ),
                       const SizedBox(width: 16),
 
-                      // ── BUTTONS ──
+                      // â”€â”€ BUTTONS â”€â”€
                       Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -476,7 +479,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
               ),
             ),
 
-            // ✅ NAYA: Customer History Card — customer select hone ke baad
+            // âœ… NAYA: Customer History Card â€” customer select hone ke baad
             if (widget.ctrl.selectedCustomer != null) ...[
               const SizedBox(height: 10),
               _PosCustomerHistoryCard(ctrl: widget.ctrl),
@@ -535,7 +538,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
-                color: SalesPosColors.bodyTextMuted.withOpacity(0.6),
+                color: SalesPosColors.bodyTextMuted.withValues(alpha: 0.6),
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -601,13 +604,13 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border.all(
                 color: notFound && suggestions.isEmpty
-                    ? SalesPosColors.danger.withOpacity(0.25)
-                    : SalesPosColors.brandGold.withOpacity(0.3),
+                    ? SalesPosColors.danger.withValues(alpha: 0.25)
+                    : SalesPosColors.brandGold.withValues(alpha: 0.3),
               ),
               borderRadius: BorderRadius.circular(12),
             ),
             child: notFound && suggestions.isEmpty
-                // ─── CUSTOMER NOT FOUND STATE ───
+                // â”€â”€â”€ CUSTOMER NOT FOUND STATE â”€â”€â”€
                 ? Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 14),
@@ -617,7 +620,8 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: SalesPosColors.danger.withOpacity(0.06),
+                            color:
+                                SalesPosColors.danger.withValues(alpha: 0.06),
                             shape: BoxShape.circle,
                           ),
                           alignment: Alignment.center,
@@ -628,12 +632,12 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        Expanded(
+                        const Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Text(
+                              Text(
                                 "Customer Not Found",
                                 style: TextStyle(
                                   color: SalesPosColors.danger,
@@ -641,9 +645,9 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                                   fontSize: 13,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              SizedBox(height: 2),
                               Text(
-                                "Not Registered — Click 'New Customer' to add",
+                                "Not Registered â€” Click 'New Customer' to add",
                                 style: TextStyle(
                                   color: SalesPosColors.bodyTextMuted,
                                   fontSize: 11,
@@ -655,7 +659,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                       ],
                     ),
                   )
-                // ─── SUGGESTIONS LIST ───
+                // â”€â”€â”€ SUGGESTIONS LIST â”€â”€â”€
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     shrinkWrap: true,
@@ -680,7 +684,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                                 height: 36,
                                 decoration: BoxDecoration(
                                   color: SalesPosColors.brandGold
-                                      .withOpacity(0.15),
+                                      .withValues(alpha: 0.15),
                                   shape: BoxShape.circle,
                                 ),
                                 alignment: Alignment.center,
@@ -709,7 +713,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                                     if (c.mobile.isNotEmpty)
                                       Text(
                                         c.mobile,
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           color: SalesPosColors.bodyTextMuted,
                                           fontSize: 12,
                                         ),
@@ -720,7 +724,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                               if (c.city.isNotEmpty)
                                 Text(
                                   c.city,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: SalesPosColors.bodyTextMuted,
                                     fontSize: 12,
                                   ),
@@ -811,13 +815,13 @@ class _HoverAnimatedButtonState extends State<_HoverAnimatedButton> {
                 if (widget.isPrimary)
                   BoxShadow(
                     color: SalesPosColors.brandGold
-                        .withOpacity(_isHovered ? 0.6 : 0.4),
+                        .withValues(alpha: _isHovered ? 0.6 : 0.4),
                     blurRadius: _isHovered ? 16 : 10,
                     offset: const Offset(0, 4),
                   )
                 else if (_isHovered)
                   BoxShadow(
-                    color: SalesPosColors.brandGold.withOpacity(0.15),
+                    color: SalesPosColors.brandGold.withValues(alpha: 0.15),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -858,45 +862,46 @@ class _HoverAnimatedButtonState extends State<_HoverAnimatedButton> {
 }
 
 // ==========================================
-// ✅ NAYA WIDGET: POS Customer History Card
+// âœ… NAYA WIDGET: POS Customer History Card
 // Customer select hone ke baad dikhega:
-//   • Total bills count
-//   • Outstanding due amount + bill numbers
-//   • Last visit date + kitne months pehle
-//   • Customer type badge
+//   â€¢ Total bills count
+//   â€¢ Outstanding due amount + bill numbers
+//   â€¢ Last visit date + kitne months pehle
+//   â€¢ Customer type badge
 // ==========================================
 // ==========================================
-// ✅ UPGRADED v4: POS Customer History Card
+// âœ… UPGRADED v4: POS Customer History Card
 //
 // CHANGES:
-//   • Due section zyada prominent — bada amount + "X bills mein"
-//   • Saari due bills ki list (scrollable agar zyada ho)
-//   • 2 Action Buttons: "Clear Due" aur "New Bill"
-//   • _ClearDueDialog — har bill ke against payment collect karne ke liye
+//   â€¢ Due section zyada prominent â€” bada amount + "X bills mein"
+//   â€¢ Saari due bills ki list (scrollable agar zyada ho)
+//   â€¢ 2 Action Buttons: "Clear Due" aur "New Bill"
+//   â€¢ _ClearDueDialog â€” har bill ke against payment collect karne ke liye
 // ==========================================
 class _PosCustomerHistoryCard extends StatelessWidget {
   final PosBillingController ctrl;
   const _PosCustomerHistoryCard({required this.ctrl});
 
-  // ── FORMATTER ──────────────────────────────────────────────────────────
+  // â”€â”€ FORMATTER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   String _fmt(double v) {
-    if (v >= 100000) return '₹${(v / 100000).toStringAsFixed(2)}L';
-    if (v >= 1000) return '₹${(v / 1000).toStringAsFixed(1)}K';
-    return '₹${v.toStringAsFixed(0)}';
+    if (v >= 100000) return 'â‚¹${(v / 100000).toStringAsFixed(2)}L';
+    if (v >= 1000) return 'â‚¹${(v / 1000).toStringAsFixed(1)}K';
+    return 'â‚¹${v.toStringAsFixed(0)}';
   }
 
   @override
   Widget build(BuildContext context) {
-    // ── LOADING STATE ───────────────────────────────────────────────────
+    // â”€â”€ LOADING STATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (ctrl.isLoadingHistory) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: SalesPosColors.customerCardBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: SalesPosColors.brandGold.withOpacity(0.2)),
+          border: Border.all(
+              color: SalesPosColors.brandGold.withValues(alpha: 0.2)),
         ),
-        child: Row(
+        child: const Row(
           children: [
             SizedBox(
               width: 14,
@@ -904,7 +909,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
               child: CircularProgressIndicator(
                   strokeWidth: 2, color: SalesPosColors.brandGold),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Text(
               'Customer history load ho rahi hai...',
               style:
@@ -917,7 +922,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
 
     final history = ctrl.customerHistory;
 
-    // ── NEW CUSTOMER — NO HISTORY ───────────────────────────────────────
+    // â”€â”€ NEW CUSTOMER â€” NO HISTORY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (history == null) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -926,13 +931,13 @@ class _PosCustomerHistoryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: SalesPosColors.bodyBorder),
         ),
-        child: Row(
+        child: const Row(
           children: [
             Icon(Icons.person_add_alt_1_rounded,
                 size: 16, color: SalesPosColors.bodyTextMuted),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text(
-              'Naya customer — koi purana record nahi mila',
+              'Naya customer â€” koi purana record nahi mila',
               style:
                   TextStyle(color: SalesPosColors.bodyTextMuted, fontSize: 12),
             ),
@@ -941,7 +946,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
       );
     }
 
-    // ── DATA ────────────────────────────────────────────────────────────
+    // â”€â”€ DATA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     final totalBills = history.bills.length;
     final outstanding = history.outstanding;
     final hasDue = outstanding > 0;
@@ -973,26 +978,26 @@ class _PosCustomerHistoryCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: hasDue
-            ? SalesPosColors.danger.withOpacity(0.04)
+            ? SalesPosColors.danger.withValues(alpha: 0.04)
             : SalesPosColors.customerCardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: hasDue
-              ? SalesPosColors.danger.withOpacity(0.45)
-              : SalesPosColors.brandGold.withOpacity(0.25),
+              ? SalesPosColors.danger.withValues(alpha: 0.45)
+              : SalesPosColors.brandGold.withValues(alpha: 0.25),
           width: 1.5,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── HEADER ────────────────────────────────────────────────────
+          // â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Row(
             children: [
-              Icon(Icons.history_rounded,
+              const Icon(Icons.history_rounded,
                   size: 15, color: SalesPosColors.brandGold),
               const SizedBox(width: 6),
-              Text(
+              const Text(
                 'CUSTOMER HISTORY',
                 style: TextStyle(
                   color: SalesPosColors.brandGold,
@@ -1005,14 +1010,14 @@ class _PosCustomerHistoryCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: SalesPosColors.brandGold.withOpacity(0.15),
+                  color: SalesPosColors.brandGold.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                      color: SalesPosColors.brandGold.withOpacity(0.4)),
+                      color: SalesPosColors.brandGold.withValues(alpha: 0.4)),
                 ),
                 child: Text(
                   history.type.toUpperCase(),
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: SalesPosColors.brandGold,
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -1023,7 +1028,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
 
-          // ── STATS: Total Bills + Last Visit ───────────────────────────
+          // â”€â”€ STATS: Total Bills + Last Visit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Row(
             children: [
               _HistoryStat(
@@ -1042,20 +1047,21 @@ class _PosCustomerHistoryCard extends StatelessWidget {
             ],
           ),
 
-          // ── DUE SECTION ───────────────────────────────────────────────
+          // â”€â”€ DUE SECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           if (hasDue) ...[
             const SizedBox(height: 12),
 
-            // ── BIG DUE BANNER ────────────────────────────────────────
+            // â”€â”€ BIG DUE BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: SalesPosColors.danger.withOpacity(0.08),
+                color: SalesPosColors.danger.withValues(alpha: 0.08),
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(10)),
                 border: Border.all(
-                    color: SalesPosColors.danger.withOpacity(0.35), width: 1.5),
+                    color: SalesPosColors.danger.withValues(alpha: 0.35),
+                    width: 1.5),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -1065,7 +1071,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: SalesPosColors.danger.withOpacity(0.12),
+                      color: SalesPosColors.danger.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.warning_amber_rounded,
@@ -1080,7 +1086,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                       Text(
                         'TOTAL BAKAYA (DUE)',
                         style: TextStyle(
-                          color: SalesPosColors.danger.withOpacity(0.85),
+                          color: SalesPosColors.danger.withValues(alpha: 0.85),
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.2,
@@ -1091,7 +1097,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                         dueBillCount == 1
                             ? '1 bill mein pending hai'
                             : '$dueBillCount bills mein pending hai',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: SalesPosColors.bodyTextMuted,
                           fontSize: 11,
                         ),
@@ -1115,17 +1121,17 @@ class _PosCustomerHistoryCard extends StatelessWidget {
               ),
             ),
 
-            // ── DUE BILLS BREAKDOWN ───────────────────────────────────
+            // â”€â”€ DUE BILLS BREAKDOWN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (dueBills.isNotEmpty)
               Container(
                 decoration: BoxDecoration(
-                  color: SalesPosColors.danger.withOpacity(0.03),
+                  color: SalesPosColors.danger.withValues(alpha: 0.03),
                   border: Border(
                     left: BorderSide(
-                        color: SalesPosColors.danger.withOpacity(0.35),
+                        color: SalesPosColors.danger.withValues(alpha: 0.35),
                         width: 1.5),
                     right: BorderSide(
-                        color: SalesPosColors.danger.withOpacity(0.35),
+                        color: SalesPosColors.danger.withValues(alpha: 0.35),
                         width: 1.5),
                   ),
                 ),
@@ -1138,12 +1144,12 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                             children: [
                               Icon(Icons.receipt_outlined,
                                   size: 13,
-                                  color:
-                                      SalesPosColors.danger.withOpacity(0.55)),
+                                  color: SalesPosColors.danger
+                                      .withValues(alpha: 0.55)),
                               const SizedBox(width: 6),
                               Text(
                                 due.billNo,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: SalesPosColors.bodyTextMuted,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -1154,14 +1160,14 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                                 due.formattedDate,
                                 style: TextStyle(
                                   color: SalesPosColors.bodyTextMuted
-                                      .withOpacity(0.6),
+                                      .withValues(alpha: 0.6),
                                   fontSize: 10,
                                 ),
                               ),
                               const Spacer(),
                               Text(
                                 _fmt(due.dueAmount),
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: SalesPosColors.danger,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w800,
@@ -1174,19 +1180,20 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                 ),
               ),
 
-            // ── ACTION BUTTONS ────────────────────────────────────────
+            // â”€â”€ ACTION BUTTONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: SalesPosColors.danger.withOpacity(0.05),
+                color: SalesPosColors.danger.withValues(alpha: 0.05),
                 borderRadius:
                     const BorderRadius.vertical(bottom: Radius.circular(10)),
                 border: Border.all(
-                    color: SalesPosColors.danger.withOpacity(0.35), width: 1.5),
+                    color: SalesPosColors.danger.withValues(alpha: 0.35),
+                    width: 1.5),
               ),
               child: Row(
                 children: [
-                  // ── CLEAR DUE ───────────────────────────────────────
+                  // â”€â”€ CLEAR DUE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   Expanded(
                     child: SizedBox(
                       height: 42,
@@ -1208,7 +1215,8 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: SalesPosColors.danger,
                           side: BorderSide(
-                              color: SalesPosColors.danger.withOpacity(0.7),
+                              color:
+                                  SalesPosColors.danger.withValues(alpha: 0.7),
                               width: 1.5),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
@@ -1218,7 +1226,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
 
-                  // ── NEW BILL ────────────────────────────────────────
+                  // â”€â”€ NEW BILL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   Expanded(
                     child: SizedBox(
                       height: 42,
@@ -1226,19 +1234,19 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                         onPressed: () {
                           // History card collapse karo aur billing continue karo
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
+                            const SnackBar(
                               content: Row(
                                 children: [
-                                  const Icon(Icons.receipt_long,
+                                  Icon(Icons.receipt_long,
                                       color: Colors.white, size: 16),
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: 8),
                                   Text(
-                                      'Naya bill — items add karein (due baad mein le sakte hain)'),
+                                      'Naya bill â€” items add karein (due baad mein le sakte hain)'),
                                 ],
                               ),
                               backgroundColor: SalesPosColors.success,
                               behavior: SnackBarBehavior.floating,
-                              duration: const Duration(seconds: 3),
+                              duration: Duration(seconds: 3),
                             ),
                           );
                         },
@@ -1265,16 +1273,16 @@ class _PosCustomerHistoryCard extends StatelessWidget {
             ),
           ],
 
-          // ── ALL CLEAR ─────────────────────────────────────────────────
+          // â”€â”€ ALL CLEAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           if (!hasDue && totalBills > 0) ...[
             const SizedBox(height: 8),
-            Row(
+            const Row(
               children: [
-                const Icon(Icons.check_circle_rounded,
+                Icon(Icons.check_circle_rounded,
                     size: 14, color: SalesPosColors.success),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 Text(
-                  'Koi bakaya nahi — account bilkul saaf hai',
+                  'Koi bakaya nahi â€” account bilkul saaf hai',
                   style: TextStyle(color: SalesPosColors.success, fontSize: 11),
                 ),
               ],
@@ -1287,7 +1295,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
 }
 
 // ==========================================
-// ✅ NAYA: Clear Due Dialog
+// âœ… NAYA: Clear Due Dialog
 // Customer ke unpaid bills ki list + total
 // collect karne ka option
 // ==========================================
@@ -1318,9 +1326,9 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
   }
 
   String _fmt(double v) {
-    if (v >= 100000) return '₹${(v / 100000).toStringAsFixed(2)}L';
-    if (v >= 1000) return '₹${(v / 1000).toStringAsFixed(1)}K';
-    return '₹${v.toStringAsFixed(0)}';
+    if (v >= 100000) return 'â‚¹${(v / 100000).toStringAsFixed(2)}L';
+    if (v >= 1000) return 'â‚¹${(v / 1000).toStringAsFixed(1)}K';
+    return 'â‚¹${v.toStringAsFixed(0)}';
   }
 
   @override
@@ -1335,14 +1343,14 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── HEADER ──────────────────────────────────────────────
+            // â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Row(
               children: [
                 Container(
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: SalesPosColors.danger.withOpacity(0.1),
+                    color: SalesPosColors.danger.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.payments_outlined,
@@ -1363,7 +1371,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                     ),
                     Text(
                       widget.customerName,
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: SalesPosColors.bodyTextMuted, fontSize: 12),
                     ),
                   ],
@@ -1380,25 +1388,25 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
             ),
 
             const SizedBox(height: 16),
-            Divider(color: SalesPosColors.bodyBorder),
+            const Divider(color: SalesPosColors.bodyBorder),
             const SizedBox(height: 12),
 
-            // ── TOTAL DUE BOX ────────────────────────────────────────
+            // â”€â”€ TOTAL DUE BOX â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: SalesPosColors.danger.withOpacity(0.07),
+                color: SalesPosColors.danger.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(8),
-                border:
-                    Border.all(color: SalesPosColors.danger.withOpacity(0.3)),
+                border: Border.all(
+                    color: SalesPosColors.danger.withValues(alpha: 0.3)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'Total Bakaya (${widget.dueBills.length} bills)',
-                    style: TextStyle(
+                    style: const TextStyle(
                         color: SalesPosColors.danger,
                         fontSize: 12,
                         fontWeight: FontWeight.w700),
@@ -1417,7 +1425,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
 
             const SizedBox(height: 14),
 
-            // ── BILL BREAKDOWN ───────────────────────────────────────
+            // â”€â”€ BILL BREAKDOWN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             const Text(
               'BILL-WISE BREAKDOWN',
               style: TextStyle(
@@ -1441,7 +1449,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 itemCount: widget.dueBills.length,
                 separatorBuilder: (_, __) =>
-                    Divider(height: 1, color: SalesPosColors.bodyBorder),
+                    const Divider(height: 1, color: SalesPosColors.bodyBorder),
                 itemBuilder: (_, i) {
                   final due = widget.dueBills[i];
                   return Padding(
@@ -1458,7 +1466,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                                 color: SalesPosColors.textDark)),
                         const SizedBox(width: 8),
                         Text(due.formattedDate,
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontSize: 10,
                                 color: SalesPosColors.bodyTextMuted)),
                         const Spacer(),
@@ -1479,7 +1487,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
 
             const SizedBox(height: 16),
 
-            // ── PAYMENT MODE ─────────────────────────────────────────
+            // â”€â”€ PAYMENT MODE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             const Text(
               'PAYMENT MODE',
               style: TextStyle(
@@ -1503,7 +1511,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                           horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
                         color: selected
-                            ? SalesPosColors.brandGold.withOpacity(0.15)
+                            ? SalesPosColors.brandGold.withValues(alpha: 0.15)
                             : SalesPosColors.bodyBg,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
@@ -1531,7 +1539,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
 
             const SizedBox(height: 14),
 
-            // ── AMOUNT INPUT ─────────────────────────────────────────
+            // â”€â”€ AMOUNT INPUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Row(
               children: [
                 Expanded(
@@ -1561,8 +1569,8 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                           ),
                           decoration: InputDecoration(
                             hintText: '0.00',
-                            prefixText: '₹  ',
-                            hintStyle: TextStyle(
+                            prefixText: 'â‚¹  ',
+                            hintStyle: const TextStyle(
                                 color: SalesPosColors.bodyTextMuted,
                                 fontSize: 14),
                             filled: true,
@@ -1606,7 +1614,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                         horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: _payFull
-                          ? SalesPosColors.success.withOpacity(0.12)
+                          ? SalesPosColors.success.withValues(alpha: 0.12)
                           : SalesPosColors.bodyBg,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
@@ -1633,7 +1641,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
 
             const SizedBox(height: 20),
 
-            // ── CONFIRM BUTTON ───────────────────────────────────────
+            // â”€â”€ CONFIRM BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -1655,7 +1663,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                          '₹${amount.toStringAsFixed(0)} collected via $_selectedMode — bill update pending'),
+                          'â‚¹${amount.toStringAsFixed(0)} collected via $_selectedMode â€” bill update pending'),
                       backgroundColor: SalesPosColors.success,
                       behavior: SnackBarBehavior.floating,
                     ),
@@ -1717,7 +1725,7 @@ class _HistoryStat extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: SalesPosColors.bodyTextMuted,
                     fontSize: 10,
                     fontWeight: FontWeight.w500,

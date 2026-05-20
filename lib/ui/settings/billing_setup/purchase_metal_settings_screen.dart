@@ -1,7 +1,7 @@
 // =============================================================================
 // FILE        : lib/ui/settings/billing_setup/purchase/purchase_metal_settings_screen.dart
-// MODULE      : Billing Setup → Purchase
-// DESCRIPTION : Settings screen for one metal — purchase side.
+// MODULE      : Billing Setup â†’ Purchase
+// DESCRIPTION : Settings screen for one metal â€” purchase side.
 //               3 sections: Voucher Display | Return Policy | Terms & Template
 //               Single scrollable screen. One Save button. No lock/unlock.
 // =============================================================================
@@ -131,7 +131,7 @@ class _PurchaseMetalSettingsScreenState
       backgroundColor: BillingSetupColors.bodyBg,
       appBar: BillingSetupAppBar(
         screenTitle: '$_metalEmoji $_metalDisplay Purchase',
-        screenSubtitle: 'Voucher display · Return policy · Terms',
+        screenSubtitle: 'Voucher display Â· Return policy Â· Terms',
         onBack: () => Navigator.maybePop(context),
       ),
       body: SafeArea(
@@ -142,7 +142,7 @@ class _PurchaseMetalSettingsScreenState
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  // ── SECTION 1: Voucher Item Display ─────────────────────
+                  // â”€â”€ SECTION 1: Voucher Item Display â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
                     title: 'Purchase Voucher Display',
                     subtitle:
@@ -153,7 +153,7 @@ class _PurchaseMetalSettingsScreenState
                   ),
                   const SizedBox(height: 20),
 
-                  // ── SECTION 2: Return Policy ─────────────────────────────
+                  // â”€â”€ SECTION 2: Return Policy â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
                     title: 'Purchase Return Policy',
                     subtitle: 'Rules for returning purchased items to supplier',
@@ -163,7 +163,7 @@ class _PurchaseMetalSettingsScreenState
                   ),
                   const SizedBox(height: 20),
 
-                  // ── SECTION 3: Terms & Template ──────────────────────────
+                  // â”€â”€ SECTION 3: Terms & Template â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
                     title: 'Terms & Template',
                     subtitle:
@@ -174,7 +174,7 @@ class _PurchaseMetalSettingsScreenState
                   ),
                   const SizedBox(height: 32),
 
-                  // ── SAVE BUTTON ──────────────────────────────────────────
+                  // â”€â”€ SAVE BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   SizedBox(
                     width: double.infinity,
                     height: 52,
@@ -214,7 +214,7 @@ class _PurchaseMetalSettingsScreenState
     );
   }
 
-  // ── DISPLAY TOGGLES — per metal ────────────────────────────────────────────
+  // â”€â”€ DISPLAY TOGGLES â€” per metal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   List<Widget> _buildDisplayToggles() {
     final metal = widget.metal;
     final List<Widget> toggles = [];
@@ -254,12 +254,12 @@ class _PurchaseMetalSettingsScreenState
       addToggle('Purity / Tunch', 'e.g. 22KT, 925, 950PT', _model.showPurity,
           (v) => _toggle((m) => m.copyWith(showPurity: v)));
 
-      addToggle('Rate (₹/g)', 'Purchase rate per gram', _model.showRate,
+      addToggle('Rate (â‚¹/g)', 'Purchase rate per gram', _model.showRate,
           (v) => _toggle((m) => m.copyWith(showRate: v)));
 
       addToggle(
           'Fine Weight',
-          'Calculated: net wt × purity %',
+          'Calculated: net wt Ã— purity %',
           _model.showFineWeight,
           (v) => _toggle((m) => m.copyWith(showFineWeight: v)));
     }
@@ -268,7 +268,7 @@ class _PurchaseMetalSettingsScreenState
     if (metal == BillingMetal.gold) {
       addToggle(
           'HUID Number',
-          'BIS Hallmark HUID — mandatory for gold purchase',
+          'BIS Hallmark HUID â€” mandatory for gold purchase',
           _model.showHuid,
           (v) => _toggle((m) => m.copyWith(showHuid: v)));
     }
@@ -293,7 +293,7 @@ class _PurchaseMetalSettingsScreenState
           _model.showCertificationNo,
           (v) => _toggle((m) => m.copyWith(showCertificationNo: v)));
 
-      addToggle('Rate (₹/ct)', 'Purchase rate per carat', _model.showRate,
+      addToggle('Rate (â‚¹/ct)', 'Purchase rate per carat', _model.showRate,
           (v) => _toggle((m) => m.copyWith(showRate: v)));
 
       addToggle(
@@ -333,7 +333,7 @@ class _PurchaseMetalSettingsScreenState
 
     addToggle(
         'PAN Number',
-        'Required for transactions above ₹2 lakh',
+        'Required for transactions above â‚¹2 lakh',
         _model.showPanNumber,
         (v) => _toggle((m) => m.copyWith(showPanNumber: v)));
 
@@ -353,7 +353,7 @@ class _PurchaseMetalSettingsScreenState
     return toggles;
   }
 
-  // ── RETURN POLICY SECTION ─────────────────────────────────────────────────
+  // â”€â”€ RETURN POLICY SECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   List<Widget> _buildReturnSection() {
     return [
       _InputField(
@@ -386,7 +386,7 @@ class _PurchaseMetalSettingsScreenState
     ];
   }
 
-  // ── TERMS & TEMPLATE SECTION ──────────────────────────────────────────────
+  // â”€â”€ TERMS & TEMPLATE SECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   List<Widget> _buildTermsSection() {
     return [
       _InputField(
@@ -483,7 +483,7 @@ class _SectionCard extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -495,7 +495,7 @@ class _SectionCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: accent.withOpacity(0.04),
+              color: accent.withValues(alpha: 0.04),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(14)),
               border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
@@ -505,7 +505,7 @@ class _SectionCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: accent.withOpacity(0.10),
+                    color: accent.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(icon, size: 18, color: accent),
@@ -587,7 +587,7 @@ class _ToggleRow extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: accent,
+            activeThumbColor: accent,
           ),
         ],
       ),
@@ -630,7 +630,7 @@ class _InputField extends StatelessWidget {
               )),
           if (subtitle != null) ...[
             const SizedBox(width: 6),
-            Text('· $subtitle',
+            Text('Â· $subtitle',
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   color: const Color(0xFF9CA3AF),
@@ -705,7 +705,7 @@ class _DropdownField extends StatelessWidget {
             )),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
-          value: items.contains(value) ? value : items.first,
+          initialValue: items.contains(value) ? value : items.first,
           dropdownColor: Colors.white,
           iconEnabledColor: const Color(0xFF374151),
           items: items

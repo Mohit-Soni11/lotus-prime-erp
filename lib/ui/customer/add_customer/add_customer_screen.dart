@@ -1,6 +1,6 @@
 // =============================================================================
 // FILE        : add_customer_screen.dart
-// MODULE      : Customer → Add New Customer
+// MODULE      : Customer â†’ Add New Customer
 // LAYER       : UI / Screen
 // DESCRIPTION : Full production Add Customer screen.
 //               Uses centralized theme files and external AppBar.
@@ -20,8 +20,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../logic/customer/add_customer_logic.dart';
 import '../../../models/customer/customer_enums/add_customer_enums.dart';
 import '../../../models/customer/add_customer/add_customer_form_model.dart';
-import '../../../theme/customer/add_customer/add_customer_theme.dart'; // ✅ Added centralized theme
-import 'add_customer_app_bar.dart'; // ✅ Added external AppBar (Adjust path as needed)
+import '../../../theme/customer/add_customer/add_customer_theme.dart'; // âœ… Added centralized theme
+import 'add_customer_app_bar.dart'; // âœ… Added external AppBar (Adjust path as needed)
 
 // =============================================================================
 // MASTER SCREEN
@@ -158,7 +158,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     _logic
       ..removeListener(_rebuild)
       ..dispose();
-    for (final a in _anims) a.dispose();
+    for (final a in _anims) {
+      a.dispose();
+    }
     for (final c in [
       _firstNameCtrl,
       _lastNameCtrl,
@@ -179,7 +181,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       _creditLimCtrl,
       _memberIdCtrl,
       _notesCtrl,
-    ]) c.dispose();
+    ]) {
+      c.dispose();
+    }
     for (final f in [
       _firstNameFocus,
       _lastNameFocus,
@@ -197,13 +201,15 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       _cityFocus,
       _pincodeFocus,
       _notesFocus,
-    ]) f.dispose();
+    ]) {
+      f.dispose();
+    }
     super.dispose();
   }
 
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // ACTIONS
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Future<void> _pickImage() async {
     final src = await showModalBottomSheet<ImageSource>(
@@ -239,7 +245,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
             onPrimary: Colors.black,
             surface: Colors.white,
           ),
-          dialogBackgroundColor: Colors.white,
+          dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
         ),
         child: child!,
       ),
@@ -281,7 +287,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       _cityCtrl,
       _pincodeCtrl,
       _notesCtrl,
-    ]) c.clear();
+    ]) {
+      c.clear();
+    }
     _whatsappCtrl.clear();
     _openBalCtrl.text = '0';
     _creditLimCtrl.text = '0';
@@ -315,9 +323,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     ));
   }
 
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // BUILD
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   @override
   Widget build(BuildContext context) {
@@ -326,7 +334,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       child: Scaffold(
         backgroundColor: AddCustomerColors.bodyBg,
         appBar: AddCustomerAppBar(
-          // ✅ Replaced hardcoded AppBar with external component
+          // âœ… Replaced hardcoded AppBar with external component
           onBack: widget.onBack ?? () => Navigator.maybePop(context),
         ),
         body: SafeArea(
@@ -440,9 +448,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
         child: SlideTransition(position: _slides[i], child: child),
       );
 
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION CARD
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildSection({
     required IconData icon,
@@ -472,10 +480,10 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.20),
+                color: Colors.white.withValues(alpha: 0.20),
                 borderRadius: BorderRadius.circular(10),
-                border:
-                    Border.all(color: Colors.white.withOpacity(0.30), width: 1),
+                border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.30), width: 1),
               ),
               child: Center(
                   child: Text(
@@ -493,7 +501,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.18),
+                color: Colors.white.withValues(alpha: 0.18),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: Colors.white, size: 19),
@@ -529,9 +537,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION 0: PROFILE PHOTO
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildPhotoSection() {
     final imagePath = _logic.form.profileImagePath;
@@ -540,18 +548,19 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AddCustomerColors.brandGold.withOpacity(0.14),
-            AddCustomerColors.brandGold.withOpacity(0.04)
+            AddCustomerColors.brandGold.withValues(alpha: 0.14),
+            AddCustomerColors.brandGold.withValues(alpha: 0.04)
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: AddCustomerColors.brandGold.withOpacity(0.30), width: 1.5),
+            color: AddCustomerColors.brandGold.withValues(alpha: 0.30),
+            width: 1.5),
         boxShadow: [
           BoxShadow(
-              color: AddCustomerColors.brandGold.withOpacity(0.12),
+              color: AddCustomerColors.brandGold.withValues(alpha: 0.12),
               blurRadius: 20,
               offset: const Offset(0, 6)),
         ],
@@ -568,12 +577,13 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
                 shape: BoxShape.circle,
                 gradient: SweepGradient(colors: [
                   AddCustomerColors.brandGold,
-                  AddCustomerColors.brandGold.withOpacity(0.4),
+                  AddCustomerColors.brandGold.withValues(alpha: 0.4),
                   AddCustomerColors.brandGold
                 ]),
                 boxShadow: [
                   BoxShadow(
-                      color: AddCustomerColors.brandGold.withOpacity(0.40),
+                      color:
+                          AddCustomerColors.brandGold.withValues(alpha: 0.40),
                       blurRadius: 16,
                       spreadRadius: 2)
                 ],
@@ -601,7 +611,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
                 border: Border.all(color: Colors.white, width: 2),
                 boxShadow: [
                   BoxShadow(
-                      color: AddCustomerColors.brandGold.withOpacity(0.5),
+                      color: AddCustomerColors.brandGold.withValues(alpha: 0.5),
                       blurRadius: 8,
                       offset: const Offset(0, 2))
                 ],
@@ -624,7 +634,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
             const SizedBox(height: 5),
             Text(
               imagePath != null
-                  ? '✓ Photo uploaded'
+                  ? 'âœ“ Photo uploaded'
                   : 'Avatar will auto-switch based on gender selection.',
               style: GoogleFonts.inter(
                   fontSize: 12,
@@ -650,7 +660,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
                   icon: Icons.delete_outline_rounded,
                   bg: AddCustomerColors.errorBg,
                   fg: AddCustomerColors.error,
-                  border: AddCustomerColors.error.withOpacity(0.3),
+                  border: AddCustomerColors.error.withValues(alpha: 0.3),
                   onTap: () => _logic.setProfileImagePath(null),
                 ),
               ],
@@ -680,7 +690,8 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
           boxShadow: bg == AddCustomerColors.brandGold
               ? [
                   BoxShadow(
-                      color: AddCustomerColors.brandGold.withOpacity(0.30),
+                      color:
+                          AddCustomerColors.brandGold.withValues(alpha: 0.30),
                       blurRadius: 6,
                       offset: const Offset(0, 2))
                 ]
@@ -704,16 +715,16 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       height: 84,
       color: isFemale ? const Color(0xFFFFF0F5) : const Color(0xFFF0F4FF),
       child: isFemale
-          ? FaIcon(FontAwesomeIcons.solidUser,
-              size: 40, color: const Color(0xFFEC4899))
-          : Icon(Icons.person_rounded,
-              size: 48, color: const Color(0xFF6366F1)),
+          ? const FaIcon(FontAwesomeIcons.solidUser,
+              size: 40, color: Color(0xFFEC4899))
+          : const Icon(Icons.person_rounded,
+              size: 48, color: Color(0xFF6366F1)),
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION 1: PERSONAL
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildPersonalSection() {
     final isCorp = _logic.form.isCorporate;
@@ -820,9 +831,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     ]);
   }
 
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION 2: CONTACT
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildContactSection() {
     final sameWa = _logic.form.sameAsWhatsApp;
@@ -852,10 +863,11 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       GestureDetector(
         onTap: () {
           _logic.setSameAsWhatsApp(!sameWa);
-          if (!sameWa)
+          if (!sameWa) {
             _whatsappCtrl.text = _mobileCtrl.text;
-          else
+          } else {
             _whatsappCtrl.clear();
+          }
         },
         child: Row(children: [
           AnimatedContainer(
@@ -922,9 +934,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     ]);
   }
 
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION 3: KYC
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildKycSection() {
     final isCorp = _logic.form.isCorporate;
@@ -1007,9 +1019,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     ]);
   }
 
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION 4: ADDRESS
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildAddressSection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1103,9 +1115,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     ]);
   }
 
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION 5: BILLING
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildBillingSection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1117,7 +1129,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
                 ctrl: _openBalCtrl,
                 focus: FocusNode(),
                 hint: '0.00',
-                prefix: '₹',
+                prefix: 'â‚¹',
                 onChanged: _logic.onOpeningBalanceChanged,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -1132,7 +1144,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
                 ctrl: _creditLimCtrl,
                 focus: FocusNode(),
                 hint: '0.00',
-                prefix: '₹',
+                prefix: 'â‚¹',
                 onChanged: _logic.onCreditLimitChanged,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -1157,7 +1169,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? _tierColor(t).withOpacity(0.12)
+                      ? _tierColor(t).withValues(alpha: 0.12)
                       : const Color(0xFFF3F4F6),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
@@ -1215,7 +1227,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
             child: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                    color: AddCustomerColors.brandGold.withOpacity(0.15),
+                    color: AddCustomerColors.brandGold.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6)),
                 child: const Icon(Icons.refresh_rounded,
                     color: AddCustomerColors.brandGold, size: 16)),
@@ -1223,7 +1235,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
         ]),
       ),
       const SizedBox(height: 4),
-      Text('Auto-generated. Tap ↻ to regenerate.',
+      Text('Auto-generated. Tap â†» to regenerate.',
           style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -1257,9 +1269,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     }
   }
 
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION 6: PREFERENCES
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildPreferencesSection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1301,10 +1313,10 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
-              color: const Color(0xFFDB2777).withOpacity(0.10),
+              color: const Color(0xFFDB2777).withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(8),
-              border:
-                  Border.all(color: const Color(0xFFDB2777).withOpacity(0.3)),
+              border: Border.all(
+                  color: const Color(0xFFDB2777).withValues(alpha: 0.3)),
             ),
             child: Row(children: [
               const Icon(Icons.add_rounded, color: Color(0xFFDB2777), size: 16),
@@ -1332,29 +1344,30 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFFDB2777).withOpacity(0.03),
+            color: const Color(0xFFDB2777).withValues(alpha: 0.03),
             borderRadius: BorderRadius.circular(10),
-            border:
-                Border.all(color: const Color(0xFFDB2777).withOpacity(0.15)),
+            border: Border.all(
+                color: const Color(0xFFDB2777).withValues(alpha: 0.15)),
           ),
           child: Row(children: [
             Icon(Icons.people_outline_rounded,
-                color: const Color(0xFFDB2777).withOpacity(0.5), size: 20),
+                color: const Color(0xFFDB2777).withValues(alpha: 0.5),
+                size: 20),
             const SizedBox(width: 12),
             Text('No family members added yet',
                 style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFFDB2777).withOpacity(0.8))),
+                    color: const Color(0xFFDB2777).withValues(alpha: 0.8))),
           ]),
         ),
       ],
     ]);
   }
 
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION 7: ADDITIONAL
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildAdditionalSection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1374,10 +1387,10 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: const Color(0xFF475569).withOpacity(0.10),
+            color: const Color(0xFF475569).withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(4),
           ),
-          child: Text('Staff only · Not on bill',
+          child: Text('Staff only Â· Not on bill',
               style: GoogleFonts.inter(
                   fontSize: 10,
                   fontWeight: FontWeight.w500,
@@ -1399,7 +1412,8 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
           boxShadow: _logic.activeField == ActiveField.notes
               ? [
                   BoxShadow(
-                      color: AddCustomerColors.brandGold.withOpacity(0.10),
+                      color:
+                          AddCustomerColors.brandGold.withValues(alpha: 0.10),
                       blurRadius: 10,
                       offset: const Offset(0, 3))
                 ]
@@ -1424,9 +1438,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     ]);
   }
 
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // ACTION BUTTONS
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildActionButtons() {
     final canSave = _logic.canSave;
@@ -1458,7 +1472,8 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
           boxShadow: canSave
               ? [
                   BoxShadow(
-                      color: AddCustomerColors.saveBtnBg.withOpacity(0.40),
+                      color:
+                          AddCustomerColors.saveBtnBg.withValues(alpha: 0.40),
                       blurRadius: 16,
                       offset: const Offset(0, 5))
                 ]
@@ -1493,9 +1508,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     ]);
   }
 
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // REUSABLE HELPERS
-  // ════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   ActiveField _activeFieldFor(FocusNode fn) {
     if (fn == _firstNameFocus) return ActiveField.firstName;
@@ -1576,14 +1591,16 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
           boxShadow: isFocused
               ? [
                   BoxShadow(
-                      color: AddCustomerColors.brandGold.withOpacity(0.12),
+                      color:
+                          AddCustomerColors.brandGold.withValues(alpha: 0.12),
                       blurRadius: 10,
                       offset: const Offset(0, 3))
                 ]
               : hasError
                   ? [
                       BoxShadow(
-                          color: AddCustomerColors.error.withOpacity(0.08),
+                          color:
+                              AddCustomerColors.error.withValues(alpha: 0.08),
                           blurRadius: 6)
                     ]
                   : [],
@@ -1594,11 +1611,11 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
             height: maxLines > 1 ? 54 : double.infinity,
             decoration: BoxDecoration(
               color: isFocused
-                  ? AddCustomerColors.brandGold.withOpacity(0.12)
+                  ? AddCustomerColors.brandGold.withValues(alpha: 0.12)
                   : hasError
-                      ? AddCustomerColors.error.withOpacity(0.08)
+                      ? AddCustomerColors.error.withValues(alpha: 0.08)
                       : hasValue
-                          ? Colors.black.withOpacity(0.03)
+                          ? Colors.black.withValues(alpha: 0.03)
                           : const Color(0xFFF0EDE8),
               borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(11),
@@ -1606,7 +1623,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
               border: Border(
                   right: BorderSide(
                       color: isFocused
-                          ? AddCustomerColors.brandGold.withOpacity(0.3)
+                          ? AddCustomerColors.brandGold.withValues(alpha: 0.3)
                           : AddCustomerColors.inputBorder,
                       width: 1)),
             ),
@@ -1645,10 +1662,11 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
             textInputAction:
                 next != null ? TextInputAction.next : TextInputAction.done,
             onFieldSubmitted: (_) {
-              if (next != null)
+              if (next != null) {
                 FocusScope.of(context).requestFocus(next);
-              else
+              } else {
                 FocusScope.of(context).unfocus();
+              }
             },
             decoration: InputDecoration(
               hintText: hint,
@@ -1696,12 +1714,12 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
           height: 54,
           decoration: BoxDecoration(
             color: fmt != null
-                ? AddCustomerColors.brandGold.withOpacity(0.05)
+                ? AddCustomerColors.brandGold.withValues(alpha: 0.05)
                 : AddCustomerColors.inputBg,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
                 color: fmt != null
-                    ? AddCustomerColors.brandGold.withOpacity(0.4)
+                    ? AddCustomerColors.brandGold.withValues(alpha: 0.4)
                     : AddCustomerColors.inputBorder,
                 width: fmt != null ? 1.5 : 1),
           ),
@@ -1711,12 +1729,12 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
               height: 54,
               decoration: BoxDecoration(
                 color: fmt != null
-                    ? AddCustomerColors.brandGold.withOpacity(0.10)
+                    ? AddCustomerColors.brandGold.withValues(alpha: 0.10)
                     : const Color(0xFFF0EDE8),
                 borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(11),
                     bottomLeft: Radius.circular(11)),
-                border: Border(
+                border: const Border(
                     right: BorderSide(color: AddCustomerColors.inputBorder)),
               ),
               child: Icon(icon,
@@ -1748,8 +1766,8 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
                 ),
               )
             else
-              Padding(
-                  padding: const EdgeInsets.only(right: 14),
+              const Padding(
+                  padding: EdgeInsets.only(right: 14),
                   child: Icon(Icons.calendar_month_rounded,
                       size: 20, color: Colors.black87)),
           ]),
@@ -1776,12 +1794,12 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
         height: 54,
         decoration: BoxDecoration(
           color: hasValue
-              ? AddCustomerColors.brandGold.withOpacity(0.04)
+              ? AddCustomerColors.brandGold.withValues(alpha: 0.04)
               : AddCustomerColors.inputBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
               color: hasValue
-                  ? AddCustomerColors.brandGold.withOpacity(0.4)
+                  ? AddCustomerColors.brandGold.withValues(alpha: 0.4)
                   : AddCustomerColors.inputBorder,
               width: hasValue ? 1.5 : 1),
         ),
@@ -1791,12 +1809,12 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
             height: 54,
             decoration: BoxDecoration(
               color: hasValue
-                  ? AddCustomerColors.brandGold.withOpacity(0.10)
+                  ? AddCustomerColors.brandGold.withValues(alpha: 0.10)
                   : const Color(0xFFF0EDE8),
               borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(11),
                   bottomLeft: Radius.circular(11)),
-              border: Border(
+              border: const Border(
                   right: BorderSide(color: AddCustomerColors.inputBorder)),
             ),
             child: Icon(icon,
@@ -1849,12 +1867,12 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
         height: 54,
         decoration: BoxDecoration(
           color: hasValue
-              ? AddCustomerColors.brandGold.withOpacity(0.04)
+              ? AddCustomerColors.brandGold.withValues(alpha: 0.04)
               : AddCustomerColors.inputBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
               color: hasValue
-                  ? AddCustomerColors.brandGold.withOpacity(0.4)
+                  ? AddCustomerColors.brandGold.withValues(alpha: 0.4)
                   : AddCustomerColors.inputBorder,
               width: hasValue ? 1.5 : 1),
         ),
@@ -1864,12 +1882,12 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
             height: 54,
             decoration: BoxDecoration(
               color: hasValue
-                  ? AddCustomerColors.brandGold.withOpacity(0.10)
+                  ? AddCustomerColors.brandGold.withValues(alpha: 0.10)
                   : const Color(0xFFF0EDE8),
               borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(11),
                   bottomLeft: Radius.circular(11)),
-              border: Border(
+              border: const Border(
                   right: BorderSide(color: AddCustomerColors.inputBorder)),
             ),
             child: Icon(icon,
@@ -1918,12 +1936,12 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
           height: 54,
           decoration: BoxDecoration(
             color: filePath != null
-                ? accentColor.withOpacity(0.05)
+                ? accentColor.withValues(alpha: 0.05)
                 : AddCustomerColors.inputBg,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
                 color: filePath != null
-                    ? accentColor.withOpacity(0.4)
+                    ? accentColor.withValues(alpha: 0.4)
                     : AddCustomerColors.inputBorder,
                 width: filePath != null ? 1.5 : 1),
           ),
@@ -1933,12 +1951,12 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
               height: 54,
               decoration: BoxDecoration(
                 color: filePath != null
-                    ? accentColor.withOpacity(0.10)
+                    ? accentColor.withValues(alpha: 0.10)
                     : const Color(0xFFF0EDE8),
                 borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(11),
                     bottomLeft: Radius.circular(11)),
-                border: Border(
+                border: const Border(
                     right: BorderSide(color: AddCustomerColors.inputBorder)),
               ),
               child: Icon(filePath != null ? Icons.file_present_rounded : icon,
@@ -1959,14 +1977,14 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
             if (filePath != null)
               GestureDetector(
                   onTap: onRemove,
-                  child: Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: const Icon(Icons.close_rounded,
+                  child: const Padding(
+                      padding: EdgeInsets.only(right: 12),
+                      child: Icon(Icons.close_rounded,
                           color: AddCustomerColors.error, size: 20))),
             if (filePath == null)
-              Padding(
-                  padding: const EdgeInsets.only(right: 14),
-                  child: const Icon(Icons.upload_rounded,
+              const Padding(
+                  padding: EdgeInsets.only(right: 14),
+                  child: Icon(Icons.upload_rounded,
                       color: Colors.black87, size: 20)),
           ]),
         ),
@@ -2004,7 +2022,7 @@ class _EntityChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
           color: isSelected
-              ? activeColor.withOpacity(0.08)
+              ? activeColor.withValues(alpha: 0.08)
               : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
@@ -2013,7 +2031,7 @@ class _EntityChip extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                      color: activeColor.withOpacity(0.12),
+                      color: activeColor.withValues(alpha: 0.12),
                       blurRadius: 8,
                       offset: const Offset(0, 3))
                 ]
@@ -2024,7 +2042,7 @@ class _EntityChip extends StatelessWidget {
             padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
               color: isSelected
-                  ? activeColor.withOpacity(0.12)
+                  ? activeColor.withValues(alpha: 0.12)
                   : const Color(0xFFE9ECEF),
               borderRadius: BorderRadius.circular(8),
             ),
@@ -2102,7 +2120,8 @@ class _FamilyMemberRowState extends State<_FamilyMemberRow> {
       decoration: BoxDecoration(
         color: const Color(0xFFFDF8FF),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDB2777).withOpacity(0.2)),
+        border:
+            Border.all(color: const Color(0xFFDB2777).withValues(alpha: 0.2)),
       ),
       child: Column(children: [
         Row(children: [
@@ -2156,8 +2175,9 @@ class _FamilyMemberRowState extends State<_FamilyMemberRow> {
                         (r) => DropdownMenuItem(value: r, child: Text(r.label)))
                     .toList(),
                 onChanged: (r) {
-                  if (r != null)
+                  if (r != null) {
                     widget.onUpdate(widget.member.copyWith(relation: r));
+                  }
                 },
               ),
             ),

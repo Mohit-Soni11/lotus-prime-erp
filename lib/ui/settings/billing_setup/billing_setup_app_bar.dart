@@ -1,12 +1,12 @@
 // =============================================================================
 // FILE        : lib/ui/settings/billing_setup/billing_setup_app_bar.dart
 // MODULE      : Billing Setup
-// DESCRIPTION : Dark-shell AppBar — matches CustomerList & Day Book pattern.
-//               ✅ Gold gradient module icon + radar blink live indicator
-//               ✅ Gold hover back button
-//               ✅ "SYSTEM ONLINE" green blink badge below subtitle
-//               ✅ Right-side module badge (BILLING SETUP)
-//               ✅ All colors/strings/icons from BillingSetupTheme — zero
+// DESCRIPTION : Dark-shell AppBar â€” matches CustomerList & Day Book pattern.
+//               âœ… Gold gradient module icon + radar blink live indicator
+//               âœ… Gold hover back button
+//               âœ… "SYSTEM ONLINE" green blink badge below subtitle
+//               âœ… Right-side module badge (BILLING SETUP)
+//               âœ… All colors/strings/icons from BillingSetupTheme â€” zero
 //                  hardcoded values in UI.
 // =============================================================================
 
@@ -75,15 +75,15 @@ class _BillingSetupAppBarState extends State<BillingSetupAppBar>
         bottom: false,
         child: Row(
           children: [
-            // ── 1. Animated Back Button ───────────────────────────────────────
+            // â”€â”€ 1. Animated Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _HoverBackButton(onTap: widget.onBack),
             const SizedBox(width: 16),
 
-            // ── 2. Vertical Divider ───────────────────────────────────────────
+            // â”€â”€ 2. Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _buildVerticalDivider(),
             const SizedBox(width: 16),
 
-            // ── 3. Gradient Module Icon ───────────────────────────────────────
+            // â”€â”€ 3. Gradient Module Icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Container(
               width: 30,
               height: 30,
@@ -97,7 +97,7 @@ class _BillingSetupAppBarState extends State<BillingSetupAppBar>
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: BillingSetupColors.brandGold.withOpacity(0.4),
+                    color: BillingSetupColors.brandGold.withValues(alpha: 0.4),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -111,7 +111,7 @@ class _BillingSetupAppBarState extends State<BillingSetupAppBar>
             ),
             const SizedBox(width: 12),
 
-            // ── 4. Title + Subtitle + Radar ───────────────────────────────────
+            // â”€â”€ 4. Title + Subtitle + Radar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,7 +132,7 @@ class _BillingSetupAppBarState extends State<BillingSetupAppBar>
 
             const Spacer(),
 
-            // ── 5. Right Module Badge ─────────────────────────────────────────
+            // â”€â”€ 5. Right Module Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _buildVerticalDivider(),
             const SizedBox(width: 16),
             _buildModuleBadge(),
@@ -171,7 +171,7 @@ class _BillingSetupAppBarState extends State<BillingSetupAppBar>
         ),
         boxShadow: [
           BoxShadow(
-            color: BillingSetupColors.brandGold.withOpacity(0.08),
+            color: BillingSetupColors.brandGold.withValues(alpha: 0.08),
             blurRadius: 10,
           ),
         ],
@@ -205,9 +205,9 @@ class _BillingSetupAppBarState extends State<BillingSetupAppBar>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HOVER BACK BUTTON — exact CustomerList / Day Book pattern
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// HOVER BACK BUTTON â€” exact CustomerList / Day Book pattern
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
   const _HoverBackButton({required this.onTap});
@@ -239,7 +239,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
             decoration: BoxDecoration(
               color: _isHovered
                   ? BillingSetupColors.shellBg
-                  : BillingSetupColors.shellBorder.withOpacity(0.3),
+                  : BillingSetupColors.shellBorder.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isHovered
@@ -250,7 +250,8 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               boxShadow: _isHovered
                   ? [
                       BoxShadow(
-                        color: BillingSetupColors.brandGold.withOpacity(0.3),
+                        color:
+                            BillingSetupColors.brandGold.withValues(alpha: 0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
                       ),
@@ -271,9 +272,9 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RADAR / SYSTEM ONLINE — exact CustomerList pattern
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// RADAR / SYSTEM ONLINE â€” exact CustomerList pattern
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _RadarWidget extends StatelessWidget {
   final AnimationController blinkCtrl;
   const _RadarWidget({required this.blinkCtrl});
@@ -312,10 +313,10 @@ class _RadarWidget extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
-            color: BillingSetupColors.onlineGreen.withOpacity(0.08),
+            color: BillingSetupColors.onlineGreen.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: BillingSetupColors.onlineGreen.withOpacity(0.25),
+              color: BillingSetupColors.onlineGreen.withValues(alpha: 0.25),
             ),
           ),
           child: Text(
@@ -342,7 +343,7 @@ class _RadarWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: BillingSetupColors.onlineGreen.withOpacity(0.5),
+                  color: BillingSetupColors.onlineGreen.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),

@@ -1,10 +1,10 @@
 // =============================================================================
 // FILE        : lib/ui/settings/billing_setup/sales/sales_metal_settings_screen.dart
-// MODULE      : Billing Setup → Sales
+// MODULE      : Billing Setup â†’ Sales
 // DESCRIPTION : Settings screen for one metal type.
 //               3 sections: Invoice Display | Return & Buyback | Terms & Template
 //               Single scrollable screen. One "Save" button. No lock/unlock.
-//               Metal is passed as a string — one screen handles all 4 metals.
+//               Metal is passed as a string â€” one screen handles all 4 metals.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -31,14 +31,14 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
   bool _loading = true;
   bool _saving = false;
 
-  // Text controllers — only for fields that need text input
+  // Text controllers â€” only for fields that need text input
   final _returnWindowCtrl = TextEditingController();
   final _handlingCtrl = TextEditingController();
   final _buybackRateCtrl = TextEditingController();
   final _purityDeductCtrl = TextEditingController();
   final _termsCtrl = TextEditingController();
-  final _returnPolicyCtrl = TextEditingController(); // ✅ NEW
-  final _buybackPolicyCtrl = TextEditingController(); // ✅ NEW
+  final _returnPolicyCtrl = TextEditingController(); // âœ… NEW
+  final _buybackPolicyCtrl = TextEditingController(); // âœ… NEW
   final _footerCtrl = TextEditingController();
 
   // Metal accent color
@@ -121,7 +121,7 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
     }
   }
 
-  // ── Toggle helper — updates model state ────────────────────────────────────
+  // â”€â”€ Toggle helper â€” updates model state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   void _toggle(SalesBillingModel Function(SalesBillingModel) updater) {
     setState(() => _model = updater(_model));
   }
@@ -144,7 +144,7 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
       backgroundColor: BillingSetupColors.bodyBg,
       appBar: BillingSetupAppBar(
         screenTitle: '$_metalEmoji $_metalDisplay Sales',
-        screenSubtitle: 'Invoice display · Return policy · Terms',
+        screenSubtitle: 'Invoice display Â· Return policy Â· Terms',
         onBack: () => Navigator.maybePop(context),
       ),
       body: SafeArea(
@@ -155,7 +155,7 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  // ── SECTION 1: Invoice Item Display ─────────────────────
+                  // â”€â”€ SECTION 1: Invoice Item Display â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
                     title: 'Invoice Item Display',
                     subtitle: 'What appears on each line item of the bill',
@@ -165,7 +165,7 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // ── SECTION 2: Return & Buyback Policy ──────────────────
+                  // â”€â”€ SECTION 2: Return & Buyback Policy â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
                     title: 'Return & Buyback Policy',
                     subtitle: 'Rules for this metal\'s return & exchange',
@@ -175,7 +175,7 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // ── SECTION 3: Terms & Template ─────────────────────────
+                  // â”€â”€ SECTION 3: Terms & Template â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
                     title: 'Terms & Template',
                     subtitle:
@@ -186,7 +186,7 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // ── SAVE BUTTON ──────────────────────────────────────────
+                  // â”€â”€ SAVE BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   SizedBox(
                     width: double.infinity,
                     height: 52,
@@ -226,7 +226,7 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
     );
   }
 
-  // ── DISPLAY TOGGLES — per metal ────────────────────────────────────────────
+  // â”€â”€ DISPLAY TOGGLES â€” per metal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   List<Widget> _buildDisplayToggles() {
     final metal = widget.metal;
     final List<Widget> toggles = [];
@@ -270,7 +270,7 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
       addToggle('Purity / Tunch', 'e.g. 22KT, 925, 950PT', _model.showPurity,
           (v) => _toggle((m) => m.copyWith(showPurity: v)));
 
-      addToggle('Rate (₹/g)', 'Metal rate per gram', _model.showRate,
+      addToggle('Rate (â‚¹/g)', 'Metal rate per gram', _model.showRate,
           (v) => _toggle((m) => m.copyWith(showRate: v)));
 
       addToggle(
@@ -287,14 +287,14 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
 
       addToggle(
           'Fine Weight',
-          'Calculated: net wt × purity %',
+          'Calculated: net wt Ã— purity %',
           _model.showFineWeight,
           (v) => _toggle((m) => m.copyWith(showFineWeight: v)));
     }
 
     // Gold specific
     if (metal == BillingMetal.gold) {
-      addToggle('HUID Number', 'BIS Hallmark HUID — govt. mandatory',
+      addToggle('HUID Number', 'BIS Hallmark HUID â€” govt. mandatory',
           _model.showHuid, (v) => _toggle((m) => m.copyWith(showHuid: v)));
 
       addToggle(
@@ -348,11 +348,11 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
           _model.showMakingCharges,
           (v) => _toggle((m) => m.copyWith(showMakingCharges: v)));
 
-      addToggle('Rate (₹/ct)', 'Diamond rate per carat', _model.showRate,
+      addToggle('Rate (â‚¹/ct)', 'Diamond rate per carat', _model.showRate,
           (v) => _toggle((m) => m.copyWith(showRate: v)));
     }
 
-    // Stone details — for non-pure-diamond items (gold with stones)
+    // Stone details â€” for non-pure-diamond items (gold with stones)
     if (metal != BillingMetal.diamond) {
       addToggle(
           'Stone Details',
@@ -383,7 +383,7 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
     return toggles;
   }
 
-  // ── RETURN & BUYBACK SECTION ───────────────────────────────────────────────
+  // â”€â”€ RETURN & BUYBACK SECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   List<Widget> _buildReturnSection() {
     return [
       _InputField(
@@ -440,7 +440,7 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
     ];
   }
 
-  // ── TERMS & TEMPLATE SECTION ──────────────────────────────────────────────
+  // â”€â”€ TERMS & TEMPLATE SECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   List<Widget> _buildTermsSection() {
     return [
       _InputField(
@@ -518,7 +518,7 @@ class _SectionCard extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -527,11 +527,11 @@ class _SectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ───────────────────────────────────────────────────────
+          // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: accent.withOpacity(0.04),
+              color: accent.withValues(alpha: 0.04),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(14)),
               border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
@@ -541,7 +541,7 @@ class _SectionCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: accent.withOpacity(0.10),
+                    color: accent.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(icon, size: 18, color: accent),
@@ -568,7 +568,7 @@ class _SectionCard extends StatelessWidget {
               ],
             ),
           ),
-          // ── Children ─────────────────────────────────────────────────────
+          // â”€â”€ Children â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -624,7 +624,7 @@ class _ToggleRow extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: accent,
+            activeThumbColor: accent,
           ),
         ],
       ),
@@ -667,7 +667,7 @@ class _InputField extends StatelessWidget {
               )),
           if (subtitle != null) ...[
             const SizedBox(width: 6),
-            Text('· $subtitle',
+            Text('Â· $subtitle',
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   color: const Color(0xFF9CA3AF),
@@ -683,7 +683,7 @@ class _InputField extends StatelessWidget {
           style: GoogleFonts.inter(
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF111827), // ✅ Bold black visible text
+            color: const Color(0xFF111827), // âœ… Bold black visible text
           ),
           decoration: InputDecoration(
             hintText: hint,
@@ -742,8 +742,8 @@ class _DropdownField extends StatelessWidget {
             )),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
-          value: items.contains(value) ? value : items.first,
-          dropdownColor: Colors.white, // ✅ Fix: white bg, not black
+          initialValue: items.contains(value) ? value : items.first,
+          dropdownColor: Colors.white, // âœ… Fix: white bg, not black
           iconEnabledColor: const Color(0xFF374151),
           items: items
               .map((e) => DropdownMenuItem(
@@ -752,7 +752,7 @@ class _DropdownField extends StatelessWidget {
                       e,
                       style: GoogleFonts.inter(
                         fontSize: 15,
-                        color: const Color(0xFF111827), // ✅ Dark visible text
+                        color: const Color(0xFF111827), // âœ… Dark visible text
                         fontWeight: FontWeight.w500,
                       ),
                     ),

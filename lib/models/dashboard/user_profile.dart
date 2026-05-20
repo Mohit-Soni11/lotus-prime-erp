@@ -1,14 +1,14 @@
 // File: lib/core/models/user_profile.dart
 
 class UserProfile {
-  final String id;        
-  final String name;      
-  final String role;      
-  final String? imageUrl; 
-  final bool isOnline;    
+  final String id;
+  final String name;
+  final String role;
+  final String? imageUrl;
+  final bool isOnline;
 
   const UserProfile({
-    this.id = "0",        
+    this.id = "0",
     required this.name,
     required this.role,
     this.imageUrl,

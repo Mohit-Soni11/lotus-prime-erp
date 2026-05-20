@@ -4,7 +4,6 @@
 // =============================================================================
 
 import '../../../database/db/app_database.dart';
-import '../../../database/tables/setting/billing/purchase_billing_settings.dart';
 import '../../../models/setting/billing_setup/purchase_billing_model.dart';
 import '../../../models/setting/billing_setup/sales_billing_model.dart';
 import 'package:drift/drift.dart';

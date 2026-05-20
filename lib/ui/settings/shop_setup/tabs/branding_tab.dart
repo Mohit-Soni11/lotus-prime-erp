@@ -2,7 +2,7 @@
 // FILE: branding_tab.dart
 // TYPE: Presentation Layer (UI)
 // AUTHOR: Senior System Architect
-// DESCRIPTION: 60-FPS Zero-Lag UI using ListenableBuilder. 100% completely 
+// DESCRIPTION: 60-FPS Zero-Lag UI using ListenableBuilder. 100% completely
 //              decoupled from hardcoded strings, dimensions, and styling.
 //              [UPGRADED: Added autoSyncData Receiver and Database Auto-Fill]
 // -----------------------------------------------------------------------------
@@ -18,9 +18,9 @@ import '../../../../../../models/setting/shop_setup/shop_profile_model.dart';
 import '../../../../../../models/setting/shop_setup/tabs/shop_branding_model.dart';
 
 class BrandingTab extends StatefulWidget {
-  final ShopProfileModel? initialData; 
+  final ShopProfileModel? initialData;
   // 🚀 NEW: Receive branding data directly from SQLite via Wizard
-  final Map<String, dynamic>? brandingData; 
+  final Map<String, dynamic>? brandingData;
 
   const BrandingTab({super.key, this.initialData, this.brandingData});
 
@@ -35,33 +35,40 @@ class _BrandingTabState extends State<BrandingTab> {
   void initState() {
     super.initState();
     logic = BrandingLogic();
-    
+
     // Yeh Basic Info se phone/email sync karega
-    logic.init(widget.initialData); 
-    
+    logic.init(widget.initialData);
+
     // 🚀 NEW: AUTO-FILL LOGIC FOR SOCIAL & SUPPORT LINKS (Database Fetch)
     if (widget.brandingData != null && widget.brandingData!.isNotEmpty) {
-      logic.instaCtrl.text = widget.brandingData!['instagram']?.toString() ?? '';
+      logic.instaCtrl.text =
+          widget.brandingData!['instagram']?.toString() ?? '';
       logic.fbCtrl.text = widget.brandingData!['facebook']?.toString() ?? '';
       logic.ytCtrl.text = widget.brandingData!['youtube']?.toString() ?? '';
       logic.webCtrl.text = widget.brandingData!['website']?.toString() ?? '';
-      logic.waChannelCtrl.text = widget.brandingData!['whatsapp_channel']?.toString() ?? '';
+      logic.waChannelCtrl.text =
+          widget.brandingData!['whatsapp_channel']?.toString() ?? '';
 
       // Agar explicitly branding mein hi support data save kiya tha, toh usko use karein
-      if (widget.brandingData!['whatsapp_business'] != null && widget.brandingData!['whatsapp_business'].toString().isNotEmpty) {
-        logic.waBizCtrl.text = widget.brandingData!['whatsapp_business'].toString();
+      if (widget.brandingData!['whatsapp_business'] != null &&
+          widget.brandingData!['whatsapp_business'].toString().isNotEmpty) {
+        logic.waBizCtrl.text =
+            widget.brandingData!['whatsapp_business'].toString();
       }
-      if (widget.brandingData!['support_email'] != null && widget.brandingData!['support_email'].toString().isNotEmpty) {
+      if (widget.brandingData!['support_email'] != null &&
+          widget.brandingData!['support_email'].toString().isNotEmpty) {
         logic.emailCtrl.text = widget.brandingData!['support_email'].toString();
       }
-      if (widget.brandingData!['support_phone'] != null && widget.brandingData!['support_phone'].toString().isNotEmpty) {
+      if (widget.brandingData!['support_phone'] != null &&
+          widget.brandingData!['support_phone'].toString().isNotEmpty) {
         logic.phoneCtrl.text = widget.brandingData!['support_phone'].toString();
       }
 
       // Logic layer ke state model ko bhi update kar do
-      logic.brandingData = ShopBrandingModel.fromJson(Map<String, dynamic>.from(widget.brandingData!));
+      logic.brandingData = ShopBrandingModel.fromJson(
+          Map<String, dynamic>.from(widget.brandingData!));
     }
-    
+
     // 🚀 UPGRADE: Completely removed setState listener!
     // UI will now strictly use ListenableBuilder for high-performance rebuilds.
   }
@@ -74,7 +81,10 @@ class _BrandingTabState extends State<BrandingTab> {
 
   // --- 🚀 UPGRADE: DATA RECEIVER (Bridge Endpoint from Wizard) ---
   // Yeh function Wizard se bheje gaye data ko catch karega aur auto-fill karega.
-  void autoSyncData({required String phone, required String whatsapp, required String email}) {
+  void autoSyncData(
+      {required String phone,
+      required String whatsapp,
+      required String email}) {
     bool isUpdated = false;
 
     // Sirf tabhi update karo jab fields khali hon (Taaki user ka purana data overwrite na ho)
@@ -118,22 +128,20 @@ class _BrandingTabState extends State<BrandingTab> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        bool isDesktop = constraints.maxWidth > BrandingStyles.desktopBreakpoint;
-        return SingleChildScrollView(
-          padding: BrandingStyles.padPageBottom,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildPageHeader(),
-              const SizedBox(height: BrandingStyles.spacePageTitle),
-              if (isDesktop) _buildDesktopLayout() else _buildMobileLayout(),
-            ],
-          ),
-        );
-      }
-    );
+    return LayoutBuilder(builder: (context, constraints) {
+      bool isDesktop = constraints.maxWidth > BrandingStyles.desktopBreakpoint;
+      return SingleChildScrollView(
+        padding: BrandingStyles.padPageBottom,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildPageHeader(),
+            const SizedBox(height: BrandingStyles.spacePageTitle),
+            if (isDesktop) _buildDesktopLayout() else _buildMobileLayout(),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildDesktopLayout() {
@@ -164,7 +172,8 @@ class _BrandingTabState extends State<BrandingTab> {
       sectionId: 'social',
       title: BrandingStrings.cardSocialTitle,
       icon: BrandingIcons.secSocial,
-      onToggle: () => _handleSectionToggle('social', BrandingStrings.toggleSocial),
+      onToggle: () =>
+          _handleSectionToggle('social', BrandingStrings.toggleSocial),
       formKey: logic.socialKey,
       childrenBuilder: (isLocked) => [
         _ThemeInputField(
@@ -217,7 +226,8 @@ class _BrandingTabState extends State<BrandingTab> {
           brandColor: BrandingColors.brandWeb,
           platformType: 'website',
           onLaunchUrl: logic.launchPlatformUrl,
-          onFieldSubmitted: (_) => _handleSectionToggle('social', BrandingStrings.toggleSocial),
+          onFieldSubmitted: (_) =>
+              _handleSectionToggle('social', BrandingStrings.toggleSocial),
         ),
       ],
     );
@@ -228,7 +238,8 @@ class _BrandingTabState extends State<BrandingTab> {
       sectionId: 'support',
       title: BrandingStrings.cardSupportTitle,
       icon: BrandingIcons.secSupport,
-      onToggle: () => _handleSectionToggle('support', BrandingStrings.toggleSupport),
+      onToggle: () =>
+          _handleSectionToggle('support', BrandingStrings.toggleSupport),
       formKey: logic.supportKey,
       childrenBuilder: (isLocked) => [
         _ThemeInputField(
@@ -240,7 +251,7 @@ class _BrandingTabState extends State<BrandingTab> {
           focusNode: logic.waChannelFocus,
           nextFocus: logic.waBizFocus,
           brandColor: BrandingColors.brandWhatsapp,
-          platformType: 'website', 
+          platformType: 'website',
           onLaunchUrl: logic.launchPlatformUrl,
         ),
         const SizedBox(height: BrandingStyles.spaceFieldGap),
@@ -286,7 +297,8 @@ class _BrandingTabState extends State<BrandingTab> {
           brandColor: BrandingColors.brandPhone,
           platformType: 'phone',
           onLaunchUrl: logic.launchPlatformUrl,
-          onFieldSubmitted: (_) => _handleSectionToggle('support', BrandingStrings.toggleSupport),
+          onFieldSubmitted: (_) =>
+              _handleSectionToggle('support', BrandingStrings.toggleSupport),
         ),
       ],
     );
@@ -303,97 +315,114 @@ class _BrandingTabState extends State<BrandingTab> {
   }) {
     // 🚀 UPGRADE: ListenableBuilder strictly limits UI rebuilds to ONLY this card.
     return ListenableBuilder(
-      listenable: logic,
-      builder: (context, child) {
-        bool isLocked = logic.isSectionLocked(sectionId);
-        bool isSaving = logic.loadingSection == sectionId;
+        listenable: logic,
+        builder: (context, child) {
+          bool isLocked = logic.isSectionLocked(sectionId);
+          bool isSaving = logic.loadingSection == sectionId;
 
-        return Container(
-          padding: BrandingStyles.padCardInternal,
-          decoration: BrandingStyles.cardDecoration,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: BrandingStyles.padIconBg,
-                        decoration: BoxDecoration(
-                          color: BrandingColors.goldAccentLight,
-                          borderRadius: BorderRadius.circular(BrandingStyles.rHeaderIcon),
+          return Container(
+            padding: BrandingStyles.padCardInternal,
+            decoration: BrandingStyles.cardDecoration,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: BrandingStyles.padIconBg,
+                          decoration: BoxDecoration(
+                            color: BrandingColors.goldAccentLight,
+                            borderRadius: BorderRadius.circular(
+                                BrandingStyles.rHeaderIcon),
+                          ),
+                          child: Icon(icon,
+                              color: BrandingColors.goldAccent,
+                              size: BrandingStyles.iconHeaderSize),
                         ),
-                        child: Icon(icon, color: BrandingColors.goldAccent, size: BrandingStyles.iconHeaderSize),
-                      ),
-                      const SizedBox(width: BrandingStyles.spaceIconText),
-                      Text(
-                        title,
-                        style: BrandingStyles.textSectionTitle,
-                      ),
-                    ],
-                  ),
-                  // ANIMATED LOCK / SAVE BUTTON
-                  Material(
-                    color: BrandingColors.transparent,
-                    child: InkWell(
-                      onTap: isSaving ? null : onToggle,
-                      borderRadius: BorderRadius.circular(BrandingStyles.rStatusPill),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: BrandingStyles.padBtnPill,
-                        decoration: BoxDecoration(
-                          color: isLocked ? BrandingColors.inputBgLocked : BrandingColors.statusActiveBg,
-                          borderRadius: BorderRadius.circular(BrandingStyles.rStatusPill),
-                          border: Border.all(
-                            color: isLocked ? BrandingColors.borderLockedState : BrandingColors.borderActiveState
-                          )
+                        const SizedBox(width: BrandingStyles.spaceIconText),
+                        Text(
+                          title,
+                          style: BrandingStyles.textSectionTitle,
                         ),
-                        child: Row(
-                          children: [
-                            if (isSaving)
-                               const SizedBox(
-                                 width: BrandingStyles.iconBtnSize, 
-                                 height: BrandingStyles.iconBtnSize, 
-                                 child: CircularProgressIndicator(strokeWidth: BrandingStyles.strokeLoader, color: BrandingColors.statusActiveText)
-                               )
-                            else
-                               Icon(
-                                 isLocked ? BrandingIcons.lock : BrandingIcons.save, 
-                                 size: BrandingStyles.iconBtnSize, 
-                                 color: isLocked ? BrandingColors.textMuted : BrandingColors.statusActiveText
-                               ),
-                            const SizedBox(width: BrandingStyles.spaceBtnIconText),
-                            Text(
-                              isSaving ? BrandingStrings.btnSaving : (isLocked ? BrandingStrings.btnLocked : BrandingStrings.btnSave),
-                              style: isLocked ? BrandingStyles.textBtnStatusLocked : BrandingStyles.textBtnStatusActive,
-                            ),
-                          ],
-                        ),
-                      ),
+                      ],
                     ),
-                  )
-                ],
-              ),
-              Divider(
-                height: BrandingStyles.dividerHeight, 
-                thickness: BrandingStyles.dividerThickness, 
-                color: BrandingColors.borderLight
-              ),
-              Form(
-                key: formKey,
-                autovalidateMode: AutovalidateMode.disabled,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: childrenBuilder(isLocked),
+                    // ANIMATED LOCK / SAVE BUTTON
+                    Material(
+                      color: BrandingColors.transparent,
+                      child: InkWell(
+                        onTap: isSaving ? null : onToggle,
+                        borderRadius:
+                            BorderRadius.circular(BrandingStyles.rStatusPill),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: BrandingStyles.padBtnPill,
+                          decoration: BoxDecoration(
+                              color: isLocked
+                                  ? BrandingColors.inputBgLocked
+                                  : BrandingColors.statusActiveBg,
+                              borderRadius: BorderRadius.circular(
+                                  BrandingStyles.rStatusPill),
+                              border: Border.all(
+                                  color: isLocked
+                                      ? BrandingColors.borderLockedState
+                                      : BrandingColors.borderActiveState)),
+                          child: Row(
+                            children: [
+                              if (isSaving)
+                                const SizedBox(
+                                    width: BrandingStyles.iconBtnSize,
+                                    height: BrandingStyles.iconBtnSize,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth:
+                                            BrandingStyles.strokeLoader,
+                                        color: BrandingColors.statusActiveText))
+                              else
+                                Icon(
+                                    isLocked
+                                        ? BrandingIcons.lock
+                                        : BrandingIcons.save,
+                                    size: BrandingStyles.iconBtnSize,
+                                    color: isLocked
+                                        ? BrandingColors.textMuted
+                                        : BrandingColors.statusActiveText),
+                              const SizedBox(
+                                  width: BrandingStyles.spaceBtnIconText),
+                              Text(
+                                isSaving
+                                    ? BrandingStrings.btnSaving
+                                    : (isLocked
+                                        ? BrandingStrings.btnLocked
+                                        : BrandingStrings.btnSave),
+                                style: isLocked
+                                    ? BrandingStyles.textBtnStatusLocked
+                                    : BrandingStyles.textBtnStatusActive,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
                 ),
-              )
-            ],
-          ),
-        );
-      }
-    );
+                const Divider(
+                    height: BrandingStyles.dividerHeight,
+                    thickness: BrandingStyles.dividerThickness,
+                    color: BrandingColors.borderLight),
+                Form(
+                  key: formKey,
+                  autovalidateMode: AutovalidateMode.disabled,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: childrenBuilder(isLocked),
+                  ),
+                )
+              ],
+            ),
+          );
+        });
   }
 
   // --- PAGE HEADER ---
@@ -437,7 +466,7 @@ class _ThemeInputField extends StatefulWidget {
   final bool isLastField;
   final Function(String)? onFieldSubmitted;
   final int? maxLength;
-  
+
   final String platformType;
   final Function(String, String)? onLaunchUrl;
 
@@ -515,16 +544,20 @@ class _ThemeInputFieldState extends State<_ThemeInputField> {
           children: [
             Container(
               height: BrandingStyles.hInputField,
-              decoration: boxDecoration, 
+              decoration: boxDecoration,
               padding: BrandingStyles.padInputInner,
               child: Row(
                 children: [
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
-                    child: Icon(widget.icon, key: ValueKey(iconColor), size: BrandingStyles.iconInputSize, color: iconColor),
+                    child: Icon(widget.icon,
+                        key: ValueKey(iconColor),
+                        size: BrandingStyles.iconInputSize,
+                        color: iconColor),
                   ),
                   const SizedBox(width: BrandingStyles.spaceIconText),
-                  Container(width: 1, height: 24, color: BrandingColors.borderLight),
+                  Container(
+                      width: 1, height: 24, color: BrandingColors.borderLight),
                   const SizedBox(width: BrandingStyles.spaceIconText),
                   Expanded(
                     child: TextFormField(
@@ -533,19 +566,30 @@ class _ThemeInputFieldState extends State<_ThemeInputField> {
                       keyboardType: widget.inputType,
                       focusNode: widget.focusNode,
                       maxLength: widget.maxLength,
-                      inputFormatters: widget.maxLength != null ? [
-                        LengthLimitingTextInputFormatter(widget.maxLength),
-                        FilteringTextInputFormatter.digitsOnly,
-                      ] : [],
-                      textInputAction: widget.isLastField ? TextInputAction.done : TextInputAction.next,
+                      inputFormatters: widget.maxLength != null
+                          ? [
+                              LengthLimitingTextInputFormatter(
+                                  widget.maxLength),
+                              FilteringTextInputFormatter.digitsOnly,
+                            ]
+                          : [],
+                      textInputAction: widget.isLastField
+                          ? TextInputAction.done
+                          : TextInputAction.next,
                       onFieldSubmitted: (val) {
                         if (widget.isLastField) {
-                          if (widget.onFieldSubmitted != null) widget.onFieldSubmitted!(val);
+                          if (widget.onFieldSubmitted != null) {
+                            widget.onFieldSubmitted!(val);
+                          }
                         } else {
-                          if (widget.nextFocus != null) FocusScope.of(context).requestFocus(widget.nextFocus);
+                          if (widget.nextFocus != null) {
+                            FocusScope.of(context)
+                                .requestFocus(widget.nextFocus);
+                          }
                         }
                       },
-                      style: BrandingStyles.textInput(isClickableLink, widget.brandColor),
+                      style: BrandingStyles.textInput(
+                          isClickableLink, widget.brandColor),
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         counterText: "",
@@ -558,17 +602,19 @@ class _ThemeInputFieldState extends State<_ThemeInputField> {
                 ],
               ),
             ),
-            
+
             // INVISIBLE CLICKABLE LAYER WHEN LOCKED
             if (isClickableLink)
               Positioned.fill(
                 child: Material(
                   color: BrandingColors.transparent,
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(BrandingStyles.rInputRadius),
+                    borderRadius:
+                        BorderRadius.circular(BrandingStyles.rInputRadius),
                     onTap: () {
                       if (widget.onLaunchUrl != null) {
-                        widget.onLaunchUrl!(widget.platformType, widget.ctrl.text);
+                        widget.onLaunchUrl!(
+                            widget.platformType, widget.ctrl.text);
                       }
                     },
                   ),

@@ -3,7 +3,7 @@
 // TYPE: Invoice Items Container (UPGRADED)
 // AUTHOR: Senior System Architect
 // DESCRIPTION: Zero-Lag Cart Table connected to Master Theme.
-//              ✅ Strictly mapped Colors, Icons, and TextStyles.
+//              âœ… Strictly mapped Colors, Icons, and TextStyles.
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -42,11 +42,11 @@ class PosSaleItemsTable extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 border:
                     Border.all(color: SalesPosColors.bodyBorder, width: 1.5),
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(
                       color: SalesPosColors.shadowLight,
                       blurRadius: 10,
-                      offset: const Offset(0, 4)),
+                      offset: Offset(0, 4)),
                 ],
               ),
               child: Column(
@@ -61,7 +61,7 @@ class PosSaleItemsTable extends StatelessWidget {
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: ctrl.saleItems.length,
                           itemBuilder: (_, i) => PosSaleItemRow(
-                            // ✅ FIX: ObjectKey prevents state mix-up when rows deleted
+                            // âœ… FIX: ObjectKey prevents state mix-up when rows deleted
                             key: ObjectKey(ctrl.saleItems[i]),
                             index: i,
                             item: ctrl.saleItems[i],
@@ -81,7 +81,7 @@ class PosSaleItemsTable extends StatelessWidget {
   Widget _buildHeader() {
     return Container(
       decoration: BoxDecoration(
-        color: SalesPosColors.brandGold.withOpacity(0.06),
+        color: SalesPosColors.brandGold.withValues(alpha: 0.06),
         border: const Border(
             bottom: BorderSide(color: SalesPosColors.bodyBorder, width: 1.5)),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
@@ -95,10 +95,10 @@ class PosSaleItemsTable extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: SalesPosColors.brandGold.withOpacity(0.12),
+                color: SalesPosColors.brandGold.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                    color: SalesPosColors.brandGold.withOpacity(0.40)),
+                    color: SalesPosColors.brandGold.withValues(alpha: 0.40)),
               ),
               child: const Center(
                 child: Icon(SalesPosIcons.invoiceItemsHeader,
@@ -311,9 +311,9 @@ class PosSaleItemsTable extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: SalesPosColors.success.withOpacity(0.08),
+                color: SalesPosColors.success.withValues(alpha: 0.08),
                 border: Border.all(
-                    color: SalesPosColors.success.withOpacity(0.35),
+                    color: SalesPosColors.success.withValues(alpha: 0.35),
                     width: 1.5),
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -336,7 +336,7 @@ class PosSaleItemsTable extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: SalesPosColors.success.withOpacity(0.15),
+                      color: SalesPosColors.success.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Text(
@@ -392,8 +392,8 @@ class PosSaleItemsTable extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+          color: color.withValues(alpha: 0.1),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
           borderRadius: BorderRadius.circular(8)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -412,9 +412,9 @@ class PosSaleItemsTable extends StatelessWidget {
                   style: TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 12,
-                      color: color.withOpacity(0.8))),
+                      color: color.withValues(alpha: 0.8))),
               const SizedBox(width: 10),
-              Text("₹ ${totalVal.toStringAsFixed(2)}",
+              Text("â‚¹ ${totalVal.toStringAsFixed(2)}",
                   style: TextStyle(
                       fontWeight: FontWeight.w900, fontSize: 14, color: color)),
             ],

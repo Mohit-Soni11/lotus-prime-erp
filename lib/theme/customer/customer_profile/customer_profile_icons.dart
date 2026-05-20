@@ -13,55 +13,56 @@ class CustomerProfileIcons {
   CustomerProfileIcons._();
 
   // ── APP BAR ───────────────────────────────────────────────────────────────
-  static const IconData backArrow    = Icons.arrow_back_rounded;
-  static const IconData moduleIcon   = Icons.account_circle_rounded; // ✅ FIXED — no yellow dot
+  static const IconData backArrow = Icons.arrow_back_rounded;
+  static const IconData moduleIcon =
+      Icons.account_circle_rounded; // ✅ FIXED — no yellow dot
 
   // ── 4 ACTION BUTTONS ──────────────────────────────────────────────────────
-  static const IconData newSale      = Icons.add_shopping_cart_rounded;
-  static const IconData edit         = Icons.edit_rounded;
-  static const IconData billHistory  = Icons.receipt_long_rounded;
-  static const IconData delete       = Icons.delete_outline_rounded;
+  static const IconData newSale = Icons.add_shopping_cart_rounded;
+  static const IconData edit = Icons.edit_rounded;
+  static const IconData billHistory = Icons.receipt_long_rounded;
+  static const IconData delete = Icons.delete_outline_rounded;
 
   // ── PROFILE INFO ─────────────────────────────────────────────────────────
-  static const IconData phone        = Icons.phone_android_rounded;
-  static const IconData whatsapp     = Icons.chat_bubble_outline_rounded;
-  static const IconData city         = Icons.location_city_rounded;
-  static const IconData calendar     = Icons.calendar_today_outlined;
-  static const IconData type         = Icons.card_membership_rounded;
-  static const IconData vip          = Icons.workspace_premium_rounded;
+  static const IconData phone = Icons.phone_android_rounded;
+  static const IconData whatsapp = Icons.chat_bubble_outline_rounded;
+  static const IconData city = Icons.location_city_rounded;
+  static const IconData calendar = Icons.calendar_today_outlined;
+  static const IconData type = Icons.card_membership_rounded;
+  static const IconData vip = Icons.workspace_premium_rounded;
 
   // ── CREDIT SECTION ────────────────────────────────────────────────────────
-  static const IconData creditLimit  = Icons.account_balance_wallet_rounded;
-  static const IconData outstanding  = Icons.pending_actions_rounded;
+  static const IconData creditLimit = Icons.account_balance_wallet_rounded;
+  static const IconData outstanding = Icons.pending_actions_rounded;
   static const IconData creditStatus = Icons.shield_rounded;
-  static const IconData clear        = Icons.check_circle_rounded;
-  static const IconData due          = Icons.warning_amber_rounded;
-  static const IconData defaulter    = Icons.error_rounded;
-  static const IconData editLimit    = Icons.edit_note_rounded;
-  static const IconData saveLimit    = Icons.check_rounded;
+  static const IconData clear = Icons.check_circle_rounded;
+  static const IconData due = Icons.warning_amber_rounded;
+  static const IconData defaulter = Icons.error_rounded;
+  static const IconData editLimit = Icons.edit_note_rounded;
+  static const IconData saveLimit = Icons.check_rounded;
 
   // ── BILL HISTORY ──────────────────────────────────────────────────────────
-  static const IconData invoice      = Icons.receipt_rounded;
-  static const IconData amount       = Icons.currency_rupee_rounded;
-  static const IconData billDate     = Icons.calendar_month_rounded;
-  static const IconData emptyBills   = Icons.receipt_long_outlined;
+  static const IconData invoice = Icons.receipt_rounded;
+  static const IconData amount = Icons.currency_rupee_rounded;
+  static const IconData billDate = Icons.calendar_month_rounded;
+  static const IconData emptyBills = Icons.receipt_long_outlined;
 
   // ── ADVANCE ORDERS ───────────────────────────────────────────────────────  ✅ NEW
-  static const IconData advanceOrder   = Icons.diamond_outlined;
+  static const IconData advanceOrder = Icons.diamond_outlined;
   static const IconData advancePending = Icons.hourglass_top_rounded;
-  static const IconData advanceReady   = Icons.inventory_2_rounded;
+  static const IconData advanceReady = Icons.inventory_2_rounded;
   static const IconData advanceConvert = Icons.swap_horiz_rounded;
-  static const IconData advancePaid    = Icons.payments_rounded;
-  static const IconData advanceEmpty   = Icons.diamond_outlined;
-  static const IconData deliveryDate   = Icons.local_shipping_rounded;
+  static const IconData advancePaid = Icons.payments_rounded;
+  static const IconData advanceEmpty = Icons.diamond_outlined;
+  static const IconData deliveryDate = Icons.local_shipping_rounded;
 
   // ── DUES SECTION ──────────────────────────────────────────────────────────  ✅ NEW
-  static const IconData duesSection    = Icons.account_balance_rounded;
-  static const IconData dueBill        = Icons.receipt_long_rounded;
-  static const IconData dueAmount      = Icons.currency_rupee_rounded;
-  static const IconData dueClear       = Icons.check_circle_outline_rounded;
-  static const IconData dueEmpty       = Icons.check_circle_rounded;
+  static const IconData duesSection = Icons.account_balance_rounded;
+  static const IconData dueBill = Icons.receipt_long_rounded;
+  static const IconData dueAmount = Icons.currency_rupee_rounded;
+  static const IconData dueClear = Icons.check_circle_outline_rounded;
+  static const IconData dueEmpty = Icons.check_circle_rounded;
 
   // ── CONFIRM DELETE ────────────────────────────────────────────────────────
-  static const IconData warningIcon  = Icons.warning_rounded;
+  static const IconData warningIcon = Icons.warning_rounded;
 }

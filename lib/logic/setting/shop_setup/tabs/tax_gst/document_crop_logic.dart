@@ -18,7 +18,7 @@ class DocumentCropLogic {
   final ImagePicker _picker = ImagePicker();
   static const int maxFileSizeMb = 10;
 
-  /// 🚀 UPGRADE: Removed BuildContext. Throws FormatException on error, 
+  /// 🚀 UPGRADE: Removed BuildContext. Throws FormatException on error,
   /// allowing the UI layer to catch it and show a Snackbar cleanly.
   Future<File?> pickDocumentFromGallery() async {
     try {
@@ -32,7 +32,7 @@ class DocumentCropLogic {
       File file = File(pickedFile.path);
       int sizeInBytes = await file.length();
       double sizeInMb = sizeInBytes / (1024 * 1024);
-      
+
       if (sizeInMb > maxFileSizeMb) {
         throw const FormatException("FILE_TOO_LARGE");
       }
@@ -45,14 +45,15 @@ class DocumentCropLogic {
 
   Future<File?> cropDocumentMobile(File originalFile, Color brandColor) async {
     try {
-      native_crop.CroppedFile? croppedFile = await native_crop.ImageCropper().cropImage(
+      native_crop.CroppedFile? croppedFile =
+          await native_crop.ImageCropper().cropImage(
         sourcePath: originalFile.path,
         uiSettings: [
           native_crop.AndroidUiSettings(
             toolbarTitle: 'Secure Document Crop',
             toolbarColor: brandColor,
             toolbarWidgetColor: Colors.white,
-            initAspectRatio: native_crop.CropAspectRatioPreset.original, 
+            initAspectRatio: native_crop.CropAspectRatioPreset.original,
             lockAspectRatio: false,
             hideBottomControls: false,
           ),
@@ -84,8 +85,8 @@ class DocumentCropLogic {
   Future<void> clearCache(File? image) async {
     if (image != null) {
       // 1. Evict from Flutter RAM Cache
-      FileImage(image).evict(); 
-      
+      FileImage(image).evict();
+
       // 2. Delete physical temporary file from storage
       if (await image.exists()) {
         try {

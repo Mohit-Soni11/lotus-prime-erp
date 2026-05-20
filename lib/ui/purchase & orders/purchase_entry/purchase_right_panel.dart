@@ -77,9 +77,9 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              PurchaseEntryColors.purchaseAccent.withOpacity(0.05),
+              PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.05),
               PurchaseEntryColors.bodyBorder,
-              PurchaseEntryColors.purchaseAccent.withOpacity(0.05),
+              PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.05),
             ],
           ),
         ),
@@ -268,7 +268,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: active
-              ? PurchaseEntryColors.purchaseAccent.withOpacity(0.12)
+              ? PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.12)
               : PurchaseEntryColors.bodyPanel,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
@@ -337,9 +337,11 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
               margin: const EdgeInsets.only(top: 8),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: PurchaseEntryColors.purchaseAccent.withOpacity(0.05),
+                color:
+                    PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.05),
                 border: Border.all(
-                  color: PurchaseEntryColors.purchaseAccent.withOpacity(0.25),
+                  color: PurchaseEntryColors.purchaseAccent
+                      .withValues(alpha: 0.25),
                   width: 1.5,
                 ),
                 borderRadius: BorderRadius.circular(8),
@@ -441,9 +443,9 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
               curve: Curves.easeOut,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: balanceColor.withOpacity(0.10),
+                color: balanceColor.withValues(alpha: 0.10),
                 border: Border.all(
-                  color: balanceColor.withOpacity(0.60),
+                  color: balanceColor.withValues(alpha: 0.60),
                   width: 2.0,
                 ),
                 borderRadius: BorderRadius.circular(12),
@@ -495,7 +497,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
 
   Widget _buildActionButtons() {
     final isCredit = widget.ctrl.grandTotal < 0;
-    final totalColor = PurchaseEntryColors.purchaseAccent;
+    const totalColor = PurchaseEntryColors.purchaseAccent;
     final canPrint = widget.ctrl.items.any((item) => item.hasContent);
 
     return Padding(
@@ -507,9 +509,9 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: totalColor.withOpacity(0.10),
+              color: totalColor.withValues(alpha: 0.10),
               border: Border.all(
-                color: totalColor.withOpacity(0.50),
+                color: totalColor.withValues(alpha: 0.50),
                 width: 2.0,
               ),
               borderRadius: BorderRadius.circular(12),
@@ -546,10 +548,10 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: PurchaseEntryColors.danger.withOpacity(0.08),
+                color: PurchaseEntryColors.danger.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: PurchaseEntryColors.danger.withOpacity(0.20),
+                  color: PurchaseEntryColors.danger.withValues(alpha: 0.20),
                 ),
               ),
               child: Text(
@@ -584,7 +586,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                       foregroundColor: PurchaseEntryColors.purchaseAccent,
                       side: BorderSide(
                         color: PurchaseEntryColors.purchaseAccent
-                            .withOpacity(0.80),
+                            .withValues(alpha: 0.80),
                         width: 2.0,
                       ),
                       shape: RoundedRectangleBorder(
@@ -650,7 +652,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: PurchaseEntryColors.success,
                       disabledBackgroundColor:
-                          PurchaseEntryColors.success.withOpacity(0.55),
+                          PurchaseEntryColors.success.withValues(alpha: 0.55),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -679,10 +681,11 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: PurchaseEntryColors.purchaseAccent.withOpacity(0.12),
+              color: PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: PurchaseEntryColors.purchaseAccent.withOpacity(0.35),
+                color:
+                    PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.35),
                 width: 1.5,
               ),
             ),

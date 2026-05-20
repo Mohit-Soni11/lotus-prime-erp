@@ -1,13 +1,12 @@
 // -----------------------------------------------------------------------------
 // FILE: lib/ui/settings/account_profile/account_profile_app_bar.dart
-// MODULE: Settings → Account Profile
-// DESCRIPTION: App bar — exact same pattern as CustomerListAppBar
+// MODULE: Settings â†’ Account Profile
+// DESCRIPTION: App bar â€” exact same pattern as CustomerListAppBar
 //              Dark shell + Gold accent + Animated back + Radar dot
 // -----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
 import '../../../theme/settings/account_profile/account_profile_theme.dart';
-
 
 class AccountProfileAppBar extends StatelessWidget
     implements PreferredSizeWidget {
@@ -27,8 +26,7 @@ class AccountProfileAppBar extends StatelessWidget
       decoration: const BoxDecoration(
         color: AccountProfileColors.shellPanelBg,
         border: Border(
-          bottom:
-              BorderSide(color: AccountProfileColors.shellBorder, width: 1),
+          bottom: BorderSide(color: AccountProfileColors.shellBorder, width: 1),
         ),
         boxShadow: [
           BoxShadow(
@@ -46,7 +44,7 @@ class AccountProfileAppBar extends StatelessWidget
             _HoverBackButton(onTap: onBack),
             const SizedBox(width: 20),
 
-            // 2. VERTICAL DIVIDER (gradient — same as customer list)
+            // 2. VERTICAL DIVIDER (gradient â€” same as customer list)
             _buildVerticalDivider(),
             const SizedBox(width: 20),
 
@@ -100,9 +98,9 @@ class AccountProfileAppBar extends StatelessWidget
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ANIMATED HOVER BACK BUTTON — exact same as CustomerList
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ANIMATED HOVER BACK BUTTON â€” exact same as CustomerList
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
   const _HoverBackButton({required this.onTap});
@@ -145,7 +143,8 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               boxShadow: _isHovered
                   ? [
                       BoxShadow(
-                        color: AccountProfileColors.brandGold.withOpacity(0.25),
+                        color: AccountProfileColors.brandGold
+                            .withValues(alpha: 0.25),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
                       ),
@@ -166,9 +165,9 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RADAR ANIMATION — exact same as CustomerList
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// RADAR ANIMATION â€” exact same as CustomerList
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _RadarStatusWidget extends StatefulWidget {
   const _RadarStatusWidget();
 
@@ -227,13 +226,12 @@ class _RadarStatusWidgetState extends State<_RadarStatusWidget>
         ),
         const SizedBox(width: 8),
         Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
-            color: const Color(0xFF10B981).withOpacity(0.08),
+            color: const Color(0xFF10B981).withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: const Color(0xFF10B981).withOpacity(0.2),
+              color: const Color(0xFF10B981).withValues(alpha: 0.2),
             ),
           ),
           child: const Text(
@@ -260,7 +258,7 @@ class _RadarStatusWidgetState extends State<_RadarStatusWidget>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: const Color(0xFF10B981).withOpacity(0.5),
+                  color: const Color(0xFF10B981).withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),

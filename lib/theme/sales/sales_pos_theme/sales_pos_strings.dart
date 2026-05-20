@@ -12,11 +12,11 @@ class SalesPosStrings {
   static const String systemOnline = "SYSTEM ONLINE";
   static const String defaultShopName = "Lotus Jewellers";
   static const String defaultCity = "Patna";
-  
+
   // --- LOGIN BADGE ---
   static const String menuProfile = "My Profile";
   static const String menuLogout = "Logout";
-  
+
   // --- TOP CONTROL BAR ---
   static const String modeRetail = "RETAIL";
   static const String modeWholesale = "WHOLESALE";
@@ -43,8 +43,9 @@ class SalesPosStrings {
   // --- ITEMS TABLE ---
   static const String headerNewItems = "NEW ITEMS (SALE)   [+ Click to Add]";
   static const String btnAddNewItem = "Add New Item (F2)";
-  static const String emptyItemsMsg = "Press F2 or click 'Add New Item' to start billing.";
-  
+  static const String emptyItemsMsg =
+      "Press F2 or click 'Add New Item' to start billing.";
+
   // --- OLD GOLD TABLE ---
   static const String headerOldGold = "OLD GOLD / EXCHANGE (-)";
   static const String msgNoOldGold = "No old gold added.";
@@ -70,7 +71,7 @@ class SalesPosStrings {
   static const String lblPromiseDate = "Promise Date:";
   static const String btnSelectDate = "Select Date";
   static const String lblGrandTotal = "GRAND TOTAL";
-  
+
   // --- ACTION BUTTONS ---
   static const String btnHold = "HOLD";
   static const String btnSavePrint = "SAVE & PRINT";

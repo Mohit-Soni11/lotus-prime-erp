@@ -52,7 +52,7 @@ class PurchaseTopControlBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ── HEADING ROW ───────────────────────────────────────────
+                  // â”€â”€ HEADING ROW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -109,12 +109,14 @@ class PurchaseTopControlBar extends StatelessWidget {
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: isGstOn
-                              ? PurchaseEntryColors.success.withOpacity(0.07)
+                              ? PurchaseEntryColors.success
+                                  .withValues(alpha: 0.07)
                               : PurchaseEntryColors.bodyBg,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isGstOn
-                                ? PurchaseEntryColors.success.withOpacity(0.35)
+                                ? PurchaseEntryColors.success
+                                    .withValues(alpha: 0.35)
                                 : PurchaseEntryColors.bodyBorder,
                           ),
                         ),
@@ -151,7 +153,7 @@ class PurchaseTopControlBar extends StatelessWidget {
                     ],
                   ),
 
-                  // ── Divider ──────────────────────────────────────────────
+                  // â”€â”€ Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   Container(
                     height: 1,
                     width: double.infinity,
@@ -159,7 +161,7 @@ class PurchaseTopControlBar extends StatelessWidget {
                     color: PurchaseEntryColors.bodyBorder,
                   ),
 
-                  // ── CONTROLS ROW ─────────────────────────────────────────
+                  // â”€â”€ CONTROLS ROW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -215,13 +217,14 @@ class PurchaseTopControlBar extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
                             color: isGstOn
-                                ? PurchaseEntryColors.success.withOpacity(0.05)
+                                ? PurchaseEntryColors.success
+                                    .withValues(alpha: 0.05)
                                 : PurchaseEntryColors.bodyPanel,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: isGstOn
                                   ? PurchaseEntryColors.success
-                                      .withOpacity(0.40)
+                                      .withValues(alpha: 0.40)
                                   : PurchaseEntryColors.bodyBorder,
                               width: isGstOn ? 1.5 : 1.0,
                             ),
@@ -229,7 +232,7 @@ class PurchaseTopControlBar extends StatelessWidget {
                                 ? [
                                     BoxShadow(
                                       color: PurchaseEntryColors.success
-                                          .withOpacity(0.12),
+                                          .withValues(alpha: 0.12),
                                       blurRadius: 12,
                                       offset: const Offset(0, 3),
                                     ),
@@ -323,7 +326,7 @@ class PurchaseTopControlBar extends StatelessWidget {
         width: width,
         height: 3,
         decoration: BoxDecoration(
-          color: PurchaseEntryColors.purchaseAccent.withOpacity(opacity),
+          color: PurchaseEntryColors.purchaseAccent.withValues(alpha: opacity),
           borderRadius: BorderRadius.circular(2),
         ),
       );
@@ -350,8 +353,8 @@ class PurchaseTopControlBar extends StatelessWidget {
             boxShadow: isActive
                 ? [
                     BoxShadow(
-                      color:
-                          PurchaseEntryColors.purchaseAccent.withOpacity(0.28),
+                      color: PurchaseEntryColors.purchaseAccent
+                          .withValues(alpha: 0.28),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),

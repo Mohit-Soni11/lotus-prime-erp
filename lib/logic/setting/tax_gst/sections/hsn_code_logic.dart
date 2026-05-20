@@ -29,8 +29,9 @@ class HsnCodeLogic extends ChangeNotifier {
   }
 
   void addCode() {
-    if (addCategoryCtrl.text.trim().isEmpty || addHsnCtrl.text.trim().isEmpty)
+    if (addCategoryCtrl.text.trim().isEmpty || addHsnCtrl.text.trim().isEmpty) {
       return;
+    }
     codes.add(HsnCodeModel(
       category: addCategoryCtrl.text.trim(),
       hsnCode: addHsnCtrl.text.trim(),

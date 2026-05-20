@@ -1,8 +1,8 @@
 class SearchResult {
-  final String id;        // Database ID
-  final String title;     // Main Text (e.g., Customer Name / Bill No)
-  final String subtitle;  // Sub Text (e.g., Mobile / Amount)
-  final String type;      // "Customer", "Invoice", "Loan"
+  final String id; // Database ID
+  final String title; // Main Text (e.g., Customer Name / Bill No)
+  final String subtitle; // Sub Text (e.g., Mobile / Amount)
+  final String type; // "Customer", "Invoice", "Loan"
 
   // CONST Constructor for Performance Optimization
   const SearchResult({
@@ -19,7 +19,7 @@ class SearchResult {
   factory SearchResult.fromJson(Map<String, dynamic> json) {
     return SearchResult(
       // ID can be int or string from DB, force convert to String safely
-      id: json['id']?.toString() ?? "0", 
+      id: json['id']?.toString() ?? "0",
       title: json['title'] ?? "Unknown",
       subtitle: json['subtitle'] ?? "",
       type: json['type'] ?? "General",

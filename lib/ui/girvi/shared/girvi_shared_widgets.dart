@@ -13,7 +13,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../theme/girvi/girvi_theme.dart';
-import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
 
 // =============================================================================
@@ -21,8 +20,8 @@ import '../../../models/girvi/girvi_loan_model.dart';
 // =============================================================================
 
 class GirviAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String       screenTitle;
-  final String       screenSubtitle;
+  final String screenTitle;
+  final String screenSubtitle;
   final VoidCallback onBack;
   final List<Widget>? actions;
 
@@ -57,14 +56,17 @@ class GirviAppBar extends StatelessWidget implements PreferredSizeWidget {
             children: [
               Row(children: [
                 Container(
-                  width: 5, height: 5,
+                  width: 5,
+                  height: 5,
                   decoration: BoxDecoration(
                     color: GirviColors.brandGold,
                     shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(
-                      color: GirviColors.brandGold.withOpacity(0.6),
-                      blurRadius: 6,
-                    )],
+                    boxShadow: [
+                      BoxShadow(
+                        color: GirviColors.brandGold.withValues(alpha: 0.6),
+                        blurRadius: 6,
+                      )
+                    ],
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -97,7 +99,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
+      onExit: (_) => setState(() => _hovered = false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
@@ -107,26 +109,30 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
           curve: Curves.easeOutBack,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
-            width: 42, height: 42,
+            width: 42,
+            height: 42,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: GirviColors.shellBg,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: _hovered ? GirviColors.brandGold : GirviColors.shellBorder,
+                color:
+                    _hovered ? GirviColors.brandGold : GirviColors.shellBorder,
                 width: _hovered ? 1.5 : 1.0,
               ),
               boxShadow: [
                 if (_hovered)
                   BoxShadow(
-                    color: GirviColors.brandGold.withOpacity(0.25),
-                    blurRadius: 12, offset: const Offset(0, 3),
+                    color: GirviColors.brandGold.withValues(alpha: 0.25),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
                   ),
               ],
             ),
             child: Icon(
               GirviIcons.backArrow,
-              color: _hovered ? GirviColors.brandGold : GirviColors.shellTextTitle,
+              color:
+                  _hovered ? GirviColors.brandGold : GirviColors.shellTextTitle,
               size: 20,
             ),
           ),
@@ -139,14 +145,20 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
 class _VertDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
-    width: 1, height: 32,
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topCenter, end: Alignment.bottomCenter,
-        colors: [Colors.transparent, GirviColors.shellBorder, Colors.transparent],
-      ),
-    ),
-  );
+        width: 1,
+        height: 32,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              GirviColors.shellBorder,
+              Colors.transparent
+            ],
+          ),
+        ),
+      );
 }
 
 class _RadarBadge extends StatefulWidget {
@@ -163,7 +175,8 @@ class _RadarBadgeState extends State<_RadarBadge>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _ac = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat();
+    _ac = AnimationController(vsync: this, duration: const Duration(seconds: 2))
+      ..repeat();
   }
 
   @override
@@ -183,60 +196,70 @@ class _RadarBadgeState extends State<_RadarBadge>
   }
 
   Widget _wave(double delay, double size) => AnimatedBuilder(
-    animation: _ac,
-    builder: (_, __) {
-      final v = (_ac.value + delay) % 1.0;
-      return Opacity(
-        opacity: 1.0 - v,
-        child: Transform.scale(
-          scale: 1.0 + v * 1.5,
-          child: Container(
-            width: size, height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: GirviColors.onlineGreen.withOpacity(0.5), width: 1.5),
+        animation: _ac,
+        builder: (_, __) {
+          final v = (_ac.value + delay) % 1.0;
+          return Opacity(
+            opacity: 1.0 - v,
+            child: Transform.scale(
+              scale: 1.0 + v * 1.5,
+              child: Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      color: GirviColors.onlineGreen.withValues(alpha: 0.5),
+                      width: 1.5),
+                ),
+              ),
             ),
-          ),
-        ),
+          );
+        },
       );
-    },
-  );
 
   @override
   Widget build(BuildContext context) => Row(children: [
-    SizedBox(
-      width: 14, height: 14,
-      child: Stack(alignment: Alignment.center, children: [
-        _wave(0.0, 14),
-        _wave(0.5, 14),
-        Container(
-          width: 6, height: 6,
-          decoration: BoxDecoration(
-            color: GirviColors.onlineGreen,
-            shape: BoxShape.circle,
-            boxShadow: [BoxShadow(
-              color: GirviColors.onlineGreen,
-              blurRadius: 6, spreadRadius: 1,
-            )],
-          ),
+        SizedBox(
+          width: 14,
+          height: 14,
+          child: Stack(alignment: Alignment.center, children: [
+            _wave(0.0, 14),
+            _wave(0.5, 14),
+            Container(
+              width: 6,
+              height: 6,
+              decoration: const BoxDecoration(
+                color: GirviColors.onlineGreen,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: GirviColors.onlineGreen,
+                    blurRadius: 6,
+                    spreadRadius: 1,
+                  )
+                ],
+              ),
+            ),
+          ]),
         ),
-      ]),
-    ),
-    const SizedBox(width: 8),
-    Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: GirviColors.onlineGreen.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: GirviColors.onlineGreen.withOpacity(0.2)),
-      ),
-      child: Text(GirviStrings.systemOnline,
-        style: GoogleFonts.inter(
-          color: GirviColors.onlineGreen,
-          fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
-    ),
-  ]);
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: GirviColors.onlineGreen.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+                color: GirviColors.onlineGreen.withValues(alpha: 0.2)),
+          ),
+          child: Text(GirviStrings.systemOnline,
+              style: GoogleFonts.inter(
+                  color: GirviColors.onlineGreen,
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8)),
+        ),
+      ]);
 }
 
 class _ModuleBadge extends StatelessWidget {
@@ -245,38 +268,42 @@ class _ModuleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-    decoration: BoxDecoration(
-      color: GirviColors.moduleBadgeBg,
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: GirviColors.moduleBadgeBorder),
-    ),
-    child: Row(mainAxisSize: MainAxisSize.min, children: [
-      Container(
-        padding: const EdgeInsets.all(6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: GirviColors.brandGold.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(6),
+          color: GirviColors.moduleBadgeBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: GirviColors.moduleBadgeBorder),
         ),
-        child: const Icon(GirviIcons.moduleIcon, color: GirviColors.brandGold, size: 14),
-      ),
-      const SizedBox(width: 10),
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(GirviStrings.moduleBadge,
-            style: GoogleFonts.inter(
-              color: GirviColors.shellTextTitle,
-              fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.3)),
-          Text(subtitle,
-            style: GoogleFonts.inter(
-              color: GirviColors.shellTextMuted,
-              fontSize: 10, fontWeight: FontWeight.w400)),
-        ],
-      ),
-    ]),
-  );
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: GirviColors.brandGold.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Icon(GirviIcons.moduleIcon,
+                color: GirviColors.brandGold, size: 14),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(GirviStrings.moduleBadge,
+                  style: GoogleFonts.inter(
+                      color: GirviColors.shellTextTitle,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3)),
+              Text(subtitle,
+                  style: GoogleFonts.inter(
+                      color: GirviColors.shellTextMuted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400)),
+            ],
+          ),
+        ]),
+      );
 }
 
 // =============================================================================
@@ -285,10 +312,10 @@ class _ModuleBadge extends StatelessWidget {
 
 class GirviSectionCard extends StatelessWidget {
   final IconData icon;
-  final String   title;
-  final String   subtitle;
-  final Color    accent;
-  final Widget   child;
+  final String title;
+  final String subtitle;
+  final Color accent;
+  final Widget child;
 
   const GirviSectionCard({
     super.key,
@@ -309,9 +336,9 @@ class GirviSectionCard extends StatelessWidget {
           // Header
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               border: Border(bottom: BorderSide(color: GirviColors.divider)),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
             ),
             child: Row(children: [
               Container(
@@ -323,9 +350,10 @@ class GirviSectionCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,    style: GirviStyles.sectionTitle),
+                  Text(title, style: GirviStyles.sectionTitle),
                   const SizedBox(height: 2),
-                  Text(subtitle, style: GirviStyles.caption.copyWith(fontSize: 11)),
+                  Text(subtitle,
+                      style: GirviStyles.caption.copyWith(fontSize: 11)),
                 ],
               ),
             ]),
@@ -346,21 +374,21 @@ class GirviSectionCard extends StatelessWidget {
 // =============================================================================
 
 class GirviInputField extends StatefulWidget {
-  final String                    label;
-  final String                    hint;
-  final IconData                  icon;
-  final TextEditingController?    controller;
-  final FocusNode?                focusNode;
-  final FocusNode?                nextFocus;
-  final int                       maxLines;
-  final bool                      enabled;
-  final String?                   prefixText;
-  final String?                   suffixText;
-  final Widget?                   suffixWidget;
-  final TextInputType?            keyboardType;
+  final String label;
+  final String hint;
+  final IconData icon;
+  final TextEditingController? controller;
+  final FocusNode? focusNode;
+  final FocusNode? nextFocus;
+  final int maxLines;
+  final bool enabled;
+  final String? prefixText;
+  final String? suffixText;
+  final Widget? suffixWidget;
+  final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
-  final void Function(String)?    onChanged;
+  final void Function(String)? onChanged;
 
   const GirviInputField({
     super.key,
@@ -370,8 +398,8 @@ class GirviInputField extends StatefulWidget {
     this.controller,
     this.focusNode,
     this.nextFocus,
-    this.maxLines    = 1,
-    this.enabled     = true,
+    this.maxLines = 1,
+    this.enabled = true,
     this.prefixText,
     this.suffixText,
     this.suffixWidget,
@@ -415,17 +443,17 @@ class _GirviInputFieldState extends State<GirviInputField> {
 
   BoxDecoration get _dec {
     if (!widget.enabled) return GirviStyles.inputDisabled;
-    if (_focused)        return GirviStyles.inputFocused;
+    if (_focused) return GirviStyles.inputFocused;
     return GirviStyles.inputNormal;
   }
 
   @override
   Widget build(BuildContext context) {
     final hasContent = widget.controller?.text.isNotEmpty ?? false;
-    final iconColor  = _focused
+    final iconColor = _focused
         ? GirviColors.brandGold
         : hasContent
-            ? GirviColors.success.withOpacity(0.8)
+            ? GirviColors.success.withValues(alpha: 0.8)
             : GirviColors.textHint;
 
     return Column(
@@ -435,7 +463,7 @@ class _GirviInputFieldState extends State<GirviInputField> {
         const SizedBox(height: 6),
         AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          height:   widget.maxLines > 1 ? null : GirviStyles.inputHeight,
+          height: widget.maxLines > 1 ? null : GirviStyles.inputHeight,
           decoration: _dec,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Row(children: [
@@ -449,18 +477,19 @@ class _GirviInputFieldState extends State<GirviInputField> {
             const SizedBox(width: 10),
             if (widget.prefixText != null)
               Text(widget.prefixText!,
-                  style: GirviStyles.fieldInput.copyWith(color: GirviColors.textMuted)),
+                  style: GirviStyles.fieldInput
+                      .copyWith(color: GirviColors.textMuted)),
             Expanded(
               child: TextFormField(
-                controller:      widget.controller,
-                focusNode:       widget.focusNode,
-                maxLines:        widget.maxLines,
-                enabled:         widget.enabled,
-                keyboardType:    widget.keyboardType,
+                controller: widget.controller,
+                focusNode: widget.focusNode,
+                maxLines: widget.maxLines,
+                enabled: widget.enabled,
+                keyboardType: widget.keyboardType,
                 inputFormatters: widget.inputFormatters,
-                validator:       widget.validator,
-                onChanged:       widget.onChanged,
-                style:           GirviStyles.fieldInput,
+                validator: widget.validator,
+                onChanged: widget.onChanged,
+                style: GirviStyles.fieldInput,
                 textInputAction: widget.nextFocus != null
                     ? TextInputAction.next
                     : TextInputAction.done,
@@ -470,15 +499,15 @@ class _GirviInputFieldState extends State<GirviInputField> {
                   }
                 },
                 decoration: InputDecoration(
-                  border:      InputBorder.none,
-                  hintText:    widget.hint,
-                  hintStyle:   GirviStyles.fieldHint,
+                  border: InputBorder.none,
+                  hintText: widget.hint,
+                  hintStyle: GirviStyles.fieldHint,
                   counterText: '',
-                  errorStyle:  const TextStyle(height: 0),
-                  suffixText:  widget.suffixText,
-                  suffixStyle: GirviStyles.fieldLabel.copyWith(
-                      color: GirviColors.textMuted),
-                  suffix:      widget.suffixWidget,
+                  errorStyle: const TextStyle(height: 0),
+                  suffixText: widget.suffixText,
+                  suffixStyle: GirviStyles.fieldLabel
+                      .copyWith(color: GirviColors.textMuted),
+                  suffix: widget.suffixWidget,
                 ),
               ),
             ),
@@ -489,12 +518,12 @@ class _GirviInputFieldState extends State<GirviInputField> {
   }
 }
 
-// ── Dropdown ─────────────────────────────────────────────────────────────────
+// â”€â”€ Dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class GirviDropdown<T> extends StatelessWidget {
-  final String             label;
-  final IconData           icon;
-  final T                  value;
+  final String label;
+  final IconData icon;
+  final T value;
   final List<DropdownMenuItem<T>> items;
   final void Function(T?) onChanged;
 
@@ -526,12 +555,12 @@ class GirviDropdown<T> extends StatelessWidget {
             Expanded(
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<T>(
-                  value:    value,
-                  items:    items,
+                  value: value,
+                  items: items,
                   onChanged: onChanged,
-                  icon:     const Icon(GirviIcons.expandDown,
+                  icon: const Icon(GirviIcons.expandDown,
                       color: GirviColors.textMuted, size: 18),
-                  style:    GirviStyles.fieldInput,
+                  style: GirviStyles.fieldInput,
                   dropdownColor: GirviColors.cardBg,
                   borderRadius: BorderRadius.circular(10),
                   isExpanded: true,
@@ -545,13 +574,13 @@ class GirviDropdown<T> extends StatelessWidget {
   }
 }
 
-// ── Read-Only Field ───────────────────────────────────────────────────────────
+// â”€â”€ Read-Only Field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class GirviReadOnlyField extends StatelessWidget {
-  final String  label;
-  final String  value;
-  final Color?  valueColor;
-  final bool    highlighted;
+  final String label;
+  final String value;
+  final Color? valueColor;
+  final bool highlighted;
 
   const GirviReadOnlyField({
     super.key,
@@ -567,9 +596,10 @@ class GirviReadOnlyField extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: highlighted
           ? BoxDecoration(
-              color: GirviColors.brandGold.withOpacity(0.06),
+              color: GirviColors.brandGold.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: GirviColors.brandGold.withOpacity(0.25)),
+              border: Border.all(
+                  color: GirviColors.brandGold.withValues(alpha: 0.25)),
             )
           : BoxDecoration(
               color: GirviColors.inputBgLocked,
@@ -584,7 +614,8 @@ class GirviReadOnlyField extends StatelessWidget {
           Text(
             value,
             style: GirviStyles.readOnlyValue.copyWith(
-              color: valueColor ?? (highlighted ? GirviColors.brandGold : GirviColors.success),
+              color: valueColor ??
+                  (highlighted ? GirviColors.brandGold : GirviColors.success),
             ),
           ),
         ],
@@ -593,7 +624,7 @@ class GirviReadOnlyField extends StatelessWidget {
   }
 }
 
-// ── Two-Column Row ────────────────────────────────────────────────────────────
+// â”€â”€ Two-Column Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class GirviRowTwo extends StatelessWidget {
   final Widget left;
@@ -609,16 +640,16 @@ class GirviRowTwo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Expanded(child: left),
-      SizedBox(width: gap),
-      Expanded(child: right),
-    ],
-  );
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: left),
+          SizedBox(width: gap),
+          Expanded(child: right),
+        ],
+      );
 }
 
-// ── Error Banner ──────────────────────────────────────────────────────────────
+// â”€â”€ Error Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class GirviErrorBanner extends StatelessWidget {
   final String message;
@@ -626,19 +657,22 @@ class GirviErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    decoration: BoxDecoration(
-      color: GirviColors.dangerBg,
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: GirviColors.dangerBorder),
-    ),
-    child: Row(children: [
-      const Icon(Icons.error_outline_rounded, color: GirviColors.danger, size: 18),
-      const SizedBox(width: 10),
-      Expanded(child: Text(message,
-          style: GoogleFonts.inter(color: GirviColors.danger, fontSize: 13))),
-    ]),
-  );
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: GirviColors.dangerBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: GirviColors.dangerBorder),
+        ),
+        child: Row(children: [
+          const Icon(Icons.error_outline_rounded,
+              color: GirviColors.danger, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+              child: Text(message,
+                  style: GoogleFonts.inter(
+                      color: GirviColors.danger, fontSize: 13))),
+        ]),
+      );
 }
 
 // =============================================================================
@@ -647,8 +681,8 @@ class GirviErrorBanner extends StatelessWidget {
 
 class GirviTicketCard extends StatelessWidget {
   final GirviLoanWithCustomer data;
-  final VoidCallback          onTap;
-  final VoidCallback?         onRelease;
+  final VoidCallback onTap;
+  final VoidCallback? onRelease;
 
   const GirviTicketCard({
     super.key,
@@ -659,14 +693,14 @@ class GirviTicketCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loan     = data.loan;
-    final fmt      = NumberFormat('#,##,##0.00', 'en_IN');
-    final dateFmt  = DateFormat('dd MMM yyyy');
+    final loan = data.loan;
+    final fmt = NumberFormat('#,##,##0.00', 'en_IN');
+    final dateFmt = DateFormat('dd MMM yyyy');
 
-    final statusColor  = loan.statusColor;
-    final statusBg     = loan.statusBgColor;
-    final statusLabel  = loan.statusLabel;
-    final isActive     = loan.isActive || loan.isOverdue;
+    final statusColor = loan.statusColor;
+    final statusBg = loan.statusBgColor;
+    final statusLabel = loan.statusLabel;
+    final isActive = loan.isActive || loan.isOverdue;
 
     return GestureDetector(
       onTap: onTap,
@@ -679,12 +713,15 @@ class GirviTicketCard extends StatelessWidget {
             left: BorderSide(color: statusColor, width: 4),
           ),
           boxShadow: const [
-            BoxShadow(color: GirviColors.shadowLight, blurRadius: 8, offset: Offset(0, 2)),
+            BoxShadow(
+                color: GirviColors.shadowLight,
+                blurRadius: 8,
+                offset: Offset(0, 2)),
           ],
         ),
         child: Column(
           children: [
-            // ── Header row ────────────────────────────────────────────────────
+            // â”€â”€ Header row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
               child: Row(children: [
@@ -692,7 +729,7 @@ class GirviTicketCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(GirviIcons.ticket, color: statusColor, size: 16),
@@ -707,31 +744,34 @@ class GirviTicketCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(data.customerName,
                           style: GoogleFonts.inter(
-                            fontSize: 13, fontWeight: FontWeight.w600,
-                            color: GirviColors.textDark)),
-                      Text(data.customerMobile,
-                          style: GirviStyles.caption),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: GirviColors.textDark)),
+                      Text(data.customerMobile, style: GirviStyles.caption),
                     ],
                   ),
                 ),
                 // Status badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: statusBg,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: statusColor.withOpacity(0.4)),
+                    border:
+                        Border.all(color: statusColor.withValues(alpha: 0.4)),
                   ),
                   child: Text(statusLabel,
-                      style: GirviStyles.statusBadge.copyWith(color: statusColor)),
+                      style:
+                          GirviStyles.statusBadge.copyWith(color: statusColor)),
                 ),
               ]),
             ),
 
-            // ── Divider ────────────────────────────────────────────────────
+            // â”€â”€ Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Container(height: 1, color: GirviColors.divider),
 
-            // ── Details row ────────────────────────────────────────────────
+            // â”€â”€ Details row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: Row(children: [
@@ -742,12 +782,14 @@ class GirviTicketCard extends StatelessWidget {
                     children: [
                       Text(loan.itemDescription,
                           style: GoogleFonts.inter(
-                            fontSize: 13, fontWeight: FontWeight.w500,
-                            color: GirviColors.textBody),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: GirviColors.textBody),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 3),
-                      Text('${loan.metalType} ${loan.metalPurity} · ${loan.netWeight.toStringAsFixed(2)}g',
+                      Text(
+                          '${loan.metalType} ${loan.metalPurity} Â· ${loan.netWeight.toStringAsFixed(2)}g',
                           style: GirviStyles.caption),
                     ],
                   ),
@@ -756,29 +798,31 @@ class GirviTicketCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text('₹${fmt.format(loan.loanAmount)}',
+                    Text('â‚¹${fmt.format(loan.loanAmount)}',
                         style: GoogleFonts.manrope(
-                          fontSize: 16, fontWeight: FontWeight.w900,
-                          color: GirviColors.textDark)),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: GirviColors.textDark)),
                     Text('Loan Amount', style: GirviStyles.caption),
                   ],
                 ),
               ]),
             ),
 
-            // ── Footer row (dates + interest) ─────────────────────────────
+            // â”€â”€ Footer row (dates + interest) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Container(
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: GirviColors.bodyBg,
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(14)),
+                borderRadius:
+                    BorderRadius.vertical(bottom: Radius.circular(14)),
               ),
               child: Row(children: [
                 // Start date
                 _MiniStat(
                   label: 'Start',
                   value: dateFmt.format(loan.startDate),
-                  icon:  GirviIcons.dates,
+                  icon: GirviIcons.dates,
                   color: GirviColors.info,
                 ),
                 const SizedBox(width: 16),
@@ -790,8 +834,9 @@ class GirviTicketCard extends StatelessWidget {
                       : loan.maturityDate != null
                           ? dateFmt.format(loan.maturityDate!)
                           : 'N/A',
-                  icon:  loan.isClosed ? GirviIcons.released : GirviIcons.dates,
-                  color: loan.isOverdue ? GirviColors.danger : GirviColors.success,
+                  icon: loan.isClosed ? GirviIcons.released : GirviIcons.dates,
+                  color:
+                      loan.isOverdue ? GirviColors.danger : GirviColors.success,
                 ),
                 const Spacer(),
                 // Accrued interest
@@ -799,10 +844,13 @@ class GirviTicketCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text('₹${fmt.format(loan.accruedInterest)}',
+                      Text('â‚¹${fmt.format(loan.accruedInterest)}',
                           style: GoogleFonts.manrope(
-                            fontSize: 13, fontWeight: FontWeight.w700,
-                            color: loan.isOverdue ? GirviColors.danger : GirviColors.warning)),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: loan.isOverdue
+                                  ? GirviColors.danger
+                                  : GirviColors.warning)),
                       Text('Interest Due', style: GirviStyles.caption),
                     ],
                   ),
@@ -813,18 +861,21 @@ class GirviTicketCard extends StatelessWidget {
                   GestureDetector(
                     onTap: onRelease,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: GirviColors.success,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        const Icon(GirviIcons.release, color: Colors.white, size: 12),
+                        const Icon(GirviIcons.release,
+                            color: Colors.white, size: 12),
                         const SizedBox(width: 4),
                         Text('Release',
                             style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 11, fontWeight: FontWeight.w700)),
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700)),
                       ]),
                     ),
                   ),
@@ -838,10 +889,10 @@ class GirviTicketCard extends StatelessWidget {
 }
 
 class _MiniStat extends StatelessWidget {
-  final String  label;
-  final String  value;
+  final String label;
+  final String value;
   final IconData icon;
-  final Color   color;
+  final Color color;
 
   const _MiniStat({
     required this.label,
@@ -852,19 +903,21 @@ class _MiniStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Icon(icon, color: color, size: 13),
-      const SizedBox(width: 4),
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: GirviStyles.caption.copyWith(fontSize: 10)),
-          Text(value, style: GoogleFonts.inter(
-              fontSize: 11, fontWeight: FontWeight.w600,
-              color: GirviColors.textDark)),
+          Icon(icon, color: color, size: 13),
+          const SizedBox(width: 4),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: GirviStyles.caption.copyWith(fontSize: 10)),
+              Text(value,
+                  style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: GirviColors.textDark)),
+            ],
+          ),
         ],
-      ),
-    ],
-  );
+      );
 }

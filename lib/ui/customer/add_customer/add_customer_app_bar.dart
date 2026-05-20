@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // FILE: add_customer_app_bar.dart
-// MODULE: Customer → Add New Customer
-// DESCRIPTION: Dark app bar — premium layout with improved spacing.
+// MODULE: Customer â†’ Add New Customer
+// DESCRIPTION: Dark app bar â€” premium layout with improved spacing.
 // -----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
@@ -63,7 +63,7 @@ class AddCustomerAppBar extends StatelessWidget implements PreferredSizeWidget {
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: AddCustomerColors.brandGold.withOpacity(0.5),
+                    color: AddCustomerColors.brandGold.withValues(alpha: 0.5),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   )
@@ -113,9 +113,9 @@ class AddCustomerAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // HOVER BACK BUTTON (Fixed exactly like Booking Advance)
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
   const _HoverBackButton({required this.onTap});
@@ -148,7 +148,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               // Changed this line to match Booking Advance exactly
               color: _isHovered
                   ? AddCustomerColors.shellBg
-                  : AddCustomerColors.shellBorder.withOpacity(0.3),
+                  : AddCustomerColors.shellBorder.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isHovered
@@ -159,7 +159,8 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               boxShadow: _isHovered
                   ? [
                       BoxShadow(
-                        color: AddCustomerColors.brandGold.withOpacity(0.25),
+                        color:
+                            AddCustomerColors.brandGold.withValues(alpha: 0.25),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
                       ),
@@ -180,9 +181,9 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // RADAR STATUS (Fixed hardcoded colors to use AddCustomerColors.onlineGreen)
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _RadarStatusWidget extends StatefulWidget {
   const _RadarStatusWidget();
 
@@ -214,10 +215,10 @@ class _RadarStatusWidgetState extends State<_RadarStatusWidget>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AddCustomerColors.onlineGreen.withOpacity(0.08),
+        color: AddCustomerColors.onlineGreen.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(30),
-        border:
-            Border.all(color: AddCustomerColors.onlineGreen.withOpacity(0.3)),
+        border: Border.all(
+            color: AddCustomerColors.onlineGreen.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -272,7 +273,7 @@ class _RadarStatusWidgetState extends State<_RadarStatusWidget>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AddCustomerColors.onlineGreen.withOpacity(0.5),
+                  color: AddCustomerColors.onlineGreen.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),

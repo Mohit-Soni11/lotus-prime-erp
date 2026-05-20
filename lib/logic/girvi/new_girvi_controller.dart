@@ -15,15 +15,12 @@ import 'package:flutter/material.dart';
 
 import '../../database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
-import '../../models/girvi/girvi_loan_model.dart';
 import '../../repositories/girvi/girvi_repository.dart';
 
 class NewGirviController extends ChangeNotifier {
-
   final GirviRepository _repo;
 
-  NewGirviController(AppDatabase db)
-      : _repo = GirviRepository(db);
+  NewGirviController(AppDatabase db) : _repo = GirviRepository(db);
 
   // ── TICKET ────────────────────────────────────────────────────────────────
   String _ticketNo = '';
@@ -114,10 +111,10 @@ class NewGirviController extends ChangeNotifier {
   }
 
   // ── LOAN AMOUNT ───────────────────────────────────────────────────────────
-  double _loanAmount     = 0.0;
-  double _ltvPercent     = 70.0; // default 70% LTV
-  double get loanAmount  => _loanAmount;
-  double get ltvPercent  => _ltvPercent;
+  double _loanAmount = 0.0;
+  double _ltvPercent = 70.0; // default 70% LTV
+  double get loanAmount => _loanAmount;
+  double get ltvPercent => _ltvPercent;
 
   /// Computed from loanAmount / totalValue
   double get computedLtv =>
@@ -141,10 +138,10 @@ class NewGirviController extends ChangeNotifier {
 
   // ── INTEREST RATE ─────────────────────────────────────────────────────────
   double _interestRate = 2.0; // 2% per month default
-  int    _durationMonths = 12;
+  int _durationMonths = 12;
 
-  double get interestRate    => _interestRate;
-  int    get durationMonths  => _durationMonths;
+  double get interestRate => _interestRate;
+  int get durationMonths => _durationMonths;
 
   void onInterestRateChanged(String v) {
     _interestRate = double.tryParse(v) ?? 2.0;
@@ -172,7 +169,7 @@ class NewGirviController extends ChangeNotifier {
   /// Computed maturity date
   DateTime get maturityDate {
     int month = _startDate.month + _durationMonths;
-    int year  = _startDate.year;
+    int year = _startDate.year;
     while (month > 12) {
       month -= 12;
       year++;
@@ -202,15 +199,15 @@ class NewGirviController extends ChangeNotifier {
   double get totalDueAtMaturity => _loanAmount + totalInterestAtMaturity;
 
   // ── STATUS ────────────────────────────────────────────────────────────────
-  bool    _isSaving = false;
+  bool _isSaving = false;
   String? _errorMessage;
   String? _successMessage;
-  bool    _initialized = false;
+  bool _initialized = false;
 
-  bool    get isSaving      => _isSaving;
-  String? get errorMessage  => _errorMessage;
+  bool get isSaving => _isSaving;
+  String? get errorMessage => _errorMessage;
   String? get successMessage => _successMessage;
-  bool    get isFormReady   => hasCustomer && _loanAmount > 0 && netWeight > 0;
+  bool get isFormReady => hasCustomer && _loanAmount > 0 && netWeight > 0;
 
   // ── INIT ──────────────────────────────────────────────────────────────────
 
@@ -310,45 +307,48 @@ class NewGirviController extends ChangeNotifier {
       return false;
     }
 
-    _isSaving     = true;
+    _isSaving = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
       final companion = GirviLoansCompanion.insert(
-        ticketNo:        _ticketNo,
-        customerId:      _selectedCustomer!.id,
+        ticketNo: _ticketNo,
+        customerId: _selectedCustomer!.id,
         itemDescription: itemDescription.trim(),
-        itemCount:       drift.Value(_itemCount),
-        metalType:       drift.Value(_metalType.dbValue),
-        metalPurity:     drift.Value(_metalPurity.dbValue),
-        grossWeight:     drift.Value(_grossWeight),
-        stoneWeight:     drift.Value(_stoneWeight),
-        netWeight:       drift.Value(netWeight),
-        ratePerGram:     drift.Value(_ratePerGram),
-        totalValue:      drift.Value(totalValue),
-        ltvPercent:      drift.Value(computedLtv),
-        loanAmount:      drift.Value(_loanAmount),
-        interestRate:    drift.Value(_interestRate),
-        durationMonths:  drift.Value(_durationMonths),
+        itemCount: drift.Value(_itemCount),
+        metalType: drift.Value(_metalType.dbValue),
+        metalPurity: drift.Value(_metalPurity.dbValue),
+        grossWeight: drift.Value(_grossWeight),
+        stoneWeight: drift.Value(_stoneWeight),
+        netWeight: drift.Value(netWeight),
+        ratePerGram: drift.Value(_ratePerGram),
+        totalValue: drift.Value(totalValue),
+        ltvPercent: drift.Value(computedLtv),
+        loanAmount: drift.Value(_loanAmount),
+        interestRate: drift.Value(_interestRate),
+        durationMonths: drift.Value(_durationMonths),
         disbursementMode: drift.Value(_disbursementMode.dbValue),
-        startDate:       drift.Value(_startDate),
-        maturityDate:    drift.Value(maturityDate),
-        idProofType:     drift.Value(_idProofType?.dbValue),
-        idProofNumber:   drift.Value(idProofNumber?.trim().isEmpty == true ? null : idProofNumber?.trim()),
-        notes:           drift.Value(notes?.trim().isEmpty == true ? null : notes?.trim()),
+        startDate: drift.Value(_startDate),
+        maturityDate: drift.Value(maturityDate),
+        idProofType: drift.Value(_idProofType?.dbValue),
+        idProofNumber: drift.Value(idProofNumber?.trim().isEmpty == true
+            ? null
+            : idProofNumber?.trim()),
+        notes:
+            drift.Value(notes?.trim().isEmpty == true ? null : notes?.trim()),
       );
 
       await _repo.createLoan(companion);
 
       _successMessage = 'Girvi ticket $_ticketNo created successfully!';
-      _isSaving       = false;
+      _isSaving = false;
       notifyListeners();
       return true;
     } catch (e) {
       debugPrint('NewGirviController.saveLoan error: $e');
       _errorMessage = 'Failed to save girvi. Please try again.';
-      _isSaving     = false;
+      _isSaving = false;
       notifyListeners();
       return false;
     }
@@ -357,23 +357,23 @@ class NewGirviController extends ChangeNotifier {
   // ── RESET ─────────────────────────────────────────────────────────────────
 
   Future<void> resetForm() async {
-    _selectedCustomer  = null;
-    _itemCount         = 1;
-    _metalType         = MetalType.gold;
-    _metalPurity       = MetalPurity.k22;
-    _grossWeight       = 0.0;
-    _stoneWeight       = 0.0;
-    _ratePerGram       = 0.0;
-    _ltvPercent        = 70.0;
-    _loanAmount        = 0.0;
-    _interestRate      = 2.0;
-    _durationMonths    = 12;
-    _disbursementMode  = GirviPaymentMode.cash;
-    _startDate         = DateTime.now();
-    _idProofType       = null;
-    _errorMessage      = null;
-    _successMessage    = null;
-    _initialized       = false;
+    _selectedCustomer = null;
+    _itemCount = 1;
+    _metalType = MetalType.gold;
+    _metalPurity = MetalPurity.k22;
+    _grossWeight = 0.0;
+    _stoneWeight = 0.0;
+    _ratePerGram = 0.0;
+    _ltvPercent = 70.0;
+    _loanAmount = 0.0;
+    _interestRate = 2.0;
+    _durationMonths = 12;
+    _disbursementMode = GirviPaymentMode.cash;
+    _startDate = DateTime.now();
+    _idProofType = null;
+    _errorMessage = null;
+    _successMessage = null;
+    _initialized = false;
     await initialize(); // regenerates ticket number
   }
 }

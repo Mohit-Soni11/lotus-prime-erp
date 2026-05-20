@@ -1,6 +1,6 @@
 // =============================================================================
 // FILE        : add_karigar_app_bar.dart
-// MODULE      : Karigar → Add Karigar
+// MODULE      : Karigar â†’ Add Karigar
 // LAYER       : UI / Component
 // DESCRIPTION : Premium Dark shell AppBar for the Add Karigar screen.
 // =============================================================================
@@ -63,15 +63,15 @@ class _AddKarigarAppBarState extends State<AddKarigarAppBar>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ── 1. Animated Back Button ──────────────────────────────────────
+            // â”€â”€ 1. Animated Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _HoverBackButton(onTap: widget.onBack),
             const SizedBox(width: 18),
 
-            // ── 2. Vertical Divider ──────────────────────────────────────────
+            // â”€â”€ 2. Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _buildVerticalDivider(),
             const SizedBox(width: 18),
 
-            // ── 3. Premium Gradient Module Icon ──────────────────────────────
+            // â”€â”€ 3. Premium Gradient Module Icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Container(
               width: 34,
               height: 34,
@@ -87,7 +87,7 @@ class _AddKarigarAppBarState extends State<AddKarigarAppBar>
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: AddKarigarColors.brandGold.withOpacity(0.5),
+                    color: AddKarigarColors.brandGold.withValues(alpha: 0.5),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   )
@@ -101,7 +101,7 @@ class _AddKarigarAppBarState extends State<AddKarigarAppBar>
             ),
             const SizedBox(width: 14),
 
-            // ── 4. Main Title ────────────────────────────────────────────────
+            // â”€â”€ 4. Main Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Text(
               AddKarigarStrings.screenTitle.toUpperCase(),
               style: AddKarigarStyles.shellTitle.copyWith(
@@ -113,7 +113,7 @@ class _AddKarigarAppBarState extends State<AddKarigarAppBar>
             // Spacer pushes everything else to the right
             const Spacer(),
 
-            // ── 5. Premium Radar Widget ──────────────────────────────────────
+            // â”€â”€ 5. Premium Radar Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _RadarWidget(blinkCtrl: _blinkCtrl),
           ],
         ),
@@ -140,9 +140,9 @@ class _AddKarigarAppBarState extends State<AddKarigarAppBar>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // ANIMATED BACK BUTTON
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
   const _HoverBackButton({required this.onTap});
@@ -174,7 +174,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
             decoration: BoxDecoration(
               color: _isHovered
                   ? AddKarigarColors.shellBg
-                  : AddKarigarColors.shellBorder.withOpacity(0.3),
+                  : AddKarigarColors.shellBorder.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isHovered
@@ -185,7 +185,8 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               boxShadow: _isHovered
                   ? [
                       BoxShadow(
-                        color: AddKarigarColors.brandGold.withOpacity(0.3),
+                        color:
+                            AddKarigarColors.brandGold.withValues(alpha: 0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
                       ),
@@ -206,9 +207,9 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // RADAR / ONLINE WIDGET (Pill shape added)
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _RadarWidget extends StatelessWidget {
   final AnimationController blinkCtrl;
   const _RadarWidget({required this.blinkCtrl});
@@ -218,10 +219,10 @@ class _RadarWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AddKarigarColors.onlineGreen.withOpacity(0.08),
+        color: AddKarigarColors.onlineGreen.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(30),
         border: Border.all(
-          color: AddKarigarColors.onlineGreen.withOpacity(0.3),
+          color: AddKarigarColors.onlineGreen.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -283,7 +284,7 @@ class _RadarWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AddKarigarColors.onlineGreen.withOpacity(0.5),
+                  color: AddKarigarColors.onlineGreen.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),

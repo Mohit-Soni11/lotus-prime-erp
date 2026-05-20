@@ -1,6 +1,6 @@
 // =============================================================================
 // FILE        : lib/ui/settings/settings_dashboard/settings_screen.dart
-// DESCRIPTION : Settings hub screen. v12 — billingSetup navigation wired.
+// DESCRIPTION : Settings hub screen. v12 â€” billingSetup navigation wired.
 //               FIXED: Uses original SettingsColors/SettingsData/CategoryMeta
 // =============================================================================
 
@@ -15,13 +15,13 @@ import '../../../models/setting/settings_model.dart';
 import '../shop_setup/shop_setup_wizard.dart';
 import '../account_profile/account_profile_screen.dart';
 
-// ✅ v12: Billing Setup
+// âœ… v12: Billing Setup
 import '../billing_setup/billing_setup_hub_screen.dart';
 
-// ✅ Metal Costing Analysis
+// âœ… Metal Costing Analysis
 import '../metal_costing/metal_costing_hub_screen.dart';
 
-// ✅ v13: Tax & GST Hub
+// âœ… v13: Tax & GST Hub
 import '../tax_gst/tax_gst_hub_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -44,7 +44,7 @@ class SettingsScreen extends StatelessWidget {
         );
         break;
 
-      // ✅ v12: Billing Setup — fade transition
+      // âœ… v12: Billing Setup â€” fade transition
       case 'billing_setup':
         Navigator.push(
           context,
@@ -62,7 +62,7 @@ class SettingsScreen extends StatelessWidget {
         );
         break;
 
-      // ✅ Metal Costing Analysis — fade transition
+      // âœ… Metal Costing Analysis â€” fade transition
       case 'metal_costing':
         Navigator.push(
           context,
@@ -80,7 +80,7 @@ class SettingsScreen extends StatelessWidget {
         );
         break;
 
-      // ✅ v13: Tax & GST Hub — fade transition
+      // âœ… v13: Tax & GST Hub â€” fade transition
       case 'gst_config':
         Navigator.push(
           context,
@@ -108,7 +108,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: SettingsColors.pageBackground, // ✅ original naam
+      backgroundColor: SettingsColors.pageBackground, // âœ… original naam
       body: SafeArea(
         child: SingleChildScrollView(
           padding: SettingsStyles.pagePadding,
@@ -117,10 +117,10 @@ class SettingsScreen extends StatelessWidget {
             children: [
               const _Header(),
               const SizedBox(height: 36),
-              Divider(
+              const Divider(
                   color: SettingsColors.cardBorder, thickness: 1, height: 1),
               const SizedBox(height: 36),
-              // ✅ Original SettingsCategory loop — SettingsGroup nahi
+              // âœ… Original SettingsCategory loop â€” SettingsGroup nahi
               ...SettingsCategory.values.map((cat) {
                 final items = SettingsData.getByCategory(cat);
                 if (items.isEmpty) return const SizedBox.shrink();
@@ -139,7 +139,7 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
-// ── HEADER ────────────────────────────────────────────────────────────────────
+// â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _Header extends StatelessWidget {
   const _Header();
 
@@ -162,7 +162,7 @@ class _Header extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ✅ SettingsStyles.headerTitle — original style
+              // âœ… SettingsStyles.headerTitle â€” original style
               const Text('Settings', style: SettingsStyles.headerTitle),
               const SizedBox(height: 8),
               Row(
@@ -195,7 +195,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-// ── ANIMATED LIVE DOT ─────────────────────────────────────────────────────────
+// â”€â”€ ANIMATED LIVE DOT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _LiveDot extends StatefulWidget {
   const _LiveDot();
 
@@ -240,8 +240,8 @@ class _LiveDotState extends State<_LiveDot>
               height: 16,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color:
-                    SettingsColors.onlineGreen.withOpacity(_pulse.value * 0.28),
+                color: SettingsColors.onlineGreen
+                    .withValues(alpha: _pulse.value * 0.28),
               ),
             ),
           ),
@@ -266,9 +266,9 @@ class _LiveDotState extends State<_LiveDot>
   }
 }
 
-// ── CATEGORY SECTION ──────────────────────────────────────────────────────────
+// â”€â”€ CATEGORY SECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _CategorySection extends StatelessWidget {
-  final CategoryMeta meta; // ✅ original — SettingsGroup nahi
+  final CategoryMeta meta; // âœ… original â€” SettingsGroup nahi
   final List<SettingsModel> items;
   final void Function(SettingsModel) onTap;
 
@@ -309,7 +309,7 @@ class _CategorySection extends StatelessWidget {
           ),
           const SizedBox(height: 18),
 
-          // ✅ Original responsive GridView
+          // âœ… Original responsive GridView
           LayoutBuilder(
             builder: (context, constraints) {
               final w = constraints.maxWidth;

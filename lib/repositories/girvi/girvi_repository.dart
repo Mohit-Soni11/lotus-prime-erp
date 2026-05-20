@@ -35,8 +35,8 @@ class GirviRepository {
       ..where(_db.girviLoans.ticketNo.like('$prefix%'));
 
     final result = await query.getSingle();
-    final count  = result.read(_db.girviLoans.id.count()) ?? 0;
-    final seq    = (count + 1).toString().padLeft(5, '0');
+    final count = result.read(_db.girviLoans.id.count()) ?? 0;
+    final seq = (count + 1).toString().padLeft(5, '0');
 
     return '$prefix$seq';
   }
@@ -54,8 +54,7 @@ class GirviRepository {
   // ════════════════════════════════════════════════════════════════════════════
 
   Future<GirviLoan?> getLoanById(int id) async {
-    return (_db.select(_db.girviLoans)
-          ..where((l) => l.id.equals(id)))
+    return (_db.select(_db.girviLoans)..where((l) => l.id.equals(id)))
         .getSingleOrNull();
   }
 
@@ -71,8 +70,8 @@ class GirviRepository {
 
   Future<List<GirviLoanWithCustomer>> getLoansWithCustomer({
     GirviFilter filter = GirviFilter.all,
-    String      searchQuery = '',
-    int?        customerId,
+    String searchQuery = '',
+    int? customerId,
   }) async {
     final query = _db.select(_db.girviLoans).join([
       drift.innerJoin(
@@ -87,11 +86,14 @@ class GirviRepository {
         case GirviFilter.active:
           query.where(_db.girviLoans.status.equals(GirviStatus.active.dbValue));
         case GirviFilter.overdue:
-          query.where(_db.girviLoans.status.equals(GirviStatus.overdue.dbValue));
+          query
+              .where(_db.girviLoans.status.equals(GirviStatus.overdue.dbValue));
         case GirviFilter.released:
-          query.where(_db.girviLoans.status.equals(GirviStatus.released.dbValue));
+          query.where(
+              _db.girviLoans.status.equals(GirviStatus.released.dbValue));
         case GirviFilter.auctioned:
-          query.where(_db.girviLoans.status.equals(GirviStatus.auctioned.dbValue));
+          query.where(
+              _db.girviLoans.status.equals(GirviStatus.auctioned.dbValue));
         default:
           break;
       }
@@ -107,25 +109,26 @@ class GirviRepository {
     final rows = await query.get();
 
     var result = rows.map((row) {
-      final loan     = row.readTable(_db.girviLoans);
+      final loan = row.readTable(_db.girviLoans);
       final customer = row.readTable(_db.customers);
       return GirviLoanWithCustomer(
-        loan:           _mapLoan(loan),
-        customerName:   customer.name,
+        loan: _mapLoan(loan),
+        customerName: customer.name,
         customerMobile: customer.mobile,
-        customerCity:   customer.city,
+        customerCity: customer.city,
       );
     }).toList();
 
     // Search filter (client-side for simplicity)
     if (searchQuery.isNotEmpty) {
       final q = searchQuery.toLowerCase();
-      result = result.where((g) =>
-        g.loan.ticketNo.toLowerCase().contains(q)        ||
-        g.customerName.toLowerCase().contains(q)          ||
-        g.customerMobile.contains(q)                      ||
-        g.loan.itemDescription.toLowerCase().contains(q)
-      ).toList();
+      result = result
+          .where((g) =>
+              g.loan.ticketNo.toLowerCase().contains(q) ||
+              g.customerName.toLowerCase().contains(q) ||
+              g.customerMobile.contains(q) ||
+              g.loan.itemDescription.toLowerCase().contains(q))
+          .toList();
     }
 
     return result;
@@ -138,13 +141,13 @@ class GirviRepository {
   Future<GirviSummaryModel> getSummary() async {
     final allLoans = await (_db.select(_db.girviLoans)).get();
 
-    int    totalActive   = 0;
-    int    totalOverdue  = 0;
-    int    totalReleased = 0;
-    int    totalAuctioned = 0;
+    int totalActive = 0;
+    int totalOverdue = 0;
+    int totalReleased = 0;
+    int totalAuctioned = 0;
     double totalPrincipal = 0;
     double totalInterestDue = 0;
-    double totalValue    = 0;
+    double totalValue = 0;
 
     final now = DateTime.now();
 
@@ -153,22 +156,23 @@ class GirviRepository {
       switch (GirviStatus.fromDb(loan.status)) {
         case GirviStatus.active:
         case GirviStatus.partialRelease:
-          final overdue = loan.maturityDate != null && now.isAfter(loan.maturityDate!);
+          final overdue =
+              loan.maturityDate != null && now.isAfter(loan.maturityDate!);
           if (overdue) {
             totalOverdue++;
           } else {
             totalActive++;
           }
-          totalPrincipal  += loan.loanAmount;
+          totalPrincipal += loan.loanAmount;
           totalInterestDue += model.accruedInterest;
-          totalValue       += loan.totalValue;
+          totalValue += loan.totalValue;
         case GirviStatus.released:
           totalReleased++;
         case GirviStatus.auctioned:
           totalAuctioned++;
         case GirviStatus.overdue:
           totalOverdue++;
-          totalPrincipal  += loan.loanAmount;
+          totalPrincipal += loan.loanAmount;
           totalInterestDue += model.accruedInterest;
       }
     }
@@ -181,14 +185,14 @@ class GirviRepository {
     final monthlyCollected = payments.fold<double>(0.0, (s, p) => s + p.amount);
 
     return GirviSummaryModel(
-      totalActive:              totalActive,
-      totalOverdue:             totalOverdue,
-      totalReleased:            totalReleased,
-      totalAuctioned:           totalAuctioned,
-      totalPrincipalActive:     totalPrincipal,
-      totalInterestDue:         totalInterestDue,
-      totalPortfolioValue:      totalValue,
-      totalCollectedThisMonth:  monthlyCollected,
+      totalActive: totalActive,
+      totalOverdue: totalOverdue,
+      totalReleased: totalReleased,
+      totalAuctioned: totalAuctioned,
+      totalPrincipalActive: totalPrincipal,
+      totalInterestDue: totalInterestDue,
+      totalPortfolioValue: totalValue,
+      totalCollectedThisMonth: monthlyCollected,
     );
   }
 
@@ -207,7 +211,7 @@ class GirviRepository {
     return updateLoan(
       id,
       GirviLoansCompanion(
-        status:    drift.Value(status.dbValue),
+        status: drift.Value(status.dbValue),
         updatedAt: drift.Value(DateTime.now()),
       ),
     );
@@ -218,30 +222,30 @@ class GirviRepository {
   // ════════════════════════════════════════════════════════════════════════════
 
   Future<bool> releaseLoan({
-    required int    loanId,
+    required int loanId,
     required double principal,
     required double interest,
     required double penalty,
     required double totalAmount,
     required String paymentMode,
-    String?         notes,
-    String?         releasedBy,
+    String? notes,
+    String? releasedBy,
   }) async {
     return _db.transaction(() async {
       // 1. Update loan record
       final loanUpdated = await updateLoan(
         loanId,
         GirviLoansCompanion(
-          status:             drift.Value(GirviStatus.released.dbValue),
-          releaseDate:        drift.Value(DateTime.now()),
-          releasePrincipal:   drift.Value(principal),
-          releaseInterest:    drift.Value(interest),
-          releasePenalty:     drift.Value(penalty),
+          status: drift.Value(GirviStatus.released.dbValue),
+          releaseDate: drift.Value(DateTime.now()),
+          releasePrincipal: drift.Value(principal),
+          releaseInterest: drift.Value(interest),
+          releasePenalty: drift.Value(penalty),
           releaseTotalAmount: drift.Value(totalAmount),
           releasePaymentMode: drift.Value(paymentMode),
-          releaseNotes:       drift.Value(notes),
-          releasedBy:         drift.Value(releasedBy),
-          updatedAt:          drift.Value(DateTime.now()),
+          releaseNotes: drift.Value(notes),
+          releasedBy: drift.Value(releasedBy),
+          updatedAt: drift.Value(DateTime.now()),
         ),
       );
 
@@ -251,15 +255,18 @@ class GirviRepository {
       // RULE: required fields (no default in table) = raw value
       //       optional fields (withDefault / nullable) = drift.Value()
       await _db.into(_db.girviPayments).insert(
-        GirviPaymentsCompanion.insert(
-          girviId:      loanId,                                      // required — raw int
-          paymentType:  GirviPaymentType.fullRelease.dbValue,        // required — raw String
-          amount:       drift.Value(totalAmount),                    // withDefault → drift.Value
-          paymentMode:  drift.Value(paymentMode),                    // withDefault → drift.Value
-          balanceAfter: drift.Value(0.0),                            // withDefault → drift.Value
-          notes:        drift.Value('Full release settlement'),       // nullable   → drift.Value
-        ),
-      );
+            GirviPaymentsCompanion.insert(
+              girviId: loanId, // required — raw int
+              paymentType:
+                  GirviPaymentType.fullRelease.dbValue, // required — raw String
+              amount: drift.Value(totalAmount), // withDefault → drift.Value
+              paymentMode:
+                  drift.Value(paymentMode), // withDefault → drift.Value
+              balanceAfter: const drift.Value(0.0), // withDefault → drift.Value
+              notes: const drift.Value(
+                  'Full release settlement'), // nullable   → drift.Value
+            ),
+          );
 
       return true;
     });
@@ -316,41 +323,41 @@ class GirviRepository {
 
   GirviLoanModel _mapLoan(GirviLoan row) {
     return GirviLoanModel(
-      id:               row.id,
-      ticketNo:         row.ticketNo,
-      customerId:       row.customerId,
-      itemDescription:  row.itemDescription,
-      itemCount:        row.itemCount,
-      metalType:        row.metalType,
-      metalPurity:      row.metalPurity,
-      grossWeight:      row.grossWeight,
-      stoneWeight:      row.stoneWeight,
-      netWeight:        row.netWeight,
-      ratePerGram:      row.ratePerGram,
-      totalValue:       row.totalValue,
-      ltvPercent:       row.ltvPercent,
-      loanAmount:       row.loanAmount,
-      interestRate:     row.interestRate,
-      durationMonths:   row.durationMonths,
+      id: row.id,
+      ticketNo: row.ticketNo,
+      customerId: row.customerId,
+      itemDescription: row.itemDescription,
+      itemCount: row.itemCount,
+      metalType: row.metalType,
+      metalPurity: row.metalPurity,
+      grossWeight: row.grossWeight,
+      stoneWeight: row.stoneWeight,
+      netWeight: row.netWeight,
+      ratePerGram: row.ratePerGram,
+      totalValue: row.totalValue,
+      ltvPercent: row.ltvPercent,
+      loanAmount: row.loanAmount,
+      interestRate: row.interestRate,
+      durationMonths: row.durationMonths,
       disbursementMode: row.disbursementMode,
-      startDate:        row.startDate,
-      createdAt:        row.createdAt,
-      maturityDate:     row.maturityDate,
-      releaseDate:      row.releaseDate,
+      startDate: row.startDate,
+      createdAt: row.createdAt,
+      maturityDate: row.maturityDate,
+      releaseDate: row.releaseDate,
       lastInterestPaidDate: row.lastInterestPaidDate,
-      idProofType:      row.idProofType,
-      idProofNumber:    row.idProofNumber,
+      idProofType: row.idProofType,
+      idProofNumber: row.idProofNumber,
       idProofImagePath: row.idProofImagePath,
-      status:           row.status,
-      notes:            row.notes,
+      status: row.status,
+      notes: row.notes,
       releasePrincipal: row.releasePrincipal,
-      releaseInterest:  row.releaseInterest,
-      releasePenalty:   row.releasePenalty,
+      releaseInterest: row.releaseInterest,
+      releasePenalty: row.releasePenalty,
       releaseTotalAmount: row.releaseTotalAmount,
       releasePaymentMode: row.releasePaymentMode,
-      releaseNotes:     row.releaseNotes,
-      releasedBy:       row.releasedBy,
-      updatedAt:        row.updatedAt,
+      releaseNotes: row.releaseNotes,
+      releasedBy: row.releasedBy,
+      updatedAt: row.updatedAt,
     );
   }
 }

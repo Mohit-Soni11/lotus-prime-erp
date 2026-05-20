@@ -20,7 +20,8 @@ class StepperIndicator extends StatelessWidget {
       shrinkWrap: true,
       scrollDirection: Axis.horizontal,
       itemCount: steps.length,
-      separatorBuilder: (context, index) => const SizedBox(width: 32), // More spacing
+      separatorBuilder: (context, index) =>
+          const SizedBox(width: 32), // More spacing
       itemBuilder: (context, index) {
         return _buildStepTab(steps[index]);
       },
@@ -33,7 +34,7 @@ class StepperIndicator extends StatelessWidget {
 
     return InkWell(
       onTap: () => onStepTap(step.id),
-      overlayColor: MaterialStateProperty.all(Colors.transparent),
+      overlayColor: WidgetStateProperty.all(Colors.transparent),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -41,17 +42,19 @@ class StepperIndicator extends StatelessWidget {
           AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 300),
             style: LayoutStyles.stepTitle.copyWith(
-              // ✅ Updated: Uses 'textPlaceholder' instead of 'textDisabled'
-              color: isActive 
-                  ? LayoutColors.textTitle 
-                  : (isCompleted ? LayoutColors.textBody : LayoutColors.textPlaceholder),
+              // âœ… Updated: Uses 'textPlaceholder' instead of 'textDisabled'
+              color: isActive
+                  ? LayoutColors.textTitle
+                  : (isCompleted
+                      ? LayoutColors.textBody
+                      : LayoutColors.textPlaceholder),
               fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
             ),
             child: Text(step.title),
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           // The Magic Gold Bar (Indicator)
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
@@ -59,13 +62,18 @@ class StepperIndicator extends StatelessWidget {
             height: 2,
             width: isActive ? 20 : 0, // Grows when active
             decoration: BoxDecoration(
-              // ✅ Updated: Uses 'goldPrimary'
-              color: LayoutColors.goldPrimary, 
+              // âœ… Updated: Uses 'goldPrimary'
+              color: LayoutColors.goldPrimary,
               borderRadius: BorderRadius.circular(2),
-              boxShadow: isActive ? [
-                // ✅ Updated: Gold Glow
-                BoxShadow(color: LayoutColors.goldPrimary.withOpacity(0.6), blurRadius: 8)
-              ] : [],
+              boxShadow: isActive
+                  ? [
+                      // âœ… Updated: Gold Glow
+                      BoxShadow(
+                          color:
+                              LayoutColors.goldPrimary.withValues(alpha: 0.6),
+                          blurRadius: 8)
+                    ]
+                  : [],
             ),
           ),
         ],

@@ -11,10 +11,10 @@ import '../../../theme/karigar/karigar_theme.dart';
 
 class KarigarSectionCard extends StatelessWidget {
   final IconData icon;
-  final String   title;
-  final String   subtitle;
-  final Color    accent;
-  final Widget   child;
+  final String title;
+  final String subtitle;
+  final Color accent;
+  final Widget child;
 
   const KarigarSectionCard({
     super.key,
@@ -35,11 +35,11 @@ class KarigarSectionCard extends StatelessWidget {
           // Card header
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               border: Border(
                 bottom: BorderSide(color: KarigarColors.divider, width: 1),
               ),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
             ),
             child: Row(children: [
               Container(
@@ -51,9 +51,10 @@ class KarigarSectionCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,    style: KarigarStyles.sectionTitle),
+                  Text(title, style: KarigarStyles.sectionTitle),
                   const SizedBox(height: 2),
-                  Text(subtitle, style: KarigarStyles.caption.copyWith(fontSize: 11)),
+                  Text(subtitle,
+                      style: KarigarStyles.caption.copyWith(fontSize: 11)),
                 ],
               ),
             ]),

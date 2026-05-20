@@ -13,16 +13,16 @@ class TaxGstActionButton extends StatefulWidget {
     required this.icon,
     required this.accentColor,
     required this.onTap,
-    this.isFilled  = false,
-    this.isSaving  = false,
+    this.isFilled = false,
+    this.isSaving = false,
   });
 
-  final String        label;
-  final IconData      icon;
-  final Color         accentColor;
+  final String label;
+  final IconData icon;
+  final Color accentColor;
   final VoidCallback? onTap;
-  final bool          isFilled;
-  final bool          isSaving;
+  final bool isFilled;
+  final bool isSaving;
 
   @override
   State<TaxGstActionButton> createState() => _TaxGstActionButtonState();
@@ -30,9 +30,8 @@ class TaxGstActionButton extends StatefulWidget {
 
 class _TaxGstActionButtonState extends State<TaxGstActionButton>
     with SingleTickerProviderStateMixin {
-
   late final AnimationController _hoverCtrl;
-  late final Animation<double>   _scaleAnim;
+  late final Animation<double> _scaleAnim;
 
   @override
   void initState() {
@@ -47,7 +46,10 @@ class _TaxGstActionButtonState extends State<TaxGstActionButton>
   }
 
   @override
-  void dispose() { _hoverCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _hoverCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +58,7 @@ class _TaxGstActionButtonState extends State<TaxGstActionButton>
           ? SystemMouseCursors.click
           : SystemMouseCursors.basic,
       onEnter: (_) => _hoverCtrl.forward(),
-      onExit:  (_) => _hoverCtrl.reverse(),
+      onExit: (_) => _hoverCtrl.reverse(),
       child: ScaleTransition(
         scale: _scaleAnim,
         child: GestureDetector(
@@ -66,8 +68,8 @@ class _TaxGstActionButtonState extends State<TaxGstActionButton>
             builder: (_, __) => Container(
               padding: TaxGstStyles.btnPadding,
               decoration: TaxGstStyles.btnDecoration(
-                color:     widget.accentColor,
-                isFilled:  widget.isFilled,
+                color: widget.accentColor,
+                isFilled: widget.isFilled,
                 isHovered: _hoverCtrl.value > 0.3,
               ),
               child: Row(
@@ -75,30 +77,28 @@ class _TaxGstActionButtonState extends State<TaxGstActionButton>
                 children: [
                   if (widget.isSaving)
                     SizedBox(
-                      width: 12, height: 12,
+                      width: 12,
+                      height: 12,
                       child: CircularProgressIndicator(
                         strokeWidth: 1.8,
-                        color: widget.isFilled
-                            ? Colors.white
-                            : widget.accentColor,
+                        color:
+                            widget.isFilled ? Colors.white : widget.accentColor,
                       ),
                     )
                   else
                     Icon(
                       widget.icon,
                       size: 13,
-                      color: widget.isFilled
-                          ? Colors.white
-                          : widget.accentColor,
+                      color:
+                          widget.isFilled ? Colors.white : widget.accentColor,
                     ),
                   const SizedBox(width: 5),
                   Text(
                     widget.label,
                     style: TaxGstStyles.btnText(
                       context,
-                      color: widget.isFilled
-                          ? Colors.white
-                          : widget.accentColor,
+                      color:
+                          widget.isFilled ? Colors.white : widget.accentColor,
                     ),
                   ),
                 ],

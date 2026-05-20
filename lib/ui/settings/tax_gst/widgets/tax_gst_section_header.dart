@@ -21,15 +21,15 @@ class TaxGstSectionHeader extends StatelessWidget {
     this.showEditButton = true,
   });
 
-  final String      title;
-  final String      subtitle;
-  final Color       accentColor;
-  final bool        isEditing;
-  final bool        isSaving;
+  final String title;
+  final String subtitle;
+  final Color accentColor;
+  final bool isEditing;
+  final bool isSaving;
   final VoidCallback onEdit;
   final VoidCallback onSave;
   final VoidCallback onCancel;
-  final bool        showEditButton;
+  final bool showEditButton;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +41,7 @@ class TaxGstSectionHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,    style: TaxGstStyles.sectionTitle(context)),
+              Text(title, style: TaxGstStyles.sectionTitle(context)),
               const SizedBox(height: 3),
               Text(subtitle, style: TaxGstStyles.sectionSubtitle(context)),
             ],
@@ -54,31 +54,31 @@ class TaxGstSectionHeader extends StatelessWidget {
           // Edit or Save/Cancel
           if (!isEditing)
             TaxGstActionButton(
-              label:       TaxGstStrings.btnEdit,
-              icon:        TaxGstIcons.actionEdit,
+              label: TaxGstStrings.btnEdit,
+              icon: TaxGstIcons.actionEdit,
               accentColor: accentColor,
-              onTap:       onEdit,
+              onTap: onEdit,
             )
           else
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TaxGstActionButton(
-                  label:       TaxGstStrings.btnCancel,
-                  icon:        TaxGstIcons.actionCancel,
+                  label: TaxGstStrings.btnCancel,
+                  icon: TaxGstIcons.actionCancel,
                   accentColor: TaxGstColors.btnCancel,
-                  onTap:       onCancel,
+                  onTap: onCancel,
                 ),
                 const SizedBox(width: 8),
                 TaxGstActionButton(
-                  label:       isSaving
+                  label: isSaving
                       ? TaxGstStrings.btnSaving
                       : TaxGstStrings.btnSave,
-                  icon:        TaxGstIcons.actionSave,
+                  icon: TaxGstIcons.actionSave,
                   accentColor: TaxGstColors.btnSave,
-                  isFilled:    true,
-                  isSaving:    isSaving,
-                  onTap:       isSaving ? null : onSave,
+                  isFilled: true,
+                  isSaving: isSaving,
+                  onTap: isSaving ? null : onSave,
                 ),
               ],
             ),

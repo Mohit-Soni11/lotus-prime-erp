@@ -48,18 +48,15 @@ class _BookingAdvanceScreenState extends State<BookingAdvanceScreen> {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: BookingAdvanceColors.bodyBg,
-
         appBar: BookingAdvanceAppBar(
           onBack: widget.onBack ?? () => Navigator.of(context).pop(),
         ),
-
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 // ═══════════════════════════════════════════════════════
                 // LEFT COLUMN (70%) — same as POS left column
                 // ═══════════════════════════════════════════════════════
@@ -71,24 +68,30 @@ class _BookingAdvanceScreenState extends State<BookingAdvanceScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-
                         // ── TOP ROW: Control Bar + Status Bar ──
                         LayoutBuilder(builder: (_, constraints) {
                           final sideBySide = constraints.maxWidth > 720;
                           if (sideBySide) {
                             return IntrinsicHeight(
-                              child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                                BookingTopControlBar(ctrl: _ctrl),
-                                const SizedBox(width: 16),
-                                Expanded(child: BookingStatusBar(ctrl: _ctrl)),
-                              ]),
+                              child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    BookingTopControlBar(ctrl: _ctrl),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                        child: BookingStatusBar(ctrl: _ctrl)),
+                                  ]),
                             );
                           }
-                          return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                            BookingTopControlBar(ctrl: _ctrl),
-                            const SizedBox(height: 12),
-                            BookingStatusBar(ctrl: _ctrl),
-                          ]);
+                          return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                BookingTopControlBar(ctrl: _ctrl),
+                                const SizedBox(height: 12),
+                                BookingStatusBar(ctrl: _ctrl),
+                              ]);
                         }),
 
                         const SizedBox(height: 14),
@@ -129,7 +132,8 @@ class _BookingAdvanceScreenState extends State<BookingAdvanceScreen> {
                               ? BookingAdvanceColors.success
                               : BookingAdvanceColors.danger,
                           behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                       );
                     },

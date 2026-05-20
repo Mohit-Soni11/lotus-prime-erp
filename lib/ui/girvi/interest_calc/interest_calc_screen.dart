@@ -2,7 +2,7 @@
 // FILE        : interest_calc_screen.dart
 // MODULE      : Girvi / Pawn
 // LAYER       : UI / Screen
-// DESCRIPTION : Standalone Interest Calculator — fully reactive.
+// DESCRIPTION : Standalone Interest Calculator â€” fully reactive.
 //               Inputs: Principal, Rate/Month, Duration.
 //               Outputs: Monthly interest, Total interest, Total due,
 //                        Annual rate, Month-wise breakdown table.
@@ -96,7 +96,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                   padding: const EdgeInsets.all(16),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
-                      // ── Input Card ─────────────────────────────────────
+                      // â”€â”€ Input Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                       GirviSectionCard(
                         icon: GirviIcons.calculator,
                         title: 'Loan Parameters',
@@ -104,7 +104,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                         accent: GirviColors.brandGold,
                         child: Column(children: [
                           GirviInputField(
-                            label: 'Principal Amount (₹) *',
+                            label: 'Principal Amount (â‚¹) *',
                             hint: '0.00',
                             icon: GirviIcons.loanTerms,
                             controller: _principalCtrl,
@@ -116,7 +116,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                               FilteringTextInputFormatter.allow(
                                   RegExp(r'[0-9.]'))
                             ],
-                            prefixText: '₹ ',
+                            prefixText: 'â‚¹ ',
                           ),
                           const SizedBox(height: 14),
                           GirviRowTwo(
@@ -172,7 +172,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                       ),
                       const SizedBox(height: 16),
 
-                      // ── Results Card ────────────────────────────────────
+                      // â”€â”€ Results Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                       if (_ctrl.principal > 0) ...[
                         _buildResultsCard(),
                         const SizedBox(height: 16),
@@ -194,16 +194,17 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
   Widget _buildResultsCard() {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [GirviColors.shellBg, GirviColors.shellPanelBg],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: GirviColors.brandGold.withOpacity(0.25)),
+        border:
+            Border.all(color: GirviColors.brandGold.withValues(alpha: 0.25)),
         boxShadow: [
           BoxShadow(
-            color: GirviColors.brandGold.withOpacity(0.08),
+            color: GirviColors.brandGold.withValues(alpha: 0.08),
             blurRadius: 14,
             offset: const Offset(0, 4),
           )
@@ -214,11 +215,10 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
           // Header
           Container(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               border:
                   Border(bottom: BorderSide(color: GirviColors.shellBorder)),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Row(children: [
               const Icon(GirviIcons.interestRate,
@@ -252,14 +252,14 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
               Row(children: [
                 _ResultStat(
                   label: 'Monthly Interest',
-                  value: '₹ ${_fmt.format(_ctrl.monthlyInterest)}',
+                  value: 'â‚¹ ${_fmt.format(_ctrl.monthlyInterest)}',
                   color: GirviColors.warning,
                   large: false,
                 ),
                 const SizedBox(width: 12),
                 _ResultStat(
                   label: 'Total Interest',
-                  value: '₹ ${_fmt.format(_ctrl.totalInterest)}',
+                  value: 'â‚¹ ${_fmt.format(_ctrl.totalInterest)}',
                   color: GirviColors.danger,
                   large: false,
                 ),
@@ -269,24 +269,24 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: GirviColors.brandGold.withOpacity(0.08),
+                  color: GirviColors.brandGold.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
-                  border:
-                      Border.all(color: GirviColors.brandGold.withOpacity(0.3)),
+                  border: Border.all(
+                      color: GirviColors.brandGold.withValues(alpha: 0.3)),
                 ),
                 child: Column(children: [
                   Text('Total Amount Due at Maturity',
                       style: GoogleFonts.inter(
                           color: GirviColors.shellTextMuted, fontSize: 12)),
                   const SizedBox(height: 6),
-                  Text('₹ ${_fmt.format(_ctrl.totalDue)}',
+                  Text('â‚¹ ${_fmt.format(_ctrl.totalDue)}',
                       style: GoogleFonts.manrope(
                           color: GirviColors.brandGold,
                           fontSize: 26,
                           fontWeight: FontWeight.w900)),
                   Text(
-                      'Principal: ₹${_fmt.format(_ctrl.principal)} + '
-                      'Interest: ₹${_fmt.format(_ctrl.totalInterest)}',
+                      'Principal: â‚¹${_fmt.format(_ctrl.principal)} + '
+                      'Interest: â‚¹${_fmt.format(_ctrl.totalInterest)}',
                       style: GirviStyles.caption.copyWith(
                           color: GirviColors.shellTextMuted, fontSize: 11)),
                 ]),
@@ -314,7 +314,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
             color: GirviColors.bodyBg,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Row(children: [
+          child: const Row(children: [
             _TableHeader('Month', flex: 1),
             _TableHeader('Interest', flex: 2),
             _TableHeader('Balance', flex: 2),
@@ -355,7 +355,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
         ),
         Expanded(
           flex: 2,
-          child: Text('₹ ${_fmt.format(r.interest)}',
+          child: Text('â‚¹ ${_fmt.format(r.interest)}',
               style: GoogleFonts.manrope(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -363,7 +363,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
         ),
         Expanded(
           flex: 2,
-          child: Text('₹ ${_fmt.format(r.balance)}',
+          child: Text('â‚¹ ${_fmt.format(r.balance)}',
               style: GoogleFonts.manrope(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
@@ -392,9 +392,9 @@ class _ResultStat extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.08),
+            color: color.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: color.withOpacity(0.2)),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

@@ -17,13 +17,13 @@ import 'bank_book_enums.dart';
 // ── Per-category line in breakdown panel ──────────────────────────────────────
 
 class BankCategoryBreakdownItem {
-  final String               label;
-  final String               categoryDbValue;
-  final BankTransactionType  type;
-  final double               amount;
-  final String               amountFormatted;
-  final double               percentage;
-  final int                  count;
+  final String label;
+  final String categoryDbValue;
+  final BankTransactionType type;
+  final double amount;
+  final String amountFormatted;
+  final double percentage;
+  final int count;
 
   const BankCategoryBreakdownItem({
     required this.label,
@@ -39,10 +39,10 @@ class BankCategoryBreakdownItem {
 // ── Cheque Summary ────────────────────────────────────────────────────────────
 
 class ChequeSummary {
-  final int    totalIssued;
-  final int    totalCleared;
-  final int    totalBounced;
-  final int    totalPending;
+  final int totalIssued;
+  final int totalCleared;
+  final int totalBounced;
+  final int totalPending;
   final double pendingAmount;
   final String pendingAmountFormatted;
 
@@ -56,19 +56,18 @@ class ChequeSummary {
   });
 
   factory ChequeSummary.zero() => const ChequeSummary(
-    totalIssued:            0,
-    totalCleared:           0,
-    totalBounced:           0,
-    totalPending:           0,
-    pendingAmount:          0,
-    pendingAmountFormatted: '₹ 0.00',
-  );
+        totalIssued: 0,
+        totalCleared: 0,
+        totalBounced: 0,
+        totalPending: 0,
+        pendingAmount: 0,
+        pendingAmountFormatted: '₹ 0.00',
+      );
 }
 
 // ── Main Summary Snapshot ─────────────────────────────────────────────────────
 
 class BankBookSummaryModel {
-
   final double openingBalance;
   final double totalCredit;
   final double totalDebit;
@@ -84,11 +83,11 @@ class BankBookSummaryModel {
   final List<BankCategoryBreakdownItem> creditBreakdown;
   final List<BankCategoryBreakdownItem> debitBreakdown;
 
-  final int    totalTransactions;
-  final int    creditCount;
-  final int    debitCount;
-  final int    reconciledCount;
-  final int    unreconciledCount;
+  final int totalTransactions;
+  final int creditCount;
+  final int debitCount;
+  final int reconciledCount;
+  final int unreconciledCount;
 
   final ChequeSummary chequeSummary;
 
@@ -120,52 +119,52 @@ class BankBookSummaryModel {
 
   // ── Factory: Loading ──────────────────────────────────────────────────────
   factory BankBookSummaryModel.loading() => BankBookSummaryModel(
-    openingBalance:    0,
-    totalCredit:       0,
-    totalDebit:        0,
-    closingBalance:    0,
-    netFlow:           0,
-    openingBalanceStr: '--',
-    totalCreditStr:    '--',
-    totalDebitStr:     '--',
-    closingBalanceStr: '--',
-    netFlowStr:        '--',
-    creditBreakdown:   [],
-    debitBreakdown:    [],
-    totalTransactions: 0,
-    creditCount:       0,
-    debitCount:        0,
-    reconciledCount:   0,
-    unreconciledCount: 0,
-    chequeSummary:     ChequeSummary.zero(),
-    isLoading:         true,
-  );
+        openingBalance: 0,
+        totalCredit: 0,
+        totalDebit: 0,
+        closingBalance: 0,
+        netFlow: 0,
+        openingBalanceStr: '--',
+        totalCreditStr: '--',
+        totalDebitStr: '--',
+        closingBalanceStr: '--',
+        netFlowStr: '--',
+        creditBreakdown: [],
+        debitBreakdown: [],
+        totalTransactions: 0,
+        creditCount: 0,
+        debitCount: 0,
+        reconciledCount: 0,
+        unreconciledCount: 0,
+        chequeSummary: ChequeSummary.zero(),
+        isLoading: true,
+      );
 
   // ── Factory: Zero ─────────────────────────────────────────────────────────
   factory BankBookSummaryModel.zero() => BankBookSummaryModel(
-    openingBalance:    0,
-    totalCredit:       0,
-    totalDebit:        0,
-    closingBalance:    0,
-    netFlow:           0,
-    openingBalanceStr: _fmt(0),
-    totalCreditStr:    _fmt(0),
-    totalDebitStr:     _fmt(0),
-    closingBalanceStr: _fmt(0),
-    netFlowStr:        _fmt(0),
-    creditBreakdown:   [],
-    debitBreakdown:    [],
-    totalTransactions: 0,
-    creditCount:       0,
-    debitCount:        0,
-    reconciledCount:   0,
-    unreconciledCount: 0,
-    chequeSummary:     ChequeSummary.zero(),
-  );
+        openingBalance: 0,
+        totalCredit: 0,
+        totalDebit: 0,
+        closingBalance: 0,
+        netFlow: 0,
+        openingBalanceStr: _fmt(0),
+        totalCreditStr: _fmt(0),
+        totalDebitStr: _fmt(0),
+        closingBalanceStr: _fmt(0),
+        netFlowStr: _fmt(0),
+        creditBreakdown: [],
+        debitBreakdown: [],
+        totalTransactions: 0,
+        creditCount: 0,
+        debitCount: 0,
+        reconciledCount: 0,
+        unreconciledCount: 0,
+        chequeSummary: ChequeSummary.zero(),
+      );
 
   static final _currencyFmt = NumberFormat.currency(
-    locale:        'en_IN',
-    symbol:        '₹ ',
+    locale: 'en_IN',
+    symbol: '₹ ',
     decimalDigits: 2,
   );
 

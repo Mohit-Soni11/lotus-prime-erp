@@ -94,7 +94,7 @@ class DayBookController extends ChangeNotifier {
   }
 
   void _setupDenomListeners() {
-    void _update() {
+    void update() {
       denomination = DenominationCount(
         note500: int.tryParse(denom500Ctrl.text) ?? 0,
         note200: int.tryParse(denom200Ctrl.text) ?? 0,
@@ -116,7 +116,7 @@ class DayBookController extends ChangeNotifier {
       denom10Ctrl,
       denomCoinsCtrl,
     ]) {
-      c.addListener(_update);
+      c.addListener(update);
     }
   }
 

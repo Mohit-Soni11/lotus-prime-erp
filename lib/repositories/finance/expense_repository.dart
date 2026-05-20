@@ -17,14 +17,13 @@ import '../../models/finance/expense/expense_model.dart';
 import '../../models/finance/expense/expense_summary_model.dart';
 
 class ExpenseRepository {
-
   final AppDatabase _db;
   ExpenseRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
 
   // ── Currency formatter ────────────────────────────────────────────────────
   static final _fmt = NumberFormat.currency(
-    locale:        'en_IN',
-    symbol:        '₹ ',
+    locale: 'en_IN',
+    symbol: '₹ ',
     decimalDigits: 2,
   );
   static String _f(double v) => _fmt.format(v);
@@ -54,8 +53,8 @@ class ExpenseRepository {
   Future<List<ExpenseModel>> fetchExpenses({
     required DateTime from,
     required DateTime to,
-    String?           categoryDbValue, // null = all categories
-    String?           searchQuery,
+    String? categoryDbValue, // null = all categories
+    String? searchQuery,
   }) async {
     try {
       var query = _db.select(_db.cashTransactions)
@@ -68,20 +67,19 @@ class ExpenseRepository {
         query = query..where((t) => t.category.equals(categoryDbValue));
       }
 
-      final rows = await (query
-            ..orderBy([(t) => OrderingTerm.desc(t.txnDate)]))
-          .get();
+      final rows =
+          await (query..orderBy([(t) => OrderingTerm.desc(t.txnDate)])).get();
 
       var models = rows.map(_rowToModel).toList();
 
       if (searchQuery != null && searchQuery.trim().isNotEmpty) {
         final q = searchQuery.trim().toLowerCase();
         models = models.where((m) {
-          return m.categoryLabel.toLowerCase().contains(q)              ||
-                 (m.partyName?.toLowerCase().contains(q)   ?? false)   ||
-                 (m.description?.toLowerCase().contains(q) ?? false)   ||
-                 (m.customLabel?.toLowerCase().contains(q) ?? false)   ||
-                 m.expenseId.toLowerCase().contains(q);
+          return m.categoryLabel.toLowerCase().contains(q) ||
+              (m.partyName?.toLowerCase().contains(q) ?? false) ||
+              (m.description?.toLowerCase().contains(q) ?? false) ||
+              (m.customLabel?.toLowerCase().contains(q) ?? false) ||
+              m.expenseId.toLowerCase().contains(q);
         }).toList();
       }
 
@@ -110,31 +108,36 @@ class ExpenseRepository {
 
       if (rows.isEmpty) return ExpenseSummaryModel.zero();
 
-      double totalExpense    = 0.0;
-      double highestSingle   = 0.0;
-      final  Map<String, double> byCategory = {};
-      final  Map<String, double> byMode     = {};
-      final  Map<String, int>    countCat   = {};
-      final  Map<String, int>    countMode  = {};
+      double totalExpense = 0.0;
+      double highestSingle = 0.0;
+      final Map<String, double> byCategory = {};
+      final Map<String, double> byMode = {};
+      final Map<String, int> countCat = {};
+      final Map<String, int> countMode = {};
 
       for (final row in rows) {
         totalExpense += row.amount;
         if (row.amount > highestSingle) highestSingle = row.amount;
 
         byCategory[row.category] = (byCategory[row.category] ?? 0) + row.amount;
-        byMode[row.paymentMode]   = (byMode[row.paymentMode]  ?? 0) + row.amount;
-        countCat[row.category]    = (countCat[row.category]   ?? 0) + 1;
-        countMode[row.paymentMode]= (countMode[row.paymentMode]?? 0) + 1;
+        byMode[row.paymentMode] = (byMode[row.paymentMode] ?? 0) + row.amount;
+        countCat[row.category] = (countCat[row.category] ?? 0) + 1;
+        countMode[row.paymentMode] = (countMode[row.paymentMode] ?? 0) + 1;
       }
 
       // Daily average (days in range)
-      final days        = to.difference(from).inDays + 1;
-      final dailyAvg    = totalExpense / days.clamp(1, days);
+      final days = to.difference(from).inDays + 1;
+      final dailyAvg = totalExpense / days.clamp(1, days);
 
       // Top category
-      String topCatDb  = '';
+      String topCatDb = '';
       double topCatAmt = 0.0;
-      byCategory.forEach((k, v) { if (v > topCatAmt) { topCatAmt = v; topCatDb = k; } });
+      byCategory.forEach((k, v) {
+        if (v > topCatAmt) {
+          topCatAmt = v;
+          topCatDb = k;
+        }
+      });
       final topLabel = topCatDb.isNotEmpty
           ? ExpenseCategory.fromDb(topCatDb).displayLabel
           : '—';
@@ -145,11 +148,11 @@ class ExpenseRepository {
         final pct = totalExpense > 0 ? (e.value / totalExpense) * 100 : 0.0;
         return ExpenseCategoryBreakdown(
           categoryDbValue: e.key,
-          label:           cat.displayLabel,
-          amount:          e.value,
+          label: cat.displayLabel,
+          amount: e.value,
           amountFormatted: _f(e.value),
-          percentage:      pct,
-          count:           countCat[e.key] ?? 0,
+          percentage: pct,
+          count: countCat[e.key] ?? 0,
         );
       }).toList()
         ..sort((a, b) => b.amount.compareTo(a.amount));
@@ -159,26 +162,26 @@ class ExpenseRepository {
         final mode = PaymentMode.fromDb(e.key);
         return ExpensePaymentBreakdown(
           paymentModeLabel: mode.displayLabel,
-          amount:           e.value,
-          amountFormatted:  _f(e.value),
-          count:            countMode[e.key] ?? 0,
+          amount: e.value,
+          amountFormatted: _f(e.value),
+          count: countMode[e.key] ?? 0,
         );
       }).toList()
         ..sort((a, b) => b.amount.compareTo(a.amount));
 
       return ExpenseSummaryModel(
-        totalExpense:           totalExpense,
-        totalExpenseFormatted:  _f(totalExpense),
-        dailyAverage:           dailyAvg,
-        dailyAverageFormatted:  _f(dailyAvg),
-        totalCount:             rows.length,
-        highestSingleExpense:   highestSingle,
+        totalExpense: totalExpense,
+        totalExpenseFormatted: _f(totalExpense),
+        dailyAverage: dailyAvg,
+        dailyAverageFormatted: _f(dailyAvg),
+        totalCount: rows.length,
+        highestSingleExpense: highestSingle,
         highestSingleFormatted: _f(highestSingle),
-        topCategoryLabel:       topLabel,
-        topCategoryAmount:      topCatAmt,
-        topCategoryFormatted:   _f(topCatAmt),
-        categoryBreakdown:      catBreakdown,
-        paymentBreakdown:       modeBreakdown,
+        topCategoryLabel: topLabel,
+        topCategoryAmount: topCatAmt,
+        topCategoryFormatted: _f(topCatAmt),
+        categoryBreakdown: catBreakdown,
+        paymentBreakdown: modeBreakdown,
       );
     } catch (e) {
       debugPrint('❌ ExpenseRepository.computeSummary: $e');
@@ -192,32 +195,32 @@ class ExpenseRepository {
 
   Future<bool> saveExpense({
     required ExpenseCategory category,
-    required double          amount,
-    required PaymentMode     paymentMode,
-    required DateTime        expenseDate,
-    String?                  customLabel,
-    String?                  description,
-    String?                  partyName,
+    required double amount,
+    required PaymentMode paymentMode,
+    required DateTime expenseDate,
+    String? customLabel,
+    String? description,
+    String? partyName,
   }) async {
     try {
       final expenseId = await _generateExpenseId();
 
       await _db.into(_db.cashTransactions).insert(
-        CashTransactionsCompanion.insert(
-          txnId:           expenseId,
-          txnDate:         expenseDate,
-          type:            CashTransactionType.expense.dbValue,
-          category:        category.dbValue,
-          amount:          Value(amount),
-          paymentMode:     Value(paymentMode.dbValue),
-          customLabel:     Value(customLabel),
-          description:     Value(description),
-          partyName:       Value(partyName),
-          referenceType:   const Value('MANUAL'),
-          isAutoGenerated: const Value(false),
-          isVoided:        const Value(false),
-        ),
-      );
+            CashTransactionsCompanion.insert(
+              txnId: expenseId,
+              txnDate: expenseDate,
+              type: CashTransactionType.expense.dbValue,
+              category: category.dbValue,
+              amount: Value(amount),
+              paymentMode: Value(paymentMode.dbValue),
+              customLabel: Value(customLabel),
+              description: Value(description),
+              partyName: Value(partyName),
+              referenceType: const Value('MANUAL'),
+              isAutoGenerated: const Value(false),
+              isVoided: const Value(false),
+            ),
+          );
       return true;
     } catch (e) {
       debugPrint('❌ ExpenseRepository.saveExpense: $e');
@@ -231,12 +234,11 @@ class ExpenseRepository {
 
   Future<bool> voidExpense(int id, String reason) async {
     try {
-      await (_db.update(_db.cashTransactions)
-            ..where((t) => t.id.equals(id)))
+      await (_db.update(_db.cashTransactions)..where((t) => t.id.equals(id)))
           .write(CashTransactionsCompanion(
-        isVoided:   const Value(true),
+        isVoided: const Value(true),
         voidReason: Value(reason),
-        updatedAt:  Value(DateTime.now()),
+        updatedAt: Value(DateTime.now()),
       ));
       return true;
     } catch (e) {
@@ -250,9 +252,9 @@ class ExpenseRepository {
   // ==========================================================================
 
   Stream<double> watchTodayTotal() {
-    final now      = DateTime.now();
+    final now = DateTime.now();
     final dayStart = DateTime(now.year, now.month, now.day);
-    final dayEnd   = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final dayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
     return (_db.select(_db.cashTransactions)
           ..where((t) => t.isVoided.equals(false))
@@ -287,19 +289,19 @@ class ExpenseRepository {
         : cat.displayLabel;
 
     return ExpenseModel(
-      id:              row.id,
-      expenseId:       row.txnId,
-      expenseDate:     row.txnDate,
-      category:        cat,
-      categoryLabel:   categoryLabel,
-      amount:          row.amount,
+      id: row.id,
+      expenseId: row.txnId,
+      expenseDate: row.txnDate,
+      category: cat,
+      categoryLabel: categoryLabel,
+      amount: row.amount,
       amountFormatted: _f(row.amount),
-      paymentMode:     PaymentMode.fromDb(row.paymentMode),
-      customLabel:     row.customLabel,
-      description:     row.description,
-      partyName:       row.partyName,
-      referenceId:     row.referenceId,
-      isVoided:        row.isVoided,
+      paymentMode: PaymentMode.fromDb(row.paymentMode),
+      customLabel: row.customLabel,
+      description: row.description,
+      partyName: row.partyName,
+      referenceId: row.referenceId,
+      isVoided: row.isVoided,
       isAutoGenerated: row.isAutoGenerated,
     );
   }

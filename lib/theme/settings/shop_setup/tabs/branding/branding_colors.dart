@@ -2,7 +2,7 @@
 // FILE: branding_colors.dart
 // TYPE: Theme Layer / Colors
 // AUTHOR: Senior System Architect
-// DESCRIPTION: Centralized color palette with pre-calculated opacity states 
+// DESCRIPTION: Centralized color palette with pre-calculated opacity states
 //              to prevent runtime color calculation in the UI layer.
 // -----------------------------------------------------------------------------
 
@@ -13,37 +13,37 @@ class BrandingColors {
   BrandingColors._();
 
   // --- Backgrounds ---
-  static const Color bgMain = Color(0xFFF8F5F1);       
-  static const Color cardBg = Color(0xFFFFFFFF);       
-  static const Color inputBg = Color(0xFFF9FAFB);      
-  static const Color inputBgLocked = Color(0xFFF3F4F6); 
-  static const Color transparent = Colors.transparent;  
-  
+  static const Color bgMain = Color(0xFFF8F5F1);
+  static const Color cardBg = Color(0xFFFFFFFF);
+  static const Color inputBg = Color(0xFFF9FAFB);
+  static const Color inputBgLocked = Color(0xFFF3F4F6);
+  static const Color transparent = Colors.transparent;
+
   // --- Branding ---
-  static const Color goldAccent = Color(0xFFD4AF37);   
-  static const Color borderLight = Color(0xFFE5E7EB);  
-  static const Color shadowSubtle = Color(0x0A000000); 
-  
-  // 🚀 UPGRADE: Extracted Hardcoded Opacities from UI
-  static Color goldAccentLight = goldAccent.withOpacity(0.1);
-  static Color borderLockedState = textHint.withOpacity(0.3);
-  static Color borderActiveState = statusActiveText.withOpacity(0.3);
+  static const Color goldAccent = Color(0xFFD4AF37);
+  static const Color borderLight = Color(0xFFE5E7EB);
+  static const Color shadowSubtle = Color(0x0A000000);
+
+  // ðŸš€ UPGRADE: Extracted Hardcoded Opacities from UI
+  static Color goldAccentLight = goldAccent.withValues(alpha: 0.1);
+  static Color borderLockedState = textHint.withValues(alpha: 0.3);
+  static Color borderActiveState = statusActiveText.withValues(alpha: 0.3);
 
   // --- Text ---
-  static const Color textDark = Color(0xFF111827);     
-  static const Color textBody = Color(0xFF374151);     
-  static const Color textHint = Color(0xFF9CA3AF);     
-  static const Color textMuted = Color(0xFF6B7280);    
+  static const Color textDark = Color(0xFF111827);
+  static const Color textBody = Color(0xFF374151);
+  static const Color textHint = Color(0xFF9CA3AF);
+  static const Color textMuted = Color(0xFF6B7280);
 
   // --- Actions & States ---
-  static const Color btnDanger = Color(0xFFEF4444);    
-  static const Color iconEdit = Color(0xFF374151);      
-  static const Color saveBtn = Color(0xFF166534);       
-  static const Color iconSuccess = Color(0xFF059669); 
+  static const Color btnDanger = Color(0xFFEF4444);
+  static const Color iconEdit = Color(0xFF374151);
+  static const Color saveBtn = Color(0xFF166534);
+  static const Color iconSuccess = Color(0xFF059669);
 
   // --- Badges ---
-  static const Color statusActiveBg = Color(0xFFDCFCE7); 
-  static const Color statusActiveText = Color(0xFF166534); 
+  static const Color statusActiveBg = Color(0xFFDCFCE7);
+  static const Color statusActiveText = Color(0xFF166534);
 
   // --- Social Brand Colors ---
   static const Color brandInsta = Color(0xFFE1306C);

@@ -80,7 +80,7 @@ class CustomerProfileRepository {
         mobile: cust.mobile,
         whatsapp: cust.whatsapp ?? "",
         city: cust.city ?? "",
-        type: cust.type ?? "Regular",
+        type: cust.type,
         createdAt: cust.createdAt,
         creditLimit: cust.creditLimit,
         outstanding: outstanding,

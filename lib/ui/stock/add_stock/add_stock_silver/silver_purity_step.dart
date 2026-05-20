@@ -3,10 +3,10 @@
 // MODULE      : Stock & Inventory (Silver)
 // LAYER       : UI / Step
 // DESCRIPTION : Purity selection step for Silver Add Stock.
-//               ✅ 100% Isolated — uses only SilverStock theme.
-//               ✅ Silver purity presets: 999, 925 (Sterling), 800, 700, Custom.
-//               ✅ Side panel shows current silver stock by purity.
-//               ✅ "Continue to Item Entry" → unlocks items step.
+//               âœ… 100% Isolated â€” uses only SilverStock theme.
+//               âœ… Silver purity presets: 999, 925 (Sterling), 800, 700, Custom.
+//               âœ… Side panel shows current silver stock by purity.
+//               âœ… "Continue to Item Entry" â†’ unlocks items step.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -103,7 +103,7 @@ class _SilverPurityStepState extends State<SilverPurityStep>
     );
   }
 
-  // ── MAIN PANEL ────────────────────────────────────────────────
+  // â”€â”€ MAIN PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildMainPanel() {
     final ctrl = widget.ctrl;
 
@@ -114,11 +114,11 @@ class _SilverPurityStepState extends State<SilverPurityStep>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── GRADIENT BANNER ─────────────────────────────────
+          // â”€â”€ GRADIENT BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           _buildGradientBanner(),
           const SizedBox(height: 24),
 
-          // ── TITLE ────────────────────────────────────────────
+          // â”€â”€ TITLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Text(
             'Purity / Grade Selection',
             style: SilverStockStyles.pageTitle,
@@ -136,7 +136,7 @@ class _SilverPurityStepState extends State<SilverPurityStep>
           ),
           const SizedBox(height: 24),
 
-          // ── PURITY CHIPS ─────────────────────────────────────
+          // â”€â”€ PURITY CHIPS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -161,7 +161,7 @@ class _SilverPurityStepState extends State<SilverPurityStep>
             }).toList(),
           ),
 
-          // ── CUSTOM INPUT ─────────────────────────────────────
+          // â”€â”€ CUSTOM INPUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           if (ctrl.isCustomPurity) ...[
             const SizedBox(height: 20),
             Text(
@@ -206,7 +206,7 @@ class _SilverPurityStepState extends State<SilverPurityStep>
 
           const SizedBox(height: 28),
 
-          // ── CONTINUE BUTTON ──────────────────────────────────
+          // â”€â”€ CONTINUE BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           ListenableBuilder(
             listenable: ctrl,
             builder: (_, __) => SizedBox(
@@ -219,7 +219,8 @@ class _SilverPurityStepState extends State<SilverPurityStep>
                   disabledBackgroundColor: SilverStockColors.inputBgLocked,
                   foregroundColor: Colors.white,
                   elevation: ctrl.canProceedFromPurity ? 2 : 0,
-                  shadowColor: SilverStockColors.brandSilver.withOpacity(0.4),
+                  shadowColor:
+                      SilverStockColors.brandSilver.withValues(alpha: 0.4),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -261,7 +262,7 @@ class _SilverPurityStepState extends State<SilverPurityStep>
     );
   }
 
-  // ── GRADIENT BANNER ──────────────────────────────────────────
+  // â”€â”€ GRADIENT BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildGradientBanner() {
     return Container(
       width: double.infinity,
@@ -281,7 +282,7 @@ class _SilverPurityStepState extends State<SilverPurityStep>
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: const Color(0xFF1A2F3A).withOpacity(0.12),
+              color: const Color(0xFF1A2F3A).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
             ),
             clipBehavior: Clip.antiAlias,
@@ -301,7 +302,7 @@ class _SilverPurityStepState extends State<SilverPurityStep>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Silver — Stock Intake',
+                  'Silver â€” Stock Intake',
                   style: GoogleFonts.manrope(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -314,7 +315,7 @@ class _SilverPurityStepState extends State<SilverPurityStep>
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     height: 1.45,
-                    color: const Color(0xFF1A2F3A).withOpacity(0.72),
+                    color: const Color(0xFF1A2F3A).withValues(alpha: 0.72),
                   ),
                 ),
               ],
@@ -324,11 +325,11 @@ class _SilverPurityStepState extends State<SilverPurityStep>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A2F3A).withOpacity(0.12),
+              color: const Color(0xFF1A2F3A).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              '999 · 925 · 800',
+              '999 Â· 925 Â· 800',
               style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
@@ -342,7 +343,7 @@ class _SilverPurityStepState extends State<SilverPurityStep>
     );
   }
 
-  // ── SIDE PANEL ────────────────────────────────────────────────
+  // â”€â”€ SIDE PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildSidePanel() {
     final ctrl = widget.ctrl;
 
@@ -358,7 +359,7 @@ class _SilverPurityStepState extends State<SilverPurityStep>
               width: 30,
               height: 30,
               decoration: BoxDecoration(
-                color: SilverStockColors.brandSilver.withOpacity(0.12),
+                color: SilverStockColors.brandSilver.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.inventory_2_rounded,
@@ -392,9 +393,9 @@ class _SilverPurityStepState extends State<SilverPurityStep>
             listenable: ctrl,
             builder: (_, __) {
               if (ctrl.isLoadingStockSummary) {
-                return Center(
+                return const Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: EdgeInsets.all(20),
                     child: SizedBox(
                       width: 20,
                       height: 20,
@@ -415,12 +416,14 @@ class _SilverPurityStepState extends State<SilverPurityStep>
                     color: SilverStockColors.brandSilverLight,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: SilverStockColors.brandSilver.withOpacity(0.18)),
+                        color: SilverStockColors.brandSilver
+                            .withValues(alpha: 0.18)),
                   ),
                   child: Column(children: [
                     Icon(Icons.inventory_outlined,
                         size: 28,
-                        color: SilverStockColors.brandSilver.withOpacity(0.5)),
+                        color: SilverStockColors.brandSilver
+                            .withValues(alpha: 0.5)),
                     const SizedBox(height: 8),
                     Text(
                       'No Silver stock on record.',
@@ -468,7 +471,7 @@ class _SilverPurityStepState extends State<SilverPurityStep>
           ),
           const SizedBox(height: 10),
           _guideline(
-              'Purity is locked at batch level — select carefully before proceeding.'),
+              'Purity is locked at batch level â€” select carefully before proceeding.'),
           _guideline(
               'Each item row supports individual HUID, company name and quantity.'),
           _guideline(
@@ -507,9 +510,9 @@ class _SilverPurityStepState extends State<SilverPurityStep>
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // PURITY CHIP WIDGET
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 class _PurityChip extends StatelessWidget {
   final _SilverPurityOption preset;
   final bool isSelected;
@@ -526,13 +529,13 @@ class _PurityChip extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
-      splashColor: SilverStockColors.brandSilver.withOpacity(0.12),
+      splashColor: SilverStockColors.brandSilver.withValues(alpha: 0.12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
           color: isSelected
-              ? SilverStockColors.brandSilver.withOpacity(0.11)
+              ? SilverStockColors.brandSilver.withValues(alpha: 0.11)
               : SilverStockColors.inputBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
@@ -544,7 +547,8 @@ class _PurityChip extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: SilverStockColors.brandSilver.withOpacity(0.18),
+                    color:
+                        SilverStockColors.brandSilver.withValues(alpha: 0.18),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   )
@@ -576,7 +580,7 @@ class _PurityChip extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 10,
                 color: isSelected
-                    ? SilverStockColors.brandSilver.withOpacity(0.75)
+                    ? SilverStockColors.brandSilver.withValues(alpha: 0.75)
                     : SilverStockColors.textMuted,
               ),
             ),
@@ -592,9 +596,9 @@ class _PurityChip extends StatelessWidget {
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // PURITY STOCK ROW
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 class _PurityStockRow extends StatelessWidget {
   final String purity;
   final double grams;
@@ -609,8 +613,8 @@ class _PurityStockRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: SilverStockColors.brandSilverLight,
         borderRadius: BorderRadius.circular(12),
-        border:
-            Border.all(color: SilverStockColors.brandSilver.withOpacity(0.18)),
+        border: Border.all(
+            color: SilverStockColors.brandSilver.withValues(alpha: 0.18)),
       ),
       child: Row(children: [
         Expanded(
@@ -632,9 +636,9 @@ class _PurityStockRow extends StatelessWidget {
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // DATA CLASS
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 class _SilverPurityOption {
   final String value;
   final String subtitle;

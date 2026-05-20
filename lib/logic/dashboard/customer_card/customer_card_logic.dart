@@ -6,12 +6,13 @@ import '../../../models/dashboard/customer_stats_model.dart';
 class CustomerCardLogic {
   // Dependency Injection (Testable Code)
   final AppDatabase _db;
-  
+
   CustomerCardLogic({AppDatabase? db}) : _db = db ?? AppDatabase();
 
-  final StreamController<CustomerStatsModel> _controller = StreamController<CustomerStatsModel>();
+  final StreamController<CustomerStatsModel> _controller =
+      StreamController<CustomerStatsModel>();
   Stream<CustomerStatsModel> get statsStream => _controller.stream;
-  
+
   StreamSubscription? _dbSubscription;
 
   void init() {
@@ -25,7 +26,7 @@ class CustomerCardLogic {
 
       // ✅ OPTIMIZED QUERY: Count only rows created today
       final countExpr = _db.customers.id.count();
-      
+
       final query = _db.selectOnly(_db.customers)
         ..addColumns([countExpr])
         ..where(_db.customers.createdAt.isBiggerOrEqualValue(todayStart));
@@ -36,7 +37,7 @@ class CustomerCardLogic {
 
         if (results.isNotEmpty) {
           final count = results.first.read(countExpr) ?? 0;
-          
+
           // Logic: > 5 customers in a day is considered "High Growth"
           final bool isHighGrowth = count > 5;
           final String status = isHighGrowth ? "High Growth 🚀" : "Stable";

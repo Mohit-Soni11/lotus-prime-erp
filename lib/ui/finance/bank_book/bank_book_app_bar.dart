@@ -2,12 +2,12 @@
 // FILE        : bank_book_app_bar.dart
 // MODULE      : Finance & Ledgers / Bank Book
 // LAYER       : UI
-// DESCRIPTION : Dark-shell AppBar — matches Cash Book & Sales POS pattern.
-//               ✅ Radar-blink live indicator
-//               ✅ Gold hover back button
-//               ✅ Shop name from session
-//               ✅ Sync button + Add Entry button
-//               ✅ Add Account button
+// DESCRIPTION : Dark-shell AppBar â€” matches Cash Book & Sales POS pattern.
+//               âœ… Radar-blink live indicator
+//               âœ… Gold hover back button
+//               âœ… Shop name from session
+//               âœ… Sync button + Add Entry button
+//               âœ… Add Account button
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -17,11 +17,11 @@ import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
 import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
 
 class BankBookAppBar extends StatefulWidget implements PreferredSizeWidget {
-  final VoidCallback       onBack;
+  final VoidCallback onBack;
   final BankBookController ctrl;
-  final VoidCallback       onAddEntry;
-  final VoidCallback       onSyncBills;
-  final VoidCallback       onAddAccount;
+  final VoidCallback onAddEntry;
+  final VoidCallback onSyncBills;
+  final VoidCallback onAddAccount;
 
   const BankBookAppBar({
     super.key,
@@ -41,10 +41,9 @@ class BankBookAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _BankBookAppBarState extends State<BankBookAppBar>
     with SingleTickerProviderStateMixin {
-
   String _shopName = '';
   late AnimationController _blinkCtrl;
-  late Animation<double>   _blinkAnim;
+  late Animation<double> _blinkAnim;
 
   @override
   void initState() {
@@ -52,7 +51,7 @@ class _BankBookAppBarState extends State<BankBookAppBar>
     _fetchShopName();
 
     _blinkCtrl = AnimationController(
-      vsync:    this,
+      vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
 
@@ -64,7 +63,7 @@ class _BankBookAppBarState extends State<BankBookAppBar>
   Future<void> _fetchShopName() async {
     try {
       final tenantId = await ShopSessionManager.getPermanentTenantId();
-      final data     = await ShopSetupRepository().fetchExistingSetup(tenantId);
+      final data = await ShopSetupRepository().fetchExistingSetup(tenantId);
       if (data != null && data['basic_info'] != null && mounted) {
         setState(() {
           _shopName = data['basic_info']['display_name']?.toString() ?? '';
@@ -82,8 +81,8 @@ class _BankBookAppBarState extends State<BankBookAppBar>
   @override
   Widget build(BuildContext context) {
     return Container(
-      width:   double.infinity,
-      height:  70.0,
+      width: double.infinity,
+      height: 70.0,
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       decoration: const BoxDecoration(
         color: BankBookColors.shellPanel,
@@ -95,108 +94,114 @@ class _BankBookAppBarState extends State<BankBookAppBar>
         bottom: false,
         child: Row(
           children: [
-
-            // ── Back Button ─────────────────────────────────────────────────
+            // â”€â”€ Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _HoverBackButton(onTap: widget.onBack),
             const SizedBox(width: 16),
 
-            // ── Vertical Divider ────────────────────────────────────────────
+            // â”€â”€ Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _vertDivider(),
             const SizedBox(width: 16),
 
-            // ── Module Icon + Title ─────────────────────────────────────────
+            // â”€â”€ Module Icon + Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Container(
-              width:  36,
+              width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color:        BankBookColors.brandGoldLight,
+                color: BankBookColors.brandGoldLight,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                    color: BankBookColors.brandGold.withOpacity(0.3)),
+                    color: BankBookColors.brandGold.withValues(alpha: 0.3)),
               ),
               child: const Icon(
                 BankBookIcons.moduleIcon,
                 color: BankBookColors.brandGold,
-                size:  18,
+                size: 18,
               ),
             ),
             const SizedBox(width: 12),
 
             Column(
-              mainAxisAlignment:  MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(BankBookStrings.moduleTitle, style: BankBookStyles.appBarTitle),
+                Text(BankBookStrings.moduleTitle,
+                    style: BankBookStyles.appBarTitle),
                 if (_shopName.isNotEmpty)
-                  Text(_shopName, style: const TextStyle(
-                    fontSize:   11,
-                    color:      BankBookColors.shellMuted,
-                    fontWeight: FontWeight.w500,
-                  )),
+                  Text(_shopName,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: BankBookColors.shellMuted,
+                        fontWeight: FontWeight.w500,
+                      )),
               ],
             ),
 
             const Spacer(),
 
-            // ── Live Indicator ──────────────────────────────────────────────
+            // â”€â”€ Live Indicator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             AnimatedBuilder(
               animation: _blinkAnim,
               builder: (_, __) => Opacity(
                 opacity: _blinkAnim.value,
                 child: Row(children: [
                   Container(
-                    width: 7, height: 7,
+                    width: 7,
+                    height: 7,
                     decoration: const BoxDecoration(
                       color: BankBookColors.creditAccent,
                       shape: BoxShape.circle,
                     ),
                   ),
                   const SizedBox(width: 6),
-                  const Text('LIVE', style: TextStyle(
-                    fontSize:      10,
-                    fontWeight:    FontWeight.w800,
-                    color:         BankBookColors.creditAccent,
-                    letterSpacing: 1.2,
-                  )),
+                  const Text('LIVE',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: BankBookColors.creditAccent,
+                        letterSpacing: 1.2,
+                      )),
                 ]),
               ),
             ),
 
             const SizedBox(width: 20),
 
-            // ── Add Account Button ──────────────────────────────────────────
+            // â”€â”€ Add Account Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _AppBarIconBtn(
-              icon:    BankBookIcons.addAccount,
+              icon: BankBookIcons.addAccount,
               tooltip: BankBookStrings.addAccount,
-              onTap:   widget.onAddAccount,
+              onTap: widget.onAddAccount,
             ),
             const SizedBox(width: 8),
 
-            // ── Sync Button ─────────────────────────────────────────────────
+            // â”€â”€ Sync Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _AppBarIconBtn(
-              icon:    BankBookIcons.sync,
+              icon: BankBookIcons.sync,
               tooltip: BankBookStrings.syncBills,
-              onTap:   widget.onSyncBills,
+              onTap: widget.onSyncBills,
             ),
             const SizedBox(width: 8),
 
-            // ── Add Entry Button ────────────────────────────────────────────
+            // â”€â”€ Add Entry Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             GestureDetector(
               onTap: widget.onAddEntry,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color:        BankBookColors.brandGold,
+                  color: BankBookColors.brandGold,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(children: [
-                  Icon(BankBookIcons.addEntry, size: 16, color: Color(0xFF111827)),
+                  Icon(BankBookIcons.addEntry,
+                      size: 16, color: Color(0xFF111827)),
                   SizedBox(width: 6),
-                  Text('Add Entry', style: TextStyle(
-                    fontSize:   13,
-                    fontWeight: FontWeight.w800,
-                    color:      Color(0xFF111827),
-                  )),
+                  Text('Add Entry',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF111827),
+                      )),
                 ]),
               ),
             ),
@@ -206,11 +211,11 @@ class _BankBookAppBarState extends State<BankBookAppBar>
     );
   }
 
-  Widget _vertDivider() => Container(
-    width: 1, height: 30, color: BankBookColors.shellBorder);
+  Widget _vertDivider() =>
+      Container(width: 1, height: 30, color: BankBookColors.shellBorder);
 }
 
-// ── Hover Back Button ──────────────────────────────────────────────────────────
+// â”€â”€ Hover Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -227,29 +232,28 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
+      onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          width: 36, height: 36,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
-            color: _hovered
-                ? BankBookColors.brandGoldLight
-                : Colors.transparent,
+            color:
+                _hovered ? BankBookColors.brandGoldLight : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: _hovered
-                  ? BankBookColors.brandGold.withOpacity(0.4)
+                  ? BankBookColors.brandGold.withValues(alpha: 0.4)
                   : BankBookColors.shellBorder,
             ),
           ),
           child: Icon(
             Icons.arrow_back_ios_new_rounded,
-            size:  16,
-            color: _hovered
-                ? BankBookColors.brandGold
-                : BankBookColors.shellMuted,
+            size: 16,
+            color:
+                _hovered ? BankBookColors.brandGold : BankBookColors.shellMuted,
           ),
         ),
       ),
@@ -257,11 +261,11 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-// ── Icon Button ────────────────────────────────────────────────────────────────
+// â”€â”€ Icon Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _AppBarIconBtn extends StatefulWidget {
-  final IconData     icon;
-  final String       tooltip;
+  final IconData icon;
+  final String tooltip;
   final VoidCallback onTap;
   const _AppBarIconBtn({
     required this.icon,
@@ -282,25 +286,25 @@ class _AppBarIconBtnState extends State<_AppBarIconBtn> {
       message: widget.tooltip,
       child: MouseRegion(
         onEnter: (_) => setState(() => _hovered = true),
-        onExit:  (_) => setState(() => _hovered = false),
+        onExit: (_) => setState(() => _hovered = false),
         child: GestureDetector(
           onTap: widget.onTap,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
-            width: 36, height: 36,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: _hovered
-                  ? BankBookColors.brandGoldLight
-                  : Colors.transparent,
+              color:
+                  _hovered ? BankBookColors.brandGoldLight : Colors.transparent,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: _hovered
-                    ? BankBookColors.brandGold.withOpacity(0.4)
+                    ? BankBookColors.brandGold.withValues(alpha: 0.4)
                     : BankBookColors.shellBorder,
               ),
             ),
-            child: Icon(widget.icon,
-                size: 18, color: BankBookColors.shellMuted),
+            child:
+                Icon(widget.icon, size: 18, color: BankBookColors.shellMuted),
           ),
         ),
       ),

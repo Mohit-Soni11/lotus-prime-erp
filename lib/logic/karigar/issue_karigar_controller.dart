@@ -5,7 +5,7 @@
 // DESCRIPTION : Business logic for the Issue to Karigar screen.
 //               Manages form state, live weight computation, sequence number
 //               generation, karigar selection, and database persistence.
-//               ChangeNotifier pattern — zero setState in UI.
+//               ChangeNotifier pattern Ã¢â‚¬â€ zero setState in UI.
 // =============================================================================
 
 import 'package:drift/drift.dart' as drift;
@@ -16,49 +16,45 @@ import '../../models/karigar/karigar_enums/karigar_enums.dart';
 import '../../repositories/karigar/karigar_repository.dart';
 
 class IssueKarigarController extends ChangeNotifier {
-
-  final AppDatabase       _db;
   final KarigarRepository _repo;
 
-  IssueKarigarController(AppDatabase db)
-      : _db   = db,
-        _repo = KarigarRepository(db);
+  IssueKarigarController(AppDatabase db) : _repo = KarigarRepository(db);
 
-  // ── STATE ──────────────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ STATE Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
-  bool    _isSaving      = false;
+  bool _isSaving = false;
   String? _errorMessage;
   String? _successMessage;
-  String  _issueNumber   = '';
+  String _issueNumber = '';
 
   // Karigar selection
   KarigarMaster? _selectedKarigar;
 
   // Dropdown selections
-  KarigarMetalType    _metalType    = KarigarMetalType.gold;
-  String              _purity       = KarigarGoldPurity.k22.label;
+  KarigarMetalType _metalType = KarigarMetalType.gold;
+  String _purity = KarigarGoldPurity.k22.label;
   KarigarItemCategory _itemCategory = KarigarItemCategory.ring;
-  IssueStatus         _status       = IssueStatus.pending;
+  IssueStatus _status = IssueStatus.pending;
 
   // Live weight tracking
   double _grossWeight = 0.0;
   double _stoneWeight = 0.0;
 
-  // ── GETTERS ────────────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ GETTERS Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
-  bool           get isSaving        => _isSaving;
-  String?        get errorMessage    => _errorMessage;
-  String?        get successMessage  => _successMessage;
-  bool           get hasError        => _errorMessage != null;
-  bool           get hasSuccess      => _successMessage != null;
-  String         get issueNumber     => _issueNumber;
+  bool get isSaving => _isSaving;
+  String? get errorMessage => _errorMessage;
+  String? get successMessage => _successMessage;
+  bool get hasError => _errorMessage != null;
+  bool get hasSuccess => _successMessage != null;
+  String get issueNumber => _issueNumber;
   KarigarMaster? get selectedKarigar => _selectedKarigar;
-  bool           get hasKarigar      => _selectedKarigar != null;
+  bool get hasKarigar => _selectedKarigar != null;
 
-  KarigarMetalType    get metalType    => _metalType;
-  String              get purity       => _purity;
+  KarigarMetalType get metalType => _metalType;
+  String get purity => _purity;
   KarigarItemCategory get itemCategory => _itemCategory;
-  IssueStatus         get status       => _status;
+  IssueStatus get status => _status;
 
   /// Live computed net weight (gross - stone).
   double get netWeight =>
@@ -78,14 +74,14 @@ class IssueKarigarController extends ChangeNotifier {
     }
   }
 
-  // ── INITIALIZATION ─────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ INITIALIZATION Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
   Future<void> initialize() async {
     _issueNumber = await _repo.generateIssueNumber();
     notifyListeners();
   }
 
-  // ── SETTERS ─────────────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ SETTERS Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
   void selectKarigar(KarigarMaster karigar) {
     _selectedKarigar = karigar;
@@ -130,16 +126,16 @@ class IssueKarigarController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── SAVE ───────────────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ SAVE Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
   Future<bool> saveIssue({
-    required String  itemDescription,
-    required int     quantity,
-    required double  grossWeight,
-    required double  stoneWeight,
+    required String itemDescription,
+    required int quantity,
+    required double grossWeight,
+    required double stoneWeight,
     required DateTime issueDate,
-    DateTime?        expectedDelivery,
-    String?          notes,
+    DateTime? expectedDelivery,
+    String? notes,
   }) async {
     if (_selectedKarigar == null) {
       _errorMessage = 'Please select a karigar before saving.';
@@ -147,7 +143,7 @@ class IssueKarigarController extends ChangeNotifier {
       return false;
     }
 
-    _isSaving     = true;
+    _isSaving = true;
     _errorMessage = null;
     _successMessage = null;
     notifyListeners();
@@ -157,19 +153,19 @@ class IssueKarigarController extends ChangeNotifier {
       final cleanNotes = notes?.trim().isEmpty == true ? null : notes?.trim();
 
       final companion = KarigarIssuesCompanion.insert(
-        issueNumber:      _issueNumber,
-        karigarId:        _selectedKarigar!.id,
-        issueDate:        issueDate,
-        itemDescription:  itemDescription.trim(),
-        itemCategory:     drift.Value(_itemCategory.label),
-        quantity:         drift.Value(quantity),
-        metalType:        drift.Value(_metalType.label),
-        purity:           drift.Value(_purity.isEmpty ? null : _purity),
+        issueNumber: _issueNumber,
+        karigarId: _selectedKarigar!.id,
+        issueDate: issueDate,
+        itemDescription: itemDescription.trim(),
+        itemCategory: drift.Value(_itemCategory.label),
+        quantity: drift.Value(quantity),
+        metalType: drift.Value(_metalType.label),
+        purity: drift.Value(_purity.isEmpty ? null : _purity),
         grossWeightIssued: drift.Value(grossWeight),
-        netWeightIssued:  drift.Value(computed),
+        netWeightIssued: drift.Value(computed),
         expectedDelivery: drift.Value(expectedDelivery),
-        status:           drift.Value(_status.label),
-        notes:            drift.Value(cleanNotes),
+        status: drift.Value(_status.label),
+        notes: drift.Value(cleanNotes),
       );
 
       await _repo.createIssue(companion);
@@ -185,24 +181,24 @@ class IssueKarigarController extends ChangeNotifier {
     }
   }
 
-  // ── RESET ──────────────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ RESET Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
   Future<void> resetForm() async {
     _selectedKarigar = null;
-    _metalType       = KarigarMetalType.gold;
-    _purity          = KarigarGoldPurity.k22.label;
-    _itemCategory    = KarigarItemCategory.ring;
-    _status          = IssueStatus.pending;
-    _grossWeight     = 0.0;
-    _stoneWeight     = 0.0;
-    _errorMessage    = null;
-    _successMessage  = null;
-    _issueNumber     = await _repo.generateIssueNumber();
+    _metalType = KarigarMetalType.gold;
+    _purity = KarigarGoldPurity.k22.label;
+    _itemCategory = KarigarItemCategory.ring;
+    _status = IssueStatus.pending;
+    _grossWeight = 0.0;
+    _stoneWeight = 0.0;
+    _errorMessage = null;
+    _successMessage = null;
+    _issueNumber = await _repo.generateIssueNumber();
     notifyListeners();
   }
 
   void clearMessages() {
-    _errorMessage   = null;
+    _errorMessage = null;
     _successMessage = null;
     notifyListeners();
   }

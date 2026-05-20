@@ -19,21 +19,21 @@ import '../../../theme/karigar/karigar_theme.dart';
 // =============================================================================
 
 class KarigarInputField extends StatefulWidget {
-  final String                    label;
-  final String                    hint;
-  final IconData                  icon;
-  final TextEditingController?    controller;
-  final FocusNode?                focusNode;
-  final FocusNode?                nextFocus;
-  final int                       maxLines;
-  final bool                      enabled;
-  final String?                   prefixText;
-  final String?                   suffixText;
-  final Widget?                   suffixWidget;
-  final TextInputType?            keyboardType;
+  final String label;
+  final String hint;
+  final IconData icon;
+  final TextEditingController? controller;
+  final FocusNode? focusNode;
+  final FocusNode? nextFocus;
+  final int maxLines;
+  final bool enabled;
+  final String? prefixText;
+  final String? suffixText;
+  final Widget? suffixWidget;
+  final TextInputType? keyboardType;
   final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
-  final void Function(String)?    onChanged;
+  final void Function(String)? onChanged;
 
   const KarigarInputField({
     super.key,
@@ -43,8 +43,8 @@ class KarigarInputField extends StatefulWidget {
     this.controller,
     this.focusNode,
     this.nextFocus,
-    this.maxLines    = 1,
-    this.enabled     = true,
+    this.maxLines = 1,
+    this.enabled = true,
     this.prefixText,
     this.suffixText,
     this.suffixWidget,
@@ -88,17 +88,17 @@ class _KarigarInputFieldState extends State<KarigarInputField> {
 
   BoxDecoration get _decoration {
     if (!widget.enabled) return KarigarStyles.inputDisabled;
-    if (_focused)        return KarigarStyles.inputFocused;
+    if (_focused) return KarigarStyles.inputFocused;
     return KarigarStyles.inputNormal;
   }
 
   @override
   Widget build(BuildContext context) {
     final hasContent = widget.controller?.text.isNotEmpty ?? false;
-    final iconColor  = _focused
+    final iconColor = _focused
         ? KarigarColors.brandGold
         : hasContent
-            ? KarigarColors.success.withOpacity(0.8)
+            ? KarigarColors.success.withValues(alpha: 0.8)
             : KarigarColors.textHint;
 
     return Column(
@@ -108,7 +108,7 @@ class _KarigarInputFieldState extends State<KarigarInputField> {
         const SizedBox(height: 6),
         AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          height:   widget.maxLines > 1 ? null : KarigarStyles.inputHeight,
+          height: widget.maxLines > 1 ? null : KarigarStyles.inputHeight,
           decoration: _decoration,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Row(children: [
@@ -122,18 +122,19 @@ class _KarigarInputFieldState extends State<KarigarInputField> {
             const SizedBox(width: 10),
             if (widget.prefixText != null)
               Text(widget.prefixText!,
-                  style: KarigarStyles.fieldInput.copyWith(color: KarigarColors.textMuted)),
+                  style: KarigarStyles.fieldInput
+                      .copyWith(color: KarigarColors.textMuted)),
             Expanded(
               child: TextFormField(
-                controller:      widget.controller,
-                focusNode:       widget.focusNode,
-                maxLines:        widget.maxLines,
-                enabled:         widget.enabled,
-                keyboardType:    widget.keyboardType,
+                controller: widget.controller,
+                focusNode: widget.focusNode,
+                maxLines: widget.maxLines,
+                enabled: widget.enabled,
+                keyboardType: widget.keyboardType,
                 inputFormatters: widget.inputFormatters,
-                validator:       widget.validator,
-                onChanged:       widget.onChanged,
-                style:           KarigarStyles.fieldInput,
+                validator: widget.validator,
+                onChanged: widget.onChanged,
+                style: KarigarStyles.fieldInput,
                 textInputAction: widget.nextFocus != null
                     ? TextInputAction.next
                     : TextInputAction.done,
@@ -143,13 +144,14 @@ class _KarigarInputFieldState extends State<KarigarInputField> {
                   }
                 },
                 decoration: InputDecoration(
-                  border:         InputBorder.none,
-                  hintText:       widget.hint,
-                  hintStyle:      KarigarStyles.fieldHint,
-                  counterText:    '',
-                  errorStyle:     const TextStyle(height: 0),
-                  suffixText:     widget.suffixText,
-                  suffixStyle:    KarigarStyles.fieldInput.copyWith(color: KarigarColors.textMuted),
+                  border: InputBorder.none,
+                  hintText: widget.hint,
+                  hintStyle: KarigarStyles.fieldHint,
+                  counterText: '',
+                  errorStyle: const TextStyle(height: 0),
+                  suffixText: widget.suffixText,
+                  suffixStyle: KarigarStyles.fieldInput
+                      .copyWith(color: KarigarColors.textMuted),
                   contentPadding: widget.maxLines > 1
                       ? const EdgeInsets.symmetric(vertical: 14)
                       : const EdgeInsets.only(bottom: 2),
@@ -172,12 +174,12 @@ class _KarigarInputFieldState extends State<KarigarInputField> {
 // =============================================================================
 
 class KarigarDropdown<T> extends StatelessWidget {
-  final String             label;
-  final IconData           icon;
-  final T                  value;
-  final List<T>            items;
+  final String label;
+  final IconData icon;
+  final T value;
+  final List<T> items;
   final String Function(T) itemLabel;
-  final void Function(T?)  onChanged;
+  final void Function(T?) onChanged;
 
   const KarigarDropdown({
     super.key,
@@ -208,20 +210,22 @@ class KarigarDropdown<T> extends StatelessWidget {
             Expanded(
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<T>(
-                  value:         value,
-                  isExpanded:    true,
+                  value: value,
+                  isExpanded: true,
                   dropdownColor: KarigarColors.cardBg,
                   icon: const Icon(KarigarIcons.dropDown,
                       color: KarigarColors.textMuted, size: 20),
-                  style:         KarigarStyles.fieldInput,
-                  items: items.map((item) =>
-                    DropdownMenuItem<T>(
-                      value: item,
-                      child: Text(itemLabel(item),
-                          style: KarigarStyles.fieldInput,
-                          overflow: TextOverflow.ellipsis),
-                    ),
-                  ).toList(),
+                  style: KarigarStyles.fieldInput,
+                  items: items
+                      .map(
+                        (item) => DropdownMenuItem<T>(
+                          value: item,
+                          child: Text(itemLabel(item),
+                              style: KarigarStyles.fieldInput,
+                              overflow: TextOverflow.ellipsis),
+                        ),
+                      )
+                      .toList(),
                   onChanged: onChanged,
                 ),
               ),
@@ -238,11 +242,11 @@ class KarigarDropdown<T> extends StatelessWidget {
 // =============================================================================
 
 class KarigarReadOnlyField extends StatelessWidget {
-  final String   label;
-  final String   value;
+  final String label;
+  final String value;
   final IconData icon;
-  final Color    color;
-  final String?  note;
+  final Color color;
+  final String? note;
 
   const KarigarReadOnlyField({
     super.key,
@@ -267,9 +271,11 @@ class KarigarReadOnlyField extends StatelessWidget {
           child: Row(children: [
             Icon(icon, color: color, size: 18),
             const SizedBox(width: 10),
-            Container(width: 1, height: 22, color: color.withOpacity(0.25)),
+            Container(
+                width: 1, height: 22, color: color.withValues(alpha: 0.25)),
             const SizedBox(width: 10),
-            Text(value, style: KarigarStyles.readOnlyValue.copyWith(color: color)),
+            Text(value,
+                style: KarigarStyles.readOnlyValue.copyWith(color: color)),
           ]),
         ),
         if (note != null) ...[
@@ -286,9 +292,9 @@ class KarigarReadOnlyField extends StatelessWidget {
 // =============================================================================
 
 class KarigarDisabledField extends StatelessWidget {
-  final String   label;
+  final String label;
   final IconData icon;
-  final String   value;
+  final String value;
 
   const KarigarDisabledField({
     super.key,
@@ -348,7 +354,7 @@ class KarigarRowTwo extends StatelessWidget {
 // =============================================================================
 
 class KarigarErrorBanner extends StatelessWidget {
-  final String       message;
+  final String message;
   final VoidCallback onDismiss;
   const KarigarErrorBanner({
     super.key,
@@ -362,18 +368,21 @@ class KarigarErrorBanner extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
       decoration: BoxDecoration(
-        color:  KarigarColors.dangerBg,
+        color: KarigarColors.dangerBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: KarigarColors.danger.withOpacity(0.4)),
+        border: Border.all(color: KarigarColors.danger.withValues(alpha: 0.4)),
       ),
       child: Row(children: [
-        Icon(KarigarIcons.warning, color: KarigarColors.danger, size: 18),
+        const Icon(KarigarIcons.warning, color: KarigarColors.danger, size: 18),
         const SizedBox(width: 10),
-        Expanded(child: Text(message,
-            style: GoogleFonts.inter(color: KarigarColors.danger, fontSize: 13))),
+        Expanded(
+            child: Text(message,
+                style: GoogleFonts.inter(
+                    color: KarigarColors.danger, fontSize: 13))),
         GestureDetector(
           onTap: onDismiss,
-          child: Icon(KarigarIcons.close, color: KarigarColors.danger, size: 18),
+          child: const Icon(KarigarIcons.close,
+              color: KarigarColors.danger, size: 18),
         ),
       ]),
     );
@@ -386,7 +395,7 @@ class KarigarErrorBanner extends StatelessWidget {
 
 class KarigarStatusPill extends StatelessWidget {
   final String label;
-  final Color  color;
+  final Color color;
   final IconData? icon;
 
   const KarigarStatusPill({
@@ -406,12 +415,13 @@ class KarigarStatusPill extends StatelessWidget {
           Icon(icon, color: color, size: 12),
           const SizedBox(width: 4),
         ],
-        Text(label, style: GoogleFonts.inter(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: color,
-          letterSpacing: 0.3,
-        )),
+        Text(label,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
+              letterSpacing: 0.3,
+            )),
       ]),
     );
   }
@@ -428,10 +438,10 @@ class WastageBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCritical = wastagePercent > 5.0;
-    final isHigh     = wastagePercent > 2.0;
+    final isHigh = wastagePercent > 2.0;
     if (!isHigh && !isCritical) return const SizedBox.shrink();
 
-    final color   = isCritical ? KarigarColors.danger : KarigarColors.warning;
+    final color = isCritical ? KarigarColors.danger : KarigarColors.warning;
     final message = isCritical
         ? KarigarStrings.noteWastageCritical
         : KarigarStrings.noteWastageHigh;
@@ -439,19 +449,20 @@ class WastageBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.35)),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Row(children: [
         Icon(KarigarIcons.warning, color: color, size: 16),
         const SizedBox(width: 10),
-        Expanded(child: Text(message,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ))),
+        Expanded(
+            child: Text(message,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ))),
       ]),
     );
   }

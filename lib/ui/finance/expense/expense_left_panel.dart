@@ -28,15 +28,14 @@ class ExpenseLeftPanel extends StatelessWidget {
       listenable: ctrl,
       builder: (_, __) {
         return Container(
-          width:  330,
+          width: 330,
           height: double.infinity,
-          color:  ExpenseColors.bodyBg,
+          color: ExpenseColors.bodyBg,
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-
                 // 1. View Mode Toggle
                 _ViewModeToggle(ctrl: ctrl),
                 const SizedBox(height: 12),
@@ -60,7 +59,7 @@ class ExpenseLeftPanel extends StatelessWidget {
                 // 5. Category Breakdown
                 if (!ctrl.isLoading &&
                     ctrl.summary.categoryBreakdown.isNotEmpty) ...[
-                  _SectionHeader(ExpenseStrings.categoryBreakdown),
+                  const _SectionHeader(ExpenseStrings.categoryBreakdown),
                   const SizedBox(height: 8),
                   _CategoryBreakdownList(ctrl: ctrl),
                   const SizedBox(height: 16),
@@ -69,7 +68,7 @@ class ExpenseLeftPanel extends StatelessWidget {
                 // 6. Payment Mode Breakdown
                 if (!ctrl.isLoading &&
                     ctrl.summary.paymentBreakdown.isNotEmpty) ...[
-                  _SectionHeader(ExpenseStrings.paymentBreakdown),
+                  const _SectionHeader(ExpenseStrings.paymentBreakdown),
                   const SizedBox(height: 8),
                   _PaymentBreakdownList(ctrl: ctrl),
                 ],
@@ -85,12 +84,12 @@ class ExpenseLeftPanel extends StatelessWidget {
 
   Widget _shimmerCard({required double height}) {
     return Shimmer.fromColors(
-      baseColor:      const Color(0xFFE5E0D8),
+      baseColor: const Color(0xFFE5E0D8),
       highlightColor: const Color(0xFFF9F6F0),
       child: Container(
-        height:     height,
+        height: height,
         decoration: BoxDecoration(
-          color:        Colors.white,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(12),
         ),
       ),
@@ -107,26 +106,26 @@ class _ViewModeToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height:     40,
+      height: 40,
       decoration: BoxDecoration(
-        color:        ExpenseColors.summaryChipBg,
+        color: ExpenseColors.summaryChipBg,
         borderRadius: BorderRadius.circular(10),
-        border:       Border.all(color: ExpenseColors.bodyBorder),
+        border: Border.all(color: ExpenseColors.bodyBorder),
       ),
       child: Row(
         children: ExpenseViewMode.values.map((mode) {
           final isActive = ctrl.viewMode == mode;
           final label = switch (mode) {
-            ExpenseViewMode.daily   => ExpenseStrings.viewDaily,
+            ExpenseViewMode.daily => ExpenseStrings.viewDaily,
             ExpenseViewMode.monthly => ExpenseStrings.viewMonthly,
-            ExpenseViewMode.yearly  => ExpenseStrings.viewYearly,
+            ExpenseViewMode.yearly => ExpenseStrings.viewYearly,
           };
           return Expanded(
             child: GestureDetector(
               onTap: () => ctrl.setViewMode(mode),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                margin:   const EdgeInsets.all(3),
+                margin: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
                   color: isActive
                       ? ExpenseColors.moduleAccent
@@ -137,11 +136,10 @@ class _ViewModeToggle extends StatelessWidget {
                   child: Text(
                     label,
                     style: TextStyle(
-                      fontSize:   12,
+                      fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: isActive
-                          ? Colors.white
-                          : ExpenseColors.textSecondary,
+                      color:
+                          isActive ? Colors.white : ExpenseColors.textSecondary,
                     ),
                   ),
                 ),
@@ -163,17 +161,17 @@ class _DateNavigator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height:     44,
+      height: 44,
       decoration: BoxDecoration(
-        color:        ExpenseColors.bodyPanel,
+        color: ExpenseColors.bodyPanel,
         borderRadius: BorderRadius.circular(10),
-        border:       Border.all(color: ExpenseColors.bodyBorder),
+        border: Border.all(color: ExpenseColors.bodyBorder),
       ),
       child: Row(
         children: [
           // Previous
           _NavButton(
-            icon:  ExpenseIcons.previous,
+            icon: ExpenseIcons.previous,
             onTap: ctrl.goToPrevious,
           ),
 
@@ -185,13 +183,13 @@ class _DateNavigator extends StatelessWidget {
                 child: Text(
                   ctrl.headerLabel,
                   style: const TextStyle(
-                    fontSize:   12,
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color:      ExpenseColors.textPrimary,
+                    color: ExpenseColors.textPrimary,
                   ),
                   textAlign: TextAlign.center,
-                  maxLines:  1,
-                  overflow:  TextOverflow.ellipsis,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
@@ -199,8 +197,8 @@ class _DateNavigator extends StatelessWidget {
 
           // Next (disabled if at today)
           _NavButton(
-            icon:    ExpenseIcons.next,
-            onTap:   ctrl.isAtToday ? null : ctrl.goToNext,
+            icon: ExpenseIcons.next,
+            onTap: ctrl.isAtToday ? null : ctrl.goToNext,
             disabled: ctrl.isAtToday,
           ),
         ],
@@ -210,24 +208,23 @@ class _DateNavigator extends StatelessWidget {
 }
 
 class _NavButton extends StatelessWidget {
-  final IconData     icon;
+  final IconData icon;
   final VoidCallback? onTap;
-  final bool         disabled;
+  final bool disabled;
   const _NavButton({required this.icon, this.onTap, this.disabled = false});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: SizedBox(
         width: 40,
         height: double.infinity,
         child: Icon(
           icon,
-          size:  18,
-          color: disabled
-              ? ExpenseColors.textMuted
-              : ExpenseColors.textSecondary,
+          size: 18,
+          color:
+              disabled ? ExpenseColors.textMuted : ExpenseColors.textSecondary,
         ),
       ),
     );
@@ -244,16 +241,16 @@ class _TotalExpenseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = ctrl.summary;
     return Container(
-      padding:    const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color:        ExpenseColors.bodyPanel,
+        color: ExpenseColors.bodyPanel,
         borderRadius: BorderRadius.circular(12),
-        border:       Border.all(color: ExpenseColors.cardBorderLight),
-        boxShadow: [
+        border: Border.all(color: ExpenseColors.cardBorderLight),
+        boxShadow: const [
           BoxShadow(
-            color:      ExpenseColors.shadowLight,
+            color: ExpenseColors.shadowLight,
             blurRadius: 8,
-            offset:     const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -262,21 +259,20 @@ class _TotalExpenseCard extends StatelessWidget {
         children: [
           Row(children: [
             Container(
-              width:  32,
+              width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color:        ExpenseColors.moduleAccentLight,
+                color: ExpenseColors.moduleAccentLight,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
                 ExpenseIcons.expense,
-                size:  16,
+                size: 16,
                 color: ExpenseColors.moduleAccent,
               ),
             ),
             const SizedBox(width: 10),
-            Text(ExpenseStrings.totalExpenses,
-                style: ExpenseStyles.totalLabel),
+            Text(ExpenseStrings.totalExpenses, style: ExpenseStyles.totalLabel),
           ]),
           const SizedBox(height: 12),
           Text(
@@ -333,9 +329,9 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color:        ExpenseColors.summaryChipBg,
+        color: ExpenseColors.summaryChipBg,
         borderRadius: BorderRadius.circular(10),
-        border:       Border.all(color: ExpenseColors.bodyBorder),
+        border: Border.all(color: ExpenseColors.bodyBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,9 +354,11 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      Container(width: 3, height: 12,
+      Container(
+          width: 3,
+          height: 12,
           decoration: BoxDecoration(
-            color:        ExpenseColors.moduleAccent,
+            color: ExpenseColors.moduleAccent,
             borderRadius: BorderRadius.circular(2),
           )),
       const SizedBox(width: 8),
@@ -379,24 +377,20 @@ class _CategoryBreakdownList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color:        ExpenseColors.bodyPanel,
+        color: ExpenseColors.bodyPanel,
         borderRadius: BorderRadius.circular(12),
-        border:       Border.all(color: ExpenseColors.cardBorderLight),
+        border: Border.all(color: ExpenseColors.cardBorderLight),
       ),
       child: Column(
-        children: ctrl.summary.categoryBreakdown
-            .asMap()
-            .entries
-            .map((entry) {
-          final i    = entry.key;
+        children: ctrl.summary.categoryBreakdown.asMap().entries.map((entry) {
+          final i = entry.key;
           final item = entry.value;
-          final isLast =
-              i == ctrl.summary.categoryBreakdown.length - 1;
+          final isLast = i == ctrl.summary.categoryBreakdown.length - 1;
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -416,9 +410,9 @@ class _CategoryBreakdownList extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
                         value: item.percentage / 100,
-                        minHeight:       4,
+                        minHeight: 4,
                         backgroundColor: ExpenseColors.summaryChipBg,
-                        valueColor: AlwaysStoppedAnimation<Color>(
+                        valueColor: const AlwaysStoppedAnimation<Color>(
                           ExpenseColors.moduleAccent,
                         ),
                       ),
@@ -428,8 +422,10 @@ class _CategoryBreakdownList extends StatelessWidget {
               ),
               if (!isLast)
                 const Divider(
-                    height: 1, color: ExpenseColors.divider,
-                    indent: 12, endIndent: 12),
+                    height: 1,
+                    color: ExpenseColors.divider,
+                    indent: 12,
+                    endIndent: 12),
             ],
           );
         }).toList(),
@@ -448,31 +444,26 @@ class _PaymentBreakdownList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color:        ExpenseColors.bodyPanel,
+        color: ExpenseColors.bodyPanel,
         borderRadius: BorderRadius.circular(12),
-        border:       Border.all(color: ExpenseColors.cardBorderLight),
+        border: Border.all(color: ExpenseColors.cardBorderLight),
       ),
       child: Column(
-        children: ctrl.summary.paymentBreakdown
-            .asMap()
-            .entries
-            .map((entry) {
-          final i    = entry.key;
+        children: ctrl.summary.paymentBreakdown.asMap().entries.map((entry) {
+          final i = entry.key;
           final item = entry.value;
-          final isLast =
-              i == ctrl.summary.paymentBreakdown.length - 1;
+          final isLast = i == ctrl.summary.paymentBreakdown.length - 1;
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 child: Row(children: [
                   Expanded(
                     child: Text(item.paymentModeLabel,
                         style: ExpenseStyles.breakdownLabel),
                   ),
-                  Text('${item.count}x',
-                      style: ExpenseStyles.breakdownPct),
+                  Text('${item.count}x', style: ExpenseStyles.breakdownPct),
                   const SizedBox(width: 10),
                   Text(item.amountFormatted,
                       style: ExpenseStyles.breakdownAmount),
@@ -480,8 +471,10 @@ class _PaymentBreakdownList extends StatelessWidget {
               ),
               if (!isLast)
                 const Divider(
-                    height: 1, color: ExpenseColors.divider,
-                    indent: 12, endIndent: 12),
+                    height: 1,
+                    color: ExpenseColors.divider,
+                    indent: 12,
+                    endIndent: 12),
             ],
           );
         }).toList(),

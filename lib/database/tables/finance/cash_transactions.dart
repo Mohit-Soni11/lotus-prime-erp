@@ -15,12 +15,11 @@ import 'package:drift/drift.dart';
 import '../base_table.dart';
 
 @DataClassName('CashTransaction')
-@TableIndex(name: 'idx_cash_txn_date',     columns: {#txnDate})
-@TableIndex(name: 'idx_cash_txn_type',     columns: {#type})
-@TableIndex(name: 'idx_cash_txn_ref',      columns: {#referenceId})
+@TableIndex(name: 'idx_cash_txn_date', columns: {#txnDate})
+@TableIndex(name: 'idx_cash_txn_type', columns: {#type})
+@TableIndex(name: 'idx_cash_txn_ref', columns: {#referenceId})
 @TableIndex(name: 'idx_cash_txn_category', columns: {#category})
 class CashTransactions extends Table with BaseTable {
-
   // ── Transaction Identity ──────────────────────────────────────────────────
   /// Human-readable ID: TXN-2025-0001
   TextColumn get txnId => text().unique()();
@@ -70,8 +69,7 @@ class CashTransactions extends Table with BaseTable {
       boolean().withDefault(const Constant(false))();
 
   /// true = soft-deleted (never hard-delete financial records)
-  BoolColumn get isVoided =>
-      boolean().withDefault(const Constant(false))();
+  BoolColumn get isVoided => boolean().withDefault(const Constant(false))();
 
   /// Reason provided when voiding
   TextColumn get voidReason => text().nullable()();

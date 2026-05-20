@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 // FILE: customer_list_styles.dart
-// MODULE: Customer → Customer List
+// MODULE: Customer â†’ Customer List
 // -----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
@@ -22,7 +22,7 @@ class CustomerListStyles {
   static const EdgeInsets chipPadding =
       EdgeInsets.symmetric(horizontal: 16, vertical: 8);
 
-  // ── TYPOGRAPHY (Updated to Premium Style) ────────────────────────────────
+  // â”€â”€ TYPOGRAPHY (Updated to Premium Style) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get appBarTitle => GoogleFonts.inter(
         fontSize: 18, // Changed to 18
         fontWeight: FontWeight.w700,
@@ -111,12 +111,13 @@ class CustomerListStyles {
       fontWeight: FontWeight.w500,
       color: CustomerListColors.bodyTextMuted);
 
-  // ── DECORATIONS ──────────────────────────────────────────────────────────
+  // â”€â”€ DECORATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get cardDecoration => BoxDecoration(
         color: CustomerListColors.bodyPanelBg,
         borderRadius: BorderRadius.circular(cardBorderRadius),
         border: Border.all(
-            color: CustomerListColors.bodyBorder.withOpacity(0.5), width: 1),
+            color: CustomerListColors.bodyBorder.withValues(alpha: 0.5),
+            width: 1),
         boxShadow: const [
           BoxShadow(
               color: CustomerListColors.shadowLight,
@@ -131,7 +132,7 @@ class CustomerListStyles {
         border: Border.all(color: CustomerListColors.brandGold, width: 1.5),
         boxShadow: [
           BoxShadow(
-              color: CustomerListColors.brandGold.withOpacity(0.15),
+              color: CustomerListColors.brandGold.withValues(alpha: 0.15),
               blurRadius: 20,
               offset: const Offset(0, 8))
         ],
@@ -153,7 +154,8 @@ class CustomerListStyles {
         color: CustomerListColors.bodyPanelBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: CustomerListColors.bodyBorder.withOpacity(0.5), width: 1),
+            color: CustomerListColors.bodyBorder.withValues(alpha: 0.5),
+            width: 1),
         boxShadow: const [
           BoxShadow(
               color: CustomerListColors.shadowLight,

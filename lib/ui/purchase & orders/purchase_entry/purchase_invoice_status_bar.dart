@@ -11,7 +11,6 @@ import '../../../logic/purchase/purchase_entry_controller.dart';
 import '../../../models/purchase/purchase_enums/purchase_enums.dart';
 import 'package:lotus_erp/logic/dashboard/date_card/date_card_logic.dart';
 
-
 class PurchaseInvoiceStatusBar extends StatefulWidget {
   final PurchaseEntryController ctrl;
 
@@ -39,10 +38,10 @@ class _PurchaseInvoiceStatusBarState extends State<PurchaseInvoiceStatusBar>
       vsync: this,
       duration: const Duration(milliseconds: 550),
     );
-    _fadeAnim  = CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOut);
+    _fadeAnim = CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOut);
     _slideAnim = Tween<Offset>(
       begin: const Offset(0, -0.4),
-      end:   Offset.zero,
+      end: Offset.zero,
     ).animate(CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOutCubic));
 
     _slideCtrl.forward();
@@ -55,8 +54,7 @@ class _PurchaseInvoiceStatusBarState extends State<PurchaseInvoiceStatusBar>
     super.dispose();
   }
 
-  bool get _isGst =>
-      widget.ctrl.taxType == PurchaseTaxType.gst;
+  bool get _isGst => widget.ctrl.taxType == PurchaseTaxType.gst;
 
   Color get _accent =>
       _isGst ? PurchaseEntryColors.success : PurchaseEntryColors.purchaseAccent;
@@ -158,12 +156,12 @@ class _PurchaseInvoiceStatusBarState extends State<PurchaseInvoiceStatusBar>
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: _isGst
-                        ? PurchaseEntryColors.success.withOpacity(0.07)
+                        ? PurchaseEntryColors.success.withValues(alpha: 0.07)
                         : PurchaseEntryColors.bodyBg,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: _isGst
-                          ? PurchaseEntryColors.success.withOpacity(0.35)
+                          ? PurchaseEntryColors.success.withValues(alpha: 0.35)
                           : PurchaseEntryColors.bodyBorder,
                     ),
                   ),
@@ -172,7 +170,8 @@ class _PurchaseInvoiceStatusBarState extends State<PurchaseInvoiceStatusBar>
                     children: [
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 260),
-                        width: 6, height: 6,
+                        width: 6,
+                        height: 6,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: _isGst
@@ -215,15 +214,18 @@ class _PurchaseInvoiceStatusBarState extends State<PurchaseInvoiceStatusBar>
                 children: [
                   // Icon box
                   Container(
-                    width: 52, height: 52,
+                    width: 52,
+                    height: 52,
                     decoration: BoxDecoration(
-                      color: _accent.withOpacity(0.08),
+                      color: _accent.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: _accent.withOpacity(0.25)),
+                      border:
+                          Border.all(color: _accent.withValues(alpha: 0.25)),
                     ),
                     child: Icon(
                       PurchaseEntryIcons.invoiceOutline,
-                      color: _accent, size: 24,
+                      color: _accent,
+                      size: 24,
                     ),
                   ),
 
@@ -262,7 +264,8 @@ class _PurchaseInvoiceStatusBarState extends State<PurchaseInvoiceStatusBar>
 
                   // Vertical rule
                   Container(
-                    width: 1, height: 34,
+                    width: 1,
+                    height: 34,
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
@@ -297,8 +300,9 @@ class _PurchaseInvoiceStatusBarState extends State<PurchaseInvoiceStatusBar>
   }
 
   Widget _buildDateTimeRow(DateCardModel data) {
-    final parts     = data.time.split(':');
-    final cleanTime = parts.length >= 2 ? '${parts[0]} : ${parts[1]}' : data.time;
+    final parts = data.time.split(':');
+    final cleanTime =
+        parts.length >= 2 ? '${parts[0]} : ${parts[1]}' : data.time;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -315,8 +319,9 @@ class _PurchaseInvoiceStatusBarState extends State<PurchaseInvoiceStatusBar>
         ),
         const SizedBox(width: 8),
         Container(
-          width: 4, height: 4,
-          decoration: BoxDecoration(
+          width: 4,
+          height: 4,
+          decoration: const BoxDecoration(
             color: PurchaseEntryColors.textMuted,
             shape: BoxShape.circle,
           ),
@@ -329,8 +334,8 @@ class _PurchaseInvoiceStatusBarState extends State<PurchaseInvoiceStatusBar>
           value: cleanTime,
           valueColor: PurchaseEntryColors.success,
           fontSize: 14,
-          bg: PurchaseEntryColors.success.withOpacity(0.07),
-          border: PurchaseEntryColors.success.withOpacity(0.25),
+          bg: PurchaseEntryColors.success.withValues(alpha: 0.07),
+          border: PurchaseEntryColors.success.withValues(alpha: 0.25),
         ),
       ],
     );
@@ -358,9 +363,10 @@ class _PurchaseInvoiceStatusBarState extends State<PurchaseInvoiceStatusBar>
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 26, height: 26,
+            width: 26,
+            height: 26,
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.12),
+              color: iconColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(7),
             ),
             child: Icon(icon, color: iconColor, size: 14),
@@ -373,7 +379,7 @@ class _PurchaseInvoiceStatusBarState extends State<PurchaseInvoiceStatusBar>
               Text(
                 label,
                 style: TextStyle(
-                  color: iconColor.withOpacity(0.8),
+                  color: iconColor.withValues(alpha: 0.8),
                   fontSize: 9,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.0,
@@ -398,9 +404,10 @@ class _PurchaseInvoiceStatusBarState extends State<PurchaseInvoiceStatusBar>
   }
 
   Widget _accentLine(double width, double opacity) => Container(
-        width: width, height: 3,
+        width: width,
+        height: 3,
         decoration: BoxDecoration(
-          color: PurchaseEntryColors.purchaseAccent.withOpacity(opacity),
+          color: PurchaseEntryColors.purchaseAccent.withValues(alpha: opacity),
           borderRadius: BorderRadius.circular(2),
         ),
       );

@@ -1,8 +1,8 @@
 // =============================================================================
 // FILE        : delivery_stats_header.dart
-// MODULE      : Sales → Delivery Management
+// MODULE      : Sales â†’ Delivery Management
 // LAYER       : UI
-// DESCRIPTION : Top stats row — 4 metric cards showing Active, Action Required,
+// DESCRIPTION : Top stats row â€” 4 metric cards showing Active, Action Required,
 //               Due Ledger, Completed counts. Responsive, animated.
 // =============================================================================
 
@@ -123,13 +123,15 @@ class _StatCard extends StatelessWidget {
         color: DeliveryColors.bodyPanelBg,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: highlight ? color.withOpacity(0.4) : DeliveryColors.bodyBorder,
+          color: highlight
+              ? color.withValues(alpha: 0.4)
+              : DeliveryColors.bodyBorder,
           width: highlight ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
             color: highlight
-                ? color.withOpacity(0.08)
+                ? color.withValues(alpha: 0.08)
                 : DeliveryColors.shadowLight,
             blurRadius: 6,
             offset: const Offset(0, 2),
@@ -141,7 +143,7 @@ class _StatCard extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.10),
+            color: color.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: color, size: 18),
@@ -183,15 +185,15 @@ class _DueAmountCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: DeliveryColors.urgencyOverdueBg,
         borderRadius: BorderRadius.circular(10),
-        border:
-            Border.all(color: DeliveryColors.urgencyOverdue.withOpacity(0.3)),
+        border: Border.all(
+            color: DeliveryColors.urgencyOverdue.withValues(alpha: 0.3)),
       ),
       child: Row(children: [
         Container(
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: DeliveryColors.urgencyOverdue.withOpacity(0.15),
+            color: DeliveryColors.urgencyOverdue.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(DeliveryIcons.dueAmount,
@@ -203,7 +205,7 @@ class _DueAmountCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '₹${_formatAmount(amount)}',
+                'â‚¹${_formatAmount(amount)}',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
@@ -211,7 +213,7 @@ class _DueAmountCard extends StatelessWidget {
                   height: 1.1,
                 ),
               ),
-              Text(DeliveryStrings.statTotalDue,
+              const Text(DeliveryStrings.statTotalDue,
                   style: DeliveryStyles.cardSubtitle),
             ],
           ),

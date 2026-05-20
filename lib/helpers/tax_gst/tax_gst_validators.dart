@@ -16,16 +16,17 @@ class TaxGstValidators {
     if (value == null || value.trim().isEmpty) {
       return "GSTIN cannot be empty";
     }
-    
+
     final String cleanValue = value.trim().toUpperCase();
-    
+
     // Strict production-grade regex for Indian GSTIN
-    final RegExp gstRegex = RegExp(r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$');
-    
+    final RegExp gstRegex =
+        RegExp(r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$');
+
     if (!gstRegex.hasMatch(cleanValue)) {
       return "Invalid GSTIN format. Please check again.";
     }
-    
+
     return null;
   }
 
@@ -45,9 +46,9 @@ class TaxGstValidators {
     if (value == null || value.trim().isEmpty) {
       return "BIS License number is required";
     }
-    
+
     final String cleanValue = value.trim().toUpperCase();
-    
+
     if (cleanValue.length < 5) {
       return "Invalid BIS License format";
     }

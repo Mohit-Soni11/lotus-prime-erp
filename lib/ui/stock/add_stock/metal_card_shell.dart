@@ -63,25 +63,25 @@ class MetalCardShell extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(24),
-            splashColor: accent.withOpacity(0.08),
-            highlightColor: accent.withOpacity(0.04),
+            splashColor: accent.withValues(alpha: 0.08),
+            highlightColor: accent.withValues(alpha: 0.04),
             child: Ink(
               decoration: BoxDecoration(
                 color: surface,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: accent.withOpacity(0.22),
+                  color: accent.withValues(alpha: 0.22),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: accent.withOpacity(0.10),
+                    color: accent.withValues(alpha: 0.10),
                     blurRadius: 20,
                     spreadRadius: 0,
                     offset: const Offset(0, 6),
                   ),
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),

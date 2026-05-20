@@ -2,7 +2,7 @@
 // FILE        : lib/theme/settings/billing_setup/billing_setup_styles.dart
 // MODULE      : Billing Setup
 // LAYER       : Theme / Styles
-// DESCRIPTION : Typography, decorations, dimensions — mirrors KarigarStyles.
+// DESCRIPTION : Typography, decorations, dimensions â€” mirrors KarigarStyles.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -12,9 +12,9 @@ import 'billing_setup_colors.dart';
 class BillingSetupStyles {
   BillingSetupStyles._();
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // TYPOGRAPHY
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   static TextStyle get shellTitle => GoogleFonts.inter(
         fontSize: 17,
@@ -56,7 +56,7 @@ class BillingSetupStyles {
         letterSpacing: 1.2,
       );
 
-  // ── APP BAR TYPOGRAPHY ────────────────────────────────────────────────────
+  // â”€â”€ APP BAR TYPOGRAPHY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   static TextStyle get appBarTitle => GoogleFonts.inter(
         fontSize: 15,
@@ -92,9 +92,9 @@ class BillingSetupStyles {
         color: BillingSetupColors.shellTextMuted,
       );
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // DIMENSIONS
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   static const double appBarHeight = 72.0;
   static const double inputHeight = 52.0;
@@ -108,11 +108,11 @@ class BillingSetupStyles {
   static const EdgeInsets cardPadding = EdgeInsets.all(24);
   static const EdgeInsets pagePadding = EdgeInsets.fromLTRB(20, 0, 20, 50);
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // DECORATIONS
-  // ═══════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-  // Dark shell — exact KarigarStyles.shellDecoration
+  // Dark shell â€” exact KarigarStyles.shellDecoration
   static const BoxDecoration shellDecoration = BoxDecoration(
     color: BillingSetupColors.shellPanelBg,
     border: Border(
@@ -143,14 +143,15 @@ class BillingSetupStyles {
         color: BillingSetupColors.cardBg,
         borderRadius: BorderRadius.circular(rCard),
         border: Border.all(
-          color:
-              hovered ? accent.withOpacity(0.7) : BillingSetupColors.cardBorder,
+          color: hovered
+              ? accent.withValues(alpha: 0.7)
+              : BillingSetupColors.cardBorder,
           width: hovered ? 1.5 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
             color: hovered
-                ? accent.withOpacity(0.15)
+                ? accent.withValues(alpha: 0.15)
                 : BillingSetupColors.shadowLight,
             blurRadius: hovered ? 20 : 8,
             offset: const Offset(0, 4),
@@ -170,7 +171,7 @@ class BillingSetupStyles {
         ),
       );
 
-  // Input focused — gold glow
+  // Input focused â€” gold glow
   static BoxDecoration get inputActive => BoxDecoration(
         color: BillingSetupColors.inputBg,
         borderRadius: BorderRadius.circular(rInput),
@@ -180,7 +181,7 @@ class BillingSetupStyles {
         ),
         boxShadow: [
           BoxShadow(
-            color: BillingSetupColors.goldAccent.withOpacity(0.15),
+            color: BillingSetupColors.goldAccent.withValues(alpha: 0.15),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -189,14 +190,14 @@ class BillingSetupStyles {
 
   // Section icon box
   static BoxDecoration sectionIconBox(Color accent) => BoxDecoration(
-        color: accent.withOpacity(0.10),
+        color: accent.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(rHeaderIcon),
       );
 
   // Status pill
   static BoxDecoration statusPill(Color color) => BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(rStatusPill),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       );
 }

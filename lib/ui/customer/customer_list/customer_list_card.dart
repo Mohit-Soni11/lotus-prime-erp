@@ -1,31 +1,31 @@
 // -----------------------------------------------------------------------------
 // FILE: customer_list_card.dart
-// MODULE: Customer → Customer List
+// MODULE: Customer â†’ Customer List
 // DESCRIPTION: Individual customer card. Cream BG + White card.
 //              Hover effect with gold border glow.
 // -----------------------------------------------------------------------------
- 
+
 import 'package:flutter/material.dart';
 import '../../../theme/customer/customer_list/customer_list_theme.dart';
 import '../../../models/customer/customer_list/customer_list_ui_model.dart';
- 
+
 class CustomerListCard extends StatefulWidget {
   final CustomerListItemModel customer;
   final VoidCallback? onTap;
- 
+
   const CustomerListCard({
     super.key,
     required this.customer,
     this.onTap,
   });
- 
+
   @override
   State<CustomerListCard> createState() => _CustomerListCardState();
 }
- 
+
 class _CustomerListCardState extends State<CustomerListCard> {
   bool _isHovered = false;
- 
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -45,23 +45,23 @@ class _CustomerListCardState extends State<CustomerListCard> {
             padding: CustomerListStyles.cardPaddingH,
             child: Row(
               children: [
-                // ── AVATAR ─────────────────────────────────────────────────
+                // â”€â”€ AVATAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _buildAvatar(),
                 const SizedBox(width: 16),
- 
-                // ── MAIN INFO ──────────────────────────────────────────────
+
+                // â”€â”€ MAIN INFO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 Expanded(child: _buildMainInfo()),
                 const SizedBox(width: 12),
- 
-                // ── INVOICE COUNT (FIXED) ──────────────────────────────────
+
+                // â”€â”€ INVOICE COUNT (FIXED) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _buildInvoiceBox(),
                 const SizedBox(width: 12),
- 
-                // ── ARROW ──────────────────────────────────────────────────
+
+                // â”€â”€ ARROW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 AnimatedOpacity(
                   opacity: _isHovered ? 1.0 : 0.3,
                   duration: const Duration(milliseconds: 180),
-                  child: Icon(
+                  child: const Icon(
                     CustomerListIcons.arrowRight,
                     color: CustomerListColors.brandGold,
                     size: 16,
@@ -74,7 +74,7 @@ class _CustomerListCardState extends State<CustomerListCard> {
       ),
     );
   }
- 
+
   Widget _buildAvatar() {
     return Stack(
       children: [
@@ -89,14 +89,14 @@ class _CustomerListCardState extends State<CustomerListCard> {
             border: Border.all(
               color: widget.customer.isVip
                   ? CustomerListColors.vipBadgeBorder
-                  : CustomerListColors.brandGold.withOpacity(0.3),
+                  : CustomerListColors.brandGold.withValues(alpha: 0.3),
               width: 1.5,
             ),
           ),
           alignment: Alignment.center,
           child: Text(
             widget.customer.initials,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
               color: CustomerListColors.brandGold,
@@ -126,7 +126,7 @@ class _CustomerListCardState extends State<CustomerListCard> {
       ],
     );
   }
- 
+
   Widget _buildMainInfo() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,11 +146,11 @@ class _CustomerListCardState extends State<CustomerListCard> {
           ],
         ),
         const SizedBox(height: 6),
- 
+
         // Mobile
         Row(
           children: [
-            Icon(
+            const Icon(
               CustomerListIcons.phone,
               size: 13,
               color: CustomerListColors.bodyTextMuted,
@@ -163,11 +163,11 @@ class _CustomerListCardState extends State<CustomerListCard> {
           ],
         ),
         const SizedBox(height: 4),
- 
+
         // City + Since
         Row(
           children: [
-            Icon(
+            const Icon(
               CustomerListIcons.city,
               size: 12,
               color: CustomerListColors.bodyTextMuted,
@@ -180,7 +180,7 @@ class _CustomerListCardState extends State<CustomerListCard> {
               style: CustomerListStyles.customerDetail,
             ),
             const SizedBox(width: 12),
-            Icon(
+            const Icon(
               CustomerListIcons.calendar,
               size: 12,
               color: CustomerListColors.bodyTextMuted,
@@ -195,7 +195,7 @@ class _CustomerListCardState extends State<CustomerListCard> {
       ],
     );
   }
- 
+
   Widget _buildTypeBadge() {
     if (widget.customer.isVip) {
       return Container(
@@ -211,7 +211,7 @@ class _CustomerListCardState extends State<CustomerListCard> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
+            const Icon(
               CustomerListIcons.vipBadge,
               size: 10,
               color: CustomerListColors.vipBadgeText,
@@ -232,12 +232,14 @@ class _CustomerListCardState extends State<CustomerListCard> {
             width: 1,
           ),
         ),
-        child: Text("STANDARD", style: CustomerListStyles.regularBadge), // Fixed text
+        child: Text("STANDARD",
+            style: CustomerListStyles.regularBadge), // Fixed text
       );
     }
   }
- 
-  Widget _buildInvoiceBox() { // Renamed from _buildBillBox
+
+  Widget _buildInvoiceBox() {
+    // Renamed from _buildBillBox
     return Container(
       width: 64,
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -248,7 +250,7 @@ class _CustomerListCardState extends State<CustomerListCard> {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: widget.customer.billCount > 0
-              ? CustomerListColors.brandGold.withOpacity(0.3)
+              ? CustomerListColors.brandGold.withValues(alpha: 0.3)
               : CustomerListColors.bodyBorder,
         ),
       ),

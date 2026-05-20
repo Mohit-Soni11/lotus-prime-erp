@@ -215,7 +215,7 @@ class _AddSilverStockSupplierPanelState
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: SilverStockColors.brandSilver.withOpacity(0.10),
+                color: SilverStockColors.brandSilver.withValues(alpha: 0.10),
                 blurRadius: 24,
                 spreadRadius: 1,
                 offset: const Offset(0, 4),
@@ -227,7 +227,7 @@ class _AddSilverStockSupplierPanelState
               ),
             ],
             border: Border.all(
-              color: SilverStockColors.brandSilver.withOpacity(0.22),
+              color: SilverStockColors.brandSilver.withValues(alpha: 0.22),
               width: 1.5,
             ),
           ),
@@ -242,8 +242,8 @@ class _AddSilverStockSupplierPanelState
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      SilverStockColors.brandSilver.withOpacity(0.48),
-                      SilverStockColors.brandSilver.withOpacity(0.10),
+                      SilverStockColors.brandSilver.withValues(alpha: 0.48),
+                      SilverStockColors.brandSilver.withValues(alpha: 0.10),
                       Colors.transparent,
                     ],
                   ),
@@ -320,7 +320,8 @@ class _AddSilverStockSupplierPanelState
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: SilverStockColors.brandSilver.withOpacity(0.35),
+                    color:
+                        SilverStockColors.brandSilver.withValues(alpha: 0.35),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -437,7 +438,7 @@ class _AddSilverStockSupplierPanelState
           color: SilverStockColors.warningBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: SilverStockColors.warning.withOpacity(0.25),
+            color: SilverStockColors.warning.withValues(alpha: 0.25),
           ),
         ),
         child: Row(
@@ -480,7 +481,7 @@ class _AddSilverStockSupplierPanelState
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: SilverStockColors.brandSilver.withOpacity(0.12),
+                color: SilverStockColors.brandSilver.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
@@ -529,7 +530,8 @@ class _AddSilverStockSupplierPanelState
       decoration: BoxDecoration(
         color: SilverStockColors.successBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: SilverStockColors.success.withOpacity(0.24)),
+        border: Border.all(
+            color: SilverStockColors.success.withValues(alpha: 0.24)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -538,7 +540,7 @@ class _AddSilverStockSupplierPanelState
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: SilverStockColors.success.withOpacity(0.12),
+              color: SilverStockColors.success.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -657,7 +659,7 @@ class _AddSilverStockSupplierPanelState
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: SilverStockStyles.fieldHint.copyWith(
-                color: SilverStockColors.textHint.withOpacity(0.7),
+                color: SilverStockColors.textHint.withValues(alpha: 0.7),
                 fontSize: 13,
               ),
               prefixIcon: icon != null
@@ -734,7 +736,8 @@ class _SilverSupplierLookupDropdown extends StatelessWidget {
           return ListTile(
             dense: true,
             leading: CircleAvatar(
-              backgroundColor: SilverStockColors.brandSilver.withOpacity(0.12),
+              backgroundColor:
+                  SilverStockColors.brandSilver.withValues(alpha: 0.12),
               child: Text(
                 supplier.avatarInitial,
                 style: const TextStyle(
@@ -791,7 +794,7 @@ class _SilverPrimaryActionChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: SilverStockColors.brandSilver.withOpacity(0.28),
+              color: SilverStockColors.brandSilver.withValues(alpha: 0.28),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
@@ -827,10 +830,10 @@ class _SilverStatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: SilverStockColors.brandSilver.withOpacity(0.12),
+        color: SilverStockColors.brandSilver.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: SilverStockColors.brandSilver.withOpacity(0.28),
+          color: SilverStockColors.brandSilver.withValues(alpha: 0.28),
         ),
       ),
       child: Row(

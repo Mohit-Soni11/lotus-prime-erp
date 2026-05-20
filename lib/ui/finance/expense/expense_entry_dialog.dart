@@ -3,12 +3,12 @@
 // MODULE      : Expense Entry
 // LAYER       : UI
 // DESCRIPTION : Slide-up animated dialog for adding a new expense entry.
-//               ✅ All 12 expense categories with dropdown.
-//               ✅ Custom label field for OTHER_EXPENSE category.
-//               ✅ Payment mode selector chips.
-//               ✅ Date picker (gold themed).
-//               ✅ Save button disables until required fields filled.
-//               ✅ ListenableBuilder — zero setState inside dialog body.
+//               âœ… All 12 expense categories with dropdown.
+//               âœ… Custom label field for OTHER_EXPENSE category.
+//               âœ… Payment mode selector chips.
+//               âœ… Date picker (gold themed).
+//               âœ… Save button disables until required fields filled.
+//               âœ… ListenableBuilder â€” zero setState inside dialog body.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -28,10 +28,9 @@ class ExpenseEntryDialog extends StatefulWidget {
 
 class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
     with SingleTickerProviderStateMixin {
-
   late AnimationController _slideCtrl;
-  late Animation<Offset>   _slideAnim;
-  late Animation<double>   _fadeAnim;
+  late Animation<Offset> _slideAnim;
+  late Animation<double> _fadeAnim;
 
   @override
   void initState() {
@@ -39,12 +38,12 @@ class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
     widget.ctrl.resetEntryForm();
 
     _slideCtrl = AnimationController(
-      vsync:    this,
+      vsync: this,
       duration: const Duration(milliseconds: 320),
     );
     _slideAnim = Tween<Offset>(
       begin: const Offset(0, 1),
-      end:   Offset.zero,
+      end: Offset.zero,
     ).animate(CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOutCubic));
     _fadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _slideCtrl, curve: Curves.easeOut),
@@ -66,25 +65,25 @@ class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
         position: _slideAnim,
         child: Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(
-              horizontal: 24, vertical: 40),
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
           child: Container(
-            width:      540,
+            width: 540,
             decoration: BoxDecoration(
-              color:        ExpenseColors.bodyPanel,
+              color: ExpenseColors.bodyPanel,
               borderRadius: BorderRadius.circular(20),
-              border:       Border.all(color: ExpenseColors.cardBorderLight),
+              border: Border.all(color: ExpenseColors.cardBorderLight),
               boxShadow: [
                 BoxShadow(
-                  color:      Colors.black.withOpacity(0.15),
+                  color: Colors.black.withValues(alpha: 0.15),
                   blurRadius: 32,
-                  offset:     const Offset(0, 12),
+                  offset: const Offset(0, 12),
                 ),
               ],
             ),
             child: ListenableBuilder(
               listenable: widget.ctrl,
-              builder:    (_, __) => _buildContent(),
+              builder: (_, __) => _buildContent(),
             ),
           ),
         ),
@@ -98,21 +97,21 @@ class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
-        mainAxisSize:       MainAxisSize.min,
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-
-          // ── Dialog Header ─────────────────────────────────────────────
+          // â”€â”€ Dialog Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Row(children: [
             Container(
-              width:  40, height: 40,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color:        ExpenseColors.moduleAccentLight,
+                color: ExpenseColors.moduleAccentLight,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
                 ExpenseIcons.expense,
-                size:  20,
+                size: 20,
                 color: ExpenseColors.moduleAccent,
               ),
             ),
@@ -123,9 +122,10 @@ class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
             GestureDetector(
               onTap: () => Navigator.pop(context),
               child: Container(
-                width: 30, height: 30,
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
-                  color:        ExpenseColors.summaryChipBg,
+                  color: ExpenseColors.summaryChipBg,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(ExpenseIcons.close,
@@ -136,19 +136,19 @@ class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
 
           const SizedBox(height: 24),
 
-          // ── Amount ────────────────────────────────────────────────────
-          _FieldLabel(ExpenseStrings.amount),
+          // â”€â”€ Amount â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          const _FieldLabel(ExpenseStrings.amount),
           const SizedBox(height: 6),
           _AmountField(ctrl: ctrl),
 
           const SizedBox(height: 16),
 
-          // ── Category ──────────────────────────────────────────────────
-          _FieldLabel(ExpenseStrings.category),
+          // â”€â”€ Category â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          const _FieldLabel(ExpenseStrings.category),
           const SizedBox(height: 6),
           _CategoryDropdown(ctrl: ctrl),
 
-          // ── Custom Label (only for OTHER_EXPENSE) ─────────────────────
+          // â”€â”€ Custom Label (only for OTHER_EXPENSE) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           if (ctrl.entryNeedsCustomLabel) ...[
             const SizedBox(height: 10),
             _CustomLabelField(ctrl: ctrl),
@@ -156,50 +156,49 @@ class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
 
           const SizedBox(height: 16),
 
-          // ── Payment Mode ──────────────────────────────────────────────
-          _FieldLabel(ExpenseStrings.paymentMode),
+          // â”€â”€ Payment Mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          const _FieldLabel(ExpenseStrings.paymentMode),
           const SizedBox(height: 8),
           _PaymentModeChips(ctrl: ctrl),
 
           const SizedBox(height: 16),
 
-          // ── Date ──────────────────────────────────────────────────────
-          _FieldLabel(ExpenseStrings.date),
+          // â”€â”€ Date â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          const _FieldLabel(ExpenseStrings.date),
           const SizedBox(height: 6),
           _DateSelector(ctrl: ctrl),
 
           const SizedBox(height: 16),
 
-          // ── Vendor / Party Name ───────────────────────────────────────
-          _FieldLabel(ExpenseStrings.partyName),
+          // â”€â”€ Vendor / Party Name â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          const _FieldLabel(ExpenseStrings.partyName),
           const SizedBox(height: 6),
           _InputField(
             controller: ctrl.partyNameCtrl,
-            hint:       ExpenseStrings.partyHint,
+            hint: ExpenseStrings.partyHint,
           ),
 
           const SizedBox(height: 16),
 
-          // ── Description ───────────────────────────────────────────────
-          _FieldLabel(ExpenseStrings.description),
+          // â”€â”€ Description â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          const _FieldLabel(ExpenseStrings.description),
           const SizedBox(height: 6),
           _InputField(
             controller: ctrl.descriptionCtrl,
-            hint:       ExpenseStrings.descriptionHint,
-            maxLines:   2,
+            hint: ExpenseStrings.descriptionHint,
+            maxLines: 2,
           ),
 
           const SizedBox(height: 24),
 
-          // ── Action Buttons ────────────────────────────────────────────
+          // â”€â”€ Action Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Row(children: [
             Expanded(
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  padding:         const EdgeInsets.symmetric(vertical: 14),
-                  side:            const BorderSide(
-                      color: ExpenseColors.bodyBorder),
-                  shape:           RoundedRectangleBorder(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: const BorderSide(color: ExpenseColors.bodyBorder),
+                  shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                   foregroundColor: ExpenseColors.textSecondary,
                 ),
@@ -220,7 +219,7 @@ class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
   }
 }
 
-// ── Amount Field ──────────────────────────────────────────────────────────────
+// â”€â”€ Amount Field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _AmountField extends StatelessWidget {
   final ExpenseController ctrl;
@@ -229,42 +228,41 @@ class _AmountField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
-      controller:   ctrl.amountCtrl,
+      controller: ctrl.amountCtrl,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      autofocus:    true,
-      style:        ExpenseStyles.amountInput,
+      autofocus: true,
+      style: ExpenseStyles.amountInput,
       decoration: InputDecoration(
-        hintText:  ExpenseStrings.amountHint,
-        hintStyle: ExpenseStyles.amountInput.copyWith(
-            color: ExpenseColors.textMuted),
-        prefix: Text('₹  ',
-            style: ExpenseStyles.amountInput.copyWith(
-                color: ExpenseColors.moduleAccent)),
-        filled:      true,
-        fillColor:   ExpenseColors.moduleAccentLight,
-        contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14, vertical: 14),
+        hintText: ExpenseStrings.amountHint,
+        hintStyle:
+            ExpenseStyles.amountInput.copyWith(color: ExpenseColors.textMuted),
+        prefix: Text('â‚¹  ',
+            style: ExpenseStyles.amountInput
+                .copyWith(color: ExpenseColors.moduleAccent)),
+        filled: true,
+        fillColor: ExpenseColors.moduleAccentLight,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-              color: ExpenseColors.moduleAccent),
+          borderSide: const BorderSide(color: ExpenseColors.moduleAccent),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-              color: ExpenseColors.moduleAccent.withOpacity(0.4)),
+              color: ExpenseColors.moduleAccent.withValues(alpha: 0.4)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-              color: ExpenseColors.moduleAccent, width: 1.5),
+          borderSide:
+              const BorderSide(color: ExpenseColors.moduleAccent, width: 1.5),
         ),
       ),
     );
   }
 }
 
-// ── Category Dropdown ─────────────────────────────────────────────────────────
+// â”€â”€ Category Dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _CategoryDropdown extends StatelessWidget {
   final ExpenseController ctrl;
@@ -273,17 +271,17 @@ class _CategoryDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:    const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color:        ExpenseColors.searchBg,
+        color: ExpenseColors.searchBg,
         borderRadius: BorderRadius.circular(10),
-        border:       Border.all(color: ExpenseColors.searchBorder),
+        border: Border.all(color: ExpenseColors.searchBorder),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<ExpenseCategory>(
-          value:        ctrl.entryCategory,
-          isExpanded:   true,
-          style:        ExpenseStyles.labelPrimary,
+          value: ctrl.entryCategory,
+          isExpanded: true,
+          style: ExpenseStyles.labelPrimary,
           dropdownColor: ExpenseColors.bodyPanel,
           items: ExpenseCategory.values.map((cat) {
             final isOther = cat == ExpenseCategory.otherExpense;
@@ -295,8 +293,7 @@ class _CategoryDropdown extends StatelessWidget {
                       size: 14, color: ExpenseColors.moduleAccent),
                   const SizedBox(width: 6),
                 ],
-                Text(cat.displayLabel,
-                    style: ExpenseStyles.labelPrimary),
+                Text(cat.displayLabel, style: ExpenseStyles.labelPrimary),
               ]),
             );
           }).toList(),
@@ -309,7 +306,7 @@ class _CategoryDropdown extends StatelessWidget {
   }
 }
 
-// ── Custom Label Field ────────────────────────────────────────────────────────
+// â”€â”€ Custom Label Field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _CustomLabelField extends StatelessWidget {
   final ExpenseController ctrl;
@@ -319,41 +316,41 @@ class _CustomLabelField extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
-      curve:    Curves.easeOutCubic,
+      curve: Curves.easeOutCubic,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
             Container(
-              width: 4, height: 4,
+              width: 4,
+              height: 4,
               decoration: const BoxDecoration(
-                color: ExpenseColors.moduleAccent, shape: BoxShape.circle),
+                  color: ExpenseColors.moduleAccent, shape: BoxShape.circle),
             ),
             const SizedBox(width: 6),
             Text('Specify Category *',
-                style: ExpenseStyles.labelSecondary.copyWith(
-                  color: ExpenseColors.moduleAccent)),
+                style: ExpenseStyles.labelSecondary
+                    .copyWith(color: ExpenseColors.moduleAccent)),
           ]),
           const SizedBox(height: 6),
           TextField(
             controller: ctrl.customLabelCtrl,
-            style:      ExpenseStyles.inputText,
+            style: ExpenseStyles.inputText,
             decoration: InputDecoration(
-              hintText:  'e.g. Temple Donation, Tool Purchase, Medical…',
+              hintText: 'e.g. Temple Donation, Tool Purchase, Medicalâ€¦',
               hintStyle: ExpenseStyles.labelMuted,
-              filled:    true,
+              filled: true,
               fillColor: ExpenseColors.moduleAccentLight,
-              contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 12),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                    color: ExpenseColors.moduleAccent),
+                borderSide: const BorderSide(color: ExpenseColors.moduleAccent),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(
-                    color: ExpenseColors.moduleAccent.withOpacity(0.4)),
+                    color: ExpenseColors.moduleAccent.withValues(alpha: 0.4)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -368,31 +365,32 @@ class _CustomLabelField extends StatelessWidget {
   }
 }
 
-// ── Payment Mode Chips ────────────────────────────────────────────────────────
+// â”€â”€ Payment Mode Chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _PaymentModeChips extends StatelessWidget {
   final ExpenseController ctrl;
   const _PaymentModeChips({required this.ctrl});
 
   IconData _modeIcon(PaymentMode mode) => switch (mode) {
-    PaymentMode.cash   => ExpenseIcons.cash,
-    PaymentMode.upi    => ExpenseIcons.upi,
-    PaymentMode.card   => ExpenseIcons.card,
-    PaymentMode.bank   => ExpenseIcons.bank,
-    PaymentMode.cheque => ExpenseIcons.cheque,
-  };
+        PaymentMode.cash => ExpenseIcons.cash,
+        PaymentMode.upi => ExpenseIcons.upi,
+        PaymentMode.card => ExpenseIcons.card,
+        PaymentMode.bank => ExpenseIcons.bank,
+        PaymentMode.cheque => ExpenseIcons.cheque,
+      };
 
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 8, runSpacing: 8,
+      spacing: 8,
+      runSpacing: 8,
       children: PaymentMode.values.map((mode) {
         final isActive = ctrl.entryMode == mode;
         return GestureDetector(
           onTap: () => ctrl.setEntryMode(mode),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
-            padding:  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: isActive
                   ? ExpenseColors.moduleAccentLight
@@ -400,7 +398,7 @@ class _PaymentModeChips extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isActive
-                    ? ExpenseColors.moduleAccent.withOpacity(0.5)
+                    ? ExpenseColors.moduleAccent.withValues(alpha: 0.5)
                     : ExpenseColors.bodyBorder,
               ),
             ),
@@ -413,7 +411,7 @@ class _PaymentModeChips extends StatelessWidget {
               const SizedBox(width: 6),
               Text(mode.displayLabel,
                   style: TextStyle(
-                    fontSize:   12,
+                    fontSize: 12,
                     fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                     color: isActive
                         ? ExpenseColors.moduleAccent
@@ -427,7 +425,7 @@ class _PaymentModeChips extends StatelessWidget {
   }
 }
 
-// ── Date Selector ─────────────────────────────────────────────────────────────
+// â”€â”€ Date Selector â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _DateSelector extends StatelessWidget {
   final ExpenseController ctrl;
@@ -438,14 +436,14 @@ class _DateSelector extends StatelessWidget {
     return GestureDetector(
       onTap: () async {
         final picked = await showDatePicker(
-          context:     ctx,
+          context: ctx,
           initialDate: ctrl.entryDate,
-          firstDate:   DateTime(2020),
-          lastDate:    DateTime.now(),
+          firstDate: DateTime(2020),
+          lastDate: DateTime.now(),
           builder: (_, child) => Theme(
             data: ThemeData.light().copyWith(
               colorScheme: const ColorScheme.light(
-                primary:   ExpenseColors.brandGold,
+                primary: ExpenseColors.brandGold,
                 onPrimary: Color(0xFF111827),
               ),
             ),
@@ -455,12 +453,12 @@ class _DateSelector extends StatelessWidget {
         if (picked != null) ctrl.setEntryDate(picked);
       },
       child: Container(
-        height:  48,
+        height: 48,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color:        ExpenseColors.searchBg,
+          color: ExpenseColors.searchBg,
           borderRadius: BorderRadius.circular(10),
-          border:       Border.all(color: ExpenseColors.searchBorder),
+          border: Border.all(color: ExpenseColors.searchBorder),
         ),
         child: Row(children: [
           const Icon(ExpenseIcons.calendar,
@@ -479,68 +477,71 @@ class _DateSelector extends StatelessWidget {
   }
 }
 
-// ── Save Button ───────────────────────────────────────────────────────────────
+// â”€â”€ Save Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _SaveButton extends StatelessWidget {
   final ExpenseController ctrl;
-  final BuildContext      context;
+  final BuildContext context;
   const _SaveButton({required this.ctrl, required this.context});
 
   @override
   Widget build(BuildContext ctx) {
-    final isDisabled = ctrl.entryNeedsCustomLabel &&
-        ctrl.customLabelCtrl.text.trim().isEmpty;
+    final isDisabled =
+        ctrl.entryNeedsCustomLabel && ctrl.customLabelCtrl.text.trim().isEmpty;
 
     return GestureDetector(
-      onTap: (ctrl.isSaving || isDisabled) ? null : () async {
-        final ok = await ctrl.saveExpense();
-        if (ok && ctx.mounted) {
-          Navigator.pop(ctx);
-          ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-            content: const Text(ExpenseStrings.saveSuccess,
-                style: TextStyle(fontWeight: FontWeight.w600)),
-            backgroundColor: ExpenseColors.moduleAccent,
-            behavior:        SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
-            margin:   const EdgeInsets.all(16),
-            duration: const Duration(seconds: 2),
-          ));
-        } else if (!ok && ctx.mounted) {
-          ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-            content: const Text(ExpenseStrings.saveFailed,
-                style: TextStyle(fontWeight: FontWeight.w600)),
-            backgroundColor: ExpenseColors.danger,
-            behavior:        SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
-            margin:   const EdgeInsets.all(16),
-            duration: const Duration(seconds: 2),
-          ));
-        }
-      },
+      onTap: (ctrl.isSaving || isDisabled)
+          ? null
+          : () async {
+              final ok = await ctrl.saveExpense();
+              if (ok && ctx.mounted) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                  content: const Text(ExpenseStrings.saveSuccess,
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  backgroundColor: ExpenseColors.moduleAccent,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  margin: const EdgeInsets.all(16),
+                  duration: const Duration(seconds: 2),
+                ));
+              } else if (!ok && ctx.mounted) {
+                ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                  content: const Text(ExpenseStrings.saveFailed,
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  backgroundColor: ExpenseColors.danger,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  margin: const EdgeInsets.all(16),
+                  duration: const Duration(seconds: 2),
+                ));
+              }
+            },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height:   48,
+        height: 48,
         decoration: BoxDecoration(
           color: (ctrl.isSaving || isDisabled)
-              ? ExpenseColors.moduleAccent.withOpacity(0.5)
+              ? ExpenseColors.moduleAccent.withValues(alpha: 0.5)
               : ExpenseColors.moduleAccent,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Center(
           child: ctrl.isSaving
               ? const SizedBox(
-                  width: 18, height: 18,
+                  width: 18,
+                  height: 18,
                   child: CircularProgressIndicator(
                       strokeWidth: 2, color: Colors.white),
                 )
-              : Text(
+              : const Text(
                   ExpenseStrings.saveExpense,
-                  style: const TextStyle(
-                    fontSize:   14,
+                  style: TextStyle(
+                    fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color:      Colors.white,
+                    color: Colors.white,
                   ),
                 ),
         ),
@@ -549,7 +550,7 @@ class _SaveButton extends StatelessWidget {
   }
 }
 
-// ── Shared Helpers ────────────────────────────────────────────────────────────
+// â”€â”€ Shared Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _FieldLabel extends StatelessWidget {
   final String text;
@@ -562,8 +563,8 @@ class _FieldLabel extends StatelessWidget {
 
 class _InputField extends StatelessWidget {
   final TextEditingController controller;
-  final String                hint;
-  final int                   maxLines;
+  final String hint;
+  final int maxLines;
 
   const _InputField({
     required this.controller,
@@ -575,15 +576,15 @@ class _InputField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
-      maxLines:   maxLines,
-      style:      ExpenseStyles.inputText,
+      maxLines: maxLines,
+      style: ExpenseStyles.inputText,
       decoration: InputDecoration(
-        hintText:       hint,
-        hintStyle:      ExpenseStyles.labelMuted,
-        filled:         true,
-        fillColor:      ExpenseColors.searchBg,
-        contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12, vertical: 12),
+        hintText: hint,
+        hintStyle: ExpenseStyles.labelMuted,
+        filled: true,
+        fillColor: ExpenseColors.searchBg,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: ExpenseColors.searchBorder),
@@ -594,8 +595,8 @@ class _InputField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-              color: ExpenseColors.moduleAccent, width: 1.5),
+          borderSide:
+              const BorderSide(color: ExpenseColors.moduleAccent, width: 1.5),
         ),
       ),
     );

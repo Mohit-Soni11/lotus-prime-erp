@@ -20,7 +20,7 @@ class TcsTdsSection extends StatelessWidget {
       listenable: logic,
       builder: (context, _) {
         final e = logic.isEditing;
-        final a = TaxGstColors.card05Accent;
+        const a = TaxGstColors.card05Accent;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -110,7 +110,7 @@ class TcsTdsSection extends StatelessWidget {
 
             const SizedBox(height: TaxGstStyles.spaceMD),
 
-            TaxGstInfoBanner(
+            const TaxGstInfoBanner(
               accentColor: a,
               message: TaxGstStrings.infoTcs,
             ),

@@ -58,8 +58,7 @@ enum IssueStatus {
   /// Returns true if the job is still open and trackable.
   bool get isActive => this == pending || this == inProgress;
 
-  static IssueStatus fromLabel(String l) =>
-      IssueStatus.values.firstWhere(
+  static IssueStatus fromLabel(String l) => IssueStatus.values.firstWhere(
         (e) => e.label == l,
         orElse: () => IssueStatus.pending,
       );

@@ -15,142 +15,142 @@ class ExpenseStyles {
   // ── App Bar ───────────────────────────────────────────────────────────────
 
   static TextStyle get appBarTitle => GoogleFonts.inter(
-    fontSize:      18.0,
-    fontWeight:    FontWeight.w700,
-    color:         ExpenseColors.shellTitle,
-    letterSpacing: 0.5,
-  );
+        fontSize: 18.0,
+        fontWeight: FontWeight.w700,
+        color: ExpenseColors.shellTitle,
+        letterSpacing: 0.5,
+      );
 
   static TextStyle get appBarSubtitle => GoogleFonts.inter(
-    fontSize:   11.0,
-    fontWeight: FontWeight.w500,
-    color:      ExpenseColors.shellMuted,
-  );
+        fontSize: 11.0,
+        fontWeight: FontWeight.w500,
+        color: ExpenseColors.shellMuted,
+      );
 
   // ── Left Panel ────────────────────────────────────────────────────────────
 
   static TextStyle get totalLabel => GoogleFonts.manrope(
-    fontSize:   12.0,
-    fontWeight: FontWeight.w600,
-    color:      ExpenseColors.textSecondary,
-    letterSpacing: 0.8,
-  );
+        fontSize: 12.0,
+        fontWeight: FontWeight.w600,
+        color: ExpenseColors.textSecondary,
+        letterSpacing: 0.8,
+      );
 
   static TextStyle get totalAmount => GoogleFonts.manrope(
-    fontSize:   28.0,
-    fontWeight: FontWeight.w900,
-    color:      ExpenseColors.moduleAccentMid,
-    height:     1.0,
-  );
+        fontSize: 28.0,
+        fontWeight: FontWeight.w900,
+        color: ExpenseColors.moduleAccentMid,
+        height: 1.0,
+      );
 
   static TextStyle get sectionHeader => GoogleFonts.inter(
-    fontSize:      11.0,
-    fontWeight:    FontWeight.w700,
-    color:         ExpenseColors.textSecondary,
-    letterSpacing: 1.1,
-  );
+        fontSize: 11.0,
+        fontWeight: FontWeight.w700,
+        color: ExpenseColors.textSecondary,
+        letterSpacing: 1.1,
+      );
 
   static TextStyle get metaLabel => GoogleFonts.inter(
-    fontSize:   12.0,
-    fontWeight: FontWeight.w500,
-    color:      ExpenseColors.textMuted,
-  );
+        fontSize: 12.0,
+        fontWeight: FontWeight.w500,
+        color: ExpenseColors.textMuted,
+      );
 
   static TextStyle get metaValue => GoogleFonts.manrope(
-    fontSize:   13.0,
-    fontWeight: FontWeight.w700,
-    color:      ExpenseColors.textPrimary,
-  );
+        fontSize: 13.0,
+        fontWeight: FontWeight.w700,
+        color: ExpenseColors.textPrimary,
+      );
 
   // ── List Items ────────────────────────────────────────────────────────────
 
   static TextStyle get groupHeader => GoogleFonts.inter(
-    fontSize:   12.0,
-    fontWeight: FontWeight.w700,
-    color:      ExpenseColors.textSecondary,
-    letterSpacing: 0.4,
-  );
+        fontSize: 12.0,
+        fontWeight: FontWeight.w700,
+        color: ExpenseColors.textSecondary,
+        letterSpacing: 0.4,
+      );
 
   static TextStyle get groupTotal => GoogleFonts.manrope(
-    fontSize:   12.0,
-    fontWeight: FontWeight.w700,
-    color:      ExpenseColors.moduleAccentMid,
-  );
+        fontSize: 12.0,
+        fontWeight: FontWeight.w700,
+        color: ExpenseColors.moduleAccentMid,
+      );
 
   static TextStyle get itemCategory => GoogleFonts.inter(
-    fontSize:   14.0,
-    fontWeight: FontWeight.w600,
-    color:      ExpenseColors.textPrimary,
-  );
+        fontSize: 14.0,
+        fontWeight: FontWeight.w600,
+        color: ExpenseColors.textPrimary,
+      );
 
   static TextStyle get itemMeta => GoogleFonts.inter(
-    fontSize:   12.0,
-    fontWeight: FontWeight.w400,
-    color:      ExpenseColors.textSecondary,
-  );
+        fontSize: 12.0,
+        fontWeight: FontWeight.w400,
+        color: ExpenseColors.textSecondary,
+      );
 
   static TextStyle get itemAmount => GoogleFonts.manrope(
-    fontSize:   15.0,
-    fontWeight: FontWeight.w800,
-    color:      ExpenseColors.moduleAccentMid,
-  );
+        fontSize: 15.0,
+        fontWeight: FontWeight.w800,
+        color: ExpenseColors.moduleAccentMid,
+      );
 
   static TextStyle get expenseId => GoogleFonts.inter(
-    fontSize:   11.0,
-    fontWeight: FontWeight.w500,
-    color:      ExpenseColors.textMuted,
-    fontFeatures: [const FontFeature.tabularFigures()],
-  );
+        fontSize: 11.0,
+        fontWeight: FontWeight.w500,
+        color: ExpenseColors.textMuted,
+        fontFeatures: [const FontFeature.tabularFigures()],
+      );
 
   // ── Dialog / Form ─────────────────────────────────────────────────────────
 
   static TextStyle get labelPrimary => GoogleFonts.inter(
-    fontSize:   14.0,
-    fontWeight: FontWeight.w600,
-    color:      ExpenseColors.textPrimary,
-  );
+        fontSize: 14.0,
+        fontWeight: FontWeight.w600,
+        color: ExpenseColors.textPrimary,
+      );
 
   static TextStyle get labelSecondary => GoogleFonts.inter(
-    fontSize:   12.0,
-    fontWeight: FontWeight.w600,
-    color:      ExpenseColors.textSecondary,
-  );
+        fontSize: 12.0,
+        fontWeight: FontWeight.w600,
+        color: ExpenseColors.textSecondary,
+      );
 
   static TextStyle get labelMuted => GoogleFonts.inter(
-    fontSize:   13.0,
-    fontWeight: FontWeight.w400,
-    color:      ExpenseColors.textMuted,
-  );
+        fontSize: 13.0,
+        fontWeight: FontWeight.w400,
+        color: ExpenseColors.textMuted,
+      );
 
   static TextStyle get inputText => GoogleFonts.inter(
-    fontSize:   14.0,
-    fontWeight: FontWeight.w600,
-    color:      ExpenseColors.textDark,
-  );
+        fontSize: 14.0,
+        fontWeight: FontWeight.w600,
+        color: ExpenseColors.textDark,
+      );
 
   static TextStyle get amountInput => GoogleFonts.manrope(
-    fontSize:   22.0,
-    fontWeight: FontWeight.w900,
-    color:      ExpenseColors.textDark,
-  );
+        fontSize: 22.0,
+        fontWeight: FontWeight.w900,
+        color: ExpenseColors.textDark,
+      );
 
   // ── Breakdown Bar ─────────────────────────────────────────────────────────
 
   static TextStyle get breakdownLabel => GoogleFonts.inter(
-    fontSize:   12.0,
-    fontWeight: FontWeight.w500,
-    color:      ExpenseColors.textSecondary,
-  );
+        fontSize: 12.0,
+        fontWeight: FontWeight.w500,
+        color: ExpenseColors.textSecondary,
+      );
 
   static TextStyle get breakdownAmount => GoogleFonts.manrope(
-    fontSize:   12.0,
-    fontWeight: FontWeight.w700,
-    color:      ExpenseColors.textPrimary,
-  );
+        fontSize: 12.0,
+        fontWeight: FontWeight.w700,
+        color: ExpenseColors.textPrimary,
+      );
 
   static TextStyle get breakdownPct => GoogleFonts.inter(
-    fontSize:   11.0,
-    fontWeight: FontWeight.w500,
-    color:      ExpenseColors.textMuted,
-  );
+        fontSize: 11.0,
+        fontWeight: FontWeight.w500,
+        color: ExpenseColors.textMuted,
+      );
 }

@@ -93,12 +93,23 @@ class ShopProfileModel {
   }
 
   ShopProfileModel copyWith({
-    String? legalName, String? displayName, String? tagline,
-    String? ownerName, String? ownerPhone, String? ownerWhatsapp,
-    String? estYear, String? branchCode,
-    String? openTime, String? closeTime, String? weeklyOff,
-    String? brandDisplayName, String? businessEmail, String? shopPhone, String? shopWhatsapp,
-    String? logoPath, String? signaturePath,
+    String? legalName,
+    String? displayName,
+    String? tagline,
+    String? ownerName,
+    String? ownerPhone,
+    String? ownerWhatsapp,
+    String? estYear,
+    String? branchCode,
+    String? openTime,
+    String? closeTime,
+    String? weeklyOff,
+    String? brandDisplayName,
+    String? businessEmail,
+    String? shopPhone,
+    String? shopWhatsapp,
+    String? logoPath,
+    String? signaturePath,
   }) {
     return ShopProfileModel(
       legalName: legalName ?? this.legalName,
@@ -125,32 +136,44 @@ class ShopProfileModel {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     return other is ShopProfileModel &&
-      other.legalName == legalName &&
-      other.displayName == displayName &&
-      other.tagline == tagline &&
-      other.ownerName == ownerName &&
-      other.ownerPhone == ownerPhone &&
-      other.ownerWhatsapp == ownerWhatsapp &&
-      other.estYear == estYear &&
-      other.branchCode == branchCode &&
-      other.openTime == openTime &&
-      other.closeTime == closeTime &&
-      other.weeklyOff == weeklyOff &&
-      other.brandDisplayName == brandDisplayName &&
-      other.businessEmail == businessEmail &&
-      other.shopPhone == shopPhone &&
-      other.shopWhatsapp == shopWhatsapp &&
-      other.logoPath == logoPath &&
-      other.signaturePath == signaturePath;
+        other.legalName == legalName &&
+        other.displayName == displayName &&
+        other.tagline == tagline &&
+        other.ownerName == ownerName &&
+        other.ownerPhone == ownerPhone &&
+        other.ownerWhatsapp == ownerWhatsapp &&
+        other.estYear == estYear &&
+        other.branchCode == branchCode &&
+        other.openTime == openTime &&
+        other.closeTime == closeTime &&
+        other.weeklyOff == weeklyOff &&
+        other.brandDisplayName == brandDisplayName &&
+        other.businessEmail == businessEmail &&
+        other.shopPhone == shopPhone &&
+        other.shopWhatsapp == shopWhatsapp &&
+        other.logoPath == logoPath &&
+        other.signaturePath == signaturePath;
   }
 
   @override
   int get hashCode {
     return Object.hash(
-      legalName, displayName, tagline, ownerName, ownerPhone, 
-      ownerWhatsapp, estYear, branchCode, openTime, closeTime, 
-      weeklyOff, brandDisplayName, businessEmail, shopPhone, 
-      shopWhatsapp, logoPath, signaturePath
-    );
+        legalName,
+        displayName,
+        tagline,
+        ownerName,
+        ownerPhone,
+        ownerWhatsapp,
+        estYear,
+        branchCode,
+        openTime,
+        closeTime,
+        weeklyOff,
+        brandDisplayName,
+        businessEmail,
+        shopPhone,
+        shopWhatsapp,
+        logoPath,
+        signaturePath);
   }
 }

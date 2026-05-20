@@ -3,8 +3,8 @@
 // TYPE: Smart UI Component (UPGRADED)
 // AUTHOR: Senior System Architect
 // DESCRIPTION: Payment Hub & Invoice Summary connected to Master Theme.
-//              ✅ HOLD System Wired-Up with Smart Badge.
-//              ✅ INVOICE PREVIEW Wired-Up.
+//              âœ… HOLD System Wired-Up with Smart Badge.
+//              âœ… INVOICE PREVIEW Wired-Up.
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -13,7 +13,7 @@ import '../../../logic/sales & orders/sales pos/pos_billing_controller.dart';
 import '../../../models/sales & orders/sales_pos_enums/sales_pos_enums.dart';
 import 'pos_hold_list_dialog.dart';
 
-// 🚀 NAYA IMPORT INVOICE PREVIEW KE LIYE:
+// ðŸš€ NAYA IMPORT INVOICE PREVIEW KE LIYE:
 import 'pos_invoice_preview_screen.dart';
 
 class PosRightBillingPanel extends StatefulWidget {
@@ -28,7 +28,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
   bool _makingExpanded = false;
   bool _gstExpanded = false;
   bool _exchangeExpanded = false;
-  // ✅ promiseDate ab ctrl mein hai (PosBillingController.promiseDate)
+  // âœ… promiseDate ab ctrl mein hai (PosBillingController.promiseDate)
 
   String? _refundMethod;
   double _lastPayableAmount = 0.0;
@@ -82,7 +82,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
             surface: SalesPosColors.bodyPanelBg,
             onSurface: SalesPosColors.bodyTextMain,
           ),
-          dialogBackgroundColor: SalesPosColors.bodyPanelBg,
+          dialogTheme: const DialogThemeData(
+              backgroundColor: SalesPosColors.bodyPanelBg),
         ),
         child: child!,
       ),
@@ -143,9 +144,9 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
         height: 2.0,
         decoration: BoxDecoration(
           gradient: LinearGradient(colors: [
-            SalesPosColors.brandGold.withOpacity(0.05),
+            SalesPosColors.brandGold.withValues(alpha: 0.05),
             SalesPosColors.bodyBorder,
-            SalesPosColors.brandGold.withOpacity(0.05),
+            SalesPosColors.brandGold.withValues(alpha: 0.05),
           ]),
         ),
       );
@@ -264,12 +265,12 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                             style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w900,
-                                color:
-                                    SalesPosColors.danger.withOpacity(0.90))),
+                                color: SalesPosColors.danger
+                                    .withValues(alpha: 0.90))),
                         Row(
                           children: [
                             Text(
-                                "- ₹ ${widget.ctrl.oldGoldCashDeduction.toStringAsFixed(2)}",
+                                "- â‚¹ ${widget.ctrl.oldGoldCashDeduction.toStringAsFixed(2)}",
                                 style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w900,
@@ -291,9 +292,10 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                       margin: const EdgeInsets.only(top: 8),
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                          color: SalesPosColors.danger.withOpacity(0.04),
+                          color: SalesPosColors.danger.withValues(alpha: 0.04),
                           border: Border.all(
-                              color: SalesPosColors.danger.withOpacity(0.25),
+                              color:
+                                  SalesPosColors.danger.withValues(alpha: 0.25),
                               width: 1.5),
                           borderRadius: BorderRadius.circular(8)),
                       child: Column(
@@ -437,8 +439,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
-        border: Border.all(color: color.withOpacity(0.35), width: 1.5),
+        color: color.withValues(alpha: 0.05),
+        border: Border.all(color: color.withValues(alpha: 0.35), width: 1.5),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -458,7 +460,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
-                      color: SalesPosColors.bodyTextMain.withOpacity(0.8))),
+                      color:
+                          SalesPosColors.bodyTextMain.withValues(alpha: 0.8))),
               Text("${sold.toStringAsFixed(3)} $unit",
                   style: const TextStyle(
                       fontSize: 13,
@@ -474,7 +477,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
-                      color: SalesPosColors.bodyTextMain.withOpacity(0.8))),
+                      color:
+                          SalesPosColors.bodyTextMain.withValues(alpha: 0.8))),
               Text("- ${jama.toStringAsFixed(3)} $unit",
                   style: const TextStyle(
                       fontSize: 13,
@@ -484,7 +488,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Divider(color: color.withOpacity(0.3), height: 1.5),
+            child: Divider(color: color.withValues(alpha: 0.3), height: 1.5),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -518,14 +522,16 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                           decoration: InputDecoration(
                             hintText: isGrams ? "Bhaw /g" : "Bhaw /ct",
                             hintStyle: TextStyle(
-                                color: color.withOpacity(0.5), fontSize: 13),
+                                color: color.withValues(alpha: 0.5),
+                                fontSize: 13),
                             filled: true,
                             fillColor: SalesPosColors.bodyBg,
                             contentPadding:
                                 const EdgeInsets.symmetric(horizontal: 10),
                             enabledBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
-                                    color: color.withOpacity(0.4), width: 1.5),
+                                    color: color.withValues(alpha: 0.4),
+                                    width: 1.5),
                                 borderRadius: BorderRadius.circular(6)),
                             focusedBorder: OutlineInputBorder(
                                 borderSide:
@@ -542,8 +548,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                     flex: 5,
                     child: Text(
                       bhawAmt < 0
-                          ? "- ₹ ${bhawAmt.abs().toStringAsFixed(2)}"
-                          : "₹ ${bhawAmt.toStringAsFixed(2)}",
+                          ? "- â‚¹ ${bhawAmt.abs().toStringAsFixed(2)}"
+                          : "â‚¹ ${bhawAmt.toStringAsFixed(2)}",
                       textAlign: TextAlign.right,
                       style: TextStyle(
                           fontSize: 16,
@@ -576,10 +582,10 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: SalesPosColors.brandGold.withOpacity(0.12),
+              color: SalesPosColors.brandGold.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                  color: SalesPosColors.brandGold.withOpacity(0.35),
+                  color: SalesPosColors.brandGold.withValues(alpha: 0.35),
                   width: 1.5),
             ),
             child: Icon(icon, color: SalesPosColors.brandGold, size: 20),
@@ -596,7 +602,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                       fontWeight: FontWeight.w900)),
               const SizedBox(height: 2),
               Text(subtitle,
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                       color: SalesPosColors.bodyTextMuted)),
@@ -619,7 +625,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: SalesPosColors.bodyTextMain)),
-          Text(customVal ?? "₹ ${amount.toStringAsFixed(2)}",
+          Text(customVal ?? "â‚¹ ${amount.toStringAsFixed(2)}",
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
@@ -641,8 +647,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                 color: SalesPosColors.bodyTextMain)),
         Text(
             isCredit
-                ? "- ₹ ${amount.abs().toStringAsFixed(2)}"
-                : "₹ ${amount.toStringAsFixed(2)}",
+                ? "- â‚¹ ${amount.abs().toStringAsFixed(2)}"
+                : "â‚¹ ${amount.toStringAsFixed(2)}",
             style: TextStyle(
                 fontSize: isMid ? 16 : 17,
                 fontWeight: FontWeight.w900,
@@ -656,7 +662,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
   Widget _buildDiscountRow() {
     final discAmt = widget.ctrl.discountAmount;
     final isPercent = widget.ctrl.discountType == DiscountType.percentage;
-    // ✅ FIX: % mode mein 100 se zyada ho to warning dikhao
+    // âœ… FIX: % mode mein 100 se zyada ho to warning dikhao
     final double inputVal = double.tryParse(widget.ctrl.discountCtrl.text) ?? 0;
     final bool isInvalidPct = isPercent && inputVal > 100;
 
@@ -709,7 +715,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   if (discAmt > 0)
                     Padding(
                       padding: const EdgeInsets.only(right: 10),
-                      child: Text("- ₹ ${discAmt.toStringAsFixed(2)}",
+                      child: Text("- â‚¹ ${discAmt.toStringAsFixed(2)}",
                           style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w900,
@@ -732,11 +738,11 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                       ),
                       decoration: InputDecoration(
                         hintText: "0",
-                        hintStyle:
-                            TextStyle(color: SalesPosColors.bodyTextMuted),
+                        hintStyle: const TextStyle(
+                            color: SalesPosColors.bodyTextMuted),
                         filled: true,
                         fillColor: isInvalidPct
-                            ? SalesPosColors.danger.withOpacity(0.08)
+                            ? SalesPosColors.danger.withValues(alpha: 0.08)
                             : SalesPosColors.bodyBg,
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 0),
@@ -760,7 +766,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
               ),
             ],
           ),
-          // ✅ Warning: % 100 se zyada ho to
+          // âœ… Warning: % 100 se zyada ho to
           if (isInvalidPct)
             Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -771,10 +777,10 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                       color: SalesPosColors.danger, size: 13),
                   const SizedBox(width: 4),
                   Text(
-                    "Max 100% — Auto-capped at 100%",
+                    "Max 100% â€” Auto-capped at 100%",
                     style: TextStyle(
                         fontSize: 11,
-                        color: SalesPosColors.danger.withOpacity(0.85),
+                        color: SalesPosColors.danger.withValues(alpha: 0.85),
                         fontWeight: FontWeight.w600),
                   ),
                 ],
@@ -804,7 +810,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                 Row(
                   children: [
                     Text(
-                        "₹ ${widget.ctrl.totalMakingCharge.toStringAsFixed(2)}",
+                        "â‚¹ ${widget.ctrl.totalMakingCharge.toStringAsFixed(2)}",
                         style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w900,
@@ -871,8 +877,9 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-          color: brandColor.withOpacity(0.04),
-          border: Border.all(color: brandColor.withOpacity(0.25), width: 1.5),
+          color: brandColor.withValues(alpha: 0.04),
+          border:
+              Border.all(color: brandColor.withValues(alpha: 0.25), width: 1.5),
           borderRadius: BorderRadius.circular(10)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -886,19 +893,20 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
           const SizedBox(height: 8),
           _buildSubtleRow(
               mTaxable > 0
-                  ? "Tax on Metal (3% on ₹${mTaxable.toStringAsFixed(2)})"
+                  ? "Tax on Metal (3% on â‚¹${mTaxable.toStringAsFixed(2)})"
                   : "Tax on Metal (0.00)",
               0,
-              customVal: "₹ ${mGst.toStringAsFixed(2)}"),
+              customVal: "â‚¹ ${mGst.toStringAsFixed(2)}"),
           _buildSubtleRow(
               lTaxable > 0
-                  ? "Tax on Labour (5% on ₹${lTaxable.toStringAsFixed(2)})"
+                  ? "Tax on Labour (5% on â‚¹${lTaxable.toStringAsFixed(2)})"
                   : "Tax on Labour (0.00)",
               0,
-              customVal: "₹ ${lGst.toStringAsFixed(2)}"),
+              customVal: "â‚¹ ${lGst.toStringAsFixed(2)}"),
           Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Divider(color: brandColor.withOpacity(0.2), height: 1.5)),
+              child: Divider(
+                  color: brandColor.withValues(alpha: 0.2), height: 1.5)),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -907,7 +915,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                       fontSize: 13,
                       fontWeight: FontWeight.w900,
                       color: SalesPosColors.bodyTextMain)),
-              Text("₹ ${controllerTotalGst.toStringAsFixed(2)}",
+              Text("â‚¹ ${controllerTotalGst.toStringAsFixed(2)}",
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
@@ -941,7 +949,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                         color: SalesPosColors.bodyTextMain)),
                 Row(
                   children: [
-                    Text("₹ ${widget.ctrl.totalGst.toStringAsFixed(2)}",
+                    Text("â‚¹ ${widget.ctrl.totalGst.toStringAsFixed(2)}",
                         style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w900,
@@ -963,9 +971,9 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
               margin: const EdgeInsets.only(top: 8),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                  color: SalesPosColors.brandGold.withOpacity(0.05),
+                  color: SalesPosColors.brandGold.withValues(alpha: 0.05),
                   border: Border.all(
-                      color: SalesPosColors.brandGold.withOpacity(0.25),
+                      color: SalesPosColors.brandGold.withValues(alpha: 0.25),
                       width: 1.5),
                   borderRadius: BorderRadius.circular(8)),
               child: Column(
@@ -979,7 +987,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Divider(
-                          color: SalesPosColors.brandGold.withOpacity(0.3),
+                          color:
+                              SalesPosColors.brandGold.withValues(alpha: 0.3),
                           height: 1.5)),
                   if (isWholesale) ...[
                     if (widget.ctrl.goldNetFine != 0 ||
@@ -1019,22 +1028,22 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                         widget.ctrl.goldNetFine != 0)
                       _buildSubtleRow("Gold (HSN 7113)", 0,
                           customVal:
-                              "₹ ${widget.ctrl.goldGst.toStringAsFixed(2)}"),
+                              "â‚¹ ${widget.ctrl.goldGst.toStringAsFixed(2)}"),
                     if (widget.ctrl.totalSilverWt > 0 ||
                         widget.ctrl.silverNetFine != 0)
                       _buildSubtleRow("Silver (HSN 7113)", 0,
                           customVal:
-                              "₹ ${widget.ctrl.silverGst.toStringAsFixed(2)}"),
+                              "â‚¹ ${widget.ctrl.silverGst.toStringAsFixed(2)}"),
                     if (widget.ctrl.totalPlatinumWt > 0 ||
                         widget.ctrl.platNetFine != 0)
                       _buildSubtleRow("Platinum (HSN 7113)", 0,
                           customVal:
-                              "₹ ${widget.ctrl.platinumGst.toStringAsFixed(2)}"),
+                              "â‚¹ ${widget.ctrl.platinumGst.toStringAsFixed(2)}"),
                     if (widget.ctrl.totalDiamondWt > 0 ||
                         widget.ctrl.diaNetFine != 0)
                       _buildSubtleRow("Diamond (HSN 7102)", 0,
                           customVal:
-                              "₹ ${widget.ctrl.diamondGst.toStringAsFixed(2)}"),
+                              "â‚¹ ${widget.ctrl.diamondGst.toStringAsFixed(2)}"),
                   ]
                 ],
               ),
@@ -1054,7 +1063,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: const Center(
-        child: Text("NORMAL BILL  ·  NO GST APPLIED",
+        child: Text("NORMAL BILL  Â·  NO GST APPLIED",
             style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
@@ -1121,9 +1130,9 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
               curve: Curves.easeOut,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: balanceColor.withOpacity(0.10),
+                color: balanceColor.withValues(alpha: 0.10),
                 border: Border.all(
-                    color: balanceColor.withOpacity(0.60), width: 2.0),
+                    color: balanceColor.withValues(alpha: 0.60), width: 2.0),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -1149,7 +1158,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                                   color: balanceColor)),
                           const SizedBox(height: 4),
                           Text(
-                              "₹ ${widget.ctrl.balanceDue.abs().toStringAsFixed(2)}",
+                              "â‚¹ ${widget.ctrl.balanceDue.abs().toStringAsFixed(2)}",
                               style: TextStyle(
                                   fontSize: 26,
                                   fontWeight: FontWeight.w900,
@@ -1229,7 +1238,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                 decoration: BoxDecoration(
                   color: SalesPosColors.bodyBg,
                   border: Border.all(
-                      color: SalesPosColors.danger.withOpacity(0.50),
+                      color: SalesPosColors.danger.withValues(alpha: 0.50),
                       width: 1.5),
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -1244,7 +1253,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                           style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w900,
-                              color: SalesPosColors.danger.withOpacity(0.95))),
+                              color: SalesPosColors.danger
+                                  .withValues(alpha: 0.95))),
                     ]),
                     widget.ctrl.promiseDate != null
                         ? Text(
@@ -1301,7 +1311,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   fontWeight: FontWeight.w900),
               decoration: InputDecoration(
                 hintText: "0.00",
-                hintStyle: TextStyle(
+                hintStyle: const TextStyle(
                     color: SalesPosColors.bodyTextMuted, fontSize: 14),
                 filled: true,
                 fillColor: SalesPosColors.bodyBg,
@@ -1342,8 +1352,9 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: boxColor.withOpacity(0.10),
-              border: Border.all(color: boxColor.withOpacity(0.50), width: 2.0),
+              color: boxColor.withValues(alpha: 0.10),
+              border: Border.all(
+                  color: boxColor.withValues(alpha: 0.50), width: 2.0),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -1363,7 +1374,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                             letterSpacing: 1.5)),
                     const SizedBox(height: 6),
                     Text(
-                        "${isCredit ? '- ' : ''}₹ ${payableAmount.abs().toStringAsFixed(2)}",
+                        "${isCredit ? '- ' : ''}â‚¹ ${payableAmount.abs().toStringAsFixed(2)}",
                         style: SalesPosStyles.grandTotalText
                             .copyWith(color: boxColor)),
                   ],
@@ -1396,7 +1407,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                           fontSize: 12,
                           letterSpacing: 1.0)),
                   style: TextButton.styleFrom(
-                    backgroundColor: SalesPosColors.warning.withOpacity(0.1),
+                    backgroundColor:
+                        SalesPosColors.warning.withValues(alpha: 0.1),
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     shape: RoundedRectangleBorder(
@@ -1416,7 +1428,9 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                     // --- HOLD BUTTON LINKED ---
                     onPressed: () {
                       if (widget.ctrl.saleItems.isEmpty &&
-                          widget.ctrl.oldGoldItems.isEmpty) return;
+                          widget.ctrl.oldGoldItems.isEmpty) {
+                        return;
+                      }
                       widget.ctrl.holdCurrentBill();
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content: Text("Bill successfully parked!"),
@@ -1433,7 +1447,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: SalesPosColors.warning,
                       side: BorderSide(
-                          color: SalesPosColors.warning.withOpacity(0.80),
+                          color: SalesPosColors.warning.withValues(alpha: 0.80),
                           width: 2.0),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
@@ -1447,7 +1461,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                 child: SizedBox(
                   height: 54,
                   child: ElevatedButton.icon(
-                    // 🚀 YAHAN MAIN CHANGE KIYA HAI (GENERATE INVOICE LINKED)
+                    // ðŸš€ YAHAN MAIN CHANGE KIYA HAI (GENERATE INVOICE LINKED)
                     onPressed: () {
                       // Safety Check: Agar cart khali hai toh error show karo
                       if (widget.ctrl.saleItems.isEmpty &&

@@ -13,11 +13,10 @@ import '../base_table.dart';
 import 'girvi_loans.dart';
 
 @DataClassName('GirviPayment')
-@TableIndex(name: 'idx_girvi_pay_girvi',   columns: {#girviId})
-@TableIndex(name: 'idx_girvi_pay_date',    columns: {#paymentDate})
-@TableIndex(name: 'idx_girvi_pay_type',    columns: {#paymentType})
+@TableIndex(name: 'idx_girvi_pay_girvi', columns: {#girviId})
+@TableIndex(name: 'idx_girvi_pay_date', columns: {#paymentDate})
+@TableIndex(name: 'idx_girvi_pay_type', columns: {#paymentType})
 class GirviPayments extends Table with BaseTable {
-
   // ── PARENT REFERENCE ──────────────────────────────────────────────────────
   IntColumn get girviId =>
       integer().references(GirviLoans, #id, onDelete: KeyAction.cascade)();
@@ -34,8 +33,7 @@ class GirviPayments extends Table with BaseTable {
   TextColumn get paymentType => text()();
 
   /// Cash | UPI | NEFT | Bank Transfer | Cheque
-  TextColumn get paymentMode =>
-      text().withDefault(const Constant('Cash'))();
+  TextColumn get paymentMode => text().withDefault(const Constant('Cash'))();
 
   /// Number of months covered (for interest payments)
   IntColumn get monthsCovered => integer().nullable()();

@@ -20,64 +20,64 @@ class AddSupplierLogic extends ChangeNotifier {
 
   /// Pass existing model for Edit mode, null for Add mode.
   AddSupplierLogic({SupplierModel? existing}) {
-    _repo      = SupplierRepository(AppDatabase());
-    _isEdit    = existing != null;
-    _existingId= existing?.id;
+    _repo = SupplierRepository(AppDatabase());
+    _isEdit = existing != null;
+    _existingId = existing?.id;
     if (existing != null) _populateFromExisting(existing);
   }
 
   // ── STATE ──────────────────────────────────────────────────────────────
 
-  bool                 _isEdit       = false;
-  int?                 _existingId;
-  AddSupplierFormState _formState    = AddSupplierFormState.idle;
-  String?              _errorMessage;
-  String?              _successMessage;
+  bool _isEdit = false;
+  int? _existingId;
+  AddSupplierFormState _formState = AddSupplierFormState.idle;
+  String? _errorMessage;
+  String? _successMessage;
 
   // ── FORM VALUES (kept as plain fields for direct binding) ─────────────
 
-  String       businessName     = '';
-  String       contactPerson    = '';
-  SupplierType supplierType     = SupplierType.manufacturer;
-  String       mobile           = '';
-  String       whatsapp         = '';
-  String       email            = '';
-  String       alternateContact = '';
-  String       panNumber        = '';
-  String       gstNumber        = '';
-  String       addressLine1     = '';
-  String       addressLine2     = '';
-  String       state            = '';
-  String       pincode          = '';
-  double       openingBalance   = 0.0;
-  String       notes            = '';
+  String businessName = '';
+  String contactPerson = '';
+  SupplierType supplierType = SupplierType.manufacturer;
+  String mobile = '';
+  String whatsapp = '';
+  String email = '';
+  String alternateContact = '';
+  String panNumber = '';
+  String gstNumber = '';
+  String addressLine1 = '';
+  String addressLine2 = '';
+  String state = '';
+  String pincode = '';
+  double openingBalance = 0.0;
+  String notes = '';
 
   // ── GETTERS ────────────────────────────────────────────────────────────
 
-  bool                 get isEditMode      => _isEdit;
-  AddSupplierFormState get formState       => _formState;
-  String?              get errorMessage    => _errorMessage;
-  String?              get successMessage  => _successMessage;
-  bool                 get isSaving        => _formState == AddSupplierFormState.saving;
+  bool get isEditMode => _isEdit;
+  AddSupplierFormState get formState => _formState;
+  String? get errorMessage => _errorMessage;
+  String? get successMessage => _successMessage;
+  bool get isSaving => _formState == AddSupplierFormState.saving;
 
   // ── POPULATE FOR EDIT ──────────────────────────────────────────────────
 
   void _populateFromExisting(SupplierModel m) {
-    businessName     = m.businessName;
-    contactPerson    = m.contactPersonName  ?? '';
-    supplierType     = m.supplierType;
-    mobile           = m.mobile;
-    whatsapp         = m.whatsapp           ?? '';
-    email            = m.email              ?? '';
-    alternateContact = m.alternateContact   ?? '';
-    panNumber        = m.panNumber          ?? '';
-    gstNumber        = m.gstNumber          ?? '';
-    addressLine1     = m.addressLine1       ?? '';
-    addressLine2     = m.addressLine2       ?? '';
-    state            = m.state              ?? '';
-    pincode          = m.pincode            ?? '';
-    openingBalance   = m.openingBalance;
-    notes            = m.notes              ?? '';
+    businessName = m.businessName;
+    contactPerson = m.contactPersonName ?? '';
+    supplierType = m.supplierType;
+    mobile = m.mobile;
+    whatsapp = m.whatsapp ?? '';
+    email = m.email ?? '';
+    alternateContact = m.alternateContact ?? '';
+    panNumber = m.panNumber ?? '';
+    gstNumber = m.gstNumber ?? '';
+    addressLine1 = m.addressLine1 ?? '';
+    addressLine2 = m.addressLine2 ?? '';
+    state = m.state ?? '';
+    pincode = m.pincode ?? '';
+    openingBalance = m.openingBalance;
+    notes = m.notes ?? '';
   }
 
   // ── SETTERS ────────────────────────────────────────────────────────────
@@ -95,7 +95,7 @@ class AddSupplierLogic extends ChangeNotifier {
 
   String? validateBusinessName(String? val) {
     if (val == null || val.trim().isEmpty) return 'Business name is required';
-    if (val.trim().length < 2)            return 'Name must be at least 2 characters';
+    if (val.trim().length < 2) return 'Name must be at least 2 characters';
     return null;
   }
 
@@ -121,29 +121,33 @@ class AddSupplierLogic extends ChangeNotifier {
   // ── SAVE ───────────────────────────────────────────────────────────────
 
   Future<bool> save() async {
-    _formState     = AddSupplierFormState.saving;
-    _errorMessage  = null;
+    _formState = AddSupplierFormState.saving;
+    _errorMessage = null;
     _successMessage = null;
     notifyListeners();
 
     try {
       final model = SupplierModel(
-        id:                _existingId,
-        businessName:      businessName.trim(),
-        contactPersonName: contactPerson.trim().isEmpty ? null : contactPerson.trim(),
-        supplierType:      supplierType,
-        mobile:            mobile.trim(),
-        whatsapp:          whatsapp.trim().isEmpty ? null : whatsapp.trim(),
-        email:             email.trim().isEmpty ? null : email.trim(),
-        alternateContact:  alternateContact.trim().isEmpty ? null : alternateContact.trim(),
-        panNumber:         panNumber.trim().isEmpty ? null : panNumber.trim().toUpperCase(),
-        gstNumber:         gstNumber.trim().isEmpty ? null : gstNumber.trim().toUpperCase(),
-        addressLine1:      addressLine1.trim().isEmpty ? null : addressLine1.trim(),
-        addressLine2:      addressLine2.trim().isEmpty ? null : addressLine2.trim(),
-        state:             state.trim().isEmpty ? null : state.trim(),
-        pincode:           pincode.trim().isEmpty ? null : pincode.trim(),
-        openingBalance:    openingBalance,
-        notes:             notes.trim().isEmpty ? null : notes.trim(),
+        id: _existingId,
+        businessName: businessName.trim(),
+        contactPersonName:
+            contactPerson.trim().isEmpty ? null : contactPerson.trim(),
+        supplierType: supplierType,
+        mobile: mobile.trim(),
+        whatsapp: whatsapp.trim().isEmpty ? null : whatsapp.trim(),
+        email: email.trim().isEmpty ? null : email.trim(),
+        alternateContact:
+            alternateContact.trim().isEmpty ? null : alternateContact.trim(),
+        panNumber:
+            panNumber.trim().isEmpty ? null : panNumber.trim().toUpperCase(),
+        gstNumber:
+            gstNumber.trim().isEmpty ? null : gstNumber.trim().toUpperCase(),
+        addressLine1: addressLine1.trim().isEmpty ? null : addressLine1.trim(),
+        addressLine2: addressLine2.trim().isEmpty ? null : addressLine2.trim(),
+        state: state.trim().isEmpty ? null : state.trim(),
+        pincode: pincode.trim().isEmpty ? null : pincode.trim(),
+        openingBalance: openingBalance,
+        notes: notes.trim().isEmpty ? null : notes.trim(),
       );
 
       if (_isEdit) {
@@ -151,13 +155,13 @@ class AddSupplierLogic extends ChangeNotifier {
         _successMessage = 'Supplier "${model.businessName}" updated!';
       } else {
         await _repo.addSupplier(model);
-        _successMessage = 'Supplier "${model.businessName}" added successfully!';
+        _successMessage =
+            'Supplier "${model.businessName}" added successfully!';
       }
 
       _formState = AddSupplierFormState.success;
       notifyListeners();
       return true;
-
     } catch (e) {
       debugPrint('AddSupplierLogic.save error: $e');
       if (e.toString().contains('UNIQUE')) {
@@ -172,9 +176,9 @@ class AddSupplierLogic extends ChangeNotifier {
   }
 
   void clearMessages() {
-    _errorMessage   = null;
+    _errorMessage = null;
     _successMessage = null;
-    _formState      = AddSupplierFormState.idle;
+    _formState = AddSupplierFormState.idle;
     notifyListeners();
   }
 }

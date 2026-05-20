@@ -14,14 +14,14 @@ enum TaxpayerType {
   overseas('Overseas');
 
   final String displayName;
-  
+
   const TaxpayerType(this.displayName);
 
   /// Safely parses string from API/Database to Enum.
   /// Defaults to [TaxpayerType.regular] if the string doesn't match.
   static TaxpayerType fromString(String? value) {
     if (value == null || value.trim().isEmpty) return TaxpayerType.regular;
-    
+
     return TaxpayerType.values.firstWhere(
       (type) => type.displayName.toLowerCase() == value.toLowerCase(),
       orElse: () => TaxpayerType.regular,
@@ -32,7 +32,7 @@ enum TaxpayerType {
 /// Defines the current interaction state of a specific form section.
 /// This eliminates the need for multiple confusing boolean flags.
 enum SectionEditState {
-  locked,   // Read-only state, inputs are disabled
-  editing,  // User is actively modifying the fields
-  saving    // Async operation in progress, show loading spinner
+  locked, // Read-only state, inputs are disabled
+  editing, // User is actively modifying the fields
+  saving // Async operation in progress, show loading spinner
 }

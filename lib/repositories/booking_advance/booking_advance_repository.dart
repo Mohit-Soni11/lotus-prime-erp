@@ -26,11 +26,11 @@ class BookingAdvanceRepository {
   /// Example: April 2025 → March 2026 = "2526"
   /// Indian FY starts in April, so months Jan/Feb/Mar belong to previous FY.
   String getCurrentFinancialYear() {
-    final now       = DateTime.now();
+    final now = DateTime.now();
     final startYear = now.month < 4 ? now.year - 1 : now.year;
-    final endYear   = startYear + 1;
+    final endYear = startYear + 1;
     return '${(startYear % 100).toString().padLeft(2, '0')}'
-           '${(endYear   % 100).toString().padLeft(2, '0')}';
+        '${(endYear % 100).toString().padLeft(2, '0')}';
   }
 
   /// Returns the next sequence number based on total existing bookings in DB.
@@ -45,51 +45,51 @@ class BookingAdvanceRepository {
   // ===========================================================================
 
   Future<int> saveNewBooking({
-    required int       customerId,
-    required String    customerName,
-    required String    customerMobile,
-    required String    itemName,
-    required String    itemDesc,
-    required String    metalType,
-    required String    purity,
-    required double    approxWeight,
-    required String    bookingType,
-    required double    lockedRate,
+    required int customerId,
+    required String customerName,
+    required String customerMobile,
+    required String itemName,
+    required String itemDesc,
+    required String metalType,
+    required String purity,
+    required double approxWeight,
+    required String bookingType,
+    required double lockedRate,
     required DateTime? deliveryDate,
-    required String?   notes,
-    required double    totalAdvance,
-    required double    goldRate,
-    required bool      isGst,
+    required String? notes,
+    required double totalAdvance,
+    required double goldRate,
+    required bool isGst,
   }) async {
-    final fy      = getCurrentFinancialYear();
-    final seq     = await getNextBookingSequence();
+    final fy = getCurrentFinancialYear();
+    final seq = await getNextBookingSequence();
     final orderNo = 'BK-LJ-$fy-${seq.toString().padLeft(4, '0')}';
 
     return _db.transaction(() async {
       final orderId = await _db.into(_db.salesOrders).insert(
-        SalesOrdersCompanion.insert(
-          orderNo:      orderNo,
-          customerId:   customerId,
-          itemName:     itemName,
-          metalType:    Value(metalType),
-          purity:       Value(purity),
-          approxWeight: Value(approxWeight),
-          bookingType:  Value(bookingType),
-          lockedRate:   Value(lockedRate),
-          status:       const Value('PENDING'),
-          deliveryDate: Value(deliveryDate),
-          notes:        Value(notes),
-        ),
-      );
+            SalesOrdersCompanion.insert(
+              orderNo: orderNo,
+              customerId: customerId,
+              itemName: itemName,
+              metalType: Value(metalType),
+              purity: Value(purity),
+              approxWeight: Value(approxWeight),
+              bookingType: Value(bookingType),
+              lockedRate: Value(lockedRate),
+              status: const Value('PENDING'),
+              deliveryDate: Value(deliveryDate),
+              notes: Value(notes),
+            ),
+          );
 
       if (totalAdvance > 0) {
         await _db.into(_db.orderAdvances).insert(
-          OrderAdvancesCompanion.insert(
-            orderId:    orderId,
-            amountPaid: Value(totalAdvance),
-            rateOnDate: Value(goldRate),
-          ),
-        );
+              OrderAdvancesCompanion.insert(
+                orderId: orderId,
+                amountPaid: Value(totalAdvance),
+                rateOnDate: Value(goldRate),
+              ),
+            );
       }
 
       debugPrint('✅ Booking saved: $orderNo | Advance: ₹$totalAdvance');
@@ -107,11 +107,13 @@ class BookingAdvanceRepository {
           ..where((t) => t.name.contains(query) | t.mobile.contains(query))
           ..limit(8))
         .get();
-    return results.map((c) => {
-      'id':     c.id,
-      'name':   c.name,
-      'mobile': c.mobile,
-      'city':   c.city ?? '',
-    }).toList();
+    return results
+        .map((c) => {
+              'id': c.id,
+              'name': c.name,
+              'mobile': c.mobile,
+              'city': c.city ?? '',
+            })
+        .toList();
   }
 }

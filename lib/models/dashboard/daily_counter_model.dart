@@ -24,16 +24,16 @@ class MetalEntry {
   });
 
   factory MetalEntry.zero() => const MetalEntry(
-    weightStr: '0.000 gm',
-    piecesStr: '0 Pcs',
-    weightRaw: 0.0,
-  );
+        weightStr: '0.000 gm',
+        piecesStr: '0 Pcs',
+        weightRaw: 0.0,
+      );
 
   factory MetalEntry.loading() => const MetalEntry(
-    weightStr: '--',
-    piecesStr: '--',
-    weightRaw: 0.0,
-  );
+        weightStr: '--',
+        piecesStr: '--',
+        weightRaw: 0.0,
+      );
 }
 
 /// Metal Movement section ka data
@@ -51,26 +51,26 @@ class MetalMovementData {
   });
 
   factory MetalMovementData.loading() => MetalMovementData(
-    soldGold:    MetalEntry.loading(),
-    soldSilver:  MetalEntry.loading(),
-    boughtGold:  MetalEntry.loading(),
-    boughtSilver:MetalEntry.loading(),
-  );
+        soldGold: MetalEntry.loading(),
+        soldSilver: MetalEntry.loading(),
+        boughtGold: MetalEntry.loading(),
+        boughtSilver: MetalEntry.loading(),
+      );
 
   factory MetalMovementData.zero() => MetalMovementData(
-    soldGold:    MetalEntry.zero(),
-    soldSilver:  MetalEntry.zero(),
-    boughtGold:  MetalEntry.zero(),
-    boughtSilver:MetalEntry.zero(),
-  );
+        soldGold: MetalEntry.zero(),
+        soldSilver: MetalEntry.zero(),
+        boughtGold: MetalEntry.zero(),
+        boughtSilver: MetalEntry.zero(),
+      );
 }
 
 /// Finance & Due section ka data
 class FinanceDueData {
-  final String dueCount;      // e.g. "5 Customers"
-  final String dueAmount;     // e.g. "₹1,20,000"
-  final String girviCount;    // e.g. "2 New Loans"
-  final String girviAmount;   // e.g. "₹50,000"
+  final String dueCount; // e.g. "5 Customers"
+  final String dueAmount; // e.g. "₹1,20,000"
+  final String girviCount; // e.g. "2 New Loans"
+  final String girviAmount; // e.g. "₹50,000"
   final double dueAmountRaw;
   final double girviAmountRaw;
 
@@ -84,30 +84,30 @@ class FinanceDueData {
   });
 
   factory FinanceDueData.loading() => const FinanceDueData(
-    dueCount: '--',
-    dueAmount: '--',
-    girviCount: '--',
-    girviAmount: '--',
-    dueAmountRaw: 0,
-    girviAmountRaw: 0,
-  );
+        dueCount: '--',
+        dueAmount: '--',
+        girviCount: '--',
+        girviAmount: '--',
+        dueAmountRaw: 0,
+        girviAmountRaw: 0,
+      );
 
   factory FinanceDueData.zero() => const FinanceDueData(
-    dueCount: '0 Customers',
-    dueAmount: '₹0',
-    girviCount: '0 Loans',
-    girviAmount: '₹0',
-    dueAmountRaw: 0,
-    girviAmountRaw: 0,
-  );
+        dueCount: '0 Customers',
+        dueAmount: '₹0',
+        girviCount: '0 Loans',
+        girviAmount: '₹0',
+        dueAmountRaw: 0,
+        girviAmountRaw: 0,
+      );
 }
 
 /// Complete Daily Counter Card ka model
 class DailyCounterModel {
-  final String            dateStr;
+  final String dateStr;
   final MetalMovementData metalMovement;
-  final FinanceDueData    financeDue;
-  final bool              isLoading;
+  final FinanceDueData financeDue;
+  final bool isLoading;
 
   const DailyCounterModel({
     required this.dateStr,
@@ -117,15 +117,15 @@ class DailyCounterModel {
   });
 
   factory DailyCounterModel.loading() => DailyCounterModel(
-    dateStr:       '--',
-    metalMovement: MetalMovementData.loading(),
-    financeDue:    FinanceDueData.loading(),
-    isLoading:     true,
-  );
+        dateStr: '--',
+        metalMovement: MetalMovementData.loading(),
+        financeDue: FinanceDueData.loading(),
+        isLoading: true,
+      );
 
   factory DailyCounterModel.empty(String dateStr) => DailyCounterModel(
-    dateStr:       dateStr,
-    metalMovement: MetalMovementData.zero(),
-    financeDue:    FinanceDueData.zero(),
-  );
+        dateStr: dateStr,
+        metalMovement: MetalMovementData.zero(),
+        financeDue: FinanceDueData.zero(),
+      );
 }

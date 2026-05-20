@@ -2,19 +2,19 @@
 // FILE        : alert_row.dart
 // MODULE      : Dashboard / Alert Row
 // LAYER       : UI
-// DESCRIPTION : 4 Premium Alert Cards — dark gradient design.
+// DESCRIPTION : 4 Premium Alert Cards â€” dark gradient design.
 //               BillCard/ShopCard ke saath consistent dark theme.
 //
 //               DESIGN:
-//               • Har card ka apna COLOR IDENTITY (red/amber/emerald gradient)
-//               • Glowing STATUS ORB — CRITICAL pe pulse animation
-//               • Diagonal SLASH bg decoration — premium depth
-//               • Ghost ICON background — layered feel
-//               • SEVERITY PROGRESS BAR — animated fill
-//               • CRITICAL card mein border glow pulse
-//               • Hover lift effect (desktop)
-//               • Staggered slide+scale entry
-//               • AnimatedSwitcher on value change
+//               â€¢ Har card ka apna COLOR IDENTITY (red/amber/emerald gradient)
+//               â€¢ Glowing STATUS ORB â€” CRITICAL pe pulse animation
+//               â€¢ Diagonal SLASH bg decoration â€” premium depth
+//               â€¢ Ghost ICON background â€” layered feel
+//               â€¢ SEVERITY PROGRESS BAR â€” animated fill
+//               â€¢ CRITICAL card mein border glow pulse
+//               â€¢ Hover lift effect (desktop)
+//               â€¢ Staggered slide+scale entry
+//               â€¢ AnimatedSwitcher on value change
 //
 //               ARCHITECTURE: Theme files se import karta hai
 //               (alert_row_colors, alert_row_styles, alert_row_icons)
@@ -36,21 +36,20 @@ class AlertRow extends StatefulWidget {
 }
 
 class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
-
   late final AlertRowLogic _logic;
 
-  // Staggered entry — 4 cards
+  // Staggered entry â€” 4 cards
   late final List<AnimationController> _entryCtrl;
-  late final List<Animation<double>>   _entrySlide;
-  late final List<Animation<double>>   _entryFade;
-  late final List<Animation<double>>   _entryScale;
+  late final List<Animation<double>> _entrySlide;
+  late final List<Animation<double>> _entryFade;
+  late final List<Animation<double>> _entryScale;
 
   // CRITICAL border + orb pulse
   late final AnimationController _pulseCtrl;
-  late final Animation<double>   _pulseAnim;
+  late final Animation<double> _pulseAnim;
 
   // Interaction states
-  final Set<String> _hoveredCards  = {};
+  final Set<String> _hoveredCards = {};
   final Set<String> _pressedArrows = {};
 
   @override
@@ -59,27 +58,32 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
     _logic = AlertRowLogic();
 
     // Entry animations
-    _entryCtrl = List.generate(4, (_) => AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 500)));
+    _entryCtrl = List.generate(
+        4,
+        (_) => AnimationController(
+            vsync: this, duration: const Duration(milliseconds: 500)));
 
-    _entrySlide = _entryCtrl.map((c) =>
-      Tween<double>(begin: 26.0, end: 0.0).animate(
-        CurvedAnimation(parent: c, curve: Curves.easeOutCubic))).toList();
+    _entrySlide = _entryCtrl
+        .map((c) => Tween<double>(begin: 26.0, end: 0.0)
+            .animate(CurvedAnimation(parent: c, curve: Curves.easeOutCubic)))
+        .toList();
 
-    _entryFade = _entryCtrl.map((c) =>
-      Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: c, curve: Curves.easeOut))).toList();
+    _entryFade = _entryCtrl
+        .map((c) => Tween<double>(begin: 0.0, end: 1.0)
+            .animate(CurvedAnimation(parent: c, curve: Curves.easeOut)))
+        .toList();
 
-    _entryScale = _entryCtrl.map((c) =>
-      Tween<double>(begin: 0.93, end: 1.0).animate(
-        CurvedAnimation(parent: c, curve: Curves.easeOutBack))).toList();
+    _entryScale = _entryCtrl
+        .map((c) => Tween<double>(begin: 0.93, end: 1.0)
+            .animate(CurvedAnimation(parent: c, curve: Curves.easeOutBack)))
+        .toList();
 
     // Pulse for CRITICAL cards
     _pulseCtrl = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 1000))
+        vsync: this, duration: const Duration(milliseconds: 1000))
       ..repeat(reverse: true);
-    _pulseAnim = Tween<double>(begin: 0.25, end: 1.0).animate(
-      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
+    _pulseAnim = Tween<double>(begin: 0.25, end: 1.0)
+        .animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
     _playStaggeredEntry();
   }
@@ -94,7 +98,9 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
   @override
   void dispose() {
     _logic.dispose();
-    for (final c in _entryCtrl) c.dispose();
+    for (final c in _entryCtrl) {
+      c.dispose();
+    }
     _pulseCtrl.dispose();
     super.dispose();
   }
@@ -141,7 +147,7 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
     );
   }
 
-  // ── Staggered entry wrapper ────────────────────────────────────────────────
+  // â”€â”€ Staggered entry wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildAnimatedCard(int index, AlertCardModel card) {
     return AnimatedBuilder(
       animation: _entryCtrl[index],
@@ -169,7 +175,7 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
         decoration: BoxDecoration(
           color: AlertRowColors.shimmerBase,
           borderRadius: BorderRadius.circular(AlertRowStyles.cardBorderRadius),
-          border: Border.all(color: Colors.white.withOpacity(0.06)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
         ),
         padding: AlertRowStyles.contentPad,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -193,11 +199,14 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
           const SizedBox(height: 16),
           // Severity + button row
           Row(children: [
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              _sBox(45, 8),
-              const SizedBox(height: 4),
-              _sBox(double.infinity, 3, radius: 4),
-            ])),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  _sBox(45, 8),
+                  const SizedBox(height: 4),
+                  _sBox(double.infinity, 3, radius: 4),
+                ])),
             const SizedBox(width: 12),
             _sBox(30, 30, circle: true),
           ]),
@@ -219,16 +228,16 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
   }
 
   // ==========================================
-  // MAIN CARD — Premium dark design
+  // MAIN CARD â€” Premium dark design
   // ==========================================
   Widget _buildCard(AlertCardModel card) {
     final bool isCritical = card.status == AlertStatus.critical;
-    final bool isHovered  = _hoveredCards.contains(card.id);
-    final Color accent    = AlertRowColors.accentFor(card.status);
+    final bool isHovered = _hoveredCards.contains(card.id);
+    final Color accent = AlertRowColors.accentFor(card.status);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredCards.add(card.id)),
-      onExit:  (_) => setState(() => _hoveredCards.remove(card.id)),
+      onExit: (_) => setState(() => _hoveredCards.remove(card.id)),
       child: GestureDetector(
         onTap: () => widget.onNavigate(card.routeId),
         child: AnimatedScale(
@@ -239,12 +248,10 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
             animation: _pulseAnim,
             builder: (_, __) {
               final borderColor = isCritical
-                  ? accent.withOpacity(_pulseAnim.value * 0.65)
-                  : accent.withOpacity(0.18);
+                  ? accent.withValues(alpha: _pulseAnim.value * 0.65)
+                  : accent.withValues(alpha: 0.18);
 
-              final glowOpacity = isCritical
-                  ? _pulseAnim.value * 0.12
-                  : 0.06;
+              final glowOpacity = isCritical ? _pulseAnim.value * 0.12 : 0.06;
 
               return Container(
                 decoration: AlertRowStyles.cardDecoration(
@@ -254,43 +261,45 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
                   glowOpacity: glowOpacity,
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AlertRowStyles.cardBorderRadius),
+                  borderRadius:
+                      BorderRadius.circular(AlertRowStyles.cardBorderRadius),
                   child: Stack(children: [
-
-                    // ── BG: Diagonal slash decoration ──────────────────────
+                    // â”€â”€ BG: Diagonal slash decoration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     Positioned(
-                      top: -15, right: -15,
+                      top: -15,
+                      right: -15,
                       child: Transform.rotate(
                         angle: 0.45,
                         child: Container(
-                          width: 68, height: 108,
+                          width: 68,
+                          height: 108,
                           decoration: BoxDecoration(
-                            color: accent.withOpacity(0.04),
+                            color: accent.withValues(alpha: 0.04),
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
                       ),
                     ),
 
-                    // ── BG: Ghost icon ─────────────────────────────────────
+                    // â”€â”€ BG: Ghost icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     Positioned(
-                      bottom: -8, right: -8,
+                      bottom: -8,
+                      right: -8,
                       child: Icon(
                         _iconFor(card.id),
                         size: 72,
-                        color: accent.withOpacity(0.05),
+                        color: accent.withValues(alpha: 0.05),
                       ),
                     ),
 
-                    // ── MAIN CONTENT ───────────────────────────────────────
+                    // â”€â”€ MAIN CONTENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     Padding(
                       padding: AlertRowStyles.contentPad,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-
-                          // ── 1. TOP: Orb + Title + Badge ──────────────────
+                          // â”€â”€ 1. TOP: Orb + Title + Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                           Row(children: [
                             // Pulsing status orb
                             AnimatedBuilder(
@@ -301,13 +310,16 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: accent,
-                                  boxShadow: [BoxShadow(
-                                    color: accent.withOpacity(
-                                      isCritical ? _pulseAnim.value : 0.7,
-                                    ),
-                                    blurRadius: isCritical ? 9 : 5,
-                                    spreadRadius: isCritical ? 2 : 0,
-                                  )],
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: accent.withValues(
+                                        alpha:
+                                            isCritical ? _pulseAnim.value : 0.7,
+                                      ),
+                                      blurRadius: isCritical ? 9 : 5,
+                                      spreadRadius: isCritical ? 2 : 0,
+                                    )
+                                  ],
                                 ),
                               ),
                             ),
@@ -324,7 +336,7 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
 
                             const SizedBox(width: 4),
 
-                            // Status badge — pill shape
+                            // Status badge â€” pill shape
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 7, vertical: 3),
@@ -332,7 +344,8 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
                               child: Text(
                                 AlertRowColors.badgeLabelFor(card.status),
                                 style: AlertRowStyles.badgeStyle.copyWith(
-                                  color: AlertRowColors.badgeTextFor(card.status),
+                                  color:
+                                      AlertRowColors.badgeTextFor(card.status),
                                 ),
                               ),
                             ),
@@ -340,7 +353,7 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
 
                           const SizedBox(height: 13),
 
-                          // ── 2. MIDDLE: Icon circle + Main value ──────────
+                          // â”€â”€ 2. MIDDLE: Icon circle + Main value â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -348,7 +361,8 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
                               Container(
                                 width: AlertRowStyles.iconCircleSize,
                                 height: AlertRowStyles.iconCircleSize,
-                                decoration: AlertRowStyles.iconCircle(card.status),
+                                decoration:
+                                    AlertRowStyles.iconCircle(card.status),
                                 child: Center(
                                   child: Icon(
                                     _iconFor(card.id),
@@ -359,28 +373,29 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
                               ),
                               const SizedBox(width: 11),
 
-                              // Main value — animated on change
+                              // Main value â€” animated on change
                               Expanded(
                                 child: AnimatedSwitcher(
                                   duration: const Duration(milliseconds: 400),
                                   switchInCurve: Curves.easeOutCubic,
                                   transitionBuilder: (child, anim) =>
-                                    FadeTransition(
-                                      opacity: anim,
-                                      child: SlideTransition(
-                                        position: Tween<Offset>(
-                                          begin: const Offset(0, 0.3),
-                                          end: Offset.zero,
-                                        ).animate(anim),
-                                        child: child,
-                                      ),
+                                      FadeTransition(
+                                    opacity: anim,
+                                    child: SlideTransition(
+                                      position: Tween<Offset>(
+                                        begin: const Offset(0, 0.3),
+                                        end: Offset.zero,
+                                      ).animate(anim),
+                                      child: child,
                                     ),
+                                  ),
                                   child: Align(
                                     key: ValueKey(card.mainValue),
                                     alignment: Alignment.centerLeft,
                                     child: Text(
                                       card.mainValue,
-                                      style: AlertRowStyles.mainValueStyle(card.status),
+                                      style: AlertRowStyles.mainValueStyle(
+                                          card.status),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -392,7 +407,7 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
 
                           const SizedBox(height: 7),
 
-                          // ── 3. SUB TEXT ───────────────────────────────────
+                          // â”€â”€ 3. SUB TEXT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                           Text(
                             card.subText,
                             style: AlertRowStyles.subTextStyle,
@@ -402,7 +417,7 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
 
                           const SizedBox(height: 13),
 
-                          // ── 4. BOTTOM: Severity bar + Arrow button ────────
+                          // â”€â”€ 4. BOTTOM: Severity bar + Arrow button â”€â”€â”€â”€â”€â”€â”€â”€
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -411,27 +426,33 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('SEVERITY',
-                                        style: AlertRowStyles.severityLabelStyle),
+                                    const Text('SEVERITY',
+                                        style:
+                                            AlertRowStyles.severityLabelStyle),
                                     const SizedBox(height: 4),
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(4),
                                       child: SizedBox(
-                                        height: AlertRowStyles.severityBarHeight,
+                                        height:
+                                            AlertRowStyles.severityBarHeight,
                                         child: Stack(children: [
                                           // Track
                                           Container(
-                                              color: Colors.white.withOpacity(0.07)),
+                                              color: Colors.white
+                                                  .withValues(alpha: 0.07)),
                                           // Animated fill
                                           AnimatedFractionallySizedBox(
-                                            duration: const Duration(milliseconds: 900),
+                                            duration: const Duration(
+                                                milliseconds: 900),
                                             curve: Curves.easeOutCubic,
-                                            widthFactor: AlertRowColors.severityFillFor(
-                                                card.status),
+                                            widthFactor:
+                                                AlertRowColors.severityFillFor(
+                                                    card.status),
                                             child: Container(
                                               decoration: BoxDecoration(
-                                                gradient: LinearGradient(colors: [
-                                                  accent.withOpacity(0.5),
+                                                gradient:
+                                                    LinearGradient(colors: [
+                                                  accent.withValues(alpha: 0.5),
                                                   accent,
                                                 ]),
                                                 borderRadius:
@@ -465,10 +486,10 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
     );
   }
 
-  // ── Arrow Button ──────────────────────────────────────────────────────────
+  // â”€â”€ Arrow Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildArrowBtn(AlertCardModel card) {
     final bool isPressed = _pressedArrows.contains(card.id);
-    final Color accent   = AlertRowColors.accentFor(card.status);
+    final Color accent = AlertRowColors.accentFor(card.status);
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressedArrows.add(card.id)),
@@ -499,14 +520,19 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
     );
   }
 
-  // ── Icon mapping ──────────────────────────────────────────────────────────
+  // â”€â”€ Icon mapping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   IconData _iconFor(String id) {
     switch (id) {
-      case 'inventory':   return AlertRowIcons.inventory;
-      case 'orders':      return AlertRowIcons.orders;
-      case 'collections': return AlertRowIcons.collections;
-      case 'deliveries':  return AlertRowIcons.deliveries;
-      default:            return Icons.info_rounded;
+      case 'inventory':
+        return AlertRowIcons.inventory;
+      case 'orders':
+        return AlertRowIcons.orders;
+      case 'collections':
+        return AlertRowIcons.collections;
+      case 'deliveries':
+        return AlertRowIcons.deliveries;
+      default:
+        return Icons.info_rounded;
     }
   }
 }

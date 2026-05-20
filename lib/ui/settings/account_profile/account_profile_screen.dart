@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 // FILE: lib/ui/settings/account_profile/account_profile_screen.dart
-// MODULE: Settings → Account Profile
+// MODULE: Settings â†’ Account Profile
 // DESCRIPTION: Role-based profile page
 //              - Dark shell app bar (exact CustomerList style)
 //              - Cream + White body
@@ -32,58 +32,57 @@ class AccountProfileScreen extends StatefulWidget {
 
 class _AccountProfileScreenState extends State<AccountProfileScreen>
     with SingleTickerProviderStateMixin {
-  // ── Services ──────────────────────────────────────────────────────────────
+  // â”€â”€ Services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   final AuthService _authService = AuthService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // ── State ─────────────────────────────────────────────────────────────────
+  // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
   bool _isSaving = false;
   File? _pickedImageFile;
 
-  // ── Form ──────────────────────────────────────────────────────────────────
+  // â”€â”€ Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameCtrl;
   late TextEditingController _mobileCtrl;
   late TextEditingController _emailCtrl;
 
-  // ── Password ──────────────────────────────────────────────────────────────
+  // â”€â”€ Password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   bool _showPasswordSection = false;
-  final _currPassCtrl    = TextEditingController();
-  final _newPassCtrl     = TextEditingController();
+  final _currPassCtrl = TextEditingController();
+  final _newPassCtrl = TextEditingController();
   final _confirmPassCtrl = TextEditingController();
-  bool _obscureCurr    = true;
-  bool _obscureNew     = true;
+  bool _obscureCurr = true;
+  bool _obscureNew = true;
   bool _obscureConfirm = true;
 
-  // ── Animation ─────────────────────────────────────────────────────────────
+  // â”€â”€ Animation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   late AnimationController _fadeCtrl;
-  late Animation<double>   _fadeAnim;
-  late Animation<Offset>   _slideAnim;
+  late Animation<double> _fadeAnim;
+  late Animation<Offset> _slideAnim;
 
-  // ── Role helpers ──────────────────────────────────────────────────────────
-  String get _role =>
-      (_userData?['role'] ?? 'STAFF').toString().toUpperCase();
-  bool get _isOwner   => _role == 'OWNER';
+  // â”€â”€ Role helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  String get _role => (_userData?['role'] ?? 'STAFF').toString().toUpperCase();
+  bool get _isOwner => _role == 'OWNER';
   bool get _isManager => _role == 'MANAGER';
   bool get _canEditName => _isOwner || _isManager || _role == 'STAFF';
   bool get _canEditMobile => _isOwner || _isManager;
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   @override
   void initState() {
     super.initState();
-    _nameCtrl   = TextEditingController();
+    _nameCtrl = TextEditingController();
     _mobileCtrl = TextEditingController();
-    _emailCtrl  = TextEditingController();
+    _emailCtrl = TextEditingController();
 
     _fadeCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
-    _fadeAnim  = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
+    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
     _slideAnim = Tween<Offset>(
       begin: const Offset(0, 0.04),
       end: Offset.zero,
@@ -104,9 +103,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
     super.dispose();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // DATA
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> _loadUserData() async {
     setState(() => _isLoading = true);
@@ -115,9 +114,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
       if (data != null && mounted) {
         setState(() {
           _userData = data;
-          _nameCtrl.text   = data['name']   ?? '';
+          _nameCtrl.text = data['name'] ?? '';
           _mobileCtrl.text = data['mobile'] ?? '';
-          _emailCtrl.text  = _auth.currentUser?.email ?? data['email'] ?? '';
+          _emailCtrl.text = _auth.currentUser?.email ?? data['email'] ?? '';
           _isLoading = false;
         });
         _fadeCtrl.forward();
@@ -127,9 +126,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // PHOTO PICK + CROP
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> _pickAndCropPhoto() async {
     // 1. Pick from gallery
@@ -186,9 +185,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // SAVE PROFILE
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
@@ -217,16 +216,17 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
         await _loadUserData();
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         _showSnack('Error: ${e.toString()}', isError: true);
+      }
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // CHANGE PASSWORD
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> _changePassword() async {
     if (_newPassCtrl.text != _confirmPassCtrl.text) {
@@ -264,9 +264,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // SNACKBAR
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _showSnack(String msg, {required bool isError}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -290,17 +290,16 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
             ? AccountProfileColors.danger
             : AccountProfileColors.success,
         behavior: SnackBarBehavior.floating,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         margin: const EdgeInsets.all(16),
         duration: const Duration(seconds: 3),
       ),
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // BUILD
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   @override
   Widget build(BuildContext context) {
@@ -323,15 +322,15 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ── TOP: Avatar + Form side by side ─────────────────
+                      // â”€â”€ TOP: Avatar + Form side by side â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                       _buildTopRow(),
                       const SizedBox(height: 20),
 
-                      // ── Password section ─────────────────────────────────
+                      // â”€â”€ Password section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                       _buildPasswordCard(),
                       const SizedBox(height: 20),
 
-                      // ── Owner-only account details ───────────────────────
+                      // â”€â”€ Owner-only account details â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                       if (_isOwner) ...[
                         _buildAccountDetailsCard(),
                         const SizedBox(height: 20),
@@ -344,9 +343,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // TOP ROW: Avatar (left) + Form (right)
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildTopRow() {
     return Row(
@@ -361,14 +360,13 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // AVATAR CARD
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildAvatarCard() {
     final networkUrl = _userData?['profileImageUrl'] as String?;
-    final hasNetwork =
-        networkUrl != null && networkUrl.startsWith('http');
+    final hasNetwork = networkUrl != null && networkUrl.startsWith('http');
     final hasLocal = _pickedImageFile != null;
 
     return Container(
@@ -377,7 +375,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
       decoration: AccountProfileStyles.cardDecoration,
       child: Column(
         children: [
-          // ── Avatar circle ───────────────────────────────────────────────
+          // â”€â”€ Avatar circle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Stack(
             children: [
               Container(
@@ -389,7 +387,8 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
                       color: AccountProfileColors.brandGold, width: 2.5),
                   boxShadow: [
                     BoxShadow(
-                      color: AccountProfileColors.brandGold.withOpacity(0.2),
+                      color:
+                          AccountProfileColors.brandGold.withValues(alpha: 0.2),
                       blurRadius: 16,
                       spreadRadius: 2,
                     ),
@@ -399,7 +398,8 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
                   child: hasLocal
                       ? Image.file(_pickedImageFile!, fit: BoxFit.cover)
                       : hasNetwork
-                          ? Image.network(networkUrl, fit: BoxFit.cover,
+                          ? Image.network(networkUrl,
+                              fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) =>
                                   _buildInitialsAvatar())
                           : _buildInitialsAvatar(),
@@ -423,7 +423,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
                       boxShadow: [
                         BoxShadow(
                           color: AccountProfileColors.brandGold
-                              .withOpacity(0.35),
+                              .withValues(alpha: 0.35),
                           blurRadius: 8,
                         ),
                       ],
@@ -499,15 +499,14 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
                 decoration: BoxDecoration(
                   color: AccountProfileColors.brandGoldBg,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                      color: AccountProfileColors.brandGoldBorder),
+                  border:
+                      Border.all(color: AccountProfileColors.brandGoldBorder),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(AccountProfileIcons.crop,
-                        size: 13,
-                        color: AccountProfileColors.brandGold),
+                        size: 13, color: AccountProfileColors.brandGold),
                     const SizedBox(width: 5),
                     Text(AccountProfileStrings.btnCrop,
                         style: GoogleFonts.inter(
@@ -593,9 +592,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // FORM CARD
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildFormCard() {
     return Container(
@@ -654,7 +653,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AccountProfileColors.brandGold,
                   disabledBackgroundColor:
-                      AccountProfileColors.brandGold.withOpacity(0.45),
+                      AccountProfileColors.brandGold.withValues(alpha: 0.45),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
@@ -731,13 +730,13 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                  color: AccountProfileColors.inputBorder),
+              borderSide:
+                  const BorderSide(color: AccountProfileColors.inputBorder),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                  color: AccountProfileColors.inputBorder),
+              borderSide:
+                  const BorderSide(color: AccountProfileColors.inputBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -747,7 +746,8 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
             disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(
-                  color: AccountProfileColors.inputBorder.withOpacity(0.5)),
+                  color:
+                      AccountProfileColors.inputBorder.withValues(alpha: 0.5)),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -765,9 +765,9 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // PASSWORD CARD
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildPasswordCard() {
     return Container(
@@ -776,9 +776,10 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
         children: [
           // Toggle header
           InkWell(
-            onTap: () => setState(
-                () => _showPasswordSection = !_showPasswordSection),
-            borderRadius: BorderRadius.circular(AccountProfileStyles.cardRadius),
+            onTap: () =>
+                setState(() => _showPasswordSection = !_showPasswordSection),
+            borderRadius:
+                BorderRadius.circular(AccountProfileStyles.cardRadius),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
@@ -790,7 +791,8 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
                       color: AccountProfileColors.infoBg,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                          color: AccountProfileColors.info.withOpacity(0.3)),
+                          color:
+                              AccountProfileColors.info.withValues(alpha: 0.3)),
                     ),
                     child: const Icon(AccountProfileIcons.lock,
                         color: AccountProfileColors.info, size: 18),
@@ -814,10 +816,8 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
                   AnimatedRotation(
                     turns: _showPasswordSection ? 0.5 : 0,
                     duration: const Duration(milliseconds: 250),
-                    child: const Icon(
-                        AccountProfileIcons.chevronDown,
-                        color: AccountProfileColors.bodyTextMuted,
-                        size: 22),
+                    child: const Icon(AccountProfileIcons.chevronDown,
+                        color: AccountProfileColors.bodyTextMuted, size: 22),
                   ),
                 ],
               ),
@@ -846,31 +846,28 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
       child: Column(
         children: [
           Divider(
-              color: AccountProfileColors.bodyBorder.withOpacity(0.7),
+              color: AccountProfileColors.bodyBorder.withValues(alpha: 0.7),
               height: 1),
           const SizedBox(height: 18),
           _buildPasswordField(
             controller: _currPassCtrl,
             label: AccountProfileStrings.labelCurrentPass,
             obscure: _obscureCurr,
-            onToggle: () =>
-                setState(() => _obscureCurr = !_obscureCurr),
+            onToggle: () => setState(() => _obscureCurr = !_obscureCurr),
           ),
           const SizedBox(height: 12),
           _buildPasswordField(
             controller: _newPassCtrl,
             label: AccountProfileStrings.labelNewPass,
             obscure: _obscureNew,
-            onToggle: () =>
-                setState(() => _obscureNew = !_obscureNew),
+            onToggle: () => setState(() => _obscureNew = !_obscureNew),
           ),
           const SizedBox(height: 12),
           _buildPasswordField(
             controller: _confirmPassCtrl,
             label: AccountProfileStrings.labelConfirmPass,
             obscure: _obscureConfirm,
-            onToggle: () =>
-                setState(() => _obscureConfirm = !_obscureConfirm),
+            onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -881,7 +878,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
               style: ElevatedButton.styleFrom(
                 backgroundColor: AccountProfileColors.info,
                 disabledBackgroundColor:
-                    AccountProfileColors.info.withOpacity(0.5),
+                    AccountProfileColors.info.withValues(alpha: 0.5),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -917,8 +914,8 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
           obscureText: obscure,
           style: AccountProfileStyles.fieldValue,
           decoration: InputDecoration(
-            prefixIcon: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+            prefixIcon: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12),
               child: Icon(AccountProfileIcons.lock,
                   size: 17, color: AccountProfileColors.info),
             ),
@@ -940,13 +937,13 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                  color: AccountProfileColors.inputBorder),
+              borderSide:
+                  const BorderSide(color: AccountProfileColors.inputBorder),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                  color: AccountProfileColors.inputBorder),
+              borderSide:
+                  const BorderSide(color: AccountProfileColors.inputBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -959,19 +956,18 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // OWNER ACCOUNT DETAILS CARD
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildAccountDetailsCard() {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AccountProfileColors.bodyPanelBg,
-        borderRadius:
-            BorderRadius.circular(AccountProfileStyles.cardRadius),
+        borderRadius: BorderRadius.circular(AccountProfileStyles.cardRadius),
         border: Border.all(
-            color: AccountProfileColors.brandGold.withOpacity(0.25)),
+            color: AccountProfileColors.brandGold.withValues(alpha: 0.25)),
         boxShadow: const [
           BoxShadow(
               color: AccountProfileColors.shadowLight,
@@ -988,19 +984,17 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
           ),
           const SizedBox(height: 16),
           Divider(
-              color: AccountProfileColors.bodyBorder.withOpacity(0.6),
+              color: AccountProfileColors.bodyBorder.withValues(alpha: 0.6),
               height: 1),
           const SizedBox(height: 14),
-          _infoRow('Company ID',
-              _userData?['companyId'] ?? '—'),
-          _infoRow('User ID',
-              _auth.currentUser?.uid ?? '—'),
+          _infoRow('Company ID', _userData?['companyId'] ?? 'â€”'),
+          _infoRow('User ID', _auth.currentUser?.uid ?? 'â€”'),
           _infoRow('Plan', _userData?['plan'] ?? 'Enterprise'),
           _infoRow(
             'Email Verified',
             (_auth.currentUser?.emailVerified ?? false)
-                ? '✓ Verified'
-                : '✗ Not Verified',
+                ? 'âœ“ Verified'
+                : 'âœ— Not Verified',
             valueColor: (_auth.currentUser?.emailVerified ?? false)
                 ? AccountProfileColors.successText
                 : AccountProfileColors.danger,
@@ -1019,8 +1013,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
         children: [
           SizedBox(
             width: 140,
-            child: Text(label,
-                style: AccountProfileStyles.infoLabel),
+            child: Text(label, style: AccountProfileStyles.infoLabel),
           ),
           Expanded(
             child: Text(
@@ -1036,12 +1029,11 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // SECTION HEADER
-  // ─────────────────────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  Widget _buildSectionHeader(
-      {required IconData icon, required String title}) {
+  Widget _buildSectionHeader({required IconData icon, required String title}) {
     return Row(
       children: [
         Container(
@@ -1052,8 +1044,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
             borderRadius: BorderRadius.circular(7),
             border: Border.all(color: AccountProfileColors.brandGoldBorder),
           ),
-          child: Icon(icon,
-              size: 14, color: AccountProfileColors.brandGold),
+          child: Icon(icon, size: 14, color: AccountProfileColors.brandGold),
         ),
         const SizedBox(width: 10),
         Text(title, style: AccountProfileStyles.sectionTitle),
@@ -1070,8 +1061,7 @@ class _PhotoMenuSheet extends StatelessWidget {
   final VoidCallback onGallery;
   final VoidCallback onRemove;
 
-  const _PhotoMenuSheet(
-      {required this.onGallery, required this.onRemove});
+  const _PhotoMenuSheet({required this.onGallery, required this.onRemove});
 
   @override
   Widget build(BuildContext context) {
@@ -1082,7 +1072,7 @@ class _PhotoMenuSheet extends StatelessWidget {
         color: AccountProfileColors.bodyPanelBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: AccountProfileColors.bodyBorder.withOpacity(0.6)),
+            color: AccountProfileColors.bodyBorder.withValues(alpha: 0.6)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1104,7 +1094,7 @@ class _PhotoMenuSheet extends StatelessWidget {
             onTap: onGallery,
           ),
           Divider(
-              color: AccountProfileColors.bodyBorder.withOpacity(0.5),
+              color: AccountProfileColors.bodyBorder.withValues(alpha: 0.5),
               height: 1,
               indent: 20,
               endIndent: 20),
@@ -1138,15 +1128,14 @@ class _SheetTile extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         child: Row(
           children: [
             Container(
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.08),
+                color: color.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(9),
               ),
               child: Icon(icon, color: color, size: 18),

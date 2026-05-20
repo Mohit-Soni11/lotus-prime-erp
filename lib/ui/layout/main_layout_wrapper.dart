@@ -4,18 +4,18 @@
 // DESCRIPTION : Central navigation shell.
 //
 // CHANGELOG:
-//   v1 — Initial shell
-//   v2 — cashBookRoute wired to CashBookScreen
-//   v3 — Karigar module all 4 routes wired
-//   v4 — karigarHisaabRoute renamed to karigarLedgerRoute (route fix)
+//   v1 â€” Initial shell
+//   v2 â€” cashBookRoute wired to CashBookScreen
+//   v3 â€” Karigar module all 4 routes wired
+//   v4 â€” karigarHisaabRoute renamed to karigarLedgerRoute (route fix)
 //        Finance & Ledgers comment updated (renamed from Accounts & GST)
-//   v5 — bankBookRoute wired to BankBookScreen
-//   v6 — Girvi module all 4 routes wired
-//   v7 — Supplier module wired
-//   v8 — ✅ Expense Entry module wired
-//   v9 — ✅ Day Book module wired
-//   v10 — ✅ Delivery Management module wired
-//   v11 — ✅ Add Stock Route wired to AddStockHubScreen
+//   v5 â€” bankBookRoute wired to BankBookScreen
+//   v6 â€” Girvi module all 4 routes wired
+//   v7 â€” Supplier module wired
+//   v8 â€” âœ… Expense Entry module wired
+//   v9 â€” âœ… Day Book module wired
+//   v10 â€” âœ… Delivery Management module wired
+//   v11 â€” âœ… Add Stock Route wired to AddStockHubScreen
 // =============================================================================
 
 import 'dart:io';
@@ -37,7 +37,7 @@ import '../../ui/sales & orders/sales_pos/pos_master_sale_screen.dart';
 // BOOKING
 import '../booking_advance/booking_advance_screen.dart';
 
-// ✅ v10: DELIVERY MANAGEMENT
+// âœ… v10: DELIVERY MANAGEMENT
 import '../sales & orders/delivery/delivery_management_screen.dart';
 
 // STOCK
@@ -50,7 +50,7 @@ import '../customer/add_customer/add_customer_screen.dart';
 import '../customer/customer_profile/customer_profile_screen.dart';
 import '../customer/defaulter/defaulter_list_screen.dart';
 
-// ✅ v7: SUPPLIER MODULE
+// âœ… v7: SUPPLIER MODULE
 import '../stock/supplier/supplier_list/supplier_list_screen.dart';
 import '../stock/supplier/add_supplier/add_supplier_screen.dart';
 
@@ -60,7 +60,7 @@ import '../purchase & orders/purchase_entry/purchase_entry_screen.dart';
 // FINANCE & LEDGERS
 import '../finance/cash_book/cash_book_screen.dart';
 import '../finance/bank_book/bank_book_screen.dart';
-import '../finance/expense/expense_screen.dart'; // ✅ v8: Expense Entry
+import '../finance/expense/expense_screen.dart'; // âœ… v8: Expense Entry
 
 // KARIGAR MODULE
 import '../karigar/issue_karigar/issue_karigar_screen.dart';
@@ -68,13 +68,13 @@ import '../karigar/receive_karigar/receive_karigar_screen.dart';
 import '../karigar/pending_jobs/pending_jobs_screen.dart';
 import '../karigar/karigar_hisaab/karigar_hisaab_screen.dart';
 
-// ✅ v6: GIRVI MODULE
+// âœ… v6: GIRVI MODULE
 import '../girvi/new_girvi/new_girvi_screen.dart';
 import '../girvi/girvi_list/girvi_list_screen.dart';
 import '../girvi/interest_calc/interest_calc_screen.dart';
 import '../girvi/notice_auction/notice_auction_screen.dart';
 
-// ✅ v9: REPORTS MODULE
+// âœ… v9: REPORTS MODULE
 import '../report/day_book/day_book_screen.dart';
 
 class MainLayoutWrapper extends StatefulWidget {
@@ -88,9 +88,9 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
   String _activePageRouteId = AppRoutes.dashboardRoute;
   int? _activeCustomerId;
 
-  // ── Central Navigation Controller ────────────────────────────────────────
+  // â”€â”€ Central Navigation Controller â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  // ✅ NEW: customerId ke saath navigate — Payment Status → Customer Profile
+  // âœ… NEW: customerId ke saath navigate â€” Payment Status â†’ Customer Profile
   void _navigateToWithId(String routeId, {int? customerId}) {
     if (routeId == AppRoutes.customerProfileRoute && customerId != null) {
       Navigator.push(
@@ -124,7 +124,7 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
                     onBack: () => Navigator.pop(context),
                   )));
 
-      // ── ✅ v10: DELIVERY MANAGEMENT ────────────────────────────────────────
+      // â”€â”€ âœ… v10: DELIVERY MANAGEMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     } else if (routeId == AppRoutes.deliveryManagementRoute) {
       Navigator.push(
           context,
@@ -187,7 +187,7 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
                   )));
     }
 
-    // ── ✅ v7: SUPPLIER MODULE ─────────────────────────────────────────────────
+    // â”€â”€ âœ… v7: SUPPLIER MODULE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     else if (routeId == AppRoutes.supplierListRoute) {
       Navigator.push(
@@ -205,7 +205,7 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
                                   )));
                     },
                     onSupplierTap: (supplierId) {
-                      // TODO: SupplierProfileScreen — coming soon
+                      // TODO: SupplierProfileScreen â€” coming soon
                     },
                   )));
     } else if (routeId == AppRoutes.addSupplierRoute) {
@@ -218,7 +218,7 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
                   )));
     }
 
-    // ── STOCK ─────────────────────────────────────────────────────────────────
+    // â”€â”€ STOCK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     else if (routeId == AppRoutes.addStockRoute) {
       Navigator.push(context,
@@ -235,7 +235,7 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
           MaterialPageRoute(builder: (_) => const PurchaseEntryScreen()));
     }
 
-    // ── FINANCE & LEDGERS ─────────────────────────────────────────────────────
+    // â”€â”€ FINANCE & LEDGERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     else if (routeId == AppRoutes.cashBookRoute) {
       Navigator.push(
@@ -244,7 +244,7 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
       Navigator.push(
           context, MaterialPageRoute(builder: (_) => const BankBookScreen()));
     } else if (routeId == AppRoutes.expenseEntryRoute) {
-      // ✅ v8
+      // âœ… v8
       Navigator.push(
           context,
           MaterialPageRoute(
@@ -253,7 +253,7 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
                   )));
     }
 
-    // ── KARIGAR MODULE ────────────────────────────────────────────────────────
+    // â”€â”€ KARIGAR MODULE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     else if (routeId == AppRoutes.issueToKarigarRoute) {
       Navigator.push(context,
@@ -285,7 +285,7 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
                   )));
     }
 
-    // ── ✅ v6: GIRVI MODULE ───────────────────────────────────────────────────
+    // â”€â”€ âœ… v6: GIRVI MODULE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     else if (routeId == AppRoutes.newGirviRoute) {
       Navigator.push(
@@ -315,7 +315,7 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
                   )));
     }
 
-    // ── ✅ v9: REPORTS MODULE ─────────────────────────────────────────────────
+    // â”€â”€ âœ… v9: REPORTS MODULE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     else if (routeId == AppRoutes.dayBookRoute) {
       Navigator.push(
@@ -332,14 +332,14 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
     }
   }
 
-  // ── Page Content Switcher ─────────────────────────────────────────────────
+  // â”€â”€ Page Content Switcher â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _getPageContent(String routeId) {
     switch (routeId) {
       case AppRoutes.dashboardRoute:
         return DashboardScreen(
           onNavigate: (route) => _navigateTo(route),
-          // ✅ FIX: customerId ab pass hoga — Payment Status → Customer Profile
+          // âœ… FIX: customerId ab pass hoga â€” Payment Status â†’ Customer Profile
           onNavigateWithId: (routeId, {int? customerId}) =>
               _navigateToWithId(routeId, customerId: customerId),
         );
@@ -352,7 +352,7 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
     }
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
+  // â”€â”€ Build â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   @override
   Widget build(BuildContext context) {
@@ -386,14 +386,14 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
             child: Container(
               margin: EdgeInsets.zero,
               decoration: BoxDecoration(
-                color: UV.colors.bgSecondary.withOpacity(0.5),
+                color: UV.colors.bgSecondary.withValues(alpha: 0.5),
                 border: Border(
                   left: BorderSide(color: UV.colors.glassBorder, width: 1),
                 ),
                 boxShadow: [
                   if (!isSmallScreen)
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 10,
                       offset: const Offset(-4, 0),
                     ),
@@ -418,7 +418,7 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
     );
   }
 
-  // ── Sidebar ────────────────────────────────────────────────────────────────
+  // â”€â”€ Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildSidebarLogic(BuildContext context, {required bool isMobile}) {
     return CustomSidebar(
@@ -439,7 +439,7 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
   }
 }
 
-// ── Coming Soon Widget ─────────────────────────────────────────────────────────
+// â”€â”€ Coming Soon Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ComingSoonWidget extends StatelessWidget {
   final String pageTitle;
@@ -454,7 +454,7 @@ class _ComingSoonWidget extends StatelessWidget {
           Icon(
             Icons.construction_rounded,
             size: 60,
-            color: UV.colors.textSecondary.withOpacity(0.5),
+            color: UV.colors.textSecondary.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 20),
           Text('Under Construction',
@@ -463,7 +463,7 @@ class _ComingSoonWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: UV.colors.textSecondary.withOpacity(0.1),
+              color: UV.colors.textSecondary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(

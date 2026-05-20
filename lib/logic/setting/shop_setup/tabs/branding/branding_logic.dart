@@ -16,14 +16,13 @@ import '../../../../../models/setting/shop_setup/enums/branding_enums.dart';
 import '../../../../../helpers/branding/branding_validators.dart';
 
 class BrandingLogic extends ChangeNotifier {
-  
   // --- CORE DATA MODEL ---
   ShopBrandingModel brandingData = const ShopBrandingModel();
 
   // --- STATE LOCKS ---
   bool isSocialLocked = true;
   bool isSupportLocked = true;
-  
+
   // 🚀 UPGRADE: Changed to String to perfectly match UI requirements
   String? loadingSection;
 
@@ -48,7 +47,7 @@ class BrandingLogic extends ChangeNotifier {
   final FocusNode fbFocus = FocusNode();
   final FocusNode ytFocus = FocusNode();
   final FocusNode webFocus = FocusNode();
-  
+
   final FocusNode waChannelFocus = FocusNode();
   final FocusNode waBizFocus = FocusNode();
   final FocusNode emailFocus = FocusNode();
@@ -58,25 +57,25 @@ class BrandingLogic extends ChangeNotifier {
   void init(ShopProfileModel? basicInfoData) {
     if (basicInfoData != null) {
       if (waBizCtrl.text.isEmpty) {
-        waBizCtrl.text = basicInfoData.shopWhatsapp.isNotEmpty 
-            ? basicInfoData.shopWhatsapp 
+        waBizCtrl.text = basicInfoData.shopWhatsapp.isNotEmpty
+            ? basicInfoData.shopWhatsapp
             : basicInfoData.ownerWhatsapp;
       }
-          
+
       if (emailCtrl.text.isEmpty) {
         emailCtrl.text = basicInfoData.businessEmail;
       }
-      
+
       if (phoneCtrl.text.isEmpty) {
-        phoneCtrl.text = basicInfoData.shopPhone.isNotEmpty 
-            ? basicInfoData.shopPhone 
+        phoneCtrl.text = basicInfoData.shopPhone.isNotEmpty
+            ? basicInfoData.shopPhone
             : basicInfoData.ownerPhone;
       }
     }
   }
 
   // --- UI HELPER METHODS ---
-  
+
   /// Checks if a specific section is currently locked.
   bool isSectionLocked(String sectionId) {
     return sectionId == 'social' ? isSocialLocked : isSupportLocked;
@@ -101,14 +100,36 @@ class BrandingLogic extends ChangeNotifier {
   Future<void> saveSection(String sectionId) async {
     // 1. Validation & Auto-Focus Error Routing
     if (sectionId == 'social') {
-      if (BrandingValidators.validateOptionalSocialLink(instaCtrl.text) != null) { instaFocus.requestFocus(); return; }
-      if (BrandingValidators.validateOptionalSocialLink(fbCtrl.text) != null) { fbFocus.requestFocus(); return; }
-      if (BrandingValidators.validateOptionalSocialLink(ytCtrl.text) != null) { ytFocus.requestFocus(); return; }
-      if (BrandingValidators.validateOptionalSocialLink(webCtrl.text) != null) { webFocus.requestFocus(); return; }
+      if (BrandingValidators.validateOptionalSocialLink(instaCtrl.text) !=
+          null) {
+        instaFocus.requestFocus();
+        return;
+      }
+      if (BrandingValidators.validateOptionalSocialLink(fbCtrl.text) != null) {
+        fbFocus.requestFocus();
+        return;
+      }
+      if (BrandingValidators.validateOptionalSocialLink(ytCtrl.text) != null) {
+        ytFocus.requestFocus();
+        return;
+      }
+      if (BrandingValidators.validateOptionalSocialLink(webCtrl.text) != null) {
+        webFocus.requestFocus();
+        return;
+      }
     } else if (sectionId == 'support') {
-      if (BrandingValidators.validateOptionalPhone(waBizCtrl.text) != null) { waBizFocus.requestFocus(); return; }
-      if (BrandingValidators.validateOptionalEmail(emailCtrl.text) != null) { emailFocus.requestFocus(); return; }
-      if (BrandingValidators.validateOptionalPhone(phoneCtrl.text) != null) { phoneFocus.requestFocus(); return; }
+      if (BrandingValidators.validateOptionalPhone(waBizCtrl.text) != null) {
+        waBizFocus.requestFocus();
+        return;
+      }
+      if (BrandingValidators.validateOptionalEmail(emailCtrl.text) != null) {
+        emailFocus.requestFocus();
+        return;
+      }
+      if (BrandingValidators.validateOptionalPhone(phoneCtrl.text) != null) {
+        phoneFocus.requestFocus();
+        return;
+      }
     }
 
     // 2. Start Loading State
@@ -145,10 +166,10 @@ class BrandingLogic extends ChangeNotifier {
   /// 🚀 UPGRADE: Now accepts String from UI and safely parses it to strict Enum
   Future<void> launchPlatformUrl(String platformType, String value) async {
     if (value.trim().isEmpty) return;
-    
+
     // Convert string to strict Enum to prevent compile-time crashes
     final SocialPlatform platform = SocialPlatform.fromString(platformType);
-    
+
     String urlString = "";
     final cleanValue = value.trim();
 
@@ -159,10 +180,11 @@ class BrandingLogic extends ChangeNotifier {
       case SocialPlatform.facebook:
       case SocialPlatform.youtube:
       case SocialPlatform.website:
-        urlString = cleanValue.startsWith('http') ? cleanValue : "https://$cleanValue";
+        urlString =
+            cleanValue.startsWith('http') ? cleanValue : "https://$cleanValue";
         break;
       case SocialPlatform.whatsapp:
-        urlString = "https://wa.me/91$cleanValue"; 
+        urlString = "https://wa.me/91$cleanValue";
         break;
       case SocialPlatform.email:
         urlString = "mailto:$cleanValue";
@@ -184,12 +206,24 @@ class BrandingLogic extends ChangeNotifier {
 
   @override
   void dispose() {
-    instaCtrl.dispose(); fbCtrl.dispose(); ytCtrl.dispose(); webCtrl.dispose();
-    waChannelCtrl.dispose(); waBizCtrl.dispose(); emailCtrl.dispose(); phoneCtrl.dispose();
-    
-    instaFocus.dispose(); fbFocus.dispose(); ytFocus.dispose(); webFocus.dispose();
-    waChannelFocus.dispose(); waBizFocus.dispose(); emailFocus.dispose(); phoneFocus.dispose();
-    
+    instaCtrl.dispose();
+    fbCtrl.dispose();
+    ytCtrl.dispose();
+    webCtrl.dispose();
+    waChannelCtrl.dispose();
+    waBizCtrl.dispose();
+    emailCtrl.dispose();
+    phoneCtrl.dispose();
+
+    instaFocus.dispose();
+    fbFocus.dispose();
+    ytFocus.dispose();
+    webFocus.dispose();
+    waChannelFocus.dispose();
+    waBizFocus.dispose();
+    emailFocus.dispose();
+    phoneFocus.dispose();
+
     super.dispose();
   }
 }

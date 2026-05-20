@@ -8,32 +8,32 @@
 
 class InventoryStats {
   // ── Opening Stock (items added before today) ──────────────────
-  final int    openingCount;
-  final double openingWeight;   // total gross weight in grams
-  final double openingValue;    // total MRP value in ₹
+  final int openingCount;
+  final double openingWeight; // total gross weight in grams
+  final double openingValue; // total MRP value in ₹
 
   // ── Closing Stock (currently Available) ──────────────────────
-  final int    closingCount;
+  final int closingCount;
   final double closingWeight;
   final double closingValue;
 
   // ── Today's movement ─────────────────────────────────────────
-  final int todayAdded;    // items added today
-  final int todaySold;     // items sold today (status = Sold, updatedAt today)
+  final int todayAdded; // items added today
+  final int todaySold; // items sold today (status = Sold, updatedAt today)
 
   // ── Metal Holdings ────────────────────────────────────────────
-  final int    goldCount;
+  final int goldCount;
   final double goldWeight;
   final double goldValue;
 
-  final int    silverCount;
+  final int silverCount;
   final double silverWeight;
   final double silverValue;
 
-  final int    diamondCount;
+  final int diamondCount;
   final double diamondValue;
 
-  final int    platinumCount;
+  final int platinumCount;
   final double platinumWeight;
 
   const InventoryStats({
@@ -60,18 +60,29 @@ class InventoryStats {
   // Convenience: net movement today
   int get netMovement => todayAdded - todaySold;
 
-  bool get hasGold     => goldCount > 0;
-  bool get hasSilver   => silverCount > 0;
-  bool get hasDiamond  => diamondCount > 0;
+  bool get hasGold => goldCount > 0;
+  bool get hasSilver => silverCount > 0;
+  bool get hasDiamond => diamondCount > 0;
   bool get hasPlatinum => platinumCount > 0;
 
   static InventoryStats empty() => const InventoryStats(
-    openingCount: 0,   openingWeight: 0,  openingValue: 0,
-    closingCount: 0,   closingWeight: 0,  closingValue: 0,
-    todayAdded: 0,     todaySold: 0,
-    goldCount: 0,      goldWeight: 0,     goldValue: 0,
-    silverCount: 0,    silverWeight: 0,   silverValue: 0,
-    diamondCount: 0,   diamondValue: 0,
-    platinumCount: 0,  platinumWeight: 0,
-  );
+        openingCount: 0,
+        openingWeight: 0,
+        openingValue: 0,
+        closingCount: 0,
+        closingWeight: 0,
+        closingValue: 0,
+        todayAdded: 0,
+        todaySold: 0,
+        goldCount: 0,
+        goldWeight: 0,
+        goldValue: 0,
+        silverCount: 0,
+        silverWeight: 0,
+        silverValue: 0,
+        diamondCount: 0,
+        diamondValue: 0,
+        platinumCount: 0,
+        platinumWeight: 0,
+      );
 }

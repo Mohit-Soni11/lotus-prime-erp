@@ -136,9 +136,9 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard> {
                     width: 52,
                     height: 52,
                     decoration: BoxDecoration(
-                      color: accent.withOpacity(0.08),
+                      color: accent.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: accent.withOpacity(0.25)),
+                      border: Border.all(color: accent.withValues(alpha: 0.25)),
                     ),
                     child: Icon(
                       AddStockIcons.hsn,
@@ -221,7 +221,7 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard> {
             },
           ),
           const SizedBox(height: 12),
-          // ── SUPPLIER INVOICE NUMBER INPUT ──
+          // â”€â”€ SUPPLIER INVOICE NUMBER INPUT â”€â”€
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -256,7 +256,7 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard> {
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: accent.withOpacity(0.10),
+                        color: accent.withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(7),
                       ),
                       child: Icon(
@@ -274,13 +274,13 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard> {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
+                    borderSide: const BorderSide(
                       color: AddStockColors.cardBorder,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
+                    borderSide: const BorderSide(
                       color: AddStockColors.cardBorder,
                     ),
                   ),
@@ -308,7 +308,7 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard> {
       width: width,
       height: 3,
       decoration: BoxDecoration(
-        color: color.withOpacity(opacity),
+        color: color.withValues(alpha: opacity),
         borderRadius: BorderRadius.circular(2),
       ),
     );
@@ -329,9 +329,9 @@ class _StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.28)),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -380,8 +380,8 @@ class _DateTimeRow extends StatelessWidget {
           iconColor: AddStockColors.accentCompliance,
           label: 'DATE',
           value: data.date.toUpperCase(),
-          chipBg: AddStockColors.accentCompliance.withOpacity(0.07),
-          chipBorder: AddStockColors.accentCompliance.withOpacity(0.25),
+          chipBg: AddStockColors.accentCompliance.withValues(alpha: 0.07),
+          chipBorder: AddStockColors.accentCompliance.withValues(alpha: 0.25),
           valueColor: AddStockColors.textDark,
         ),
         _DateChip(
@@ -389,8 +389,8 @@ class _DateTimeRow extends StatelessWidget {
           iconColor: AddStockColors.success,
           label: 'TIME',
           value: cleanTime,
-          chipBg: AddStockColors.success.withOpacity(0.07),
-          chipBorder: AddStockColors.success.withOpacity(0.25),
+          chipBg: AddStockColors.success.withValues(alpha: 0.07),
+          chipBorder: AddStockColors.success.withValues(alpha: 0.25),
           valueColor: AddStockColors.success,
         ),
       ],
@@ -434,7 +434,7 @@ class _DateChip extends StatelessWidget {
             width: 26,
             height: 26,
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.12),
+              color: iconColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(7),
             ),
             child: Icon(icon, color: iconColor, size: 14),
@@ -450,7 +450,7 @@ class _DateChip extends StatelessWidget {
                   fontSize: 9,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.0,
-                  color: iconColor.withOpacity(0.8),
+                  color: iconColor.withValues(alpha: 0.8),
                 ),
               ),
               const SizedBox(height: 2),

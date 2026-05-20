@@ -22,7 +22,7 @@ class TaxGstIcons {
   static const IconData gstLegalName = Icons.business_rounded;
   static const IconData calendar = Icons.calendar_month_rounded;
   static const IconData taxpayer = Icons.person_pin_rounded;
-  
+
   static const IconData bisVerified = Icons.verified_user_rounded;
   static const IconData dateRange = Icons.date_range_rounded;
 
@@ -32,12 +32,12 @@ class TaxGstIcons {
   static const IconData portalOpen = Icons.open_in_new_rounded;
   static const IconData verifyCheck = Icons.check_circle_outline_rounded;
   static const IconData hsnSync = Icons.sync_rounded;
-  static const IconData lock = Icons.lock_outline_rounded; 
+  static const IconData lock = Icons.lock_outline_rounded;
   static const IconData unlock = Icons.lock_open_rounded;
   static const IconData close = Icons.close_rounded;
   static const IconData check = Icons.check_rounded;
   static const IconData arrowRight = Icons.arrow_forward_ios_rounded;
-  
+
   // --- Documents ---
   static const IconData cloudUp = Icons.cloud_upload_rounded;
   static const IconData uploadFile = Icons.upload_file_rounded;
@@ -46,7 +46,7 @@ class TaxGstIcons {
   static const IconData removeTrash = Icons.delete_outline_rounded;
   static const IconData browse = Icons.folder_open_rounded;
   static const IconData info = Icons.info_outline_rounded;
-  
+
   // --- Status ---
   static const IconData statusShield = Icons.gpp_good_rounded;
   static const IconData error = Icons.error_outline_rounded;

@@ -68,15 +68,15 @@ class _PendingJobsAppBarState extends State<PendingJobsAppBar>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ── 1. Animated Back Button ──────────────────────────────────────
+            // â”€â”€ 1. Animated Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _HoverBackButton(onTap: widget.onBack),
             const SizedBox(width: 18),
 
-            // ── 2. Vertical Divider ──────────────────────────────────────────
+            // â”€â”€ 2. Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _buildVerticalDivider(),
             const SizedBox(width: 18),
 
-            // ── 3. Premium Gradient Module Icon ──────────────────────────────
+            // â”€â”€ 3. Premium Gradient Module Icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Container(
               width: 34,
               height: 34,
@@ -92,7 +92,7 @@ class _PendingJobsAppBarState extends State<PendingJobsAppBar>
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: KarigarColors.brandGold.withOpacity(0.5),
+                    color: KarigarColors.brandGold.withValues(alpha: 0.5),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   )
@@ -106,7 +106,7 @@ class _PendingJobsAppBarState extends State<PendingJobsAppBar>
             ),
             const SizedBox(width: 14),
 
-            // ── 4. Main Title ────────────────────────────────────────────────
+            // â”€â”€ 4. Main Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Text(
               KarigarStrings.pendingScreenTitle.toUpperCase(),
               style: KarigarStyles.shellTitle.copyWith(
@@ -118,7 +118,7 @@ class _PendingJobsAppBarState extends State<PendingJobsAppBar>
             // Spacer pushes everything else to the right
             const Spacer(),
 
-            // ── 5. Premium Radar Widget ──────────────────────────────────────
+            // â”€â”€ 5. Premium Radar Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _RadarWidget(blinkCtrl: _blinkCtrl),
           ],
         ),
@@ -145,9 +145,9 @@ class _PendingJobsAppBarState extends State<PendingJobsAppBar>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // REUSABLE APP BAR COMPONENTS
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -180,7 +180,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
             decoration: BoxDecoration(
               color: _isHovered
                   ? KarigarColors.shellBg
-                  : KarigarColors.shellBorder.withOpacity(0.3),
+                  : KarigarColors.shellBorder.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isHovered
@@ -191,7 +191,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               boxShadow: _isHovered
                   ? [
                       BoxShadow(
-                        color: KarigarColors.brandGold.withOpacity(0.3),
+                        color: KarigarColors.brandGold.withValues(alpha: 0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
                       ),
@@ -221,10 +221,10 @@ class _RadarWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: KarigarColors.onlineGreen.withOpacity(0.08),
+        color: KarigarColors.onlineGreen.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(30),
         border: Border.all(
-          color: KarigarColors.onlineGreen.withOpacity(0.3),
+          color: KarigarColors.onlineGreen.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -286,7 +286,7 @@ class _RadarWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: KarigarColors.onlineGreen.withOpacity(0.5),
+                  color: KarigarColors.onlineGreen.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),

@@ -69,7 +69,7 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
     );
   }
 
-  // ── MAIN PANEL ─────────────────────────────────────────────────────────────
+  // â”€â”€ MAIN PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildMainPanel(AddStockController ctrl, StockMetalUiData ui) {
     return Container(
       decoration: AddStockStyles.cardWithAccent(ui.accent),
@@ -91,7 +91,7 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: ui.textOnGradient.withOpacity(0.12),
+                    color: ui.textOnGradient.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   clipBehavior: Clip.antiAlias,
@@ -110,7 +110,7 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${ui.title} — Stock Intake',
+                        '${ui.title} â€” Stock Intake',
                         style: GoogleFonts.manrope(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
@@ -123,7 +123,7 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           height: 1.45,
-                          color: ui.textOnGradient.withOpacity(0.75),
+                          color: ui.textOnGradient.withValues(alpha: 0.75),
                         ),
                       ),
                     ],
@@ -166,7 +166,7 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
                   ),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? ui.accent.withOpacity(0.12)
+                        ? ui.accent.withValues(alpha: 0.12)
                         : AddStockColors.inputBg,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
@@ -266,7 +266,7 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
     );
   }
 
-  // ── SIDE PANEL — Smart Stock Summary ───────────────────────────────────────
+  // â”€â”€ SIDE PANEL â€” Smart Stock Summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildSidePanel(AddStockController ctrl, StockMetalUiData ui) {
     return Container(
       decoration: AddStockStyles.cardDecoration,
@@ -281,7 +281,7 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
                 width: 30,
                 height: 30,
                 decoration: BoxDecoration(
-                  color: ui.accent.withOpacity(0.12),
+                  color: ui.accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child:
@@ -333,14 +333,14 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
               decoration: BoxDecoration(
                 color: ui.softSurface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: ui.accent.withOpacity(0.14)),
+                border: Border.all(color: ui.accent.withValues(alpha: 0.14)),
               ),
               child: Column(
                 children: [
                   Icon(
                     Icons.inventory_outlined,
                     size: 28,
-                    color: ui.accent.withOpacity(0.5),
+                    color: ui.accent.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -392,7 +392,7 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
           ),
           const SizedBox(height: 10),
           _guideline(
-            'Purity is locked at batch level — select carefully before proceeding.',
+            'Purity is locked at batch level â€” select carefully before proceeding.',
             ui.accent,
           ),
           _guideline(
@@ -420,7 +420,7 @@ class _AddStockPurityStepState extends State<AddStockPurityStep> {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accent.withOpacity(0.18)),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
       ),
       child: Row(
         children: [

@@ -29,7 +29,7 @@ class DefaulterStyles {
         letterSpacing: 0.5,
       );
 
-  static TextStyle get onlineBadgeText => TextStyle(
+  static TextStyle get onlineBadgeText => const TextStyle(
         // Removed GoogleFonts to match exact style
         fontSize: 12.0, // Match 12px
         fontWeight: FontWeight.w700,
@@ -216,11 +216,11 @@ class DefaulterStyles {
         color: DefaulterColors.statCardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: DefaulterColors.statCardBorder, width: 1),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: DefaulterColors.shadowLight,
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       );
@@ -229,11 +229,11 @@ class DefaulterStyles {
         color: DefaulterColors.bodyPanelBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: DefaulterColors.bodyBorder, width: 1),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: DefaulterColors.shadowLight,
             blurRadius: 12,
-            offset: const Offset(0, 3),
+            offset: Offset(0, 3),
           ),
         ],
       );
@@ -242,11 +242,11 @@ class DefaulterStyles {
         color: DefaulterColors.searchBg,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: DefaulterColors.searchBorder, width: 1),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: DefaulterColors.shadowLight,
             blurRadius: 6,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       );

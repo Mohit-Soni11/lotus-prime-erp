@@ -9,9 +9,9 @@ class BillStatsModel {
     required this.totalRevenue,
   });
 
-  factory BillStatsModel.loading() => 
+  factory BillStatsModel.loading() =>
       const BillStatsModel(count: "--", totalRevenue: "Loading...");
 
-  factory BillStatsModel.zero() => 
+  factory BillStatsModel.zero() =>
       const BillStatsModel(count: "0", totalRevenue: "₹ 0.00");
 }

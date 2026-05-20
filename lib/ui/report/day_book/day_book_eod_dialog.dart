@@ -1,12 +1,12 @@
 // =============================================================================
 // FILE        : day_book_eod_dialog.dart
-// MODULE      : Reports & Analytics → Day Book
+// MODULE      : Reports & Analytics â†’ Day Book
 // LAYER       : UI
 // DESCRIPTION : End of Day Settlement Dialog.
-//               • Denomination calculator (physical cash count)
-//               • System amount vs physical amount comparison
-//               • Match → "Close Day & Lock Ledger" button active
-//               • Mismatch → difference highlighted in red
+//               â€¢ Denomination calculator (physical cash count)
+//               â€¢ System amount vs physical amount comparison
+//               â€¢ Match â†’ "Close Day & Lock Ledger" button active
+//               â€¢ Mismatch â†’ difference highlighted in red
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -36,12 +36,12 @@ class DayBookEodDialog extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── Header ─────────────────────────────────────────────
+                // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _EodHeader(),
 
                 const Divider(height: 1, color: DayBookColors.divider),
 
-                // ── Body (scrollable) ──────────────────────────────────
+                // â”€â”€ Body (scrollable) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 Flexible(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(20),
@@ -76,7 +76,7 @@ class DayBookEodDialog extends StatelessWidget {
 
                 const Divider(height: 1, color: DayBookColors.divider),
 
-                // ── Footer Buttons ─────────────────────────────────────
+                // â”€â”€ Footer Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _EodFooter(ctrl: ctrl, isMatched: isMatched, context: context),
               ],
             ),
@@ -87,9 +87,9 @@ class DayBookEodDialog extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Header
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _EodHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -125,7 +125,7 @@ class _EodHeader extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: DayBookColors.shellBorder.withOpacity(0.4),
+              color: DayBookColors.shellBorder.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(DayBookIcons.close,
@@ -137,9 +137,9 @@ class _EodHeader extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Denomination Grid
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _DenominationGrid extends StatelessWidget {
   final DayBookController ctrl;
   const _DenominationGrid({required this.ctrl});
@@ -155,8 +155,8 @@ class _DenominationGrid extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       child: Column(children: [
         // Header row
-        Row(children: [
-          const Expanded(
+        const Row(children: [
+          Expanded(
               flex: 2,
               child: Text('Denomination',
                   style: TextStyle(
@@ -164,7 +164,7 @@ class _DenominationGrid extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       color: DayBookColors.textMuted,
                       letterSpacing: 0.5))),
-          const Expanded(
+          Expanded(
               child: Text('Count',
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -172,7 +172,7 @@ class _DenominationGrid extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       color: DayBookColors.textMuted,
                       letterSpacing: 0.5))),
-          const Expanded(
+          Expanded(
               child: Text('Amount',
                   textAlign: TextAlign.end,
                   style: TextStyle(
@@ -254,7 +254,7 @@ class _DenomRow extends StatelessWidget {
                   color: DayBookColors.brandGoldLight,
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
-                      color: DayBookColors.brandGold.withOpacity(0.25)),
+                      color: DayBookColors.brandGold.withValues(alpha: 0.25)),
                 ),
                 child: Text(label,
                     style: DayBookStyles.denomLabel
@@ -302,7 +302,7 @@ class _DenomRow extends StatelessWidget {
             // Computed amount
             Expanded(
               child: Text(
-                '₹${_fmtNum(amount.toDouble())}',
+                'â‚¹${_fmtNum(amount.toDouble())}',
                 textAlign: TextAlign.end,
                 style: DayBookStyles.denomTotal,
               ),
@@ -320,9 +320,9 @@ class _DenomRow extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Summary Amount Row
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _SummaryRow extends StatelessWidget {
   final String label;
   final double value;
@@ -341,9 +341,9 @@ class _SummaryRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.06),
+        color: color.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(children: [
         Icon(icon, color: color, size: 16),
@@ -351,7 +351,7 @@ class _SummaryRow extends StatelessWidget {
         Text(label, style: DayBookStyles.labelBold),
         const Spacer(),
         Text(
-          '₹${value.toStringAsFixed(2)}',
+          'â‚¹${value.toStringAsFixed(2)}',
           style: DayBookStyles.amountMedium.copyWith(color: color),
         ),
       ]),
@@ -359,9 +359,9 @@ class _SummaryRow extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Difference Row
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _DifferenceRow extends StatelessWidget {
   final double diff;
   final bool isMatched;
@@ -404,7 +404,7 @@ class _DifferenceRow extends StatelessWidget {
         const Spacer(),
         if (!isMatched)
           Text(
-            '${diff > 0 ? '+' : ''}₹${diff.toStringAsFixed(2)}',
+            '${diff > 0 ? '+' : ''}â‚¹${diff.toStringAsFixed(2)}',
             style: DayBookStyles.amountSmall.copyWith(
               color: DayBookColors.cashOutAccent,
             ),
@@ -417,9 +417,9 @@ class _DifferenceRow extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Footer Buttons
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _EodFooter extends StatelessWidget {
   final DayBookController ctrl;
   final bool isMatched;
@@ -478,7 +478,7 @@ class _EodFooter extends StatelessWidget {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: const Text('Day closed & ledger locked ✓',
+                        content: const Text('Day closed & ledger locked âœ“',
                             style: TextStyle(fontWeight: FontWeight.w600)),
                         backgroundColor: DayBookColors.cashInAccent,
                         behavior: SnackBarBehavior.floating,

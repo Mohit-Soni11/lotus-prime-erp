@@ -22,7 +22,6 @@ import '../../../models/finance/bank_book/bank_book_summary_model.dart';
 import '../../../repositories/finance/bank_book_repository.dart';
 
 class BankBookController extends ChangeNotifier {
-
   BankBookController() {
     _init();
   }
@@ -31,65 +30,65 @@ class BankBookController extends ChangeNotifier {
   final BankBookRepository _repository = BankBookRepository();
 
   // ── Account State ─────────────────────────────────────────────────────────
-  List<BankAccountModel> _accounts         = [];
-  BankAccountModel?      _selectedAccount;
-  bool                   _accountsLoading  = true;
+  List<BankAccountModel> _accounts = [];
+  BankAccountModel? _selectedAccount;
+  bool _accountsLoading = true;
 
-  List<BankAccountModel> get accounts        => _accounts;
-  BankAccountModel?      get selectedAccount => _selectedAccount;
-  bool                   get accountsLoading => _accountsLoading;
+  List<BankAccountModel> get accounts => _accounts;
+  BankAccountModel? get selectedAccount => _selectedAccount;
+  bool get accountsLoading => _accountsLoading;
 
   // ── View State ────────────────────────────────────────────────────────────
-  BankBookViewMode _viewMode   = BankBookViewMode.daily;
-  BankBookFilter   _filter     = BankBookFilter.all;
-  DateTime         _activeDate = DateTime.now();
+  BankBookViewMode _viewMode = BankBookViewMode.daily;
+  BankBookFilter _filter = BankBookFilter.all;
+  DateTime _activeDate = DateTime.now();
 
-  BankBookViewMode get viewMode   => _viewMode;
-  BankBookFilter   get filter     => _filter;
-  DateTime         get activeDate => _activeDate;
+  BankBookViewMode get viewMode => _viewMode;
+  BankBookFilter get filter => _filter;
+  DateTime get activeDate => _activeDate;
 
   // ── Data State ────────────────────────────────────────────────────────────
-  BankBookSummaryModel          _summary    = BankBookSummaryModel.loading();
-  List<BankTransactionGroup>    _groups     = [];
-  List<BankTransactionModel>    _allTxns    = [];
-  bool                          _isLoading  = true;
-  String?                       _errorMessage;
+  BankBookSummaryModel _summary = BankBookSummaryModel.loading();
+  List<BankTransactionGroup> _groups = [];
+  List<BankTransactionModel> _allTxns = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
-  BankBookSummaryModel       get summary      => _summary;
-  List<BankTransactionGroup> get groups       => _groups;
-  bool                       get isLoading    => _isLoading;
-  String?                    get errorMessage => _errorMessage;
+  BankBookSummaryModel get summary => _summary;
+  List<BankTransactionGroup> get groups => _groups;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
 
   // ── Search ────────────────────────────────────────────────────────────────
   final TextEditingController searchCtrl = TextEditingController();
   String _searchQuery = '';
 
   // ── Entry Form Controllers ────────────────────────────────────────────────
-  final TextEditingController amountCtrl       = TextEditingController();
-  final TextEditingController descriptionCtrl  = TextEditingController();
-  final TextEditingController partyNameCtrl    = TextEditingController();
+  final TextEditingController amountCtrl = TextEditingController();
+  final TextEditingController descriptionCtrl = TextEditingController();
+  final TextEditingController partyNameCtrl = TextEditingController();
   final TextEditingController chequeNumberCtrl = TextEditingController();
 
-  BankTransactionType _entryType         = BankTransactionType.credit;
-  String              _entryCategory     = BankCreditCategory.salePayment.dbValue;
-  BankPaymentMode     _entryMode         = BankPaymentMode.neft;
-  DateTime            _entryDate         = DateTime.now();
-  DateTime?           _entryValueDate;
-  ChequeStatus        _entryChequeStatus = ChequeStatus.issued;
-  bool                _isSaving          = false;
+  BankTransactionType _entryType = BankTransactionType.credit;
+  String _entryCategory = BankCreditCategory.salePayment.dbValue;
+  BankPaymentMode _entryMode = BankPaymentMode.neft;
+  DateTime _entryDate = DateTime.now();
+  DateTime? _entryValueDate;
+  ChequeStatus _entryChequeStatus = ChequeStatus.issued;
+  bool _isSaving = false;
 
-  BankTransactionType get entryType         => _entryType;
-  String              get entryCategory     => _entryCategory;
-  BankPaymentMode     get entryMode         => _entryMode;
-  DateTime            get entryDate         => _entryDate;
-  DateTime?           get entryValueDate    => _entryValueDate;
-  ChequeStatus        get entryChequeStatus => _entryChequeStatus;
-  bool                get isSaving          => _isSaving;
-  bool                get isChequeMode      => _entryMode == BankPaymentMode.cheque;
+  BankTransactionType get entryType => _entryType;
+  String get entryCategory => _entryCategory;
+  BankPaymentMode get entryMode => _entryMode;
+  DateTime get entryDate => _entryDate;
+  DateTime? get entryValueDate => _entryValueDate;
+  ChequeStatus get entryChequeStatus => _entryChequeStatus;
+  bool get isSaving => _isSaving;
+  bool get isChequeMode => _entryMode == BankPaymentMode.cheque;
 
   // ── Stream ────────────────────────────────────────────────────────────────
   StreamSubscription<List<BankTransactionModel>>? _watchSub;
-  StreamSubscription<List<BankAccountModel>>?     _accountWatchSub;
+  StreamSubscription<List<BankAccountModel>>? _accountWatchSub;
 
   // ==========================================================================
   // INIT
@@ -128,34 +127,34 @@ class BankBookController extends ChangeNotifier {
   void selectAccount(BankAccountModel account) {
     if (_selectedAccount?.id == account.id) return;
     _selectedAccount = account;
-    _isLoading       = true;
+    _isLoading = true;
     notifyListeners();
     _startWatch();
   }
 
   Future<bool> addAccount({
-    required String          accountName,
-    required String          bankName,
-    required String          accountNumber,
+    required String accountName,
+    required String bankName,
+    required String accountNumber,
     required BankAccountType accountType,
-    String?  holderName,
-    String?  ifscCode,
-    String?  branchName,
-    String?  upiId,
-    double   openingBalance = 0.0,
-    bool     isPrimary      = false,
+    String? holderName,
+    String? ifscCode,
+    String? branchName,
+    String? upiId,
+    double openingBalance = 0.0,
+    bool isPrimary = false,
   }) async {
     final id = await _repository.saveAccount(
-      accountName:    accountName,
-      bankName:       bankName,
-      accountNumber:  accountNumber,
-      accountType:    accountType,
-      holderName:     holderName,
-      ifscCode:       ifscCode,
-      branchName:     branchName,
-      upiId:          upiId,
+      accountName: accountName,
+      bankName: bankName,
+      accountNumber: accountNumber,
+      accountType: accountType,
+      holderName: holderName,
+      ifscCode: ifscCode,
+      branchName: branchName,
+      upiId: upiId,
       openingBalance: openingBalance,
-      isPrimary:      isPrimary,
+      isPrimary: isPrimary,
     );
 
     if (id != null) {
@@ -199,7 +198,7 @@ class BankBookController extends ChangeNotifier {
       onError: (e) {
         debugPrint('❌ BankBookController watch error: $e');
         _errorMessage = 'Failed to load transactions.';
-        _isLoading    = false;
+        _isLoading = false;
         notifyListeners();
       },
     );
@@ -212,7 +211,7 @@ class BankBookController extends ChangeNotifier {
   Future<void> _refreshSummary() async {
     final accId = _selectedAccount?.id;
     if (accId == null) {
-      _summary   = BankBookSummaryModel.zero();
+      _summary = BankBookSummaryModel.zero();
       _isLoading = false;
       return;
     }
@@ -220,10 +219,10 @@ class BankBookController extends ChangeNotifier {
     final range = _dateRange;
     _summary = await _repository.computeSummary(
       accountId: accId,
-      from:      range.start,
-      to:        range.end,
+      from: range.start,
+      to: range.end,
     );
-    _isLoading    = false;
+    _isLoading = false;
     _errorMessage = null;
   }
 
@@ -250,11 +249,11 @@ class BankBookController extends ChangeNotifier {
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
       txns = txns.where((t) {
-        return t.categoryLabel.toLowerCase().contains(q)           ||
-               (t.partyName?.toLowerCase().contains(q) ?? false)   ||
-               (t.description?.toLowerCase().contains(q) ?? false) ||
-               t.txnId.toLowerCase().contains(q)                   ||
-               (t.chequeNumber?.toLowerCase().contains(q) ?? false);
+        return t.categoryLabel.toLowerCase().contains(q) ||
+            (t.partyName?.toLowerCase().contains(q) ?? false) ||
+            (t.description?.toLowerCase().contains(q) ?? false) ||
+            t.txnId.toLowerCase().contains(q) ||
+            (t.chequeNumber?.toLowerCase().contains(q) ?? false);
       }).toList();
     }
 
@@ -271,18 +270,20 @@ class BankBookController extends ChangeNotifier {
     }
 
     final groups = map.entries.map((e) {
-      final list   = e.value;
-      final credit = list.where((t) => t.isCredit).fold(0.0, (s, t) => s + t.amount);
-      final debit  = list.where((t) => t.isDebit).fold(0.0, (s, t) => s + t.amount);
-      final date   = DateFormat('yyyy-MM-dd').parse(e.key);
+      final list = e.value;
+      final credit =
+          list.where((t) => t.isCredit).fold(0.0, (s, t) => s + t.amount);
+      final debit =
+          list.where((t) => t.isDebit).fold(0.0, (s, t) => s + t.amount);
+      final date = DateFormat('yyyy-MM-dd').parse(e.key);
 
       return BankTransactionGroup(
-        date:         date,
-        dateLabel:    _buildDateLabel(date),
+        date: date,
+        dateLabel: _buildDateLabel(date),
         transactions: list,
-        groupCredit:  credit,
-        groupDebit:   debit,
-        groupNet:     credit - debit,
+        groupCredit: credit,
+        groupDebit: debit,
+        groupNet: credit - debit,
       );
     }).toList();
 
@@ -291,9 +292,9 @@ class BankBookController extends ChangeNotifier {
   }
 
   String _buildDateLabel(DateTime date) {
-    final now   = DateTime.now();
+    final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final d     = DateTime(date.year, date.month, date.day);
+    final d = DateTime(date.year, date.month, date.day);
 
     if (d == today) return 'Today — ${DateFormat('d MMM yyyy').format(date)}';
     if (d == today.subtract(const Duration(days: 1))) {
@@ -308,7 +309,7 @@ class BankBookController extends ChangeNotifier {
 
   void setViewMode(BankBookViewMode mode) {
     if (_viewMode == mode) return;
-    _viewMode  = mode;
+    _viewMode = mode;
     _isLoading = true;
     notifyListeners();
     _startWatch();
@@ -321,7 +322,7 @@ class BankBookController extends ChangeNotifier {
 
   void navigatePrevious() {
     _activeDate = _shift(-1);
-    _isLoading  = true;
+    _isLoading = true;
     notifyListeners();
     _startWatch();
   }
@@ -330,14 +331,14 @@ class BankBookController extends ChangeNotifier {
     final shifted = _shift(1);
     if (shifted.isAfter(DateTime.now())) return;
     _activeDate = shifted;
-    _isLoading  = true;
+    _isLoading = true;
     notifyListeners();
     _startWatch();
   }
 
   void jumpToToday() {
     _activeDate = DateTime.now();
-    _isLoading  = true;
+    _isLoading = true;
     notifyListeners();
     _startWatch();
   }
@@ -357,7 +358,7 @@ class BankBookController extends ChangeNotifier {
   // ==========================================================================
 
   void setEntryType(BankTransactionType type) {
-    _entryType     = type;
+    _entryType = type;
     _entryCategory = type == BankTransactionType.credit
         ? BankCreditCategory.salePayment.dbValue
         : BankDebitCategory.supplierPayment.dbValue;
@@ -394,11 +395,11 @@ class BankBookController extends ChangeNotifier {
     descriptionCtrl.clear();
     partyNameCtrl.clear();
     chequeNumberCtrl.clear();
-    _entryType         = BankTransactionType.credit;
-    _entryCategory     = BankCreditCategory.salePayment.dbValue;
-    _entryMode         = BankPaymentMode.neft;
-    _entryDate         = DateTime.now();
-    _entryValueDate    = null;
+    _entryType = BankTransactionType.credit;
+    _entryCategory = BankCreditCategory.salePayment.dbValue;
+    _entryMode = BankPaymentMode.neft;
+    _entryDate = DateTime.now();
+    _entryValueDate = null;
     _entryChequeStatus = ChequeStatus.issued;
     notifyListeners();
   }
@@ -417,17 +418,20 @@ class BankBookController extends ChangeNotifier {
     notifyListeners();
 
     final success = await _repository.saveTransaction(
-      accountId:      accId,
-      type:           _entryType,
+      accountId: accId,
+      type: _entryType,
       categoryDbValue: _entryCategory,
-      amount:         amount,
-      paymentMode:    _entryMode,
-      txnDate:        _entryDate,
-      valueDate:      _entryValueDate,
-      chequeNumber:   isChequeMode ? chequeNumberCtrl.text.trim() : null,
-      chequeStatus:   isChequeMode ? _entryChequeStatus : null,
-      description:    descriptionCtrl.text.trim().isEmpty ? null : descriptionCtrl.text.trim(),
-      partyName:      partyNameCtrl.text.trim().isEmpty   ? null : partyNameCtrl.text.trim(),
+      amount: amount,
+      paymentMode: _entryMode,
+      txnDate: _entryDate,
+      valueDate: _entryValueDate,
+      chequeNumber: isChequeMode ? chequeNumberCtrl.text.trim() : null,
+      chequeStatus: isChequeMode ? _entryChequeStatus : null,
+      description: descriptionCtrl.text.trim().isEmpty
+          ? null
+          : descriptionCtrl.text.trim(),
+      partyName:
+          partyNameCtrl.text.trim().isEmpty ? null : partyNameCtrl.text.trim(),
     );
 
     _isSaving = false;
@@ -459,9 +463,10 @@ class BankBookController extends ChangeNotifier {
   String get activeDateLabel {
     switch (_viewMode) {
       case BankBookViewMode.daily:
-        final now   = DateTime.now();
+        final now = DateTime.now();
         final today = DateTime(now.year, now.month, now.day);
-        final d     = DateTime(_activeDate.year, _activeDate.month, _activeDate.day);
+        final d =
+            DateTime(_activeDate.year, _activeDate.month, _activeDate.day);
         if (d == today) return 'Today';
         if (d == today.subtract(const Duration(days: 1))) return 'Yesterday';
         return DateFormat('d MMM yyyy').format(_activeDate);
@@ -474,9 +479,9 @@ class BankBookController extends ChangeNotifier {
 
   bool get isToday {
     final now = DateTime.now();
-    return _activeDate.year  == now.year  &&
-           _activeDate.month == now.month &&
-           _activeDate.day   == now.day;
+    return _activeDate.year == now.year &&
+        _activeDate.month == now.month &&
+        _activeDate.day == now.day;
   }
 
   List<String> get availableCategories {
@@ -502,17 +507,18 @@ class BankBookController extends ChangeNotifier {
       case BankBookViewMode.daily:
         return (
           start: DateTime(_activeDate.year, _activeDate.month, _activeDate.day),
-          end:   DateTime(_activeDate.year, _activeDate.month, _activeDate.day, 23, 59, 59),
+          end: DateTime(
+              _activeDate.year, _activeDate.month, _activeDate.day, 23, 59, 59),
         );
       case BankBookViewMode.monthly:
         return (
           start: DateTime(_activeDate.year, _activeDate.month, 1),
-          end:   DateTime(_activeDate.year, _activeDate.month + 1, 0, 23, 59, 59),
+          end: DateTime(_activeDate.year, _activeDate.month + 1, 0, 23, 59, 59),
         );
       case BankBookViewMode.yearly:
         return (
           start: DateTime(_activeDate.year, 1, 1),
-          end:   DateTime(_activeDate.year, 12, 31, 23, 59, 59),
+          end: DateTime(_activeDate.year, 12, 31, 23, 59, 59),
         );
     }
   }

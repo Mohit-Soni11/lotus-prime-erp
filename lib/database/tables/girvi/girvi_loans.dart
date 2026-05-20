@@ -13,12 +13,11 @@ import '../base_table.dart';
 import '../customers.dart';
 
 @DataClassName('GirviLoan')
-@TableIndex(name: 'idx_girvi_customer',  columns: {#customerId})
-@TableIndex(name: 'idx_girvi_status',    columns: {#status})
-@TableIndex(name: 'idx_girvi_ticket',    columns: {#ticketNo})
+@TableIndex(name: 'idx_girvi_customer', columns: {#customerId})
+@TableIndex(name: 'idx_girvi_status', columns: {#status})
+@TableIndex(name: 'idx_girvi_ticket', columns: {#ticketNo})
 @TableIndex(name: 'idx_girvi_startdate', columns: {#startDate})
 class GirviLoans extends Table with BaseTable {
-
   // ── TICKET ───────────────────────────────────────────────────────────────
   /// Unique ticket number e.g. GRV/2024/00001
   TextColumn get ticketNo => text().unique()();
@@ -76,8 +75,7 @@ class GirviLoans extends Table with BaseTable {
 
   // ── DATES ─────────────────────────────────────────────────────────────────
   /// Date loan was created/started
-  DateTimeColumn get startDate =>
-      dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get startDate => dateTime().withDefault(currentDateAndTime)();
 
   /// Maturity date = startDate + durationMonths (stored for alerts)
   DateTimeColumn get maturityDate => dateTime().nullable()();

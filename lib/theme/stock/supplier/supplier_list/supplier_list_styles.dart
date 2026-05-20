@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 // FILE: supplier_list_styles.dart
-// MODULE: Supplier → Supplier List
+// MODULE: Supplier â†’ Supplier List
 // -----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
@@ -22,7 +22,7 @@ class SupplierListStyles {
   static const EdgeInsets chipPadding =
       EdgeInsets.symmetric(horizontal: 16, vertical: 8);
 
-  // ── TYPOGRAPHY (Updated to Premium Style) ────────────────────────────────
+  // â”€â”€ TYPOGRAPHY (Updated to Premium Style) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get appBarTitle => GoogleFonts.inter(
         fontSize: 18, // Changed to 18
         fontWeight: FontWeight.w700,
@@ -118,12 +118,12 @@ class SupplierListStyles {
         color: SupplierListColors.bodyTextMuted,
       );
 
-  // ── DECORATIONS ──────────────────────────────────────────────────────────
+  // â”€â”€ DECORATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get cardDecoration => BoxDecoration(
         color: SupplierListColors.bodyPanelBg,
         borderRadius: BorderRadius.circular(cardBorderRadius),
-        border:
-            Border.all(color: SupplierListColors.bodyBorder.withOpacity(0.5)),
+        border: Border.all(
+            color: SupplierListColors.bodyBorder.withValues(alpha: 0.5)),
         boxShadow: const [
           BoxShadow(
               color: SupplierListColors.shadowLight,
@@ -138,7 +138,7 @@ class SupplierListStyles {
         border: Border.all(color: SupplierListColors.brandGold, width: 1.5),
         boxShadow: [
           BoxShadow(
-              color: SupplierListColors.brandGold.withOpacity(0.15),
+              color: SupplierListColors.brandGold.withValues(alpha: 0.15),
               blurRadius: 20,
               offset: const Offset(0, 8))
         ],
@@ -159,8 +159,8 @@ class SupplierListStyles {
   static BoxDecoration get statsCardDecoration => BoxDecoration(
         color: SupplierListColors.bodyPanelBg,
         borderRadius: BorderRadius.circular(16),
-        border:
-            Border.all(color: SupplierListColors.bodyBorder.withOpacity(0.5)),
+        border: Border.all(
+            color: SupplierListColors.bodyBorder.withValues(alpha: 0.5)),
         boxShadow: const [
           BoxShadow(
               color: SupplierListColors.shadowLight,

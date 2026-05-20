@@ -4,10 +4,10 @@
 // AUTHOR  : Lotus Prime ERP
 // VERSION : 1.0.0
 // DESC    : Dark-shell AppBar with:
-//           • Animated gold-hover back button
-//           • GST-green gradient module icon
-//           • Title + live pulse blink dot
-//           • Module badge (TAX & GST)
+//           â€¢ Animated gold-hover back button
+//           â€¢ GST-green gradient module icon
+//           â€¢ Title + live pulse blink dot
+//           â€¢ Module badge (TAX & GST)
 //           All text/color/icon from theme layer only.
 // ============================================================
 
@@ -20,8 +20,7 @@ class TaxGstAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBackPressed;
 
   @override
-  Size get preferredSize =>
-      const Size.fromHeight(TaxGstStyles.appBarHeight);
+  Size get preferredSize => const Size.fromHeight(TaxGstStyles.appBarHeight);
 
   @override
   State<TaxGstAppBar> createState() => _TaxGstAppBarState();
@@ -29,9 +28,8 @@ class TaxGstAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _TaxGstAppBarState extends State<TaxGstAppBar>
     with SingleTickerProviderStateMixin {
-
   late final AnimationController _pulseCtrl;
-  late final Animation<double>   _pulseAnim;
+  late final Animation<double> _pulseAnim;
 
   @override
   void initState() {
@@ -55,15 +53,15 @@ class _TaxGstAppBarState extends State<TaxGstAppBar>
   Widget build(BuildContext context) {
     return Container(
       height: TaxGstStyles.appBarHeight,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: TaxGstColors.shellSurface,
-        border: const Border(
+        border: Border(
           bottom: BorderSide(
             color: TaxGstColors.shellBorder,
             width: 1.0,
           ),
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: Color(0x28000000),
             blurRadius: 20,
@@ -77,30 +75,31 @@ class _TaxGstAppBarState extends State<TaxGstAppBar>
           padding: const EdgeInsets.symmetric(horizontal: 18),
           child: Row(
             children: [
-
-              // ── Back Button ────────────────────────────────────
+              // â”€â”€ Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               _AnimatedBackButton(onTap: widget.onBackPressed),
 
               const SizedBox(width: 14),
 
-              // ── Vertical Divider ───────────────────────────────
+              // â”€â”€ Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Container(
-                width: 1, height: 28,
+                width: 1,
+                height: 28,
                 color: TaxGstColors.shellBorder,
               ),
 
               const SizedBox(width: 14),
 
-              // ── Module Icon ────────────────────────────────────
+              // â”€â”€ Module Icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Container(
                 width: TaxGstStyles.moduleIconSize,
                 height: TaxGstStyles.moduleIconSize,
                 decoration: BoxDecoration(
                   gradient: TaxGstColors.moduleIconGradient,
-                  borderRadius: BorderRadius.circular(TaxGstStyles.radiusBadge + 1),
+                  borderRadius:
+                      BorderRadius.circular(TaxGstStyles.radiusBadge + 1),
                   boxShadow: [
                     BoxShadow(
-                      color: TaxGstColors.accentPrimary.withOpacity(0.45),
+                      color: TaxGstColors.accentPrimary.withValues(alpha: 0.45),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
@@ -115,7 +114,7 @@ class _TaxGstAppBarState extends State<TaxGstAppBar>
 
               const SizedBox(width: 12),
 
-              // ── Title + Pulse ──────────────────────────────────
+              // â”€â”€ Title + Pulse â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -134,7 +133,8 @@ class _TaxGstAppBarState extends State<TaxGstAppBar>
                           builder: (_, __) => Opacity(
                             opacity: _pulseAnim.value,
                             child: Container(
-                              width: 6, height: 6,
+                              width: 6,
+                              height: 6,
                               decoration: const BoxDecoration(
                                 color: TaxGstColors.onlinePulse,
                                 shape: BoxShape.circle,
@@ -153,10 +153,11 @@ class _TaxGstAppBarState extends State<TaxGstAppBar>
                 ),
               ),
 
-              // ── Module Badge ───────────────────────────────────
+              // â”€â”€ Module Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 5,
+                  horizontal: 10,
+                  vertical: 5,
                 ),
                 decoration: BoxDecoration(
                   color: TaxGstColors.shellBadgeBg,
@@ -171,7 +172,7 @@ class _TaxGstAppBarState extends State<TaxGstAppBar>
                     Icon(
                       TaxGstIcons.moduleHeader,
                       size: 11,
-                      color: TaxGstColors.accentPrimary.withOpacity(0.8),
+                      color: TaxGstColors.accentPrimary.withValues(alpha: 0.8),
                     ),
                     const SizedBox(width: 5),
                     Text(
@@ -189,7 +190,7 @@ class _TaxGstAppBarState extends State<TaxGstAppBar>
   }
 }
 
-// ── Animated Back Button ──────────────────────────────────────────────────────
+// â”€â”€ Animated Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _AnimatedBackButton extends StatefulWidget {
   const _AnimatedBackButton({required this.onTap});
@@ -201,10 +202,9 @@ class _AnimatedBackButton extends StatefulWidget {
 
 class _AnimatedBackButtonState extends State<_AnimatedBackButton>
     with SingleTickerProviderStateMixin {
-
   late final AnimationController _hoverCtrl;
-  late final Animation<Color?>    _iconColorAnim;
-  late final Animation<Color?>    _bgColorAnim;
+  late final Animation<Color?> _iconColorAnim;
+  late final Animation<Color?> _bgColorAnim;
 
   @override
   void initState() {
@@ -215,11 +215,11 @@ class _AnimatedBackButtonState extends State<_AnimatedBackButton>
     );
     _iconColorAnim = ColorTween(
       begin: TaxGstColors.shellBackBtn,
-      end:   TaxGstColors.shellBackBtnHover,
+      end: TaxGstColors.shellBackBtnHover,
     ).animate(_hoverCtrl);
     _bgColorAnim = ColorTween(
       begin: Colors.transparent,
-      end:   TaxGstColors.shellBackBtnHoverBg,
+      end: TaxGstColors.shellBackBtnHoverBg,
     ).animate(_hoverCtrl);
   }
 
@@ -234,7 +234,7 @@ class _AnimatedBackButtonState extends State<_AnimatedBackButton>
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => _hoverCtrl.forward(),
-      onExit:  (_) => _hoverCtrl.reverse(),
+      onExit: (_) => _hoverCtrl.reverse(),
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedBuilder(
@@ -245,7 +245,7 @@ class _AnimatedBackButtonState extends State<_AnimatedBackButton>
               color: _bgColorAnim.value,
               borderRadius: BorderRadius.circular(TaxGstStyles.radiusChip),
               border: Border.all(
-                color: _iconColorAnim.value?.withOpacity(0.3) ??
+                color: _iconColorAnim.value?.withValues(alpha: 0.3) ??
                     Colors.transparent,
                 width: 1,
               ),

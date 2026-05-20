@@ -7,7 +7,7 @@ mixin BaseTable on Table {
 
   // Audit Trail: Record kab bana (Important for Syncing later)
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
-  
+
   // Optional: Record kab update hua
   DateTimeColumn get updatedAt => dateTime().nullable()();
 }

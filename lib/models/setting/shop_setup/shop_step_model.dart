@@ -24,7 +24,8 @@ class ShopStepModel {
     required this.title,
     required this.subTitle,
     required this.icon,
-    this.status = StepStatus.locked, // Defaults to locked from basic_info_enums.dart
+    this.status =
+        StepStatus.locked, // Defaults to locked from basic_info_enums.dart
   });
 
   /// Creates a new instance with updated fields, essential for State Management.
@@ -49,13 +50,13 @@ class ShopStepModel {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-  
+
     return other is ShopStepModel &&
-      other.id == id &&
-      other.title == title &&
-      other.subTitle == subTitle &&
-      other.icon == icon &&
-      other.status == status;
+        other.id == id &&
+        other.title == title &&
+        other.subTitle == subTitle &&
+        other.icon == icon &&
+        other.status == status;
   }
 
   @override

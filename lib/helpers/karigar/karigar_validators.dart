@@ -13,14 +13,18 @@ class KarigarValidators {
   // ── KARIGAR MASTER ─────────────────────────────────────────────────────────
 
   static String? validateKarigarName(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Karigar name is required';
+    if (value == null || value.trim().isEmpty) {
+      return 'Karigar name is required';
+    }
     if (value.trim().length < 2) return 'Name must be at least 2 characters';
     if (value.trim().length > 150) return 'Name is too long';
     return null;
   }
 
   static String? validatePhone(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Phone number is required';
+    if (value == null || value.trim().isEmpty) {
+      return 'Phone number is required';
+    }
     final digits = value.replaceAll(RegExp(r'\D'), '');
     if (digits.length < 10) return 'Enter a valid 10-digit phone number';
     if (digits.length > 15) return 'Phone number is too long';
@@ -85,7 +89,8 @@ class KarigarValidators {
     return validateWeight(value, required: true);
   }
 
-  static String? validateStoneWeight(String? value, {required double grossWeight}) {
+  static String? validateStoneWeight(String? value,
+      {required double grossWeight}) {
     if (value == null || value.trim().isEmpty) return null;
     final d = double.tryParse(value);
     if (d == null) return 'Enter a valid stone weight';
@@ -100,7 +105,9 @@ class KarigarValidators {
     String? value, {
     required double issuedWeight,
   }) {
-    if (value == null || value.trim().isEmpty) return 'Received weight is required';
+    if (value == null || value.trim().isEmpty) {
+      return 'Received weight is required';
+    }
     final d = double.tryParse(value);
     if (d == null) return 'Enter a valid weight in grams';
     if (d <= 0) return 'Received weight must be greater than zero';

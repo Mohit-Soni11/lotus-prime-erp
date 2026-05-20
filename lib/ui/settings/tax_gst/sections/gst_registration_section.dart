@@ -1,6 +1,6 @@
 // ============================================================
 // FILE    : lib/ui/settings/tax_gst/sections/gst_registration_section.dart
-// MODULE  : Tax & GST — Card 01
+// MODULE  : Tax & GST â€” Card 01
 // ============================================================
 import 'package:flutter/material.dart';
 import '../../../../theme/settings/tax_gst/tax_gst_theme.dart';
@@ -19,26 +19,27 @@ class GstRegistrationSection extends StatelessWidget {
       listenable: logic,
       builder: (context, _) {
         final e = logic.isEditing;
-        final a = TaxGstColors.card01Accent;
+        const a = TaxGstColors.card01Accent;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             TaxGstSectionHeader(
-              title:       TaxGstStrings.card01SectionTitle,
-              subtitle:    TaxGstStrings.card01SectionSub,
+              title: TaxGstStrings.card01SectionTitle,
+              subtitle: TaxGstStrings.card01SectionSub,
               accentColor: a,
-              isEditing:   e,
-              isSaving:    logic.isSaving,
-              onEdit:      logic.beginEdit,
-              onCancel:    logic.cancelEdit,
+              isEditing: e,
+              isSaving: logic.isSaving,
+              onEdit: logic.beginEdit,
+              onCancel: logic.cancelEdit,
               onSave: () async {
                 final ok = await logic.save();
                 if (context.mounted) {
-                  _showSnack(context, ok
-                      ? TaxGstStrings.snackSaved
-                      : TaxGstStrings.snackSaveError,
+                  _showSnack(
+                      context,
+                      ok
+                          ? TaxGstStrings.snackSaved
+                          : TaxGstStrings.snackSaveError,
                       isError: !ok);
                 }
               },
@@ -48,21 +49,23 @@ class GstRegistrationSection extends StatelessWidget {
 
             // Row 1: GSTIN + Legal Name
             TaxGstFieldRow(children: [
-              _field(context,
-                ctrl:    logic.gstinCtrl,
-                label:   TaxGstStrings.labelGstin,
-                hint:    TaxGstStrings.hintGstin,
-                icon:    TaxGstIcons.fieldGstin,
-                accent:  a,
-                locked:  !e,
-                caps:    TextCapitalization.characters,
-                error:   logic.gstinError,
+              _field(
+                context,
+                ctrl: logic.gstinCtrl,
+                label: TaxGstStrings.labelGstin,
+                hint: TaxGstStrings.hintGstin,
+                icon: TaxGstIcons.fieldGstin,
+                accent: a,
+                locked: !e,
+                caps: TextCapitalization.characters,
+                error: logic.gstinError,
               ),
-              _field(context,
-                ctrl:   logic.legalNameCtrl,
-                label:  TaxGstStrings.labelLegalName,
-                hint:   TaxGstStrings.hintLegalName,
-                icon:   TaxGstIcons.fieldLegalName,
+              _field(
+                context,
+                ctrl: logic.legalNameCtrl,
+                label: TaxGstStrings.labelLegalName,
+                hint: TaxGstStrings.hintLegalName,
+                icon: TaxGstIcons.fieldLegalName,
                 accent: a,
                 locked: !e,
               ),
@@ -72,24 +75,26 @@ class GstRegistrationSection extends StatelessWidget {
 
             // Row 2: PAN + TAN
             TaxGstFieldRow(children: [
-              _field(context,
-                ctrl:   logic.panCtrl,
-                label:  TaxGstStrings.labelPan,
-                hint:   TaxGstStrings.hintPan,
-                icon:   TaxGstIcons.fieldPan,
+              _field(
+                context,
+                ctrl: logic.panCtrl,
+                label: TaxGstStrings.labelPan,
+                hint: TaxGstStrings.hintPan,
+                icon: TaxGstIcons.fieldPan,
                 accent: a,
                 locked: !e,
-                caps:   TextCapitalization.characters,
-                error:  logic.panError,
+                caps: TextCapitalization.characters,
+                error: logic.panError,
               ),
-              _field(context,
-                ctrl:   logic.tanCtrl,
-                label:  TaxGstStrings.labelTan,
-                hint:   TaxGstStrings.hintTan,
-                icon:   TaxGstIcons.fieldTan,
+              _field(
+                context,
+                ctrl: logic.tanCtrl,
+                label: TaxGstStrings.labelTan,
+                hint: TaxGstStrings.hintTan,
+                icon: TaxGstIcons.fieldTan,
                 accent: a,
                 locked: !e,
-                caps:   TextCapitalization.characters,
+                caps: TextCapitalization.characters,
               ),
             ]),
 
@@ -99,18 +104,18 @@ class GstRegistrationSection extends StatelessWidget {
             TaxGstFieldRow(children: [
               // Date picker field
               _DateField(
-                ctrl:   logic.regDateCtrl,
-                label:  TaxGstStrings.labelRegDate,
+                ctrl: logic.regDateCtrl,
+                label: TaxGstStrings.labelRegDate,
                 accent: a,
                 locked: !e,
               ),
               // Dropdown
               _DropdownField(
-                label:    TaxGstStrings.labelTaxpayerType,
-                value:    logic.taxpayerType,
-                options:  TaxGstStrings.taxpayerTypes,
-                accent:   a,
-                locked:   !e,
+                label: TaxGstStrings.labelTaxpayerType,
+                value: logic.taxpayerType,
+                options: TaxGstStrings.taxpayerTypes,
+                accent: a,
+                locked: !e,
                 onChanged: logic.setTaxpayerType,
               ),
             ]),
@@ -118,20 +123,21 @@ class GstRegistrationSection extends StatelessWidget {
             const SizedBox(height: TaxGstStyles.fieldGapV),
 
             // State Code (full width)
-            _field(context,
-              ctrl:   logic.stateCtrl,
-              label:  TaxGstStrings.labelStateCode,
-              hint:   TaxGstStrings.hintState,
-              icon:   TaxGstIcons.fieldState,
+            _field(
+              context,
+              ctrl: logic.stateCtrl,
+              label: TaxGstStrings.labelStateCode,
+              hint: TaxGstStrings.hintState,
+              icon: TaxGstIcons.fieldState,
               accent: a,
               locked: !e,
             ),
 
             const SizedBox(height: TaxGstStyles.spaceMD),
 
-            TaxGstInfoBanner(
+            const TaxGstInfoBanner(
               accentColor: a,
-              message:     TaxGstStrings.infoGstin,
+              message: TaxGstStrings.infoGstin,
             ),
           ],
         );
@@ -151,25 +157,25 @@ class GstRegistrationSection extends StatelessWidget {
     String? error,
   }) {
     return TextFormField(
-      controller:          ctrl,
-      enabled:             !locked,
-      textCapitalization:  caps,
-      style:               TaxGstStyles.inputText(context),
+      controller: ctrl,
+      enabled: !locked,
+      textCapitalization: caps,
+      style: TaxGstStyles.inputText(context),
       decoration: TaxGstStyles.inputDecoration(
         context,
-        labelText:   label,
-        hintText:    hint,
-        prefixIcon:  icon,
+        labelText: label,
+        hintText: hint,
+        prefixIcon: icon,
         accentColor: accent,
-        isLocked:    locked,
-        hasError:    error != null,
-        errorText:   error,
+        isLocked: locked,
+        hasError: error != null,
+        errorText: error,
       ),
     );
   }
 }
 
-// ── Date picker field ─────────────────────────────────────────────────────────
+// â”€â”€ Date picker field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _DateField extends StatelessWidget {
   const _DateField({
     required this.ctrl,
@@ -180,8 +186,8 @@ class _DateField extends StatelessWidget {
 
   final TextEditingController ctrl;
   final String label;
-  final Color  accent;
-  final bool   locked;
+  final Color accent;
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
@@ -190,10 +196,10 @@ class _DateField extends StatelessWidget {
           ? null
           : () async {
               final picked = await showDatePicker(
-                context:     context,
+                context: context,
                 initialDate: DateTime.now(),
-                firstDate:   DateTime(2000),
-                lastDate:    DateTime(2100),
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2100),
                 builder: (context, child) => Theme(
                   data: ThemeData.light().copyWith(
                     colorScheme: ColorScheme.light(
@@ -205,8 +211,7 @@ class _DateField extends StatelessWidget {
                 ),
               );
               if (picked != null) {
-                ctrl.text =
-                    '${picked.day.toString().padLeft(2, '0')}/'
+                ctrl.text = '${picked.day.toString().padLeft(2, '0')}/'
                     '${picked.month.toString().padLeft(2, '0')}/'
                     '${picked.year}';
               }
@@ -214,22 +219,23 @@ class _DateField extends StatelessWidget {
       child: AbsorbPointer(
         child: TextFormField(
           controller: ctrl,
-          enabled:    !locked,
-          style:      const TextStyle(
-            fontSize: 13.5, fontWeight: FontWeight.w500,
+          enabled: !locked,
+          style: const TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w500,
             color: TaxGstColors.textPrimary,
           ),
           decoration: TaxGstStyles.inputDecoration(
             context,
-            labelText:   label,
-            hintText:    TaxGstStrings.hintDate,
-            prefixIcon:  TaxGstIcons.fieldDate,
+            labelText: label,
+            hintText: TaxGstStrings.hintDate,
+            prefixIcon: TaxGstIcons.fieldDate,
             accentColor: accent,
-            isLocked:    locked,
+            isLocked: locked,
             suffixWidget: locked
                 ? null
                 : Icon(TaxGstIcons.calendarPick,
-                    size: 16, color: accent.withOpacity(0.7)),
+                    size: 16, color: accent.withValues(alpha: 0.7)),
           ),
         ),
       ),
@@ -237,7 +243,7 @@ class _DateField extends StatelessWidget {
   }
 }
 
-// ── Dropdown field ────────────────────────────────────────────────────────────
+// â”€â”€ Dropdown field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _DropdownField extends StatelessWidget {
   const _DropdownField({
     required this.label,
@@ -248,25 +254,25 @@ class _DropdownField extends StatelessWidget {
     required this.onChanged,
   });
 
-  final String         label;
-  final String         value;
-  final List<String>   options;
-  final Color          accent;
-  final bool           locked;
+  final String label;
+  final String value;
+  final List<String> options;
+  final Color accent;
+  final bool locked;
   final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       style: TaxGstStyles.inputText(context),
       decoration: TaxGstStyles.inputDecoration(
         context,
-        labelText:   label,
-        hintText:    '',
-        prefixIcon:  TaxGstIcons.fieldTaxType,
+        labelText: label,
+        hintText: '',
+        prefixIcon: TaxGstIcons.fieldTaxType,
         accentColor: accent,
-        isLocked:    locked,
+        isLocked: locked,
       ).copyWith(
         fillColor: locked
             ? TaxGstColors.inputSurfaceLocked
@@ -284,7 +290,7 @@ class _DropdownField extends StatelessWidget {
   }
 }
 
-// ── Snackbar helper ───────────────────────────────────────────────────────────
+// â”€â”€ Snackbar helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 void _showSnack(BuildContext context, String msg, {bool isError = false}) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
@@ -292,7 +298,8 @@ void _showSnack(BuildContext context, String msg, {bool isError = false}) {
       content: Row(children: [
         Icon(
           isError ? TaxGstIcons.statusError : TaxGstIcons.statusSuccess,
-          color: Colors.white, size: 16,
+          color: Colors.white,
+          size: 16,
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -302,11 +309,10 @@ void _showSnack(BuildContext context, String msg, {bool isError = false}) {
       ]),
       backgroundColor:
           isError ? TaxGstColors.statusDanger : TaxGstColors.btnSave,
-      behavior:  SnackBarBehavior.floating,
-      shape:     RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.circular(TaxGstStyles.radiusButton)),
-      margin:    const EdgeInsets.all(16),
-      duration:  const Duration(seconds: 3),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(TaxGstStyles.radiusButton)),
+      margin: const EdgeInsets.all(16),
+      duration: const Duration(seconds: 3),
     ));
 }

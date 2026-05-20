@@ -56,17 +56,17 @@ class KarigarStatsModel {
   });
 
   factory KarigarStatsModel.empty() => const KarigarStatsModel(
-    totalIssuedWeight:   0.0,
-    totalReceivedWeight: 0.0,
-    pendingWeight:       0.0,
-    totalMakingCharges:  0.0,
-    totalPaid:           0.0,
-    outstandingBalance:  0.0,
-    totalIssues:         0,
-    activeIssues:        0,
-    completedIssues:     0,
-    overdueIssues:       0,
-  );
+        totalIssuedWeight: 0.0,
+        totalReceivedWeight: 0.0,
+        pendingWeight: 0.0,
+        totalMakingCharges: 0.0,
+        totalPaid: 0.0,
+        outstandingBalance: 0.0,
+        totalIssues: 0,
+        activeIssues: 0,
+        completedIssues: 0,
+        overdueIssues: 0,
+      );
 }
 
 // =============================================================================
@@ -98,10 +98,10 @@ class OverallKarigarStats {
   });
 
   factory OverallKarigarStats.empty() => const OverallKarigarStats(
-    totalKarigars:          0,
-    totalActiveJobs:        0,
-    totalOverdueJobs:       0,
-    totalWeightWithKarigar: 0.0,
-    totalOutstanding:       0.0,
-  );
+        totalKarigars: 0,
+        totalActiveJobs: 0,
+        totalOverdueJobs: 0,
+        totalWeightWithKarigar: 0.0,
+        totalOutstanding: 0.0,
+      );
 }

@@ -28,9 +28,8 @@ enum CustomerTier {
   final String label;
   const CustomerTier(this.label);
 
-  static CustomerTier fromLabel(String l) =>
-      CustomerTier.values.firstWhere((e) => e.label == l,
-          orElse: () => CustomerTier.regular);
+  static CustomerTier fromLabel(String l) => CustomerTier.values
+      .firstWhere((e) => e.label == l, orElse: () => CustomerTier.regular);
 }
 
 // ── 3. GENDER ────────────────────────────────────────────────────────────────
@@ -43,8 +42,7 @@ enum Gender {
   const Gender(this.label);
 
   static Gender fromLabel(String l) =>
-      Gender.values.firstWhere((e) => e.label == l,
-          orElse: () => Gender.male);
+      Gender.values.firstWhere((e) => e.label == l, orElse: () => Gender.male);
 }
 
 // ── 4. ID PROOF TYPE ─────────────────────────────────────────────────────────
@@ -60,18 +58,27 @@ enum IdProofType {
   final String label;
   const IdProofType(this.label);
 
-  static IdProofType fromLabel(String l) =>
-      IdProofType.values.firstWhere((e) => e.label == l,
-          orElse: () => IdProofType.aadhar);
+  static IdProofType fromLabel(String l) => IdProofType.values
+      .firstWhere((e) => e.label == l, orElse: () => IdProofType.aadhar);
 }
 
 // ── 5. RING SIZE ──────────────────────────────────────────────────────────────
 enum RingSize {
-  size6('Size 6'),   size7('Size 7'),   size8('Size 8'),
-  size9('Size 9'),   size10('Size 10'), size11('Size 11'),
-  size12('Size 12'), size13('Size 13'), size14('Size 14'),
-  size15('Size 15'), size16('Size 16'), size17('Size 17'),
-  size18('Size 18'), size19('Size 19'), size20('Size 20'),
+  size6('Size 6'),
+  size7('Size 7'),
+  size8('Size 8'),
+  size9('Size 9'),
+  size10('Size 10'),
+  size11('Size 11'),
+  size12('Size 12'),
+  size13('Size 13'),
+  size14('Size 14'),
+  size15('Size 15'),
+  size16('Size 16'),
+  size17('Size 17'),
+  size18('Size 18'),
+  size19('Size 19'),
+  size20('Size 20'),
   notKnown('Not Known');
 
   final String label;
@@ -80,9 +87,14 @@ enum RingSize {
 
 // ── 6. BANGLE SIZE ───────────────────────────────────────────────────────────
 enum BangleSize {
-  s22('2.2 inches'), s24('2.4 inches'), s26('2.6 inches'),
-  s28('2.8 inches'), s30('3.0 inches'), s32('3.2 inches'),
-  s34('3.4 inches'), notKnown('Not Known');
+  s22('2.2 inches'),
+  s24('2.4 inches'),
+  s26('2.6 inches'),
+  s28('2.8 inches'),
+  s30('3.0 inches'),
+  s32('3.2 inches'),
+  s34('3.4 inches'),
+  notKnown('Not Known');
 
   final String label;
   const BangleSize(this.label);
@@ -99,9 +111,8 @@ enum FamilyRelation {
   final String label;
   const FamilyRelation(this.label);
 
-  static FamilyRelation fromLabel(String l) =>
-      FamilyRelation.values.firstWhere((e) => e.label == l,
-          orElse: () => FamilyRelation.other);
+  static FamilyRelation fromLabel(String l) => FamilyRelation.values
+      .firstWhere((e) => e.label == l, orElse: () => FamilyRelation.other);
 }
 
 // ── 8. REFERRAL SOURCE ───────────────────────────────────────────────────────
@@ -121,17 +132,38 @@ enum ReferralSource {
 
 // ── 9. INDIA STATES ───────────────────────────────────────────────────────────
 enum IndiaState {
-  ap('Andhra Pradesh'),   ar('Arunachal Pradesh'), as_('Assam'),
-  br('Bihar'),            cg('Chhattisgarh'),      ga('Goa'),
-  gj('Gujarat'),          hr('Haryana'),            hp('Himachal Pradesh'),
-  jh('Jharkhand'),        ka('Karnataka'),          kl('Kerala'),
-  mp('Madhya Pradesh'),   mh('Maharashtra'),        mn('Manipur'),
-  ml('Meghalaya'),        mz('Mizoram'),            nl('Nagaland'),
-  od('Odisha'),           pb('Punjab'),             rj('Rajasthan'),
-  sk('Sikkim'),           tn('Tamil Nadu'),         tg('Telangana'),
-  tr('Tripura'),          up('Uttar Pradesh'),      uk('Uttarakhand'),
-  wb('West Bengal'),      dl('Delhi'),              jk('Jammu & Kashmir'),
-  la('Ladakh'),           other('Other');
+  ap('Andhra Pradesh'),
+  ar('Arunachal Pradesh'),
+  as_('Assam'),
+  br('Bihar'),
+  cg('Chhattisgarh'),
+  ga('Goa'),
+  gj('Gujarat'),
+  hr('Haryana'),
+  hp('Himachal Pradesh'),
+  jh('Jharkhand'),
+  ka('Karnataka'),
+  kl('Kerala'),
+  mp('Madhya Pradesh'),
+  mh('Maharashtra'),
+  mn('Manipur'),
+  ml('Meghalaya'),
+  mz('Mizoram'),
+  nl('Nagaland'),
+  od('Odisha'),
+  pb('Punjab'),
+  rj('Rajasthan'),
+  sk('Sikkim'),
+  tn('Tamil Nadu'),
+  tg('Telangana'),
+  tr('Tripura'),
+  up('Uttar Pradesh'),
+  uk('Uttarakhand'),
+  wb('West Bengal'),
+  dl('Delhi'),
+  jk('Jammu & Kashmir'),
+  la('Ladakh'),
+  other('Other');
 
   final String label;
   const IndiaState(this.label);
@@ -139,28 +171,48 @@ enum IndiaState {
 
 // ── 10. FORM SAVE STATE ──────────────────────────────────────────────────────
 enum SaveState {
-  idle, validating, saving, success, error, duplicate,
+  idle,
+  validating,
+  saving,
+  success,
+  error,
+  duplicate,
 }
 
 // ── 11. ACTIVE FIELD ─────────────────────────────────────────────────────────
 enum ActiveField {
   none,
-  firstName, lastName, companyName, contactPerson,
-  mobile, whatsapp, email, alternateContact,
-  panNumber, idProofNumber, gstNumber,
-  addressLine1, addressLine2, pincode,
-  openingBalance, creditLimit, membershipId,
+  firstName,
+  lastName,
+  companyName,
+  contactPerson,
+  mobile,
+  whatsapp,
+  email,
+  alternateContact,
+  panNumber,
+  idProofNumber,
+  gstNumber,
+  addressLine1,
+  addressLine2,
+  pincode,
+  openingBalance,
+  creditLimit,
+  membershipId,
   notes,
 }
 
 // ── LEGACY (kept for old code compatibility) ─────────────────────────────────
 enum NewCustomerType {
-  regular, vip;
+  regular,
+  vip;
 
   String get value {
     switch (this) {
-      case NewCustomerType.regular: return 'Regular';
-      case NewCustomerType.vip:    return 'VIP';
+      case NewCustomerType.regular:
+        return 'Regular';
+      case NewCustomerType.vip:
+        return 'VIP';
     }
   }
 }

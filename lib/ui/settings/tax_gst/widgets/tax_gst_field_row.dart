@@ -2,8 +2,8 @@
 // FILE    : lib/ui/settings/tax_gst/widgets/tax_gst_field_row.dart
 // MODULE  : Tax & GST Configuration
 // DESC    : Layout + input widgets.
-//           TaxGstFieldRow   → responsive 2-column layout
-//           TaxGstInputField → labelled text input
+//           TaxGstFieldRow   â†’ responsive 2-column layout
+//           TaxGstInputField â†’ labelled text input
 //           TaxGstDropdownRow, TaxGstSectionDivider, TaxGstSaveButton
 // ============================================================
 import 'package:flutter/material.dart';
@@ -34,7 +34,8 @@ class TaxGstFieldRow extends StatelessWidget {
       return Column(
         children: children
             .expand(
-              (child) => [child, SizedBox(height: TaxGstStyles.fieldGapV)],
+              (child) =>
+                  [child, const SizedBox(height: TaxGstStyles.fieldGapV)],
             )
             .toList()
           ..removeLast(),
@@ -141,11 +142,13 @@ class TaxGstInputField extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
+                borderSide:
+                    BorderSide(color: Colors.white.withValues(alpha: 0.08)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
+                borderSide:
+                    BorderSide(color: Colors.white.withValues(alpha: 0.08)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -206,7 +209,7 @@ class TaxGstDropdownRow extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: value,
+            initialValue: value,
             onChanged: onChanged,
             dropdownColor: const Color(0xFF1E2130),
             style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
@@ -217,11 +220,13 @@ class TaxGstDropdownRow extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
+                borderSide:
+                    BorderSide(color: Colors.white.withValues(alpha: 0.08)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
+                borderSide:
+                    BorderSide(color: Colors.white.withValues(alpha: 0.08)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -282,7 +287,7 @@ class TaxGstSectionDivider extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Divider(color: color.withOpacity(0.2), thickness: 1),
+            child: Divider(color: color.withValues(alpha: 0.2), thickness: 1),
           ),
         ],
       ),
@@ -314,7 +319,8 @@ class TaxGstSaveButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF16A34A),
           foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFF16A34A).withOpacity(0.4),
+          disabledBackgroundColor:
+              const Color(0xFF16A34A).withValues(alpha: 0.4),
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

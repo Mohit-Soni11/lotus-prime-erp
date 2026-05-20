@@ -1,14 +1,14 @@
 // =============================================================================
 // FILE        : delivery_repository.dart
-// MODULE      : Sales → Delivery Management
+// MODULE      : Sales ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Delivery Management
 // LAYER       : Repository / Database
 // DESCRIPTION : All database operations for the Delivery Management module.
 //               Implements the full Order-to-Cash pipeline:
-//               BOOKED → IN_MAKING → READY → DELIVERED
+//               BOOKED ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ IN_MAKING ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ READY ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ DELIVERED
 //               Partial delivery, payment routing, due ledger.
 //
 // CHANGELOG:
-//   v1 — Initial repository for Delivery Management module.
+//   v1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Initial repository for Delivery Management module.
 // =============================================================================
 
 import 'package:drift/drift.dart';
@@ -45,7 +45,7 @@ class DeliveryRepository {
   }
 
   // ===========================================================================
-  // CREATE — New Delivery Order (from Booking Advance)
+  // CREATE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â New Delivery Order (from Booking Advance)
   // ===========================================================================
 
   Future<int> createFromBooking({
@@ -131,10 +131,10 @@ class DeliveryRepository {
   }
 
   // ===========================================================================
-  // READ — List queries for each tab
+  // READ ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â List queries for each tab
   // ===========================================================================
 
-  /// Tab 1: Active Orders — BOOKED + IN_MAKING + READY
+  /// Tab 1: Active Orders ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â BOOKED + IN_MAKING + READY
   Future<List<DeliveryOrderUiModel>> getActiveOrders({String? search}) async {
     final query = _db.select(_db.deliveryOrders)
       ..where((t) => t.status.isIn(['BOOKED', 'IN_MAKING', 'READY']))
@@ -152,7 +152,7 @@ class DeliveryRepository {
     return Future.wait(rows.map((r) => _toUiModel(r)));
   }
 
-  /// Tab 2: Action Required — overdue + today + tomorrow (not delivered/cancelled)
+  /// Tab 2: Action Required ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â overdue + today + tomorrow (not delivered/cancelled)
   Future<List<DeliveryOrderUiModel>> getActionRequired() async {
     final tomorrow = DateTime.now().add(const Duration(days: 2));
     final query = _db.select(_db.deliveryOrders)
@@ -164,7 +164,7 @@ class DeliveryRepository {
     return Future.wait(rows.map((r) => _toUiModel(r)));
   }
 
-  /// Tab 3: Due Ledger — delivered but payment PARTIAL
+  /// Tab 3: Due Ledger ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â delivered but payment PARTIAL
   Future<List<DeliveryOrderUiModel>> getDueLedger({String? search}) async {
     final query = _db.select(_db.deliveryOrders)
       ..where((t) =>
@@ -184,7 +184,7 @@ class DeliveryRepository {
     return Future.wait(rows.map((r) => _toUiModel(r)));
   }
 
-  /// Tab 4: Completed Bills — DELIVERED + PAID
+  /// Tab 4: Completed Bills ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â DELIVERED + PAID
   Future<List<DeliveryOrderUiModel>> getCompletedBills({String? search}) async {
     final query = _db.select(_db.deliveryOrders)
       ..where(
@@ -227,12 +227,12 @@ class DeliveryRepository {
         if (o.expectedDeliveryDate == null) continue;
         final d = DateTime(o.expectedDeliveryDate!.year,
             o.expectedDeliveryDate!.month, o.expectedDeliveryDate!.day);
-        if (d.isBefore(today))
+        if (d.isBefore(today)) {
           overdue++;
-        else if (d.isAtSameMomentAs(today))
+        } else if (d.isAtSameMomentAs(today))
           todayCount++;
         else if (d.isAtSameMomentAs(
-            tomorrow)) {} // tomorrow — counted in actionRequired
+            tomorrow)) {} // tomorrow ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â counted in actionRequired
       }
 
       final dueLedger = await (_db.select(_db.deliveryOrders)
@@ -259,13 +259,13 @@ class DeliveryRepository {
         totalRecoveredToday: 0.0,
       );
     } catch (e) {
-      debugPrint('🔴 DeliveryRepo.getSummary error: $e');
+      debugPrint('ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â´ DeliveryRepo.getSummary error: $e');
       return DeliverySummaryModel.empty();
     }
   }
 
   // ===========================================================================
-  // UPDATE — Status transitions
+  // UPDATE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Status transitions
   // ===========================================================================
 
   /// Move order to IN_MAKING (assign karigar)
@@ -296,7 +296,7 @@ class DeliveryRepository {
   }
 
   // ===========================================================================
-  // DELIVER — The core One-Click conversion flow
+  // DELIVER ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â The core One-Click conversion flow
   // ===========================================================================
 
   /// Full delivery: all items delivered, sets status + payment routing.
@@ -335,7 +335,7 @@ class DeliveryRepository {
       ));
 
       debugPrint(
-          '✅ Order $orderId delivered. Status: $paymentStatus, Due: $dueAmount');
+          'ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Order $orderId delivered. Status: $paymentStatus, Due: $dueAmount');
       return linkedBillNo ?? 'DM-$orderId';
     });
   }
@@ -388,7 +388,7 @@ class DeliveryRepository {
           linkedBillId: Value(linkedBillId),
         ));
       } else {
-        // Order still active — update financials only
+        // Order still active ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â update financials only
         await (_db.update(_db.deliveryOrders)
               ..where((t) => t.id.equals(orderId)))
             .write(DeliveryOrdersCompanion(
@@ -430,7 +430,7 @@ class DeliveryRepository {
   }
 
   // ===========================================================================
-  // HELPER — DB row → UI model
+  // HELPER ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â DB row ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ UI model
   // ===========================================================================
 
   Future<DeliveryOrderUiModel> _toUiModel(DeliveryOrder row) async {
@@ -458,8 +458,8 @@ class DeliveryRepository {
       karigarName: row.karigarName,
       linkedBillNo: row.linkedBillNo,
       items: items,
-      createdAt: row.createdAt ?? DateTime.now(), // ✅ Fixed null safety
-      updatedAt: row.updatedAt ?? DateTime.now(), // ✅ Fixed null safety
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt ?? row.createdAt,
     );
   }
 

@@ -8,22 +8,22 @@
 
 /// Payment ke 3 states — Python design se same
 enum PaymentStatus {
-  paid,        // paidAmount >= finalAmount → Green
-  partial,     // 0 < paidAmount < finalAmount → Amber/Gold
-  unpaid,      // paidAmount == 0 → Red
+  paid, // paidAmount >= finalAmount → Green
+  partial, // 0 < paidAmount < finalAmount → Amber/Gold
+  unpaid, // paidAmount == 0 → Red
 }
 
 /// Ek bill ka complete data — UI row ke liye
 class PaymentBillItem {
-  final int    billId;
+  final int billId;
   final String billNo;
   final String customerName;
   final String customerInitials; // Avatar ke liye
-  final int?   customerId;       // Profile navigate ke liye
+  final int? customerId; // Profile navigate ke liye
   final String mobile;
   final double totalAmount;
   final double paidAmount;
-  final double dueAmount;        // totalAmount - paidAmount
+  final double dueAmount; // totalAmount - paidAmount
   final DateTime billDate;
   final PaymentStatus status;
 

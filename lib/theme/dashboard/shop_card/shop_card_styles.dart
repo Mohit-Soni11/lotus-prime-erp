@@ -5,7 +5,7 @@ class ShopCardStyles {
   // --- Layout Dimensions ---
   static const double borderRadius = 20.0;
   static const EdgeInsets cardPadding = EdgeInsets.all(20.0);
-  
+
   // --- Typography ---
   static const TextStyle shopNameStyle = TextStyle(
     fontSize: 22.0, // Matches NAME_SIZE approx
@@ -47,15 +47,17 @@ class ShopCardStyles {
 
   // --- Premium Decoration (Copied for consistency) ---
   static BoxDecoration get premiumCardDecoration => BoxDecoration(
-    gradient: const LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [ShopCardColors.cardBgStart, ShopCardColors.cardBgEnd],
-    ),
-    borderRadius: BorderRadius.circular(borderRadius),
-    border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
-    boxShadow: const [
-      BoxShadow(color: Colors.black45, blurRadius: 20, offset: Offset(0, 10)),
-    ],
-  );
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [ShopCardColors.cardBgStart, ShopCardColors.cardBgEnd],
+        ),
+        borderRadius: BorderRadius.circular(borderRadius),
+        border:
+            Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+        boxShadow: const [
+          BoxShadow(
+              color: Colors.black45, blurRadius: 20, offset: Offset(0, 10)),
+        ],
+      );
 }

@@ -5,30 +5,30 @@
 // DESCRIPTION : Premium Payment Status widget for Dashboard.
 //
 //               SECTIONS:
-//               ┌─────────────────────────────────────────────┐
-//               │  💳 PAYMENT STATUS          [Today's summary]│
-//               │  ┌──────────┐ ┌──────────┐ ┌──────────┐    │
-//               │  │ 5 Bills  │ │ ₹2.1L    │ │ ₹45K     │    │
-//               │  │ Total    │ │ Collected│ │ Pending  │    │
-//               │  └──────────┘ └──────────┘ └──────────┘    │
-//               │  [ALL] [DUE] [PAID]                         │
-//               │  ┌─────────────────────────────────────────┐│
-//               │  │ 🔵 Rajesh Kumar    ₹1,50,000  Dec 13    ││
-//               │  │    #INV-1234    Paid:₹1L Due:₹50K PARTIAL│
-//               │  └─────────────────────────────────────────┘│
-//               │  ... more rows ...                           │
-//               │  [▼ Show 2 More]                             │
-//               └─────────────────────────────────────────────┘
+//               â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//               â”‚  ðŸ’³ PAYMENT STATUS          [Today's summary]â”‚
+//               â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â”‚
+//               â”‚  â”‚ 5 Bills  â”‚ â”‚ â‚¹2.1L    â”‚ â”‚ â‚¹45K     â”‚    â”‚
+//               â”‚  â”‚ Total    â”‚ â”‚ Collectedâ”‚ â”‚ Pending  â”‚    â”‚
+//               â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â”‚
+//               â”‚  [ALL] [DUE] [PAID]                         â”‚
+//               â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”â”‚
+//               â”‚  â”‚ ðŸ”µ Rajesh Kumar    â‚¹1,50,000  Dec 13    â”‚â”‚
+//               â”‚  â”‚    #INV-1234    Paid:â‚¹1L Due:â‚¹50K PARTIALâ”‚
+//               â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜â”‚
+//               â”‚  ... more rows ...                           â”‚
+//               â”‚  [â–¼ Show 2 More]                             â”‚
+//               â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
 //               ANIMATIONS:
-//               • Header ShaderMask gold gradient
-//               • Summary stat chips slide-in
-//               • Filter tab switch — AnimatedContainer
-//               • Each bill row — staggered entry (slide + fade)
-//               • Row press — scale 0.98 + border highlight
-//               • Show More/Less — AnimatedSize expand
-//               • Shimmer loading state
-//               • Customer tap → navigate to profile
+//               â€¢ Header ShaderMask gold gradient
+//               â€¢ Summary stat chips slide-in
+//               â€¢ Filter tab switch â€” AnimatedContainer
+//               â€¢ Each bill row â€” staggered entry (slide + fade)
+//               â€¢ Row press â€” scale 0.98 + border highlight
+//               â€¢ Show More/Less â€” AnimatedSize expand
+//               â€¢ Shimmer loading state
+//               â€¢ Customer tap â†’ navigate to profile
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -92,7 +92,9 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
 
   void _setupRowAnimations(int count) {
     // Purane controllers dispose karo
-    for (final c in _rowCtrl) c.dispose();
+    for (final c in _rowCtrl) {
+      c.dispose();
+    }
     _rowCtrl.clear();
     _rowSlide.clear();
     _rowFade.clear();
@@ -120,7 +122,9 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
   void dispose() {
     _logic.removeListener(_onDataChanged);
     _logic.dispose();
-    for (final c in _rowCtrl) c.dispose();
+    for (final c in _rowCtrl) {
+      c.dispose();
+    }
     _headerCtrl.dispose();
     super.dispose();
   }
@@ -147,19 +151,19 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // ── HEADER ─────────────────────────────────────────────
+                  // â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _buildHeader(),
                   const SizedBox(height: 16),
 
-                  // ── SUMMARY STATS ──────────────────────────────────────
+                  // â”€â”€ SUMMARY STATS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _buildSummaryRow(),
                   const SizedBox(height: 16),
 
-                  // ── FILTER TABS ────────────────────────────────────────
+                  // â”€â”€ FILTER TABS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _buildFilterTabs(),
                   const SizedBox(height: 14),
 
-                  // ── BILL ROWS ──────────────────────────────────────────
+                  // â”€â”€ BILL ROWS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _buildBillsList(),
                 ],
               ),
@@ -170,7 +174,7 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
     );
   }
 
-  // ── HEADER ──────────────────────────────────────────────────────────────
+  // â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildHeader() {
     return Row(
       children: [
@@ -179,10 +183,10 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: PaymentStatusColors.accentGold.withOpacity(0.12),
+            color: PaymentStatusColors.accentGold.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-                color: PaymentStatusColors.accentGold.withOpacity(0.2)),
+                color: PaymentStatusColors.accentGold.withValues(alpha: 0.2)),
           ),
           child: Center(
             child: ShaderMask(
@@ -232,7 +236,7 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
     );
   }
 
-  // ── SUMMARY STATS ────────────────────────────────────────────────────────
+  // â”€â”€ SUMMARY STATS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildSummaryRow() {
     if (_logic.isLoading) return _buildSummaryShimmer();
 
@@ -267,9 +271,9 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,7 +310,7 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
                 ]).expand((e) => e).toList());
   }
 
-  // ── FILTER TABS ──────────────────────────────────────────────────────────
+  // â”€â”€ FILTER TABS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildFilterTabs() {
     final tabs = [
       (PaymentFilterTab.all, 'ALL'),
@@ -343,7 +347,7 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
     );
   }
 
-  // ── BILLS LIST ───────────────────────────────────────────────────────────
+  // â”€â”€ BILLS LIST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildBillsList() {
     if (_logic.isLoading) return _buildListShimmer();
 
@@ -385,7 +389,7 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
     );
   }
 
-  // ── BILL ROW ─────────────────────────────────────────────────────────────
+  // â”€â”€ BILL ROW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildBillRow(PaymentBillItem bill, int index) {
     final bool isPressed = _pressedRows.contains(bill.billId);
 
@@ -417,7 +421,7 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── TOP ROW: Avatar + Name + Amount + Date ─────────────────
+                // â”€â”€ TOP ROW: Avatar + Name + Amount + Date â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 Row(
                   children: [
                     // Avatar circle
@@ -478,7 +482,7 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
 
                 const SizedBox(height: 10),
 
-                // ── BOTTOM ROW: Paid + Due + Status Badge ──────────────────
+                // â”€â”€ BOTTOM ROW: Paid + Due + Status Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 Row(
                   children: [
                     // Paid
@@ -537,7 +541,7 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
     );
   }
 
-  // ── SHOW MORE BUTTON ─────────────────────────────────────────────────────
+  // â”€â”€ SHOW MORE BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildShowMoreBtn(int remaining) {
     return GestureDetector(
       onTap: _logic.toggleExpanded,
@@ -545,10 +549,10 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: PaymentStatusColors.accentGold.withOpacity(0.06),
+          color: PaymentStatusColors.accentGold.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-              color: PaymentStatusColors.accentGold.withOpacity(0.2)),
+              color: PaymentStatusColors.accentGold.withValues(alpha: 0.2)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -573,20 +577,20 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
     );
   }
 
-  // ── EMPTY STATE ──────────────────────────────────────────────────────────
+  // â”€â”€ EMPTY STATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildEmptyState() {
     final tab = _logic.data.activeTab;
     final msg = tab == PaymentFilterTab.paid
         ? 'No paid invoices are available yet.'
         : tab == PaymentFilterTab.due
-            ? 'Koi due payment nahi! 🎉'
+            ? 'Koi due payment nahi! ðŸŽ‰'
             : 'Aaj koi bill nahi bana';
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 28),
       child: Center(
         child: Column(children: [
-          Icon(PaymentStatusIcons.header,
+          const Icon(PaymentStatusIcons.header,
               size: 32, color: PaymentStatusColors.textMuted),
           const SizedBox(height: 8),
           Text(msg, style: PaymentStatusStyles.emptyStyle),
@@ -595,7 +599,7 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
     );
   }
 
-  // ── SHIMMER ──────────────────────────────────────────────────────────────
+  // â”€â”€ SHIMMER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildListShimmer() {
     return Column(
       children: List.generate(
@@ -619,7 +623,7 @@ class _PaymentStatusCardState extends State<PaymentStatusCard>
   }
 }
 
-// ── Ambient Glows ─────────────────────────────────────────────────────────────
+// â”€â”€ Ambient Glows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _AmbientGlows extends StatelessWidget {
   const _AmbientGlows();
 
@@ -635,10 +639,11 @@ class _AmbientGlows extends StatelessWidget {
             height: 160,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: PaymentStatusColors.accentGold.withOpacity(0.04),
+              color: PaymentStatusColors.accentGold.withValues(alpha: 0.04),
               boxShadow: [
                 BoxShadow(
-                    color: PaymentStatusColors.accentGold.withOpacity(0.06),
+                    color:
+                        PaymentStatusColors.accentGold.withValues(alpha: 0.06),
                     blurRadius: 80,
                     spreadRadius: 10)
               ],
@@ -653,10 +658,11 @@ class _AmbientGlows extends StatelessWidget {
             height: 100,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: PaymentStatusColors.accentGold.withOpacity(0.03),
+              color: PaymentStatusColors.accentGold.withValues(alpha: 0.03),
               boxShadow: [
                 BoxShadow(
-                    color: PaymentStatusColors.accentGold.withOpacity(0.04),
+                    color:
+                        PaymentStatusColors.accentGold.withValues(alpha: 0.04),
                     blurRadius: 50,
                     spreadRadius: 5)
               ],

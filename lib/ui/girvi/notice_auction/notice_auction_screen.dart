@@ -19,7 +19,6 @@ import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../repositories/girvi/girvi_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import 'notice_auction_app_bar.dart'; // NAYA IMPORT
-import '../shared/girvi_shared_widgets.dart';
 
 class NoticeAuctionScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -39,7 +38,6 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
   String? _error;
 
   final _fmt = NumberFormat('#,##,##0.00', 'en_IN');
-  final _dateFmt = DateFormat('dd MMM yyyy');
 
   @override
   void initState() {
@@ -176,7 +174,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        // ── Alert Banner ─────────────────────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬ Alert Banner Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         SliverToBoxAdapter(
           child: Container(
             margin: const EdgeInsets.all(16),
@@ -200,7 +198,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
                           fontSize: 14,
                           fontWeight: FontWeight.w800)),
                   Text(
-                    'Total: ₹${_fmt.format(_overdueLoans.fold(0.0, (s, g) => s + g.loan.loanAmount))} principal outstanding',
+                    'Total: Ã¢â€šÂ¹${_fmt.format(_overdueLoans.fold(0.0, (s, g) => s + g.loan.loanAmount))} principal outstanding',
                     style:
                         GirviStyles.caption.copyWith(color: GirviColors.danger),
                   ),
@@ -210,7 +208,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
           ),
         ),
 
-        // ── Cards ────────────────────────────────────────────────────────
+        // Ã¢â€â‚¬Ã¢â€â‚¬ Cards Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
           sliver: SliverList(
@@ -251,7 +249,8 @@ class _OverdueCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: GirviColors.cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border(left: BorderSide(color: GirviColors.danger, width: 4)),
+        border:
+            const Border(left: BorderSide(color: GirviColors.danger, width: 4)),
         boxShadow: const [
           BoxShadow(
               color: GirviColors.shadowLight,
@@ -320,13 +319,13 @@ class _OverdueCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _MiniInfo('Principal', '₹${fmt.format(loan.loanAmount)}',
+                _MiniInfo('Principal', 'Ã¢â€šÂ¹${fmt.format(loan.loanAmount)}',
                     GirviColors.brandGold),
                 _MiniInfo(
                     'Accrued Interest',
-                    '₹${fmt.format(loan.accruedInterest)}',
+                    'Ã¢â€šÂ¹${fmt.format(loan.accruedInterest)}',
                     GirviColors.warning),
-                _MiniInfo('Total Due', '₹${fmt.format(loan.totalDue)}',
+                _MiniInfo('Total Due', 'Ã¢â€šÂ¹${fmt.format(loan.totalDue)}',
                     GirviColors.danger),
               ],
             ),
@@ -419,9 +418,9 @@ class _EmptyOverdue extends StatelessWidget {
   Widget build(BuildContext context) => Center(
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(GirviIcons.released,
-              color: GirviColors.success.withOpacity(0.5), size: 64),
+              color: GirviColors.success.withValues(alpha: 0.5), size: 64),
           const SizedBox(height: 16),
-          Text('No Overdue Loans! 🎉',
+          Text('No Overdue Loans! Ã°Å¸Å½â€°',
               style: GoogleFonts.manrope(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,

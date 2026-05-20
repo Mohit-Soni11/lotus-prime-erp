@@ -4,13 +4,14 @@ class LayoutIcons {
   // --- 🧭 Navigation ---
   static const IconData backArrow = Icons.arrow_back_ios_new_rounded;
   static const IconData nextArrow = Icons.arrow_forward_rounded;
-  static const IconData finish = Icons.rocket_launch_rounded; // Added for Footer
-  
+  static const IconData finish =
+      Icons.rocket_launch_rounded; // Added for Footer
+
   // --- ⚙️ Actions ---
   static const IconData save = Icons.save_as_rounded;
   static const IconData edit = Icons.edit_note_rounded;
   static const IconData upload = Icons.cloud_upload_rounded;
-  
+
   // --- 🏢 Setup Wizard Icons ---
   static const IconData business = Icons.store_mall_directory_rounded;
   static const IconData address = Icons.place_rounded;

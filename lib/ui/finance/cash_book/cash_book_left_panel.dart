@@ -2,9 +2,9 @@
 // FILE        : cash_book_left_panel.dart
 // MODULE      : Accounts / Cash Book
 // LAYER       : UI
-// DESCRIPTION : Fixed left panel — Summary card, view-mode toggle,
+// DESCRIPTION : Fixed left panel â€” Summary card, view-mode toggle,
 //               date navigator, and category breakdown.
-//               Uses ListenableBuilder — zero setState in UI.
+//               Uses ListenableBuilder â€” zero setState in UI.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -26,15 +26,14 @@ class CashBookLeftPanel extends StatelessWidget {
       listenable: ctrl,
       builder: (_, __) {
         return Container(
-          width:   330,
-          height:  double.infinity,
-          color:   CashBookColors.bodyBg,
+          width: 330,
+          height: double.infinity,
+          color: CashBookColors.bodyBg,
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-
                 // 1. View Mode Toggle
                 _ViewModeToggle(ctrl: ctrl),
                 const SizedBox(height: 12),
@@ -62,10 +61,10 @@ class CashBookLeftPanel extends StatelessWidget {
                 // 7. Income Breakdown
                 if (ctrl.summary.incomeBreakdown.isNotEmpty)
                   _BreakdownSection(
-                    title:    CashBookStrings.incomeBreakdown,
-                    items:    ctrl.summary.incomeBreakdown,
-                    color:    CashBookColors.incomeAccent,
-                    bgColor:  CashBookColors.incomeBg,
+                    title: CashBookStrings.incomeBreakdown,
+                    items: ctrl.summary.incomeBreakdown,
+                    color: CashBookColors.incomeAccent,
+                    bgColor: CashBookColors.incomeBg,
                   ),
 
                 if (ctrl.summary.incomeBreakdown.isNotEmpty)
@@ -74,10 +73,10 @@ class CashBookLeftPanel extends StatelessWidget {
                 // 8. Expense Breakdown
                 if (ctrl.summary.expenseBreakdown.isNotEmpty)
                   _BreakdownSection(
-                    title:    CashBookStrings.expenseBreakdown,
-                    items:    ctrl.summary.expenseBreakdown,
-                    color:    CashBookColors.expenseAccent,
-                    bgColor:  CashBookColors.expenseBg,
+                    title: CashBookStrings.expenseBreakdown,
+                    items: ctrl.summary.expenseBreakdown,
+                    color: CashBookColors.expenseAccent,
+                    bgColor: CashBookColors.expenseBg,
                   ),
 
                 const SizedBox(height: 24),
@@ -90,7 +89,7 @@ class CashBookLeftPanel extends StatelessWidget {
   }
 }
 
-// ── View Mode Toggle ──────────────────────────────────────────────────────────
+// â”€â”€ View Mode Toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ViewModeToggle extends StatelessWidget {
   final CashBookController ctrl;
@@ -99,19 +98,19 @@ class _ViewModeToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height:      40,
-      decoration:  BoxDecoration(
-        color:        CashBookColors.summaryChipBg,
+      height: 40,
+      decoration: BoxDecoration(
+        color: CashBookColors.summaryChipBg,
         borderRadius: BorderRadius.circular(10),
-        border:       Border.all(color: CashBookColors.bodyBorder),
+        border: Border.all(color: CashBookColors.bodyBorder),
       ),
       child: Row(
         children: CashBookViewMode.values.map((mode) {
           final isActive = ctrl.viewMode == mode;
           final label = switch (mode) {
-            CashBookViewMode.daily   => CashBookStrings.viewDaily,
+            CashBookViewMode.daily => CashBookStrings.viewDaily,
             CashBookViewMode.monthly => CashBookStrings.viewMonthly,
-            CashBookViewMode.yearly  => CashBookStrings.viewYearly,
+            CashBookViewMode.yearly => CashBookStrings.viewYearly,
           };
 
           return Expanded(
@@ -121,15 +120,19 @@ class _ViewModeToggle extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color:        isActive ? CashBookColors.toggleActiveBg : Colors.transparent,
+                  color: isActive
+                      ? CashBookColors.toggleActiveBg
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(7),
-                  boxShadow:    isActive ? [
-                    BoxShadow(
-                      color:      Colors.black.withOpacity(0.08),
-                      blurRadius: 4,
-                      offset:     const Offset(0, 2),
-                    )
-                  ] : [],
+                  boxShadow: isActive
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : [],
                 ),
                 child: Center(
                   child: Text(
@@ -148,7 +151,7 @@ class _ViewModeToggle extends StatelessWidget {
   }
 }
 
-// ── Date Navigator ────────────────────────────────────────────────────────────
+// â”€â”€ Date Navigator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _DateNavigator extends StatelessWidget {
   final CashBookController ctrl;
@@ -157,20 +160,21 @@ class _DateNavigator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height:     48,
+      height: 48,
       decoration: BoxDecoration(
-        color:        CashBookColors.cardBg,
+        color: CashBookColors.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border:       Border.all(color: CashBookColors.cardBorderLight),
-        boxShadow:    [BoxShadow(
-          color:      CashBookColors.cardShadow,
-          blurRadius: 8,
-          offset:     const Offset(0, 2),
-        )],
+        border: Border.all(color: CashBookColors.cardBorderLight),
+        boxShadow: const [
+          BoxShadow(
+            color: CashBookColors.cardShadow,
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          )
+        ],
       ),
       child: Row(
         children: [
-
           // Previous
           _NavBtn(icon: CashBookIcons.previous, onTap: ctrl.navigatePrevious),
 
@@ -190,8 +194,8 @@ class _DateNavigator extends StatelessWidget {
 
           // Next
           _NavBtn(
-            icon:     CashBookIcons.next,
-            onTap:    ctrl.navigateNext,
+            icon: CashBookIcons.next,
+            onTap: ctrl.navigateNext,
             disabled: ctrl.isToday && ctrl.viewMode == CashBookViewMode.daily,
           ),
         ],
@@ -204,7 +208,8 @@ class _NavBtn extends StatefulWidget {
   final IconData icon;
   final VoidCallback onTap;
   final bool disabled;
-  const _NavBtn({required this.icon, required this.onTap, this.disabled = false});
+  const _NavBtn(
+      {required this.icon, required this.onTap, this.disabled = false});
 
   @override
   State<_NavBtn> createState() => _NavBtnState();
@@ -216,24 +221,25 @@ class _NavBtnState extends State<_NavBtn> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown:  widget.disabled ? null : (_) => setState(() => _pressed = true),
-      onTapUp:    widget.disabled ? null : (_) => setState(() => _pressed = false),
+      onTapDown:
+          widget.disabled ? null : (_) => setState(() => _pressed = true),
+      onTapUp: widget.disabled ? null : (_) => setState(() => _pressed = false),
       onTapCancel: () => setState(() => _pressed = false),
-      onTap:      widget.disabled ? null : widget.onTap,
+      onTap: widget.disabled ? null : widget.onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        width:  44,
+        width: 44,
         height: double.infinity,
         decoration: BoxDecoration(
           color: _pressed ? CashBookColors.summaryChipBg : Colors.transparent,
           borderRadius: const BorderRadius.only(
-            topLeft:     Radius.circular(12),
-            bottomLeft:  Radius.circular(12),
+            topLeft: Radius.circular(12),
+            bottomLeft: Radius.circular(12),
           ),
         ),
         child: Icon(
           widget.icon,
-          size:  18,
+          size: 18,
           color: widget.disabled
               ? CashBookColors.textMuted
               : CashBookColors.textSecondary,
@@ -243,7 +249,7 @@ class _NavBtnState extends State<_NavBtn> {
   }
 }
 
-// ── Opening Balance Card ──────────────────────────────────────────────────────
+// â”€â”€ Opening Balance Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _OpeningBalanceCard extends StatelessWidget {
   final CashBookController ctrl;
@@ -257,11 +263,13 @@ class _OpeningBalanceCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width:  38, height: 38,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color:        CashBookColors.brandGoldLight,
+              color: CashBookColors.brandGoldLight,
               borderRadius: BorderRadius.circular(10),
-              border:       Border.all(color: CashBookColors.brandGold.withOpacity(0.3)),
+              border: Border.all(
+                  color: CashBookColors.brandGold.withValues(alpha: 0.3)),
             ),
             child: const Icon(CashBookIcons.openingBalance,
                 size: 18, color: CashBookColors.brandGold),
@@ -271,7 +279,8 @@ class _OpeningBalanceCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(CashBookStrings.openingBalance, style: CashBookStyles.labelSecondary),
+                Text(CashBookStrings.openingBalance,
+                    style: CashBookStyles.labelSecondary),
                 const SizedBox(height: 2),
                 summary.isLoading
                     ? _shimmerText(100)
@@ -284,9 +293,10 @@ class _OpeningBalanceCard extends StatelessWidget {
           GestureDetector(
             onTap: () => _showEditOpeningBalance(context),
             child: Container(
-              width: 30, height: 30,
+              width: 30,
+              height: 30,
               decoration: BoxDecoration(
-                color:        CashBookColors.summaryChipBg,
+                color: CashBookColors.summaryChipBg,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(CashBookIcons.edit,
@@ -313,30 +323,31 @@ class _OpeningBalanceCard extends StatelessWidget {
         title: Text(CashBookStrings.editOpeningBalance,
             style: CashBookStyles.labelPrimary),
         content: TextField(
-          controller:   txtCtrl,
+          controller: txtCtrl,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          style:        CashBookStyles.inputText,
-          decoration:   InputDecoration(
-            hintText:    CashBookStrings.openingBalanceHint,
-            prefixText:  '₹ ',
-            filled:      true,
-            fillColor:   CashBookColors.summaryChipBg,
-            border:      OutlineInputBorder(
+          style: CashBookStyles.inputText,
+          decoration: InputDecoration(
+            hintText: CashBookStrings.openingBalanceHint,
+            prefixText: 'â‚¹ ',
+            filled: true,
+            fillColor: CashBookColors.summaryChipBg,
+            border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide:   const BorderSide(color: CashBookColors.bodyBorder),
+              borderSide: const BorderSide(color: CashBookColors.bodyBorder),
             ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(CashBookStrings.cancel,
+            child: const Text(CashBookStrings.cancel,
                 style: TextStyle(color: CashBookColors.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: CashBookColors.brandGold,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () async {
               final v = double.tryParse(txtCtrl.text.trim()) ?? 0;
@@ -344,11 +355,13 @@ class _OpeningBalanceCard extends StatelessWidget {
               if (context.mounted) {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text(CashBookStrings.openingBalanceSaved)),
+                  const SnackBar(
+                      content: Text(CashBookStrings.openingBalanceSaved)),
                 );
               }
             },
-            child: const Text('Save', style: TextStyle(color: Color(0xFF111827))),
+            child:
+                const Text('Save', style: TextStyle(color: Color(0xFF111827))),
           ),
         ],
       ),
@@ -356,7 +369,7 @@ class _OpeningBalanceCard extends StatelessWidget {
   }
 }
 
-// ── Income / Expense Row ──────────────────────────────────────────────────────
+// â”€â”€ Income / Expense Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _IncomeExpenseRow extends StatelessWidget {
   final CashBookController ctrl;
@@ -367,24 +380,26 @@ class _IncomeExpenseRow extends StatelessWidget {
     final s = ctrl.summary;
     return Row(
       children: [
-        Expanded(child: _StatBlock(
-          label:    '↓  Income',
-          value:    s.totalIncomeStr,
-          count:    s.incomeCount,
-          color:    CashBookColors.incomeAccent,
-          bg:       CashBookColors.incomeBg,
-          border:   CashBookColors.incomeBorder,
-          loading:  s.isLoading,
+        Expanded(
+            child: _StatBlock(
+          label: 'â†“  Income',
+          value: s.totalIncomeStr,
+          count: s.incomeCount,
+          color: CashBookColors.incomeAccent,
+          bg: CashBookColors.incomeBg,
+          border: CashBookColors.incomeBorder,
+          loading: s.isLoading,
         )),
         const SizedBox(width: 8),
-        Expanded(child: _StatBlock(
-          label:    '↑  Expense',
-          value:    s.totalExpenseStr,
-          count:    s.expenseCount,
-          color:    CashBookColors.expenseAccent,
-          bg:       CashBookColors.expenseBg,
-          border:   CashBookColors.expenseBorder,
-          loading:  s.isLoading,
+        Expanded(
+            child: _StatBlock(
+          label: 'â†‘  Expense',
+          value: s.totalExpenseStr,
+          count: s.expenseCount,
+          color: CashBookColors.expenseAccent,
+          bg: CashBookColors.expenseBg,
+          border: CashBookColors.expenseBorder,
+          loading: s.isLoading,
         )),
       ],
     );
@@ -394,11 +409,11 @@ class _IncomeExpenseRow extends StatelessWidget {
 class _StatBlock extends StatelessWidget {
   final String label;
   final String value;
-  final int    count;
-  final Color  color;
-  final Color  bg;
-  final Color  border;
-  final bool   loading;
+  final int count;
+  final Color color;
+  final Color bg;
+  final Color border;
+  final bool loading;
 
   const _StatBlock({
     required this.label,
@@ -413,26 +428,28 @@ class _StatBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:    const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color:        bg,
+        color: bg,
         borderRadius: BorderRadius.circular(12),
-        border:       Border.all(color: border),
+        border: Border.all(color: border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(
-            fontSize:   11,
-            fontWeight: FontWeight.w700,
-            color:      color,
-            letterSpacing: 0.5,
-          )),
+          Text(label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: color,
+                letterSpacing: 0.5,
+              )),
           const SizedBox(height: 6),
           loading
               ? _shimmerText(80)
-              : Text(value, style: GoogleFontsWrapper.interBold(
-                  fontSize: 14, color: color)),
+              : Text(value,
+                  style:
+                      GoogleFontsWrapper.interBold(fontSize: 14, color: color)),
           const SizedBox(height: 4),
           Text('$count entries', style: CashBookStyles.labelMuted),
         ],
@@ -441,7 +458,7 @@ class _StatBlock extends StatelessWidget {
   }
 }
 
-// ── Net Balance Card ──────────────────────────────────────────────────────────
+// â”€â”€ Net Balance Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _NetBalanceCard extends StatelessWidget {
   final CashBookController ctrl;
@@ -449,25 +466,31 @@ class _NetBalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s   = ctrl.summary;
+    final s = ctrl.summary;
     final pos = s.isPositive;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      padding:  const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color:        pos ? CashBookColors.netPositiveBg : CashBookColors.netNegativeBg,
+        color:
+            pos ? CashBookColors.netPositiveBg : CashBookColors.netNegativeBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: pos ? CashBookColors.incomeBorder : CashBookColors.expenseBorder,
+          color:
+              pos ? CashBookColors.incomeBorder : CashBookColors.expenseBorder,
           width: 1.5,
         ),
-        boxShadow: [BoxShadow(
-          color:      (pos ? CashBookColors.incomeAccent : CashBookColors.expenseAccent)
-              .withOpacity(0.12),
-          blurRadius: 12,
-          offset:     const Offset(0, 4),
-        )],
+        boxShadow: [
+          BoxShadow(
+            color: (pos
+                    ? CashBookColors.incomeAccent
+                    : CashBookColors.expenseAccent)
+                .withValues(alpha: 0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -475,11 +498,14 @@ class _NetBalanceCard extends StatelessWidget {
           Row(children: [
             Icon(
               pos ? Icons.trending_up_rounded : Icons.trending_down_rounded,
-              color: pos ? CashBookColors.incomeAccent : CashBookColors.expenseAccent,
-              size:  16,
+              color: pos
+                  ? CashBookColors.incomeAccent
+                  : CashBookColors.expenseAccent,
+              size: 16,
             ),
             const SizedBox(width: 6),
-            Text(CashBookStrings.closingBalance, style: CashBookStyles.labelSecondary),
+            Text(CashBookStrings.closingBalance,
+                style: CashBookStyles.labelSecondary),
           ]),
           const SizedBox(height: 8),
           s.isLoading
@@ -496,16 +522,19 @@ class _NetBalanceCard extends StatelessWidget {
           Row(children: [
             Icon(
               pos ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-              size:  12,
-              color: pos ? CashBookColors.incomeChip : CashBookColors.expenseChip,
+              size: 12,
+              color:
+                  pos ? CashBookColors.incomeChip : CashBookColors.expenseChip,
             ),
             const SizedBox(width: 4),
             Text(
               '${pos ? '+' : '-'} ${s.netFlowStr} net flow',
               style: TextStyle(
-                fontSize:   11,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: pos ? CashBookColors.incomeChip : CashBookColors.expenseChip,
+                color: pos
+                    ? CashBookColors.incomeChip
+                    : CashBookColors.expenseChip,
               ),
             ),
           ]),
@@ -515,7 +544,7 @@ class _NetBalanceCard extends StatelessWidget {
   }
 }
 
-// ── Count Pill Row ────────────────────────────────────────────────────────────
+// â”€â”€ Count Pill Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _CountRow extends StatelessWidget {
   final CashBookController ctrl;
@@ -527,9 +556,9 @@ class _CountRow extends StatelessWidget {
     return Row(children: [
       _Pill('${s.totalTransactions}', 'Total', CashBookColors.textSecondary),
       const SizedBox(width: 8),
-      _Pill('${s.incomeCount}',       'Income',  CashBookColors.incomeAccent),
+      _Pill('${s.incomeCount}', 'Income', CashBookColors.incomeAccent),
       const SizedBox(width: 8),
-      _Pill('${s.expenseCount}',      'Expense', CashBookColors.expenseAccent),
+      _Pill('${s.expenseCount}', 'Expense', CashBookColors.expenseAccent),
     ]);
   }
 }
@@ -537,7 +566,7 @@ class _CountRow extends StatelessWidget {
 class _Pill extends StatelessWidget {
   final String value;
   final String label;
-  final Color  color;
+  final Color color;
   const _Pill(this.value, this.label, this.color);
 
   @override
@@ -546,16 +575,17 @@ class _Pill extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color:        color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(8),
-          border:       Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Column(children: [
-          Text(value, style: TextStyle(
-            fontSize:   16,
-            fontWeight: FontWeight.w800,
-            color:      color,
-          )),
+          Text(value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: color,
+              )),
           Text(label, style: CashBookStyles.labelMuted),
         ]),
       ),
@@ -563,13 +593,13 @@ class _Pill extends StatelessWidget {
   }
 }
 
-// ── Breakdown Section ─────────────────────────────────────────────────────────
+// â”€â”€ Breakdown Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _BreakdownSection extends StatelessWidget {
-  final String                   title;
+  final String title;
   final List<CategoryBreakdownItem> items;
-  final Color                    color;
-  final Color                    bgColor;
+  final Color color;
+  final Color bgColor;
 
   const _BreakdownSection({
     required this.title,
@@ -587,10 +617,10 @@ class _BreakdownSection extends StatelessWidget {
           Text(title.toUpperCase(), style: CashBookStyles.sectionTitle),
           const SizedBox(height: 12),
           ...items.take(5).map((item) => _BreakdownRow(
-            item:    item,
-            color:   color,
-            bgColor: bgColor,
-          )),
+                item: item,
+                color: color,
+                bgColor: bgColor,
+              )),
         ],
       ),
     );
@@ -631,10 +661,10 @@ class _BreakdownRow extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value:            item.percentage / 100,
-              minHeight:        4,
-              backgroundColor:  color.withOpacity(0.12),
-              valueColor:       AlwaysStoppedAnimation<Color>(color),
+              value: item.percentage / 100,
+              minHeight: 4,
+              backgroundColor: color.withValues(alpha: 0.12),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),
         ],
@@ -643,7 +673,7 @@ class _BreakdownRow extends StatelessWidget {
   }
 }
 
-// ── Shared Helpers ────────────────────────────────────────────────────────────
+// â”€â”€ Shared Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _Card extends StatelessWidget {
   final Widget child;
@@ -654,14 +684,16 @@ class _Card extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color:        CashBookColors.cardBg,
+        color: CashBookColors.cardBg,
         borderRadius: BorderRadius.circular(14),
-        border:       Border.all(color: CashBookColors.cardBorderLight),
-        boxShadow: [BoxShadow(
-          color:      CashBookColors.cardShadow,
-          blurRadius: 8,
-          offset:     const Offset(0, 2),
-        )],
+        border: Border.all(color: CashBookColors.cardBorderLight),
+        boxShadow: const [
+          BoxShadow(
+            color: CashBookColors.cardShadow,
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          )
+        ],
       ),
       child: child,
     );
@@ -670,12 +702,13 @@ class _Card extends StatelessWidget {
 
 Widget _shimmerText(double width) {
   return Shimmer.fromColors(
-    baseColor:      const Color(0xFFE8E3D8),
+    baseColor: const Color(0xFFE8E3D8),
     highlightColor: const Color(0xFFF5F0E8),
     child: Container(
-      width: width, height: 16,
+      width: width,
+      height: 16,
       decoration: BoxDecoration(
-        color:        Colors.white,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(4),
       ),
     ),
@@ -685,6 +718,7 @@ Widget _shimmerText(double width) {
 // Tiny wrapper so we don't import google_fonts in this file
 class GoogleFontsWrapper {
   static TextStyle interBold({required double fontSize, required Color color}) {
-    return TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700, color: color);
+    return TextStyle(
+        fontSize: fontSize, fontWeight: FontWeight.w700, color: color);
   }
 }

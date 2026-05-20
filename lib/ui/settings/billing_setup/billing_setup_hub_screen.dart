@@ -1,7 +1,7 @@
 // =============================================================================
 // FILE        : lib/ui/settings/billing_setup/billing_setup_hub_screen.dart
 // MODULE      : Billing Setup
-// DESCRIPTION : Hub screen — 4 cards: Sales, Purchase, Girvi, Return
+// DESCRIPTION : Hub screen â€” 4 cards: Sales, Purchase, Girvi, Return
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -56,7 +56,7 @@ class BillingSetupHubScreen extends StatelessWidget {
                   )),
               const SizedBox(height: 16),
 
-              // ── Row 1: Sales + Purchase ───────────────────────────────────
+              // â”€â”€ Row 1: Sales + Purchase â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Row(children: [
                 Expanded(
                   child: _ModuleCard(
@@ -85,7 +85,7 @@ class BillingSetupHubScreen extends StatelessWidget {
 
               const SizedBox(height: 14),
 
-              // ── Row 2: Girvi + Return ─────────────────────────────────────
+              // â”€â”€ Row 2: Girvi + Return â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Row(children: [
                 Expanded(
                   child: _ModuleCard(
@@ -93,7 +93,7 @@ class BillingSetupHubScreen extends StatelessWidget {
                     title: BillingSetupStrings.cardGirviTitle,
                     subtitle: BillingSetupStrings.cardGirviSub,
                     accent: BillingSetupColors.girviBrand,
-                    tag: 'Interest · Notice · Terms',
+                    tag: 'Interest Â· Notice Â· Terms',
                     onTap: () => _navigate(context, const GirviBillingScreen()),
                   ),
                 ),
@@ -104,12 +104,12 @@ class BillingSetupHubScreen extends StatelessWidget {
                     title: BillingSetupStrings.cardReturnTitle,
                     subtitle: BillingSetupStrings.cardReturnSub,
                     accent: BillingSetupColors.returnBrand,
-                    tag: 'Policy · Buyback · Terms',
+                    tag: 'Policy Â· Buyback Â· Terms',
                     onTap: () {
-                      // Return screen — agle step mein
+                      // Return screen â€” agle step mein
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Return & Buyback — Coming soon!',
+                          content: Text('Return & Buyback â€” Coming soon!',
                               style: GoogleFonts.inter(color: Colors.white)),
                           backgroundColor: BillingSetupColors.returnBrand,
                           behavior: SnackBarBehavior.floating,
@@ -125,19 +125,20 @@ class BillingSetupHubScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // ── Info banner ───────────────────────────────────────────────
+              // â”€â”€ Info banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: BillingSetupColors.salesBrand.withOpacity(0.05),
+                  color: BillingSetupColors.salesBrand.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: BillingSetupColors.salesBrand.withOpacity(0.2)),
+                      color:
+                          BillingSetupColors.salesBrand.withValues(alpha: 0.2)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.info_outline_rounded,
+                    const Icon(Icons.info_outline_rounded,
                         size: 16, color: BillingSetupColors.salesBrand),
                     const SizedBox(width: 10),
                     Expanded(
@@ -230,15 +231,15 @@ class _ModuleCardState extends State<_ModuleCard>
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: _hovered
-                    ? widget.accent.withOpacity(0.5)
+                    ? widget.accent.withValues(alpha: 0.5)
                     : Colors.grey.shade200,
                 width: _hovered ? 1.5 : 1,
               ),
               boxShadow: [
                 BoxShadow(
                   color: _hovered
-                      ? widget.accent.withOpacity(0.12)
-                      : Colors.black.withOpacity(0.04),
+                      ? widget.accent.withValues(alpha: 0.12)
+                      : Colors.black.withValues(alpha: 0.04),
                   blurRadius: _hovered ? 20 : 8,
                   offset: const Offset(0, 4),
                 ),
@@ -251,7 +252,8 @@ class _ModuleCardState extends State<_ModuleCard>
                   duration: const Duration(milliseconds: 180),
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: widget.accent.withOpacity(_hovered ? 0.15 : 0.08),
+                    color:
+                        widget.accent.withValues(alpha: _hovered ? 0.15 : 0.08),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(widget.icon, size: 22, color: widget.accent),
@@ -281,9 +283,10 @@ class _ModuleCardState extends State<_ModuleCard>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: widget.accent.withOpacity(0.08),
+                    color: widget.accent.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: widget.accent.withOpacity(0.2)),
+                    border:
+                        Border.all(color: widget.accent.withValues(alpha: 0.2)),
                   ),
                   child: Text(
                     widget.tag,
@@ -301,13 +304,15 @@ class _ModuleCardState extends State<_ModuleCard>
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: widget.accent.withOpacity(_hovered ? 1 : 0.5),
+                      color:
+                          widget.accent.withValues(alpha: _hovered ? 1 : 0.5),
                     ),
                   ),
                   const SizedBox(width: 4),
                   Icon(Icons.arrow_forward_rounded,
                       size: 11,
-                      color: widget.accent.withOpacity(_hovered ? 1 : 0.5)),
+                      color:
+                          widget.accent.withValues(alpha: _hovered ? 1 : 0.5)),
                 ]),
               ],
             ),

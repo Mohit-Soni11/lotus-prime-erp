@@ -9,9 +9,10 @@
 class AddressStrings {
   // --- PAGE HEADERS ---
   static const String pageTitle = "Registered Office & Location";
-  static const String pageSub = "Manage billing premises, warehouses, and geo-spatial data";
+  static const String pageSub =
+      "Manage billing premises, warehouses, and geo-spatial data";
   static const String statusActive = "LOCATION ACTIVE";
-  
+
   // --- SECTION HEADERS ---
   static const String secAddress = "Registered Premises";
   static const String subLocation = "LOCATION DETAILS";
@@ -21,19 +22,19 @@ class AddressStrings {
   // --- LABELS & HINTS ---
   static const String lblAddr1 = "Building / Shop / Premise No.";
   static const String hintAddr1 = "e.g. Unit 402, Infinity Towers";
-  
+
   static const String lblAddr2 = "Street / Area / Road";
   static const String hintAddr2 = "e.g. Cyber City, Sector 21";
-  
+
   static const String lblCity = "City / District";
   static const String hintCity = "Enter City";
-  
+
   static const String lblState = "State / Province";
   static const String hintState = "Enter State";
-  
+
   static const String lblPin = "Pincode / Zip";
   static const String hintPin = "6 Digit Code";
-  
+
   static const String lblCountry = "Country";
   static const String hintCountry = "India";
 
@@ -60,6 +61,7 @@ class AddressStrings {
   static const String msgLocError = "Error: Could not fetch accurate location.";
 
   // --- MAP CONFIGURATION ---
-  static const String mapTileUrl = "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}";
+  static const String mapTileUrl =
+      "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}";
   static const String mapUserAgent = "com.lotus.erp";
 }

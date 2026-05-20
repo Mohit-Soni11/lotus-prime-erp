@@ -1,8 +1,8 @@
 // =============================================================================
 // FILE        : delivery_detail_panel.dart
-// MODULE      : Sales → Delivery Management
+// MODULE      : Sales â†’ Delivery Management
 // LAYER       : UI
-// DESCRIPTION : Right side panel — shows full order details, items list,
+// DESCRIPTION : Right side panel â€” shows full order details, items list,
 //               financials, and action buttons (Mark Ready, Deliver, etc.)
 //               Adapts: full delivery vs partial delivery vs due collection.
 // =============================================================================
@@ -67,7 +67,7 @@ class DeliveryDetailPanel extends StatelessWidget {
   }
 }
 
-// ── Panel Header ──────────────────────────────────────────────────────────────
+// â”€â”€ Panel Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _PanelHeader extends StatelessWidget {
   final DeliveryOrderUiModel order;
   final VoidCallback onClose;
@@ -86,7 +86,7 @@ class _PanelHeader extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: DeliveryColors.brandGold.withOpacity(0.15),
+            color: DeliveryColors.brandGold.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(DeliveryIcons.moduleIcon,
@@ -117,7 +117,7 @@ class _PanelHeader extends StatelessWidget {
   }
 }
 
-// ── Order Details Section ─────────────────────────────────────────────────────
+// â”€â”€ Order Details Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _OrderDetailsSection extends StatelessWidget {
   final DeliveryOrderUiModel order;
   const _OrderDetailsSection({required this.order});
@@ -141,7 +141,7 @@ class _OrderDetailsSection extends StatelessWidget {
             icon: DeliveryIcons.weight,
             label: 'Metal',
             value:
-                '${order.metalType} ${order.purity} • ${order.approxWeight.toStringAsFixed(3)}g'),
+                '${order.metalType} ${order.purity} â€¢ ${order.approxWeight.toStringAsFixed(3)}g'),
         if (order.karigarName != null)
           _DetailRow(
               icon: DeliveryIcons.karigar,
@@ -168,7 +168,7 @@ class _OrderDetailsSection extends StatelessWidget {
   }
 }
 
-// ── Items Section (multi-item) ────────────────────────────────────────────────
+// â”€â”€ Items Section (multi-item) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ItemsSection extends StatelessWidget {
   final DeliveryManagementController ctrl;
   final DeliveryOrderUiModel order;
@@ -184,9 +184,9 @@ class _ItemsSection extends StatelessWidget {
       trailing: showSelect
           ? GestureDetector(
               onTap: ctrl.selectAllReadyItems,
-              child: Text(
+              child: const Text(
                 DeliveryStrings.partialSelectAll,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: DeliveryColors.brandGold,
@@ -207,12 +207,12 @@ class _ItemsSection extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? DeliveryColors.brandGold.withOpacity(0.08)
+                    ? DeliveryColors.brandGold.withValues(alpha: 0.08)
                     : DeliveryColors.bodyBg,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isSelected
-                      ? DeliveryColors.brandGold.withOpacity(0.4)
+                      ? DeliveryColors.brandGold.withValues(alpha: 0.4)
                       : DeliveryColors.bodyBorder,
                 ),
               ),
@@ -240,7 +240,7 @@ class _ItemsSection extends StatelessWidget {
                     children: [
                       Text(item.itemName, style: DeliveryStyles.cardTitle),
                       Text(
-                        '${item.metalType} ${item.purity} • ${item.approxWeight.toStringAsFixed(3)}g',
+                        '${item.metalType} ${item.purity} â€¢ ${item.approxWeight.toStringAsFixed(3)}g',
                         style: DeliveryStyles.cardSubtitle,
                       ),
                     ],
@@ -308,7 +308,7 @@ class _ItemStatusPill extends StatelessWidget {
   }
 }
 
-// ── Financials Section ────────────────────────────────────────────────────────
+// â”€â”€ Financials Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _FinancialsSection extends StatelessWidget {
   final DeliveryOrderUiModel order;
   const _FinancialsSection({required this.order});
@@ -320,17 +320,17 @@ class _FinancialsSection extends StatelessWidget {
       child: Column(children: [
         _FinRow(
             label: 'Advance Paid',
-            value: '₹${_f(order.advancePaid)}',
+            value: 'â‚¹${_f(order.advancePaid)}',
             color: DeliveryColors.statusBooked),
         if (order.totalAmount > 0)
           _FinRow(
               label: 'Total Amount',
-              value: '₹${_f(order.totalAmount)}',
+              value: 'â‚¹${_f(order.totalAmount)}',
               color: DeliveryColors.bodyTextMain),
         if (order.dueAmount > 0)
           _FinRow(
               label: 'Due Amount',
-              value: '₹${_f(order.dueAmount)}',
+              value: 'â‚¹${_f(order.dueAmount)}',
               color: DeliveryColors.urgencyOverdue,
               highlight: true),
         const SizedBox(height: 4),
@@ -412,7 +412,7 @@ class _PaymentStatusRow extends StatelessWidget {
   }
 }
 
-// ── Action Section ────────────────────────────────────────────────────────────
+// â”€â”€ Action Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ActionSection extends StatelessWidget {
   final DeliveryManagementController ctrl;
   final DeliveryOrderUiModel order;
@@ -428,7 +428,7 @@ class _ActionSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = order.status;
 
-    // Completed / Cancelled — only show WhatsApp & bill link
+    // Completed / Cancelled â€” only show WhatsApp & bill link
     if (status == DeliveryOrderStatus.cancelled ||
         (status == DeliveryOrderStatus.delivered &&
             order.paymentStatus == DeliveryPaymentStatus.paid)) {
@@ -443,7 +443,7 @@ class _ActionSection extends StatelessWidget {
       );
     }
 
-    // Due Ledger — collect payment
+    // Due Ledger â€” collect payment
     if (status == DeliveryOrderStatus.delivered &&
         order.paymentStatus == DeliveryPaymentStatus.partial) {
       return _Section(
@@ -481,7 +481,7 @@ class _ActionSection extends StatelessWidget {
       );
     }
 
-    // Active pipeline — BOOKED / IN_MAKING / READY
+    // Active pipeline â€” BOOKED / IN_MAKING / READY
     return _Section(
       title: DeliveryStrings.panelDeliverOrder,
       child: Column(
@@ -496,8 +496,9 @@ class _ActionSection extends StatelessWidget {
               outlined: true,
               onTap: () async {
                 final ok = await ctrl.markInMaking(order.id);
-                if (ok && context.mounted)
+                if (ok && context.mounted) {
                   _showSnack(context, DeliveryStrings.snackInMaking);
+                }
               },
             ),
 
@@ -509,8 +510,9 @@ class _ActionSection extends StatelessWidget {
               outlined: true,
               onTap: () async {
                 final ok = await ctrl.markReady(order.id);
-                if (ok && context.mounted)
+                if (ok && context.mounted) {
                   _showSnack(context, DeliveryStrings.snackReadyMarked);
+                }
               },
             ),
 
@@ -660,7 +662,7 @@ class _ActionSection extends StatelessWidget {
   }
 }
 
-// ── Due Summary Row ───────────────────────────────────────────────────────────
+// â”€â”€ Due Summary Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _DueSummaryRow extends StatelessWidget {
   final DeliveryManagementController ctrl;
   final DeliveryOrderUiModel order;
@@ -679,20 +681,20 @@ class _DueSummaryRow extends StatelessWidget {
             color: DeliveryColors.urgencyOverdueBg,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-                color: DeliveryColors.urgencyOverdue.withOpacity(0.3)),
+                color: DeliveryColors.urgencyOverdue.withValues(alpha: 0.3)),
           ),
           child: Row(children: [
             const Icon(DeliveryIcons.dueAmount,
                 size: 16, color: DeliveryColors.urgencyOverdue),
             const SizedBox(width: 8),
-            Text(DeliveryStrings.lblDueAfter,
-                style: const TextStyle(
+            const Text(DeliveryStrings.lblDueAfter,
+                style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: DeliveryColors.urgencyOverdue)),
             const Spacer(),
             Text(
-              '₹${due.toStringAsFixed(2)}',
+              'â‚¹${due.toStringAsFixed(2)}',
               style: DeliveryStyles.dueAmount,
             ),
           ]),
@@ -702,7 +704,7 @@ class _DueSummaryRow extends StatelessWidget {
   }
 }
 
-// ── Amount Input Field ────────────────────────────────────────────────────────
+// â”€â”€ Amount Input Field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _AmountField extends StatefulWidget {
   final TextEditingController ctrl;
   final String label;
@@ -728,7 +730,7 @@ class _AmountFieldState extends State<_AmountField> {
           child: Row(children: [
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 12),
-              child: Text('₹',
+              child: Text('â‚¹',
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
@@ -757,7 +759,7 @@ class _AmountFieldState extends State<_AmountField> {
   }
 }
 
-// ── Action Button ─────────────────────────────────────────────────────────────
+// â”€â”€ Action Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ActionButton extends StatefulWidget {
   final String label;
   final IconData icon;
@@ -795,12 +797,16 @@ class _ActionButtonState extends State<_ActionButton> {
           height: 44,
           decoration: BoxDecoration(
             color: widget.outlined
-                ? (_hover ? widget.color.withOpacity(0.08) : Colors.transparent)
-                : (_hover ? widget.color.withOpacity(0.85) : widget.color),
+                ? (_hover
+                    ? widget.color.withValues(alpha: 0.08)
+                    : Colors.transparent)
+                : (_hover
+                    ? widget.color.withValues(alpha: 0.85)
+                    : widget.color),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: widget.outlined
-                  ? widget.color.withOpacity(0.5)
+                  ? widget.color.withValues(alpha: 0.5)
                   : Colors.transparent,
             ),
           ),
@@ -838,7 +844,7 @@ class _ActionButtonState extends State<_ActionButton> {
   }
 }
 
-// ── Section Wrapper ───────────────────────────────────────────────────────────
+// â”€â”€ Section Wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _Section extends StatelessWidget {
   final String title;
   final Widget child;
@@ -862,7 +868,8 @@ class _Section extends StatelessWidget {
           if (trailing != null) trailing!,
         ]),
         const SizedBox(height: 10),
-        Divider(color: DeliveryColors.bodyBorder.withOpacity(0.7), height: 1),
+        Divider(
+            color: DeliveryColors.bodyBorder.withValues(alpha: 0.7), height: 1),
         const SizedBox(height: 10),
         child,
       ]),
@@ -870,7 +877,7 @@ class _Section extends StatelessWidget {
   }
 }
 
-// ── Detail Row ────────────────────────────────────────────────────────────────
+// â”€â”€ Detail Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _DetailRow extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -911,7 +918,7 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
-// ── No Selection State ────────────────────────────────────────────────────────
+// â”€â”€ No Selection State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _NoSelectionState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -924,7 +931,7 @@ class _NoSelectionState extends StatelessWidget {
             Icon(
               DeliveryIcons.moduleIcon,
               size: 52,
-              color: DeliveryColors.bodyTextMuted.withOpacity(0.2),
+              color: DeliveryColors.bodyTextMuted.withValues(alpha: 0.2),
             ),
             const SizedBox(height: 14),
             Text(
@@ -932,7 +939,7 @@ class _NoSelectionState extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: DeliveryColors.bodyTextMuted.withOpacity(0.5),
+                color: DeliveryColors.bodyTextMuted.withValues(alpha: 0.5),
               ),
             ),
             const SizedBox(height: 6),
@@ -940,7 +947,7 @@ class _NoSelectionState extends StatelessWidget {
               'Choose an order from the list to view its details.',
               style: TextStyle(
                 fontSize: 12,
-                color: DeliveryColors.bodyTextMuted.withOpacity(0.4),
+                color: DeliveryColors.bodyTextMuted.withValues(alpha: 0.4),
               ),
             ),
           ],

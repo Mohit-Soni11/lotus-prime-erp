@@ -1,6 +1,6 @@
 // ==========================================
 // FILE: defaulter_data_table.dart
-// MODULE: Customer → Defaulter List
+// MODULE: Customer â†’ Defaulter List
 // DESCRIPTION: Main data table widget.
 //              Shows defaulter rows with risk badges, amounts, actions.
 //              Handles: loading shimmer, empty state, hover effects.
@@ -40,9 +40,10 @@ class DefaulterDataTable extends StatelessWidget {
             _TableHeader(),
 
             // Table Body
-            Expanded(child: _TableBody(
-              defaulters:   defaulters,
-              isLoading:    isLoading,
+            Expanded(
+                child: _TableBody(
+              defaulters: defaulters,
+              isLoading: isLoading,
               errorMessage: errorMessage,
             )),
           ],
@@ -52,9 +53,9 @@ class DefaulterDataTable extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // TABLE HEADER
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _TableHeader extends StatelessWidget {
   @override
@@ -65,14 +66,14 @@ class _TableHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          _headerCell(DefaulterStrings.colCustomer,  flex: 4),
-          _headerCell(DefaulterStrings.colRisk,      flex: 2, center: true),
+          _headerCell(DefaulterStrings.colCustomer, flex: 4),
+          _headerCell(DefaulterStrings.colRisk, flex: 2, center: true),
           _headerCell(DefaulterStrings.colReference, flex: 2),
           _headerCell(DefaulterStrings.colPrincipal, flex: 2, center: true),
-          _headerCell(DefaulterStrings.colInterest,  flex: 2, center: true),
-          _headerCell(DefaulterStrings.colTotalDue,  flex: 2, center: true),
-          _headerCell(DefaulterStrings.colDays,      flex: 2, center: true),
-          _headerCell(DefaulterStrings.colActions,   flex: 2, center: true),
+          _headerCell(DefaulterStrings.colInterest, flex: 2, center: true),
+          _headerCell(DefaulterStrings.colTotalDue, flex: 2, center: true),
+          _headerCell(DefaulterStrings.colDays, flex: 2, center: true),
+          _headerCell(DefaulterStrings.colActions, flex: 2, center: true),
         ],
       ),
     );
@@ -90,13 +91,13 @@ class _TableHeader extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // TABLE BODY
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _TableBody extends StatelessWidget {
   final List<DefaulterModel> defaulters;
-  final bool   isLoading;
+  final bool isLoading;
   final String? errorMessage;
 
   const _TableBody({
@@ -120,7 +121,7 @@ class _TableBody extends StatelessWidget {
     }
 
     return ListView.builder(
-      itemCount:   defaulters.length,
+      itemCount: defaulters.length,
       itemBuilder: (context, index) {
         final defaulter = defaulters[index];
         return _DefaulterRow(
@@ -132,13 +133,13 @@ class _TableBody extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // DEFAULTER ROW
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _DefaulterRow extends StatefulWidget {
   final DefaulterModel defaulter;
-  final bool           isAlternate;
+  final bool isAlternate;
 
   const _DefaulterRow({
     required this.defaulter,
@@ -159,8 +160,8 @@ class _DefaulterRowState extends State<_DefaulterRow> {
     final d = widget.defaulter;
 
     return MouseRegion(
-      onEnter:  (_) => setState(() => _isHovered = true),
-      onExit:   (_) => setState(() => _isHovered = false),
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         height: 58,
@@ -181,10 +182,10 @@ class _DefaulterRowState extends State<_DefaulterRow> {
             Expanded(
               flex: 4,
               child: _CustomerCell(
-                name:  d.customerName,
+                name: d.customerName,
                 mobile: d.mobile,
-                city:   d.city,
-                type:   d.customerType,
+                city: d.city,
+                type: d.customerType,
               ),
             ),
 
@@ -258,7 +259,9 @@ class _DefaulterRowState extends State<_DefaulterRow> {
             // --- Days Overdue ---
             Expanded(
               flex: 2,
-              child: Center(child: _DaysOverdueCell(days: d.daysOverdue, level: d.riskLevel)),
+              child: Center(
+                  child: _DaysOverdueCell(
+                      days: d.daysOverdue, level: d.riskLevel)),
             ),
 
             // --- Action Buttons ---
@@ -273,9 +276,9 @@ class _DefaulterRowState extends State<_DefaulterRow> {
   }
 }
 
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // CUSTOMER CELL
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _CustomerCell extends StatelessWidget {
   final String name;
@@ -299,19 +302,19 @@ class _CustomerCell extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color:        DefaulterColors.riskCriticalBg,
-            shape:        BoxShape.circle,
+            color: DefaulterColors.riskCriticalBg,
+            shape: BoxShape.circle,
             border: Border.all(
-              color: DefaulterColors.riskCriticalBorder.withOpacity(0.3),
+              color: DefaulterColors.riskCriticalBorder.withValues(alpha: 0.3),
             ),
           ),
           child: Center(
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : '?',
               style: const TextStyle(
-                fontSize:   15,
+                fontSize: 15,
                 fontWeight: FontWeight.w800,
-                color:      DefaulterColors.riskCriticalText,
+                color: DefaulterColors.riskCriticalText,
               ),
             ),
           ),
@@ -337,7 +340,8 @@ class _CustomerCell extends StatelessWidget {
                   if (type == 'VIP') ...[
                     const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(
                         color: DefaulterColors.brandGoldLight,
                         borderRadius: BorderRadius.circular(4),
@@ -356,7 +360,7 @@ class _CustomerCell extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '$mobile  •  $city',
+                '$mobile  â€¢  $city',
                 style: DefaulterStyles.customerMobile,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -369,9 +373,9 @@ class _CustomerCell extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // RISK BADGE
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _RiskBadge extends StatelessWidget {
   final DefaulterRiskLevel level;
@@ -384,9 +388,9 @@ class _RiskBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color:        config.bg,
+        color: config.bg,
         borderRadius: BorderRadius.circular(20),
-        border:       Border.all(color: config.border, width: 1),
+        border: Border.all(color: config.border, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -412,36 +416,36 @@ class _RiskBadge extends StatelessWidget {
   _RiskConfig _riskConfig(DefaulterRiskLevel level) {
     switch (level) {
       case DefaulterRiskLevel.critical:
-        return _RiskConfig(
-          label:  DefaulterStrings.riskCritical,
-          bg:     DefaulterColors.riskCriticalBg,
+        return const _RiskConfig(
+          label: DefaulterStrings.riskCritical,
+          bg: DefaulterColors.riskCriticalBg,
           border: DefaulterColors.riskCriticalBorder,
-          text:   DefaulterColors.riskCriticalText,
-          dot:    DefaulterColors.riskCriticalDot,
+          text: DefaulterColors.riskCriticalText,
+          dot: DefaulterColors.riskCriticalDot,
         );
       case DefaulterRiskLevel.high:
-        return _RiskConfig(
-          label:  DefaulterStrings.riskHigh,
-          bg:     DefaulterColors.riskHighBg,
+        return const _RiskConfig(
+          label: DefaulterStrings.riskHigh,
+          bg: DefaulterColors.riskHighBg,
           border: DefaulterColors.riskHighBorder,
-          text:   DefaulterColors.riskHighText,
-          dot:    DefaulterColors.riskHighDot,
+          text: DefaulterColors.riskHighText,
+          dot: DefaulterColors.riskHighDot,
         );
       case DefaulterRiskLevel.medium:
-        return _RiskConfig(
-          label:  DefaulterStrings.riskMedium,
-          bg:     DefaulterColors.riskMediumBg,
+        return const _RiskConfig(
+          label: DefaulterStrings.riskMedium,
+          bg: DefaulterColors.riskMediumBg,
           border: DefaulterColors.riskMediumBorder,
-          text:   DefaulterColors.riskMediumText,
-          dot:    DefaulterColors.riskMediumDot,
+          text: DefaulterColors.riskMediumText,
+          dot: DefaulterColors.riskMediumDot,
         );
       case DefaulterRiskLevel.low:
-        return _RiskConfig(
-          label:  DefaulterStrings.riskLow,
-          bg:     DefaulterColors.riskLowBg,
+        return const _RiskConfig(
+          label: DefaulterStrings.riskLow,
+          bg: DefaulterColors.riskLowBg,
           border: DefaulterColors.riskLowBorder,
-          text:   DefaulterColors.riskLowText,
-          dot:    DefaulterColors.riskLowDot,
+          text: DefaulterColors.riskLowText,
+          dot: DefaulterColors.riskLowDot,
         );
     }
   }
@@ -449,7 +453,7 @@ class _RiskBadge extends StatelessWidget {
 
 class _RiskConfig {
   final String label;
-  final Color  bg, border, text, dot;
+  final Color bg, border, text, dot;
   const _RiskConfig({
     required this.label,
     required this.bg,
@@ -459,12 +463,12 @@ class _RiskConfig {
   });
 }
 
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // DAYS OVERDUE CELL
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _DaysOverdueCell extends StatelessWidget {
-  final int               days;
+  final int days;
   final DefaulterRiskLevel level;
 
   const _DaysOverdueCell({required this.days, required this.level});
@@ -480,7 +484,7 @@ class _DaysOverdueCell extends StatelessWidget {
           days.toString(),
           style: DefaulterStyles.daysText.copyWith(color: textColor),
         ),
-        Text(
+        const Text(
           DefaulterStrings.daysOverdueLabel,
           style: DefaulterStyles.daysUnit,
         ),
@@ -490,17 +494,21 @@ class _DaysOverdueCell extends StatelessWidget {
 
   Color _colorForLevel(DefaulterRiskLevel level) {
     switch (level) {
-      case DefaulterRiskLevel.critical: return DefaulterColors.riskCriticalText;
-      case DefaulterRiskLevel.high:     return DefaulterColors.riskHighText;
-      case DefaulterRiskLevel.medium:   return DefaulterColors.riskMediumText;
-      case DefaulterRiskLevel.low:      return DefaulterColors.riskLowText;
+      case DefaulterRiskLevel.critical:
+        return DefaulterColors.riskCriticalText;
+      case DefaulterRiskLevel.high:
+        return DefaulterColors.riskHighText;
+      case DefaulterRiskLevel.medium:
+        return DefaulterColors.riskMediumText;
+      case DefaulterRiskLevel.low:
+        return DefaulterColors.riskLowText;
     }
   }
 }
 
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // ACTION BUTTONS
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ActionButtons extends StatelessWidget {
   final String mobile;
@@ -513,20 +521,20 @@ class _ActionButtons extends StatelessWidget {
       children: [
         // Call button
         _ActionBtn(
-          icon:    DefaulterIcons.phoneCall,
-          color:   DefaulterColors.callBtnBg,
+          icon: DefaulterIcons.phoneCall,
+          color: DefaulterColors.callBtnBg,
           tooltip: DefaulterStrings.btnCall,
-          onTap:   () => _makeCall(context, mobile),
+          onTap: () => _makeCall(context, mobile),
         ),
 
         const SizedBox(width: 6),
 
         // Copy mobile number
         _ActionBtn(
-          icon:    DefaulterIcons.notify,
-          color:   DefaulterColors.notifyBtnBg,
+          icon: DefaulterIcons.notify,
+          color: DefaulterColors.notifyBtnBg,
           tooltip: DefaulterStrings.btnNotify,
-          onTap:   () => _copyNumber(context, mobile),
+          onTap: () => _copyNumber(context, mobile),
         ),
       ],
     );
@@ -541,10 +549,10 @@ class _ActionButtons extends StatelessWidget {
       await Clipboard.setData(ClipboardData(text: number));
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:  Text(DefaulterStrings.copySuccess),
+          const SnackBar(
+            content: Text(DefaulterStrings.copySuccess),
             behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 2),
+            duration: Duration(seconds: 2),
           ),
         );
       }
@@ -555,10 +563,10 @@ class _ActionButtons extends StatelessWidget {
     await Clipboard.setData(ClipboardData(text: number));
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:  Text(DefaulterStrings.copySuccess),
+        const SnackBar(
+          content: Text(DefaulterStrings.copySuccess),
           behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
+          duration: Duration(seconds: 2),
         ),
       );
     }
@@ -566,9 +574,9 @@ class _ActionButtons extends StatelessWidget {
 }
 
 class _ActionBtn extends StatelessWidget {
-  final IconData    icon;
-  final Color       color;
-  final String      tooltip;
+  final IconData icon;
+  final Color color;
+  final String tooltip;
   final VoidCallback onTap;
 
   const _ActionBtn({
@@ -583,13 +591,13 @@ class _ActionBtn extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: InkWell(
-        onTap:        onTap,
+        onTap: onTap,
         borderRadius: BorderRadius.circular(6),
         child: Container(
-          width:  30,
+          width: 30,
           height: 30,
           decoration: BoxDecoration(
-            color:        color,
+            color: color,
             borderRadius: BorderRadius.circular(6),
           ),
           child: Icon(icon, color: Colors.white, size: 14),
@@ -599,31 +607,33 @@ class _ActionBtn extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // SHIMMER ROWS (Loading State)
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ShimmerRows extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor:      Colors.grey.shade200,
+      baseColor: Colors.grey.shade200,
       highlightColor: Colors.grey.shade100,
-      period:         const Duration(milliseconds: 1200),
+      period: const Duration(milliseconds: 1200),
       child: ListView.builder(
-        itemCount:   8,
+        itemCount: 8,
         itemBuilder: (_, i) => Container(
           height: 58,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: const BoxDecoration(
             border: Border(
-              bottom: BorderSide(color: DefaulterColors.tableDivider, width: 0.8),
+              bottom:
+                  BorderSide(color: DefaulterColors.tableDivider, width: 0.8),
             ),
           ),
           child: Row(
             children: [
               Container(
-                width: 36, height: 36,
+                width: 36,
+                height: 36,
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
@@ -633,7 +643,7 @@ class _ShimmerRows extends StatelessWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment:  MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(width: 140, height: 13, color: Colors.white),
                     const SizedBox(height: 5),
@@ -662,9 +672,9 @@ class _ShimmerRows extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // EMPTY STATE
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
@@ -678,25 +688,25 @@ class _EmptyState extends StatelessWidget {
           Container(
             width: 80,
             height: 80,
-            decoration: BoxDecoration(
-              color:  DefaulterColors.riskLowBg,
-              shape:  BoxShape.circle,
+            decoration: const BoxDecoration(
+              color: DefaulterColors.riskLowBg,
+              shape: BoxShape.circle,
             ),
             child: const Icon(
               DefaulterIcons.emptyState,
-              size:  38,
+              size: 38,
               color: DefaulterColors.riskLowText,
             ),
           ),
           const SizedBox(height: 20),
-          Text(
+          const Text(
             DefaulterStrings.emptyTitle,
             style: DefaulterStyles.emptyTitle,
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             DefaulterStrings.emptySubtitle,
-            style:     DefaulterStyles.emptySubtitle,
+            style: DefaulterStyles.emptySubtitle,
             textAlign: TextAlign.center,
           ),
         ],
@@ -705,9 +715,9 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // ERROR STATE
-// ─────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ErrorState extends StatelessWidget {
   final String message;
@@ -721,13 +731,13 @@ class _ErrorState extends StatelessWidget {
         children: [
           const Icon(
             Icons.error_outline_rounded,
-            size:  48,
+            size: 48,
             color: DefaulterColors.riskCriticalText,
           ),
           const SizedBox(height: 16),
           Text(
             message,
-            style:     DefaulterStyles.emptyTitle.copyWith(
+            style: DefaulterStyles.emptyTitle.copyWith(
               color: DefaulterColors.riskCriticalText,
             ),
             textAlign: TextAlign.center,

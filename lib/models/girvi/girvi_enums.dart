@@ -14,24 +14,23 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 enum GirviStatus {
-  active       ('ACTIVE',          'Active'),
-  released     ('RELEASED',        'Released'),
-  overdue      ('OVERDUE',         'Overdue'),
-  partialRelease('PARTIAL_RELEASE','Partial Release'),
-  auctioned    ('AUCTIONED',       'Auctioned'),
+  active('ACTIVE', 'Active'),
+  released('RELEASED', 'Released'),
+  overdue('OVERDUE', 'Overdue'),
+  partialRelease('PARTIAL_RELEASE', 'Partial Release'),
+  auctioned('AUCTIONED', 'Auctioned'),
   ;
 
   const GirviStatus(this.dbValue, this.displayName);
   final String dbValue;
   final String displayName;
 
-  static GirviStatus fromDb(String v) =>
-      GirviStatus.values.firstWhere((e) => e.dbValue == v,
-          orElse: () => GirviStatus.active);
+  static GirviStatus fromDb(String v) => GirviStatus.values
+      .firstWhere((e) => e.dbValue == v, orElse: () => GirviStatus.active);
 
-  bool get isActive  => this == GirviStatus.active;
+  bool get isActive => this == GirviStatus.active;
   bool get isOverdue => this == GirviStatus.overdue;
-  bool get isClosed  =>
+  bool get isClosed =>
       this == GirviStatus.released || this == GirviStatus.auctioned;
 }
 
@@ -40,12 +39,12 @@ enum GirviStatus {
 // ════════════════════════════════════════════════════════════════════════════
 
 enum MetalType {
-  gold     ('Gold',      'Gold',      '🥇'),
-  silver   ('Silver',    'Silver',    '🥈'),
-  diamond  ('Diamond',   'Diamond',   '💎'),
-  platinum ('Platinum',  'Platinum',  '🔘'),
-  mixed    ('Mixed',     'Mixed',     '✨'),
-  other    ('Other',     'Other',     '📦'),
+  gold('Gold', 'Gold', '🥇'),
+  silver('Silver', 'Silver', '🥈'),
+  diamond('Diamond', 'Diamond', '💎'),
+  platinum('Platinum', 'Platinum', '🔘'),
+  mixed('Mixed', 'Mixed', '✨'),
+  other('Other', 'Other', '📦'),
   ;
 
   const MetalType(this.dbValue, this.displayName, this.emoji);
@@ -53,9 +52,8 @@ enum MetalType {
   final String displayName;
   final String emoji;
 
-  static MetalType fromDb(String v) =>
-      MetalType.values.firstWhere((e) => e.dbValue == v,
-          orElse: () => MetalType.gold);
+  static MetalType fromDb(String v) => MetalType.values
+      .firstWhere((e) => e.dbValue == v, orElse: () => MetalType.gold);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -63,14 +61,14 @@ enum MetalType {
 // ════════════════════════════════════════════════════════════════════════════
 
 enum MetalPurity {
-  k24   ('24K',   '24K (99.9% Pure)',    0.999),
-  k22   ('22K',   '22K (91.6% Pure)',    0.916),
-  k18   ('18K',   '18K (75.0% Pure)',    0.750),
-  k14   ('14K',   '14K (58.5% Pure)',    0.585),
-  s999  ('999',   'Silver 999 (Fine)',   0.999),
-  s925  ('925',   'Silver 925 (Sterlin)',0.925),
-  s800  ('800',   'Silver 800',          0.800),
-  other ('Other', 'Other / Custom',      1.000),
+  k24('24K', '24K (99.9% Pure)', 0.999),
+  k22('22K', '22K (91.6% Pure)', 0.916),
+  k18('18K', '18K (75.0% Pure)', 0.750),
+  k14('14K', '14K (58.5% Pure)', 0.585),
+  s999('999', 'Silver 999 (Fine)', 0.999),
+  s925('925', 'Silver 925 (Sterlin)', 0.925),
+  s800('800', 'Silver 800', 0.800),
+  other('Other', 'Other / Custom', 1.000),
   ;
 
   const MetalPurity(this.dbValue, this.displayName, this.fineness);
@@ -78,9 +76,8 @@ enum MetalPurity {
   final String displayName;
   final double fineness; // for calculation
 
-  static MetalPurity fromDb(String v) =>
-      MetalPurity.values.firstWhere((e) => e.dbValue == v,
-          orElse: () => MetalPurity.k22);
+  static MetalPurity fromDb(String v) => MetalPurity.values
+      .firstWhere((e) => e.dbValue == v, orElse: () => MetalPurity.k22);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -88,20 +85,19 @@ enum MetalPurity {
 // ════════════════════════════════════════════════════════════════════════════
 
 enum GirviPaymentMode {
-  cash        ('Cash',          'Cash'),
-  upi         ('UPI',           'UPI / QR Code'),
-  neft        ('NEFT',          'NEFT / IMPS'),
+  cash('Cash', 'Cash'),
+  upi('UPI', 'UPI / QR Code'),
+  neft('NEFT', 'NEFT / IMPS'),
   bankTransfer('Bank Transfer', 'Bank Transfer'),
-  cheque      ('Cheque',        'Cheque'),
+  cheque('Cheque', 'Cheque'),
   ;
 
   const GirviPaymentMode(this.dbValue, this.displayName);
   final String dbValue;
   final String displayName;
 
-  static GirviPaymentMode fromDb(String v) =>
-      GirviPaymentMode.values.firstWhere((e) => e.dbValue == v,
-          orElse: () => GirviPaymentMode.cash);
+  static GirviPaymentMode fromDb(String v) => GirviPaymentMode.values
+      .firstWhere((e) => e.dbValue == v, orElse: () => GirviPaymentMode.cash);
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -109,11 +105,11 @@ enum GirviPaymentMode {
 // ════════════════════════════════════════════════════════════════════════════
 
 enum GirviPaymentType {
-  interest        ('INTEREST',          'Interest Payment'),
+  interest('INTEREST', 'Interest Payment'),
   partialPrincipal('PARTIAL_PRINCIPAL', 'Partial Principal'),
-  partialInterest ('PARTIAL_INTEREST',  'Partial Interest'),
-  fullRelease     ('FULL_RELEASE',      'Full Release'),
-  penalty         ('PENALTY',           'Penalty / Fine'),
+  partialInterest('PARTIAL_INTEREST', 'Partial Interest'),
+  fullRelease('FULL_RELEASE', 'Full Release'),
+  penalty('PENALTY', 'Penalty / Fine'),
   ;
 
   const GirviPaymentType(this.dbValue, this.displayName);
@@ -130,13 +126,13 @@ enum GirviPaymentType {
 // ════════════════════════════════════════════════════════════════════════════
 
 enum GirviIdProofType {
-  aadhaar      ('Aadhaar Card',     'Aadhaar Card'),
-  pan          ('PAN Card',         'PAN Card'),
-  voterId      ('Voter ID',         'Voter ID'),
-  passport     ('Passport',         'Passport'),
-  drivingLic   ('Driving License',  'Driving License'),
-  rationCard   ('Ration Card',      'Ration Card'),
-  other        ('Other',            'Other'),
+  aadhaar('Aadhaar Card', 'Aadhaar Card'),
+  pan('PAN Card', 'PAN Card'),
+  voterId('Voter ID', 'Voter ID'),
+  passport('Passport', 'Passport'),
+  drivingLic('Driving License', 'Driving License'),
+  rationCard('Ration Card', 'Ration Card'),
+  other('Other', 'Other'),
   ;
 
   const GirviIdProofType(this.dbValue, this.displayName);
@@ -153,10 +149,10 @@ enum GirviIdProofType {
 // ════════════════════════════════════════════════════════════════════════════
 
 enum GirviFilter {
-  all      ('All'),
-  active   ('Active'),
-  overdue  ('Overdue'),
-  released ('Released'),
+  all('All'),
+  active('Active'),
+  overdue('Overdue'),
+  released('Released'),
   auctioned('Auctioned'),
   ;
 

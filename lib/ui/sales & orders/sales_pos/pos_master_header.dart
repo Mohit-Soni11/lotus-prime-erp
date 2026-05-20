@@ -2,7 +2,7 @@
 // FILE: pos_master_header.dart
 // TYPE: Smart UI Component (UPGRADED & MERGED)
 // DESCRIPTION: Dynamic App Bar listening to AuthProfileController.
-//              ✅ Back button merged (Original Color, No Gold Hover).
+//              âœ… Back button merged (Original Color, No Gold Hover).
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -40,7 +40,7 @@ class PosMasterHeader extends StatelessWidget implements PreferredSizeWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -67,7 +67,7 @@ class PosMasterHeader extends StatelessWidget implements PreferredSizeWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "ENTERPRISE POS TERMINAL", 
+                      "ENTERPRISE POS TERMINAL",
                       style: SalesPosStyles.headerTitle.copyWith(
                         color: SalesPosColors.brandSilver,
                         fontSize: 12,
@@ -88,14 +88,16 @@ class PosMasterHeader extends StatelessWidget implements PreferredSizeWidget {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: SalesPosColors.shellPanelBg,
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: SalesPosColors.shellBorder),
+                            border:
+                                Border.all(color: SalesPosColors.shellBorder),
                           ),
                           child: Text(
-                            authCtrl.shopCity.toUpperCase(), 
+                            authCtrl.shopCity.toUpperCase(),
                             style: const TextStyle(
                               color: SalesPosColors.shellTextMuted,
                               fontSize: 10,
@@ -111,22 +113,25 @@ class PosMasterHeader extends StatelessWidget implements PreferredSizeWidget {
 
               // --- 4. DYNAMIC USER BADGE WITH GLOW LOGIC ---
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: SalesPosColors.badgeBg,
                   borderRadius: BorderRadius.circular(30),
                   border: Border.all(
-                    color: isOwner ? badgeColor.withOpacity(0.5) : SalesPosColors.shellBorder,
+                    color: isOwner
+                        ? badgeColor.withValues(alpha: 0.5)
+                        : SalesPosColors.shellBorder,
                   ),
                   boxShadow: isOwner
                       ? [
                           BoxShadow(
-                            color: badgeColor.withOpacity(0.3),
+                            color: badgeColor.withValues(alpha: 0.3),
                             blurRadius: 12,
                             spreadRadius: 2,
                           )
                         ]
-                      : [], 
+                      : [],
                 ),
                 child: Row(
                   children: [
@@ -146,7 +151,7 @@ class PosMasterHeader extends StatelessWidget implements PreferredSizeWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          authCtrl.displayRoleName, 
+                          authCtrl.displayRoleName,
                           style: SalesPosStyles.badgeRoleText.copyWith(
                             color: badgeColor,
                           ),
@@ -193,7 +198,9 @@ class _SolidBackButtonState extends State<_SolidBackButton> {
           height: 42,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: _isHovered ? SalesPosColors.bodyBorder : SalesPosColors.bodyPanelBg,
+            color: _isHovered
+                ? SalesPosColors.bodyBorder
+                : SalesPosColors.bodyPanelBg,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: SalesPosColors.bodyBorder,
@@ -201,7 +208,7 @@ class _SolidBackButtonState extends State<_SolidBackButton> {
             ),
           ),
           child: const Icon(
-            Icons.arrow_back_rounded, 
+            Icons.arrow_back_rounded,
             color: SalesPosColors.textDark, // Original solid dark color
             size: 20,
           ),

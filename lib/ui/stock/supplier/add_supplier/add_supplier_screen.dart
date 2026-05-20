@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 // FILE: add_supplier_screen.dart
-// MODULE: Supplier → Add / Edit Supplier
+// MODULE: Supplier â†’ Add / Edit Supplier
 // DESCRIPTION: Full production Add/Edit Supplier form.
 //              Section-based layout identical to AddCustomerScreen.
 //              Dark AppBar + Cream body + Gold accents.
@@ -37,7 +37,7 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
   late final AddSupplierLogic _logic;
   final _formKey = GlobalKey<FormState>();
 
-  // ── Text Controllers ─────────────────────────────────────────────────────
+  // â”€â”€ Text Controllers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   late final TextEditingController _businessNameCtrl;
   late final TextEditingController _contactPersonCtrl;
   late final TextEditingController _mobileCtrl;
@@ -342,7 +342,8 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
           ),
           const SizedBox(height: 16),
           Container(
-              height: 1, color: AddSupplierColors.bodyBorder.withOpacity(0.5)),
+              height: 1,
+              color: AddSupplierColors.bodyBorder.withValues(alpha: 0.5)),
           Padding(
             padding: AddSupplierStyles.cardPadding,
             child: Column(
@@ -394,7 +395,7 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
       child: ListenableBuilder(
         listenable: _logic,
         builder: (_, __) => DropdownButtonFormField<SupplierType>(
-          value: _logic.supplierType,
+          initialValue: _logic.supplierType,
           decoration: AddSupplierStyles.fieldDecoration(
             label: AddSupplierStrings.lblSupplierType,
             prefix: const Icon(AddSupplierIcons.supplierType,
@@ -418,7 +419,8 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
       decoration: BoxDecoration(
         color: AddSupplierColors.errorBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AddSupplierColors.error.withOpacity(0.3)),
+        border:
+            Border.all(color: AddSupplierColors.error.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [

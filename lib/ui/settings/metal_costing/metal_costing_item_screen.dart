@@ -2,7 +2,7 @@
 // FILE        : lib/ui/settings/metal_costing/metal_costing_item_screen.dart
 // MODULE      : Metal Costing Analysis
 // LAYER       : UI / Presentation
-// DESCRIPTION : Level 3 — Item wise P&L list for one metal + purity.
+// DESCRIPTION : Level 3 â€” Item wise P&L list for one metal + purity.
 //               Expandable cards: 3 prices + breakdown + 2 profits.
 // =============================================================================
 
@@ -31,7 +31,7 @@ class MetalCostingItemScreen extends StatelessWidget {
       backgroundColor: MetalCostingColors.bodyBg,
       appBar: MetalCostingAppBar(
         screenTitle:
-            '${metalMeta.label.toUpperCase()} · ${puritySummary.purity}',
+            '${metalMeta.label.toUpperCase()} Â· ${puritySummary.purity}',
         screenSubtitle: MetalCostingStrings.itemWisePL,
         onBack: () => Navigator.maybePop(context),
       ),
@@ -44,7 +44,7 @@ class MetalCostingItemScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 28),
               Text(
-                '${MetalCostingStrings.itemWisePL.toUpperCase()} · '
+                '${MetalCostingStrings.itemWisePL.toUpperCase()} Â· '
                 '${MetalCostingStrings.tapToExpand.toUpperCase()}',
                 style: MetalCostingStyles.sectionLabel,
               ),
@@ -67,9 +67,9 @@ class MetalCostingItemScreen extends StatelessWidget {
   }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// ITEM CARD — Expandable
-// ═════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ITEM CARD â€” Expandable
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 class _ItemCard extends StatefulWidget {
   final MetalCostingItem item;
   final Color accent;
@@ -108,12 +108,12 @@ class _ItemCardState extends State<_ItemCard>
     _open ? _ctrl.forward() : _ctrl.reverse();
   }
 
-  String _fmt(double v) => '₹${v.abs().toStringAsFixed(0).replaceAllMapped(
+  String _fmt(double v) => 'â‚¹${v.abs().toStringAsFixed(0).replaceAllMapped(
         RegExp(r'(\d)(?=(\d{2})+\d$)'),
         (m) => '${m[1]},',
       )}';
 
-  String _fmtRate(double r) => '₹${r.toStringAsFixed(0).replaceAllMapped(
+  String _fmtRate(double r) => 'â‚¹${r.toStringAsFixed(0).replaceAllMapped(
         RegExp(r'(\d)(?=(\d{2})+\d$)'),
         (m) => '${m[1]},',
       )}';
@@ -141,7 +141,7 @@ class _ItemCardState extends State<_ItemCard>
         borderRadius: BorderRadius.circular(MetalCostingStyles.rCard),
         child: Column(
           children: [
-            // ── Header Row ──────────────────────────────────────────────────
+            // â”€â”€ Header Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             InkWell(
               onTap: _toggle,
               child: Padding(
@@ -157,8 +157,8 @@ class _ItemCardState extends State<_ItemCard>
                               style: MetalCostingStyles.itemName),
                           const SizedBox(height: 3),
                           Text(
-                            '${item.sku} · ${item.netWeight}g · '
-                            'Tanch ${item.wastage.toStringAsFixed(1)}% · '
+                            '${item.sku} Â· ${item.netWeight}g Â· '
+                            'Tanch ${item.wastage.toStringAsFixed(1)}% Â· '
                             '${DateFormat('d MMM y').format(item.purchaseDate)}',
                             style: MetalCostingStyles.itemMeta,
                           ),
@@ -183,7 +183,7 @@ class _ItemCardState extends State<_ItemCard>
                           ),
                         ),
                         child: Text(
-                          '${isProfit1Pos ? "+" : "−"}${_fmt(profit1!)}',
+                          '${isProfit1Pos ? "+" : "âˆ’"}${_fmt(profit1!)}',
                           style: GoogleFonts.manrope(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -198,10 +198,10 @@ class _ItemCardState extends State<_ItemCard>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: widget.accent.withOpacity(0.10),
+                          color: widget.accent.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(8),
-                          border:
-                              Border.all(color: widget.accent.withOpacity(0.3)),
+                          border: Border.all(
+                              color: widget.accent.withValues(alpha: 0.3)),
                         ),
                         child: Text(
                           'In Stock',
@@ -213,15 +213,15 @@ class _ItemCardState extends State<_ItemCard>
                         ),
                       ),
                     if (item.hasReplacementLoss)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 6),
+                      const Padding(
+                        padding: EdgeInsets.only(left: 6),
                         child: Icon(MetalCostingIcons.warningIcon,
                             size: 18, color: MetalCostingColors.warning),
                       ),
                     const SizedBox(width: 8),
                     RotationTransition(
                       turns: _rotate,
-                      child: Icon(MetalCostingIcons.expandArrow,
+                      child: const Icon(MetalCostingIcons.expandArrow,
                           size: 20, color: MetalCostingColors.textHint),
                     ),
                   ],
@@ -229,9 +229,9 @@ class _ItemCardState extends State<_ItemCard>
               ),
             ),
 
-            // ── Expanded Detail ──────────────────────────────────────────────
+            // â”€â”€ Expanded Detail â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (_open) ...[
-              Divider(color: MetalCostingColors.divider, height: 1),
+              const Divider(color: MetalCostingColors.divider, height: 1),
               Container(
                 color: MetalCostingColors.inputBg,
                 padding: const EdgeInsets.all(16),
@@ -265,8 +265,8 @@ class _ItemCardState extends State<_ItemCard>
                             bg: MetalCostingColors.goldCard,
                             border: MetalCostingColors.goldBrandBorder,
                             badge: item.rateWentUp
-                                ? '▲ +${_fmt(item.rateMoveAmount)}'
-                                : '▼ −${_fmt(item.rateMoveAmount)}',
+                                ? 'â–² +${_fmt(item.rateMoveAmount)}'
+                                : 'â–¼ âˆ’${_fmt(item.rateMoveAmount)}',
                             badgeColor: item.rateWentUp
                                 ? MetalCostingColors.profitGreen
                                 : MetalCostingColors.lossRed,
@@ -290,10 +290,10 @@ class _ItemCardState extends State<_ItemCard>
                                   bg: MetalCostingColors.profitGreenBg,
                                   border: MetalCostingColors.profitGreenBorder,
                                 )
-                              : _PriceBox(
+                              : const _PriceBox(
                                   label: MetalCostingStrings.notSoldLabel,
                                   labelColor: MetalCostingColors.textHint,
-                                  amount: '—',
+                                  amount: 'â€”',
                                   amountColor: MetalCostingColors.textMuted,
                                   sub: 'In stock',
                                   bg: MetalCostingColors.inputBg,
@@ -312,7 +312,7 @@ class _ItemCardState extends State<_ItemCard>
                       children: [
                         _CalcRow(
                           label: '${MetalCostingStrings.rateDiv100}  '
-                              '(${_fmtRate(item.purchaseRate)} ÷ 100)',
+                              '(${_fmtRate(item.purchaseRate)} Ã· 100)',
                           val: '${_fmtRate(item.purchaseRate / 100)}/g',
                         ),
                         _CalcRow(
@@ -327,7 +327,7 @@ class _ItemCardState extends State<_ItemCard>
                         if (item.makingCharge > 0)
                           _CalcRow(
                             label: '${MetalCostingStrings.makingCharge}  '
-                                '(₹${item.makingCharge.toStringAsFixed(0)} × ${item.netWeight}g)',
+                                '(â‚¹${item.makingCharge.toStringAsFixed(0)} Ã— ${item.netWeight}g)',
                             val: _fmt(item.makingAmount),
                           ),
                         _CalcRow(
@@ -346,8 +346,8 @@ class _ItemCardState extends State<_ItemCard>
                           '${MetalCostingStrings.currentNote}',
                       children: [
                         _CalcRow(
-                          label: 'Aaj ka rate ÷ 100  '
-                              '(${_fmtRate(item.todayRate)} ÷ 100)',
+                          label: 'Aaj ka rate Ã· 100  '
+                              '(${_fmtRate(item.todayRate)} Ã· 100)',
                           val: '${_fmtRate(item.todayRate / 100)}/g',
                         ),
                         _CalcRow(
@@ -372,7 +372,7 @@ class _ItemCardState extends State<_ItemCard>
                       const SizedBox(height: 8),
 
                       // Profit 1
-                      _ProfitNote(
+                      const _ProfitNote(
                         label: MetalCostingStrings.profit1Label,
                         note: MetalCostingStrings.profit1Note,
                       ),
@@ -384,13 +384,13 @@ class _ItemCardState extends State<_ItemCard>
                         amount: profit1,
                         positive: profit1 >= 0,
                         note: 'Aapne ${_fmtRate(item.purchaseRate / 100)}/g '
-                            'pe kharida tha — us waqt ka actual faayda.',
+                            'pe kharida tha â€” us waqt ka actual faayda.',
                       ),
 
                       const SizedBox(height: 10),
 
                       // Profit 2
-                      _ProfitNote(
+                      const _ProfitNote(
                         label: MetalCostingStrings.profit2Label,
                         note: MetalCostingStrings.profit2Note,
                       ),
@@ -405,7 +405,7 @@ class _ItemCardState extends State<_ItemCard>
                         note: item.hasReplacementLoss
                             ? MetalCostingStrings.replacementWarn
                             : 'Aaj same item lete to ${_fmt(item.currentValue)} '
-                                'lagta — phir bhi ${_fmt(item.profit2!)} profit hota.',
+                                'lagta â€” phir bhi ${_fmt(item.profit2!)} profit hota.',
                       ),
                     ] else ...[
                       // Unsold: rate movement
@@ -436,7 +436,7 @@ class _ItemCardState extends State<_ItemCard>
       );
 }
 
-// ── Price Box ─────────────────────────────────────────────────────────────────
+// â”€â”€ Price Box â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _PriceBox extends StatelessWidget {
   final String label, amount, sub;
   final Color labelColor, amountColor, bg, border;
@@ -520,7 +520,7 @@ class _PriceBox extends StatelessWidget {
   }
 }
 
-// ── Calc Card ─────────────────────────────────────────────────────────────────
+// â”€â”€ Calc Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _CalcCard extends StatelessWidget {
   final String? header;
   final List<Widget> children;
@@ -554,7 +554,7 @@ class _CalcCard extends StatelessWidget {
   }
 }
 
-// ── Calc Row ──────────────────────────────────────────────────────────────────
+// â”€â”€ Calc Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _CalcRow extends StatelessWidget {
   final String label, val;
   final bool isTotal;
@@ -569,7 +569,7 @@ class _CalcRow extends StatelessWidget {
       child: Column(
         children: [
           if (isTotal)
-            Divider(
+            const Divider(
                 color: MetalCostingColors.divider, height: 1, thickness: 0.5),
           if (isTotal) const SizedBox(height: 4),
           Row(
@@ -608,7 +608,7 @@ class _CalcRow extends StatelessWidget {
   }
 }
 
-// ── Profit Note ───────────────────────────────────────────────────────────────
+// â”€â”€ Profit Note â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ProfitNote extends StatelessWidget {
   final String label, note;
   const _ProfitNote({required this.label, required this.note});
@@ -626,14 +626,14 @@ class _ProfitNote extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: MetalCostingColors.textBody),
           ),
-          TextSpan(text: '  ·  $note'),
+          TextSpan(text: '  Â·  $note'),
         ],
       ),
     );
   }
 }
 
-// ── Profit Badge ──────────────────────────────────────────────────────────────
+// â”€â”€ Profit Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ProfitBadge extends StatelessWidget {
   final String title;
   final double amount;
@@ -649,7 +649,7 @@ class _ProfitBadge extends StatelessWidget {
     this.note,
   });
 
-  String _fmt(double v) => '₹${v.abs().toStringAsFixed(0).replaceAllMapped(
+  String _fmt(double v) => 'â‚¹${v.abs().toStringAsFixed(0).replaceAllMapped(
         RegExp(r'(\d)(?=(\d{2})+\d$)'),
         (m) => '${m[1]},',
       )}';
@@ -672,10 +672,10 @@ class _ProfitBadge extends StatelessWidget {
             ? MetalCostingColors.profitGreen
             : MetalCostingColors.lossRed;
     final icon = isWarn
-        ? '⚠️ '
+        ? 'âš ï¸ '
         : positive
-            ? '▲ '
-            : '▼ ';
+            ? 'â–² '
+            : 'â–¼ ';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),

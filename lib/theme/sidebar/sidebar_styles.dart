@@ -3,7 +3,7 @@ import 'sidebar_colors.dart';
 
 class SidebarStyles {
   // --- TEXT STYLES ---
-  
+
   // Header (LOTUS ERP)
   static const TextStyle hero = TextStyle(
     fontSize: 18,
@@ -22,7 +22,7 @@ class SidebarStyles {
   // Active/Selected Item (Gold & Bold)
   static const TextStyle action = TextStyle(
     fontSize: 14,
-    color: SidebarColors.primary, 
+    color: SidebarColors.primary,
     fontWeight: FontWeight.w600,
   );
 

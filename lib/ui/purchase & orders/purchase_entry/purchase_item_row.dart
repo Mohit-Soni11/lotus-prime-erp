@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -65,7 +63,7 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
         final isEven = widget.index.isEven;
         final isInvalid = widget.item.hasContent && !widget.item.isValidEntry;
         final background = isInvalid
-            ? PurchaseEntryColors.danger.withOpacity(0.04)
+            ? PurchaseEntryColors.danger.withValues(alpha: 0.04)
             : _isHovered
                 ? PurchaseEntryColors.cardHoverBg
                 : (isEven
@@ -84,7 +82,7 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
               border: Border(
                 bottom: BorderSide(
                   color: isInvalid
-                      ? PurchaseEntryColors.danger.withOpacity(0.18)
+                      ? PurchaseEntryColors.danger.withValues(alpha: 0.18)
                       : PurchaseEntryColors.bodyBorder,
                   width: 1,
                 ),
@@ -181,9 +179,9 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
         height: 32,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
+          color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(7),
-          border: Border.all(color: color.withOpacity(0.35)),
+          border: Border.all(color: color.withValues(alpha: 0.35)),
         ),
         child: Text(
           '${widget.index + 1}',
@@ -202,8 +200,8 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
       height: 38,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: _metalColor.withOpacity(0.10),
-        border: Border.all(color: _metalColor.withOpacity(0.40)),
+        color: _metalColor.withValues(alpha: 0.10),
+        border: Border.all(color: _metalColor.withValues(alpha: 0.40)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: DropdownButtonHideUnderline(
@@ -245,7 +243,7 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
       decoration: BoxDecoration(
         color: PurchaseEntryColors.bodyBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _metalColor.withOpacity(0.35)),
+        border: Border.all(color: _metalColor.withValues(alpha: 0.35)),
       ),
       child: TextFormField(
         controller: widget.item.purityCtrl,
@@ -264,7 +262,7 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
           contentPadding: const EdgeInsets.symmetric(vertical: 11),
           hintText: 'Purity',
           hintStyle: PurchaseEntryStyles.subTitleMuted.copyWith(
-            color: _metalColor.withOpacity(0.50),
+            color: _metalColor.withValues(alpha: 0.50),
           ),
         ),
       ),
@@ -304,7 +302,7 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
           hintText: hint,
           isDense: true,
           hintStyle: TextStyle(
-            color: PurchaseEntryColors.textMuted.withOpacity(0.5),
+            color: PurchaseEntryColors.textMuted.withValues(alpha: 0.5),
             fontSize: 13,
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 10),
@@ -340,9 +338,9 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
       padding: const EdgeInsets.symmetric(horizontal: 10),
       alignment: alignment,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Text(
         value,
@@ -368,10 +366,10 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: PurchaseEntryColors.danger.withOpacity(0.12),
+              color: PurchaseEntryColors.danger.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: PurchaseEntryColors.danger.withOpacity(0.35),
+                color: PurchaseEntryColors.danger.withValues(alpha: 0.35),
               ),
             ),
             child: const Icon(

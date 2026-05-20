@@ -17,48 +17,46 @@ import '../../models/karigar/karigar_issue_model.dart';
 import '../../repositories/karigar/karigar_repository.dart';
 
 class ReceiveKarigarController extends ChangeNotifier {
-
   final KarigarRepository _repo;
 
-  ReceiveKarigarController(AppDatabase db)
-      : _repo = KarigarRepository(db);
+  ReceiveKarigarController(AppDatabase db) : _repo = KarigarRepository(db);
 
   // ── STATE ──────────────────────────────────────────────────────────────────
 
-  bool    _isSaving         = false;
-  bool    _isLoadingIssues  = false;
+  bool _isSaving = false;
+  bool _isLoadingIssues = false;
   String? _errorMessage;
   String? _successMessage;
-  String  _receiptNumber    = '';
+  String _receiptNumber = '';
 
   // Pending issues available for selection
   List<KarigarIssueWithKarigar> _pendingIssues = [];
-  KarigarIssueWithKarigar?      _selectedIssue;
+  KarigarIssueWithKarigar? _selectedIssue;
 
   // Dropdown selections
-  KarigarMakingType     _makingType    = KarigarMakingType.perGram;
-  KarigarPaymentStatus  _paymentStatus = KarigarPaymentStatus.unpaid;
+  KarigarMakingType _makingType = KarigarMakingType.perGram;
+  KarigarPaymentStatus _paymentStatus = KarigarPaymentStatus.unpaid;
 
   // Live weight tracking
   double _grossReceived = 0.0;
-  double _stoneWeight   = 0.0;
-  double _makingRate    = 0.0;
+  double _stoneWeight = 0.0;
+  double _makingRate = 0.0;
 
   // ── GETTERS ────────────────────────────────────────────────────────────────
 
-  bool    get isSaving        => _isSaving;
-  bool    get isLoadingIssues => _isLoadingIssues;
-  String? get errorMessage    => _errorMessage;
-  String? get successMessage  => _successMessage;
-  bool    get hasError        => _errorMessage != null;
-  bool    get hasSuccess      => _successMessage != null;
-  String  get receiptNumber   => _receiptNumber;
+  bool get isSaving => _isSaving;
+  bool get isLoadingIssues => _isLoadingIssues;
+  String? get errorMessage => _errorMessage;
+  String? get successMessage => _successMessage;
+  bool get hasError => _errorMessage != null;
+  bool get hasSuccess => _successMessage != null;
+  String get receiptNumber => _receiptNumber;
 
   List<KarigarIssueWithKarigar> get pendingIssues => _pendingIssues;
-  KarigarIssueWithKarigar?      get selectedIssue => _selectedIssue;
-  bool                          get hasIssue      => _selectedIssue != null;
+  KarigarIssueWithKarigar? get selectedIssue => _selectedIssue;
+  bool get hasIssue => _selectedIssue != null;
 
-  KarigarMakingType    get makingType    => _makingType;
+  KarigarMakingType get makingType => _makingType;
   KarigarPaymentStatus get paymentStatus => _paymentStatus;
 
   // Live computed values
@@ -100,9 +98,8 @@ class ReceiveKarigarController extends ChangeNotifier {
     await _loadPendingIssues();
 
     if (preSelectedIssueId != null) {
-      final match = _pendingIssues
-          .where((i) => i.id == preSelectedIssueId)
-          .firstOrNull;
+      final match =
+          _pendingIssues.where((i) => i.id == preSelectedIssueId).firstOrNull;
       if (match != null) selectIssue(match);
     }
 
@@ -129,8 +126,8 @@ class ReceiveKarigarController extends ChangeNotifier {
     _selectedIssue = issue;
     // Pre-populate making rate from karigar's default rate (if per gram)
     _grossReceived = 0.0;
-    _stoneWeight   = 0.0;
-    _makingRate    = 0.0;
+    _stoneWeight = 0.0;
+    _makingRate = 0.0;
     notifyListeners();
   }
 
@@ -164,12 +161,12 @@ class ReceiveKarigarController extends ChangeNotifier {
 
   Future<bool> saveReceipt({
     required DateTime receiptDate,
-    required int      quantityReceived,
-    required double   grossWeightReceived,
-    required double   stoneWeight,
-    required double   makingChargesAmount,
-    required double   paidAmount,
-    String?           notes,
+    required int quantityReceived,
+    required double grossWeightReceived,
+    required double stoneWeight,
+    required double makingChargesAmount,
+    required double paidAmount,
+    String? notes,
   }) async {
     if (_selectedIssue == null) {
       _errorMessage = 'Please select a pending issue before saving.';
@@ -177,39 +174,37 @@ class ReceiveKarigarController extends ChangeNotifier {
       return false;
     }
 
-    _isSaving     = true;
+    _isSaving = true;
     _errorMessage = null;
     _successMessage = null;
     notifyListeners();
 
     try {
-      final netReceived = (grossWeightReceived - stoneWeight)
-          .clamp(0.0, double.infinity);
-      final computed   = _selectedIssue!.netWeightIssued;
-      final wastage    = (computed - netReceived).clamp(0.0, double.infinity);
-      final wastageP   = computed > 0
-          ? (wastage / computed) * 100
-          : 0.0;
+      final netReceived =
+          (grossWeightReceived - stoneWeight).clamp(0.0, double.infinity);
+      final computed = _selectedIssue!.netWeightIssued;
+      final wastage = (computed - netReceived).clamp(0.0, double.infinity);
+      final wastageP = computed > 0 ? (wastage / computed) * 100 : 0.0;
 
       final cleanNotes = notes?.trim().isEmpty == true ? null : notes?.trim();
 
       final companion = KarigarReceiptsCompanion.insert(
-        receiptNumber:       _receiptNumber,
-        issueId:             _selectedIssue!.id,
-        karigarId:           _selectedIssue!.karigarId,
-        receiptDate:         receiptDate,
-        quantityReceived:    drift.Value(quantityReceived),
+        receiptNumber: _receiptNumber,
+        issueId: _selectedIssue!.id,
+        karigarId: _selectedIssue!.karigarId,
+        receiptDate: receiptDate,
+        quantityReceived: drift.Value(quantityReceived),
         grossWeightReceived: drift.Value(grossWeightReceived),
-        stoneWeight:         drift.Value(stoneWeight),
-        netWeightReceived:   drift.Value(netReceived),
-        wastageWeight:       drift.Value(wastage),
-        wastagePercent:      drift.Value(wastageP),
-        makingChargesType:   drift.Value(_makingType.label),
-        makingChargeRate:    drift.Value(_makingRate),
+        stoneWeight: drift.Value(stoneWeight),
+        netWeightReceived: drift.Value(netReceived),
+        wastageWeight: drift.Value(wastage),
+        wastagePercent: drift.Value(wastageP),
+        makingChargesType: drift.Value(_makingType.label),
+        makingChargeRate: drift.Value(_makingRate),
         makingChargesAmount: drift.Value(makingChargesAmount),
-        paymentStatus:       drift.Value(_paymentStatus.label),
-        paidAmount:          drift.Value(paidAmount),
-        notes:               drift.Value(cleanNotes),
+        paymentStatus: drift.Value(_paymentStatus.label),
+        paidAmount: drift.Value(paidAmount),
+        notes: drift.Value(cleanNotes),
       );
 
       await _repo.createReceipt(companion); // Also marks issue as Completed
@@ -230,12 +225,12 @@ class ReceiveKarigarController extends ChangeNotifier {
 
   Future<void> resetForm() async {
     _selectedIssue = null;
-    _makingType    = KarigarMakingType.perGram;
+    _makingType = KarigarMakingType.perGram;
     _paymentStatus = KarigarPaymentStatus.unpaid;
     _grossReceived = 0.0;
-    _stoneWeight   = 0.0;
-    _makingRate    = 0.0;
-    _errorMessage  = null;
+    _stoneWeight = 0.0;
+    _makingRate = 0.0;
+    _errorMessage = null;
     _successMessage = null;
     _receiptNumber = await _repo.generateReceiptNumber();
     await _loadPendingIssues();
@@ -243,7 +238,7 @@ class ReceiveKarigarController extends ChangeNotifier {
   }
 
   void clearMessages() {
-    _errorMessage   = null;
+    _errorMessage = null;
     _successMessage = null;
     notifyListeners();
   }

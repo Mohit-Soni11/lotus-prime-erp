@@ -4,8 +4,8 @@
 // LAYER       : UI / Screen
 // DESCRIPTION : Karigar Hisaab (Ledger) screen.
 //               Split-panel layout matching CashBook + Purchase screen pattern:
-//               LEFT PANEL  (300px) — Dark: karigar list, search, active selection
-//               RIGHT PANEL (flex)  — Light: stats cards + chronological timeline
+//               LEFT PANEL  (300px) Ã¢â‚¬â€ Dark: karigar list, search, active selection
+//               RIGHT PANEL (flex)  Ã¢â‚¬â€ Light: stats cards + chronological timeline
 //               - App Bar extracted to karigar_hisaab_app_bar.dart
 // =============================================================================
 
@@ -15,7 +15,6 @@ import 'package:intl/intl.dart';
 
 import '../../../database/db/app_database.dart';
 import '../../../logic/karigar/karigar_hisaab_controller.dart';
-import '../../../models/karigar/karigar_enums/karigar_enums.dart';
 import '../../../models/karigar/karigar_issue_model.dart';
 import '../../../models/karigar/karigar_stats_model.dart';
 import '../../../theme/karigar/karigar_theme.dart';
@@ -60,13 +59,13 @@ class _KarigarHisaabScreenState extends State<KarigarHisaabScreen> {
           listenable: _ctrl,
           builder: (context, _) {
             return Row(children: [
-              // ── LEFT PANEL — Karigar List ──────────────────────────
+              // Ã¢â€â‚¬Ã¢â€â‚¬ LEFT PANEL Ã¢â‚¬â€ Karigar List Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
               _LeftPanel(
                 ctrl: _ctrl,
                 searchCtrl: _searchCtrl,
               ),
 
-              // ── RIGHT PANEL — Ledger ───────────────────────────────
+              // Ã¢â€â‚¬Ã¢â€â‚¬ RIGHT PANEL Ã¢â‚¬â€ Ledger Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
               Expanded(
                 child: Container(
                   color: KarigarColors.bodyBg,
@@ -83,9 +82,9 @@ class _KarigarHisaabScreenState extends State<KarigarHisaabScreen> {
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 // LEFT PANEL
-// ════════════════════════════════════════════════════════════════════════════
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
 class _LeftPanel extends StatelessWidget {
   final KarigarHisaabController ctrl;
@@ -195,7 +194,8 @@ class _LeftPanel extends StatelessWidget {
                               CircleAvatar(
                                 radius: 16,
                                 backgroundColor: isSelected
-                                    ? KarigarColors.brandGold.withOpacity(0.2)
+                                    ? KarigarColors.brandGold
+                                        .withValues(alpha: 0.2)
                                     : KarigarColors.leftPanelBorder,
                                 child: Text(
                                   _initials(k.name),
@@ -219,7 +219,7 @@ class _LeftPanel extends StatelessWidget {
                                         color: isSelected
                                             ? KarigarColors.shellTextTitle
                                             : KarigarColors.shellTextTitle
-                                                .withOpacity(0.85),
+                                                .withValues(alpha: 0.85),
                                       ),
                                       overflow: TextOverflow.ellipsis),
                                   Text(k.specialization,
@@ -259,15 +259,16 @@ class _LeftPanel extends StatelessWidget {
 
   String _initials(String name) {
     final parts = name.trim().split(' ');
-    if (parts.length >= 2)
+    if (parts.length >= 2) {
       return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+    }
     return name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 // RIGHT PANEL
-// ════════════════════════════════════════════════════════════════════════════
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
 class _RightPanel extends StatelessWidget {
   final KarigarHisaabController ctrl;
@@ -278,7 +279,7 @@ class _RightPanel extends StatelessWidget {
     final k = ctrl.selectedKarigar!;
     final s = ctrl.stats;
     return Column(children: [
-      // ── Karigar Header ──────────────────────────────────────────
+      // Ã¢â€â‚¬Ã¢â€â‚¬ Karigar Header Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
       Container(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
         decoration: const BoxDecoration(
@@ -321,14 +322,14 @@ class _RightPanel extends StatelessWidget {
         ]),
       ),
 
-      // ── Stats Cards ─────────────────────────────────────────────
+      // Ã¢â€â‚¬Ã¢â€â‚¬ Stats Cards Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
       Container(
         padding: const EdgeInsets.all(16),
         color: KarigarColors.bodyBg,
         child: _StatsGrid(stats: s),
       ),
 
-      // ── Timeline Label ──────────────────────────────────────────
+      // Ã¢â€â‚¬Ã¢â€â‚¬ Timeline Label Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
       Padding(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
         child: Row(children: [
@@ -340,7 +341,7 @@ class _RightPanel extends StatelessWidget {
         ]),
       ),
 
-      // ── Timeline ────────────────────────────────────────────────
+      // Ã¢â€â‚¬Ã¢â€â‚¬ Timeline Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
       Expanded(
         child: ctrl.isLoadingLedger
             ? const Center(
@@ -366,8 +367,9 @@ class _RightPanel extends StatelessWidget {
 
   String _initials(String name) {
     final parts = name.trim().split(' ');
-    if (parts.length >= 2)
+    if (parts.length >= 2) {
       return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+    }
     return name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
   }
 }
@@ -378,7 +380,7 @@ class _StatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rupee = NumberFormat('₹##,##,##0.00', 'en_IN');
+    final rupee = NumberFormat('Ã¢â€šÂ¹##,##,##0.00', 'en_IN');
     final wt = NumberFormat('##0.000', 'en_IN');
 
     return GridView.count(
@@ -474,13 +476,13 @@ class _IssueEntry extends StatelessWidget {
       decoration: BoxDecoration(
         color: KarigarColors.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border:
-            Border.all(color: KarigarColors.info.withOpacity(0.25), width: 1),
-        boxShadow: [
+        border: Border.all(
+            color: KarigarColors.info.withValues(alpha: 0.25), width: 1),
+        boxShadow: const [
           BoxShadow(
               color: KarigarColors.shadowLight,
               blurRadius: 6,
-              offset: const Offset(0, 2))
+              offset: Offset(0, 2))
         ],
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -488,7 +490,7 @@ class _IssueEntry extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: KarigarColors.info.withOpacity(0.1),
+            color: KarigarColors.info.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(KarigarIcons.txnIssue,
@@ -540,7 +542,7 @@ class _ReceiptEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fmt = DateFormat('dd MMM yyyy');
-    final rupee = NumberFormat('₹##,##,##0.00', 'en_IN');
+    final rupee = NumberFormat('Ã¢â€šÂ¹##,##,##0.00', 'en_IN');
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -549,15 +551,15 @@ class _ReceiptEntry extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: receipt.isHighWastage
-              ? KarigarColors.danger.withOpacity(0.35)
-              : KarigarColors.success.withOpacity(0.25),
+              ? KarigarColors.danger.withValues(alpha: 0.35)
+              : KarigarColors.success.withValues(alpha: 0.25),
           width: receipt.isHighWastage ? 1.5 : 1.0,
         ),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
               color: KarigarColors.shadowLight,
               blurRadius: 6,
-              offset: const Offset(0, 2))
+              offset: Offset(0, 2))
         ],
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -565,7 +567,7 @@ class _ReceiptEntry extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: KarigarColors.success.withOpacity(0.1),
+            color: KarigarColors.success.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(KarigarIcons.txnReceipt,
@@ -613,10 +615,10 @@ class _ReceiptEntry extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: KarigarColors.danger.withOpacity(0.06),
+                  color: KarigarColors.danger.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(8),
-                  border:
-                      Border.all(color: KarigarColors.danger.withOpacity(0.3)),
+                  border: Border.all(
+                      color: KarigarColors.danger.withValues(alpha: 0.3)),
                 ),
                 child: Row(children: [
                   const Icon(KarigarIcons.warning,
@@ -648,9 +650,9 @@ class _TinyChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Text(label,
           style: GoogleFonts.inter(
@@ -669,7 +671,8 @@ class _EmptyLedger extends StatelessWidget {
         child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(KarigarIcons.ledger, size: 56, color: KarigarColors.textHint),
+        const Icon(KarigarIcons.ledger,
+            size: 56, color: KarigarColors.textHint),
         const SizedBox(height: 16),
         Text(KarigarStrings.emptyLedgerTitle,
             style: KarigarStyles.sectionTitle.copyWith(fontSize: 15)),
@@ -692,7 +695,8 @@ class _SelectKarigarPrompt extends StatelessWidget {
         child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(KarigarIcons.karigarSel, size: 60, color: KarigarColors.textHint),
+        const Icon(KarigarIcons.karigarSel,
+            size: 60, color: KarigarColors.textHint),
         const SizedBox(height: 16),
         Text(KarigarStrings.ledgerSelectPrompt,
             style: KarigarStyles.sectionTitle.copyWith(
@@ -703,11 +707,4 @@ class _SelectKarigarPrompt extends StatelessWidget {
       ],
     ));
   }
-}
-
-String _initials(String name) {
-  final parts = name.trim().split(' ');
-  if (parts.length >= 2)
-    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-  return name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
 }

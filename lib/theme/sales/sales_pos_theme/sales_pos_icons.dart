@@ -17,13 +17,14 @@ class SalesPosIcons {
   static const IconData backArrow = Icons.arrow_back_ios_new_rounded;
   static const IconData syncData = Icons.sync_rounded;
   static const IconData networkWifi = Icons.wifi_rounded;
-  
+
   // --- POS ACTIONS ---
   static const IconData cart = Icons.shopping_cart_outlined;
   static const IconData searchItem = Icons.search_rounded;
   static const IconData barcodeScanner = Icons.qr_code_scanner_rounded;
   static const IconData holdOrder = Icons.pause_circle_outline_rounded;
-  static const IconData holdFilled = Icons.pause_circle_filled_rounded; // Extracted
+  static const IconData holdFilled =
+      Icons.pause_circle_filled_rounded; // Extracted
   static const IconData printReceipt = Icons.print_rounded;
 
   // --- NEW SALE & BILLING ---
@@ -45,7 +46,8 @@ class SalesPosIcons {
   static const IconData newCustomerAdd = Icons.person_add_rounded;
 
   // --- 🚀 NEW: TABLES & ITEMS SECTION ---
-  static const IconData invoiceItemsHeader = Icons.shopping_cart_checkout_rounded;
+  static const IconData invoiceItemsHeader =
+      Icons.shopping_cart_checkout_rounded;
   static const IconData addItemToCart = Icons.add_shopping_cart_rounded;
   static const IconData deleteItem = Icons.delete_outline_rounded;
   static const IconData oldGoldHeader = Icons.recycling_rounded;
@@ -54,12 +56,14 @@ class SalesPosIcons {
   static const IconData addOldGold = Icons.add_circle_outline_rounded;
 
   // --- PAYMENT MODES & HUB ---
-  static const IconData paymentHubWallet = Icons.account_balance_wallet_rounded; // Extracted
+  static const IconData paymentHubWallet =
+      Icons.account_balance_wallet_rounded; // Extracted
   static const IconData cash = Icons.payments_outlined;
   static const IconData cashFilled = Icons.payments_rounded; // Extracted
   static const IconData card = Icons.credit_card_rounded;
   static const IconData bankUpi = Icons.qr_code_scanner_rounded; // Extracted
-  static const IconData advancePayment = Icons.account_balance_rounded; // Extracted
+  static const IconData advancePayment =
+      Icons.account_balance_rounded; // Extracted
 
   // --- 🚀 NEW: STATUS & FEEDBACK ---
   static const IconData invoiceOutline = Icons.receipt_long_outlined;
@@ -73,5 +77,6 @@ class SalesPosIcons {
   static const IconData logout = Icons.power_settings_new_rounded;
   static const IconData dropdownArrow = Icons.keyboard_arrow_down_rounded;
   static const IconData arrowUp = Icons.keyboard_arrow_up_rounded; // Extracted
-  static const IconData arrowDown = Icons.keyboard_arrow_down_rounded; // Extracted
+  static const IconData arrowDown =
+      Icons.keyboard_arrow_down_rounded; // Extracted
 }

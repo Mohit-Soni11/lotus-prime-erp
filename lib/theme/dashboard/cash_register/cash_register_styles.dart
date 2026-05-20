@@ -8,43 +8,45 @@ import 'package:flutter/material.dart';
 import 'cash_register_colors.dart';
 
 class CashRegisterStyles {
-
-  // ── DIMENSIONS ────────────────────────────────────────────────────────────
-  static const double cardBorderRadius  = 20.0;
+  // â”€â”€ DIMENSIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  static const double cardBorderRadius = 20.0;
   static const double blockBorderRadius = 12.0;
-  static const double footerRadius      = 16.0;
-  static const double iconBtnSize       = 36.0;
+  static const double footerRadius = 16.0;
+  static const double iconBtnSize = 36.0;
 
-  static const EdgeInsets cardPadding  = EdgeInsets.all(20.0);
+  static const EdgeInsets cardPadding = EdgeInsets.all(20.0);
   static const EdgeInsets blockPadding = EdgeInsets.all(14.0);
 
-  // ── CARD DECORATION ───────────────────────────────────────────────────────
+  // â”€â”€ CARD DECORATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get cardDecoration => BoxDecoration(
-    gradient: const LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [CashRegisterColors.cardBgStart, CashRegisterColors.cardBgEnd],
-    ),
-    borderRadius: BorderRadius.circular(cardBorderRadius),
-    border: Border.all(color: Colors.white.withOpacity(0.08)),
-    boxShadow: const [
-      BoxShadow(
-        color: Colors.black45,
-        blurRadius: 25,
-        offset: Offset(0, 15),
-        spreadRadius: -5,
-      ),
-    ],
-  );
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            CashRegisterColors.cardBgStart,
+            CashRegisterColors.cardBgEnd
+          ],
+        ),
+        borderRadius: BorderRadius.circular(cardBorderRadius),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black45,
+            blurRadius: 25,
+            offset: Offset(0, 15),
+            spreadRadius: -5,
+          ),
+        ],
+      );
 
-  // ── OPENING BALANCE ROW ───────────────────────────────────────────────────
+  // â”€â”€ OPENING BALANCE ROW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get openingDecoration => BoxDecoration(
-    color: CashRegisterColors.openingBg,
-    borderRadius: BorderRadius.circular(blockBorderRadius),
-    border: Border.all(color: CashRegisterColors.openingBorder),
-  );
+        color: CashRegisterColors.openingBg,
+        borderRadius: BorderRadius.circular(blockBorderRadius),
+        border: Border.all(color: CashRegisterColors.openingBorder),
+      );
 
-  // ── RECEIVED / PAID BLOCKS ────────────────────────────────────────────────
+  // â”€â”€ RECEIVED / PAID BLOCKS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration receivedDecoration = BoxDecoration(
     color: CashRegisterColors.receivedBg,
     borderRadius: BorderRadius.circular(blockBorderRadius),
@@ -57,27 +59,27 @@ class CashRegisterStyles {
     border: Border.all(color: CashRegisterColors.paidBorder),
   );
 
-  // ── REPORT BUTTON ─────────────────────────────────────────────────────────
+  // â”€â”€ REPORT BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get reportBtnDecoration => BoxDecoration(
-    color: CashRegisterColors.reportIconBg,
-    borderRadius: BorderRadius.circular(10),
-    border: Border.all(color: CashRegisterColors.reportIconBorder),
-  );
+        color: CashRegisterColors.reportIconBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: CashRegisterColors.reportIconBorder),
+      );
 
-  // ── FOOTER (Net Cash) ─────────────────────────────────────────────────────
+  // â”€â”€ FOOTER (Net Cash) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get footerDecoration => BoxDecoration(
-    color: CashRegisterColors.footerBg,
-    borderRadius: BorderRadius.circular(footerRadius),
-    boxShadow: [
-      BoxShadow(
-        color: CashRegisterColors.footerShadow,
-        blurRadius: 10,
-        offset: const Offset(0, 4),
-      ),
-    ],
-  );
+        color: CashRegisterColors.footerBg,
+        borderRadius: BorderRadius.circular(footerRadius),
+        boxShadow: const [
+          BoxShadow(
+            color: CashRegisterColors.footerShadow,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      );
 
-  // ── TEXT STYLES ───────────────────────────────────────────────────────────
+  // â”€â”€ TEXT STYLES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle headerTitleStyle = TextStyle(
     fontSize: 13.0,
     fontWeight: FontWeight.w700,

@@ -12,8 +12,7 @@ enum BookingStatus {
   final String value;
   const BookingStatus(this.value);
 
-  static BookingStatus fromString(String s) =>
-      BookingStatus.values.firstWhere(
+  static BookingStatus fromString(String s) => BookingStatus.values.firstWhere(
         (e) => e.value == s.toUpperCase(),
         orElse: () => BookingStatus.pending,
       );
@@ -26,8 +25,7 @@ enum BookingType {
   final String value;
   const BookingType(this.value);
 
-  static BookingType fromString(String s) =>
-      BookingType.values.firstWhere(
+  static BookingType fromString(String s) => BookingType.values.firstWhere(
         (e) => e.value == s.toUpperCase(),
         orElse: () => BookingType.open,
       );
@@ -42,8 +40,7 @@ enum MetalTypeBA {
   final String value;
   const MetalTypeBA(this.value);
 
-  static MetalTypeBA fromString(String s) =>
-      MetalTypeBA.values.firstWhere(
+  static MetalTypeBA fromString(String s) => MetalTypeBA.values.firstWhere(
         (e) => e.value == s.toUpperCase(),
         orElse: () => MetalTypeBA.gold,
       );

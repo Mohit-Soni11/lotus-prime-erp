@@ -27,11 +27,16 @@ enum DeliveryOrderStatus {
 
   String get label {
     switch (this) {
-      case DeliveryOrderStatus.booked:    return 'Booked';
-      case DeliveryOrderStatus.inMaking:  return 'In Making';
-      case DeliveryOrderStatus.ready:     return 'Ready';
-      case DeliveryOrderStatus.delivered: return 'Delivered';
-      case DeliveryOrderStatus.cancelled: return 'Cancelled';
+      case DeliveryOrderStatus.booked:
+        return 'Booked';
+      case DeliveryOrderStatus.inMaking:
+        return 'In Making';
+      case DeliveryOrderStatus.ready:
+        return 'Ready';
+      case DeliveryOrderStatus.delivered:
+        return 'Delivered';
+      case DeliveryOrderStatus.cancelled:
+        return 'Cancelled';
     }
   }
 }
@@ -69,9 +74,12 @@ enum DeliveryPaymentStatus {
 
   String get label {
     switch (this) {
-      case DeliveryPaymentStatus.unpaid:   return 'Unpaid';
-      case DeliveryPaymentStatus.partial:  return 'Partial Due';
-      case DeliveryPaymentStatus.paid:     return 'Paid';
+      case DeliveryPaymentStatus.unpaid:
+        return 'Unpaid';
+      case DeliveryPaymentStatus.partial:
+        return 'Partial Due';
+      case DeliveryPaymentStatus.paid:
+        return 'Paid';
     }
   }
 }

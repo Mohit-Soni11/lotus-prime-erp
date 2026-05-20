@@ -3,9 +3,9 @@
 // MODULE      : Purchase Entry
 // LAYER       : UI
 // DESCRIPTION : Dark-shell AppBar matching Sales POS design language.
-//               ✅ Removed System Login Badge
-//               ✅ Added correct Purchase premium gradient icon
-//               ✅ Updated positioning and System Online Radar with neon green
+//               âœ… Removed System Login Badge
+//               âœ… Added correct Purchase premium gradient icon
+//               âœ… Updated positioning and System Online Radar with neon green
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -63,7 +63,7 @@ class _PurchaseEntryAppBarState extends State<PurchaseEntryAppBar> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -74,15 +74,15 @@ class _PurchaseEntryAppBarState extends State<PurchaseEntryAppBar> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ── 1. Hover Back Button ─────────────────────────────────────────
+            // â”€â”€ 1. Hover Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _HoverBackButton(onTap: widget.onBack),
             const SizedBox(width: 18),
 
-            // ── 2. Vertical Divider ──────────────────────────────────────────
+            // â”€â”€ 2. Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _verticalDivider(),
             const SizedBox(width: 18),
 
-            // ── 3. Premium Gradient Module Icon ──────────────────────────────
+            // â”€â”€ 3. Premium Gradient Module Icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Container(
               width: 34,
               height: 34,
@@ -98,7 +98,7 @@ class _PurchaseEntryAppBarState extends State<PurchaseEntryAppBar> {
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: PurchaseEntryColors.brandGold.withOpacity(0.5),
+                    color: PurchaseEntryColors.brandGold.withValues(alpha: 0.5),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -112,21 +112,21 @@ class _PurchaseEntryAppBarState extends State<PurchaseEntryAppBar> {
             ),
             const SizedBox(width: 14),
 
-            // ── 4. Perfectly Aligned Main Title ──────────────────────────────
+            // â”€â”€ 4. Perfectly Aligned Main Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (_shopName.isNotEmpty) ...[
               Text(
                 _shopName.toUpperCase(),
                 style: PurchaseEntryStyles.headerTitle.copyWith(
                   fontSize: 14,
-                  color:
-                      PurchaseEntryStyles.headerTitle.color?.withOpacity(0.8) ??
-                          Colors.white70,
+                  color: PurchaseEntryStyles.headerTitle.color
+                          ?.withValues(alpha: 0.8) ??
+                      Colors.white70,
                 ),
               ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 10.0),
                 child: Text(
-                  '•',
+                  'â€¢',
                   style: TextStyle(
                     color: PurchaseEntryColors.brandGold,
                     fontSize: 18,
@@ -143,7 +143,7 @@ class _PurchaseEntryAppBarState extends State<PurchaseEntryAppBar> {
             // Spacer pushes everything else to the right
             const Spacer(),
 
-            // ── 5. System Online Radar Badge ─────────────────────────────────
+            // â”€â”€ 5. System Online Radar Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             const _RadarStatusWidget(),
           ],
         ),
@@ -168,7 +168,7 @@ class _PurchaseEntryAppBarState extends State<PurchaseEntryAppBar> {
       );
 }
 
-// ── Hover Back Button ────────────────────────────────────────────────────────
+// â”€â”€ Hover Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
   const _HoverBackButton({required this.onTap});
@@ -199,7 +199,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
             decoration: BoxDecoration(
               color: _isHovered
                   ? PurchaseEntryColors.shellBg
-                  : PurchaseEntryColors.shellBorder.withOpacity(0.3),
+                  : PurchaseEntryColors.shellBorder.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isHovered
@@ -210,7 +210,8 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               boxShadow: [
                 if (_isHovered)
                   BoxShadow(
-                    color: PurchaseEntryColors.brandGold.withOpacity(0.25),
+                    color:
+                        PurchaseEntryColors.brandGold.withValues(alpha: 0.25),
                     blurRadius: 12,
                     offset: const Offset(0, 3),
                   ),
@@ -230,7 +231,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-// ── Radar Status Widget ──────────────────────────────────────────────────────
+// â”€â”€ Radar Status Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _RadarStatusWidget extends StatefulWidget {
   const _RadarStatusWidget();
   @override
@@ -273,10 +274,10 @@ class _RadarStatusWidgetState extends State<_RadarStatusWidget>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: PurchaseEntryColors.onlineGreen.withOpacity(0.08),
+        color: PurchaseEntryColors.onlineGreen.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(30), // Pill shape
         border: Border.all(
-          color: PurchaseEntryColors.onlineGreen.withOpacity(0.3),
+          color: PurchaseEntryColors.onlineGreen.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -309,7 +310,7 @@ class _RadarStatusWidgetState extends State<_RadarStatusWidget>
             ),
           ),
           const SizedBox(width: 8),
-          Text(
+          const Text(
             PurchaseEntryStrings.systemOnline,
             style: PurchaseEntryStyles.systemOnlineText,
           ),
@@ -333,7 +334,7 @@ class _RadarStatusWidgetState extends State<_RadarStatusWidget>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: PurchaseEntryColors.onlineGreen.withOpacity(0.5),
+                  color: PurchaseEntryColors.onlineGreen.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),

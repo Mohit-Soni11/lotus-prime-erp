@@ -39,21 +39,47 @@ class TaxGstStyles {
   static const EdgeInsets padCardInternal = EdgeInsets.all(24.0);
   static const EdgeInsets padPageBottom = EdgeInsets.only(bottom: 50.0);
   static const double gapSection = 30.0; // Between header and first card
-  static const double gapCard = 24.0;    // Between form cards
-  static const double gapInput = 16.0;   // Between input fields inside card
+  static const double gapCard = 24.0; // Between form cards
+  static const double gapInput = 16.0; // Between input fields inside card
 
   // --- Typography / Text Styles (Extracted from UI) ---
-  static TextStyle get pageTitle => GoogleFonts.manrope(fontSize: szPageTitle, fontWeight: FontWeight.w800, color: TaxGstColors.textDark, letterSpacing: -0.5);
-  static TextStyle get pageSubtitle => GoogleFonts.inter(fontSize: 14.0, color: TaxGstColors.textMuted);
-  static TextStyle get sectionTitle => GoogleFonts.manrope(fontSize: szSectionTitle, fontWeight: FontWeight.w700, color: TaxGstColors.textDark);
-  static TextStyle get sectionSub => GoogleFonts.inter(fontSize: szSectionSub, fontWeight: FontWeight.w800, color: TaxGstColors.textMuted, letterSpacing: 1.2);
-  
-  static TextStyle get fieldLabel => GoogleFonts.manrope(fontSize: szFieldLabel, fontWeight: FontWeight.w700, color: TaxGstColors.textBody);
-  static TextStyle get fieldText => GoogleFonts.manrope(fontSize: szFieldText, fontWeight: FontWeight.w700, color: TaxGstColors.textDark);
-  static TextStyle get fieldHint => GoogleFonts.inter(fontSize: szFieldHint, color: TaxGstColors.textHint);
-  
-  static TextStyle get statusPill => GoogleFonts.inter(fontSize: 11.0, fontWeight: FontWeight.w700, color: TaxGstColors.statusActiveText, letterSpacing: 0.5);
-  static TextStyle get dialogTitle => GoogleFonts.manrope(fontSize: szDialogTitle, fontWeight: FontWeight.w800, color: TaxGstColors.cardBg);
+  static TextStyle get pageTitle => GoogleFonts.manrope(
+      fontSize: szPageTitle,
+      fontWeight: FontWeight.w800,
+      color: TaxGstColors.textDark,
+      letterSpacing: -0.5);
+  static TextStyle get pageSubtitle =>
+      GoogleFonts.inter(fontSize: 14.0, color: TaxGstColors.textMuted);
+  static TextStyle get sectionTitle => GoogleFonts.manrope(
+      fontSize: szSectionTitle,
+      fontWeight: FontWeight.w700,
+      color: TaxGstColors.textDark);
+  static TextStyle get sectionSub => GoogleFonts.inter(
+      fontSize: szSectionSub,
+      fontWeight: FontWeight.w800,
+      color: TaxGstColors.textMuted,
+      letterSpacing: 1.2);
+
+  static TextStyle get fieldLabel => GoogleFonts.manrope(
+      fontSize: szFieldLabel,
+      fontWeight: FontWeight.w700,
+      color: TaxGstColors.textBody);
+  static TextStyle get fieldText => GoogleFonts.manrope(
+      fontSize: szFieldText,
+      fontWeight: FontWeight.w700,
+      color: TaxGstColors.textDark);
+  static TextStyle get fieldHint =>
+      GoogleFonts.inter(fontSize: szFieldHint, color: TaxGstColors.textHint);
+
+  static TextStyle get statusPill => GoogleFonts.inter(
+      fontSize: 11.0,
+      fontWeight: FontWeight.w700,
+      color: TaxGstColors.statusActiveText,
+      letterSpacing: 0.5);
+  static TextStyle get dialogTitle => GoogleFonts.manrope(
+      fontSize: szDialogTitle,
+      fontWeight: FontWeight.w800,
+      color: TaxGstColors.cardBg);
 
   // --- Decorations ---
   static BoxDecoration cardDecoration = BoxDecoration(
@@ -76,25 +102,24 @@ class TaxGstStyles {
       border: Border.all(color: TaxGstColors.borderLight, width: 1),
     );
   }
-  
+
   static BoxDecoration activeInputDecoration = BoxDecoration(
-    color: TaxGstColors.inputBg,
-    borderRadius: BorderRadius.circular(rInput),
-    border: Border.all(color: TaxGstColors.goldAccent, width: 1.5),
-    boxShadow: [
-      BoxShadow(
-        color: TaxGstColors.goldAccent10, // Replaced hardcoded opacity
-        blurRadius: 8,
-        offset: const Offset(0, 2),
-      )
-    ]
-  );
-  
+      color: TaxGstColors.inputBg,
+      borderRadius: BorderRadius.circular(rInput),
+      border: Border.all(color: TaxGstColors.goldAccent, width: 1.5),
+      boxShadow: [
+        BoxShadow(
+          color: TaxGstColors.goldAccent10, // Replaced hardcoded opacity
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        )
+      ]);
+
   static BoxDecoration hsnInputDecoration(bool isLocked) => BoxDecoration(
-    color: isLocked ? TaxGstColors.lockedBg : TaxGstColors.cardBg,
-    borderRadius: BorderRadius.circular(6),
-    border: Border.all(color: TaxGstColors.borderLight),
-  );
+        color: isLocked ? TaxGstColors.lockedBg : TaxGstColors.cardBg,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: TaxGstColors.borderLight),
+      );
 
   static BoxDecoration uploadZoneDecoration = BoxDecoration(
     color: TaxGstColors.uploadZoneBg,

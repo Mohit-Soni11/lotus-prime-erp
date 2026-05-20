@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // FILE: supplier_list_card.dart
-// MODULE: Supplier → Supplier List
-// DESCRIPTION: Hover card — gold border glow on hover, same as CustomerListCard.
+// MODULE: Supplier â†’ Supplier List
+// DESCRIPTION: Hover card â€” gold border glow on hover, same as CustomerListCard.
 // -----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
@@ -26,7 +26,7 @@ class _SupplierListCardState extends State<SupplierListCard> {
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
-      onExit:  (_) => setState(() => _isHovered = false),
+      onExit: (_) => setState(() => _isHovered = false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
@@ -70,15 +70,16 @@ class _SupplierListCardState extends State<SupplierListCard> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            SupplierListColors.brandGold.withOpacity(0.8),
+            SupplierListColors.brandGold.withValues(alpha: 0.8),
             SupplierListColors.brandGold,
           ],
         ),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: SupplierListColors.brandGold.withOpacity(0.3),
-            blurRadius: 8, offset: const Offset(0, 3),
+            color: SupplierListColors.brandGold.withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -86,7 +87,9 @@ class _SupplierListCardState extends State<SupplierListCard> {
         child: Text(
           widget.supplier.avatarInitial,
           style: const TextStyle(
-            fontSize: 20, fontWeight: FontWeight.w900, color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+            color: Colors.black,
           ),
         ),
       ),
@@ -98,7 +101,9 @@ class _SupplierListCardState extends State<SupplierListCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(s.businessName, style: SupplierListStyles.supplierName, overflow: TextOverflow.ellipsis),
+        Text(s.businessName,
+            style: SupplierListStyles.supplierName,
+            overflow: TextOverflow.ellipsis),
         const SizedBox(height: 4),
         if (s.contactPersonName != null) ...[
           Text(s.contactPersonName!, style: SupplierListStyles.supplierDetail),
@@ -106,15 +111,19 @@ class _SupplierListCardState extends State<SupplierListCard> {
         ],
         Row(
           children: [
-            const Icon(SupplierListIcons.phone, size: 13, color: SupplierListColors.bodyTextMuted),
+            const Icon(SupplierListIcons.phone,
+                size: 13, color: SupplierListColors.bodyTextMuted),
             const SizedBox(width: 4),
             Text(s.mobile, style: SupplierListStyles.supplierMobile),
             if (s.gstNumber != null) ...[
               const SizedBox(width: 12),
-              const Icon(SupplierListIcons.gst, size: 13, color: SupplierListColors.bodyTextMuted),
+              const Icon(SupplierListIcons.gst,
+                  size: 13, color: SupplierListColors.bodyTextMuted),
               const SizedBox(width: 4),
               Flexible(
-                child: Text(s.gstNumber!, style: SupplierListStyles.supplierGst, overflow: TextOverflow.ellipsis),
+                child: Text(s.gstNumber!,
+                    style: SupplierListStyles.supplierGst,
+                    overflow: TextOverflow.ellipsis),
               ),
             ],
           ],
@@ -157,7 +166,11 @@ class _SupplierListCardState extends State<SupplierListCard> {
       ),
       child: Text(
         s.supplierType.label,
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: textC, letterSpacing: 0.5),
+        style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            color: textC,
+            letterSpacing: 0.5),
       ),
     );
   }

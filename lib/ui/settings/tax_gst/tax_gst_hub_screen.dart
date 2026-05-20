@@ -3,7 +3,7 @@
 // MODULE  : Tax & GST Configuration
 // AUTHOR  : Lotus Prime ERP
 // VERSION : 1.0.0
-// DESC    : Main screen — 7 expandable section cards.
+// DESC    : Main screen â€” 7 expandable section cards.
 //           Owns TaxGstHubLogic. Passes section logics to sections.
 //           Uses Provider pattern via ListenableBuilder.
 // ============================================================
@@ -35,7 +35,7 @@ class _TaxGstHubScreenState extends State<TaxGstHubScreen>
     with TickerProviderStateMixin {
   late final TaxGstHubLogic _logic;
 
-  // Section card metadata — driven entirely from theme strings & colors
+  // Section card metadata â€” driven entirely from theme strings & colors
   static const List<_CardMeta> _cards = [
     _CardMeta(
       icon: TaxGstIcons.card01,
@@ -108,7 +108,7 @@ class _TaxGstHubScreenState extends State<TaxGstHubScreen>
     super.dispose();
   }
 
-  // ── Section body builder ──────────────────────────────────────
+  // â”€â”€ Section body builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildSectionBody(int index) {
     return switch (index) {
       0 => GstRegistrationSection(logic: _logic.registrationLogic),
@@ -132,12 +132,12 @@ class _TaxGstHubScreenState extends State<TaxGstHubScreen>
       body: ListenableBuilder(
         listenable: _logic,
         builder: (context, _) {
-          // ── Loading state ──────────────────────────────────────
+          // â”€â”€ Loading state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           if (_logic.isLoading) {
             return const _LoadingView();
           }
 
-          // ── Error state ────────────────────────────────────────
+          // â”€â”€ Error state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           if (_logic.loadError != null) {
             return _ErrorView(
               message: _logic.loadError!,
@@ -145,7 +145,7 @@ class _TaxGstHubScreenState extends State<TaxGstHubScreen>
             );
           }
 
-          // ── Main content ───────────────────────────────────────
+          // â”€â”€ Main content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           return SafeArea(
             top: false,
             child: CustomScrollView(
@@ -201,7 +201,7 @@ class _TaxGstHubScreenState extends State<TaxGstHubScreen>
   }
 }
 
-// ── Card metadata model ───────────────────────────────────────────────────────
+// â”€â”€ Card metadata model â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _CardMeta {
   const _CardMeta({
@@ -221,7 +221,7 @@ class _CardMeta {
   final Color accentLight;
 }
 
-// ── Loading State ─────────────────────────────────────────────────────────────
+// â”€â”€ Loading State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _LoadingView extends StatelessWidget {
   const _LoadingView();
@@ -232,7 +232,7 @@ class _LoadingView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
+          const SizedBox(
             width: 40,
             height: 40,
             child: CircularProgressIndicator(
@@ -242,7 +242,7 @@ class _LoadingView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Loading Tax & GST configuration…',
+            'Loading Tax & GST configurationâ€¦',
             style: TaxGstStyles.sectionSubtitle(context),
           ),
         ],
@@ -251,7 +251,7 @@ class _LoadingView extends StatelessWidget {
   }
 }
 
-// ── Error State ───────────────────────────────────────────────────────────────
+// â”€â”€ Error State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ErrorView extends StatelessWidget {
   const _ErrorView({required this.message, required this.onRetry});
@@ -267,7 +267,8 @@ class _ErrorView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(TaxGstIcons.statusError,
-                size: 48, color: TaxGstColors.statusDanger.withOpacity(0.6)),
+                size: 48,
+                color: TaxGstColors.statusDanger.withValues(alpha: 0.6)),
             const SizedBox(height: 16),
             Text(message,
                 style: TaxGstStyles.sectionSubtitle(context),

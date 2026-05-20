@@ -17,8 +17,8 @@ class AuthProfileController extends ChangeNotifier {
   // --- DYNAMIC DATABASE MOCK VALUES ---
   // These variables will be updated from the Settings/Auth API in the future
   String displayShopName = "Lotus Jewellers";
-  String shopCity = "Patna"; 
-  
+  String shopCity = "Patna";
+
   String loggedInUserName = "System Admin";
   UserRole currentUserRole = UserRole.owner;
 
@@ -30,23 +30,23 @@ class AuthProfileController extends ChangeNotifier {
       case UserRole.manager:
         return Colors.blueAccent;
       case UserRole.cashier:
-        return SalesPosColors.success; 
+        return SalesPosColors.success;
       case UserRole.staff:
-        return SalesPosColors.brandSilver; 
+        return SalesPosColors.brandSilver;
     }
   }
 
   // --- GLOW LOGIC ---
   // Only the owner gets the premium golden shadow effect
   bool get hasGoldenGlow => currentUserRole == UserRole.owner;
-  
+
   // Clean display name for the UI header
   String get displayRoleName => currentUserRole.name.toUpperCase();
 
   // ==========================================
   // FUTURE API INTEGRATION METHODS
   // ==========================================
-  
+
   /// Call this method when the user logs in or switches profiles
   void updateUserProfile({
     required String newUserName,
@@ -56,10 +56,10 @@ class AuthProfileController extends ChangeNotifier {
   }) {
     loggedInUserName = newUserName;
     currentUserRole = newRole;
-    
+
     if (newShopName != null) displayShopName = newShopName;
     if (newShopCity != null) shopCity = newShopCity;
-    
+
     // This will instantly update the POS Master Header without rebuilding the whole screen
     notifyListeners();
   }

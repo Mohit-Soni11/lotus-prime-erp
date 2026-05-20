@@ -2,7 +2,7 @@
 // FILE: banking_logic.dart
 // TYPE: Business Logic / Master Controller
 // AUTHOR: Senior System Architect
-// DESCRIPTION: 🚀 UPGRADED: 100% Decoupled from UI. BuildContext and SnackBars 
+// DESCRIPTION: 🚀 UPGRADED: 100% Decoupled from UI. BuildContext and SnackBars
 //              removed. Zero-lag State Management using ValueNotifier.
 // -----------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ import 'package:flutter/services.dart';
 // NOTE: Adjust the import paths according to your actual folder structure.
 import '../../../../../models/setting/shop_setup/tabs/bank_account_model.dart';
 import '../../../../../models/setting/shop_setup/enums/banking_enums.dart';
-import '../../../../../logic/setting/shop_setup/tabs/tax_gst/document_crop_logic.dart'; 
+import '../../../../../logic/setting/shop_setup/tabs/tax_gst/document_crop_logic.dart';
 
 class BankingLogic {
   // 🚀 UPGRADE: Single shared instance of crop logic (Memory Safe)
@@ -23,36 +23,36 @@ class BankingLogic {
   // 🚀 UPGRADE: Replaced ChangeNotifier with ValueNotifier for granular rebuilds
   final ValueNotifier<List<BankAccountModel>> accountsNotifier;
 
-  BankingLogic() : accountsNotifier = ValueNotifier<List<BankAccountModel>>([
-    const BankAccountModel(
-      id: "primary_1", 
-      title: "Primary Operating Account", 
-      type: BankAccountType.current,
-    )
-  ]);
+  BankingLogic()
+      : accountsNotifier = ValueNotifier<List<BankAccountModel>>([
+          const BankAccountModel(
+            id: "primary_1",
+            title: "Primary Operating Account",
+            type: BankAccountType.current,
+          )
+        ]);
 
   void addNewAccount() {
     final currentList = List<BankAccountModel>.from(accountsNotifier.value);
-    currentList.add(
-      BankAccountModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: "Additional Account ${currentList.length + 1}",
-        type: BankAccountType.savings,
-      )
-    );
+    currentList.add(BankAccountModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: "Additional Account ${currentList.length + 1}",
+      type: BankAccountType.savings,
+    ));
     // Overriding the reference triggers ValueNotifier listener
-    accountsNotifier.value = currentList; 
+    accountsNotifier.value = currentList;
   }
 
   void removeAccount(String id) {
     final currentList = List<BankAccountModel>.from(accountsNotifier.value);
-    
+
     try {
       final accountToRemove = currentList.firstWhere((acc) => acc.id == id);
-      
+
       // 🚀 UPGRADE: Hard Memory Cleanup
       // Deletes the physical QR image file from storage if the account is removed
-      if (accountToRemove.qrImagePath != null && accountToRemove.qrImagePath!.isNotEmpty) {
+      if (accountToRemove.qrImagePath != null &&
+          accountToRemove.qrImagePath!.isNotEmpty) {
         cropLogic.clearCache(File(accountToRemove.qrImagePath!));
       }
     } catch (e) {
@@ -68,11 +68,11 @@ class BankingLogic {
   void updateAccountData(String id, BankAccountModel updatedAccount) {
     final currentList = List<BankAccountModel>.from(accountsNotifier.value);
     final index = currentList.indexWhere((acc) => acc.id == id);
-    
+
     if (index != -1) {
       currentList[index] = updatedAccount;
-      accountsNotifier.value = currentList; 
-      // The Deep Equality (==) inside BankAccountModel ensures that 
+      accountsNotifier.value = currentList;
+      // The Deep Equality (==) inside BankAccountModel ensures that
       // unchanged UI cards will completely ignore this update and NOT rebuild.
     }
   }

@@ -1,6 +1,6 @@
 // ============================================================
 // FILE    : lib/ui/settings/tax_gst/sections/hsn_code_section.dart
-// MODULE  : Tax & GST — Card 03
+// MODULE  : Tax & GST â€” Card 03
 // ============================================================
 import 'package:flutter/material.dart';
 import '../../../../theme/settings/tax_gst/tax_gst_theme.dart';
@@ -27,8 +27,7 @@ class _HsnCodeSectionState extends State<HsnCodeSection> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            // ── Section Header ──────────────────────────────────
+            // â”€â”€ Section Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -49,10 +48,9 @@ class _HsnCodeSectionState extends State<HsnCodeSection> {
 
             const SizedBox(height: TaxGstStyles.fieldGapV),
 
-            // ── Table Header ────────────────────────────────────
+            // â”€â”€ Table Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(children: [
                 Expanded(
                     flex: 3,
@@ -70,14 +68,12 @@ class _HsnCodeSectionState extends State<HsnCodeSection> {
                 const SizedBox(width: 32),
               ]),
             ),
-            Divider(
-                height: 1,
-                thickness: 1,
-                color: TaxGstColors.dividerColor),
+            const Divider(
+                height: 1, thickness: 1, color: TaxGstColors.dividerColor),
 
             const SizedBox(height: 4),
 
-            // ── HSN Rows ────────────────────────────────────────
+            // â”€â”€ HSN Rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (widget.logic.codes.isEmpty)
               _EmptyHsnState(accentColor: a)
             else
@@ -85,9 +81,9 @@ class _HsnCodeSectionState extends State<HsnCodeSection> {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 2),
                   child: _HsnRow(
-                    index:   entry.key,
-                    entry:   entry.value,
-                    accent:  a,
+                    index: entry.key,
+                    entry: entry.value,
+                    accent: a,
                     onDelete: () {
                       widget.logic.removeCode(entry.key);
                       _snack(context, TaxGstStrings.snackHsnRemoved);
@@ -98,7 +94,7 @@ class _HsnCodeSectionState extends State<HsnCodeSection> {
 
             const SizedBox(height: TaxGstStyles.spaceMD),
 
-            // ── Add Form ─────────────────────────────────────────
+            // â”€â”€ Add Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             AnimatedCrossFade(
               duration: TaxGstStyles.animNormal,
               crossFadeState: _showAddForm
@@ -106,11 +102,11 @@ class _HsnCodeSectionState extends State<HsnCodeSection> {
                   : CrossFadeState.showFirst,
               firstChild: _AddButton(
                 accent: a,
-                onTap:  () => setState(() => _showAddForm = true),
+                onTap: () => setState(() => _showAddForm = true),
               ),
               secondChild: _AddHsnForm(
-                logic:    widget.logic,
-                accent:   a,
+                logic: widget.logic,
+                accent: a,
                 onAdd: () {
                   widget.logic.addCode();
                   setState(() => _showAddForm = false);
@@ -125,8 +121,7 @@ class _HsnCodeSectionState extends State<HsnCodeSection> {
 
             const SizedBox(height: TaxGstStyles.spaceMD),
 
-            TaxGstInfoBanner(
-                accentColor: a, message: TaxGstStrings.infoHsn),
+            TaxGstInfoBanner(accentColor: a, message: TaxGstStrings.infoHsn),
           ],
         );
       },
@@ -142,9 +137,9 @@ class _HsnRow extends StatelessWidget {
     required this.onDelete,
   });
 
-  final int      index;
-  final dynamic  entry;   // HsnCodeModel
-  final Color    accent;
+  final int index;
+  final dynamic entry; // HsnCodeModel
+  final Color accent;
   final VoidCallback onDelete;
 
   @override
@@ -155,22 +150,19 @@ class _HsnRow extends StatelessWidget {
       child: Row(children: [
         Expanded(
           flex: 3,
-          child: Text(entry.category,
-              style: TaxGstStyles.hsnCategory(context)),
+          child: Text(entry.category, style: TaxGstStyles.hsnCategory(context)),
         ),
         Expanded(
           flex: 2,
-          child: Text(entry.hsnCode,
-              style: TaxGstStyles.hsnCode(context)),
+          child: Text(entry.hsnCode, style: TaxGstStyles.hsnCode(context)),
         ),
         SizedBox(
           width: 52,
           child: Center(
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 8, vertical: 3),
-              decoration: TaxGstStyles.ratePillDecoration(
-                  TaxGstColors.accentPrimary),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration:
+                  TaxGstStyles.ratePillDecoration(TaxGstColors.accentPrimary),
               child: Text(
                 entry.gstRate,
                 style: TaxGstStyles.hsnRate(context,
@@ -186,7 +178,7 @@ class _HsnRow extends StatelessWidget {
             onPressed: onDelete,
             icon: Icon(TaxGstIcons.actionDelete,
                 size: 16,
-                color: TaxGstColors.statusDanger.withOpacity(0.7)),
+                color: TaxGstColors.statusDanger.withValues(alpha: 0.7)),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
@@ -198,7 +190,7 @@ class _HsnRow extends StatelessWidget {
 
 class _AddButton extends StatelessWidget {
   const _AddButton({required this.accent, required this.onTap});
-  final Color        accent;
+  final Color accent;
   final VoidCallback onTap;
 
   @override
@@ -208,11 +200,10 @@ class _AddButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: accent.withOpacity(0.06),
-          borderRadius:
-              BorderRadius.circular(TaxGstStyles.radiusButton),
+          color: accent.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(TaxGstStyles.radiusButton),
           border: Border.all(
-            color: accent.withOpacity(0.30),
+            color: accent.withValues(alpha: 0.30),
             style: BorderStyle.solid,
           ),
         ),
@@ -236,7 +227,7 @@ class _AddHsnForm extends StatelessWidget {
   });
 
   final HsnCodeLogic logic;
-  final Color        accent;
+  final Color accent;
   final VoidCallback onAdd;
   final VoidCallback onCancel;
 
@@ -245,17 +236,15 @@ class _AddHsnForm extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.04),
+        color: accent.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(TaxGstStyles.radiusSection),
-        border:
-            Border.all(color: accent.withOpacity(0.25)),
+        border: Border.all(color: accent.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(TaxGstStrings.dialogAddHsnTitle,
-              style: TaxGstStyles.sectionTitle(context)
-                  .copyWith(fontSize: 13)),
+              style: TaxGstStyles.sectionTitle(context).copyWith(fontSize: 13)),
           const SizedBox(height: 10),
           Row(children: [
             Expanded(
@@ -264,8 +253,8 @@ class _AddHsnForm extends StatelessWidget {
                 controller: logic.addCategoryCtrl,
                 style: TaxGstStyles.inputText(context),
                 decoration: TaxGstStyles.inputDecoration(context,
-                    labelText:   TaxGstStrings.labelItemCategory,
-                    hintText:    TaxGstStrings.hintCategory,
+                    labelText: TaxGstStrings.labelItemCategory,
+                    hintText: TaxGstStrings.hintCategory,
                     accentColor: accent),
               ),
             ),
@@ -276,8 +265,8 @@ class _AddHsnForm extends StatelessWidget {
                 controller: logic.addHsnCtrl,
                 style: TaxGstStyles.inputText(context),
                 decoration: TaxGstStyles.inputDecoration(context,
-                    labelText:   TaxGstStrings.labelHsnCode,
-                    hintText:    TaxGstStrings.hintHsnCode,
+                    labelText: TaxGstStrings.labelHsnCode,
+                    hintText: TaxGstStrings.hintHsnCode,
                     accentColor: accent),
               ),
             ),
@@ -285,10 +274,10 @@ class _AddHsnForm extends StatelessWidget {
             SizedBox(
               width: 100,
               child: DropdownButtonFormField<String>(
-                value: logic.addRateValue,
+                initialValue: logic.addRateValue,
                 decoration: TaxGstStyles.inputDecoration(context,
-                    labelText:   TaxGstStrings.labelGstRate,
-                    hintText:    '',
+                    labelText: TaxGstStrings.labelGstRate,
+                    hintText: '',
                     accentColor: accent),
                 items: TaxGstStrings.gstRateOptions
                     .map((r) => DropdownMenuItem(
@@ -312,17 +301,16 @@ class _AddHsnForm extends StatelessWidget {
             const SizedBox(width: 8),
             ElevatedButton.icon(
               onPressed: onAdd,
-              icon: Icon(TaxGstIcons.actionAdd,
+              icon: const Icon(TaxGstIcons.actionAdd,
                   size: 14, color: Colors.white),
-              label: Text(TaxGstStrings.btnAddHsnDialog,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700)),
+              label: const Text(TaxGstStrings.btnAddHsnDialog,
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w700)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: accent,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                        TaxGstStyles.radiusButton)),
+                    borderRadius:
+                        BorderRadius.circular(TaxGstStyles.radiusButton)),
                 elevation: 0,
               ),
             ),
@@ -345,7 +333,7 @@ class _EmptyHsnState extends StatelessWidget {
         child: Column(
           children: [
             Icon(TaxGstIcons.card03,
-                size: 36, color: accentColor.withOpacity(0.3)),
+                size: 36, color: accentColor.withValues(alpha: 0.3)),
             const SizedBox(height: 8),
             Text(TaxGstStrings.emptyHsnTitle,
                 style: TaxGstStyles.sectionTitle(context)

@@ -2,7 +2,7 @@
 // FILE: sales_pos_theme.dart
 // TYPE: Barrel Exporter
 // AUTHOR: Senior System Architect
-// DESCRIPTION: Master export file. Import this single file in UI components 
+// DESCRIPTION: Master export file. Import this single file in UI components
 //              to access Colors, Icons, Styles, and Strings.
 // ==========================================
 

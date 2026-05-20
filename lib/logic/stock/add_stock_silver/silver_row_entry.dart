@@ -14,7 +14,6 @@
 //   Keeping them separate = zero cross-contamination, safe independent change.
 // =============================================================================
 
-import 'package:lotus_erp/models/purchase/purchase_enums/purchase_enums.dart';
 import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────

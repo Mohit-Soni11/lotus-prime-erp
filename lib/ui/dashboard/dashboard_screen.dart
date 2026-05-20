@@ -49,7 +49,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-
   final DashboardRepository _repository = DashboardRepository();
   UserProfile? _currentUser;
   bool _isLoading = true;
@@ -147,7 +146,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildLeftSection() {
     return Column(
       children: [
-
         // 1. 4 Stat Cards — ek row mein
         const Row(children: [
           Expanded(child: DateAndTimeCard()),
@@ -178,7 +176,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         // 5. Counter Security Check
         const CounterSecurityCard(),
-
       ],
     );
   }
@@ -190,7 +187,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildRightSection() {
     return Column(
       children: [
-
         // 1. Shop Identity Card
         ShopIdentityCard(repository: _repository),
 
@@ -218,7 +214,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         // 4. Cash Register — Payment Status ke neeche
         CashRegisterCard(onNavigate: widget.onNavigate),
-
       ],
     );
   }

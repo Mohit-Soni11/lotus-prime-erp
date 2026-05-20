@@ -31,7 +31,7 @@ enum AddressType {
       case 'warehouse':
         return AddressType.warehouse;
       default:
-        return AddressType.headOffice; 
+        return AddressType.headOffice;
     }
   }
 }

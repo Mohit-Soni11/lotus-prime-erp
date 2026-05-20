@@ -85,7 +85,7 @@ class PurchaseItemsTable extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        color: PurchaseEntryColors.purchaseAccent.withOpacity(0.04),
+        color: PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.04),
         border: const Border(
           bottom: BorderSide(color: PurchaseEntryColors.bodyBorder, width: 1.5),
         ),
@@ -98,10 +98,11 @@ class PurchaseItemsTable extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: PurchaseEntryColors.purchaseAccent.withOpacity(0.12),
+              color: PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: PurchaseEntryColors.purchaseAccent.withOpacity(0.40),
+                color:
+                    PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.40),
               ),
             ),
             child: const Icon(
@@ -338,23 +339,23 @@ class PurchaseItemsTable extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: PurchaseEntryColors.purchaseAccent.withOpacity(0.08),
+          color: PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.08),
           border: Border.all(
-            color: PurchaseEntryColors.purchaseAccent.withOpacity(0.35),
+            color: PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.35),
             width: 1.5,
           ),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Row(
+        child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               PurchaseEntryIcons.addItem,
               color: PurchaseEntryColors.purchaseAccent,
               size: 20,
             ),
-            const SizedBox(width: 8),
-            const Text(
+            SizedBox(width: 8),
+            Text(
               'ADD PURCHASE LINE',
               style: TextStyle(
                 color: PurchaseEntryColors.purchaseAccent,
@@ -423,8 +424,8 @@ class PurchaseItemsTable extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
-        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+        color: color.withValues(alpha: 0.10),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -448,7 +449,7 @@ class PurchaseItemsTable extends StatelessWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 13,
-                  color: color.withOpacity(0.9),
+                  color: color.withValues(alpha: 0.9),
                 ),
               ),
               const SizedBox(width: 12),

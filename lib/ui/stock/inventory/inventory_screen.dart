@@ -38,14 +38,14 @@ class _InventoryScreenState extends State<InventoryScreen>
   late final InventoryController _ctrl;
   final AppDatabase _db = AppDatabase();
 
-  // ── Section entry animations ────────────────────────────────
+  // â”€â”€ Section entry animations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const int _sectionCount = 5;
   late final List<AnimationController> _sectionAnim;
   late final List<Animation<double>> _sectionFade;
   late final List<Animation<Offset>> _sectionSlide;
 
-  // ── Currency formatter ───────────────────────────────────────
-  final _rupee = NumberFormat('₹##,##,##0', 'en_IN');
+  // â”€â”€ Currency formatter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  final _rupee = NumberFormat('â‚¹##,##,##0', 'en_IN');
   final _wt = NumberFormat('##0.00', 'en_IN');
 
   @override
@@ -92,7 +92,9 @@ class _InventoryScreenState extends State<InventoryScreen>
     _ctrl
       ..removeListener(_rebuild)
       ..dispose();
-    for (final a in _sectionAnim) a.dispose();
+    for (final a in _sectionAnim) {
+      a.dispose();
+    }
     super.dispose();
   }
 
@@ -103,9 +105,9 @@ class _InventoryScreenState extends State<InventoryScreen>
     );
   }
 
-  // ════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // BUILD
-  // ════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   @override
   Widget build(BuildContext context) {
@@ -146,19 +148,19 @@ class _InventoryScreenState extends State<InventoryScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Page Header ──────────────────────────────────
+                // â”€â”€ Page Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _animated(0, _buildPageHeader()),
                 const SizedBox(height: 24),
 
-                // ── Summary Cards Row ────────────────────────────
+                // â”€â”€ Summary Cards Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _animated(1, _buildSummaryCards()),
                 const SizedBox(height: 20),
 
-                // ── Metal Holdings Card ───────────────────────────
+                // â”€â”€ Metal Holdings Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _animated(2, _buildMetalHoldingsCard()),
                 const SizedBox(height: 24),
 
-                // ── Section Label + Filter ────────────────────────
+                // â”€â”€ Section Label + Filter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 _animated(3, _buildSectionHeader()),
                 const SizedBox(height: 12),
                 _animated(3, _buildCategoryFilter()),
@@ -168,7 +170,7 @@ class _InventoryScreenState extends State<InventoryScreen>
           ),
         ),
 
-        // ── Stock Items List ─────────────────────────────────────
+        // â”€â”€ Stock Items List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
           sliver: SliverToBoxAdapter(child: _animated(4, _buildStockList())),
@@ -177,9 +179,9 @@ class _InventoryScreenState extends State<InventoryScreen>
     );
   }
 
-  // ════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // PAGE HEADER
-  // ════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildPageHeader() {
     final today = DateFormat('EEEE, d MMMM yyyy').format(DateTime.now());
@@ -200,7 +202,8 @@ class _InventoryScreenState extends State<InventoryScreen>
           decoration: BoxDecoration(
             color: InvColors.brandGoldLight,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: InvColors.brandGold.withOpacity(0.3)),
+            border:
+                Border.all(color: InvColors.brandGold.withValues(alpha: 0.3)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -226,9 +229,9 @@ class _InventoryScreenState extends State<InventoryScreen>
     );
   }
 
-  // ════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SUMMARY CARDS (Opening + Closing side by side)
-  // ════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildSummaryCards() {
     final s = _ctrl.stats;
@@ -276,9 +279,9 @@ class _InventoryScreenState extends State<InventoryScreen>
     );
   }
 
-  // ════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // METAL HOLDINGS CARD
-  // ════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildMetalHoldingsCard() {
     final s = _ctrl.stats;
@@ -298,7 +301,7 @@ class _InventoryScreenState extends State<InventoryScreen>
               Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: InvColors.metalAccent.withOpacity(0.15),
+                  color: InvColors.metalAccent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -403,9 +406,9 @@ class _InventoryScreenState extends State<InventoryScreen>
     );
   }
 
-  // ════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION HEADER + CATEGORY FILTER
-  // ════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildSectionHeader() {
     return Row(
@@ -413,7 +416,7 @@ class _InventoryScreenState extends State<InventoryScreen>
         Container(
           padding: const EdgeInsets.all(7),
           decoration: BoxDecoration(
-            color: InvColors.brandGold.withOpacity(0.12),
+            color: InvColors.brandGold.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(
@@ -470,9 +473,9 @@ class _InventoryScreenState extends State<InventoryScreen>
     );
   }
 
-  // ════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // STOCK ITEMS LIST (Live StreamBuilder)
-  // ════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildStockList() {
     return StreamBuilder<List<StockItem>>(
@@ -512,7 +515,7 @@ class _InventoryScreenState extends State<InventoryScreen>
           margin: const EdgeInsets.only(bottom: 12),
           height: 90,
           decoration: InvStyles.cardDecoration.copyWith(
-            color: InvColors.cardBg.withOpacity(0.5),
+            color: InvColors.cardBg.withValues(alpha: 0.5),
           ),
         ),
       ),
@@ -697,7 +700,7 @@ class _GoldInventoryGroupCard extends StatelessWidget {
     return Container(
       decoration: InvStyles.cardDecoration.copyWith(
         border: Border.all(
-          color: InvColors.brandGold.withOpacity(0.18),
+          color: InvColors.brandGold.withValues(alpha: 0.18),
           width: 1.2,
         ),
       ),
@@ -713,10 +716,10 @@ class _GoldInventoryGroupCard extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: InvColors.brandGold.withOpacity(0.10),
+                    color: InvColors.brandGold.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: InvColors.brandGold.withOpacity(0.22),
+                      color: InvColors.brandGold.withValues(alpha: 0.22),
                     ),
                   ),
                   child: const Icon(
@@ -755,7 +758,7 @@ class _GoldInventoryGroupCard extends StatelessWidget {
                     color: InvColors.brandGoldLight,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: InvColors.brandGold.withOpacity(0.25),
+                      color: InvColors.brandGold.withValues(alpha: 0.25),
                     ),
                   ),
                   child: Column(
@@ -806,7 +809,7 @@ class _GoldInventoryGroupCard extends StatelessWidget {
                 if (group.purityTags.isNotEmpty)
                   _groupMetric(
                     'Purity Mix',
-                    group.purityTags.join(' • '),
+                    group.purityTags.join(' â€¢ '),
                     InvColors.textMuted,
                   ),
               ],
@@ -835,9 +838,9 @@ class _GoldInventoryGroupCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.08),
+        color: accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accent.withOpacity(0.18)),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -887,7 +890,7 @@ class _GoldInventoryMiniRow extends StatelessWidget {
                   'SKU ${item.sku}',
                   if ((item.purity ?? '').isNotEmpty) item.purity!,
                   if ((item.huid ?? '').isNotEmpty) 'HUID ${item.huid}',
-                ].join('  •  '),
+                ].join('  â€¢  '),
                 style: InvStyles.itemSku,
               ),
             ],
@@ -957,7 +960,7 @@ class _SummaryCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.15),
+                  color: accentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: accentColor, size: 14),
@@ -1072,7 +1075,7 @@ class _MovementChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Text(
           text,
@@ -1192,24 +1195,27 @@ class _StockItemCardState extends State<_StockItemCard> {
   bool _hovered = false;
 
   (Color, Color, Color) _statusColors(String status) {
-    if (status == StockStatus.available.label)
+    if (status == StockStatus.available.label) {
       return (
         InvColors.statusAvailBg,
         InvColors.statusAvailText,
         InvColors.closingAccent,
       );
-    if (status == StockStatus.sold.label)
+    }
+    if (status == StockStatus.sold.label) {
       return (
         InvColors.statusSoldBg,
         InvColors.statusSoldText,
         InvColors.danger,
       );
-    if (status == StockStatus.onOrder.label)
+    }
+    if (status == StockStatus.onOrder.label) {
       return (
         InvColors.statusOrderBg,
         InvColors.statusOrderText,
         InvColors.warning,
       );
+    }
     return (
       InvColors.statusKarigarBg,
       InvColors.statusKarigarText,
@@ -1240,13 +1246,15 @@ class _StockItemCardState extends State<_StockItemCard> {
           color: _hovered ? InvColors.cardBg : InvColors.cardBg,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: _hovered ? accent.withOpacity(0.5) : InvColors.cardBorder,
+            color:
+                _hovered ? accent.withValues(alpha: 0.5) : InvColors.cardBorder,
             width: _hovered ? 1.5 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color:
-                  _hovered ? accent.withOpacity(0.10) : InvColors.shadowLight,
+              color: _hovered
+                  ? accent.withValues(alpha: 0.10)
+                  : InvColors.shadowLight,
               blurRadius: _hovered ? 20 : 8,
               offset: const Offset(0, 4),
             ),
@@ -1262,9 +1270,9 @@ class _StockItemCardState extends State<_StockItemCard> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: accent.withOpacity(0.10),
+                  color: accent.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: accent.withOpacity(0.2)),
+                  border: Border.all(color: accent.withValues(alpha: 0.2)),
                 ),
                 child: Icon(
                   _categoryIcon(item.category),
@@ -1314,7 +1322,7 @@ class _StockItemCardState extends State<_StockItemCard> {
                             vertical: 1,
                           ),
                           decoration: BoxDecoration(
-                            color: accent.withOpacity(0.10),
+                            color: accent.withValues(alpha: 0.10),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -1328,7 +1336,7 @@ class _StockItemCardState extends State<_StockItemCard> {
                         if (item.purity != null &&
                             (item.purity ?? '').isNotEmpty) ...[
                           const SizedBox(width: 6),
-                          Text('• ${item.purity}', style: InvStyles.itemSku),
+                          Text('â€¢ ${item.purity}', style: InvStyles.itemSku),
                         ],
                       ],
                     ),
@@ -1419,7 +1427,7 @@ class _StatusBadge extends StatelessWidget {
 }
 
 // =============================================================================
-// APP BAR — Premium Design Match
+// APP BAR â€” Premium Design Match
 // =============================================================================
 
 class _InventoryAppBar extends StatefulWidget implements PreferredSizeWidget {
@@ -1477,15 +1485,15 @@ class _InventoryAppBarState extends State<_InventoryAppBar>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ── 1. Animated Back Button ──────────────────────────────────────
+            // â”€â”€ 1. Animated Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _HoverBackButton(onTap: widget.onBack),
             const SizedBox(width: 18),
 
-            // ── 2. Vertical Divider ──────────────────────────────────────────
+            // â”€â”€ 2. Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _buildVerticalDivider(),
             const SizedBox(width: 18),
 
-            // ── 3. Premium Gradient Module Icon ──────────────────────────────
+            // â”€â”€ 3. Premium Gradient Module Icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Container(
               width: 34,
               height: 34,
@@ -1498,7 +1506,7 @@ class _InventoryAppBarState extends State<_InventoryAppBar>
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: InvColors.brandGold.withOpacity(0.5),
+                    color: InvColors.brandGold.withValues(alpha: 0.5),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -1512,7 +1520,7 @@ class _InventoryAppBarState extends State<_InventoryAppBar>
             ),
             const SizedBox(width: 14),
 
-            // ── 4. Main Title ────────────────────────────────────────────────
+            // â”€â”€ 4. Main Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Text(
               InvStrings.screenTitle,
               style: InvStyles.shellTitle.copyWith(
@@ -1524,7 +1532,7 @@ class _InventoryAppBarState extends State<_InventoryAppBar>
             // Spacer pushes the radar widget to the right end
             const Spacer(),
 
-            // ── 5. Premium Radar Widget ──────────────────────────────────────
+            // â”€â”€ 5. Premium Radar Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _RadarWidget(blinkCtrl: _blinkCtrl),
           ],
         ),
@@ -1551,9 +1559,9 @@ class _InventoryAppBarState extends State<_InventoryAppBar>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // ANIMATED BACK BUTTON
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
   const _HoverBackButton({required this.onTap});
@@ -1585,7 +1593,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
             decoration: BoxDecoration(
               color: _isHovered
                   ? InvColors.shellBg
-                  : InvColors.shellBorder.withOpacity(0.3),
+                  : InvColors.shellBorder.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isHovered ? InvColors.brandGold : InvColors.shellBorder,
@@ -1594,7 +1602,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               boxShadow: _isHovered
                   ? [
                       BoxShadow(
-                        color: InvColors.brandGold.withOpacity(0.3),
+                        color: InvColors.brandGold.withValues(alpha: 0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
                       ),
@@ -1614,9 +1622,9 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // RADAR / ONLINE WIDGET (Pill shape added)
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _RadarWidget extends StatelessWidget {
   final AnimationController blinkCtrl;
   const _RadarWidget({required this.blinkCtrl});
@@ -1626,9 +1634,9 @@ class _RadarWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: InvColors.onlineGreen.withOpacity(0.08),
+        color: InvColors.onlineGreen.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: InvColors.onlineGreen.withOpacity(0.3)),
+        border: Border.all(color: InvColors.onlineGreen.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1689,7 +1697,7 @@ class _RadarWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: InvColors.onlineGreen.withOpacity(0.5),
+                  color: InvColors.onlineGreen.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),

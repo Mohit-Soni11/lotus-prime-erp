@@ -17,18 +17,18 @@ class ShopSessionManager {
   /// Gets the existing Tenant ID or generates a new one if it's the first time.
   static Future<String> getPermanentTenantId() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // 1. Check if ID already exists in local storage
     String? existingId = prefs.getString(_tenantKey);
-    
+
     if (existingId != null && existingId.isNotEmpty) {
       return existingId; // Return the saved permanent ID
-    } 
-    
+    }
+
     // 2. First time setup: Generate and permanently save
     final String newId = "SHOP_${_uuidGenerator.v4()}";
     await prefs.setString(_tenantKey, newId);
-    
+
     return newId;
   }
 }

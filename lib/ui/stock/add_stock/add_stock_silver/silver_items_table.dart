@@ -44,11 +44,11 @@ class SilverItemsTable extends StatelessWidget {
                       color: SilverStockColors.cardBorder,
                       width: 1.5,
                     ),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
                         color: SilverStockColors.shadowLight,
                         blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        offset: Offset(0, 4),
                       ),
                     ],
                   ),
@@ -100,7 +100,7 @@ class SilverItemsTable extends StatelessWidget {
   Widget _buildHeader(int count, bool needsHorizontalScroll) {
     return Container(
       decoration: BoxDecoration(
-        color: SilverStockColors.brandSilver.withOpacity(0.06),
+        color: SilverStockColors.brandSilver.withValues(alpha: 0.06),
         border: const Border(
           bottom: BorderSide(color: SilverStockColors.cardBorder, width: 1.5),
         ),
@@ -114,10 +114,10 @@ class SilverItemsTable extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: SilverStockColors.brandSilver.withOpacity(0.12),
+              color: SilverStockColors.brandSilver.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: SilverStockColors.brandSilver.withOpacity(0.40),
+                color: SilverStockColors.brandSilver.withValues(alpha: 0.40),
               ),
             ),
             child: const Center(
@@ -370,9 +370,9 @@ class SilverItemsTable extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: SilverStockColors.success.withOpacity(0.08),
+          color: SilverStockColors.success.withValues(alpha: 0.08),
           border: Border.all(
-            color: SilverStockColors.success.withOpacity(0.35),
+            color: SilverStockColors.success.withValues(alpha: 0.35),
             width: 1.5,
           ),
           borderRadius: BorderRadius.circular(10),
@@ -380,7 +380,7 @@ class SilverItemsTable extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
+            const Icon(
               Icons.add_circle_outline_rounded,
               color: SilverStockColors.success,
               size: 20,
@@ -399,7 +399,7 @@ class SilverItemsTable extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: SilverStockColors.success.withOpacity(0.15),
+                color: SilverStockColors.success.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: const Text(
@@ -456,8 +456,8 @@ class SilverItemsTable extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
-        border: Border.all(color: color.withOpacity(0.30), width: 1.5),
+        color: color.withValues(alpha: 0.10),
+        border: Border.all(color: color.withValues(alpha: 0.30), width: 1.5),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(

@@ -39,13 +39,12 @@ import '../../../models/dashboard/alert_card_model.dart';
 import '../../../constants/app_routes.dart';
 
 // ── Stock Thresholds (Python ke GOLD_MIN, GOLD_HALF jaisa) ────────────────────
-const int _kGoldCriticalQty  = 3;   // Items <= yeh → CRITICAL
-const int _kGoldWarningQty   = 8;   // Items <= yeh → WARNING
+const int _kGoldCriticalQty = 3; // Items <= yeh → CRITICAL
+const int _kGoldWarningQty = 8; // Items <= yeh → WARNING
 const int _kSilverCriticalQty = 5;
-const int _kSilverWarningQty  = 12;
+const int _kSilverWarningQty = 12;
 
 class AlertRowLogic extends ChangeNotifier {
-
   // ── Dependencies ─────────────────────────────────────────────────────────────
   final AppDatabase _db;
   AlertRowLogic({AppDatabase? db}) : _db = db ?? AppDatabase() {
@@ -56,9 +55,9 @@ class AlertRowLogic extends ChangeNotifier {
   AlertRowModel _data = _buildLoadingState();
   bool _hasError = false;
 
-  AlertRowModel get data     => _data;
-  bool          get hasError => _hasError;
-  bool          get isLoading => _data.cards.any((c) => c.isLoading);
+  AlertRowModel get data => _data;
+  bool get hasError => _hasError;
+  bool get isLoading => _data.cards.any((c) => c.isLoading);
 
   // ── Live Stream subscriptions ─────────────────────────────────────────────────
   final List<StreamSubscription> _subs = [];
@@ -70,33 +69,33 @@ class AlertRowLogic extends ChangeNotifier {
     // Watch StockItems for Inventory card
     _subs.add(
       _db.select(_db.stockItems).watch().listen(
-        (_) => _refresh(),
-        onError: (_) => _onError(),
-      ),
+            (_) => _refresh(),
+            onError: (_) => _onError(),
+          ),
     );
 
     // Watch SalesOrders for Orders + Deliveries cards
     _subs.add(
       _db.select(_db.salesOrders).watch().listen(
-        (_) => _refresh(),
-        onError: (_) => _onError(),
-      ),
+            (_) => _refresh(),
+            onError: (_) => _onError(),
+          ),
     );
 
     // Watch Bills for Collections card
     _subs.add(
       _db.select(_db.bills).watch().listen(
-        (_) => _refresh(),
-        onError: (_) => _onError(),
-      ),
+            (_) => _refresh(),
+            onError: (_) => _onError(),
+          ),
     );
 
     // Watch Loans for Collections card
     _subs.add(
       _db.select(_db.loans).watch().listen(
-        (_) => _refresh(),
-        onError: (_) => _onError(),
-      ),
+            (_) => _refresh(),
+            onError: (_) => _onError(),
+          ),
     );
 
     // First fetch immediately
@@ -116,10 +115,10 @@ class AlertRowLogic extends ChangeNotifier {
       ]);
 
       _data = AlertRowModel(
-        inventory:   results[0],
-        orders:      results[1],
+        inventory: results[0],
+        orders: results[1],
         collections: results[2],
-        deliveries:  results[3],
+        deliveries: results[3],
       );
       _hasError = false;
       notifyListeners();
@@ -145,11 +144,13 @@ class AlertRowLogic extends ChangeNotifier {
         .get();
 
     // Gold aur Silver alag karo
-    final goldItems   = allItems.where((i) => i.metalType.toLowerCase() == 'gold').toList();
-    final silverItems = allItems.where((i) => i.metalType.toLowerCase() == 'silver').toList();
+    final goldItems =
+        allItems.where((i) => i.metalType.toLowerCase() == 'gold').toList();
+    final silverItems =
+        allItems.where((i) => i.metalType.toLowerCase() == 'silver').toList();
 
     // Total quantities
-    final goldQty   = goldItems.fold<int>(0, (sum, i) => sum + i.quantity);
+    final goldQty = goldItems.fold<int>(0, (sum, i) => sum + i.quantity);
     final silverQty = silverItems.fold<int>(0, (sum, i) => sum + i.quantity);
 
     // Status decide karo — Python jaisa 2-level check
@@ -249,21 +250,21 @@ class AlertRowLogic extends ChangeNotifier {
     AlertStatus status;
 
     if (overdueOrders.isNotEmpty) {
-      status    = AlertStatus.critical;
+      status = AlertStatus.critical;
       mainValue = 'LATE: ${overdueOrders.length}';
-      subText   = '${overdueOrders.length} order overdue hai';
+      subText = '${overdueOrders.length} order overdue hai';
     } else if (dueTodayOrders.isNotEmpty) {
-      status    = AlertStatus.warning;
+      status = AlertStatus.warning;
       mainValue = 'DUE TODAY';
-      subText   = '${dueTodayOrders.length} order deliver karo';
+      subText = '${dueTodayOrders.length} order deliver karo';
     } else if (total == 0) {
-      status    = AlertStatus.safe;
+      status = AlertStatus.safe;
       mainValue = 'NO ORDERS';
-      subText   = 'Koi pending order nahi';
+      subText = 'Koi pending order nahi';
     } else {
-      status    = AlertStatus.safe;
+      status = AlertStatus.safe;
       mainValue = '$total Pending';
-      subText   = 'Sab orders on time';
+      subText = 'Sab orders on time';
     }
 
     return AlertCardModel(
@@ -293,7 +294,7 @@ class AlertRowLogic extends ChangeNotifier {
 
     final int billCount = activeBills.length;
     final int loanCount = activeLoans.length;
-    final int total     = billCount + loanCount;
+    final int total = billCount + loanCount;
 
     // Total outstanding amount (bills ka)
     final double totalAmt = activeBills.fold<double>(
@@ -310,21 +311,21 @@ class AlertRowLogic extends ChangeNotifier {
     AlertStatus status;
 
     if (total == 0) {
-      status    = AlertStatus.safe;
+      status = AlertStatus.safe;
       mainValue = 'ALL CLEAR';
-      subText   = 'Koi due nahi hai';
+      subText = 'Koi due nahi hai';
     } else if (loanCount > 0 && billCount > 0) {
-      status    = AlertStatus.warning;
+      status = AlertStatus.warning;
       mainValue = formattedAmt;
-      subText   = '$billCount bills + $loanCount loans active';
+      subText = '$billCount bills + $loanCount loans active';
     } else if (billCount > 0) {
-      status    = AlertStatus.warning;
+      status = AlertStatus.warning;
       mainValue = formattedAmt;
-      subText   = '$billCount active bills due';
+      subText = '$billCount active bills due';
     } else {
-      status    = AlertStatus.warning;
+      status = AlertStatus.warning;
       mainValue = '$loanCount Loans';
-      subText   = 'Active girvi/loans';
+      subText = 'Active girvi/loans';
     }
 
     return AlertCardModel(
@@ -350,7 +351,7 @@ class AlertRowLogic extends ChangeNotifier {
           ..where((t) => t.deliveryDate.isNotNull()))
         .get();
 
-    final now   = DateTime.now();
+    final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
     String mainValue;
@@ -358,9 +359,9 @@ class AlertRowLogic extends ChangeNotifier {
     AlertStatus status;
 
     if (pendingWithDate.isEmpty) {
-      status    = AlertStatus.safe;
+      status = AlertStatus.safe;
       mainValue = 'NO DUE';
-      subText   = 'Koi delivery pending nahi';
+      subText = 'Koi delivery pending nahi';
     } else {
       // Minimum delivery date dhundho (next delivery)
       final sortedDates = pendingWithDate
@@ -373,31 +374,27 @@ class AlertRowLogic extends ChangeNotifier {
         ..sort();
 
       final nextDelivery = sortedDates.first;
-      final diff         = nextDelivery.difference(today).inDays;
+      final diff = nextDelivery.difference(today).inDays;
 
       // Overdue count
-      final overdueCount =
-          sortedDates.where((d) => d.isBefore(today)).length;
+      final overdueCount = sortedDates.where((d) => d.isBefore(today)).length;
 
       if (diff < 0 || overdueCount > 0) {
         // Python: delivery_pending_days > 0 → MISSED
-        status    = AlertStatus.critical;
-        mainValue = overdueCount > 1
-            ? '$overdueCount MISSED'
-            : 'MISSED';
-        subText   = '$overdueCount delivery overdue';
+        status = AlertStatus.critical;
+        mainValue = overdueCount > 1 ? '$overdueCount MISSED' : 'MISSED';
+        subText = '$overdueCount delivery overdue';
       } else if (diff == 0) {
         // Python: delivery_pending_days == 0 → TODAY
-        status    = AlertStatus.warning;
+        status = AlertStatus.warning;
         mainValue = 'TODAY';
-        subText   = '${pendingWithDate.length} deliver karna hai';
+        subText = '${pendingWithDate.length} deliver karna hai';
       } else {
         // Python: delivery_pending_days < 0 → ON SCHEDULE
-        status    = AlertStatus.safe;
-        final formattedDate =
-            DateFormat('dd MMM').format(nextDelivery);
+        status = AlertStatus.safe;
+        final formattedDate = DateFormat('dd MMM').format(nextDelivery);
         mainValue = 'ON SCHEDULE';
-        subText   = 'Next: $formattedDate ($diff days)';
+        subText = 'Next: $formattedDate ($diff days)';
       }
     }
 
@@ -429,10 +426,14 @@ class AlertRowLogic extends ChangeNotifier {
   // ==========================================
   static AlertRowModel _buildLoadingState() {
     return AlertRowModel(
-      inventory:   AlertCardModel.loading('inventory',   'Inventory',   AppRoutes.inventoryRoute),
-      orders:      AlertCardModel.loading('orders',      'Orders',      AppRoutes.pendingJobsRoute),
-      collections: AlertCardModel.loading('collections', 'Collections', AppRoutes.defaulterListRoute),
-      deliveries:  AlertCardModel.loading('deliveries',  'Deliveries',  AppRoutes.deliveryManagementRoute),
+      inventory: AlertCardModel.loading(
+          'inventory', 'Inventory', AppRoutes.inventoryRoute),
+      orders: AlertCardModel.loading(
+          'orders', 'Orders', AppRoutes.pendingJobsRoute),
+      collections: AlertCardModel.loading(
+          'collections', 'Collections', AppRoutes.defaulterListRoute),
+      deliveries: AlertCardModel.loading(
+          'deliveries', 'Deliveries', AppRoutes.deliveryManagementRoute),
     );
   }
 

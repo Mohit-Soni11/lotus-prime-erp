@@ -1,8 +1,8 @@
 // =============================================================================
 // FILE        : delivery_order_card.dart
-// MODULE      : Sales → Delivery Management
+// MODULE      : Sales â†’ Delivery Management
 // LAYER       : UI
-// DESCRIPTION : Order list card — shows customer, item, status pipeline badge,
+// DESCRIPTION : Order list card â€” shows customer, item, status pipeline badge,
 //               urgency chip, payment status, delivery date.
 //               Tapping opens the side detail panel.
 // =============================================================================
@@ -55,7 +55,7 @@ class _DeliveryOrderCardState extends State<DeliveryOrderCard> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: o.isOverdue
-                        ? DeliveryColors.urgencyOverdue.withOpacity(0.35)
+                        ? DeliveryColors.urgencyOverdue.withValues(alpha: 0.35)
                         : DeliveryColors.bodyBorder,
                     width: o.isOverdue ? 1.5 : 1,
                   ),
@@ -70,7 +70,7 @@ class _DeliveryOrderCardState extends State<DeliveryOrderCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Row 1: Delivery No + Status badge ──
+              // â”€â”€ Row 1: Delivery No + Status badge â”€â”€
               Row(children: [
                 Text(o.deliveryNo, style: DeliveryStyles.deliveryNoText),
                 const Spacer(),
@@ -83,7 +83,7 @@ class _DeliveryOrderCardState extends State<DeliveryOrderCard> {
 
               const SizedBox(height: 10),
 
-              // ── Row 2: Customer ──
+              // â”€â”€ Row 2: Customer â”€â”€
               Row(children: [
                 const Icon(DeliveryIcons.customer,
                     size: 13, color: DeliveryColors.bodyTextMuted),
@@ -104,14 +104,14 @@ class _DeliveryOrderCardState extends State<DeliveryOrderCard> {
 
               const SizedBox(height: 6),
 
-              // ── Row 3: Item ──
+              // â”€â”€ Row 3: Item â”€â”€
               Row(children: [
                 const Icon(DeliveryIcons.item,
                     size: 13, color: DeliveryColors.brandGold),
                 const SizedBox(width: 5),
                 Expanded(
                   child: Text(
-                    '${o.itemName}  •  ${o.metalType} ${o.purity}  •  ${o.approxWeight.toStringAsFixed(3)}g',
+                    '${o.itemName}  â€¢  ${o.metalType} ${o.purity}  â€¢  ${o.approxWeight.toStringAsFixed(3)}g',
                     style: DeliveryStyles.cardSubtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -121,15 +121,16 @@ class _DeliveryOrderCardState extends State<DeliveryOrderCard> {
 
               const SizedBox(height: 8),
               Divider(
-                  color: DeliveryColors.bodyBorder.withOpacity(0.7), height: 1),
+                  color: DeliveryColors.bodyBorder.withValues(alpha: 0.7),
+                  height: 1),
               const SizedBox(height: 8),
 
-              // ── Row 4: Financials + Delivery date ──
+              // â”€â”€ Row 4: Financials + Delivery date â”€â”€
               Row(children: [
                 // Advance
                 _FinancialChip(
                   label: 'Adv',
-                  value: '₹${_fmt(o.advancePaid)}',
+                  value: 'â‚¹${_fmt(o.advancePaid)}',
                   color: DeliveryColors.statusBooked,
                 ),
                 const SizedBox(width: 8),
@@ -137,7 +138,7 @@ class _DeliveryOrderCardState extends State<DeliveryOrderCard> {
                 if (o.dueAmount > 0)
                   _FinancialChip(
                     label: 'Due',
-                    value: '₹${_fmt(o.dueAmount)}',
+                    value: 'â‚¹${_fmt(o.dueAmount)}',
                     color: DeliveryColors.urgencyOverdue,
                     highlight: true,
                   ),
@@ -165,7 +166,7 @@ class _DeliveryOrderCardState extends State<DeliveryOrderCard> {
                 ],
               ]),
 
-              // ── Row 5: Item count (multi-item orders) ──
+              // â”€â”€ Row 5: Item count (multi-item orders) â”€â”€
               if (o.hasMultipleItems) ...[
                 const SizedBox(height: 6),
                 Row(children: [
@@ -196,7 +197,7 @@ class _DeliveryOrderCardState extends State<DeliveryOrderCard> {
   }
 }
 
-// ── Status Badge ──────────────────────────────────────────────────────────────
+// â”€â”€ Status Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _StatusBadge extends StatelessWidget {
   final DeliveryOrderStatus status;
   const _StatusBadge({required this.status});
@@ -236,7 +237,7 @@ class _StatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(icon, size: 11, color: color),
@@ -255,7 +256,7 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-// ── Urgency Badge ─────────────────────────────────────────────────────────────
+// â”€â”€ Urgency Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _UrgencyBadge extends StatelessWidget {
   final DeliveryUrgency urgency;
   const _UrgencyBadge({required this.urgency});
@@ -290,7 +291,7 @@ class _UrgencyBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(
         label,
@@ -305,7 +306,7 @@ class _UrgencyBadge extends StatelessWidget {
   }
 }
 
-// ── Financial Chip ─────────────────────────────────────────────────────────────
+// â”€â”€ Financial Chip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _FinancialChip extends StatelessWidget {
   final String label;
   final String value;
@@ -324,7 +325,7 @@ class _FinancialChip extends StatelessWidget {
     return Row(mainAxisSize: MainAxisSize.min, children: [
       Text(
         '$label: ',
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: DeliveryColors.bodyTextMuted,

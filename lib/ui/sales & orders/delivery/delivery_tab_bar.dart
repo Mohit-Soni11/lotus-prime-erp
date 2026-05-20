@@ -1,6 +1,6 @@
 // =============================================================================
 // FILE        : delivery_tab_bar.dart
-// MODULE      : Sales → Delivery Management
+// MODULE      : Sales â†’ Delivery Management
 // LAYER       : UI
 // DESCRIPTION : 4-tab bar: Active Orders | Action Required | Due Ledger |
 //               Completed Bills. Dark shell style with badge counts.
@@ -127,7 +127,7 @@ class _TabState extends State<_Tab> {
                 color: active
                     ? DeliveryColors.brandGold
                     : _hover
-                        ? DeliveryColors.shellTextTitle.withOpacity(0.8)
+                        ? DeliveryColors.shellTextTitle.withValues(alpha: 0.8)
                         : DeliveryColors.shellTextMuted,
               ),
               const SizedBox(width: 7),
@@ -137,7 +137,8 @@ class _TabState extends State<_Tab> {
                     ? DeliveryStyles.tabActive
                     : DeliveryStyles.tabInactive.copyWith(
                         color: _hover
-                            ? DeliveryColors.shellTextTitle.withOpacity(0.8)
+                            ? DeliveryColors.shellTextTitle
+                                .withValues(alpha: 0.8)
                             : null,
                       ),
               ),
@@ -164,9 +165,9 @@ class _Badge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: BoxDecoration(
-        color: c.withOpacity(0.18),
+        color: c.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: c.withOpacity(0.35), width: 1),
+        border: Border.all(color: c.withValues(alpha: 0.35), width: 1),
       ),
       child: Text(
         count > 99 ? '99+' : count.toString(),

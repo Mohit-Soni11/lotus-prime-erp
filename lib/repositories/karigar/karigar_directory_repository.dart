@@ -48,15 +48,15 @@ class KarigarDirectoryRepository {
       final receipts = await (_db.select(_db.karigarReceipts)).get();
 
       // 4. Build lookup maps
-      final Map<int, int>    activeJobMap   = {};
-      final Map<int, int>    overdueJobMap  = {};
-      final Map<int, double> pendingWtMap   = {};
+      final Map<int, int> activeJobMap = {};
+      final Map<int, int> overdueJobMap = {};
+      final Map<int, double> pendingWtMap = {};
       final Map<int, double> outstandingMap = {};
 
       for (final issue in issues) {
         final kid = issue.karigarId;
-        activeJobMap[kid]  = (activeJobMap[kid] ?? 0) + 1;
-        pendingWtMap[kid]  = (pendingWtMap[kid] ?? 0.0) + issue.netWeightIssued;
+        activeJobMap[kid] = (activeJobMap[kid] ?? 0) + 1;
+        pendingWtMap[kid] = (pendingWtMap[kid] ?? 0.0) + issue.netWeightIssued;
         if (issue.expectedDelivery != null &&
             DateTime.now().isAfter(issue.expectedDelivery!)) {
           overdueJobMap[kid] = (overdueJobMap[kid] ?? 0) + 1;
@@ -74,21 +74,21 @@ class KarigarDirectoryRepository {
       // 5. Map to UI models
       return karigars.map((k) {
         return KarigarDirectoryItemModel(
-          id:                 k.id,
-          name:               k.name,
-          phone:              k.phone,
-          alternatePhone:     k.alternatePhone,
-          specialization:     k.specialization,
-          rateType:           k.rateType,
-          rateAmount:         k.rateAmount,
-          address:            k.address,
-          city:               k.city,
-          openingBalance:     k.openingBalance,
-          isActive:           k.isActive,
-          notes:              k.notes,
-          createdAt:          k.createdAt,
-          activeJobCount:     activeJobMap[k.id] ?? 0,
-          overdueJobCount:    overdueJobMap[k.id] ?? 0,
+          id: k.id,
+          name: k.name,
+          phone: k.phone,
+          alternatePhone: k.alternatePhone,
+          specialization: k.specialization,
+          rateType: k.rateType,
+          rateAmount: k.rateAmount,
+          address: k.address,
+          city: k.city,
+          openingBalance: k.openingBalance,
+          isActive: k.isActive,
+          notes: k.notes,
+          createdAt: k.createdAt,
+          activeJobCount: activeJobMap[k.id] ?? 0,
+          overdueJobCount: overdueJobMap[k.id] ?? 0,
           outstandingBalance: (outstandingMap[k.id] ?? 0.0) + k.openingBalance,
           totalWeightPending: pendingWtMap[k.id] ?? 0.0,
         );
@@ -105,16 +105,20 @@ class KarigarDirectoryRepository {
 
   Future<KarigarDirectoryStatsModel> fetchStats() async {
     try {
-      final all      = await _db.select(_db.karigarMasters).get();
-      final now      = DateTime.now();
+      final all = await _db.select(_db.karigarMasters).get();
+      final now = DateTime.now();
       final monthStart = DateTime(now.year, now.month, 1);
 
-      int totalActive   = 0;
+      int totalActive = 0;
       int totalInactive = 0;
-      int newThisMonth  = 0;
+      int newThisMonth = 0;
 
       for (final k in all) {
-        if (k.isActive) totalActive++;   else totalInactive++;
+        if (k.isActive) {
+          totalActive++;
+        } else {
+          totalInactive++;
+        }
         if (k.createdAt.isAfter(monthStart)) newThisMonth++;
       }
 
@@ -143,10 +147,10 @@ class KarigarDirectoryRepository {
       }
 
       return KarigarDirectoryStatsModel(
-        totalActive:      totalActive,
-        totalInactive:    totalInactive,
-        newThisMonth:     newThisMonth,
-        withActiveJobs:   karigarsWithJobs,
+        totalActive: totalActive,
+        totalInactive: totalInactive,
+        newThisMonth: newThisMonth,
+        withActiveJobs: karigarsWithJobs,
         totalOutstanding: totalOutstanding,
       );
     } catch (e) {
@@ -179,8 +183,7 @@ class KarigarDirectoryRepository {
   }
 
   Future<KarigarMaster?> getKarigarById(int id) async {
-    return (_db.select(_db.karigarMasters)
-          ..where((k) => k.id.equals(id)))
+    return (_db.select(_db.karigarMasters)..where((k) => k.id.equals(id)))
         .getSingleOrNull();
   }
 
@@ -192,9 +195,9 @@ class KarigarDirectoryRepository {
     final rows = await (_db.update(_db.karigarMasters)
           ..where((k) => k.id.equals(id)))
         .write(KarigarMastersCompanion(
-          isActive:  drift.Value(isActive),
-          updatedAt: drift.Value(DateTime.now()),
-        ));
+      isActive: drift.Value(isActive),
+      updatedAt: drift.Value(DateTime.now()),
+    ));
     return rows > 0;
   }
 }

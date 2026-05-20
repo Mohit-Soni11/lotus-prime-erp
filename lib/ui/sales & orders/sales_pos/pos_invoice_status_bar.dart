@@ -2,9 +2,9 @@
 // FILE: pos_invoice_status_bar.dart
 // TYPE: Smart UI Component (UPGRADED)
 // AUTHOR: Senior System Architect
-// DESCRIPTION: Invoice status box — redesigned to match PosTopControlBar.
-//              ✅ Strictly mapped Colors, Icons, and TextStyles.
-//              ✅ Compact wrap-content layout (zero dead space).
+// DESCRIPTION: Invoice status box â€” redesigned to match PosTopControlBar.
+//              âœ… Strictly mapped Colors, Icons, and TextStyles.
+//              âœ… Compact wrap-content layout (zero dead space).
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -61,7 +61,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
 
   bool get _isGst => widget.ctrl.billType == BillType.gst;
   Color get _accentColor =>
-      _isGst ? SalesPosColors.success : SalesPosColors.brandGold; 
+      _isGst ? SalesPosColors.success : SalesPosColors.brandGold;
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +73,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
           child: SlideTransition(
             position: _slideAnim,
             child: Align(
-              alignment: Alignment.centerLeft, 
+              alignment: Alignment.centerLeft,
               child: _buildCard(),
             ),
           ),
@@ -82,7 +82,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
     );
   }
 
-  // ── MAIN CARD ─────────────────────────────────────────────────
+  // â”€â”€ MAIN CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildCard() {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
@@ -91,8 +91,14 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: SalesPosColors.bodyBorder),
         boxShadow: const [
-          BoxShadow(color: SalesPosColors.shadowLight, blurRadius: 8, offset: Offset(0, 2)),
-          BoxShadow(color: SalesPosColors.shadowDark, blurRadius: 20, offset: Offset(0, 6)),
+          BoxShadow(
+              color: SalesPosColors.shadowLight,
+              blurRadius: 8,
+              offset: Offset(0, 2)),
+          BoxShadow(
+              color: SalesPosColors.shadowDark,
+              blurRadius: 20,
+              offset: Offset(0, 6)),
         ],
       ),
       child: IntrinsicWidth(
@@ -100,15 +106,13 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-
-            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
             // HEADING ROW
-            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-
                 // LEFT PART: Accent Lines & Title
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -125,9 +129,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
                         _accentLine(7, 0.18),
                       ],
                     ),
-
                     const SizedBox(width: 12),
-
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,30 +143,34 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
                           duration: const Duration(milliseconds: 260),
                           style: TextStyle(
                             fontSize: 12,
-                            fontWeight: FontWeight.bold, 
-                            color: _isGst ? SalesPosColors.success : SalesPosColors.textDark,
+                            fontWeight: FontWeight.bold,
+                            color: _isGst
+                                ? SalesPosColors.success
+                                : SalesPosColors.textDark,
                           ),
-                          child: Text(_isGst ? "Tax Invoice" : "Standard Estimate"),
+                          child: Text(
+                              _isGst ? "Tax Invoice" : "Standard Estimate"),
                         ),
                       ],
                     ),
                   ],
                 ),
 
-                const SizedBox(width: 40), 
+                const SizedBox(width: 40),
 
                 // RIGHT PART: Status pill
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 260),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), 
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: _isGst
-                        ? SalesPosColors.success.withOpacity(0.07)
+                        ? SalesPosColors.success.withValues(alpha: 0.07)
                         : SalesPosColors.bodyBg,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: _isGst
-                          ? SalesPosColors.success.withOpacity(0.35)
+                          ? SalesPosColors.success.withValues(alpha: 0.35)
                           : SalesPosColors.bodyBorder,
                     ),
                   ),
@@ -173,10 +179,13 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
                     children: [
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 260),
-                        width: 6, height: 6,
+                        width: 6,
+                        height: 6,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: _isGst ? SalesPosColors.success : SalesPosColors.textDark,
+                          color: _isGst
+                              ? SalesPosColors.success
+                              : SalesPosColors.textDark,
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -184,9 +193,11 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
                         duration: const Duration(milliseconds: 260),
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: FontWeight.w900, 
+                          fontWeight: FontWeight.w900,
                           letterSpacing: 0.8,
-                          color: _isGst ? SalesPosColors.success : SalesPosColors.textDark,
+                          color: _isGst
+                              ? SalesPosColors.success
+                              : SalesPosColors.textDark,
                         ),
                         child: Text(_isGst ? "GST BILL" : "ESTIMATE"),
                       ),
@@ -196,7 +207,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
               ],
             ),
 
-            // ── Divider ──
+            // â”€â”€ Divider â”€â”€
             Container(
               height: 1,
               width: double.infinity,
@@ -204,22 +215,21 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
               color: SalesPosColors.bodyBorder,
             ),
 
-            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
             // CONTENT ROW
-            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
             SizedBox(
               height: 52,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-
-                  // ── Invoice icon box ─────────────────────────
+                  // â”€â”€ Invoice icon box â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _buildInvoiceIconBox(),
 
                   const SizedBox(width: 16),
 
-                  // ── Invoice number block ─────────────────────
+                  // â”€â”€ Invoice number block â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,10 +237,10 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
                       Text(
                         SalesPosStrings.lblInvoiceNo.trim(),
                         style: const TextStyle(
-                          fontSize: 10, 
-                          fontWeight: FontWeight.w900, 
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
                           letterSpacing: 1.4,
-                          color: SalesPosColors.textDark, 
+                          color: SalesPosColors.textDark,
                           height: 1,
                         ),
                       ),
@@ -238,9 +248,10 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
                       Text(
                         widget.ctrl.formattedInvoice,
                         style: TextStyle(
-                          color: _isGst ? _accentColor : SalesPosColors.textDark, 
-                          fontSize: 20, 
-                          fontWeight: FontWeight.w900, 
+                          color:
+                              _isGst ? _accentColor : SalesPosColors.textDark,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
                           letterSpacing: 1.5,
                           height: 1,
                         ),
@@ -250,9 +261,10 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
 
                   const SizedBox(width: 24),
 
-                  // ── Vertical rule ────────────────────────────
+                  // â”€â”€ Vertical rule â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   Container(
-                    width: 1, height: 34,
+                    width: 1,
+                    height: 34,
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
@@ -268,7 +280,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
 
                   const SizedBox(width: 20),
 
-                  // ── Date + Time chips ────────────────────────
+                  // â”€â”€ Date + Time chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   StreamBuilder<DateCardModel>(
                     stream: _dateLogic.timeStream,
                     initialData: _dateLogic.initialData,
@@ -287,23 +299,26 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
 
   Widget _buildInvoiceIconBox() {
     return Container(
-      width: 52, height: 52,
+      width: 52,
+      height: 52,
       decoration: BoxDecoration(
-        color: _accentColor.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(10), 
-        border: Border.all(color: _accentColor.withOpacity(0.25)),
+        color: _accentColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _accentColor.withValues(alpha: 0.25)),
       ),
       child: Stack(
         children: [
           Positioned(
-            top: 0, left: 8, right: 8,
+            top: 0,
+            left: 8,
+            right: 8,
             child: Container(
               height: 1,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
                     Colors.transparent,
-                    _accentColor.withOpacity(0.55),
+                    _accentColor.withValues(alpha: 0.55),
                     Colors.transparent,
                   ],
                 ),
@@ -312,9 +327,10 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
           ),
           Center(
             child: Icon(
-              Icons.receipt_long_outlined, // Safe fallback, update to SalesPosIcons.invoiceOutline if available
+              Icons
+                  .receipt_long_outlined, // Safe fallback, update to SalesPosIcons.invoiceOutline if available
               color: _accentColor,
-              size: 24, 
+              size: 24,
             ),
           ),
         ],
@@ -324,27 +340,27 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
 
   Widget _buildDateTimeRow(DateCardModel data) {
     final timeParts = data.time.split(':');
-    final cleanTime = timeParts.length >= 2
-        ? '${timeParts[0]} : ${timeParts[1]}'
-        : data.time;
+    final cleanTime =
+        timeParts.length >= 2 ? '${timeParts[0]} : ${timeParts[1]}' : data.time;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         _buildChip(
           icon: SalesPosIcons.calendarDate,
-          iconColor: SalesPosColors.textDark, 
+          iconColor: SalesPosColors.textDark,
           subLabel: "DATE",
           value: data.date.toUpperCase(),
-          valueColor: SalesPosColors.textDark, 
-          valueFontSize: 13, 
+          valueColor: SalesPosColors.textDark,
+          valueFontSize: 13,
           chipBg: SalesPosColors.bodyBg,
           chipBorder: SalesPosColors.bodyBorder,
         ),
         const SizedBox(width: 8),
         Container(
-          width: 4, height: 4,
-          decoration: BoxDecoration(
+          width: 4,
+          height: 4,
+          decoration: const BoxDecoration(
             color: SalesPosColors.bodyTextMuted,
             shape: BoxShape.circle,
           ),
@@ -355,10 +371,10 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
           iconColor: SalesPosColors.success,
           subLabel: "TIME",
           value: cleanTime,
-          valueColor: SalesPosColors.success, 
-          valueFontSize: 14, 
-          chipBg: SalesPosColors.success.withOpacity(0.07),
-          chipBorder: SalesPosColors.success.withOpacity(0.25),
+          valueColor: SalesPosColors.success,
+          valueFontSize: 14,
+          chipBg: SalesPosColors.success.withValues(alpha: 0.07),
+          chipBorder: SalesPosColors.success.withValues(alpha: 0.25),
         ),
       ],
     );
@@ -376,7 +392,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
   }) {
     return Container(
       height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 14), 
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
         color: chipBg,
         borderRadius: BorderRadius.circular(10),
@@ -386,9 +402,10 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 26, height: 26,
+            width: 26,
+            height: 26,
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.12),
+              color: iconColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(7),
             ),
             child: Icon(icon, color: iconColor, size: 14),
@@ -401,9 +418,9 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
               Text(
                 subLabel,
                 style: TextStyle(
-                  color: iconColor.withOpacity(0.8), 
+                  color: iconColor.withValues(alpha: 0.8),
                   fontSize: 9,
-                  fontWeight: FontWeight.w900, 
+                  fontWeight: FontWeight.w900,
                   letterSpacing: 1.0,
                 ),
               ),
@@ -413,7 +430,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
                 style: TextStyle(
                   color: valueColor,
                   fontSize: valueFontSize,
-                  fontWeight: FontWeight.w900, 
+                  fontWeight: FontWeight.w900,
                   letterSpacing: 0.3,
                   height: 1,
                 ),
@@ -426,9 +443,10 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
   }
 
   Widget _accentLine(double width, double opacity) => Container(
-        width: width, height: 3,
+        width: width,
+        height: 3,
         decoration: BoxDecoration(
-          color: SalesPosColors.brandGold.withOpacity(opacity),
+          color: SalesPosColors.brandGold.withValues(alpha: opacity),
           borderRadius: BorderRadius.circular(2),
         ),
       );

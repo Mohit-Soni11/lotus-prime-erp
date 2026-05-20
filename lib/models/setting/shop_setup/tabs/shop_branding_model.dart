@@ -2,8 +2,8 @@
 // FILE: shop_branding_model.dart
 // TYPE: Data Model
 // AUTHOR: Senior System Architect
-// DESCRIPTION: Highly optimized, immutable data model strictly for Branding 
-//              and Social Media data. Includes safe JSON parsing and deep 
+// DESCRIPTION: Highly optimized, immutable data model strictly for Branding
+//              and Social Media data. Includes safe JSON parsing and deep
 //              value equality to prevent unnecessary UI rebuilds.
 // -----------------------------------------------------------------------------
 
@@ -85,28 +85,28 @@ class ShopBrandingModel {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-  
+
     return other is ShopBrandingModel &&
-      other.instagram == instagram &&
-      other.facebook == facebook &&
-      other.youtube == youtube &&
-      other.website == website &&
-      other.whatsappChannel == whatsappChannel &&
-      other.whatsappBusiness == whatsappBusiness &&
-      other.supportEmail == supportEmail &&
-      other.supportPhone == supportPhone;
+        other.instagram == instagram &&
+        other.facebook == facebook &&
+        other.youtube == youtube &&
+        other.website == website &&
+        other.whatsappChannel == whatsappChannel &&
+        other.whatsappBusiness == whatsappBusiness &&
+        other.supportEmail == supportEmail &&
+        other.supportPhone == supportPhone;
   }
 
   @override
   int get hashCode {
     return Object.hash(
-      instagram, 
-      facebook, 
-      youtube, 
-      website, 
-      whatsappChannel, 
-      whatsappBusiness, 
-      supportEmail, 
+      instagram,
+      facebook,
+      youtube,
+      website,
+      whatsappChannel,
+      whatsappBusiness,
+      supportEmail,
       supportPhone,
     );
   }

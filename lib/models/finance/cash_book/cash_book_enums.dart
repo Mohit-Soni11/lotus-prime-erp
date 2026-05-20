@@ -26,14 +26,14 @@ enum CashTransactionType {
 // ── 2. INCOME CATEGORIES ─────────────────────────────────────────────────────
 
 enum IncomeCategory {
-  sale('SALE',                    'Sale (POS)'),
-  advanceBooking('ADVANCE',       'Advance Booking'),
+  sale('SALE', 'Sale (POS)'),
+  advanceBooking('ADVANCE', 'Advance Booking'),
   orderDelivery('ORDER_DELIVERY', 'Order Delivery'),
-  girviReturn('GIRVI_RETURN',     'Girvi Released'),       // ✅ v2
-  loanReceived('LOAN_RECEIVED',   'Loan Received'),
+  girviReturn('GIRVI_RETURN', 'Girvi Released'), // ✅ v2
+  loanReceived('LOAN_RECEIVED', 'Loan Received'),
   interestReceived('INTEREST_RECEIVED', 'Interest Received'),
-  miscIncome('MISC_INCOME',       'Misc. Income'),
-  otherIncome('OTHER_INCOME',     'Other');                // ✅ v2
+  miscIncome('MISC_INCOME', 'Misc. Income'),
+  otherIncome('OTHER_INCOME', 'Other'); // ✅ v2
 
   const IncomeCategory(this.dbValue, this.displayLabel);
   final String dbValue;
@@ -52,18 +52,18 @@ enum IncomeCategory {
 // ── 3. EXPENSE CATEGORIES ────────────────────────────────────────────────────
 
 enum ExpenseCategory {
-  shopRent('SHOP_RENT',             'Shop Rent'),
-  staffSalary('STAFF_SALARY',       'Staff Salary'),
-  electricity('ELECTRICITY',        'Electricity / Utilities'),
-  purchasePayment('PURCHASE_PAYMENT','Purchase Payment'),
-  girviGiven('GIRVI_GIVEN',         'Girvi Given'),           // ✅ v2
-  maintenance('MAINTENANCE',        'Maintenance & Repair'),
-  advertising('ADVERTISING',        'Advertising / Marketing'),
-  transport('TRANSPORT',            'Transport / Logistics'),
-  bankCharges('BANK_CHARGES',       'Bank Charges'),
-  governmentFees('GOVT_FEES',       'Govt. Fees / Taxes'),
-  miscExpense('MISC_EXPENSE',       'Misc. Expense'),
-  otherExpense('OTHER_EXPENSE',     'Other');                 // ✅ v2
+  shopRent('SHOP_RENT', 'Shop Rent'),
+  staffSalary('STAFF_SALARY', 'Staff Salary'),
+  electricity('ELECTRICITY', 'Electricity / Utilities'),
+  purchasePayment('PURCHASE_PAYMENT', 'Purchase Payment'),
+  girviGiven('GIRVI_GIVEN', 'Girvi Given'), // ✅ v2
+  maintenance('MAINTENANCE', 'Maintenance & Repair'),
+  advertising('ADVERTISING', 'Advertising / Marketing'),
+  transport('TRANSPORT', 'Transport / Logistics'),
+  bankCharges('BANK_CHARGES', 'Bank Charges'),
+  governmentFees('GOVT_FEES', 'Govt. Fees / Taxes'),
+  miscExpense('MISC_EXPENSE', 'Misc. Expense'),
+  otherExpense('OTHER_EXPENSE', 'Other'); // ✅ v2
 
   const ExpenseCategory(this.dbValue, this.displayLabel);
   final String dbValue;
@@ -82,18 +82,17 @@ enum ExpenseCategory {
 // ── 4. PAYMENT MODE ───────────────────────────────────────────────────────────
 
 enum PaymentMode {
-  cash('CASH',     'Cash'),
-  upi('UPI',       'UPI'),
-  card('CARD',     'Card'),
-  bank('BANK',     'Bank Transfer'),
+  cash('CASH', 'Cash'),
+  upi('UPI', 'UPI'),
+  card('CARD', 'Card'),
+  bank('BANK', 'Bank Transfer'),
   cheque('CHEQUE', 'Cheque');
 
   const PaymentMode(this.dbValue, this.displayLabel);
   final String dbValue;
   final String displayLabel;
 
-  static PaymentMode fromDb(String value) =>
-      PaymentMode.values.firstWhere(
+  static PaymentMode fromDb(String value) => PaymentMode.values.firstWhere(
         (e) => e.dbValue == value,
         orElse: () => PaymentMode.cash,
       );
@@ -121,18 +120,22 @@ enum CashBookFilter {
 /// For OTHER_* categories, returns [customLabel] if present, else enum label.
 String resolveDisplayLabel({
   required CashTransactionType type,
-  required String              categoryDbValue,
-  String?                      customLabel,
+  required String categoryDbValue,
+  String? customLabel,
 }) {
   if (type == CashTransactionType.income) {
     final cat = IncomeCategory.fromDb(categoryDbValue);
-    if (cat.requiresCustomLabel && customLabel != null && customLabel.isNotEmpty) {
+    if (cat.requiresCustomLabel &&
+        customLabel != null &&
+        customLabel.isNotEmpty) {
       return customLabel;
     }
     return cat.displayLabel;
   } else {
     final cat = ExpenseCategory.fromDb(categoryDbValue);
-    if (cat.requiresCustomLabel && customLabel != null && customLabel.isNotEmpty) {
+    if (cat.requiresCustomLabel &&
+        customLabel != null &&
+        customLabel.isNotEmpty) {
       return customLabel;
     }
     return cat.displayLabel;

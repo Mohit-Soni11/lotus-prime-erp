@@ -2,11 +2,11 @@
 
 class NotificationItem {
   final int id;
-  final String type;       // "Stock", "CRM", "Admin" etc.
+  final String type; // "Stock", "CRM", "Admin" etc.
   final String title;
   final String desc;
   final String targetRole; // "ALL", "OWNER", "STAFF"
-  bool isRead;             // Mutable: Kyunki hum isse update karte hain (Mark Read)
+  bool isRead; // Mutable: Kyunki hum isse update karte hain (Mark Read)
 
   NotificationItem({
     required this.id,
@@ -27,7 +27,7 @@ class NotificationItem {
       title: json['title'] ?? "No Title",
       desc: json['desc'] ?? "",
       // Agar backend se target_role na aaye, toh default "ALL" maan lo
-      targetRole: json['target_role'] ?? "ALL", 
+      targetRole: json['target_role'] ?? "ALL",
       isRead: json['is_read'] ?? false,
     );
   }

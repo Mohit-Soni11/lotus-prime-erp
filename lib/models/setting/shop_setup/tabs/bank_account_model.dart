@@ -20,7 +20,7 @@ class BankAccountModel {
   final String ifsc;
   final String branch;
   final String upi;
-  final String? qrImagePath; 
+  final String? qrImagePath;
 
   const BankAccountModel({
     required this.id,
@@ -101,31 +101,30 @@ class BankAccountModel {
       if (acc.length <= 4) return "••••";
       return "•••• ${acc.substring(acc.length - 4)}";
     }
-    return acc; 
+    return acc;
   }
 
   // 🚀 UPGRADE: DEEP VALUE EQUALITY & HASHING (Lag Killer)
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-  
+
     return other is BankAccountModel &&
-      other.id == id &&
-      other.title == title &&
-      other.holder == holder &&
-      other.bank == bank &&
-      other.type == type &&
-      other.acc == acc &&
-      other.ifsc == ifsc &&
-      other.branch == branch &&
-      other.upi == upi &&
-      other.qrImagePath == qrImagePath;
+        other.id == id &&
+        other.title == title &&
+        other.holder == holder &&
+        other.bank == bank &&
+        other.type == type &&
+        other.acc == acc &&
+        other.ifsc == ifsc &&
+        other.branch == branch &&
+        other.upi == upi &&
+        other.qrImagePath == qrImagePath;
   }
 
   @override
   int get hashCode {
     return Object.hash(
-      id, title, holder, bank, type, acc, ifsc, branch, upi, qrImagePath
-    );
+        id, title, holder, bank, type, acc, ifsc, branch, upi, qrImagePath);
   }
 }

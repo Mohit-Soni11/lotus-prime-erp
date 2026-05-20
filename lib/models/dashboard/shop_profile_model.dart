@@ -11,7 +11,7 @@ class ShopProfileModel {
   final String gstin;
   final String bisLicense;
   final String huidNo;
-  
+
   // Visibility Flags (ERP Control)
   final bool showMobile;
   final bool showEmail;

@@ -12,11 +12,11 @@ import '../../../theme/customer/defaulter/defaulter_theme.dart';
 
 class DefaulterFilterBar extends StatefulWidget {
   final DefaulterFilterBy activeFilter;
-  final DefaulterSortBy   activeSort;
-  final String            searchQuery;
+  final DefaulterSortBy activeSort;
+  final String searchQuery;
   final ValueChanged<DefaulterFilterBy> onFilterChanged;
-  final ValueChanged<DefaulterSortBy>   onSortChanged;
-  final ValueChanged<String>            onSearchChanged;
+  final ValueChanged<DefaulterSortBy> onSortChanged;
+  final ValueChanged<String> onSearchChanged;
 
   const DefaulterFilterBar({
     super.key,
@@ -57,16 +57,17 @@ class _DefaulterFilterBarState extends State<DefaulterFilterBar> {
           Row(
             children: [
               // Search Bar
-              Expanded(child: _SearchBar(
-                controller:  _searchCtrl,
-                onChanged:   widget.onSearchChanged,
+              Expanded(
+                  child: _SearchBar(
+                controller: _searchCtrl,
+                onChanged: widget.onSearchChanged,
               )),
 
               const SizedBox(width: 12),
 
               // Sort Dropdown
               _SortDropdown(
-                activeSort:    widget.activeSort,
+                activeSort: widget.activeSort,
                 onSortChanged: widget.onSortChanged,
               ),
             ],
@@ -76,7 +77,7 @@ class _DefaulterFilterBarState extends State<DefaulterFilterBar> {
 
           // --- ROW 2: Filter Chips ---
           _FilterChips(
-            activeFilter:    widget.activeFilter,
+            activeFilter: widget.activeFilter,
             onFilterChanged: widget.onFilterChanged,
           ),
         ],
@@ -91,7 +92,7 @@ class _DefaulterFilterBarState extends State<DefaulterFilterBar> {
 
 class _SearchBar extends StatelessWidget {
   final TextEditingController controller;
-  final ValueChanged<String>  onChanged;
+  final ValueChanged<String> onChanged;
 
   const _SearchBar({required this.controller, required this.onChanged});
 
@@ -102,11 +103,11 @@ class _SearchBar extends StatelessWidget {
       decoration: DefaulterStyles.searchBarDecoration,
       child: TextField(
         controller: controller,
-        style:      DefaulterStyles.searchInputText,
-        onChanged:  onChanged,
+        style: DefaulterStyles.searchInputText,
+        onChanged: onChanged,
         decoration: InputDecoration(
-          hintText:        DefaulterStrings.searchHint,
-          hintStyle:       DefaulterStyles.searchInputText.copyWith(
+          hintText: DefaulterStrings.searchHint,
+          hintStyle: DefaulterStyles.searchInputText.copyWith(
             color: DefaulterColors.bodyTextHint,
             fontWeight: FontWeight.w400,
           ),
@@ -128,9 +129,9 @@ class _SearchBar extends StatelessWidget {
                   },
                 )
               : null,
-          border:           InputBorder.none,
-          contentPadding:   const EdgeInsets.symmetric(vertical: 12),
-          isDense:          true,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          isDense: true,
         ),
       ),
     );
@@ -142,7 +143,7 @@ class _SearchBar extends StatelessWidget {
 // ─────────────────────────────────────────
 
 class _SortDropdown extends StatelessWidget {
-  final DefaulterSortBy         activeSort;
+  final DefaulterSortBy activeSort;
   final ValueChanged<DefaulterSortBy> onSortChanged;
 
   const _SortDropdown({
@@ -156,13 +157,13 @@ class _SortDropdown extends StatelessWidget {
       height: 42,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color:        DefaulterColors.bodyPanelBg,
+        color: DefaulterColors.bodyPanelBg,
         borderRadius: BorderRadius.circular(10),
-        border:       Border.all(color: DefaulterColors.bodyBorder, width: 1),
+        border: Border.all(color: DefaulterColors.bodyBorder, width: 1),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<DefaulterSortBy>(
-          value:        activeSort,
+          value: activeSort,
           icon: const Icon(
             DefaulterIcons.filter,
             color: DefaulterColors.bodyTextMuted,
@@ -173,8 +174,9 @@ class _SortDropdown extends StatelessWidget {
           ),
           dropdownColor: DefaulterColors.bodyPanelBg,
           items: [
-            _sortItem(DefaulterSortBy.daysOverdue, DefaulterStrings.sortOverdue),
-            _sortItem(DefaulterSortBy.amountDue,   DefaulterStrings.sortAmount),
+            _sortItem(
+                DefaulterSortBy.daysOverdue, DefaulterStrings.sortOverdue),
+            _sortItem(DefaulterSortBy.amountDue, DefaulterStrings.sortAmount),
             _sortItem(DefaulterSortBy.customerName, DefaulterStrings.sortName),
           ],
           onChanged: (val) {
@@ -201,7 +203,7 @@ class _SortDropdown extends StatelessWidget {
 // ─────────────────────────────────────────
 
 class _FilterChips extends StatelessWidget {
-  final DefaulterFilterBy         activeFilter;
+  final DefaulterFilterBy activeFilter;
   final ValueChanged<DefaulterFilterBy> onFilterChanged;
 
   const _FilterChips({
@@ -212,19 +214,35 @@ class _FilterChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chips = [
-      (DefaulterFilterBy.all,      DefaulterStrings.filterAll,      null),
-      (DefaulterFilterBy.critical, DefaulterStrings.filterCritical,  DefaulterColors.riskCriticalText),
-      (DefaulterFilterBy.high,     DefaulterStrings.filterHigh,      DefaulterColors.riskHighText),
-      (DefaulterFilterBy.medium,   DefaulterStrings.filterMedium,    DefaulterColors.riskMediumText),
-      (DefaulterFilterBy.low,      DefaulterStrings.filterLow,       DefaulterColors.riskLowText),
-      (DefaulterFilterBy.loanOnly, DefaulterStrings.filterLoan,      null),
+      (DefaulterFilterBy.all, DefaulterStrings.filterAll, null),
+      (
+        DefaulterFilterBy.critical,
+        DefaulterStrings.filterCritical,
+        DefaulterColors.riskCriticalText
+      ),
+      (
+        DefaulterFilterBy.high,
+        DefaulterStrings.filterHigh,
+        DefaulterColors.riskHighText
+      ),
+      (
+        DefaulterFilterBy.medium,
+        DefaulterStrings.filterMedium,
+        DefaulterColors.riskMediumText
+      ),
+      (
+        DefaulterFilterBy.low,
+        DefaulterStrings.filterLow,
+        DefaulterColors.riskLowText
+      ),
+      (DefaulterFilterBy.loanOnly, DefaulterStrings.filterLoan, null),
     ];
 
     return SizedBox(
       height: 32,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount:       chips.length,
+        itemCount: chips.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final (filter, label, color) = chips[i];

@@ -17,15 +17,15 @@ import '../../../../../../../helpers/basic_info/basic_info_validators.dart';
 import '../../../../../theme/settings/shop_setup/tabs/basic_info_tab/basic_info_strings.dart';
 
 class BasicInfoLogic {
-  
   // --- 🚀 UPGRADE: GRANULAR STATE NOTIFIERS (Zero-Lag UI Fix) ---
   final ValueNotifier<bool> enterpriseLocked = ValueNotifier(true);
   final ValueNotifier<bool> operationsLocked = ValueNotifier(true);
   final ValueNotifier<bool> commLocked = ValueNotifier(true);
-  
+
   final ValueNotifier<FormSection?> loadingSection = ValueNotifier(null);
-  final ValueNotifier<String> selectedClosureDay = ValueNotifier(BasicInfoStrings.valDefaultHoliday);
-  
+  final ValueNotifier<String> selectedClosureDay =
+      ValueNotifier(BasicInfoStrings.valDefaultHoliday);
+
   final ValueNotifier<File?> logoFile = ValueNotifier(null);
   final ValueNotifier<File?> signatureFile = ValueNotifier(null);
 
@@ -38,13 +38,13 @@ class BasicInfoLogic {
   bool _isWaTouched = false;
   bool _isShopPhoneTouched = false;
   bool _isBrandDisplayTouched = false;
-  bool _isShopWaTouched = false; 
+  bool _isShopWaTouched = false;
 
   // --- INITIALIZATION ---
   void init(ShopProfileModel? initialData) {
-    if (_initialData != null) return; 
+    if (_initialData != null) return;
     _initialData = initialData;
-    
+
     if (initialData != null && weekDays.contains(initialData.weeklyOff)) {
       selectedClosureDay.value = initialData.weeklyOff;
     }
@@ -58,9 +58,9 @@ class BasicInfoLogic {
     }
     final int size = await file.length();
     if (size > _maxFileSize) return BasicInfoStrings.errFileTooLarge;
-    
+
     logoFile.value = file;
-    return null; 
+    return null;
   }
 
   Future<String?> updateSignature(File? file) async {
@@ -70,7 +70,7 @@ class BasicInfoLogic {
     }
     final int size = await file.length();
     if (size > _maxFileSize) return BasicInfoStrings.errFileTooLarge;
-    
+
     signatureFile.value = file;
     return null;
   }
@@ -91,39 +91,59 @@ class BasicInfoLogic {
   }
 
   // --- 🚀 UPGRADE: PURE VALIDATION (Returns Field Keys, Not FocusNodes) ---
-  List<String> validateEnterprise({
-    required String displayName, 
-    required String ownerName, 
-    required String ownerPhone, 
-    required String ownerWa
-  }) {
+  List<String> validateEnterprise(
+      {required String displayName,
+      required String ownerName,
+      required String ownerPhone,
+      required String ownerWa}) {
     List<String> errors = [];
-    if (BasicInfoValidators.required(displayName, BasicInfoStrings.lblDisplayName) != null) errors.add(BasicInfoStrings.keyDisplayName);
-    if (BasicInfoValidators.required(ownerName, BasicInfoStrings.lblOwner) != null) errors.add(BasicInfoStrings.keyOwnerName);
-    if (BasicInfoValidators.requiredPhone(ownerPhone) != null) errors.add(BasicInfoStrings.keyOwnerPhone);
-    if (ownerWa.isNotEmpty && BasicInfoValidators.phone(ownerWa) != null) errors.add(BasicInfoStrings.keyOwnerWa);
+    if (BasicInfoValidators.required(
+            displayName, BasicInfoStrings.lblDisplayName) !=
+        null) {
+      errors.add(BasicInfoStrings.keyDisplayName);
+    }
+    if (BasicInfoValidators.required(ownerName, BasicInfoStrings.lblOwner) !=
+        null) {
+      errors.add(BasicInfoStrings.keyOwnerName);
+    }
+    if (BasicInfoValidators.requiredPhone(ownerPhone) != null) {
+      errors.add(BasicInfoStrings.keyOwnerPhone);
+    }
+    if (ownerWa.isNotEmpty && BasicInfoValidators.phone(ownerWa) != null) {
+      errors.add(BasicInfoStrings.keyOwnerWa);
+    }
     return errors;
   }
 
-  List<String> validateOperations({
-    required String openTime, 
-    required String closeTime
-  }) {
+  List<String> validateOperations(
+      {required String openTime, required String closeTime}) {
     List<String> errors = [];
-    if (BasicInfoValidators.required(openTime, BasicInfoStrings.lblOpenTime) != null) errors.add(BasicInfoStrings.keyOpenTime);
-    if (BasicInfoValidators.required(closeTime, BasicInfoStrings.lblCloseTime) != null) errors.add(BasicInfoStrings.keyCloseTime);
+    if (BasicInfoValidators.required(openTime, BasicInfoStrings.lblOpenTime) !=
+        null) {
+      errors.add(BasicInfoStrings.keyOpenTime);
+    }
+    if (BasicInfoValidators.required(
+            closeTime, BasicInfoStrings.lblCloseTime) !=
+        null) {
+      errors.add(BasicInfoStrings.keyCloseTime);
+    }
     return errors;
   }
 
-  List<String> validateCommunication({
-    required String email, 
-    required String shopPhone, 
-    required String shopWa
-  }) {
+  List<String> validateCommunication(
+      {required String email,
+      required String shopPhone,
+      required String shopWa}) {
     List<String> errors = [];
-    if (email.isNotEmpty && BasicInfoValidators.email(email) != null) errors.add(BasicInfoStrings.keyEmail);
-    if (BasicInfoValidators.requiredPhone(shopPhone) != null) errors.add(BasicInfoStrings.keyShopPhone);
-    if (shopWa.isNotEmpty && BasicInfoValidators.phone(shopWa) != null) errors.add(BasicInfoStrings.keyShopWa);
+    if (email.isNotEmpty && BasicInfoValidators.email(email) != null) {
+      errors.add(BasicInfoStrings.keyEmail);
+    }
+    if (BasicInfoValidators.requiredPhone(shopPhone) != null) {
+      errors.add(BasicInfoStrings.keyShopPhone);
+    }
+    if (shopWa.isNotEmpty && BasicInfoValidators.phone(shopWa) != null) {
+      errors.add(BasicInfoStrings.keyShopWa);
+    }
     return errors;
   }
 
@@ -159,12 +179,14 @@ class BasicInfoLogic {
   void markWaTouched() => _isWaTouched = true;
   void markShopPhoneTouched() => _isShopPhoneTouched = true;
   void markBrandDisplayTouched() => _isBrandDisplayTouched = true;
-  void markShopWaTouched() => _isShopWaTouched = true; 
+  void markShopWaTouched() => _isShopWaTouched = true;
 
   bool get shouldSyncOwnerWa => !_isWaTouched && !enterpriseLocked.value;
-  bool get shouldSyncShopPhone => !_isShopPhoneTouched && !enterpriseLocked.value;
+  bool get shouldSyncShopPhone =>
+      !_isShopPhoneTouched && !enterpriseLocked.value;
   bool get shouldSyncShopWa => !_isShopWaTouched && !enterpriseLocked.value;
-  bool get shouldSyncBrandDisplay => !_isBrandDisplayTouched && !enterpriseLocked.value;
+  bool get shouldSyncBrandDisplay =>
+      !_isBrandDisplayTouched && !enterpriseLocked.value;
 
   void updateClosureDay(String? val) {
     if (val != null && val != selectedClosureDay.value) {
@@ -174,11 +196,20 @@ class BasicInfoLogic {
 
   // --- FINAL EXPORT ---
   ShopProfileModel generateFinalModel({
-    required String legalName, required String displayName, required String tagline,
-    required String ownerName, required String ownerPhone, required String ownerWhatsapp,
-    required String estYear, required String branchCode, required String openTime,
-    required String closeTime, required String brandDisplayName, required String businessEmail,
-    required String shopPhone, required String shopWhatsapp,
+    required String legalName,
+    required String displayName,
+    required String tagline,
+    required String ownerName,
+    required String ownerPhone,
+    required String ownerWhatsapp,
+    required String estYear,
+    required String branchCode,
+    required String openTime,
+    required String closeTime,
+    required String brandDisplayName,
+    required String businessEmail,
+    required String shopPhone,
+    required String shopWhatsapp,
   }) {
     return ShopProfileModel(
       legalName: legalName,

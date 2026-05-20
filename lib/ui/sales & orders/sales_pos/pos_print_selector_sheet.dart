@@ -3,25 +3,25 @@
 // TYPE: Smart UI Component (Bottom Sheet)
 // DESCRIPTION: Premium print format selector with live size thumbnails,
 //              copy count selector, and duplicate stamp toggle.
-//              ✅ FIXED: Live PDF Preview update
-//              ✅ FIXED: Invisible Copy Count Text & Premium UI Polish
+//              âœ… FIXED: Live PDF Preview update
+//              âœ… FIXED: Invisible Copy Count Text & Premium UI Polish
 // ==========================================
- 
+
 import 'package:flutter/material.dart';
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../models/sales & orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../logic/sales & orders/sales pos/pos_invoice_controller.dart';
- 
+
 class PosPrintSelectorSheet extends StatefulWidget {
   final PosInvoiceController invoiceCtrl;
   final VoidCallback onPrint;
- 
+
   const PosPrintSelectorSheet({
     super.key,
     required this.invoiceCtrl,
     required this.onPrint,
   });
- 
+
   static Future<void> show(
     BuildContext context, {
     required PosInvoiceController invoiceCtrl,
@@ -37,27 +37,27 @@ class PosPrintSelectorSheet extends StatefulWidget {
       ),
     );
   }
- 
+
   @override
   State<PosPrintSelectorSheet> createState() => _PosPrintSelectorSheetState();
 }
- 
+
 class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
     with SingleTickerProviderStateMixin {
   late AnimationController _animCtrl;
   late Animation<double> _slideAnim;
- 
+
   late PrintFormat _selected;
   int _copies = 1;
   bool _duplicateStamp = false;
- 
+
   @override
   void initState() {
     super.initState();
     _selected = widget.invoiceCtrl.selectedFormat;
     _copies = widget.invoiceCtrl.printCopies;
     _duplicateStamp = widget.invoiceCtrl.includeDuplicateStamp;
- 
+
     _animCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 380),
@@ -65,13 +65,13 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
     _slideAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic);
     _animCtrl.forward();
   }
- 
+
   @override
   void dispose() {
     _animCtrl.dispose();
     super.dispose();
   }
- 
+
   @override
   Widget build(BuildContext context) {
     return SlideTransition(
@@ -111,55 +111,64 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
       ),
     );
   }
- 
+
   Widget _buildHandle() => Padding(
-    padding: const EdgeInsets.only(top: 12, bottom: 4),
-    child: Center(
-      child: Container(
-        width: 40, height: 4,
-        decoration: BoxDecoration(
-          color: SalesPosColors.bodyBorder,
-          borderRadius: BorderRadius.circular(2),
-        ),
-      ),
-    ),
-  );
- 
-  Widget _buildHeader() => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 8, 16, 14),
-    child: Row(
-      children: [
-        Container(
-          width: 42, height: 42,
-          decoration: BoxDecoration(
-            color: SalesPosColors.brandGold.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: SalesPosColors.brandGold.withOpacity(0.30)),
+        padding: const EdgeInsets.only(top: 12, bottom: 4),
+        child: Center(
+          child: Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: SalesPosColors.bodyBorder,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-          child: const Icon(Icons.print_rounded, color: SalesPosColors.brandGold, size: 22),
         ),
-        const SizedBox(width: 14),
-        const Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text("SELECT PRINT FORMAT",
-                style: TextStyle(
-                    color: SalesPosColors.shellTextTitle,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.4)),
-            SizedBox(height: 2),
-            Text("Choose paper size for your printer",
-                style: TextStyle(color: SalesPosColors.shellTextMuted, fontSize: 12)),
-          ]),
+      );
+
+  Widget _buildHeader() => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 16, 14),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: SalesPosColors.brandGold.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                    color: SalesPosColors.brandGold.withValues(alpha: 0.30)),
+              ),
+              child: const Icon(Icons.print_rounded,
+                  color: SalesPosColors.brandGold, size: 22),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("SELECT PRINT FORMAT",
+                        style: TextStyle(
+                            color: SalesPosColors.shellTextTitle,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.4)),
+                    SizedBox(height: 2),
+                    Text("Choose paper size for your printer",
+                        style: TextStyle(
+                            color: SalesPosColors.shellTextMuted,
+                            fontSize: 12)),
+                  ]),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close_rounded,
+                  color: SalesPosColors.shellTextMuted),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
         ),
-        IconButton(
-          icon: const Icon(Icons.close_rounded, color: SalesPosColors.shellTextMuted),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ],
-    ),
-  );
- 
+      );
+
   Widget _buildFormatGrid() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,24 +181,27 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                 letterSpacing: 1.2)),
         const SizedBox(height: 10),
         Row(
-          children: PrintFormat.values.map((fmt) => Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(right: fmt == PrintFormat.thermal2inch ? 0 : 10),
-              child: _FormatOptionCard(
-                format: fmt,
-                isSelected: _selected == fmt,
-                onTap: () {
-                  setState(() => _selected = fmt);
-                  widget.invoiceCtrl.switchFormat(fmt);
-                },
-              ),
-            ),
-          )).toList(),
+          children: PrintFormat.values
+              .map((fmt) => Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                          right: fmt == PrintFormat.thermal2inch ? 0 : 10),
+                      child: _FormatOptionCard(
+                        format: fmt,
+                        isSelected: _selected == fmt,
+                        onTap: () {
+                          setState(() => _selected = fmt);
+                          widget.invoiceCtrl.switchFormat(fmt);
+                        },
+                      ),
+                    ),
+                  ))
+              .toList(),
         ),
       ],
     );
   }
- 
+
   Widget _buildPreviewThumbnail() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,30 +216,30 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
         Container(
           height: 130,
           decoration: BoxDecoration(
-            color: SalesPosColors.bodyBg,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: SalesPosColors.bodyBorder),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              )
-            ]
-          ),
+              color: SalesPosColors.bodyBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: SalesPosColors.bodyBorder),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ]),
           child: Center(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               transitionBuilder: (child, anim) =>
                   ScaleTransition(scale: anim, child: child),
-              child: _PaperSizeThumbnail(key: ValueKey(_selected), format: _selected),
+              child: _PaperSizeThumbnail(
+                  key: ValueKey(_selected), format: _selected),
             ),
           ),
         ),
       ],
     );
   }
- 
+
   Widget _buildAdvancedOptions() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,7 +251,6 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2)),
         const SizedBox(height: 10),
- 
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
@@ -253,29 +264,32 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                   color: SalesPosColors.bodyTextMain, size: 18),
               const SizedBox(width: 12),
               const Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text("Number of copies",
-                      style: TextStyle(
-                          color: SalesPosColors.bodyTextMain,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700)),
-                  Text("Print multiple copies at once",
-                      style: TextStyle(
-                          color: SalesPosColors.shellTextMuted, fontSize: 11)),
-                ]),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Number of copies",
+                          style: TextStyle(
+                              color: SalesPosColors.bodyTextMain,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700)),
+                      Text("Print multiple copies at once",
+                          style: TextStyle(
+                              color: SalesPosColors.shellTextMuted,
+                              fontSize: 11)),
+                    ]),
               ),
               _CopyStepper(
                 value: _copies,
                 onChanged: (v) {
                   setState(() => _copies = v);
-                  widget.invoiceCtrl.updatePrintOptions(copies: _copies, duplicate: _duplicateStamp);
+                  widget.invoiceCtrl.updatePrintOptions(
+                      copies: _copies, duplicate: _duplicateStamp);
                 },
               ),
             ],
           ),
         ),
         const SizedBox(height: 10),
- 
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
@@ -289,23 +303,28 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                   color: SalesPosColors.bodyTextMain, size: 18),
               const SizedBox(width: 12),
               const Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text("Mark as DUPLICATE",
-                      style: TextStyle(
-                          color: SalesPosColors.bodyTextMain,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700)),
-                  Text("Adds a 'Duplicate Copy' watermark",
-                      style: TextStyle(color: SalesPosColors.shellTextMuted, fontSize: 11)),
-                ]),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Mark as DUPLICATE",
+                          style: TextStyle(
+                              color: SalesPosColors.bodyTextMain,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700)),
+                      Text("Adds a 'Duplicate Copy' watermark",
+                          style: TextStyle(
+                              color: SalesPosColors.shellTextMuted,
+                              fontSize: 11)),
+                    ]),
               ),
               Switch(
                 value: _duplicateStamp,
                 onChanged: (v) {
                   setState(() => _duplicateStamp = v);
-                  widget.invoiceCtrl.updatePrintOptions(copies: _copies, duplicate: _duplicateStamp);
+                  widget.invoiceCtrl.updatePrintOptions(
+                      copies: _copies, duplicate: _duplicateStamp);
                 },
-                activeColor: SalesPosColors.brandGold,
+                activeThumbColor: SalesPosColors.brandGold,
                 inactiveThumbColor: SalesPosColors.shellTextMuted,
                 inactiveTrackColor: SalesPosColors.bodyBorder,
               ),
@@ -315,7 +334,7 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
       ],
     );
   }
- 
+
   Widget _buildActionBar() {
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -331,10 +350,12 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                 style: OutlinedButton.styleFrom(
                   foregroundColor: SalesPosColors.shellTextMuted,
                   side: const BorderSide(color: SalesPosColors.bodyBorder),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 child: const Text("CANCEL",
-                    style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.8)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w800, letterSpacing: 0.8)),
               ),
             ),
           ),
@@ -351,7 +372,8 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                   Navigator.pop(context);
                   widget.onPrint();
                 },
-                icon: const Icon(Icons.print_rounded, color: Colors.white, size: 20),
+                icon: const Icon(Icons.print_rounded,
+                    color: Colors.white, size: 20),
                 label: Text(
                     "PRINT NOW  ($_copies ${_copies == 1 ? 'COPY' : 'COPIES'})",
                     style: const TextStyle(
@@ -363,7 +385,8 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                   backgroundColor: SalesPosColors.brandGold,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ),
@@ -373,18 +396,18 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
     );
   }
 }
- 
+
 class _FormatOptionCard extends StatelessWidget {
   final PrintFormat format;
   final bool isSelected;
   final VoidCallback onTap;
- 
+
   const _FormatOptionCard({
     required this.format,
     required this.isSelected,
     required this.onTap,
   });
- 
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -394,7 +417,7 @@ class _FormatOptionCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? SalesPosColors.brandGold.withOpacity(0.10)
+              ? SalesPosColors.brandGold.withValues(alpha: 0.10)
               : SalesPosColors.bodyPanelBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
@@ -403,14 +426,16 @@ class _FormatOptionCard extends StatelessWidget {
                 : SalesPosColors.bodyBorder,
             width: isSelected ? 1.5 : 1.0,
           ),
-          // 🚀 FIX: Premium Selection Shadow added
-          boxShadow: isSelected ? [
-            BoxShadow(
-              color: SalesPosColors.brandGold.withOpacity(0.15),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ] : null,
+          // ðŸš€ FIX: Premium Selection Shadow added
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: SalesPosColors.brandGold.withValues(alpha: 0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -436,7 +461,8 @@ class _FormatOptionCard extends StatelessWidget {
             if (isSelected) ...[
               const SizedBox(height: 4),
               Container(
-                width: 8, height: 8,
+                width: 8,
+                height: 8,
                 decoration: const BoxDecoration(
                   color: SalesPosColors.brandGold,
                   shape: BoxShape.circle,
@@ -449,39 +475,45 @@ class _FormatOptionCard extends StatelessWidget {
     );
   }
 }
- 
+
 class _PaperSizeThumbnail extends StatelessWidget {
   final PrintFormat format;
- 
+
   const _PaperSizeThumbnail({super.key, required this.format});
- 
+
   @override
   Widget build(BuildContext context) {
     double width, height;
     switch (format) {
       case PrintFormat.a4:
-        width = 56; height = 79;
+        width = 56;
+        height = 79;
         break;
       case PrintFormat.thermal3inch:
-        width = 28; height = 90;
+        width = 28;
+        height = 90;
         break;
       case PrintFormat.thermal2inch:
-        width = 20; height = 90;
+        width = 20;
+        height = 90;
         break;
     }
- 
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: width, height: height,
+          width: width,
+          height: height,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(3),
-            border: Border.all(color: SalesPosColors.brandGold.withOpacity(0.6), width: 1.5),
+            border: Border.all(
+                color: SalesPosColors.brandGold.withValues(alpha: 0.6),
+                width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(2, 3),
               ),
@@ -500,8 +532,8 @@ class _PaperSizeThumbnail extends StatelessWidget {
                         ? double.infinity
                         : (i % 3 == 0 ? width * 0.5 : width * 0.8),
                     color: i == 0
-                        ? Colors.black.withOpacity(0.7)
-                        : Colors.grey.withOpacity(0.3),
+                        ? Colors.black.withValues(alpha: 0.7)
+                        : Colors.grey.withValues(alpha: 0.3),
                   ),
                 ),
               ),
@@ -510,7 +542,7 @@ class _PaperSizeThumbnail extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          format.subtitle.split('—').first.trim(),
+          format.subtitle.split('â€”').first.trim(),
           style: const TextStyle(
               color: SalesPosColors.shellTextMuted, fontSize: 10),
         ),
@@ -518,13 +550,13 @@ class _PaperSizeThumbnail extends StatelessWidget {
     );
   }
 }
- 
+
 class _CopyStepper extends StatelessWidget {
   final int value;
   final ValueChanged<int> onChanged;
- 
+
   const _CopyStepper({required this.value, required this.onChanged});
- 
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -539,9 +571,9 @@ class _CopyStepper extends StatelessWidget {
           child: Text(
             value.toString(),
             textAlign: TextAlign.center,
-            // 🚀 FIX: Text is now beautifully visible with Brand Gold color and larger font
+            // ðŸš€ FIX: Text is now beautifully visible with Brand Gold color and larger font
             style: const TextStyle(
-                color: SalesPosColors.brandGold, 
+                color: SalesPosColors.brandGold,
                 fontSize: 18,
                 fontWeight: FontWeight.w900),
           ),
@@ -554,51 +586,54 @@ class _CopyStepper extends StatelessWidget {
     );
   }
 }
- 
+
 class _StepBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
- 
+
   const _StepBtn({required this.icon, this.onTap});
- 
+
   @override
   Widget build(BuildContext context) {
     final enabled = onTap != null;
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 30, height: 30,
+        width: 30,
+        height: 30,
         decoration: BoxDecoration(
           color: enabled
-              ? SalesPosColors.brandGold.withOpacity(0.12)
-              : SalesPosColors.bodyBorder.withOpacity(0.3),
+              ? SalesPosColors.brandGold.withValues(alpha: 0.12)
+              : SalesPosColors.bodyBorder.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: enabled
-                ? SalesPosColors.brandGold.withOpacity(0.40)
+                ? SalesPosColors.brandGold.withValues(alpha: 0.40)
                 : SalesPosColors.bodyBorder,
           ),
         ),
         child: Icon(icon,
             size: 16,
-            color: enabled ? SalesPosColors.brandGold : SalesPosColors.shellTextMuted),
+            color: enabled
+                ? SalesPosColors.brandGold
+                : SalesPosColors.shellTextMuted),
       ),
     );
   }
 }
- 
+
 class _GoldDivider extends StatelessWidget {
   const _GoldDivider();
- 
+
   @override
   Widget build(BuildContext context) => Container(
-    height: 1.5,
-    decoration: BoxDecoration(
-      gradient: LinearGradient(colors: [
-        SalesPosColors.brandGold.withOpacity(0.03),
-        SalesPosColors.brandGold.withOpacity(0.30),
-        SalesPosColors.brandGold.withOpacity(0.03),
-      ]),
-    ),
-  );
+        height: 1.5,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [
+            SalesPosColors.brandGold.withValues(alpha: 0.03),
+            SalesPosColors.brandGold.withValues(alpha: 0.30),
+            SalesPosColors.brandGold.withValues(alpha: 0.03),
+          ]),
+        ),
+      );
 }

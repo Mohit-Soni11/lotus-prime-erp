@@ -45,7 +45,7 @@ class DefaulterRepository {
       final List<DefaulterModel> defaulters = [];
 
       for (final row in rows) {
-        final loan     = row.readTable(_db.loans);
+        final loan = row.readTable(_db.loans);
         final customer = row.readTableOrNull(_db.customers);
 
         // Guard: skip if customer deleted (loan has cascade but safety net)
@@ -55,35 +55,37 @@ class DefaulterRepository {
         final int daysOverdue = today.difference(loan.startDate).inDays;
 
         // Calculate Simple Interest: P × R × T (months) / 100
-        final double months          = daysOverdue / 30.0;
-        final double interestAccrued = (loan.loanAmount * loan.interestRate * months) / 100.0;
-        final double totalDue        = loan.loanAmount + interestAccrued;
+        final double months = daysOverdue / 30.0;
+        final double interestAccrued =
+            (loan.loanAmount * loan.interestRate * months) / 100.0;
+        final double totalDue = loan.loanAmount + interestAccrued;
 
         // Determine risk level
         final riskLevel = DefaulterModel.riskFromDays(daysOverdue);
 
         defaulters.add(DefaulterModel(
-          customerId:      customer.id,
-          customerName:    customer.name,
-          mobile:          customer.mobile,
-          city:            customer.city ?? '—',
-          customerType:    customer.type,
-          defaulterType:   DefaulterType.loan,
-          referenceNo:     loan.loanNo,
+          customerId: customer.id,
+          customerName: customer.name,
+          mobile: customer.mobile,
+          city: customer.city ?? '—',
+          customerType: customer.type,
+          defaulterType: DefaulterType.loan,
+          referenceNo: loan.loanNo,
           principalAmount: loan.loanAmount,
-          interestRate:    loan.interestRate,
+          interestRate: loan.interestRate,
           interestAccrued: interestAccrued,
-          totalDue:        totalDue,
-          startDate:       loan.startDate,
-          daysOverdue:     daysOverdue,
-          riskLevel:       riskLevel,
+          totalDue: totalDue,
+          startDate: loan.startDate,
+          daysOverdue: daysOverdue,
+          riskLevel: riskLevel,
         ));
       }
 
       // --- STEP 2: Sort by days overdue descending (most critical first) ---
       defaulters.sort((a, b) => b.daysOverdue.compareTo(a.daysOverdue));
 
-      debugPrint('✅ DefaulterRepository: ${defaulters.length} defaulters fetched.');
+      debugPrint(
+          '✅ DefaulterRepository: ${defaulters.length} defaulters fetched.');
       return defaulters;
     } catch (e) {
       debugPrint('❌ DefaulterRepository.fetchAllDefaulters Error: $e');
@@ -113,32 +115,33 @@ class DefaulterRepository {
       final List<DefaulterModel> defaulters = [];
 
       for (final row in rows) {
-        final loan     = row.readTable(_db.loans);
+        final loan = row.readTable(_db.loans);
         final customer = row.readTableOrNull(_db.customers);
 
         if (customer == null) continue;
 
-        final int daysOverdue       = today.difference(loan.startDate).inDays;
-        final double months          = daysOverdue / 30.0;
-        final double interestAccrued = (loan.loanAmount * loan.interestRate * months) / 100.0;
-        final double totalDue        = loan.loanAmount + interestAccrued;
-        final riskLevel              = DefaulterModel.riskFromDays(daysOverdue);
+        final int daysOverdue = today.difference(loan.startDate).inDays;
+        final double months = daysOverdue / 30.0;
+        final double interestAccrued =
+            (loan.loanAmount * loan.interestRate * months) / 100.0;
+        final double totalDue = loan.loanAmount + interestAccrued;
+        final riskLevel = DefaulterModel.riskFromDays(daysOverdue);
 
         defaulters.add(DefaulterModel(
-          customerId:      customer.id,
-          customerName:    customer.name,
-          mobile:          customer.mobile,
-          city:            customer.city ?? '—',
-          customerType:    customer.type,
-          defaulterType:   DefaulterType.loan,
-          referenceNo:     loan.loanNo,
+          customerId: customer.id,
+          customerName: customer.name,
+          mobile: customer.mobile,
+          city: customer.city ?? '—',
+          customerType: customer.type,
+          defaulterType: DefaulterType.loan,
+          referenceNo: loan.loanNo,
           principalAmount: loan.loanAmount,
-          interestRate:    loan.interestRate,
+          interestRate: loan.interestRate,
           interestAccrued: interestAccrued,
-          totalDue:        totalDue,
-          startDate:       loan.startDate,
-          daysOverdue:     daysOverdue,
-          riskLevel:       riskLevel,
+          totalDue: totalDue,
+          startDate: loan.startDate,
+          daysOverdue: daysOverdue,
+          riskLevel: riskLevel,
         ));
       }
 

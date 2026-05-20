@@ -73,14 +73,14 @@ class _SettingsCardState extends State<SettingsCard>
               borderRadius: BorderRadius.circular(SettingsStyles.cardRadius),
               border: Border.all(
                 color: _hovered
-                    ? color.withOpacity(0.70)
+                    ? color.withValues(alpha: 0.70)
                     : SettingsColors.cardBorder,
                 width: _hovered ? 1.5 : 1.0,
               ),
               boxShadow: _hovered
                   ? [
                       BoxShadow(
-                        color: color.withOpacity(0.22),
+                        color: color.withValues(alpha: 0.22),
                         blurRadius: 28,
                         offset: const Offset(0, 10),
                       ),
@@ -97,22 +97,23 @@ class _SettingsCardState extends State<SettingsCard>
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // ── Top Row: Icon Box + Arrow ──────────────────────────
+                // â”€â”€ Top Row: Icon Box + Arrow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Colored icon box — larger
+                    // Colored icon box â€” larger
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: _hovered
-                            ? color.withOpacity(0.22)
-                            : color.withOpacity(0.12),
+                            ? color.withValues(alpha: 0.22)
+                            : color.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: color.withOpacity(_hovered ? 0.45 : 0.20),
+                          color:
+                              color.withValues(alpha: _hovered ? 0.45 : 0.20),
                           width: 1,
                         ),
                       ),
@@ -137,7 +138,7 @@ class _SettingsCardState extends State<SettingsCard>
                   ],
                 ),
 
-                // ── Bottom: Title + Subtitle ───────────────────────────
+                // â”€â”€ Bottom: Title + Subtitle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

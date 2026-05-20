@@ -3,9 +3,9 @@
 // MODULE      : Stock & Inventory (Silver)
 // LAYER       : UI / Components
 // DESCRIPTION : Premium Batch Configuration Panel.
-//               ✅ Tax Status Toggle (Normal / GST).
-//               ✅ Supplier Invoice ID & System Batch ID.
-//               ✅ 100% Isolated Silver Theme.
+//               âœ… Tax Status Toggle (Normal / GST).
+//               âœ… Supplier Invoice ID & System Batch ID.
+//               âœ… 100% Isolated Silver Theme.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -61,10 +61,10 @@ class _SilverBatchConfigPanelState extends State<SilverBatchConfigPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── HEADER ──
+          // â”€â”€ HEADER â”€â”€
           Row(
             children: [
-              Icon(
+              const Icon(
                 SilverStockIcons.taxNormal,
                 color: SilverStockColors.silverAccent,
                 size: 20,
@@ -81,7 +81,7 @@ class _SilverBatchConfigPanelState extends State<SilverBatchConfigPanel> {
           const Divider(color: SilverStockColors.divider, height: 1),
           const SizedBox(height: 20),
 
-          // ── CONTENT ROW ──
+          // â”€â”€ CONTENT ROW â”€â”€
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -111,7 +111,7 @@ class _SilverBatchConfigPanelState extends State<SilverBatchConfigPanel> {
     );
   }
 
-  // ── TAX STATUS TOGGLE ──
+  // â”€â”€ TAX STATUS TOGGLE â”€â”€
   Widget _buildTaxStatusToggle() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,7 +186,7 @@ class _SilverBatchConfigPanelState extends State<SilverBatchConfigPanel> {
     );
   }
 
-  // ── SYSTEM INVOICE BOX (READ-ONLY) ──
+  // â”€â”€ SYSTEM INVOICE BOX (READ-ONLY) â”€â”€
   Widget _buildSystemInvoiceBox() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,11 +204,11 @@ class _SilverBatchConfigPanelState extends State<SilverBatchConfigPanel> {
             color: SilverStockColors.brandSilverLight,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-                color: SilverStockColors.brandSilver.withOpacity(0.3)),
+                color: SilverStockColors.brandSilver.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
-              Icon(
+              const Icon(
                 SilverStockIcons.invoiceSystem,
                 size: 16,
                 color: SilverStockColors.brandSilver,
@@ -228,7 +228,7 @@ class _SilverBatchConfigPanelState extends State<SilverBatchConfigPanel> {
     );
   }
 
-  // ── SUPPLIER INVOICE INPUT ──
+  // â”€â”€ SUPPLIER INVOICE INPUT â”€â”€
   Widget _buildSupplierInvoiceInput() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,7 +248,7 @@ class _SilverBatchConfigPanelState extends State<SilverBatchConfigPanel> {
               hintStyle: SilverStockStyles.inputText.copyWith(
                 color: SilverStockColors.textHint,
               ),
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 SilverStockIcons.invoiceSupplier,
                 size: 18,
                 color: SilverStockColors.textMuted,

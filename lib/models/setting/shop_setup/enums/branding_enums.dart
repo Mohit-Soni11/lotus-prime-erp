@@ -50,7 +50,8 @@ enum SocialPlatform {
   static SocialPlatform fromString(String type) {
     return SocialPlatform.values.firstWhere(
       (e) => e.value.toLowerCase() == type.toLowerCase(),
-      orElse: () => SocialPlatform.website, // Safe fallback to prevent runtime crashes
+      orElse: () =>
+          SocialPlatform.website, // Safe fallback to prevent runtime crashes
     );
   }
 }

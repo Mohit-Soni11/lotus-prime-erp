@@ -1,6 +1,6 @@
 // ============================================================
 // FILE  : lib/ui/settings/tax_gst/sections/bis_hallmark_section.dart
-// MODULE: Tax & GST — Card 07
+// MODULE: Tax & GST â€” Card 07
 // ============================================================
 import 'package:flutter/material.dart';
 import '../../../../theme/settings/tax_gst/tax_gst_theme.dart';
@@ -19,7 +19,7 @@ class BisHallmarkSection extends StatelessWidget {
       listenable: logic,
       builder: (context, _) {
         final e = logic.isEditing;
-        final a = TaxGstColors.card07Accent;
+        const a = TaxGstColors.card07Accent;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,7 +82,7 @@ class BisHallmarkSection extends StatelessWidget {
 
             const SizedBox(height: TaxGstStyles.spaceMD),
 
-            TaxGstInfoBanner(
+            const TaxGstInfoBanner(
               accentColor: a,
               message: TaxGstStrings.infoBis,
             ),
@@ -116,7 +116,7 @@ class BisHallmarkSection extends StatelessWidget {
       );
 }
 
-// ── Date picker field ─────────────────────────────────────────────────────────
+// â”€â”€ Date picker field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _DatePickerField extends StatelessWidget {
   const _DatePickerField({
     required this.ctrl,
@@ -171,7 +171,7 @@ class _DatePickerField extends StatelessWidget {
               suffixWidget: locked
                   ? null
                   : Icon(TaxGstIcons.calendarPick,
-                      size: 16, color: accent.withOpacity(0.7)),
+                      size: 16, color: accent.withValues(alpha: 0.7)),
             ),
           ),
         ),

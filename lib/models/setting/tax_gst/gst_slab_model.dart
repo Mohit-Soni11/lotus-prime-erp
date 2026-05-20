@@ -56,22 +56,19 @@ class GstSlabModel {
 
   factory GstSlabModel.fromMap(Map<String, dynamic> m) => GstSlabModel(
         category: m['category']?.toString() ?? '',
-        rate:     m['rate']?.toString()     ?? '3%',
+        rate: m['rate']?.toString() ?? '3%',
       );
 
   Map<String, dynamic> toMap() => {'category': category, 'rate': rate};
 
-  GstSlabModel copyWith({String? category, String? rate}) =>
-      GstSlabModel(
+  GstSlabModel copyWith({String? category, String? rate}) => GstSlabModel(
         category: category ?? this.category,
-        rate:     rate     ?? this.rate,
+        rate: rate ?? this.rate,
       );
 
   @override
   bool operator ==(Object other) =>
-      other is GstSlabModel &&
-      other.category == category &&
-      other.rate == rate;
+      other is GstSlabModel && other.category == category && other.rate == rate;
 
   @override
   int get hashCode => Object.hash(category, rate);
@@ -97,6 +94,5 @@ List<GstSlabModel> gstSlabListFromJson(String? json) {
   }
 }
 
-List<GstSlabModel> defaultGstSlabModels() => TaxGstStrings.defaultGstSlabs
-    .map((m) => GstSlabModel.fromMap(m))
-    .toList();
+List<GstSlabModel> defaultGstSlabModels() =>
+    TaxGstStrings.defaultGstSlabs.map((m) => GstSlabModel.fromMap(m)).toList();

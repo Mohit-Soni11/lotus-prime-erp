@@ -34,10 +34,12 @@ class DefaulterLogic extends ChangeNotifier {
   // FORMATTERS
   // ==========================================
   static final _currencyFmt = NumberFormat('#,##,##0.00', 'en_IN');
-  static final _compactFmt  = NumberFormat('#,##,##0', 'en_IN');
+  static final _compactFmt = NumberFormat('#,##,##0', 'en_IN');
 
-  static String formatAmount(double amount) => '₹${_currencyFmt.format(amount)}';
-  static String formatAmountCompact(double amount) => '₹${_compactFmt.format(amount)}';
+  static String formatAmount(double amount) =>
+      '₹${_currencyFmt.format(amount)}';
+  static String formatAmountCompact(double amount) =>
+      '₹${_compactFmt.format(amount)}';
 
   // ==========================================
   // LIFECYCLE: init (call from State.initState)
@@ -59,7 +61,7 @@ class DefaulterLogic extends ChangeNotifier {
       onError: (error) {
         debugPrint('❌ DefaulterLogic stream error: $error');
         _state = _state.copyWith(
-          isLoading:    false,
+          isLoading: false,
           errorMessage: 'Failed to load data. Please refresh.',
         );
         notifyListeners();
@@ -80,7 +82,7 @@ class DefaulterLogic extends ChangeNotifier {
     } catch (e) {
       debugPrint('❌ DefaulterLogic.refresh Error: $e');
       _state = _state.copyWith(
-        isLoading:    false,
+        isLoading: false,
         errorMessage: 'Refresh failed. Check connection.',
       );
       notifyListeners();
@@ -124,9 +126,9 @@ class DefaulterLogic extends ChangeNotifier {
 
     _state = _state.copyWith(
       allDefaulters: freshList,
-      stats:         stats,
-      isLoading:     false,
-      errorMessage:  null,
+      stats: stats,
+      isLoading: false,
+      errorMessage: null,
     );
 
     _applyFiltersAndSort(freshList);
@@ -140,28 +142,36 @@ class DefaulterLogic extends ChangeNotifier {
     if (query.isNotEmpty) {
       result = result.where((d) {
         return d.customerName.toLowerCase().contains(query) ||
-               d.mobile.contains(query) ||
-               d.referenceNo.toLowerCase().contains(query) ||
-               d.city.toLowerCase().contains(query);
+            d.mobile.contains(query) ||
+            d.referenceNo.toLowerCase().contains(query) ||
+            d.city.toLowerCase().contains(query);
       }).toList();
     }
 
     // 2. Apply filter
     switch (_state.activeFilter) {
       case DefaulterFilterBy.critical:
-        result = result.where((d) => d.riskLevel == DefaulterRiskLevel.critical).toList();
+        result = result
+            .where((d) => d.riskLevel == DefaulterRiskLevel.critical)
+            .toList();
         break;
       case DefaulterFilterBy.high:
-        result = result.where((d) => d.riskLevel == DefaulterRiskLevel.high).toList();
+        result = result
+            .where((d) => d.riskLevel == DefaulterRiskLevel.high)
+            .toList();
         break;
       case DefaulterFilterBy.medium:
-        result = result.where((d) => d.riskLevel == DefaulterRiskLevel.medium).toList();
+        result = result
+            .where((d) => d.riskLevel == DefaulterRiskLevel.medium)
+            .toList();
         break;
       case DefaulterFilterBy.low:
-        result = result.where((d) => d.riskLevel == DefaulterRiskLevel.low).toList();
+        result =
+            result.where((d) => d.riskLevel == DefaulterRiskLevel.low).toList();
         break;
       case DefaulterFilterBy.loanOnly:
-        result = result.where((d) => d.defaulterType == DefaulterType.loan).toList();
+        result =
+            result.where((d) => d.defaulterType == DefaulterType.loan).toList();
         break;
       case DefaulterFilterBy.all:
         break;

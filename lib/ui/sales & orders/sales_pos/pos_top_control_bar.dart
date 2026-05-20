@@ -3,8 +3,8 @@
 // TYPE: Smart UI Component (UPGRADED)
 // AUTHOR: Senior System Architect
 // DESCRIPTION: Compact toggle with perfect badge alignment.
-//              ✅ Strictly mapped Colors, Icons, and TextStyles.
-//              ✅ Wrap-content layout via IntrinsicWidth.
+//              âœ… Strictly mapped Colors, Icons, and TextStyles.
+//              âœ… Wrap-content layout via IntrinsicWidth.
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -27,7 +27,7 @@ class PosTopControlBar extends StatelessWidget {
       listenable: ctrl,
       builder: (context, _) {
         final bool isRetail = ctrl.billingMode == BillingMode.retail;
-        final bool isGstOn  = ctrl.billType   == BillType.gst;
+        final bool isGstOn = ctrl.billType == BillType.gst;
 
         return Align(
           alignment: Alignment.centerLeft,
@@ -38,24 +38,28 @@ class PosTopControlBar extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: SalesPosColors.bodyBorder),
               boxShadow: const [
-                BoxShadow(color: SalesPosColors.shadowLight, blurRadius: 8,  offset: Offset(0, 2)),
-                BoxShadow(color: SalesPosColors.shadowDark, blurRadius: 20, offset: Offset(0, 6)),
+                BoxShadow(
+                    color: SalesPosColors.shadowLight,
+                    blurRadius: 8,
+                    offset: Offset(0, 2)),
+                BoxShadow(
+                    color: SalesPosColors.shadowDark,
+                    blurRadius: 20,
+                    offset: Offset(0, 6)),
               ],
             ),
             child: IntrinsicWidth(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch, 
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-
-                  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                  // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
                   // HEADING ROW
-                  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                  // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-
                       // LEFT PART: Lines and Titles
                       Row(
                         mainAxisSize: MainAxisSize.min,
@@ -69,18 +73,16 @@ class PosTopControlBar extends StatelessWidget {
                               const SizedBox(height: 3),
                               _accentLine(13, 0.45),
                               const SizedBox(height: 3),
-                              _accentLine(7,  0.18),
+                              _accentLine(7, 0.18),
                             ],
                           ),
-
                           const SizedBox(width: 12),
-
                           Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                "INVOICE PREFERENCES", 
+                                "INVOICE PREFERENCES",
                                 style: SalesPosStyles.highVisHeader,
                               ),
                               const SizedBox(height: 4),
@@ -91,10 +93,10 @@ class PosTopControlBar extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                   color: isGstOn
                                       ? SalesPosColors.success
-                                      : SalesPosColors.bodyTextMuted, 
+                                      : SalesPosColors.bodyTextMuted,
                                 ),
                                 child: Text(
-                                  "${isRetail ? 'Retail Trade' : 'Wholesale Trade'}  ·  ${isGstOn ? 'Tax Invoice' : 'Normal Bill'}",
+                                  "${isRetail ? 'Retail Trade' : 'Wholesale Trade'}  Â·  ${isGstOn ? 'Tax Invoice' : 'Normal Bill'}",
                                 ),
                               ),
                             ],
@@ -102,20 +104,21 @@ class PosTopControlBar extends StatelessWidget {
                         ],
                       ),
 
-                      const SizedBox(width: 40), 
+                      const SizedBox(width: 40),
 
                       // RIGHT PART: Status pill (Badge)
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 260),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: isGstOn
-                              ? SalesPosColors.success.withOpacity(0.07)
+                              ? SalesPosColors.success.withValues(alpha: 0.07)
                               : SalesPosColors.bodyBg,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isGstOn
-                                ? SalesPosColors.success.withOpacity(0.35)
+                                ? SalesPosColors.success.withValues(alpha: 0.35)
                                 : SalesPosColors.bodyBorder,
                           ),
                         ),
@@ -124,7 +127,8 @@ class PosTopControlBar extends StatelessWidget {
                           children: [
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 260),
-                              width: 6, height: 6,
+                              width: 6,
+                              height: 6,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: isGstOn
@@ -151,7 +155,7 @@ class PosTopControlBar extends StatelessWidget {
                     ],
                   ),
 
-                  // ── Divider ──
+                  // â”€â”€ Divider â”€â”€
                   Container(
                     height: 1,
                     width: double.infinity,
@@ -159,19 +163,18 @@ class PosTopControlBar extends StatelessWidget {
                     color: SalesPosColors.bodyBorder,
                   ),
 
-                  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                  // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
                   // CONTROLS ROW
-                  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                  // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
                   Row(
-                    mainAxisSize: MainAxisSize.min, 
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-
                       // --- MODE SEGMENT (RETAIL / WHOLESALE) ---
                       Container(
                         height: 52,
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: SalesPosColors.bodyBg, 
+                          color: SalesPosColors.bodyBg,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: SalesPosColors.bodyBorder),
                           boxShadow: const [
@@ -188,18 +191,20 @@ class PosTopControlBar extends StatelessWidget {
                             _buildModeTab(
                               title: "RETAIL",
                               isActive: isRetail,
-                              onTap: () => ctrl.toggleBillingMode(BillingMode.retail),
+                              onTap: () =>
+                                  ctrl.toggleBillingMode(BillingMode.retail),
                             ),
                             _buildModeTab(
                               title: "WHOLESALE",
                               isActive: !isRetail,
-                              onTap: () => ctrl.toggleBillingMode(BillingMode.wholesale),
+                              onTap: () =>
+                                  ctrl.toggleBillingMode(BillingMode.wholesale),
                             ),
                           ],
                         ),
                       ),
 
-                      const SizedBox(width: 16), 
+                      const SizedBox(width: 16),
 
                       // --- BILL TYPE (NORMAL / GST) ---
                       InkWell(
@@ -209,24 +214,29 @@ class PosTopControlBar extends StatelessWidget {
                           );
                         },
                         borderRadius: BorderRadius.circular(10),
-                        splashColor: SalesPosColors.success.withOpacity(0.06),
+                        splashColor:
+                            SalesPosColors.success.withValues(alpha: 0.06),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 260),
-                          height: 52, 
-                          padding: const EdgeInsets.symmetric(horizontal: 16), 
+                          height: 52,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
-                            color: isGstOn ? SalesPosColors.success.withOpacity(0.05) : SalesPosColors.bodyPanelBg,
+                            color: isGstOn
+                                ? SalesPosColors.success.withValues(alpha: 0.05)
+                                : SalesPosColors.bodyPanelBg,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: isGstOn
-                                  ? SalesPosColors.success.withOpacity(0.40)
+                                  ? SalesPosColors.success
+                                      .withValues(alpha: 0.40)
                                   : SalesPosColors.bodyBorder,
                               width: isGstOn ? 1.5 : 1.0,
                             ),
                             boxShadow: isGstOn
                                 ? [
                                     BoxShadow(
-                                      color: SalesPosColors.success.withOpacity(0.12),
+                                      color: SalesPosColors.success
+                                          .withValues(alpha: 0.12),
                                       blurRadius: 12,
                                       offset: const Offset(0, 3),
                                     ),
@@ -240,7 +250,7 @@ class PosTopControlBar extends StatelessWidget {
                                   ],
                           ),
                           child: Row(
-                            mainAxisSize: MainAxisSize.min, 
+                            mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Column(
@@ -251,38 +261,36 @@ class PosTopControlBar extends StatelessWidget {
                                     "TAX STATUS",
                                     style: TextStyle(
                                       fontSize: 10,
-                                      fontWeight: FontWeight.w900, 
+                                      fontWeight: FontWeight.w900,
                                       letterSpacing: 1.0,
-                                      color: SalesPosColors.textDark, 
+                                      color: SalesPosColors.textDark,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
                                   AnimatedSwitcher(
                                     duration: const Duration(milliseconds: 200),
                                     child: Text(
-                                      isGstOn ? "GST INVOICE" : "NORMAL", 
+                                      isGstOn ? "GST INVOICE" : "NORMAL",
                                       key: ValueKey(isGstOn),
                                       style: TextStyle(
                                         fontSize: 15,
-                                        fontWeight: FontWeight.w900, 
+                                        fontWeight: FontWeight.w900,
                                         letterSpacing: 0.2,
                                         color: isGstOn
                                             ? SalesPosColors.success
-                                            : SalesPosColors.textDark, 
+                                            : SalesPosColors.textDark,
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
-
-                              const SizedBox(width: 24), 
-
+                              const SizedBox(width: 24),
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   _buildToggleLabel(
-                                    label: "NRM", 
+                                    label: "NRM",
                                     isActive: !isGstOn,
                                     activeColor: SalesPosColors.textDark,
                                   ),
@@ -293,7 +301,7 @@ class PosTopControlBar extends StatelessWidget {
                                         : SalesPosIcons.gstToggleOff,
                                     color: isGstOn
                                         ? SalesPosColors.success
-                                        : SalesPosColors.bodyTextMuted, 
+                                        : SalesPosColors.bodyTextMuted,
                                     size: 36,
                                   ),
                                   const SizedBox(width: 6),
@@ -323,7 +331,7 @@ class PosTopControlBar extends StatelessWidget {
         width: width,
         height: 3,
         decoration: BoxDecoration(
-          color: SalesPosColors.brandGold.withOpacity(opacity),
+          color: SalesPosColors.brandGold.withValues(alpha: opacity),
           borderRadius: BorderRadius.circular(2),
         ),
       );
@@ -349,7 +357,7 @@ class PosTopControlBar extends StatelessWidget {
             boxShadow: isActive
                 ? [
                     BoxShadow(
-                      color: SalesPosColors.brandGold.withOpacity(0.28),
+                      color: SalesPosColors.brandGold.withValues(alpha: 0.28),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -362,20 +370,20 @@ class PosTopControlBar extends StatelessWidget {
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
-                width:  isActive ? 6 : 0,
+                width: isActive ? 6 : 0,
                 height: isActive ? 6 : 0,
                 margin: EdgeInsets.only(right: isActive ? 6 : 0),
                 decoration: const BoxDecoration(
-                  color: SalesPosColors.textDark, 
+                  color: SalesPosColors.textDark,
                   shape: BoxShape.circle,
                 ),
               ),
               Text(
                 title,
                 style: TextStyle(
-                  color: SalesPosColors.textDark, 
-                  fontWeight: isActive ? FontWeight.w900 : FontWeight.w700, 
-                  fontSize: 13, 
+                  color: SalesPosColors.textDark,
+                  fontWeight: isActive ? FontWeight.w900 : FontWeight.w700,
+                  fontSize: 13,
                   letterSpacing: 0.8,
                 ),
               ),
@@ -394,8 +402,8 @@ class PosTopControlBar extends StatelessWidget {
     return AnimatedDefaultTextStyle(
       duration: const Duration(milliseconds: 220),
       style: TextStyle(
-        fontSize: 12, 
-        fontWeight: FontWeight.w900, 
+        fontSize: 12,
+        fontWeight: FontWeight.w900,
         letterSpacing: 0.5,
         color: isActive ? activeColor : SalesPosColors.bodyTextMuted,
       ),

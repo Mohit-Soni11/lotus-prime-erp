@@ -19,14 +19,14 @@ class TaxGstToggleRow extends StatefulWidget {
     this.showDivider = true,
   });
 
-  final IconData          icon;
-  final String            title;
-  final String            subtitle;
-  final bool              value;
-  final Color             accentColor;
-  final bool              isEnabled;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final Color accentColor;
+  final bool isEnabled;
   final ValueChanged<bool> onChanged;
-  final bool              showDivider;
+  final bool showDivider;
 
   @override
   State<TaxGstToggleRow> createState() => _TaxGstToggleRowState();
@@ -34,10 +34,9 @@ class TaxGstToggleRow extends StatefulWidget {
 
 class _TaxGstToggleRowState extends State<TaxGstToggleRow>
     with SingleTickerProviderStateMixin {
-
   late AnimationController _switchCtrl;
-  late Animation<double>   _thumbAnim;
-  late Animation<Color?>   _trackAnim;
+  late Animation<double> _thumbAnim;
+  late Animation<Color?> _trackAnim;
 
   @override
   void initState() {
@@ -52,7 +51,7 @@ class _TaxGstToggleRowState extends State<TaxGstToggleRow>
     );
     _trackAnim = ColorTween(
       begin: const Color(0xFFD1D5DB),
-      end:   widget.accentColor,
+      end: widget.accentColor,
     ).animate(_switchCtrl);
   }
 
@@ -65,7 +64,10 @@ class _TaxGstToggleRowState extends State<TaxGstToggleRow>
   }
 
   @override
-  void dispose() { _switchCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    _switchCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +84,7 @@ class _TaxGstToggleRowState extends State<TaxGstToggleRow>
                 height: TaxGstStyles.iconBoxSizeSmall,
                 decoration: BoxDecoration(
                   color: widget.value
-                      ? widget.accentColor.withOpacity(0.12)
+                      ? widget.accentColor.withValues(alpha: 0.12)
                       : TaxGstColors.sectionSeparator,
                   borderRadius: BorderRadius.circular(9),
                 ),
@@ -136,7 +138,8 @@ class _TaxGstToggleRowState extends State<TaxGstToggleRow>
                             _thumbAnim.value,
                           )!,
                           child: Container(
-                            width: 20, height: 20,
+                            width: 20,
+                            height: 20,
                             decoration: const BoxDecoration(
                               color: Colors.white,
                               shape: BoxShape.circle,
@@ -159,7 +162,7 @@ class _TaxGstToggleRowState extends State<TaxGstToggleRow>
           ),
         ),
         if (widget.showDivider)
-          Divider(
+          const Divider(
             height: 1,
             thickness: 1,
             color: TaxGstColors.dividerColor,

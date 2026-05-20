@@ -13,8 +13,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../theme/karigar/karigar_theme.dart';
 
 class KarigarAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String      screenTitle;
-  final String      screenSubtitle;
+  final String screenTitle;
+  final String screenSubtitle;
   final VoidCallback onBack;
 
   const KarigarAppBar({
@@ -47,14 +47,17 @@ class KarigarAppBar extends StatelessWidget implements PreferredSizeWidget {
             children: [
               Row(children: [
                 Container(
-                  width: 5, height: 5,
+                  width: 5,
+                  height: 5,
                   decoration: BoxDecoration(
                     color: KarigarColors.brandGold,
                     shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(
-                      color: KarigarColors.brandGold.withOpacity(0.6),
-                      blurRadius: 6,
-                    )],
+                    boxShadow: [
+                      BoxShadow(
+                        color: KarigarColors.brandGold.withValues(alpha: 0.6),
+                        blurRadius: 6,
+                      )
+                    ],
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -86,7 +89,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
+      onExit: (_) => setState(() => _hovered = false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
@@ -97,19 +100,22 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOut,
-            width: 42, height: 42,
+            width: 42,
+            height: 42,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: KarigarColors.shellBg,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: _hovered ? KarigarColors.brandGold : KarigarColors.shellBorder,
+                color: _hovered
+                    ? KarigarColors.brandGold
+                    : KarigarColors.shellBorder,
                 width: _hovered ? 1.5 : 1.0,
               ),
               boxShadow: [
                 if (_hovered)
                   BoxShadow(
-                    color: KarigarColors.brandGold.withOpacity(0.25),
+                    color: KarigarColors.brandGold.withValues(alpha: 0.25),
                     blurRadius: 12,
                     offset: const Offset(0, 3),
                   ),
@@ -117,7 +123,9 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
             ),
             child: Icon(
               KarigarIcons.backArrow,
-              color: _hovered ? KarigarColors.brandGold : KarigarColors.shellTextTitle,
+              color: _hovered
+                  ? KarigarColors.brandGold
+                  : KarigarColors.shellTextTitle,
               size: 20,
             ),
           ),
@@ -131,12 +139,17 @@ class _VerticalDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 1, height: 32,
+      width: 1,
+      height: 32,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Colors.transparent, KarigarColors.shellBorder, Colors.transparent],
+          colors: [
+            Colors.transparent,
+            KarigarColors.shellBorder,
+            Colors.transparent
+          ],
         ),
       ),
     );
@@ -187,11 +200,12 @@ class _RadarStatusBadgeState extends State<_RadarStatusBadge>
           child: Transform.scale(
             scale: 1.0 + v * 1.5,
             child: Container(
-              width: size, height: size,
+              width: size,
+              height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: KarigarColors.onlineGreen.withOpacity(0.5),
+                  color: KarigarColors.onlineGreen.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),
@@ -206,20 +220,24 @@ class _RadarStatusBadgeState extends State<_RadarStatusBadge>
   Widget build(BuildContext context) {
     return Row(children: [
       SizedBox(
-        width: 14, height: 14,
+        width: 14,
+        height: 14,
         child: Stack(alignment: Alignment.center, children: [
           _wave(0.0, 14),
           _wave(0.5, 14),
           Container(
-            width: 6, height: 6,
-            decoration: BoxDecoration(
+            width: 6,
+            height: 6,
+            decoration: const BoxDecoration(
               color: KarigarColors.onlineGreen,
               shape: BoxShape.circle,
-              boxShadow: [BoxShadow(
-                color: KarigarColors.onlineGreen,
-                blurRadius: 6,
-                spreadRadius: 1,
-              )],
+              boxShadow: [
+                BoxShadow(
+                  color: KarigarColors.onlineGreen,
+                  blurRadius: 6,
+                  spreadRadius: 1,
+                )
+              ],
             ),
           ),
         ]),
@@ -228,9 +246,10 @@ class _RadarStatusBadgeState extends State<_RadarStatusBadge>
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
-          color: KarigarColors.onlineGreen.withOpacity(0.08),
+          color: KarigarColors.onlineGreen.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: KarigarColors.onlineGreen.withOpacity(0.2)),
+          border: Border.all(
+              color: KarigarColors.onlineGreen.withValues(alpha: 0.2)),
         ),
         child: Text(
           KarigarStrings.systemOnline,
@@ -263,7 +282,7 @@ class _ModuleBadge extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: KarigarColors.brandGold.withOpacity(0.15),
+            color: KarigarColors.brandGold.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(6),
           ),
           child: const Icon(KarigarIcons.moduleIcon,

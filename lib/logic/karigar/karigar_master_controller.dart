@@ -12,41 +12,38 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/foundation.dart';
 
 import '../../database/db/app_database.dart';
-import '../../models/karigar/karigar_enums/karigar_enums.dart';
 import '../../repositories/karigar/karigar_repository.dart';
 
 class KarigarMasterController extends ChangeNotifier {
-
   final KarigarRepository _repo;
 
-  KarigarMasterController(AppDatabase db)
-      : _repo = KarigarRepository(db);
+  KarigarMasterController(AppDatabase db) : _repo = KarigarRepository(db);
 
   // ── STATE ──────────────────────────────────────────────────────────────────
 
   List<KarigarMaster> _allKarigars = [];
   List<KarigarMaster> _filteredKarigars = [];
-  String              _searchQuery   = '';
-  bool                _isLoading     = false;
-  String?             _errorMessage;
+  String _searchQuery = '';
+  bool _isLoading = false;
+  String? _errorMessage;
 
   // ── GETTERS ────────────────────────────────────────────────────────────────
 
-  List<KarigarMaster> get allKarigars      => _allKarigars;
+  List<KarigarMaster> get allKarigars => _allKarigars;
   List<KarigarMaster> get filteredKarigars => _filteredKarigars;
-  bool                get isLoading        => _isLoading;
-  String?             get errorMessage     => _errorMessage;
-  bool                get hasKarigars      => _allKarigars.isNotEmpty;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+  bool get hasKarigars => _allKarigars.isNotEmpty;
 
   // ── LOAD ───────────────────────────────────────────────────────────────────
 
   Future<void> loadKarigars() async {
-    _isLoading    = true;
+    _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _allKarigars      = await _repo.getAllKarigars(activeOnly: true);
+      _allKarigars = await _repo.getAllKarigars(activeOnly: true);
       _applySearch();
     } catch (e) {
       debugPrint('KarigarMasterController.loadKarigars error: $e');
@@ -83,37 +80,33 @@ class KarigarMasterController extends ChangeNotifier {
     required String name,
     required String phone,
     String? alternatePhone,
-    String  specialization = 'All Metals',
-    String  rateType       = 'Per Gram (Rs/g)',
-    double  rateAmount     = 0.0,
+    String specialization = 'All Metals',
+    String rateType = 'Per Gram (Rs/g)',
+    double rateAmount = 0.0,
     String? address,
     String? city,
-    double  openingBalance = 0.0,
+    double openingBalance = 0.0,
     String? notes,
   }) async {
     try {
       final companion = KarigarMastersCompanion.insert(
-        name:           name.trim(),
-        phone:          phone.trim(),
+        name: name.trim(),
+        phone: phone.trim(),
         alternatePhone: drift.Value(alternatePhone?.trim().isEmpty == true
             ? null
             : alternatePhone?.trim()),
         specialization: drift.Value(specialization),
-        rateType:       drift.Value(rateType),
-        rateAmount:     drift.Value(rateAmount),
-        address:        drift.Value(address?.trim().isEmpty == true
-            ? null
-            : address?.trim()),
-        city:           drift.Value(city?.trim().isEmpty == true
-            ? null
-            : city?.trim()),
+        rateType: drift.Value(rateType),
+        rateAmount: drift.Value(rateAmount),
+        address: drift.Value(
+            address?.trim().isEmpty == true ? null : address?.trim()),
+        city: drift.Value(city?.trim().isEmpty == true ? null : city?.trim()),
         openingBalance: drift.Value(openingBalance),
-        notes:          drift.Value(notes?.trim().isEmpty == true
-            ? null
-            : notes?.trim()),
+        notes:
+            drift.Value(notes?.trim().isEmpty == true ? null : notes?.trim()),
       );
 
-      final id         = await _repo.addKarigar(companion);
+      final id = await _repo.addKarigar(companion);
       final newKarigar = await _repo.getKarigarById(id);
 
       if (newKarigar != null) {

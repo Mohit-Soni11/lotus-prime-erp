@@ -4,10 +4,10 @@
 // DESCRIPTION: Immutable UI model for displaying customer in list.
 //              Separate from DB model for clean separation.
 // -----------------------------------------------------------------------------
- 
+
 import 'package:flutter/foundation.dart';
 import '../customer_enums/customer_list_enums.dart';
- 
+
 @immutable
 class CustomerListItemModel {
   final int id;
@@ -18,7 +18,7 @@ class CustomerListItemModel {
   final int billCount;
   final DateTime createdAt;
   final String initials;
- 
+
   const CustomerListItemModel({
     required this.id,
     required this.name,
@@ -29,18 +29,29 @@ class CustomerListItemModel {
     required this.createdAt,
     required this.initials,
   });
- 
+
   /// Format: "12 Jan 2025"
   String get formattedDate {
     const months = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return "${createdAt.day.toString().padLeft(2, '0')} "
         "${months[createdAt.month]} "
         "${createdAt.year}";
   }
- 
+
   /// Check if added today
   bool get isNewToday {
     final now = DateTime.now();
@@ -48,9 +59,9 @@ class CustomerListItemModel {
         createdAt.month == now.month &&
         createdAt.day == now.day;
   }
- 
+
   bool get isVip => type == CustomerType.vip;
- 
+
   static String buildInitials(String name) {
     if (name.trim().isEmpty) return "NA";
     final parts = name.trim().split(RegExp(r'\s+'));
@@ -60,7 +71,7 @@ class CustomerListItemModel {
     return name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
   }
 }
- 
+
 /// Model for the stats strip at top
 @immutable
 class CustomerListStatsModel {
@@ -68,19 +79,24 @@ class CustomerListStatsModel {
   final int todayCount;
   final int vipCount;
   final bool isLoading;
- 
+
   const CustomerListStatsModel({
     required this.totalCount,
     required this.todayCount,
     required this.vipCount,
     this.isLoading = false,
   });
- 
+
   factory CustomerListStatsModel.loading() => const CustomerListStatsModel(
-    totalCount: 0, todayCount: 0, vipCount: 0, isLoading: true,
-  );
- 
+        totalCount: 0,
+        todayCount: 0,
+        vipCount: 0,
+        isLoading: true,
+      );
+
   factory CustomerListStatsModel.empty() => const CustomerListStatsModel(
-    totalCount: 0, todayCount: 0, vipCount: 0,
-  );
+        totalCount: 0,
+        todayCount: 0,
+        vipCount: 0,
+      );
 }

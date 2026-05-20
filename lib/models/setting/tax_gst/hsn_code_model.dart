@@ -23,8 +23,8 @@ class HsnCodeModel {
   // ── Factory constructors ──────────────────────────────────────
   factory HsnCodeModel.fromMap(Map<String, dynamic> map) => HsnCodeModel(
         category: map['category']?.toString() ?? '',
-        hsnCode:  map['hsn']?.toString()      ?? '',
-        gstRate:  map['rate']?.toString()     ?? '3%',
+        hsnCode: map['hsn']?.toString() ?? '',
+        gstRate: map['rate']?.toString() ?? '3%',
       );
 
   factory HsnCodeModel.empty() =>
@@ -33,8 +33,8 @@ class HsnCodeModel {
   // ── Serialization ─────────────────────────────────────────────
   Map<String, dynamic> toMap() => {
         'category': category,
-        'hsn':      hsnCode,
-        'rate':     gstRate,
+        'hsn': hsnCode,
+        'rate': gstRate,
       };
 
   // ── copyWith ─────────────────────────────────────────────────
@@ -45,8 +45,8 @@ class HsnCodeModel {
   }) =>
       HsnCodeModel(
         category: category ?? this.category,
-        hsnCode:  hsnCode  ?? this.hsnCode,
-        gstRate:  gstRate  ?? this.gstRate,
+        hsnCode: hsnCode ?? this.hsnCode,
+        gstRate: gstRate ?? this.gstRate,
       );
 
   // ── Equality ──────────────────────────────────────────────────
@@ -55,8 +55,8 @@ class HsnCodeModel {
       identical(this, other) ||
       other is HsnCodeModel &&
           other.category == category &&
-          other.hsnCode  == hsnCode  &&
-          other.gstRate  == gstRate;
+          other.hsnCode == hsnCode &&
+          other.gstRate == gstRate;
 
   @override
   int get hashCode => Object.hash(category, hsnCode, gstRate);
@@ -89,6 +89,5 @@ List<HsnCodeModel> hsnListFromJson(String? json) {
 }
 
 /// Returns the factory-default HSN code list from [TaxGstStrings].
-List<HsnCodeModel> defaultHsnCodeModels() => TaxGstStrings.defaultHsnCodes
-    .map((m) => HsnCodeModel.fromMap(m))
-    .toList();
+List<HsnCodeModel> defaultHsnCodeModels() =>
+    TaxGstStrings.defaultHsnCodes.map((m) => HsnCodeModel.fromMap(m)).toList();

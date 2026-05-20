@@ -42,8 +42,7 @@ class KarigarRepository {
 
   /// Return a single karigar by primary key, or null if not found.
   Future<KarigarMaster?> getKarigarById(int id) async {
-    return (_db.select(_db.karigarMasters)
-          ..where((k) => k.id.equals(id)))
+    return (_db.select(_db.karigarMasters)..where((k) => k.id.equals(id)))
         .getSingleOrNull();
   }
 
@@ -60,9 +59,9 @@ class KarigarRepository {
     final rowsAffected = await (_db.update(_db.karigarMasters)
           ..where((k) => k.id.equals(id)))
         .write(KarigarMastersCompanion(
-          isActive:  const drift.Value(false),
-          updatedAt: drift.Value(DateTime.now()),
-        ));
+      isActive: const drift.Value(false),
+      updatedAt: drift.Value(DateTime.now()),
+    ));
     return rowsAffected > 0;
   }
 
@@ -83,19 +82,19 @@ class KarigarRepository {
   /// Return all issues with karigar details, with optional status filter.
   Future<List<KarigarIssueWithKarigar>> getAllIssuesWithKarigar({
     IssueStatus? statusFilter,
-    int?         karigarIdFilter,
+    int? karigarIdFilter,
   }) async {
     return _getIssuesWithKarigar(
-      statusFilter:    statusFilter,
+      statusFilter: statusFilter,
       karigarIdFilter: karigarIdFilter,
     );
   }
 
   /// Internal join query helper.
   Future<List<KarigarIssueWithKarigar>> _getIssuesWithKarigar({
-    bool        activeOnly    = false,
-    IssueStatus? statusFilter = null,
-    int?        karigarIdFilter,
+    bool activeOnly = false,
+    IssueStatus? statusFilter,
+    int? karigarIdFilter,
   }) async {
     final query = _db.select(_db.karigarIssues).join([
       drift.innerJoin(
@@ -107,7 +106,7 @@ class KarigarRepository {
     if (activeOnly) {
       query.where(
         _db.karigarIssues.status.equals(IssueStatus.pending.label) |
-        _db.karigarIssues.status.equals(IssueStatus.inProgress.label),
+            _db.karigarIssues.status.equals(IssueStatus.inProgress.label),
       );
     } else if (statusFilter != null) {
       query.where(_db.karigarIssues.status.equals(statusFilter.label));
@@ -123,34 +122,33 @@ class KarigarRepository {
 
     final rows = await query.get();
     return rows.map((row) {
-      final issue   = row.readTable(_db.karigarIssues);
+      final issue = row.readTable(_db.karigarIssues);
       final karigar = row.readTable(_db.karigarMasters);
       return KarigarIssueWithKarigar(
-        id:               issue.id,
-        issueNumber:      issue.issueNumber,
-        karigarId:        karigar.id,
-        karigarName:      karigar.name,
-        karigarPhone:     karigar.phone,
-        issueDate:        issue.issueDate,
-        itemDescription:  issue.itemDescription,
-        itemCategory:     issue.itemCategory,
-        quantity:         issue.quantity,
-        metalType:        issue.metalType,
-        purity:           issue.purity,
+        id: issue.id,
+        issueNumber: issue.issueNumber,
+        karigarId: karigar.id,
+        karigarName: karigar.name,
+        karigarPhone: karigar.phone,
+        issueDate: issue.issueDate,
+        itemDescription: issue.itemDescription,
+        itemCategory: issue.itemCategory,
+        quantity: issue.quantity,
+        metalType: issue.metalType,
+        purity: issue.purity,
         grossWeightIssued: issue.grossWeightIssued,
-        netWeightIssued:  issue.netWeightIssued,
+        netWeightIssued: issue.netWeightIssued,
         expectedDelivery: issue.expectedDelivery,
-        status:           issue.status,
-        notes:            issue.notes,
-        createdAt:        issue.createdAt,
+        status: issue.status,
+        notes: issue.notes,
+        createdAt: issue.createdAt,
       );
     }).toList();
   }
 
   /// Return a raw KarigarIssue by id (used in Receive screen).
   Future<KarigarIssue?> getIssueById(int id) async {
-    return (_db.select(_db.karigarIssues)
-          ..where((i) => i.id.equals(id)))
+    return (_db.select(_db.karigarIssues)..where((i) => i.id.equals(id)))
         .getSingleOrNull();
   }
 
@@ -159,9 +157,9 @@ class KarigarRepository {
     final rowsAffected = await (_db.update(_db.karigarIssues)
           ..where((i) => i.id.equals(id)))
         .write(KarigarIssuesCompanion(
-          status:    drift.Value(newStatus.label),
-          updatedAt: drift.Value(DateTime.now()),
-        ));
+      status: drift.Value(newStatus.label),
+      updatedAt: drift.Value(DateTime.now()),
+    ));
     return rowsAffected > 0;
   }
 
@@ -219,29 +217,29 @@ class KarigarRepository {
     final rows = await query.get();
     return rows.map((row) {
       final receipt = row.readTable(_db.karigarReceipts);
-      final issue   = row.readTable(_db.karigarIssues);
+      final issue = row.readTable(_db.karigarIssues);
       final karigar = row.readTable(_db.karigarMasters);
       return KarigarReceiptWithDetails(
-        id:                  receipt.id,
-        receiptNumber:       receipt.receiptNumber,
-        issueId:             issue.id,
-        issueNumber:         issue.issueNumber,
-        karigarId:           karigar.id,
-        karigarName:         karigar.name,
-        receiptDate:         receipt.receiptDate,
-        quantityReceived:    receipt.quantityReceived,
+        id: receipt.id,
+        receiptNumber: receipt.receiptNumber,
+        issueId: issue.id,
+        issueNumber: issue.issueNumber,
+        karigarId: karigar.id,
+        karigarName: karigar.name,
+        receiptDate: receipt.receiptDate,
+        quantityReceived: receipt.quantityReceived,
         grossWeightReceived: receipt.grossWeightReceived,
-        stoneWeight:         receipt.stoneWeight,
-        netWeightReceived:   receipt.netWeightReceived,
-        wastageWeight:       receipt.wastageWeight,
-        wastagePercent:      receipt.wastagePercent,
-        makingChargesType:   receipt.makingChargesType,
-        makingChargeRate:    receipt.makingChargeRate,
+        stoneWeight: receipt.stoneWeight,
+        netWeightReceived: receipt.netWeightReceived,
+        wastageWeight: receipt.wastageWeight,
+        wastagePercent: receipt.wastagePercent,
+        makingChargesType: receipt.makingChargesType,
+        makingChargeRate: receipt.makingChargeRate,
         makingChargesAmount: receipt.makingChargesAmount,
-        paymentStatus:       receipt.paymentStatus,
-        paidAmount:          receipt.paidAmount,
-        notes:               receipt.notes,
-        createdAt:           receipt.createdAt,
+        paymentStatus: receipt.paymentStatus,
+        paidAmount: receipt.paidAmount,
+        notes: receipt.notes,
+        createdAt: receipt.createdAt,
       );
     }).toList();
   }
@@ -252,7 +250,7 @@ class KarigarRepository {
 
   /// Generates the next unique issue number: KGI-YYYYMMDD-NNNN
   Future<String> generateIssueNumber() async {
-    final now    = DateTime.now();
+    final now = DateTime.now();
     final datePart = '${now.year}${_pad(now.month)}${_pad(now.day)}';
     final prefix = 'KGI-$datePart-';
 
@@ -274,7 +272,7 @@ class KarigarRepository {
 
   /// Generates the next unique receipt number: KGR-YYYYMMDD-NNNN
   Future<String> generateReceiptNumber() async {
-    final now    = DateTime.now();
+    final now = DateTime.now();
     final datePart = '${now.year}${_pad(now.month)}${_pad(now.day)}';
     final prefix = 'KGR-$datePart-';
 
@@ -311,10 +309,10 @@ class KarigarRepository {
         .get();
 
     double totalIssued = 0;
-    int    totalIssueCount = issues.length;
-    int    activeCount  = 0;
-    int    completedCount = 0;
-    int    overdueCount = 0;
+    int totalIssueCount = issues.length;
+    int activeCount = 0;
+    int completedCount = 0;
+    int overdueCount = 0;
 
     for (final issue in issues) {
       totalIssued += issue.netWeightIssued;
@@ -335,29 +333,30 @@ class KarigarRepository {
         .get();
 
     double totalReceived = 0;
-    double totalCharges  = 0;
-    double totalPaid     = 0;
+    double totalCharges = 0;
+    double totalPaid = 0;
 
     for (final receipt in receipts) {
       totalReceived += receipt.netWeightReceived;
-      totalCharges  += receipt.makingChargesAmount;
-      totalPaid     += receipt.paidAmount;
+      totalCharges += receipt.makingChargesAmount;
+      totalPaid += receipt.paidAmount;
     }
 
-    final pendingWeight   = (totalIssued - totalReceived).clamp(0.0, double.infinity);
-    final outstanding     = openingBalance + totalCharges - totalPaid;
+    final pendingWeight =
+        (totalIssued - totalReceived).clamp(0.0, double.infinity);
+    final outstanding = openingBalance + totalCharges - totalPaid;
 
     return KarigarStatsModel(
-      totalIssuedWeight:   totalIssued,
+      totalIssuedWeight: totalIssued,
       totalReceivedWeight: totalReceived,
-      pendingWeight:       pendingWeight,
-      totalMakingCharges:  totalCharges,
-      totalPaid:           totalPaid,
-      outstandingBalance:  outstanding,
-      totalIssues:         totalIssueCount,
-      activeIssues:        activeCount,
-      completedIssues:     completedCount,
-      overdueIssues:       overdueCount,
+      pendingWeight: pendingWeight,
+      totalMakingCharges: totalCharges,
+      totalPaid: totalPaid,
+      outstandingBalance: outstanding,
+      totalIssues: totalIssueCount,
+      activeIssues: activeCount,
+      completedIssues: completedCount,
+      overdueIssues: overdueCount,
     );
   }
 
@@ -366,9 +365,9 @@ class KarigarRepository {
     try {
       final karigars = await getAllKarigars(activeOnly: true);
 
-      int    totalActive   = 0;
-      int    totalOverdue  = 0;
-      double totalWeight   = 0;
+      int totalActive = 0;
+      int totalOverdue = 0;
+      double totalWeight = 0;
       double totalOutstanding = 0;
 
       final activeIssues = await _getIssuesWithKarigar(activeOnly: true);
@@ -382,15 +381,16 @@ class KarigarRepository {
       // Outstanding across all receipts
       final receipts = await (_db.select(_db.karigarReceipts)).get();
       for (final r in receipts) {
-        totalOutstanding += (r.makingChargesAmount - r.paidAmount).clamp(0, double.infinity);
+        totalOutstanding +=
+            (r.makingChargesAmount - r.paidAmount).clamp(0, double.infinity);
       }
 
       return OverallKarigarStats(
-        totalKarigars:          karigars.length,
-        totalActiveJobs:        totalActive,
-        totalOverdueJobs:       totalOverdue,
+        totalKarigars: karigars.length,
+        totalActiveJobs: totalActive,
+        totalOverdueJobs: totalOverdue,
         totalWeightWithKarigar: totalWeight,
-        totalOutstanding:       totalOutstanding,
+        totalOutstanding: totalOutstanding,
       );
     } catch (e) {
       debugPrint('KarigarRepository.getOverallStats error: $e');
@@ -404,11 +404,11 @@ class KarigarRepository {
 
   /// Returns all issues AND receipts for a karigar, merged and sorted by date.
   Future<List<KarigarTxnEntry>> getKarigarLedger(int karigarId) async {
-    final issuesFuture  = _getIssuesWithKarigar(karigarIdFilter: karigarId);
+    final issuesFuture = _getIssuesWithKarigar(karigarIdFilter: karigarId);
     final receiptsFuture = _getReceiptsWithDetails(karigarIdFilter: karigarId);
 
     final results = await Future.wait([issuesFuture, receiptsFuture]);
-    final issues   = results[0] as List<KarigarIssueWithKarigar>;
+    final issues = results[0] as List<KarigarIssueWithKarigar>;
     final receipts = results[1] as List<KarigarReceiptWithDetails>;
 
     final entries = <KarigarTxnEntry>[

@@ -1,6 +1,6 @@
 // =============================================================================
 // FILE        : karigar_directory_card.dart
-// MODULE      : Karigar → Karigar Directory
+// MODULE      : Karigar ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Karigar Directory
 // LAYER       : UI / Widget
 // DESCRIPTION : Individual karigar card for the directory list.
 //               Shows avatar, name, specialization, phone, city,
@@ -10,15 +10,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 
 import '../../../models/karigar/karigar_directory/karigar_directory_ui_model.dart';
 import '../../../theme/karigar/karigar_directory/karigar_directory_theme.dart';
 
 class KarigarDirectoryCard extends StatefulWidget {
   final KarigarDirectoryItemModel karigar;
-  final VoidCallback?             onTap;
-  final VoidCallback?             onToggleStatus;
+  final VoidCallback? onTap;
+  final VoidCallback? onToggleStatus;
 
   const KarigarDirectoryCard({
     super.key,
@@ -39,7 +38,7 @@ class _KarigarDirectoryCardState extends State<KarigarDirectoryCard> {
     final k = widget.karigar;
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
-      onExit:  (_) => setState(() => _isHovered = false),
+      onExit: (_) => setState(() => _isHovered = false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
@@ -53,19 +52,19 @@ class _KarigarDirectoryCardState extends State<KarigarDirectoryCard> {
           child: Padding(
             padding: KarigarDirectoryStyles.cardPadding,
             child: Row(children: [
-              // ── AVATAR ──────────────────────────────────────────────────
+              // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ AVATAR ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
               _buildAvatar(k),
               const SizedBox(width: 16),
 
-              // ── MAIN INFO ───────────────────────────────────────────────
+              // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ MAIN INFO ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
               Expanded(child: _buildMainInfo(k)),
               const SizedBox(width: 12),
 
-              // ── JOB + BALANCE BOX ────────────────────────────────────────
+              // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ JOB + BALANCE BOX ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
               _buildStatsBox(k),
               const SizedBox(width: 12),
 
-              // ── MORE OPTIONS + ARROW ─────────────────────────────────────
+              // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ MORE OPTIONS + ARROW ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
               Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -111,8 +110,8 @@ class _KarigarDirectoryCardState extends State<KarigarDirectoryCard> {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: k.isActive
-                ? KarigarDirectoryColors.brandGold.withOpacity(0.35)
-                : KarigarDirectoryColors.textHint.withOpacity(0.3),
+                ? KarigarDirectoryColors.brandGold.withValues(alpha: 0.35)
+                : KarigarDirectoryColors.textHint.withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),
@@ -131,9 +130,11 @@ class _KarigarDirectoryCardState extends State<KarigarDirectoryCard> {
       // Overdue dot
       if (k.hasOverdueJobs)
         Positioned(
-          top: -2, right: -2,
+          top: -2,
+          right: -2,
           child: Container(
-            width: 12, height: 12,
+            width: 12,
+            height: 12,
             decoration: BoxDecoration(
               color: KarigarDirectoryColors.danger,
               shape: BoxShape.circle,
@@ -167,12 +168,13 @@ class _KarigarDirectoryCardState extends State<KarigarDirectoryCard> {
           color: KarigarDirectoryColors.brandGoldLight,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: KarigarDirectoryColors.brandGold.withOpacity(0.3)),
+              color: KarigarDirectoryColors.brandGold.withValues(alpha: 0.3)),
         ),
         child: Text(
           k.specialization,
           style: GoogleFonts.inter(
-            fontSize: 11, fontWeight: FontWeight.w600,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
             color: KarigarDirectoryColors.brandGold,
           ),
         ),
@@ -225,7 +227,7 @@ class _KarigarDirectoryCardState extends State<KarigarDirectoryCard> {
         border: Border.all(
           color: isActive
               ? KarigarDirectoryColors.activeBadgeBorder
-              : KarigarDirectoryColors.textHint.withOpacity(0.3),
+              : KarigarDirectoryColors.textHint.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -234,7 +236,8 @@ class _KarigarDirectoryCardState extends State<KarigarDirectoryCard> {
             ? KarigarDirectoryStrings.statusActive
             : KarigarDirectoryStrings.statusInactive,
         style: GoogleFonts.inter(
-          fontSize: 10, fontWeight: FontWeight.w700,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
           color: isActive
               ? KarigarDirectoryColors.success
               : KarigarDirectoryColors.textMuted,
@@ -244,7 +247,6 @@ class _KarigarDirectoryCardState extends State<KarigarDirectoryCard> {
   }
 
   Widget _buildStatsBox(KarigarDirectoryItemModel k) {
-    final rupee = NumberFormat('₹##,##,##0', 'en_IN');
     return Column(children: [
       // Active jobs
       Container(
@@ -257,7 +259,7 @@ class _KarigarDirectoryCardState extends State<KarigarDirectoryCard> {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: k.hasActiveJobs
-                ? KarigarDirectoryColors.info.withOpacity(0.3)
+                ? KarigarDirectoryColors.info.withValues(alpha: 0.3)
                 : KarigarDirectoryColors.cardBorder,
           ),
         ),
@@ -273,7 +275,8 @@ class _KarigarDirectoryCardState extends State<KarigarDirectoryCard> {
           Text(
             k.activeJobCount.toString(),
             style: GoogleFonts.manrope(
-              fontSize: 15, fontWeight: FontWeight.w800,
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
               color: k.hasActiveJobs
                   ? KarigarDirectoryColors.info
                   : KarigarDirectoryColors.textMuted,
@@ -282,7 +285,8 @@ class _KarigarDirectoryCardState extends State<KarigarDirectoryCard> {
           Text(
             'JOBS',
             style: GoogleFonts.inter(
-              fontSize: 9, fontWeight: FontWeight.w600,
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
               color: KarigarDirectoryColors.textMuted,
             ),
           ),
@@ -301,7 +305,7 @@ class _KarigarDirectoryCardState extends State<KarigarDirectoryCard> {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: k.hasOutstanding
-                ? KarigarDirectoryColors.warning.withOpacity(0.3)
+                ? KarigarDirectoryColors.warning.withValues(alpha: 0.3)
                 : KarigarDirectoryColors.cardBorder,
           ),
         ),
@@ -319,7 +323,8 @@ class _KarigarDirectoryCardState extends State<KarigarDirectoryCard> {
                 ? '${(k.outstandingBalance / 1000).toStringAsFixed(0)}K'
                 : k.outstandingBalance.toStringAsFixed(0),
             style: GoogleFonts.manrope(
-              fontSize: 12, fontWeight: FontWeight.w800,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
               color: k.hasOutstanding
                   ? KarigarDirectoryColors.warning
                   : KarigarDirectoryColors.textMuted,
@@ -327,9 +332,10 @@ class _KarigarDirectoryCardState extends State<KarigarDirectoryCard> {
             textAlign: TextAlign.center,
           ),
           Text(
-            'DUE ₹',
+            'DUE ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹',
             style: GoogleFonts.inter(
-              fontSize: 9, fontWeight: FontWeight.w600,
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
               color: KarigarDirectoryColors.textMuted,
             ),
           ),
@@ -350,7 +356,8 @@ class _KarigarDirectoryCardState extends State<KarigarDirectoryCard> {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           const SizedBox(height: 8),
           Container(
-            width: 36, height: 4,
+            width: 36,
+            height: 4,
             decoration: BoxDecoration(
               color: const Color(0xFFE5E7EB),
               borderRadius: BorderRadius.circular(2),
@@ -381,7 +388,8 @@ class _KarigarDirectoryCardState extends State<KarigarDirectoryCard> {
                   ? KarigarDirectoryStrings.btnDeactivate
                   : KarigarDirectoryStrings.btnActivate,
               style: GoogleFonts.manrope(
-                fontSize: 14, fontWeight: FontWeight.w700,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
                 color: k.isActive
                     ? KarigarDirectoryColors.danger
                     : KarigarDirectoryColors.success,

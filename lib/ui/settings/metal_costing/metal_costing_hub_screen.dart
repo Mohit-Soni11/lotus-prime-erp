@@ -2,7 +2,7 @@
 // FILE        : lib/ui/settings/metal_costing/metal_costing_hub_screen.dart
 // MODULE      : Metal Costing Analysis
 // LAYER       : UI / Presentation
-// DESCRIPTION : Level 1 — Metal cards (Gold, Silver, Platinum, Diamond).
+// DESCRIPTION : Level 1 â€” Metal cards (Gold, Silver, Platinum, Diamond).
 //               Stock DB se dynamically purity count + profit show karta hai.
 // =============================================================================
 
@@ -15,7 +15,7 @@ import '../../../models/setting/metal_costing/metal_costing_model.dart';
 import 'metal_costing_app_bar.dart';
 import 'metal_costing_purity_screen.dart';
 
-// ── Metal meta for display ────────────────────────────────────────────────────
+// â”€â”€ Metal meta for display â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _MetalMeta {
   final String key;
   final String label;
@@ -63,9 +63,9 @@ const List<_MetalMeta> _metals = [
   ),
 ];
 
-// ═════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // HUB SCREEN
-// ═════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 class MetalCostingHubScreen extends StatefulWidget {
   const MetalCostingHubScreen({super.key});
 
@@ -89,7 +89,7 @@ class _MetalCostingHubScreenState extends State<MetalCostingHubScreen> {
   }
 
   String _fmtAmount(double v) =>
-      '₹${v.abs().toStringAsFixed(0).replaceAllMapped(
+      'â‚¹${v.abs().toStringAsFixed(0).replaceAllMapped(
             RegExp(r'(\d)(?=(\d{2})+\d$)'),
             (m) => '${m[1]},',
           )}';
@@ -141,7 +141,7 @@ class _MetalCostingHubScreenState extends State<MetalCostingHubScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(MetalCostingIcons.warningIcon,
+                      const Icon(MetalCostingIcons.warningIcon,
                           color: MetalCostingColors.danger, size: 40),
                       const SizedBox(height: 12),
                       Text('Error loading data',
@@ -228,16 +228,16 @@ class _MetalCostingHubScreenState extends State<MetalCostingHubScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: MetalCostingColors.goldBrand.withOpacity(0.05),
+        color: MetalCostingColors.goldBrand.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(MetalCostingStyles.rCard),
         border: Border.all(
-          color: MetalCostingColors.goldBrand.withOpacity(0.2),
+          color: MetalCostingColors.goldBrand.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(MetalCostingIcons.infoIcon,
+          const Icon(MetalCostingIcons.infoIcon,
               size: 18, color: MetalCostingColors.goldBrand),
           const SizedBox(width: 10),
           Expanded(
@@ -256,9 +256,9 @@ class _MetalCostingHubScreenState extends State<MetalCostingHubScreen> {
   }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-// METAL CARD (animated hover — exact BillingSetup HubCard pattern)
-// ═════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// METAL CARD (animated hover â€” exact BillingSetup HubCard pattern)
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 class _MetalCard extends StatefulWidget {
   final _MetalMeta meta;
   final MetalSummary? summary;
@@ -339,7 +339,7 @@ class _MetalCardState extends State<_MetalCard>
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // ── Top: icon + purity count badge ──
+                // â”€â”€ Top: icon + purity count badge â”€â”€
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -348,10 +348,11 @@ class _MetalCardState extends State<_MetalCard>
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: color.withOpacity(_hovered ? 0.18 : 0.10),
+                        color: color.withValues(alpha: _hovered ? 0.18 : 0.10),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                            color: color.withOpacity(_hovered ? 0.4 : 0.2)),
+                            color:
+                                color.withValues(alpha: _hovered ? 0.4 : 0.2)),
                       ),
                       child: Icon(widget.meta.icon, size: 22, color: color),
                     ),
@@ -360,9 +361,10 @@ class _MetalCardState extends State<_MetalCard>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: color.withOpacity(0.10),
+                          color: color.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: color.withOpacity(0.2)),
+                          border:
+                              Border.all(color: color.withValues(alpha: 0.2)),
                         ),
                         child: Text(
                           '$pCount purity',
@@ -377,7 +379,7 @@ class _MetalCardState extends State<_MetalCard>
                 ),
                 const SizedBox(height: 12),
 
-                // ── Bottom: name + profit + analyse arrow ──
+                // â”€â”€ Bottom: name + profit + analyse arrow â”€â”€
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -393,7 +395,7 @@ class _MetalCardState extends State<_MetalCard>
                     const SizedBox(height: 3),
                     Text(
                       iCount > 0
-                          ? '$iCount items · ${widget.fmtAmount(total)} profit'
+                          ? '$iCount items Â· ${widget.fmtAmount(total)} profit'
                           : 'No items in stock',
                       style: GoogleFonts.inter(
                         fontSize: 11,

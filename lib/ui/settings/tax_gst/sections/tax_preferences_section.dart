@@ -18,7 +18,7 @@ class TaxPreferencesSection extends StatelessWidget {
       listenable: logic,
       builder: (context, _) {
         final e = logic.isEditing;
-        final a = TaxGstColors.card04Accent;
+        const a = TaxGstColors.card04Accent;
         return Column(children: [
           TaxGstSectionHeader(
             title: TaxGstStrings.card04SectionTitle,

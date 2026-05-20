@@ -2,20 +2,20 @@
 // FILE        : quick_actions_card.dart
 // MODULE      : Dashboard / Quick Actions
 // LAYER       : UI
-// DESCRIPTION : 4 Quick Action buttons — 2x2 grid.
-//               ✅ "New Entry"  → Triggers bottom sheet popup
+// DESCRIPTION : 4 Quick Action buttons â€” 2x2 grid.
+//               âœ… "New Entry"  â†’ Triggers bottom sheet popup
 //                  4 options: New Sale / Purchase Entry / Collateral / Advance
-//               ✅ "Adjust"     → Triggers bottom sheet popup
+//               âœ… "Adjust"     â†’ Triggers bottom sheet popup
 //                  2 options: Due Adjust / Interest Adjustment
-//               ✅ "Add Stock"  → Direct navigation
-//               ✅ "Cash Book"  → Direct navigation
+//               âœ… "Add Stock"  â†’ Direct navigation
+//               âœ… "Cash Book"  â†’ Direct navigation
 //
 //               POPUP DESIGN:
-//               • Dark glassmorphism bottom sheet
-//               • Each option card contains an icon circle, label, and subtitle
-//               • Slide-up animation with backdrop blur
-//               • Gold shimmer header
-//               • Scale animation on option selection
+//               â€¢ Dark glassmorphism bottom sheet
+//               â€¢ Each option card contains an icon circle, label, and subtitle
+//               â€¢ Slide-up animation with backdrop blur
+//               â€¢ Gold shimmer header
+//               â€¢ Scale animation on option selection
 // =============================================================================
 
 import 'dart:ui';
@@ -39,7 +39,6 @@ class QuickActionsCard extends StatefulWidget {
 
 class _QuickActionsCardState extends State<QuickActionsCard>
     with TickerProviderStateMixin {
-
   late final QuickActionsLogic _logic;
 
   // Staggered entry animations
@@ -85,7 +84,9 @@ class _QuickActionsCardState extends State<QuickActionsCard>
   @override
   void dispose() {
     _logic.dispose();
-    for (final c in _entryControllers) c.dispose();
+    for (final c in _entryControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -94,13 +95,13 @@ class _QuickActionsCardState extends State<QuickActionsCard>
   // ==========================================
   void _showPopup(BuildContext context, QuickActionItemModel item) {
     final options = _logic.getPopupOptions(item.id);
-    final title  = _logic.getPopupTitle(item.id);
+    final title = _logic.getPopupTitle(item.id);
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      barrierColor: Colors.black.withOpacity(0.6),
+      barrierColor: Colors.black.withValues(alpha: 0.6),
       builder: (_) => _QuickActionPopupSheet(
         title: title,
         accentColor: item.accentColor,
@@ -142,17 +143,21 @@ class _QuickActionsCardState extends State<QuickActionsCard>
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        _buildAnimatedButton(index: 0, item: QuickActionsLogic.actions[0]),
-                        SizedBox(width: QuickActionsStyles.buttonSpacing),
-                        _buildAnimatedButton(index: 1, item: QuickActionsLogic.actions[1]),
+                        _buildAnimatedButton(
+                            index: 0, item: QuickActionsLogic.actions[0]),
+                        const SizedBox(width: QuickActionsStyles.buttonSpacing),
+                        _buildAnimatedButton(
+                            index: 1, item: QuickActionsLogic.actions[1]),
                       ],
                     ),
-                    SizedBox(height: QuickActionsStyles.rowSpacing),
+                    const SizedBox(height: QuickActionsStyles.rowSpacing),
                     Row(
                       children: [
-                        _buildAnimatedButton(index: 2, item: QuickActionsLogic.actions[2]),
-                        SizedBox(width: QuickActionsStyles.buttonSpacing),
-                        _buildAnimatedButton(index: 3, item: QuickActionsLogic.actions[3]),
+                        _buildAnimatedButton(
+                            index: 2, item: QuickActionsLogic.actions[2]),
+                        const SizedBox(width: QuickActionsStyles.buttonSpacing),
+                        _buildAnimatedButton(
+                            index: 3, item: QuickActionsLogic.actions[3]),
                       ],
                     ),
                   ],
@@ -165,7 +170,7 @@ class _QuickActionsCardState extends State<QuickActionsCard>
     );
   }
 
-  // ── Header ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildHeader() {
     return Row(
       children: [
@@ -173,23 +178,26 @@ class _QuickActionsCardState extends State<QuickActionsCard>
           shaderCallback: (b) => const LinearGradient(
             colors: [Color(0xFFFFD700), Color(0xFFD4AF37)],
           ).createShader(b),
-          child: const Icon(QuickActionsIcons.header, color: Colors.white, size: 18),
+          child: const Icon(QuickActionsIcons.header,
+              color: Colors.white, size: 18),
         ),
         const SizedBox(width: 8),
         ShaderMask(
           shaderCallback: (b) => const LinearGradient(
             colors: [Color(0xFFFFD700), Color(0xFFD4AF37)],
           ).createShader(b),
-          child: const Text(QuickActionsStrings.cardTitle, style: QuickActionsStyles.headerStyle),
+          child: const Text(QuickActionsStrings.cardTitle,
+              style: QuickActionsStyles.headerStyle),
         ),
       ],
     );
   }
 
-  // ── Golden Divider ──────────────────────────────────────────────────────────
+  // â”€â”€ Golden Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildGoldenDivider() {
     const dot = SizedBox(
-      width: 4, height: 4,
+      width: 4,
+      height: 4,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: QuickActionsColors.divider,
@@ -197,16 +205,19 @@ class _QuickActionsCardState extends State<QuickActionsCard>
         ),
       ),
     );
-    return Row(
+    return const Row(
       children: [
         dot,
-        const Expanded(child: SizedBox(height: 1, child: ColoredBox(color: QuickActionsColors.divider))),
+        Expanded(
+            child: SizedBox(
+                height: 1,
+                child: ColoredBox(color: QuickActionsColors.divider))),
         dot,
       ],
     );
   }
 
-  // ── Animated Button ─────────────────────────────────────────────────────────
+  // â”€â”€ Animated Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildAnimatedButton({
     required int index,
     required QuickActionItemModel item,
@@ -233,14 +244,14 @@ class _QuickActionsCardState extends State<QuickActionsCard>
           curve: Curves.easeOut,
           child: MouseRegion(
             onEnter: (_) => _logic.onHoverEnter(item.id),
-            onExit:  (_) => _logic.onHoverExit(),
+            onExit: (_) => _logic.onHoverExit(),
             child: GestureDetector(
               onTapDown: (_) => _logic.onButtonTapDown(item.id),
               onTapCancel: () => _logic.onButtonTapCancel(),
               onTapUp: (_) {
-                // ✅ Separate logic for popup vs direct navigation
+                // âœ… Separate logic for popup vs direct navigation
                 if (item.hasPopup) {
-                  _logic.onButtonTapCancel(); 
+                  _logic.onButtonTapCancel();
                   _showPopup(context, item);
                 } else {
                   _logic.onDirectButtonTapUp(item.id, widget.onNavigate);
@@ -261,12 +272,15 @@ class _QuickActionsCardState extends State<QuickActionsCard>
                         duration: const Duration(milliseconds: 150),
                         width: QuickActionsStyles.iconCircleSize,
                         height: QuickActionsStyles.iconCircleSize,
-                        decoration: QuickActionsStyles.iconCircle(item.accentColor),
+                        decoration:
+                            QuickActionsStyles.iconCircle(item.accentColor),
                         child: Center(
                           child: AnimatedScale(
                             scale: isPressed ? 1.15 : 1.0,
                             duration: const Duration(milliseconds: 100),
-                            child: Icon(item.icon, size: QuickActionsStyles.iconSize, color: item.accentColor),
+                            child: Icon(item.icon,
+                                size: QuickActionsStyles.iconSize,
+                                color: item.accentColor),
                           ),
                         ),
                       ),
@@ -282,22 +296,25 @@ class _QuickActionsCardState extends State<QuickActionsCard>
                               style: isPressed
                                   ? QuickActionsStyles.btnLabelPressedStyle
                                   : QuickActionsStyles.btnLabelStyle,
-                              child: Text(item.label, overflow: TextOverflow.ellipsis),
+                              child: Text(item.label,
+                                  overflow: TextOverflow.ellipsis),
                             ),
-                            // ✅ Small chevron hint for popup buttons
+                            // âœ… Small chevron hint for popup buttons
                             if (item.hasPopup)
                               Row(
                                 children: [
                                   Icon(
                                     Icons.keyboard_arrow_down_rounded,
                                     size: 11,
-                                    color: item.accentColor.withOpacity(0.7),
+                                    color:
+                                        item.accentColor.withValues(alpha: 0.7),
                                   ),
                                   Text(
                                     'select',
                                     style: TextStyle(
                                       fontSize: 9,
-                                      color: item.accentColor.withOpacity(0.6),
+                                      color: item.accentColor
+                                          .withValues(alpha: 0.6),
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -341,7 +358,6 @@ class _QuickActionPopupSheet extends StatefulWidget {
 
 class _QuickActionPopupSheetState extends State<_QuickActionPopupSheet>
     with TickerProviderStateMixin {
-
   late final AnimationController _sheetController;
   late final List<AnimationController> _cardControllers;
   late final List<Animation<double>> _cardSlides;
@@ -351,10 +367,12 @@ class _QuickActionPopupSheetState extends State<_QuickActionPopupSheet>
   @override
   void initState() {
     super.initState();
-    _sheetController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    _sheetController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 300));
     _cardControllers = List.generate(
       widget.options.length,
-      (_) => AnimationController(vsync: this, duration: const Duration(milliseconds: 350)),
+      (_) => AnimationController(
+          vsync: this, duration: const Duration(milliseconds: 350)),
     );
     _cardSlides = _cardControllers
         .map((c) => Tween<double>(begin: 30.0, end: 0.0)
@@ -379,7 +397,9 @@ class _QuickActionPopupSheetState extends State<_QuickActionPopupSheet>
   @override
   void dispose() {
     _sheetController.dispose();
-    for (final c in _cardControllers) c.dispose();
+    for (final c in _cardControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -396,15 +416,15 @@ class _QuickActionPopupSheetState extends State<_QuickActionPopupSheet>
             colors: [Color(0xFF1F2937), Color(0xFF0F172A)],
           ),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withOpacity(0.08)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               blurRadius: 40,
               offset: const Offset(0, -10),
             ),
             BoxShadow(
-              color: widget.accentColor.withOpacity(0.08),
+              color: widget.accentColor.withValues(alpha: 0.08),
               blurRadius: 30,
               spreadRadius: 5,
             ),
@@ -415,30 +435,37 @@ class _QuickActionPopupSheetState extends State<_QuickActionPopupSheet>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ── Drag handle ────────────────────────────────────────────────
+              // â”€â”€ Drag handle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Center(
                 child: Container(
-                  width: 40, height: 4,
+                  width: 40,
+                  height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
 
-              // ── Header ─────────────────────────────────────────────────────
+              // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Row(
                 children: [
                   // Gold accent line
-                  Container(width: 3, height: 28, decoration: BoxDecoration(
-                    color: widget.accentColor,
-                    borderRadius: BorderRadius.circular(2),
-                  )),
+                  Container(
+                      width: 3,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: widget.accentColor,
+                        borderRadius: BorderRadius.circular(2),
+                      )),
                   const SizedBox(width: 12),
                   ShaderMask(
                     shaderCallback: (b) => LinearGradient(
-                      colors: [widget.accentColor, widget.accentColor.withOpacity(0.7)],
+                      colors: [
+                        widget.accentColor,
+                        widget.accentColor.withValues(alpha: 0.7)
+                      ],
                     ).createShader(b),
                     child: Text(
                       widget.title,
@@ -460,14 +487,16 @@ class _QuickActionPopupSheetState extends State<_QuickActionPopupSheet>
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'Select an option to proceed', // <-- Changed to professional English
-                    style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.4)),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withValues(alpha: 0.4)),
                   ),
                 ),
               ),
 
               const SizedBox(height: 20),
 
-              // ── Option Cards ───────────────────────────────────────────────
+              // â”€â”€ Option Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               ...List.generate(widget.options.length, (i) {
                 final opt = widget.options[i];
                 return AnimatedBuilder(
@@ -507,17 +536,21 @@ class _QuickActionPopupSheetState extends State<_QuickActionPopupSheet>
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: isPressed
-                ? opt.accentColor.withOpacity(0.12)
-                : Colors.white.withOpacity(0.04),
+                ? opt.accentColor.withValues(alpha: 0.12)
+                : Colors.white.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isPressed
-                  ? opt.accentColor.withOpacity(0.5)
-                  : opt.accentColor.withOpacity(0.18),
+                  ? opt.accentColor.withValues(alpha: 0.5)
+                  : opt.accentColor.withValues(alpha: 0.18),
               width: isPressed ? 1.5 : 1.0,
             ),
             boxShadow: isPressed
-                ? [BoxShadow(color: opt.accentColor.withOpacity(0.15), blurRadius: 12)]
+                ? [
+                    BoxShadow(
+                        color: opt.accentColor.withValues(alpha: 0.15),
+                        blurRadius: 12)
+                  ]
                 : [],
           ),
           child: Row(
@@ -527,9 +560,10 @@ class _QuickActionPopupSheetState extends State<_QuickActionPopupSheet>
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: opt.accentColor.withOpacity(0.12),
+                  color: opt.accentColor.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
-                  border: Border.all(color: opt.accentColor.withOpacity(0.3)),
+                  border:
+                      Border.all(color: opt.accentColor.withValues(alpha: 0.3)),
                 ),
                 child: Center(
                   child: Icon(opt.icon, color: opt.accentColor, size: 20),
@@ -547,7 +581,9 @@ class _QuickActionPopupSheetState extends State<_QuickActionPopupSheet>
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: isPressed ? opt.accentColor : Colors.white.withOpacity(0.9),
+                        color: isPressed
+                            ? opt.accentColor
+                            : Colors.white.withValues(alpha: 0.9),
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -555,7 +591,7 @@ class _QuickActionPopupSheetState extends State<_QuickActionPopupSheet>
                       opt.subtitle,
                       style: TextStyle(
                         fontSize: 11.5,
-                        color: Colors.white.withOpacity(0.45),
+                        color: Colors.white.withValues(alpha: 0.45),
                         height: 1.3,
                       ),
                     ),
@@ -570,13 +606,15 @@ class _QuickActionPopupSheetState extends State<_QuickActionPopupSheet>
                 height: 28,
                 decoration: BoxDecoration(
                   color: isPressed
-                      ? opt.accentColor.withOpacity(0.25)
-                      : Colors.white.withOpacity(0.05),
+                      ? opt.accentColor.withValues(alpha: 0.25)
+                      : Colors.white.withValues(alpha: 0.05),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.arrow_forward_ios_rounded,
-                  color: isPressed ? opt.accentColor : Colors.white.withOpacity(0.3),
+                  color: isPressed
+                      ? opt.accentColor
+                      : Colors.white.withValues(alpha: 0.3),
                   size: 12,
                 ),
               ),
@@ -599,24 +637,38 @@ class _AmbientGlows extends StatelessWidget {
     return Stack(
       children: [
         Positioned(
-          top: -40, right: -30,
+          top: -40,
+          right: -30,
           child: Container(
-            width: 120, height: 120,
+            width: 120,
+            height: 120,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: QuickActionsColors.glowTopRight,
-              boxShadow: [BoxShadow(color: QuickActionsColors.glowTopRight, blurRadius: 60, spreadRadius: 10)],
+              boxShadow: [
+                BoxShadow(
+                    color: QuickActionsColors.glowTopRight,
+                    blurRadius: 60,
+                    spreadRadius: 10)
+              ],
             ),
           ),
         ),
         Positioned(
-          bottom: -30, left: -20,
+          bottom: -30,
+          left: -20,
           child: Container(
-            width: 80, height: 80,
+            width: 80,
+            height: 80,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: QuickActionsColors.glowBottomLeft,
-              boxShadow: [BoxShadow(color: QuickActionsColors.glowBottomLeft, blurRadius: 40, spreadRadius: 5)],
+              boxShadow: [
+                BoxShadow(
+                    color: QuickActionsColors.glowBottomLeft,
+                    blurRadius: 40,
+                    spreadRadius: 5)
+              ],
             ),
           ),
         ),

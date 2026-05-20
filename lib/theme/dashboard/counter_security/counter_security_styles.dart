@@ -7,40 +7,42 @@ import 'package:flutter/material.dart';
 import 'counter_security_colors.dart';
 
 class CounterSecurityStyles {
-
-  // ── DIMENSIONS ────────────────────────────────────────────────────────────
-  static const double cardBorderRadius   = 20.0;
-  static const double innerBorderRadius  = 12.0;
-  static const double chipHeight         = 32.0;
-  static const double chipBorderRadius   = 8.0;
-  static const double inputHeight        = 46.0;
-  static const double btnHeight          = 44.0;
-  static const double btnBorderRadius    = 10.0;
+  // â”€â”€ DIMENSIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  static const double cardBorderRadius = 20.0;
+  static const double innerBorderRadius = 12.0;
+  static const double chipHeight = 32.0;
+  static const double chipBorderRadius = 8.0;
+  static const double inputHeight = 46.0;
+  static const double btnHeight = 44.0;
+  static const double btnBorderRadius = 10.0;
   static const double resultBorderRadius = 14.0;
 
-  static const EdgeInsets cardPadding  = EdgeInsets.all(20.0);
+  static const EdgeInsets cardPadding = EdgeInsets.all(20.0);
   static const EdgeInsets innerPadding = EdgeInsets.all(16.0);
 
-  // ── OUTER CARD ────────────────────────────────────────────────────────────
+  // â”€â”€ OUTER CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get cardDecoration => BoxDecoration(
-    gradient: const LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [CounterSecurityColors.cardBgStart, CounterSecurityColors.cardBgEnd],
-    ),
-    borderRadius: BorderRadius.circular(cardBorderRadius),
-    border: Border.all(color: Colors.white.withOpacity(0.08)),
-    boxShadow: const [
-      BoxShadow(
-        color: Colors.black45,
-        blurRadius: 25,
-        offset: Offset(0, 15),
-        spreadRadius: -5,
-      ),
-    ],
-  );
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            CounterSecurityColors.cardBgStart,
+            CounterSecurityColors.cardBgEnd
+          ],
+        ),
+        borderRadius: BorderRadius.circular(cardBorderRadius),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black45,
+            blurRadius: 25,
+            offset: Offset(0, 15),
+            spreadRadius: -5,
+          ),
+        ],
+      );
 
-  // ── INNER SECTION (state-aware) ───────────────────────────────────────────
+  // â”€â”€ INNER SECTION (state-aware) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration innerDecoration({
     required Color bg,
     required Color border,
@@ -52,8 +54,9 @@ class CounterSecurityStyles {
         border: Border.all(color: border, width: borderWidth),
       );
 
-  // ── METAL CHIP ────────────────────────────────────────────────────────────
-  static BoxDecoration metalChip({required bool isActive, required Color activeColor}) =>
+  // â”€â”€ METAL CHIP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  static BoxDecoration metalChip(
+          {required bool isActive, required Color activeColor}) =>
       BoxDecoration(
         color: isActive ? activeColor : CounterSecurityColors.chipInactive,
         borderRadius: BorderRadius.circular(chipBorderRadius),
@@ -61,11 +64,14 @@ class CounterSecurityStyles {
             ? null
             : Border.all(color: CounterSecurityColors.chipInactiveBorder),
         boxShadow: isActive
-            ? [BoxShadow(color: activeColor.withOpacity(0.3), blurRadius: 8)]
+            ? [
+                BoxShadow(
+                    color: activeColor.withValues(alpha: 0.3), blurRadius: 8)
+              ]
             : null,
       );
 
-  // ── INPUT DECORATION ──────────────────────────────────────────────────────
+  // â”€â”€ INPUT DECORATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static InputDecoration inputDecoration({
     required String label,
     required String hint,
@@ -92,12 +98,13 @@ class CounterSecurityStyles {
             const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: CounterSecurityColors.inputBorder),
+          borderSide:
+              const BorderSide(color: CounterSecurityColors.inputBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(
-            color: CounterSecurityColors.inputBorder.withOpacity(0.5),
+            color: CounterSecurityColors.inputBorder.withValues(alpha: 0.5),
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -113,49 +120,48 @@ class CounterSecurityStyles {
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide:
-              const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
         ),
       );
 
-  // ── LOCKED BADGE ──────────────────────────────────────────────────────────
+  // â”€â”€ LOCKED BADGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get lockedBadge => BoxDecoration(
-    color: CounterSecurityColors.lockedBadge,
-    borderRadius: BorderRadius.circular(8),
-    boxShadow: [
-      BoxShadow(
-        color: CounterSecurityColors.lockedBadge.withOpacity(0.3),
-        blurRadius: 8,
-        offset: const Offset(0, 3),
-      ),
-    ],
-  );
+        color: CounterSecurityColors.lockedBadge,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: CounterSecurityColors.lockedBadge.withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      );
 
-  // ── RESULT BOX ────────────────────────────────────────────────────────────
+  // â”€â”€ RESULT BOX â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration resultBox({required bool matched}) => BoxDecoration(
-    color: matched
-        ? CounterSecurityColors.matchedBg
-        : CounterSecurityColors.mismatchBg,
-    borderRadius: BorderRadius.circular(resultBorderRadius),
-    border: Border.all(
-      color: matched
-          ? CounterSecurityColors.matchedBorder
-          : CounterSecurityColors.mismatchBorder,
-      width: 1.5,
-    ),
-    boxShadow: [
-      BoxShadow(
-        color: (matched
-                ? CounterSecurityColors.matchedBorder
-                : CounterSecurityColors.mismatchBorder)
-            .withOpacity(0.2),
-        blurRadius: 12,
-        spreadRadius: -2,
-      ),
-    ],
-  );
+        color: matched
+            ? CounterSecurityColors.matchedBg
+            : CounterSecurityColors.mismatchBg,
+        borderRadius: BorderRadius.circular(resultBorderRadius),
+        border: Border.all(
+          color: matched
+              ? CounterSecurityColors.matchedBorder
+              : CounterSecurityColors.mismatchBorder,
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (matched
+                    ? CounterSecurityColors.matchedBorder
+                    : CounterSecurityColors.mismatchBorder)
+                .withValues(alpha: 0.2),
+            blurRadius: 12,
+            spreadRadius: -2,
+          ),
+        ],
+      );
 
-  // ── TEXT STYLES ───────────────────────────────────────────────────────────
+  // â”€â”€ TEXT STYLES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle headerStyle = TextStyle(
     fontSize: 13.0,
     fontWeight: FontWeight.w700,

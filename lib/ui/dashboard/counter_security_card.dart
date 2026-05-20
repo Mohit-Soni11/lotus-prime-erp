@@ -7,32 +7,32 @@
 //               wapas aane pe verify karo.
 //
 //               3 STATES:
-//               ┌──────────────────────────────────────────────────┐
-//               │ 🔒 COUNTER SECURITY CHECK    [GOLD][SILVER]...   │
-//               │ ─────────────────────────────────────────────    │
-//               │ IDLE STATE:                                       │
-//               │  STEP 1: GIVE ITEMS                               │
-//               │  [Pieces  ] [Weight (gm)]  [🔒 LOCK & GIVE]      │
-//               ├──────────────────────────────────────────────────┤
-//               │ LOCKED STATE:                                     │
-//               │  🔒 GOLD | 5 Pcs | 15.250 gm                     │
-//               │  STEP 2: TAKE BACK                                │
-//               │  [Return Pcs] [Scale Wt]   [✓ VERIFY]            │
-//               ├──────────────────────────────────────────────────┤
-//               │ RESULT — MATCHED:                                 │
-//               │  ✅ MATCHED: 100% Accurate!          [FINISH]     │
-//               ├──────────────────────────────────────────────────┤
-//               │ RESULT — MISMATCH:                                │
-//               │  ⚠ 2 Pcs Missing | 0.500 gm KAM HAI  [RESET]    │
-//               └──────────────────────────────────────────────────┘
+//               Ã¢â€Å’Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€Â
+//               Ã¢â€â€š Ã°Å¸â€â€™ COUNTER SECURITY CHECK    [GOLD][SILVER]...   Ã¢â€â€š
+//               Ã¢â€â€š Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬    Ã¢â€â€š
+//               Ã¢â€â€š IDLE STATE:                                       Ã¢â€â€š
+//               Ã¢â€â€š  STEP 1: GIVE ITEMS                               Ã¢â€â€š
+//               Ã¢â€â€š  [Pieces  ] [Weight (gm)]  [Ã°Å¸â€â€™ LOCK & GIVE]      Ã¢â€â€š
+//               Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€Â¤
+//               Ã¢â€â€š LOCKED STATE:                                     Ã¢â€â€š
+//               Ã¢â€â€š  Ã°Å¸â€â€™ GOLD | 5 Pcs | 15.250 gm                     Ã¢â€â€š
+//               Ã¢â€â€š  STEP 2: TAKE BACK                                Ã¢â€â€š
+//               Ã¢â€â€š  [Return Pcs] [Scale Wt]   [Ã¢Å“â€œ VERIFY]            Ã¢â€â€š
+//               Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€Â¤
+//               Ã¢â€â€š RESULT Ã¢â‚¬â€ MATCHED:                                 Ã¢â€â€š
+//               Ã¢â€â€š  Ã¢Å“â€¦ MATCHED: 100% Accurate!          [FINISH]     Ã¢â€â€š
+//               Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€Â¤
+//               Ã¢â€â€š RESULT Ã¢â‚¬â€ MISMATCH:                                Ã¢â€â€š
+//               Ã¢â€â€š  Ã¢Å¡Â  2 Pcs Missing | 0.500 gm KAM HAI  [RESET]    Ã¢â€â€š
+//               Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€Ëœ
 //
 //               ANIMATIONS:
-//               • Card entry slide + fade
-//               • State transitions — AnimatedSwitcher
-//               • Locked badge — scale bounce
-//               • Result box — slide up + scale
-//               • Metal chip — AnimatedContainer
-//               • Error shake on validation fail
+//               Ã¢â‚¬Â¢ Card entry slide + fade
+//               Ã¢â‚¬Â¢ State transitions Ã¢â‚¬â€ AnimatedSwitcher
+//               Ã¢â‚¬Â¢ Locked badge Ã¢â‚¬â€ scale bounce
+//               Ã¢â‚¬Â¢ Result box Ã¢â‚¬â€ slide up + scale
+//               Ã¢â‚¬Â¢ Metal chip Ã¢â‚¬â€ AnimatedContainer
+//               Ã¢â‚¬Â¢ Error shake on validation fail
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -51,40 +51,35 @@ class CounterSecurityCard extends StatefulWidget {
 
 class _CounterSecurityCardState extends State<CounterSecurityCard>
     with TickerProviderStateMixin {
-
   late final CounterSecurityLogic _logic;
 
   // Entry animation
   late final AnimationController _entryCtrl;
-  late final Animation<double>   _entrySlide;
-  late final Animation<double>   _entryFade;
+  late final Animation<double> _entrySlide;
+  late final Animation<double> _entryFade;
 
   // Result pop animation
   late final AnimationController _resultCtrl;
-  late final Animation<double>   _resultScale;
-  late final Animation<double>   _resultSlide;
+  late final Animation<double> _resultScale;
+  late final Animation<double> _resultSlide;
 
-  // Input controllers — Step 1
+  // Input controllers Ã¢â‚¬â€ Step 1
   final _issuePcsCtrl = TextEditingController();
-  final _issueWtCtrl  = TextEditingController();
+  final _issueWtCtrl = TextEditingController();
 
-  // Input controllers — Step 2
+  // Input controllers Ã¢â‚¬â€ Step 2
   final _retPcsCtrl = TextEditingController();
-  final _retWtCtrl  = TextEditingController();
+  final _retWtCtrl = TextEditingController();
 
   // Focus nodes
   final _issuePcsFocus = FocusNode();
-  final _issueWtFocus  = FocusNode();
-  final _retPcsFocus   = FocusNode();
-  final _retWtFocus    = FocusNode();
+  final _issueWtFocus = FocusNode();
+  final _retPcsFocus = FocusNode();
+  final _retWtFocus = FocusNode();
 
   // Error states
   String? _step1Error;
   String? _step2Error;
-
-  // Shake animation key
-  final _shakeKey1 = GlobalKey();
-  final _shakeKey2 = GlobalKey();
 
   @override
   void initState() {
@@ -93,25 +88,30 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
     _logic.addListener(_onStateChanged);
 
     _entryCtrl = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 500));
+        vsync: this, duration: const Duration(milliseconds: 500));
     _entrySlide = Tween<double>(begin: 20.0, end: 0.0).animate(
-      CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOutCubic));
-    _entryFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOut));
+        CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOutCubic));
+    _entryFade = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOut));
 
     _resultCtrl = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 450));
+        vsync: this, duration: const Duration(milliseconds: 450));
     _resultScale = Tween<double>(begin: 0.85, end: 1.0).animate(
-      CurvedAnimation(parent: _resultCtrl, curve: Curves.elasticOut));
+        CurvedAnimation(parent: _resultCtrl, curve: Curves.elasticOut));
     _resultSlide = Tween<double>(begin: 15.0, end: 0.0).animate(
-      CurvedAnimation(parent: _resultCtrl, curve: Curves.easeOutCubic));
+        CurvedAnimation(parent: _resultCtrl, curve: Curves.easeOutCubic));
 
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) _entryCtrl.forward();
     });
 
     // Focus listeners for border color
-    for (final fn in [_issuePcsFocus, _issueWtFocus, _retPcsFocus, _retWtFocus]) {
+    for (final fn in [
+      _issuePcsFocus,
+      _issueWtFocus,
+      _retPcsFocus,
+      _retWtFocus
+    ]) {
       fn.addListener(() => setState(() {}));
     }
   }
@@ -147,7 +147,7 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
   void _onLock() {
     setState(() => _step1Error = null);
     final error = _logic.lockAndIssue(
-      pcsStr:    _issuePcsCtrl.text,
+      pcsStr: _issuePcsCtrl.text,
       weightStr: _issueWtCtrl.text,
     );
     if (error != null) {
@@ -161,7 +161,7 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
   void _onVerify() {
     setState(() => _step2Error = null);
     final error = _logic.verifyReturn(
-      pcsStr:    _retPcsCtrl.text,
+      pcsStr: _retPcsCtrl.text,
       weightStr: _retWtCtrl.text,
     );
     if (error != null) {
@@ -224,16 +224,17 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
     );
   }
 
-  // ── HEADER ────────────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ HEADER Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildHeader() {
     return Row(children: [
       Container(
-        width: 36, height: 36,
+        width: 36,
+        height: 36,
         decoration: BoxDecoration(
-          color: CounterSecurityColors.accentGold.withOpacity(0.12),
+          color: CounterSecurityColors.accentGold.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-              color: CounterSecurityColors.accentGold.withOpacity(0.25)),
+              color: CounterSecurityColors.accentGold.withValues(alpha: 0.25)),
         ),
         child: Center(
           child: ShaderMask(
@@ -263,26 +264,28 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
                   ? (_logic.data.isMatched
                       ? CounterSecurityColors.matchedBg
                       : CounterSecurityColors.mismatchBg)
-                  : Colors.white.withOpacity(0.06),
+                  : Colors.white.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: _logic.data.isLocked
-                ? CounterSecurityColors.lockedBorder.withOpacity(0.5)
+                ? CounterSecurityColors.lockedBorder.withValues(alpha: 0.5)
                 : _logic.data.hasResult
                     ? (_logic.data.isMatched
-                        ? CounterSecurityColors.matchedBorder.withOpacity(0.4)
-                        : CounterSecurityColors.mismatchBorder.withOpacity(0.4))
-                    : Colors.white.withOpacity(0.1),
+                        ? CounterSecurityColors.matchedBorder
+                            .withValues(alpha: 0.4)
+                        : CounterSecurityColors.mismatchBorder
+                            .withValues(alpha: 0.4))
+                    : Colors.white.withValues(alpha: 0.1),
           ),
         ),
         child: Text(
           _logic.data.isIdle
               ? 'READY'
               : _logic.data.isLocked
-                  ? 'LOCKED 🔒'
+                  ? 'LOCKED Ã°Å¸â€â€™'
                   : _logic.data.isMatched
-                      ? 'MATCHED ✅'
-                      : 'ALERT ⚠️',
+                      ? 'MATCHED Ã¢Å“â€¦'
+                      : 'ALERT Ã¢Å¡Â Ã¯Â¸Â',
           style: TextStyle(
             fontSize: 9.5,
             fontWeight: FontWeight.w800,
@@ -300,14 +303,13 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
     ]);
   }
 
-  // ── METAL SELECTOR ────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ METAL SELECTOR Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildMetalSelector() {
     return Row(
       children: SecurityMetal.values.map((metal) {
         final isActive = _logic.data.selectedMetal == metal;
         final isDisabled = _logic.data.isLocked;
-        final activeColor =
-            CounterSecurityColors.metalActiveColor(metal);
+        final activeColor = CounterSecurityColors.metalActiveColor(metal);
 
         return Expanded(
           child: Padding(
@@ -323,9 +325,9 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
                 ).copyWith(
                   color: isDisabled
                       ? (isActive
-                          ? activeColor.withOpacity(0.5)
+                          ? activeColor.withValues(alpha: 0.5)
                           : CounterSecurityColors.chipInactive
-                              .withOpacity(0.5))
+                              .withValues(alpha: 0.5))
                       : null,
                 ),
                 child: Center(
@@ -333,7 +335,7 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
                     '${metal.emoji} ${metal.label}',
                     style: CounterSecurityStyles.metalChipStyle.copyWith(
                       color: isDisabled
-                          ? Colors.white.withOpacity(0.4)
+                          ? Colors.white.withValues(alpha: 0.4)
                           : Colors.white,
                     ),
                   ),
@@ -352,9 +354,10 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
               duration: const Duration(milliseconds: 200),
               height: CounterSecurityStyles.chipHeight,
               decoration: CounterSecurityStyles.metalChip(
-                isActive: _logic.data.selectedMetal == SecurityMetal.values.last,
-                activeColor: CounterSecurityColors
-                    .metalActiveColor(SecurityMetal.values.last),
+                isActive:
+                    _logic.data.selectedMetal == SecurityMetal.values.last,
+                activeColor: CounterSecurityColors.metalActiveColor(
+                    SecurityMetal.values.last),
               ),
               child: Center(
                 child: Text(
@@ -368,7 +371,7 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
     );
   }
 
-  // ── BODY — STATE SWITCHER ─────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ BODY Ã¢â‚¬â€ STATE SWITCHER Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildBody() {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 350),
@@ -392,7 +395,7 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
     );
   }
 
-  // ── STEP 1 — GIVE ITEMS ───────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ STEP 1 Ã¢â‚¬â€ GIVE ITEMS Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildStep1() {
     return Container(
       key: const ValueKey('step1'),
@@ -409,10 +412,11 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: CounterSecurityColors.accentGold.withOpacity(0.15),
+                color: CounterSecurityColors.accentGold.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                    color: CounterSecurityColors.accentGold.withOpacity(0.3)),
+                    color: CounterSecurityColors.accentGold
+                        .withValues(alpha: 0.3)),
               ),
               child: const Text('STEP 1 : GIVE ITEMS',
                   style: CounterSecurityStyles.stepLabelStyle),
@@ -468,7 +472,7 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
     );
   }
 
-  // ── STEP 2 — TAKE BACK ────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ STEP 2 Ã¢â‚¬â€ TAKE BACK Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildStep2() {
     return Column(
       key: const ValueKey('step2'),
@@ -479,8 +483,7 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
           builder: (_, child) => child!,
           child: Container(
             width: double.infinity,
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: CounterSecurityStyles.lockedBadge,
             child: Row(children: [
               const Icon(CounterSecurityIcons.lock,
@@ -504,28 +507,26 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
           padding: CounterSecurityStyles.innerPadding,
           decoration: CounterSecurityStyles.innerDecoration(
             bg: CounterSecurityColors.lockedBg,
-            border: CounterSecurityColors.lockedBorder.withOpacity(0.4),
+            border: CounterSecurityColors.lockedBorder.withValues(alpha: 0.4),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.15),
+                    color: Colors.blue.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                        color: Colors.blue.withOpacity(0.3)),
+                    border:
+                        Border.all(color: Colors.blue.withValues(alpha: 0.3)),
                   ),
                   child: const Text('STEP 2 : TAKE BACK & VERIFY',
                       style: CounterSecurityStyles.stepLabelStyle),
                 ),
               ]),
-
               const SizedBox(height: 14),
-
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -558,7 +559,6 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
                   ),
                 ],
               ),
-
               if (_step2Error != null) ...[
                 const SizedBox(height: 8),
                 _buildError(_step2Error!),
@@ -570,7 +570,7 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
     );
   }
 
-  // ── RESULT BOX ────────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ RESULT BOX Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildResultBox() {
     final matched = _logic.data.isMatched;
 
@@ -628,14 +628,14 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
             GestureDetector(
               onTap: _onReset,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: matched ? Colors.white : Colors.white,
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 6,
                     ),
                   ],
@@ -658,7 +658,7 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
     );
   }
 
-  // ── INPUT WIDGET ──────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ INPUT WIDGET Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildInput({
     required TextEditingController controller,
     required FocusNode focus,
@@ -700,7 +700,7 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
     );
   }
 
-  // ── LOCK BUTTON ───────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ LOCK BUTTON Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildLockButton() {
     return SizedBox(
       height: CounterSecurityStyles.btnHeight,
@@ -723,7 +723,7 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
     );
   }
 
-  // ── VERIFY BUTTON ─────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ VERIFY BUTTON Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildVerifyButton() {
     return SizedBox(
       height: CounterSecurityStyles.btnHeight,
@@ -745,10 +745,11 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
     );
   }
 
-  // ── ERROR TEXT ────────────────────────────────────────────────────────────
+  // Ã¢â€â‚¬Ã¢â€â‚¬ ERROR TEXT Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildError(String msg) {
     return Row(children: [
-      const Icon(Icons.error_outline_rounded, size: 13, color: Color(0xFFFC8181)),
+      const Icon(Icons.error_outline_rounded,
+          size: 13, color: Color(0xFFFC8181)),
       const SizedBox(width: 5),
       Text(msg,
           style: const TextStyle(
@@ -760,7 +761,7 @@ class _CounterSecurityCardState extends State<CounterSecurityCard>
   }
 }
 
-// ── Ambient Glows ─────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Ambient Glows Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 class _AmbientGlows extends StatelessWidget {
   const _AmbientGlows();
   @override
@@ -768,16 +769,21 @@ class _AmbientGlows extends StatelessWidget {
     return RepaintBoundary(
       child: Stack(children: [
         Positioned(
-          top: -30, right: -20,
+          top: -30,
+          right: -20,
           child: Container(
-            width: 120, height: 120,
+            width: 120,
+            height: 120,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: CounterSecurityColors.accentGold.withOpacity(0.04),
-              boxShadow: [BoxShadow(
-                color: CounterSecurityColors.accentGold.withOpacity(0.06),
-                blurRadius: 60,
-              )],
+              color: CounterSecurityColors.accentGold.withValues(alpha: 0.04),
+              boxShadow: [
+                BoxShadow(
+                  color:
+                      CounterSecurityColors.accentGold.withValues(alpha: 0.06),
+                  blurRadius: 60,
+                )
+              ],
             ),
           ),
         ),

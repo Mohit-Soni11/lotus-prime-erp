@@ -3,9 +3,9 @@ import 'base_table.dart';
 
 @DataClassName('ShopProfileData')
 class ShopProfiles extends Table with BaseTable {
-  
   // --- 1. Basic Info (Enterprise) ---
-  TextColumn get shopName => text().withDefault(const Constant("My Jewellery Shop"))();
+  TextColumn get shopName =>
+      text().withDefault(const Constant("My Jewellery Shop"))();
   TextColumn get legalName => text().nullable()();
   TextColumn get tagline => text().nullable()();
   TextColumn get ownerName => text().nullable()();
@@ -35,7 +35,8 @@ class ShopProfiles extends Table with BaseTable {
   TextColumn get state => text().nullable()();
   TextColumn get pincode => text().nullable()();
   TextColumn get country => text().nullable()();
-  TextColumn get mapConfig => text().nullable()(); // JSON string for map coordinates
+  TextColumn get mapConfig =>
+      text().nullable()(); // JSON string for map coordinates
 
   // --- 3. Social & Support ---
   TextColumn get instagramLink => text().nullable()();
@@ -47,7 +48,7 @@ class ShopProfiles extends Table with BaseTable {
   TextColumn get gstType => text().nullable()(); // Regular/Composition
   TextColumn get bisLicense => text().nullable()();
   TextColumn get huidNo => text().nullable()();
-  
+
   // Python: hsn_json = Column(Text) -> Stores list as JSON string
   TextColumn get hsnJson => text().nullable()();
 
@@ -65,5 +66,6 @@ class ShopProfiles extends Table with BaseTable {
   BoolColumn get showGst => boolean().withDefault(const Constant(true))();
 
   // ✅ v5: Cash Register opening balance — nullable taaki purane rows crash na karein
-  RealColumn get openingCashBalance => real().nullable().withDefault(const Constant(0.0))();
+  RealColumn get openingCashBalance =>
+      real().nullable().withDefault(const Constant(0.0))();
 }

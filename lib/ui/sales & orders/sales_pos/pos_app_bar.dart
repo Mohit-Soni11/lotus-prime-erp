@@ -3,9 +3,9 @@
 // TYPE: Smart UI Component
 // AUTHOR: Senior System Architect
 // DESCRIPTION: Top navigation, Radar Status and System Badge.
-//              ✅ Premium Layout with Gold Gradient Icon.
-//              ✅ Removed System Admin Login Badge.
-//              ✅ Perfectly positioned Shop Name & New Sales Title.
+//              âœ… Premium Layout with Gold Gradient Icon.
+//              âœ… Removed System Admin Login Badge.
+//              âœ… Perfectly positioned Shop Name & New Sales Title.
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -61,7 +61,7 @@ class _PosAppBarState extends State<PosAppBar> {
 
   @override
   Widget build(BuildContext context) {
-    // 🚀 SMART FILTER: Overriding the old hardcoded parent title
+    // ðŸš€ SMART FILTER: Overriding the old hardcoded parent title
     String displayContext = widget.title.toUpperCase();
     if (displayContext.contains("POS TERMINAL") ||
         displayContext.contains("LOTUS")) {
@@ -82,7 +82,7 @@ class _PosAppBarState extends State<PosAppBar> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -93,15 +93,15 @@ class _PosAppBarState extends State<PosAppBar> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ── 1. Animated Back Button ──────────────────────────────────────
+            // â”€â”€ 1. Animated Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _HoverBackButton(onTap: widget.onBack),
             const SizedBox(width: 18),
 
-            // ── 2. Vertical Divider ──────────────────────────────────────────
+            // â”€â”€ 2. Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _buildVerticalDivider(),
             const SizedBox(width: 18),
 
-            // ── 3. Premium Gradient Module Icon (For New Sales) ──────────────
+            // â”€â”€ 3. Premium Gradient Module Icon (For New Sales) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Container(
               width: 34,
               height: 34,
@@ -117,7 +117,7 @@ class _PosAppBarState extends State<PosAppBar> {
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: SalesPosColors.brandGold.withOpacity(0.5),
+                    color: SalesPosColors.brandGold.withValues(alpha: 0.5),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   )
@@ -132,20 +132,21 @@ class _PosAppBarState extends State<PosAppBar> {
             ),
             const SizedBox(width: 14),
 
-            // ── 4. Perfectly Aligned Main Title ──────────────────────────────
+            // â”€â”€ 4. Perfectly Aligned Main Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (_shopDisplayName.isNotEmpty) ...[
               Text(
                 _shopDisplayName.toUpperCase(),
                 style: SalesPosStyles.headerTitle.copyWith(
                   fontSize: 14,
-                  color: SalesPosStyles.headerTitle.color?.withOpacity(0.8) ??
+                  color: SalesPosStyles.headerTitle.color
+                          ?.withValues(alpha: 0.8) ??
                       Colors.white70,
                 ),
               ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 10.0),
                 child: Text(
-                  "•",
+                  "â€¢",
                   style:
                       TextStyle(color: SalesPosColors.brandGold, fontSize: 18),
                 ),
@@ -160,7 +161,7 @@ class _PosAppBarState extends State<PosAppBar> {
             // Spacer pushes the radar widget to the far right side
             const Spacer(),
 
-            // ── 5. System Online Radar Badge ─────────────────────────────────
+            // â”€â”€ 5. System Online Radar Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             const RadarStatusWidget(),
           ],
         ),
@@ -187,9 +188,9 @@ class _PosAppBarState extends State<PosAppBar> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // HOVER BACK BUTTON
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
   const _HoverBackButton({required this.onTap});
@@ -220,7 +221,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
             decoration: BoxDecoration(
               color: _isHovered
                   ? SalesPosColors.shellBg
-                  : SalesPosColors.shellBorder.withOpacity(0.3),
+                  : SalesPosColors.shellBorder.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isHovered
@@ -231,7 +232,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               boxShadow: _isHovered
                   ? [
                       BoxShadow(
-                        color: SalesPosColors.brandGold.withOpacity(0.25),
+                        color: SalesPosColors.brandGold.withValues(alpha: 0.25),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
                       )
@@ -252,9 +253,9 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // RADAR STATUS (Updated to Match the Premium Pill Shape exactly)
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class RadarStatusWidget extends StatefulWidget {
   const RadarStatusWidget({super.key});
   @override
@@ -297,10 +298,10 @@ class _RadarStatusWidgetState extends State<RadarStatusWidget>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: SalesPosColors.onlineIndicator.withOpacity(0.08),
+        color: SalesPosColors.onlineIndicator.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(30), // Pill Shape
         border: Border.all(
-          color: SalesPosColors.onlineIndicator.withOpacity(0.3),
+          color: SalesPosColors.onlineIndicator.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -365,7 +366,7 @@ class _RadarStatusWidgetState extends State<RadarStatusWidget>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: SalesPosColors.onlineIndicator.withOpacity(0.5),
+                  color: SalesPosColors.onlineIndicator.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),

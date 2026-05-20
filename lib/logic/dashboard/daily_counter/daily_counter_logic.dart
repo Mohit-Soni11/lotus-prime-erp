@@ -34,7 +34,6 @@ import '../../../database/db/app_database.dart';
 import '../../../models/dashboard/daily_counter_model.dart';
 
 class DailyCounterLogic {
-
   final AppDatabase _db;
   DailyCounterLogic({AppDatabase? db}) : _db = db ?? AppDatabase();
 
@@ -55,38 +54,38 @@ class DailyCounterLogic {
   void _startWatching() {
     final now = DateTime.now();
     final todayStart = DateTime(now.year, now.month, now.day);
-    final todayEnd   = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
     // Watch BillItems (for metal sold)
     _subs.add(
       (_db.select(_db.billItems)).watch().listen(
-        (_) => _refresh(todayStart, todayEnd),
-        onError: (e) => debugPrint('❌ DailyCounter BillItems error: $e'),
-      ),
+            (_) => _refresh(todayStart, todayEnd),
+            onError: (e) => debugPrint('❌ DailyCounter BillItems error: $e'),
+          ),
     );
 
     // Watch StockItems (for metal bought/added today)
     _subs.add(
       (_db.select(_db.stockItems)).watch().listen(
-        (_) => _refresh(todayStart, todayEnd),
-        onError: (e) => debugPrint('❌ DailyCounter StockItems error: $e'),
-      ),
+            (_) => _refresh(todayStart, todayEnd),
+            onError: (e) => debugPrint('❌ DailyCounter StockItems error: $e'),
+          ),
     );
 
     // Watch Bills (for new due)
     _subs.add(
       (_db.select(_db.bills)).watch().listen(
-        (_) => _refresh(todayStart, todayEnd),
-        onError: (e) => debugPrint('❌ DailyCounter Bills error: $e'),
-      ),
+            (_) => _refresh(todayStart, todayEnd),
+            onError: (e) => debugPrint('❌ DailyCounter Bills error: $e'),
+          ),
     );
 
     // Watch Loans (for new girvi)
     _subs.add(
       (_db.select(_db.loans)).watch().listen(
-        (_) => _refresh(todayStart, todayEnd),
-        onError: (e) => debugPrint('❌ DailyCounter Loans error: $e'),
-      ),
+            (_) => _refresh(todayStart, todayEnd),
+            onError: (e) => debugPrint('❌ DailyCounter Loans error: $e'),
+          ),
     );
 
     // First fetch immediately
@@ -103,12 +102,12 @@ class DailyCounterLogic {
         _fetchFinanceDue(todayStart, todayEnd),
       ]);
 
-      final now    = DateTime.now();
-      final fmt    = DateFormat('MMM dd, yyyy');
-      final model  = DailyCounterModel(
-        dateStr:       fmt.format(now),
+      final now = DateTime.now();
+      final fmt = DateFormat('MMM dd, yyyy');
+      final model = DailyCounterModel(
+        dateStr: fmt.format(now),
         metalMovement: results[0] as MetalMovementData,
-        financeDue:    results[1] as FinanceDueData,
+        financeDue: results[1] as FinanceDueData,
       );
 
       if (!_controller.isClosed) _controller.add(model);
@@ -126,25 +125,26 @@ class DailyCounterLogic {
   // METAL MOVEMENT
   // ==========================================
   Future<MetalMovementData> _fetchMetalMovement(
-    DateTime todayStart, DateTime todayEnd,
+    DateTime todayStart,
+    DateTime todayEnd,
   ) async {
     // Aaj ke active bills fetch karo
     final todayBills = await (_db.select(_db.bills)
-      ..where((t) => t.billDate.isBiggerOrEqualValue(todayStart))
-      ..where((t) => t.billDate.isSmallerOrEqualValue(todayEnd))
-      ..where((t) => t.status.equals('ACTIVE'))
-    ).get();
+          ..where((t) => t.billDate.isBiggerOrEqualValue(todayStart))
+          ..where((t) => t.billDate.isSmallerOrEqualValue(todayEnd))
+          ..where((t) => t.status.equals('ACTIVE')))
+        .get();
 
     final todayBillIds = todayBills.map((b) => b.id).toList();
 
-    double soldGoldWt  = 0, soldSilverWt  = 0;
-    int    soldGoldPcs = 0, soldSilverPcs = 0;
+    double soldGoldWt = 0, soldSilverWt = 0;
+    int soldGoldPcs = 0, soldSilverPcs = 0;
 
     if (todayBillIds.isNotEmpty) {
       // BillItems from today's bills
       final billItems = await (_db.select(_db.billItems)
-        ..where((t) => t.billId.isIn(todayBillIds))
-      ).get();
+            ..where((t) => t.billId.isIn(todayBillIds)))
+          .get();
 
       for (final item in billItems) {
         final purity = item.purity.toUpperCase();
@@ -158,14 +158,14 @@ class DailyCounterLogic {
             purity.contains('SILVER');
 
         if (isGold) {
-          soldGoldWt  += item.grossWeight;
+          soldGoldWt += item.grossWeight;
           soldGoldPcs += 1;
         } else if (isSilver) {
-          soldSilverWt  += item.grossWeight;
+          soldSilverWt += item.grossWeight;
           soldSilverPcs += 1;
         } else {
           // Default: gold maan lo
-          soldGoldWt  += item.grossWeight;
+          soldGoldWt += item.grossWeight;
           soldGoldPcs += 1;
         }
       }
@@ -173,29 +173,29 @@ class DailyCounterLogic {
 
     // Metal Bought — StockItems aaj create kiye gaye
     final todayStock = await (_db.select(_db.stockItems)
-      ..where((t) => t.createdAt.isBiggerOrEqualValue(todayStart))
-      ..where((t) => t.createdAt.isSmallerOrEqualValue(todayEnd))
-    ).get();
+          ..where((t) => t.createdAt.isBiggerOrEqualValue(todayStart))
+          ..where((t) => t.createdAt.isSmallerOrEqualValue(todayEnd)))
+        .get();
 
-    double boughtGoldWt  = 0, boughtSilverWt  = 0;
-    int    boughtGoldPcs = 0, boughtSilverPcs = 0;
+    double boughtGoldWt = 0, boughtSilverWt = 0;
+    int boughtGoldPcs = 0, boughtSilverPcs = 0;
 
     for (final item in todayStock) {
       final metal = item.metalType.toUpperCase();
       if (metal.contains('GOLD')) {
-        boughtGoldWt  += item.grossWeight;
+        boughtGoldWt += item.grossWeight;
         boughtGoldPcs += item.quantity;
       } else if (metal.contains('SILVER')) {
-        boughtSilverWt  += item.grossWeight;
+        boughtSilverWt += item.grossWeight;
         boughtSilverPcs += item.quantity;
       }
     }
 
     return MetalMovementData(
-      soldGold:    _makeEntry(soldGoldWt,    soldGoldPcs),
-      soldSilver:  _makeEntry(soldSilverWt,  soldSilverPcs),
-      boughtGold:  _makeEntry(boughtGoldWt,  boughtGoldPcs),
-      boughtSilver:_makeEntry(boughtSilverWt,boughtSilverPcs),
+      soldGold: _makeEntry(soldGoldWt, soldGoldPcs),
+      soldSilver: _makeEntry(soldSilverWt, soldSilverPcs),
+      boughtGold: _makeEntry(boughtGoldWt, boughtGoldPcs),
+      boughtSilver: _makeEntry(boughtSilverWt, boughtSilverPcs),
     );
   }
 
@@ -203,21 +203,22 @@ class DailyCounterLogic {
   // FINANCE & DUE
   // ==========================================
   Future<FinanceDueData> _fetchFinanceDue(
-    DateTime todayStart, DateTime todayEnd,
+    DateTime todayStart,
+    DateTime todayEnd,
   ) async {
     // New Due — aaj ke bills jinka payment pending hai
     final todayBills = await (_db.select(_db.bills)
-      ..where((t) => t.billDate.isBiggerOrEqualValue(todayStart))
-      ..where((t) => t.billDate.isSmallerOrEqualValue(todayEnd))
-      ..where((t) => t.status.equals('ACTIVE'))
-    ).get();
+          ..where((t) => t.billDate.isBiggerOrEqualValue(todayStart))
+          ..where((t) => t.billDate.isSmallerOrEqualValue(todayEnd))
+          ..where((t) => t.status.equals('ACTIVE')))
+        .get();
 
-    int    dueCustCount = 0;
-    double dueTotal     = 0;
+    int dueCustCount = 0;
+    double dueTotal = 0;
 
     for (final bill in todayBills) {
       final paid = bill.paidAmount;
-      final due  = bill.finalAmount - paid;
+      final due = bill.finalAmount - paid;
       if (due > 0) {
         dueCustCount++;
         dueTotal += due;
@@ -226,26 +227,27 @@ class DailyCounterLogic {
 
     // New Girvi/Loans — aaj create kiye
     final todayLoans = await (_db.select(_db.loans)
-      ..where((t) => t.startDate.isBiggerOrEqualValue(todayStart))
-      ..where((t) => t.startDate.isSmallerOrEqualValue(todayEnd))
-    ).get();
+          ..where((t) => t.startDate.isBiggerOrEqualValue(todayStart))
+          ..where((t) => t.startDate.isSmallerOrEqualValue(todayEnd)))
+        .get();
 
     final girviCount = todayLoans.length;
     final girviTotal = todayLoans.fold<double>(
-      0, (sum, l) => sum + l.loanAmount,
+      0,
+      (sum, l) => sum + l.loanAmount,
     );
 
     return FinanceDueData(
-      dueCount:      dueCustCount == 0
+      dueCount: dueCustCount == 0
           ? '0 Customers'
           : '$dueCustCount Customer${dueCustCount > 1 ? 's' : ''}',
-      dueAmount:     _formatAmount(dueTotal),
-      girviCount:    girviCount == 0
+      dueAmount: _formatAmount(dueTotal),
+      girviCount: girviCount == 0
           ? '0 Loans'
           : '$girviCount New Loan${girviCount > 1 ? 's' : ''}',
-      girviAmount:   _formatAmount(girviTotal),
-      dueAmountRaw:  dueTotal,
-      girviAmountRaw:girviTotal,
+      girviAmount: _formatAmount(girviTotal),
+      dueAmountRaw: dueTotal,
+      girviAmountRaw: girviTotal,
     );
   }
 
@@ -273,7 +275,9 @@ class DailyCounterLogic {
   // CLEANUP
   // ==========================================
   void dispose() {
-    for (final s in _subs) s.cancel();
+    for (final s in _subs) {
+      s.cancel();
+    }
     _controller.close();
   }
 

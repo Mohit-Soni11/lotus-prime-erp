@@ -20,7 +20,7 @@ class BrandingStyles {
   static const double spaceFieldGap = 16.0;
   static const double spaceIconText = 12.0;
   static const double spaceBtnIconText = 6.0;
-  
+
   static const double dividerHeight = 40.0;
   static const double dividerThickness = 1.0;
   static const double desktopBreakpoint = 1000.0;
@@ -35,8 +35,10 @@ class BrandingStyles {
   // --- Paddings (Extracted from UI) ---
   static const EdgeInsets padPageBottom = EdgeInsets.only(bottom: 50.0);
   static const EdgeInsets padIconBg = EdgeInsets.all(8.0);
-  static const EdgeInsets padBtnPill = EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0);
-  static const EdgeInsets padInputInner = EdgeInsets.symmetric(horizontal: 16.0);
+  static const EdgeInsets padBtnPill =
+      EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0);
+  static const EdgeInsets padInputInner =
+      EdgeInsets.symmetric(horizontal: 16.0);
   static const EdgeInsets padCardInternal = EdgeInsets.all(24.0);
 
   // --- Text Sizes ---
@@ -59,52 +61,55 @@ class BrandingStyles {
 
   // --- 🚀 UPGRADE: Pre-Compiled TextStyles (Extracted GoogleFonts from UI) ---
   static TextStyle get textPageTitle => GoogleFonts.manrope(
-    fontSize: szPageTitle,
-    fontWeight: FontWeight.w800,
-    color: BrandingColors.textDark,
-    letterSpacing: -0.5,
-  );
+        fontSize: szPageTitle,
+        fontWeight: FontWeight.w800,
+        color: BrandingColors.textDark,
+        letterSpacing: -0.5,
+      );
 
   static TextStyle get textPageSub => GoogleFonts.inter(
-    fontSize: szPageSub,
-    color: BrandingColors.textMuted,
-  );
+        fontSize: szPageSub,
+        color: BrandingColors.textMuted,
+      );
 
   static TextStyle get textSectionTitle => GoogleFonts.manrope(
-    fontSize: szSectionTitle,
-    fontWeight: FontWeight.w700,
-    color: BrandingColors.textDark,
-  );
+        fontSize: szSectionTitle,
+        fontWeight: FontWeight.w700,
+        color: BrandingColors.textDark,
+      );
 
   static TextStyle get textBtnStatusLocked => GoogleFonts.inter(
-    fontSize: szBtnText,
-    fontWeight: FontWeight.w700,
-    color: BrandingColors.textMuted,
-  );
+        fontSize: szBtnText,
+        fontWeight: FontWeight.w700,
+        color: BrandingColors.textMuted,
+      );
 
   static TextStyle get textBtnStatusActive => GoogleFonts.inter(
-    fontSize: szBtnText,
-    fontWeight: FontWeight.w700,
-    color: BrandingColors.statusActiveText,
-  );
+        fontSize: szBtnText,
+        fontWeight: FontWeight.w700,
+        color: BrandingColors.statusActiveText,
+      );
 
   static TextStyle get textLabel => GoogleFonts.manrope(
-    fontSize: szFieldLabel,
-    fontWeight: FontWeight.w700,
-    color: BrandingColors.textBody,
-  );
+        fontSize: szFieldLabel,
+        fontWeight: FontWeight.w700,
+        color: BrandingColors.textBody,
+      );
 
-  static TextStyle textInput(bool isLink, Color? brandColor) => GoogleFonts.manrope(
-    fontSize: szFieldText,
-    fontWeight: FontWeight.w700,
-    color: isLink ? (brandColor ?? BrandingColors.textDark) : BrandingColors.textDark,
-    decoration: isLink ? TextDecoration.underline : TextDecoration.none,
-  );
+  static TextStyle textInput(bool isLink, Color? brandColor) =>
+      GoogleFonts.manrope(
+        fontSize: szFieldText,
+        fontWeight: FontWeight.w700,
+        color: isLink
+            ? (brandColor ?? BrandingColors.textDark)
+            : BrandingColors.textDark,
+        decoration: isLink ? TextDecoration.underline : TextDecoration.none,
+      );
 
   static TextStyle get textHint => GoogleFonts.inter(
-    color: BrandingColors.textHint,
-    fontSize: szFieldHint,
-  );
+        color: BrandingColors.textHint,
+        fontSize: szFieldHint,
+      );
 
   // --- Decorations ---
   static BoxDecoration cardDecoration = BoxDecoration(
@@ -125,25 +130,25 @@ class BrandingStyles {
       color: isLocked ? BrandingColors.inputBgLocked : BrandingColors.inputBg,
       borderRadius: BorderRadius.circular(rInput),
       border: Border.all(
-        color: BrandingColors.borderLight, 
+        color: BrandingColors.borderLight,
         width: 1,
       ),
     );
   }
-  
+
   static BoxDecoration activeInputDecoration = BoxDecoration(
-    color: BrandingColors.inputBg,
-    borderRadius: BorderRadius.circular(rInput),
-    border: Border.all(
-      color: BrandingColors.goldAccent,
-      width: 1.5,
-    ),
-    boxShadow: [
-      BoxShadow(
-        color: BrandingColors.goldAccentLight, // Fixed: Using pre-calculated opacity from colors
-        blurRadius: 8,
-        offset: const Offset(0, 2),
-      )
-    ]
-  );
+      color: BrandingColors.inputBg,
+      borderRadius: BorderRadius.circular(rInput),
+      border: Border.all(
+        color: BrandingColors.goldAccent,
+        width: 1.5,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: BrandingColors
+              .goldAccentLight, // Fixed: Using pre-calculated opacity from colors
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        )
+      ]);
 }

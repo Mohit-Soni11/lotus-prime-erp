@@ -33,14 +33,12 @@ class CustomerProfileAppBar extends StatelessWidget
       decoration: const BoxDecoration(
         color: CustomerProfileColors.shellPanelBg,
         border: Border(
-          bottom: BorderSide(
-              color: CustomerProfileColors.shellBorder, width: 1),
+          bottom:
+              BorderSide(color: CustomerProfileColors.shellBorder, width: 1),
         ),
         boxShadow: [
           BoxShadow(
-              color: Color(0x26000000),
-              blurRadius: 16,
-              offset: Offset(0, 4))
+              color: Color(0x26000000), blurRadius: 16, offset: Offset(0, 4))
         ],
       ),
       child: SafeArea(
@@ -116,8 +114,7 @@ class CustomerProfileAppBar extends StatelessWidget
 
   // ✅ FIXED: Yellow dot removed, icon changed to account_circle_rounded
   Widget _buildBadge(String name) => Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: CustomerProfileColors.shellBg,
           borderRadius: BorderRadius.circular(10),
@@ -146,9 +143,7 @@ class CustomerProfileAppBar extends StatelessWidget
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name.length > 15
-                      ? "${name.substring(0, 13)}..."
-                      : name,
+                  name.length > 15 ? "${name.substring(0, 13)}..." : name,
                   style: const TextStyle(
                     color: CustomerProfileColors.brandGold,
                     fontSize: 11,
@@ -294,8 +289,7 @@ class _RadarWidgetState extends State<_RadarWidget>
         ),
         const SizedBox(width: 8),
         Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
             color: const Color(0xFF10B981).withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(20),
@@ -326,8 +320,7 @@ class _RadarWidgetState extends State<_RadarWidget>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color:
-                        const Color(0xFF10B981).withValues(alpha: 0.5),
+                    color: const Color(0xFF10B981).withValues(alpha: 0.5),
                     width: 1.5,
                   ),
                 ),

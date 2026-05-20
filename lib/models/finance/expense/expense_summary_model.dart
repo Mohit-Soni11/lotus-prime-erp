@@ -16,8 +16,8 @@ class ExpenseCategoryBreakdown {
   final String label;
   final double amount;
   final String amountFormatted;
-  final double percentage;    // % of total expense
-  final int    count;
+  final double percentage; // % of total expense
+  final int count;
 
   const ExpenseCategoryBreakdown({
     required this.categoryDbValue,
@@ -35,7 +35,7 @@ class ExpensePaymentBreakdown {
   final String paymentModeLabel;
   final double amount;
   final String amountFormatted;
-  final int    count;
+  final int count;
 
   const ExpensePaymentBreakdown({
     required this.paymentModeLabel,
@@ -48,7 +48,6 @@ class ExpensePaymentBreakdown {
 // ── Main expense summary ──────────────────────────────────────────────────────
 
 class ExpenseSummaryModel {
-
   final double totalExpense;
   final String totalExpenseFormatted;
 
@@ -60,12 +59,12 @@ class ExpenseSummaryModel {
   final double highestSingleExpense;
   final String highestSingleFormatted;
 
-  final String topCategoryLabel;       // Top-spending category name
+  final String topCategoryLabel; // Top-spending category name
   final double topCategoryAmount;
   final String topCategoryFormatted;
 
   final List<ExpenseCategoryBreakdown> categoryBreakdown;
-  final List<ExpensePaymentBreakdown>  paymentBreakdown;
+  final List<ExpensePaymentBreakdown> paymentBreakdown;
 
   final bool isLoading;
 
@@ -89,44 +88,44 @@ class ExpenseSummaryModel {
 
   factory ExpenseSummaryModel.zero() {
     return const ExpenseSummaryModel(
-      totalExpense:           0.0,
-      totalExpenseFormatted:  '₹ 0.00',
-      dailyAverage:           0.0,
-      dailyAverageFormatted:  '₹ 0.00',
-      totalCount:             0,
-      highestSingleExpense:   0.0,
+      totalExpense: 0.0,
+      totalExpenseFormatted: '₹ 0.00',
+      dailyAverage: 0.0,
+      dailyAverageFormatted: '₹ 0.00',
+      totalCount: 0,
+      highestSingleExpense: 0.0,
       highestSingleFormatted: '₹ 0.00',
-      topCategoryLabel:       '—',
-      topCategoryAmount:      0.0,
-      topCategoryFormatted:   '₹ 0.00',
-      categoryBreakdown:      [],
-      paymentBreakdown:       [],
+      topCategoryLabel: '—',
+      topCategoryAmount: 0.0,
+      topCategoryFormatted: '₹ 0.00',
+      categoryBreakdown: [],
+      paymentBreakdown: [],
     );
   }
 
   factory ExpenseSummaryModel.loading() {
     return const ExpenseSummaryModel(
-      totalExpense:           0.0,
-      totalExpenseFormatted:  '—',
-      dailyAverage:           0.0,
-      dailyAverageFormatted:  '—',
-      totalCount:             0,
-      highestSingleExpense:   0.0,
+      totalExpense: 0.0,
+      totalExpenseFormatted: '—',
+      dailyAverage: 0.0,
+      dailyAverageFormatted: '—',
+      totalCount: 0,
+      highestSingleExpense: 0.0,
       highestSingleFormatted: '—',
-      topCategoryLabel:       '—',
-      topCategoryAmount:      0.0,
-      topCategoryFormatted:   '—',
-      categoryBreakdown:      [],
-      paymentBreakdown:       [],
-      isLoading:              true,
+      topCategoryLabel: '—',
+      topCategoryAmount: 0.0,
+      topCategoryFormatted: '—',
+      categoryBreakdown: [],
+      paymentBreakdown: [],
+      isLoading: true,
     );
   }
 
   // ── Formatter ─────────────────────────────────────────────────────────────
 
   static final _fmt = NumberFormat.currency(
-    locale:        'en_IN',
-    symbol:        '₹ ',
+    locale: 'en_IN',
+    symbol: '₹ ',
     decimalDigits: 2,
   );
 

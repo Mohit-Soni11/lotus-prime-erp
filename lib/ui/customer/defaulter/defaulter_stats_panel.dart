@@ -32,10 +32,10 @@ class DefaulterStatsPanel extends StatelessWidget {
           Expanded(
             child: _StatCard(
               isLoading: isLoading,
-              iconData:  DefaulterIcons.totalCount,
-              iconBg:    DefaulterColors.statTotalBg,
+              iconData: DefaulterIcons.totalCount,
+              iconBg: DefaulterColors.statTotalBg,
               iconColor: DefaulterColors.statTotalIcon,
-              label:     DefaulterStrings.statTotal,
+              label: DefaulterStrings.statTotal,
               valueWidget: _AnimatedCountText(
                 value: stats.totalDefaulters.toString(),
                 style: DefaulterStyles.statValue,
@@ -43,7 +43,7 @@ class DefaulterStatsPanel extends StatelessWidget {
               suffixText: DefaulterStrings.statSuffix,
               bottomRow: _RiskPills(
                 critical: stats.criticalCount,
-                high:     stats.highCount,
+                high: stats.highCount,
               ),
             ),
           ),
@@ -54,16 +54,16 @@ class DefaulterStatsPanel extends StatelessWidget {
           Expanded(
             child: _StatCard(
               isLoading: isLoading,
-              iconData:  DefaulterIcons.totalAmount,
-              iconBg:    DefaulterColors.statAmountBg,
+              iconData: DefaulterIcons.totalAmount,
+              iconBg: DefaulterColors.statAmountBg,
               iconColor: DefaulterColors.statAmountIcon,
-              label:     DefaulterStrings.statTotalDue,
+              label: DefaulterStrings.statTotalDue,
               valueWidget: _AnimatedCountText(
                 value: DefaulterLogic.formatAmountCompact(stats.totalAmountDue),
                 style: DefaulterStyles.statAmountValue,
               ),
               suffixText: null,
-              bottomRow: Text(
+              bottomRow: const Text(
                 'Principal + Interest',
                 style: DefaulterStyles.statSuffix,
               ),
@@ -76,10 +76,10 @@ class DefaulterStatsPanel extends StatelessWidget {
           Expanded(
             child: _StatCard(
               isLoading: isLoading,
-              iconData:  DefaulterIcons.criticalCount,
-              iconBg:    DefaulterColors.statCriticalBg,
+              iconData: DefaulterIcons.criticalCount,
+              iconBg: DefaulterColors.statCriticalBg,
               iconColor: DefaulterColors.statCriticalIcon,
-              label:     DefaulterStrings.statCritical,
+              label: DefaulterStrings.statCritical,
               valueWidget: _AnimatedCountText(
                 value: stats.criticalCount.toString(),
                 style: DefaulterStyles.statCriticalValue,
@@ -104,14 +104,14 @@ class DefaulterStatsPanel extends StatelessWidget {
 // ─────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
-  final bool      isLoading;
-  final IconData  iconData;
-  final Color     iconBg;
-  final Color     iconColor;
-  final String    label;
-  final Widget    valueWidget;
-  final String?   suffixText;
-  final Widget    bottomRow;
+  final bool isLoading;
+  final IconData iconData;
+  final Color iconBg;
+  final Color iconColor;
+  final String label;
+  final Widget valueWidget;
+  final String? suffixText;
+  final Widget bottomRow;
 
   const _StatCard({
     required this.isLoading,
@@ -145,7 +145,7 @@ class _StatCard extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color:        iconBg,
+                color: iconBg,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(iconData, color: iconColor, size: 18),
@@ -189,7 +189,7 @@ class _StatCard extends StatelessWidget {
 
   Widget _buildShimmer() {
     return Shimmer.fromColors(
-      baseColor:      Colors.grey.shade200,
+      baseColor: Colors.grey.shade200,
       highlightColor: Colors.grey.shade100,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,9 +205,9 @@ class _StatCard extends StatelessWidget {
   }
 
   static BoxDecoration get _shimmerBox => BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(4),
-  );
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4),
+      );
 }
 
 // ─────────────────────────────────────────
@@ -215,7 +215,7 @@ class _StatCard extends StatelessWidget {
 // ─────────────────────────────────────────
 
 class _AnimatedCountText extends StatelessWidget {
-  final String    value;
+  final String value;
   final TextStyle style;
 
   const _AnimatedCountText({required this.value, required this.style});
@@ -224,7 +224,7 @@ class _AnimatedCountText extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 500),
-      switchInCurve:  Curves.elasticOut,
+      switchInCurve: Curves.elasticOut,
       switchOutCurve: Curves.easeIn,
       transitionBuilder: (child, anim) =>
           ScaleTransition(scale: anim, child: child),
@@ -255,17 +255,17 @@ class _RiskPills extends StatelessWidget {
           _pill(
             label: '$critical Critical',
             color: DefaulterColors.riskCriticalText,
-            bg:    DefaulterColors.riskCriticalBg,
+            bg: DefaulterColors.riskCriticalBg,
           ),
         if (critical > 0 && high > 0) const SizedBox(width: 6),
         if (high > 0)
           _pill(
             label: '$high High',
             color: DefaulterColors.riskHighText,
-            bg:    DefaulterColors.riskHighBg,
+            bg: DefaulterColors.riskHighBg,
           ),
         if (critical == 0 && high == 0)
-          Text('All manageable', style: DefaulterStyles.statSuffix),
+          const Text('All manageable', style: DefaulterStyles.statSuffix),
       ],
     );
   }
@@ -278,15 +278,15 @@ class _RiskPills extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color:        bg,
+        color: bg,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         label,
         style: TextStyle(
-          fontSize:   10,
+          fontSize: 10,
           fontWeight: FontWeight.w700,
-          color:      color,
+          color: color,
         ),
       ),
     );

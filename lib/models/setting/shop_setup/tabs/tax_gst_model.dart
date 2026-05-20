@@ -61,10 +61,15 @@ class TaxGstModel {
   }
 
   TaxGstModel copyWith({
-    String? gstin, String? legalName, String? regDate,
-    TaxpayerType? taxpayerType, String? bisLicenseNo,
-    String? bisValidFrom, String? bisValidUpto,
-    String? gstCertPath, String? bisLicensePath,
+    String? gstin,
+    String? legalName,
+    String? regDate,
+    TaxpayerType? taxpayerType,
+    String? bisLicenseNo,
+    String? bisValidFrom,
+    String? bisValidUpto,
+    String? gstCertPath,
+    String? bisLicensePath,
   }) {
     return TaxGstModel(
       gstin: gstin ?? this.gstin,
@@ -83,23 +88,20 @@ class TaxGstModel {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     return other is TaxGstModel &&
-      other.gstin == gstin &&
-      other.legalName == legalName &&
-      other.regDate == regDate &&
-      other.taxpayerType == taxpayerType &&
-      other.bisLicenseNo == bisLicenseNo &&
-      other.bisValidFrom == bisValidFrom &&
-      other.bisValidUpto == bisValidUpto &&
-      other.gstCertPath == gstCertPath &&
-      other.bisLicensePath == bisLicensePath;
+        other.gstin == gstin &&
+        other.legalName == legalName &&
+        other.regDate == regDate &&
+        other.taxpayerType == taxpayerType &&
+        other.bisLicenseNo == bisLicenseNo &&
+        other.bisValidFrom == bisValidFrom &&
+        other.bisValidUpto == bisValidUpto &&
+        other.gstCertPath == gstCertPath &&
+        other.bisLicensePath == bisLicensePath;
   }
 
   @override
   int get hashCode {
-    return Object.hash(
-      gstin, legalName, regDate, taxpayerType, 
-      bisLicenseNo, bisValidFrom, bisValidUpto, 
-      gstCertPath, bisLicensePath
-    );
+    return Object.hash(gstin, legalName, regDate, taxpayerType, bisLicenseNo,
+        bisValidFrom, bisValidUpto, gstCertPath, bisLicensePath);
   }
 }

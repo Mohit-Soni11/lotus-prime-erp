@@ -283,7 +283,7 @@ class _AddStockScreenState extends State<AddStockScreen> {
                 _ctrl.resetForNewBatch();
               },
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: ui.accent.withOpacity(0.32)),
+                side: BorderSide(color: ui.accent.withValues(alpha: 0.32)),
               ),
               child: Text(
                 AddStockStrings.btnNewBatch,

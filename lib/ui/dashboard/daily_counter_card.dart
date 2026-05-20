@@ -5,26 +5,26 @@
 // DESCRIPTION : Aaj ka poora counter activity ek premium dark card mein.
 //
 //               LAYOUT:
-//               ┌────────────────────────────────────────────────┐
-//               │ 📊 DAILY COUNTER ACTIVITY      Dec 17, 2025    │
-//               │ ─────────────────────────────────────────────  │
-//               │  ┌────────────────────────┐ ┌───────────────┐  │
-//               │  │  METAL MOVEMENT        │ │ FINANCE & DUE │  │
-//               │  │  ┌────────┐ ┌────────┐ │ │ ┌───┐  ┌───┐ │  │
-//               │  │  │ SOLD ✅│ │BOUGHT🛍│ │ │ │DUE│  │GRV│ │  │
-//               │  │  │GOLD    │ │OLD GOLD│ │ │ │   │  │   │ │  │
-//               │  │  │SILVER  │ │O.SILVER│ │ │ └───┘  └───┘ │  │
-//               │  │  └────────┘ └────────┘ │ └───────────────┘  │
-//               │  └────────────────────────┘                     │
-//               └────────────────────────────────────────────────┘
+//               â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//               â”‚ ðŸ“Š DAILY COUNTER ACTIVITY      Dec 17, 2025    â”‚
+//               â”‚ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  â”‚
+//               â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚
+//               â”‚  â”‚  METAL MOVEMENT        â”‚ â”‚ FINANCE & DUE â”‚  â”‚
+//               â”‚  â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â” â”‚ â”‚ â”Œâ”€â”€â”€â”  â”Œâ”€â”€â”€â” â”‚  â”‚
+//               â”‚  â”‚  â”‚ SOLD âœ…â”‚ â”‚BOUGHTðŸ›â”‚ â”‚ â”‚ â”‚DUEâ”‚  â”‚GRVâ”‚ â”‚  â”‚
+//               â”‚  â”‚  â”‚GOLD    â”‚ â”‚OLD GOLDâ”‚ â”‚ â”‚ â”‚   â”‚  â”‚   â”‚ â”‚  â”‚
+//               â”‚  â”‚  â”‚SILVER  â”‚ â”‚O.SILVERâ”‚ â”‚ â”‚ â””â”€â”€â”€â”˜  â””â”€â”€â”€â”˜ â”‚  â”‚
+//               â”‚  â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â”‚ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚
+//               â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜                     â”‚
+//               â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
 //               ANIMATIONS:
-//               • Card entry — slide + fade
-//               • Group containers — staggered entry (100ms gap)
-//               • Inner boxes — scale entry
-//               • Amount — AnimatedSwitcher on data change
-//               • Header gold shimmer effect
-//               • Shimmer loading state
+//               â€¢ Card entry â€” slide + fade
+//               â€¢ Group containers â€” staggered entry (100ms gap)
+//               â€¢ Inner boxes â€” scale entry
+//               â€¢ Amount â€” AnimatedSwitcher on data change
+//               â€¢ Header gold shimmer effect
+//               â€¢ Shimmer loading state
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -43,18 +43,17 @@ class DailyCounterCard extends StatefulWidget {
 
 class _DailyCounterCardState extends State<DailyCounterCard>
     with TickerProviderStateMixin {
-
   late final DailyCounterLogic _logic;
 
   // Card entry animation
   late final AnimationController _cardCtrl;
-  late final Animation<double>   _cardSlide;
-  late final Animation<double>   _cardFade;
+  late final Animation<double> _cardSlide;
+  late final Animation<double> _cardFade;
 
-  // Group staggered entry — 2 groups
+  // Group staggered entry â€” 2 groups
   late final List<AnimationController> _groupCtrl;
-  late final List<Animation<double>>   _groupScale;
-  late final List<Animation<double>>   _groupFade;
+  late final List<Animation<double>> _groupScale;
+  late final List<Animation<double>> _groupFade;
 
   @override
   void initState() {
@@ -64,21 +63,25 @@ class _DailyCounterCardState extends State<DailyCounterCard>
 
     // Card entry
     _cardCtrl = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 500));
+        vsync: this, duration: const Duration(milliseconds: 500));
     _cardSlide = Tween<double>(begin: 20.0, end: 0.0).animate(
-      CurvedAnimation(parent: _cardCtrl, curve: Curves.easeOutCubic));
-    _cardFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _cardCtrl, curve: Curves.easeOut));
+        CurvedAnimation(parent: _cardCtrl, curve: Curves.easeOutCubic));
+    _cardFade = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(CurvedAnimation(parent: _cardCtrl, curve: Curves.easeOut));
 
     // Group staggered
-    _groupCtrl = List.generate(2, (_) => AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 450)));
-    _groupScale = _groupCtrl.map((c) =>
-      Tween<double>(begin: 0.94, end: 1.0).animate(
-        CurvedAnimation(parent: c, curve: Curves.easeOutBack))).toList();
-    _groupFade = _groupCtrl.map((c) =>
-      Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: c, curve: Curves.easeOut))).toList();
+    _groupCtrl = List.generate(
+        2,
+        (_) => AnimationController(
+            vsync: this, duration: const Duration(milliseconds: 450)));
+    _groupScale = _groupCtrl
+        .map((c) => Tween<double>(begin: 0.94, end: 1.0)
+            .animate(CurvedAnimation(parent: c, curve: Curves.easeOutBack)))
+        .toList();
+    _groupFade = _groupCtrl
+        .map((c) => Tween<double>(begin: 0.0, end: 1.0)
+            .animate(CurvedAnimation(parent: c, curve: Curves.easeOut)))
+        .toList();
 
     _playEntries();
   }
@@ -96,7 +99,9 @@ class _DailyCounterCardState extends State<DailyCounterCard>
   void dispose() {
     _logic.dispose();
     _cardCtrl.dispose();
-    for (final c in _groupCtrl) c.dispose();
+    for (final c in _groupCtrl) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -114,7 +119,8 @@ class _DailyCounterCardState extends State<DailyCounterCard>
       child: Container(
         decoration: DailyCounterStyles.cardDecoration,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(DailyCounterStyles.cardBorderRadius),
+          borderRadius:
+              BorderRadius.circular(DailyCounterStyles.cardBorderRadius),
           child: Stack(children: [
             // Ambient glows
             const Positioned.fill(child: _AmbientGlows()),
@@ -145,7 +151,7 @@ class _DailyCounterCardState extends State<DailyCounterCard>
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ── HEADER ───────────────────────────────────────────────────────
+        // â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         _buildHeader(data.dateStr),
 
         const SizedBox(height: 6),
@@ -154,12 +160,13 @@ class _DailyCounterCardState extends State<DailyCounterCard>
         ShaderMask(
           shaderCallback: (b) =>
               DailyCounterColors.goldGradient.createShader(b),
-          child: Container(height: 1, color: Colors.white.withOpacity(0.3)),
+          child:
+              Container(height: 1, color: Colors.white.withValues(alpha: 0.3)),
         ),
 
         const SizedBox(height: 16),
 
-        // ── TWO GROUP CONTAINERS ──────────────────────────────────────────
+        // â”€â”€ TWO GROUP CONTAINERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         LayoutBuilder(
           builder: (context, constraints) {
             final isNarrow = constraints.maxWidth < 600;
@@ -173,9 +180,13 @@ class _DailyCounterCardState extends State<DailyCounterCard>
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: _animatedGroup(0, _buildMetalMovementGroup(data.metalMovement))),
+                Expanded(
+                    child: _animatedGroup(
+                        0, _buildMetalMovementGroup(data.metalMovement))),
                 const SizedBox(width: 14),
-                Expanded(child: _animatedGroup(1, _buildFinanceDueGroup(data.financeDue))),
+                Expanded(
+                    child: _animatedGroup(
+                        1, _buildFinanceDueGroup(data.financeDue))),
               ],
             );
           },
@@ -184,25 +195,26 @@ class _DailyCounterCardState extends State<DailyCounterCard>
     );
   }
 
-  // ── HEADER ────────────────────────────────────────────────────────────────
+  // â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildHeader(String dateStr) {
     return Row(
       children: [
         // Gold icon container
         Container(
-          width: 36, height: 36,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
-            color: DailyCounterColors.accentGold.withOpacity(0.12),
+            color: DailyCounterColors.accentGold.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: DailyCounterColors.accentGold.withOpacity(0.25)),
+                color: DailyCounterColors.accentGold.withValues(alpha: 0.25)),
           ),
           child: Center(
             child: ShaderMask(
               shaderCallback: (b) =>
                   DailyCounterColors.goldGradient.createShader(b),
               child: const Icon(DailyCounterIcons.header,
-                size: 18, color: Colors.white),
+                  size: 18, color: Colors.white),
             ),
           ),
         ),
@@ -213,7 +225,7 @@ class _DailyCounterCardState extends State<DailyCounterCard>
           shaderCallback: (b) =>
               DailyCounterColors.goldGradient.createShader(b),
           child: const Text('DAILY COUNTER ACTIVITY',
-            style: DailyCounterStyles.headerStyle),
+              style: DailyCounterStyles.headerStyle),
         ),
 
         const Spacer(),
@@ -222,9 +234,9 @@ class _DailyCounterCardState extends State<DailyCounterCard>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.06),
+            color: Colors.white.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
           child: Text(dateStr, style: DailyCounterStyles.dateStyle),
         ),
@@ -232,7 +244,7 @@ class _DailyCounterCardState extends State<DailyCounterCard>
     );
   }
 
-  // ── GROUP ANIMATION WRAPPER ───────────────────────────────────────────────
+  // â”€â”€ GROUP ANIMATION WRAPPER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _animatedGroup(int i, Widget child) {
     return AnimatedBuilder(
       animation: _groupCtrl[i],
@@ -245,7 +257,7 @@ class _DailyCounterCardState extends State<DailyCounterCard>
   }
 
   // ==========================================
-  // GROUP 1 — METAL MOVEMENT
+  // GROUP 1 â€” METAL MOVEMENT
   // ==========================================
   Widget _buildMetalMovementGroup(MetalMovementData data) {
     return Container(
@@ -255,12 +267,12 @@ class _DailyCounterCardState extends State<DailyCounterCard>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Group header
-          Row(children: [
+          const Row(children: [
             Icon(DailyCounterIcons.metalMovement,
-              size: 14, color: DailyCounterColors.textMuted),
-            const SizedBox(width: 6),
-            const Text('METAL MOVEMENT (Today)',
-              style: DailyCounterStyles.groupTitleStyle),
+                size: 14, color: DailyCounterColors.textMuted),
+            SizedBox(width: 6),
+            Text('METAL MOVEMENT (Today)',
+                style: DailyCounterStyles.groupTitleStyle),
           ]),
 
           const SizedBox(height: 12),
@@ -293,9 +305,10 @@ class _DailyCounterCardState extends State<DailyCounterCard>
                 DailyCounterColors.soldIconBg,
                 DailyCounterColors.soldAccent,
               ),
-              child: Center(child: Icon(DailyCounterIcons.sold,
-                size: DailyCounterStyles.iconSize,
-                color: DailyCounterColors.soldAccent)),
+              child: const Center(
+                  child: Icon(DailyCounterIcons.sold,
+                      size: DailyCounterStyles.iconSize,
+                      color: DailyCounterColors.soldAccent)),
             ),
             const SizedBox(width: 8),
             const Text('SOLD', style: DailyCounterStyles.boxTitleStyle),
@@ -304,20 +317,20 @@ class _DailyCounterCardState extends State<DailyCounterCard>
           const SizedBox(height: 10),
 
           // Divider
-          Divider(height: 1,
-            color: DailyCounterColors.soldAccent.withOpacity(0.25)),
+          Divider(
+              height: 1,
+              color: DailyCounterColors.soldAccent.withValues(alpha: 0.25)),
 
           const SizedBox(height: 10),
 
           // Gold row
-          _metalRow('GOLD',
-            data.soldGold.weightStr, data.soldGold.piecesStr),
+          _metalRow('GOLD', data.soldGold.weightStr, data.soldGold.piecesStr),
 
           const SizedBox(height: 8),
 
           // Silver row
-          _metalRow('SILVER',
-            data.soldSilver.weightStr, data.soldSilver.piecesStr),
+          _metalRow(
+              'SILVER', data.soldSilver.weightStr, data.soldSilver.piecesStr),
         ],
       ),
     );
@@ -340,9 +353,10 @@ class _DailyCounterCardState extends State<DailyCounterCard>
                 DailyCounterColors.boughtIconBg,
                 DailyCounterColors.boughtAccent,
               ),
-              child: Center(child: Icon(DailyCounterIcons.bought,
-                size: DailyCounterStyles.iconSize,
-                color: DailyCounterColors.boughtAccent)),
+              child: const Center(
+                  child: Icon(DailyCounterIcons.bought,
+                      size: DailyCounterStyles.iconSize,
+                      color: DailyCounterColors.boughtAccent)),
             ),
             const SizedBox(width: 8),
             const Text('BOUGHT', style: DailyCounterStyles.boxTitleStyle),
@@ -350,18 +364,19 @@ class _DailyCounterCardState extends State<DailyCounterCard>
 
           const SizedBox(height: 10),
 
-          Divider(height: 1,
-            color: DailyCounterColors.boughtAccent.withOpacity(0.25)),
+          Divider(
+              height: 1,
+              color: DailyCounterColors.boughtAccent.withValues(alpha: 0.25)),
 
           const SizedBox(height: 10),
 
-          _metalRow('OLD GOLD',
-            data.boughtGold.weightStr, data.boughtGold.piecesStr),
+          _metalRow(
+              'OLD GOLD', data.boughtGold.weightStr, data.boughtGold.piecesStr),
 
           const SizedBox(height: 8),
 
-          _metalRow('OLD SILVER',
-            data.boughtSilver.weightStr, data.boughtSilver.piecesStr),
+          _metalRow('OLD SILVER', data.boughtSilver.weightStr,
+              data.boughtSilver.piecesStr),
         ],
       ),
     );
@@ -378,14 +393,14 @@ class _DailyCounterCardState extends State<DailyCounterCard>
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 400),
             child: Text(weight,
-              key: ValueKey(weight),
-              style: DailyCounterStyles.metalValueStyle),
+                key: ValueKey(weight),
+                style: DailyCounterStyles.metalValueStyle),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Text('|',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.2), fontSize: 12)),
+                style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.2), fontSize: 12)),
           ),
           Text(pieces, style: DailyCounterStyles.metalPiecesStyle),
         ]),
@@ -394,7 +409,7 @@ class _DailyCounterCardState extends State<DailyCounterCard>
   }
 
   // ==========================================
-  // GROUP 2 — FINANCE & DUE
+  // GROUP 2 â€” FINANCE & DUE
   // ==========================================
   Widget _buildFinanceDueGroup(FinanceDueData data) {
     return Container(
@@ -404,12 +419,12 @@ class _DailyCounterCardState extends State<DailyCounterCard>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Group header
-          Row(children: [
+          const Row(children: [
             Icon(DailyCounterIcons.financeDue,
-              size: 14, color: DailyCounterColors.textMuted),
-            const SizedBox(width: 6),
-            const Text('FINANCE & DUE (Today)',
-              style: DailyCounterStyles.groupTitleStyle),
+                size: 14, color: DailyCounterColors.textMuted),
+            SizedBox(width: 6),
+            Text('FINANCE & DUE (Today)',
+                style: DailyCounterStyles.groupTitleStyle),
           ]),
 
           const SizedBox(height: 12),
@@ -441,29 +456,31 @@ class _DailyCounterCardState extends State<DailyCounterCard>
                 DailyCounterColors.dueIconBg,
                 DailyCounterColors.dueAccent,
               ),
-              child: Center(child: Icon(DailyCounterIcons.due,
-                size: DailyCounterStyles.iconSize,
-                color: DailyCounterColors.dueAccent)),
+              child: const Center(
+                  child: Icon(DailyCounterIcons.due,
+                      size: DailyCounterStyles.iconSize,
+                      color: DailyCounterColors.dueAccent)),
             ),
             const SizedBox(width: 8),
             const Flexible(
-              child: Text('NEW DUE',
-                style: DailyCounterStyles.boxTitleStyle,
-                overflow: TextOverflow.ellipsis)),
+                child: Text('NEW DUE',
+                    style: DailyCounterStyles.boxTitleStyle,
+                    overflow: TextOverflow.ellipsis)),
           ]),
 
           const SizedBox(height: 10),
 
-          Divider(height: 1,
-            color: DailyCounterColors.dueAccent.withOpacity(0.25)),
+          Divider(
+              height: 1,
+              color: DailyCounterColors.dueAccent.withValues(alpha: 0.25)),
 
           const SizedBox(height: 10),
 
           // Count row with big icon
           Row(children: [
-            Icon(DailyCounterIcons.duePeople,
-              size: DailyCounterStyles.bigIconSize,
-              color: DailyCounterColors.dueAccent),
+            const Icon(DailyCounterIcons.duePeople,
+                size: DailyCounterStyles.bigIconSize,
+                color: DailyCounterColors.dueAccent),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -472,8 +489,8 @@ class _DailyCounterCardState extends State<DailyCounterCard>
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 400),
                     child: Text(data.dueCount,
-                      key: ValueKey(data.dueCount),
-                      style: DailyCounterStyles.bigCountStyle),
+                        key: ValueKey(data.dueCount),
+                        style: DailyCounterStyles.bigCountStyle),
                   ),
                   const Text('Active', style: DailyCounterStyles.subLabelStyle),
                 ],
@@ -487,19 +504,19 @@ class _DailyCounterCardState extends State<DailyCounterCard>
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: DailyCounterStyles.amountPill(
-              DailyCounterColors.dueAccent),
+            decoration:
+                DailyCounterStyles.amountPill(DailyCounterColors.dueAccent),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(DailyCounterIcons.rupee,
-                  size: 14, color: DailyCounterColors.dueAccent),
+                const Icon(DailyCounterIcons.rupee,
+                    size: 14, color: DailyCounterColors.dueAccent),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 400),
                   child: Text(data.dueAmount,
-                    key: ValueKey(data.dueAmount),
-                    style: DailyCounterStyles.amountStyle(
-                      DailyCounterColors.dueAccent)),
+                      key: ValueKey(data.dueAmount),
+                      style: DailyCounterStyles.amountStyle(
+                          DailyCounterColors.dueAccent)),
                 ),
               ],
             ),
@@ -525,28 +542,26 @@ class _DailyCounterCardState extends State<DailyCounterCard>
                 DailyCounterColors.girviIconBg,
                 DailyCounterColors.girviAccent,
               ),
-              child: Center(child: Icon(DailyCounterIcons.girvi,
-                size: DailyCounterStyles.iconSize,
-                color: DailyCounterColors.girviAccent)),
+              child: const Center(
+                  child: Icon(DailyCounterIcons.girvi,
+                      size: DailyCounterStyles.iconSize,
+                      color: DailyCounterColors.girviAccent)),
             ),
             const SizedBox(width: 8),
             const Flexible(
-              child: Text('GIRVI',
-                style: DailyCounterStyles.boxTitleStyle,
-                overflow: TextOverflow.ellipsis)),
+                child: Text('GIRVI',
+                    style: DailyCounterStyles.boxTitleStyle,
+                    overflow: TextOverflow.ellipsis)),
           ]),
-
           const SizedBox(height: 10),
-
-          Divider(height: 1,
-            color: DailyCounterColors.girviAccent.withOpacity(0.25)),
-
+          Divider(
+              height: 1,
+              color: DailyCounterColors.girviAccent.withValues(alpha: 0.25)),
           const SizedBox(height: 10),
-
           Row(children: [
-            Icon(DailyCounterIcons.girviWallet,
-              size: DailyCounterStyles.bigIconSize,
-              color: DailyCounterColors.girviAccent),
+            const Icon(DailyCounterIcons.girviWallet,
+                size: DailyCounterStyles.bigIconSize,
+                color: DailyCounterColors.girviAccent),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -555,34 +570,32 @@ class _DailyCounterCardState extends State<DailyCounterCard>
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 400),
                     child: Text(data.girviCount,
-                      key: ValueKey(data.girviCount),
-                      style: DailyCounterStyles.bigCountStyle),
+                        key: ValueKey(data.girviCount),
+                        style: DailyCounterStyles.bigCountStyle),
                   ),
                   const Text('Disbursed',
-                    style: DailyCounterStyles.subLabelStyle),
+                      style: DailyCounterStyles.subLabelStyle),
                 ],
               ),
             ),
           ]),
-
           const SizedBox(height: 10),
-
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: DailyCounterStyles.amountPill(
-              DailyCounterColors.girviAccent),
+            decoration:
+                DailyCounterStyles.amountPill(DailyCounterColors.girviAccent),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(DailyCounterIcons.rupee,
-                  size: 14, color: DailyCounterColors.girviAccent),
+                const Icon(DailyCounterIcons.rupee,
+                    size: 14, color: DailyCounterColors.girviAccent),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 400),
                   child: Text(data.girviAmount,
-                    key: ValueKey(data.girviAmount),
-                    style: DailyCounterStyles.amountStyle(
-                      DailyCounterColors.girviAccent)),
+                      key: ValueKey(data.girviAmount),
+                      style: DailyCounterStyles.amountStyle(
+                          DailyCounterColors.girviAccent)),
                 ),
               ],
             ),
@@ -634,7 +647,7 @@ class _DailyCounterCardState extends State<DailyCounterCard>
   }
 }
 
-// ── Ambient Glows ─────────────────────────────────────────────────────────────
+// â”€â”€ Ambient Glows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _AmbientGlows extends StatelessWidget {
   const _AmbientGlows();
   @override
@@ -642,28 +655,40 @@ class _AmbientGlows extends StatelessWidget {
     return RepaintBoundary(
       child: Stack(children: [
         Positioned(
-          top: -40, right: -30,
+          top: -40,
+          right: -30,
           child: Container(
-            width: 150, height: 150,
+            width: 150,
+            height: 150,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: DailyCounterColors.accentGold.withOpacity(0.04),
-              boxShadow: [BoxShadow(
-                color: DailyCounterColors.accentGold.withOpacity(0.06),
-                blurRadius: 70, spreadRadius: 10)],
+              color: DailyCounterColors.accentGold.withValues(alpha: 0.04),
+              boxShadow: [
+                BoxShadow(
+                    color:
+                        DailyCounterColors.accentGold.withValues(alpha: 0.06),
+                    blurRadius: 70,
+                    spreadRadius: 10)
+              ],
             ),
           ),
         ),
         Positioned(
-          bottom: -20, left: -20,
+          bottom: -20,
+          left: -20,
           child: Container(
-            width: 100, height: 100,
+            width: 100,
+            height: 100,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: DailyCounterColors.soldAccent.withOpacity(0.03),
-              boxShadow: [BoxShadow(
-                color: DailyCounterColors.soldAccent.withOpacity(0.05),
-                blurRadius: 50, spreadRadius: 5)],
+              color: DailyCounterColors.soldAccent.withValues(alpha: 0.03),
+              boxShadow: [
+                BoxShadow(
+                    color:
+                        DailyCounterColors.soldAccent.withValues(alpha: 0.05),
+                    blurRadius: 50,
+                    spreadRadius: 5)
+              ],
             ),
           ),
         ),

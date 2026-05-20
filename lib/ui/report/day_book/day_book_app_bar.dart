@@ -1,12 +1,12 @@
 // =============================================================================
 // FILE        : day_book_app_bar.dart
-// MODULE      : Reports & Analytics → Day Book
+// MODULE      : Reports & Analytics â†’ Day Book
 // LAYER       : UI
-// DESCRIPTION : Dark-shell AppBar — matches Booking Advance & Cash Book pattern.
-//               ✅ Gold icon + radar blink live indicator
-//               ✅ Gold hover back button
-//               ✅ Date navigation (prev / today / next)
-//               ✅ Export PDF / Excel / WhatsApp buttons
+// DESCRIPTION : Dark-shell AppBar â€” matches Booking Advance & Cash Book pattern.
+//               âœ… Gold icon + radar blink live indicator
+//               âœ… Gold hover back button
+//               âœ… Date navigation (prev / today / next)
+//               âœ… Export PDF / Excel / WhatsApp buttons
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -62,15 +62,15 @@ class _DayBookAppBarState extends State<DayBookAppBar>
           child: SafeArea(
             bottom: false,
             child: Row(children: [
-              // ── Back Button ─────────────────────────────────────────────
+              // â”€â”€ Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               _HoverBackButton(onTap: widget.onBack),
               const SizedBox(width: 16),
 
-              // ── Vertical Divider ────────────────────────────────────────
+              // â”€â”€ Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               _divider(),
               const SizedBox(width: 16),
 
-              // ── Module Icon + Title ─────────────────────────────────────
+              // â”€â”€ Module Icon + Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Container(
                 width: 30,
                 height: 30,
@@ -84,7 +84,7 @@ class _DayBookAppBarState extends State<DayBookAppBar>
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: DayBookColors.brandGold.withOpacity(0.4),
+                      color: DayBookColors.brandGold.withValues(alpha: 0.4),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     )
@@ -111,14 +111,14 @@ class _DayBookAppBarState extends State<DayBookAppBar>
 
               const Spacer(),
 
-              // ── Date Navigation ─────────────────────────────────────────
+              // â”€â”€ Date Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               _DateNav(ctrl: widget.ctrl),
               const SizedBox(width: 12),
 
               _divider(),
               const SizedBox(width: 12),
 
-              // ── Export Buttons ──────────────────────────────────────────
+              // â”€â”€ Export Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               _ExportButtons(ctrl: widget.ctrl),
             ]),
           ),
@@ -144,9 +144,9 @@ class _DayBookAppBarState extends State<DayBookAppBar>
       );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Date Navigation Widget
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _DateNav extends StatelessWidget {
   final DayBookController ctrl;
   const _DateNav({required this.ctrl});
@@ -185,7 +185,7 @@ class _DateNav extends StatelessWidget {
         ),
         const SizedBox(width: 4),
 
-        // Date label (tappable — opens picker)
+        // Date label (tappable â€” opens picker)
         GestureDetector(
           onTap: () => ctrl.selectDate(context),
           child: Container(
@@ -231,8 +231,8 @@ class _DateNav extends StatelessWidget {
               decoration: BoxDecoration(
                 color: DayBookColors.brandGoldLight,
                 borderRadius: BorderRadius.circular(6),
-                border:
-                    Border.all(color: DayBookColors.brandGold.withOpacity(0.4)),
+                border: Border.all(
+                    color: DayBookColors.brandGold.withValues(alpha: 0.4)),
               ),
               child: const Text(
                 'Today',
@@ -265,7 +265,8 @@ class _NavButton extends StatelessWidget {
         height: 32,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: DayBookColors.shellBorder.withOpacity(enabled ? 0.5 : 0.2),
+          color:
+              DayBookColors.shellBorder.withValues(alpha: enabled ? 0.5 : 0.2),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: DayBookColors.shellBorder),
         ),
@@ -279,9 +280,9 @@ class _NavButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Export Buttons
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ExportButtons extends StatelessWidget {
   final DayBookController ctrl;
   const _ExportButtons({required this.ctrl});
@@ -340,7 +341,7 @@ class _IconBtnState extends State<_IconBtn> {
             decoration: BoxDecoration(
               color: _h
                   ? DayBookColors.brandGoldLight
-                  : DayBookColors.shellBorder.withOpacity(0.3),
+                  : DayBookColors.shellBorder.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: _h ? DayBookColors.brandGold : DayBookColors.shellBorder,
@@ -359,9 +360,9 @@ class _IconBtnState extends State<_IconBtn> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Hover Back Button (exact pattern from Booking Advance)
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
   const _HoverBackButton({required this.onTap});
@@ -391,7 +392,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
             decoration: BoxDecoration(
               color: _h
                   ? DayBookColors.shellBg
-                  : DayBookColors.shellBorder.withOpacity(0.3),
+                  : DayBookColors.shellBorder.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _h ? DayBookColors.brandGold : DayBookColors.shellBorder,
@@ -400,7 +401,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               boxShadow: _h
                   ? [
                       BoxShadow(
-                        color: DayBookColors.brandGold.withOpacity(0.3),
+                        color: DayBookColors.brandGold.withValues(alpha: 0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
                       )
@@ -419,9 +420,9 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Radar / Online Widget (exact same as Booking Advance)
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _RadarWidget extends StatelessWidget {
   final AnimationController blinkCtrl;
   const _RadarWidget({required this.blinkCtrl});
@@ -455,10 +456,10 @@ class _RadarWidget extends StatelessWidget {
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
-          color: DayBookColors.onlineGreen.withOpacity(0.08),
+          color: DayBookColors.onlineGreen.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(20),
-          border:
-              Border.all(color: DayBookColors.onlineGreen.withOpacity(0.25)),
+          border: Border.all(
+              color: DayBookColors.onlineGreen.withValues(alpha: 0.25)),
         ),
         child: const Text(
           DayBookStrings.systemOnline,
@@ -488,7 +489,7 @@ class _RadarWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: DayBookColors.onlineGreen.withOpacity(0.5),
+                  color: DayBookColors.onlineGreen.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),

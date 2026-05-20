@@ -29,9 +29,9 @@ class SelectCustomerDialog extends StatefulWidget {
 
 class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
   final _searchCtrl = TextEditingController();
-  List<Customer> _all      = [];
+  List<Customer> _all = [];
   List<Customer> _filtered = [];
-  bool           _loading  = true;
+  bool _loading = true;
 
   @override
   void initState() {
@@ -53,9 +53,9 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
         .get();
     if (mounted) {
       setState(() {
-        _all      = list;
+        _all = list;
         _filtered = list;
-        _loading  = false;
+        _loading = false;
       });
     }
   }
@@ -65,10 +65,12 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
     setState(() {
       _filtered = q.isEmpty
           ? _all
-          : _all.where((c) =>
-              c.name.toLowerCase().contains(q) ||
-              c.mobile.contains(q) ||
-              (c.city?.toLowerCase().contains(q) ?? false)).toList();
+          : _all
+              .where((c) =>
+                  c.name.toLowerCase().contains(q) ||
+                  c.mobile.contains(q) ||
+                  (c.city?.toLowerCase().contains(q) ?? false))
+              .toList();
     });
   }
 
@@ -76,8 +78,8 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
-      minChildSize:     0.5,
-      maxChildSize:     0.95,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
       builder: (_, scrollCtrl) => Container(
         decoration: const BoxDecoration(
           color: GirviColors.cardBg,
@@ -88,7 +90,8 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
             // Handle
             Container(
               margin: const EdgeInsets.only(top: 10),
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
                 color: GirviColors.divider,
                 borderRadius: BorderRadius.circular(2),
@@ -98,16 +101,19 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
               child: Row(children: [
-                const Icon(GirviIcons.customer, color: GirviColors.accentCustomer),
+                const Icon(GirviIcons.customer,
+                    color: GirviColors.accentCustomer),
                 const SizedBox(width: 10),
                 Text('Select Customer',
                     style: GoogleFonts.manrope(
-                        fontSize: 17, fontWeight: FontWeight.w800,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
                         color: GirviColors.textDark)),
                 const Spacer(),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.close_rounded, color: GirviColors.textMuted),
+                  child: const Icon(Icons.close_rounded,
+                      color: GirviColors.textMuted),
                 ),
               ]),
             ),
@@ -135,17 +141,19 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
             // List
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator(
-                      color: GirviColors.brandGold))
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                          color: GirviColors.brandGold))
                   : _filtered.isEmpty
                       ? Center(
                           child: Text('No customers found',
-                              style: GirviStyles.caption.copyWith(fontSize: 14)))
+                              style:
+                                  GirviStyles.caption.copyWith(fontSize: 14)))
                       : ListView.separated(
                           controller: scrollCtrl,
                           itemCount: _filtered.length,
-                          separatorBuilder: (_, __) =>
-                              const Divider(height: 1, color: GirviColors.divider),
+                          separatorBuilder: (_, __) => const Divider(
+                              height: 1, color: GirviColors.divider),
                           itemBuilder: (_, i) {
                             final c = _filtered[i];
                             return ListTile(
@@ -162,13 +170,15 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
                               ),
                               title: Text(c.name,
                                   style: GoogleFonts.inter(
-                                      fontSize: 14, fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
                                       color: GirviColors.textDark)),
-                              subtitle: Text(c.mobile,
-                                  style: GirviStyles.caption),
+                              subtitle:
+                                  Text(c.mobile, style: GirviStyles.caption),
                               trailing: c.city != null
                                   ? Text(c.city!,
-                                      style: GirviStyles.caption.copyWith(fontSize: 11))
+                                      style: GirviStyles.caption
+                                          .copyWith(fontSize: 11))
                                   : null,
                             );
                           },

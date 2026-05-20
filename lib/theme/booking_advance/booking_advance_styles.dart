@@ -1,8 +1,8 @@
 // =============================================================================
 // FILE        : booking_advance_styles.dart
-// MODULE      : Sales → Booking & Advance
+// MODULE      : Sales â†’ Booking & Advance
 // LAYER       : Theme / Styles
-// DESCRIPTION : TextStyles & BoxDecorations — exact same as SalesPosStyles.
+// DESCRIPTION : TextStyles & BoxDecorations â€” exact same as SalesPosStyles.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -11,7 +11,7 @@ import 'booking_advance_colors.dart';
 class BookingAdvanceStyles {
   BookingAdvanceStyles._();
 
-  // ── APP BAR TITLE ─────────────────────────────────────────────────────────
+  // â”€â”€ APP BAR TITLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle headerTitle = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.w700,
@@ -19,7 +19,7 @@ class BookingAdvanceStyles {
     letterSpacing: 1.2,
   );
 
-  // ── SECTION HEADER (same as SalesPosStyles.highVisHeader) ─────────────────
+  // â”€â”€ SECTION HEADER (same as SalesPosStyles.highVisHeader) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle highVisHeader = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w900,
@@ -27,21 +27,21 @@ class BookingAdvanceStyles {
     color: BookingAdvanceColors.textDark,
   );
 
-  // ── SUBTITLE MUTED ────────────────────────────────────────────────────────
+  // â”€â”€ SUBTITLE MUTED â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle subTitleMuted = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w800,
-    color: BookingAdvanceColors.bodyTextMuted.withOpacity(0.70),
+    color: BookingAdvanceColors.bodyTextMuted.withValues(alpha: 0.70),
   );
 
-  // ── INPUT TEXT ────────────────────────────────────────────────────────────
+  // â”€â”€ INPUT TEXT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle inputText = TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w900,
     color: BookingAdvanceColors.textDark,
   );
 
-  // ── GRAND TOTAL ───────────────────────────────────────────────────────────
+  // â”€â”€ GRAND TOTAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle grandTotalText = TextStyle(
     fontSize: 26,
     fontWeight: FontWeight.w900,
@@ -49,7 +49,7 @@ class BookingAdvanceStyles {
     height: 1.0,
   );
 
-  // ── SUMMARY ROW ───────────────────────────────────────────────────────────
+  // â”€â”€ SUMMARY ROW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle summaryLabel = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w600,
@@ -75,7 +75,7 @@ class BookingAdvanceStyles {
     color: BookingAdvanceColors.brandGold,
   );
 
-  // ── SHELL PANEL (AppBar) ──────────────────────────────────────────────────
+  // â”€â”€ SHELL PANEL (AppBar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const BoxDecoration shellPanel = BoxDecoration(
     color: BookingAdvanceColors.shellPanelBg,
     border: Border(
@@ -86,72 +86,91 @@ class BookingAdvanceStyles {
     ],
   );
 
-  // ── WHITE CARD (body panels) ──────────────────────────────────────────────
+  // â”€â”€ WHITE CARD (body panels) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get whiteCard => BoxDecoration(
-    color: BookingAdvanceColors.bodyPanelBg,
-    borderRadius: BorderRadius.circular(16),
-    border: Border.all(color: BookingAdvanceColors.bodyBorder),
-    boxShadow: const [
-      BoxShadow(color: BookingAdvanceColors.shadowLight, blurRadius: 8, offset: Offset(0, 2)),
-      BoxShadow(color: BookingAdvanceColors.shadowDark, blurRadius: 20, offset: Offset(0, 6)),
-    ],
-  );
+        color: BookingAdvanceColors.bodyPanelBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: BookingAdvanceColors.bodyBorder),
+        boxShadow: const [
+          BoxShadow(
+              color: BookingAdvanceColors.shadowLight,
+              blurRadius: 8,
+              offset: Offset(0, 2)),
+          BoxShadow(
+              color: BookingAdvanceColors.shadowDark,
+              blurRadius: 20,
+              offset: Offset(0, 6)),
+        ],
+      );
 
-  // ── GOLD BORDER CARD (customer panel) ─────────────────────────────────────
+  // â”€â”€ GOLD BORDER CARD (customer panel) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration goldBorderCard = BoxDecoration(
     color: BookingAdvanceColors.bodyPanelBg,
     borderRadius: BorderRadius.circular(16),
     boxShadow: [
       BoxShadow(
-        color: BookingAdvanceColors.brandGold.withOpacity(0.12),
-        blurRadius: 20, spreadRadius: 2, offset: const Offset(0, 4),
+        color: BookingAdvanceColors.brandGold.withValues(alpha: 0.12),
+        blurRadius: 20,
+        spreadRadius: 2,
+        offset: const Offset(0, 4),
       ),
       const BoxShadow(
         color: BookingAdvanceColors.shadowDark,
-        blurRadius: 10, offset: Offset(0, 2),
+        blurRadius: 10,
+        offset: Offset(0, 2),
       ),
     ],
     border: Border.all(
-      color: BookingAdvanceColors.brandGold.withOpacity(0.3),
+      color: BookingAdvanceColors.brandGold.withValues(alpha: 0.3),
       width: 1.5,
     ),
   );
 
-  // ── RIGHT PANEL ───────────────────────────────────────────────────────────
+  // â”€â”€ RIGHT PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get rightPanel => BoxDecoration(
-    color: BookingAdvanceColors.bodyPanelBg,
-    borderRadius: BorderRadius.circular(18),
-    border: Border.all(color: BookingAdvanceColors.bodyBorder, width: 1.5),
-    boxShadow: const [
-      BoxShadow(color: BookingAdvanceColors.shadowLight, blurRadius: 8, offset: Offset(0, 2)),
-      BoxShadow(color: BookingAdvanceColors.shadowDark, blurRadius: 24, offset: Offset(0, 8)),
-    ],
-  );
+        color: BookingAdvanceColors.bodyPanelBg,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: BookingAdvanceColors.bodyBorder, width: 1.5),
+        boxShadow: const [
+          BoxShadow(
+              color: BookingAdvanceColors.shadowLight,
+              blurRadius: 8,
+              offset: Offset(0, 2)),
+          BoxShadow(
+              color: BookingAdvanceColors.shadowDark,
+              blurRadius: 24,
+              offset: Offset(0, 8)),
+        ],
+      );
 
-  // ── PANEL DIVIDER ─────────────────────────────────────────────────────────
+  // â”€â”€ PANEL DIVIDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get panelDivider => BoxDecoration(
-    gradient: LinearGradient(colors: [
-      BookingAdvanceColors.brandGold.withOpacity(0.05),
-      BookingAdvanceColors.bodyBorder,
-      BookingAdvanceColors.brandGold.withOpacity(0.05),
-    ]),
-  );
+        gradient: LinearGradient(colors: [
+          BookingAdvanceColors.brandGold.withValues(alpha: 0.05),
+          BookingAdvanceColors.bodyBorder,
+          BookingAdvanceColors.brandGold.withValues(alpha: 0.05),
+        ]),
+      );
 
-  // ── SAVE BUTTON (gold gradient) ───────────────────────────────────────────
+  // â”€â”€ SAVE BUTTON (gold gradient) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get saveButton => BoxDecoration(
-    gradient: const LinearGradient(
-      colors: [BookingAdvanceColors.goldGradientStart, BookingAdvanceColors.brandGold],
-    ),
-    borderRadius: BorderRadius.circular(12),
-    boxShadow: [
-      BoxShadow(
-        color: BookingAdvanceColors.brandGold.withOpacity(0.45),
-        blurRadius: 16, offset: const Offset(0, 5),
-      ),
-    ],
-  );
+        gradient: const LinearGradient(
+          colors: [
+            BookingAdvanceColors.goldGradientStart,
+            BookingAdvanceColors.brandGold
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: BookingAdvanceColors.brandGold.withValues(alpha: 0.45),
+            blurRadius: 16,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      );
 
-  // ── INPUT DECORATION ──────────────────────────────────────────────────────
+  // â”€â”€ INPUT DECORATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static InputDecoration inputDecoration({
     String? hint,
     Widget? prefixIcon,
@@ -167,7 +186,7 @@ class BookingAdvanceStyles {
         prefixText: prefixText,
         suffixText: suffixText,
         hintStyle: TextStyle(
-          color: BookingAdvanceColors.bodyTextMuted.withOpacity(0.6),
+          color: BookingAdvanceColors.bodyTextMuted.withValues(alpha: 0.6),
           fontSize: 13,
           fontWeight: FontWeight.w500,
         ),

@@ -1,7 +1,7 @@
 // =============================================================================
 // FILE        : booking_advance_app_bar.dart
-// MODULE      : Sales → Booking & Advance
-// DESCRIPTION : Dark shell AppBar — premium layout with improved spacing.
+// MODULE      : Sales â†’ Booking & Advance
+// DESCRIPTION : Dark shell AppBar â€” premium layout with improved spacing.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -48,7 +48,8 @@ class BookingAdvanceAppBar extends StatelessWidget
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                      color: BookingAdvanceColors.brandGold.withOpacity(0.5),
+                      color:
+                          BookingAdvanceColors.brandGold.withValues(alpha: 0.5),
                       blurRadius: 10,
                       offset: const Offset(0, 3))
                 ],
@@ -122,7 +123,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               decoration: BoxDecoration(
                 color: _isHovered
                     ? BookingAdvanceColors.shellBg
-                    : BookingAdvanceColors.shellBorder.withOpacity(0.3),
+                    : BookingAdvanceColors.shellBorder.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                     color: _isHovered
@@ -132,8 +133,8 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
                 boxShadow: _isHovered
                     ? [
                         BoxShadow(
-                            color:
-                                BookingAdvanceColors.brandGold.withOpacity(0.3),
+                            color: BookingAdvanceColors.brandGold
+                                .withValues(alpha: 0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 3))
                       ]
@@ -179,10 +180,10 @@ class _RadarWidgetState extends State<_RadarWidget>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: BookingAdvanceColors.onlineGreen.withOpacity(0.08),
+        color: BookingAdvanceColors.onlineGreen.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(30), // More pill-like and smooth
         border: Border.all(
-            color: BookingAdvanceColors.onlineGreen.withOpacity(0.3)),
+            color: BookingAdvanceColors.onlineGreen.withValues(alpha: 0.3)),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         SizedBox(
@@ -231,7 +232,7 @@ class _RadarWidgetState extends State<_RadarWidget>
                           shape: BoxShape.circle,
                           border: Border.all(
                               color: BookingAdvanceColors.onlineGreen
-                                  .withOpacity(0.5),
+                                  .withValues(alpha: 0.5),
                               width: 1.5)))));
         });
   }

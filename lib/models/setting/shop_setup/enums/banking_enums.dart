@@ -16,12 +16,13 @@ enum BankAccountType {
   // Safely parse from API or local storage strings
   static BankAccountType fromString(String? value) {
     if (value == null || value.trim().isEmpty) return BankAccountType.current;
-    
+
     final sanitizedValue = value.trim().toLowerCase();
-    
+
     return BankAccountType.values.firstWhere(
-      (e) => e.displayName.toLowerCase() == sanitizedValue || 
-             e.name.toLowerCase() == sanitizedValue,
+      (e) =>
+          e.displayName.toLowerCase() == sanitizedValue ||
+          e.name.toLowerCase() == sanitizedValue,
       orElse: () => BankAccountType.current,
     );
   }

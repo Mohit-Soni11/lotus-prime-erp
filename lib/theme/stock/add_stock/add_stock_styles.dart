@@ -13,10 +13,10 @@ import 'add_stock_colors.dart';
 class AddStockStyles {
   AddStockStyles._();
 
-  // ✅ NEW: Added for PC 2 App Bar setup
+  // âœ… NEW: Added for PC 2 App Bar setup
   static const double appBarHeight = 60.0;
 
-  // ── SHELL / APP BAR ───────────────────────────────────────────
+  // â”€â”€ SHELL / APP BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get shellTitle => GoogleFonts.inter(
         fontSize: 17,
         fontWeight: FontWeight.w700,
@@ -24,7 +24,7 @@ class AddStockStyles {
         letterSpacing: 0.8,
       );
 
-  // ── PAGE HEADER ───────────────────────────────────────────────
+  // â”€â”€ PAGE HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get pageTitle => GoogleFonts.manrope(
         fontSize: 22,
         fontWeight: FontWeight.w800,
@@ -32,7 +32,7 @@ class AddStockStyles {
         letterSpacing: 0.3,
       );
 
-  // ── SECTION CARD HEADER ───────────────────────────────────────
+  // â”€â”€ SECTION CARD HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get sectionTitle => GoogleFonts.manrope(
         fontSize: 14,
         fontWeight: FontWeight.w700,
@@ -40,7 +40,7 @@ class AddStockStyles {
         letterSpacing: 0.2,
       );
 
-  // ── FIELD LABEL ───────────────────────────────────────────────
+  // â”€â”€ FIELD LABEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get fieldLabel => GoogleFonts.inter(
         fontSize: 12,
         fontWeight: FontWeight.w600,
@@ -48,35 +48,35 @@ class AddStockStyles {
         letterSpacing: 0.1,
       );
 
-  // ── FIELD INPUT TEXT ─────────────────────────────────────────
+  // â”€â”€ FIELD INPUT TEXT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get fieldInput => GoogleFonts.manrope(
         fontSize: 14,
         fontWeight: FontWeight.w700,
         color: AddStockColors.textDark,
       );
 
-  // ── FIELD HINT ───────────────────────────────────────────────
+  // â”€â”€ FIELD HINT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get fieldHint => GoogleFonts.inter(
         fontSize: 13,
         fontWeight: FontWeight.w400,
         color: AddStockColors.textHint,
       );
 
-  // ── READ-ONLY VALUE (Net Weight, etc.) ───────────────────────
+  // â”€â”€ READ-ONLY VALUE (Net Weight, etc.) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get readOnlyValue => GoogleFonts.manrope(
         fontSize: 14,
         fontWeight: FontWeight.w800,
         color: AddStockColors.success,
       );
 
-  // ── SMALL MUTED TEXT ─────────────────────────────────────────
+  // â”€â”€ SMALL MUTED TEXT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get caption => GoogleFonts.inter(
         fontSize: 11,
         fontWeight: FontWeight.w400,
         color: AddStockColors.textMuted,
       );
 
-  // ── SAVE BUTTON ───────────────────────────────────────────────
+  // â”€â”€ SAVE BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get saveButtonText => GoogleFonts.manrope(
         fontSize: 15,
         fontWeight: FontWeight.w800,
@@ -84,18 +84,18 @@ class AddStockStyles {
         letterSpacing: 0.3,
       );
 
-  // ── RESET BUTTON ─────────────────────────────────────────────
+  // â”€â”€ RESET BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get resetButtonText => GoogleFonts.inter(
         fontSize: 13,
         fontWeight: FontWeight.w600,
         color: AddStockColors.textMuted,
       );
 
-  // ══════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // DECORATIONS
-  // ══════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-  // ── MAIN CARD ────────────────────────────────────────────────
+  // â”€â”€ MAIN CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get cardDecoration => BoxDecoration(
         color: AddStockColors.cardBg,
         borderRadius: BorderRadius.circular(16),
@@ -114,14 +114,15 @@ class AddStockStyles {
         ],
       );
 
-  // ── CARD WITH GOLD ACCENT BORDER (active/filled section) ─────
+  // â”€â”€ CARD WITH GOLD ACCENT BORDER (active/filled section) â”€â”€â”€â”€â”€
   static BoxDecoration cardWithAccent(Color accentColor) => BoxDecoration(
         color: AddStockColors.cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accentColor.withOpacity(0.35), width: 1.5),
+        border:
+            Border.all(color: accentColor.withValues(alpha: 0.35), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withOpacity(0.08),
+            color: accentColor.withValues(alpha: 0.08),
             blurRadius: 20,
             spreadRadius: 2,
             offset: const Offset(0, 4),
@@ -134,50 +135,50 @@ class AddStockStyles {
         ],
       );
 
-  // ── INPUT FIELD (Normal) ──────────────────────────────────────
+  // â”€â”€ INPUT FIELD (Normal) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get inputNormal => BoxDecoration(
         color: AddStockColors.inputBg,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AddStockColors.cardBorder, width: 1),
       );
 
-  // ── INPUT FIELD (Focused — gold border) ──────────────────────
+  // â”€â”€ INPUT FIELD (Focused â€” gold border) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get inputFocused => BoxDecoration(
         color: AddStockColors.inputBg,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AddStockColors.brandGold, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: AddStockColors.brandGold.withOpacity(0.15),
+            color: AddStockColors.brandGold.withValues(alpha: 0.15),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       );
 
-  // ── INPUT FIELD (Disabled) ───────────────────────────────────
+  // â”€â”€ INPUT FIELD (Disabled) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get inputDisabled => BoxDecoration(
         color: AddStockColors.inputBgLocked,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-            color: AddStockColors.borderLight.withOpacity(0.5), width: 1),
+            color: AddStockColors.borderLight.withValues(alpha: 0.5), width: 1),
       );
 
-  // ── INPUT FIELD (Error) ──────────────────────────────────────
+  // â”€â”€ INPUT FIELD (Error) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get inputError => BoxDecoration(
         color: const Color(0xFFFFF5F5),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AddStockColors.danger, width: 1.5),
       );
 
-  // ── READ-ONLY VALUE BOX ───────────────────────────────────────
+  // â”€â”€ READ-ONLY VALUE BOX â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration readOnlyBox(Color color) => BoxDecoration(
-        color: color.withOpacity(0.06),
+        color: color.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       );
 
-  // ── SHELL APP BAR ─────────────────────────────────────────────
+  // â”€â”€ SHELL APP BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const BoxDecoration shellDecoration = BoxDecoration(
     color: AddStockColors.shellPanelBg,
     border: Border(
@@ -185,13 +186,13 @@ class AddStockStyles {
     ),
   );
 
-  // ── SECTION ICON CONTAINER ────────────────────────────────────
+  // â”€â”€ SECTION ICON CONTAINER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration sectionIconBox(Color accent) => BoxDecoration(
-        color: accent.withOpacity(0.10),
+        color: accent.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(8),
       );
 
-  // ── DIMENSIONS ───────────────────────────────────────────────
+  // â”€â”€ DIMENSIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const double inputHeight = 52.0;
   static const double dropdownHeight = 52.0;
   static const EdgeInsets cardPadding = EdgeInsets.all(24);

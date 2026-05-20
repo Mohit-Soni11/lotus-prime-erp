@@ -2,15 +2,14 @@
 // FILE        : expense_list.dart
 // MODULE      : Expense Entry
 // LAYER       : UI
-// DESCRIPTION : Center panel — Search bar, category filter chips,
+// DESCRIPTION : Center panel â€” Search bar, category filter chips,
 //               grouped expense list with swipe-to-void and tap for detail.
-//               ✅ ListenableBuilder — zero setState.
-//               ✅ Animated empty state.
-//               ✅ Dismissible (swipe left) → void with reason dialog.
+//               âœ… ListenableBuilder â€” zero setState.
+//               âœ… Animated empty state.
+//               âœ… Dismissible (swipe left) â†’ void with reason dialog.
 // =============================================================================
 
 import 'package:flutter/material.dart';
-
 
 import '../../../logic/finance/expense/expense_controller.dart';
 import '../../../models/finance/expense/expense_enums.dart';
@@ -20,7 +19,7 @@ import '../../../theme/finance/expense/expense_theme.dart';
 
 class ExpenseList extends StatelessWidget {
   final ExpenseController ctrl;
-  final VoidCallback      onAddExpense;
+  final VoidCallback onAddExpense;
 
   const ExpenseList({
     super.key,
@@ -35,14 +34,13 @@ class ExpenseList extends StatelessWidget {
       builder: (_, __) {
         return Column(
           children: [
-
-            // ── Search + Filter Bar ──────────────────────────────────────
+            // â”€â”€ Search + Filter Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _SearchFilterBar(ctrl: ctrl),
 
-            // ── Category Filter Chips ────────────────────────────────────
+            // â”€â”€ Category Filter Chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _FilterChips(ctrl: ctrl),
 
-            // ── Body ─────────────────────────────────────────────────────
+            // â”€â”€ Body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Expanded(
               child: ctrl.isLoading
                   ? const Center(
@@ -62,7 +60,7 @@ class ExpenseList extends StatelessWidget {
   }
 }
 
-// ── Search + Filter Bar ───────────────────────────────────────────────────────
+// â”€â”€ Search + Filter Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _SearchFilterBar extends StatelessWidget {
   final ExpenseController ctrl;
@@ -72,15 +70,14 @@ class _SearchFilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      color:   ExpenseColors.bodyBg,
+      color: ExpenseColors.bodyBg,
       child: TextField(
         controller: ctrl.searchCtrl,
-        style:      ExpenseStyles.inputText.copyWith(fontSize: 13),
+        style: ExpenseStyles.inputText.copyWith(fontSize: 13),
         decoration: InputDecoration(
-          hintText:  ExpenseStrings.searchHint,
+          hintText: ExpenseStrings.searchHint,
           hintStyle: ExpenseStyles.labelMuted,
-          prefixIcon: const Icon(
-              ExpenseIcons.search,
+          prefixIcon: const Icon(ExpenseIcons.search,
               size: 18, color: ExpenseColors.textMuted),
           suffixIcon: ctrl.searchCtrl.text.isNotEmpty
               ? GestureDetector(
@@ -89,10 +86,10 @@ class _SearchFilterBar extends StatelessWidget {
                       size: 16, color: ExpenseColors.textMuted),
                 )
               : null,
-          filled:      true,
-          fillColor:   ExpenseColors.searchBg,
-          contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14, vertical: 10),
+          filled: true,
+          fillColor: ExpenseColors.searchBg,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: ExpenseColors.searchBorder),
@@ -103,8 +100,8 @@ class _SearchFilterBar extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(
-                color: ExpenseColors.moduleAccent, width: 1.5),
+            borderSide:
+                const BorderSide(color: ExpenseColors.moduleAccent, width: 1.5),
           ),
         ),
       ),
@@ -112,7 +109,7 @@ class _SearchFilterBar extends StatelessWidget {
   }
 }
 
-// ── Category Filter Chips ─────────────────────────────────────────────────────
+// â”€â”€ Category Filter Chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _FilterChips extends StatelessWidget {
   final ExpenseController ctrl;
@@ -134,20 +131,20 @@ class _FilterChips extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 40,
-      color:  ExpenseColors.bodyBg,
+      color: ExpenseColors.bodyBg,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding:         const EdgeInsets.fromLTRB(16, 0, 16, 6),
-        itemCount:       _chips.length,
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+        itemCount: _chips.length,
         separatorBuilder: (_, __) => const SizedBox(width: 6),
         itemBuilder: (_, i) {
-          final f        = _chips[i];
+          final f = _chips[i];
           final isActive = ctrl.filter == f;
           return GestureDetector(
             onTap: () => ctrl.setFilter(f),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              padding:  const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
                 color: isActive
                     ? ExpenseColors.moduleAccent
@@ -162,11 +159,9 @@ class _FilterChips extends StatelessWidget {
               child: Text(
                 f.displayLabel,
                 style: TextStyle(
-                  fontSize:   11,
+                  fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: isActive
-                      ? Colors.white
-                      : ExpenseColors.textSecondary,
+                  color: isActive ? Colors.white : ExpenseColors.textSecondary,
                 ),
               ),
             ),
@@ -177,7 +172,7 @@ class _FilterChips extends StatelessWidget {
   }
 }
 
-// ── Grouped List ──────────────────────────────────────────────────────────────
+// â”€â”€ Grouped List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _GroupedList extends StatelessWidget {
   final ExpenseController ctrl;
@@ -186,14 +181,13 @@ class _GroupedList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      padding:     const EdgeInsets.fromLTRB(16, 4, 16, 24),
-      itemCount:   ctrl.groups.length,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      itemCount: ctrl.groups.length,
       itemBuilder: (ctx, gi) {
         final group = ctrl.groups[gi];
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // Group header
             Padding(
               padding: const EdgeInsets.only(top: 12, bottom: 8),
@@ -201,14 +195,15 @@ class _GroupedList extends StatelessWidget {
                 Text(group.headerLabel, style: ExpenseStyles.groupHeader),
                 const SizedBox(width: 8),
                 Container(
-                  width:  4, height: 4,
+                  width: 4,
+                  height: 4,
                   decoration: const BoxDecoration(
-                    color: ExpenseColors.textMuted, shape: BoxShape.circle),
+                      color: ExpenseColors.textMuted, shape: BoxShape.circle),
                 ),
                 const SizedBox(width: 8),
                 Text('${group.entries.length} entries',
-                    style: ExpenseStyles.groupHeader.copyWith(
-                      color: ExpenseColors.textMuted)),
+                    style: ExpenseStyles.groupHeader
+                        .copyWith(color: ExpenseColors.textMuted)),
                 const Spacer(),
                 Text(group.groupTotalFormatted,
                     style: ExpenseStyles.groupTotal),
@@ -218,22 +213,24 @@ class _GroupedList extends StatelessWidget {
             // Entries
             Container(
               decoration: BoxDecoration(
-                color:        ExpenseColors.bodyPanel,
+                color: ExpenseColors.bodyPanel,
                 borderRadius: BorderRadius.circular(12),
-                border:       Border.all(color: ExpenseColors.cardBorderLight),
+                border: Border.all(color: ExpenseColors.cardBorderLight),
               ),
               child: Column(
                 children: group.entries.asMap().entries.map((entry) {
-                  final i      = entry.key;
-                  final item   = entry.value;
+                  final i = entry.key;
+                  final item = entry.value;
                   final isLast = i == group.entries.length - 1;
                   return Column(
                     children: [
                       _ExpenseRow(item: item, ctrl: ctrl),
                       if (!isLast)
                         const Divider(
-                            height: 1, color: ExpenseColors.divider,
-                            indent: 56, endIndent: 0),
+                            height: 1,
+                            color: ExpenseColors.divider,
+                            indent: 56,
+                            endIndent: 0),
                     ],
                   );
                 }).toList(),
@@ -246,38 +243,38 @@ class _GroupedList extends StatelessWidget {
   }
 }
 
-// ── Single Expense Row ────────────────────────────────────────────────────────
+// â”€â”€ Single Expense Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ExpenseRow extends StatelessWidget {
-  final ExpenseModel      item;
+  final ExpenseModel item;
   final ExpenseController ctrl;
   const _ExpenseRow({required this.item, required this.ctrl});
 
   IconData _categoryIcon(ExpenseCategory cat) => switch (cat) {
-    ExpenseCategory.shopRent       => ExpenseIcons.shopRent,
-    ExpenseCategory.staffSalary    => ExpenseIcons.staffSalary,
-    ExpenseCategory.electricity    => ExpenseIcons.electricity,
-    ExpenseCategory.purchasePayment=> ExpenseIcons.purchase,
-    ExpenseCategory.girviGiven     => ExpenseIcons.girvi,
-    ExpenseCategory.maintenance    => ExpenseIcons.maintenance,
-    ExpenseCategory.advertising    => ExpenseIcons.advertising,
-    ExpenseCategory.transport      => ExpenseIcons.transport,
-    ExpenseCategory.bankCharges    => ExpenseIcons.bankCharges,
-    ExpenseCategory.governmentFees => ExpenseIcons.governmentFees,
-    ExpenseCategory.miscExpense    => ExpenseIcons.misc,
-    ExpenseCategory.otherExpense   => ExpenseIcons.other,
-  };
+        ExpenseCategory.shopRent => ExpenseIcons.shopRent,
+        ExpenseCategory.staffSalary => ExpenseIcons.staffSalary,
+        ExpenseCategory.electricity => ExpenseIcons.electricity,
+        ExpenseCategory.purchasePayment => ExpenseIcons.purchase,
+        ExpenseCategory.girviGiven => ExpenseIcons.girvi,
+        ExpenseCategory.maintenance => ExpenseIcons.maintenance,
+        ExpenseCategory.advertising => ExpenseIcons.advertising,
+        ExpenseCategory.transport => ExpenseIcons.transport,
+        ExpenseCategory.bankCharges => ExpenseIcons.bankCharges,
+        ExpenseCategory.governmentFees => ExpenseIcons.governmentFees,
+        ExpenseCategory.miscExpense => ExpenseIcons.misc,
+        ExpenseCategory.otherExpense => ExpenseIcons.other,
+      };
 
   @override
   Widget build(BuildContext context) {
     return Dismissible(
-      key:       ValueKey('expense_${item.id}'),
+      key: ValueKey('expense_${item.id}'),
       direction: DismissDirection.endToStart,
       background: Container(
-        alignment:  Alignment.centerRight,
-        padding:    const EdgeInsets.only(right: 20),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color:        ExpenseColors.danger.withOpacity(0.12),
+          color: ExpenseColors.danger.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
         ),
         child: const Icon(ExpenseIcons.void_,
@@ -295,37 +292,35 @@ class _ExpenseRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
-
-              // ── Category Icon ─────────────────────────────────────────
+              // â”€â”€ Category Icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Container(
-                width:  36,
+                width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color:        ExpenseColors.moduleAccentLight,
+                  color: ExpenseColors.moduleAccentLight,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   _categoryIcon(item.category),
-                  size:  16,
+                  size: 16,
                   color: ExpenseColors.moduleAccentMid,
                 ),
               ),
               const SizedBox(width: 12),
 
-              // ── Category + Meta ───────────────────────────────────────
+              // â”€â”€ Category + Meta â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item.categoryLabel,
-                        style: ExpenseStyles.itemCategory),
+                    Text(item.categoryLabel, style: ExpenseStyles.itemCategory),
                     const SizedBox(height: 2),
                     Row(children: [
                       // Payment mode badge
                       _ModeBadge(mode: item.paymentMode),
                       const SizedBox(width: 6),
                       if (item.partyName != null) ...[
-                        Text('· ${item.partyName}',
+                        Text('Â· ${item.partyName}',
                             style: ExpenseStyles.itemMeta,
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1),
@@ -339,8 +334,8 @@ class _ExpenseRow extends StatelessWidget {
                           color: ExpenseColors.textMuted,
                           fontStyle: FontStyle.italic,
                         ),
-                        maxLines:  1,
-                        overflow:  TextOverflow.ellipsis,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ],
@@ -349,15 +344,13 @@ class _ExpenseRow extends StatelessWidget {
 
               const SizedBox(width: 12),
 
-              // ── Amount + Time ─────────────────────────────────────────
+              // â”€â”€ Amount + Time â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(item.displayAmount,
-                      style: ExpenseStyles.itemAmount),
+                  Text(item.displayAmount, style: ExpenseStyles.itemAmount),
                   const SizedBox(height: 2),
-                  Text(item.timeFormatted,
-                      style: ExpenseStyles.expenseId),
+                  Text(item.timeFormatted, style: ExpenseStyles.expenseId),
                 ],
               ),
             ],
@@ -373,32 +366,31 @@ class _ExpenseRow extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: ExpenseColors.bodyPanel,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(ExpenseStrings.voidConfirmTitle,
             style: ExpenseStyles.labelPrimary.copyWith(fontSize: 16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '${item.categoryLabel}  ·  ${item.displayAmount}',
+              '${item.categoryLabel}  Â·  ${item.displayAmount}',
               style: ExpenseStyles.labelSecondary,
             ),
             const SizedBox(height: 16),
             TextField(
               controller: reasonCtrl,
-              autofocus:  true,
+              autofocus: true,
               decoration: InputDecoration(
-                hintText:    ExpenseStrings.voidReasonHint,
-                hintStyle:   ExpenseStyles.labelMuted,
-                filled:      true,
-                fillColor:   ExpenseColors.searchBg,
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 10),
+                hintText: ExpenseStrings.voidReasonHint,
+                hintStyle: ExpenseStyles.labelMuted,
+                filled: true,
+                fillColor: ExpenseColors.searchBg,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(
-                        color: ExpenseColors.bodyBorder)),
+                    borderSide:
+                        const BorderSide(color: ExpenseColors.bodyBorder)),
                 focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: const BorderSide(
@@ -410,7 +402,7 @@ class _ExpenseRow extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(ExpenseStrings.cancel,
+            child: const Text(ExpenseStrings.cancel,
                 style: TextStyle(color: ExpenseColors.textSecondary)),
           ),
           ElevatedButton(
@@ -426,7 +418,7 @@ class _ExpenseRow extends StatelessWidget {
               final ok = await ctrl.voidExpense(item.id, reason);
               if (context.mounted) Navigator.pop(context, ok);
             },
-            child: Text(ExpenseStrings.voidConfirm),
+            child: const Text(ExpenseStrings.voidConfirm),
           ),
         ],
       ),
@@ -436,7 +428,7 @@ class _ExpenseRow extends StatelessWidget {
 
   void _showDetailSheet(BuildContext context) {
     showModalBottomSheet(
-      context:       context,
+      context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _ExpenseDetailSheet(item: item),
@@ -444,7 +436,7 @@ class _ExpenseRow extends StatelessWidget {
   }
 }
 
-// ── Payment Mode Badge ────────────────────────────────────────────────────────
+// â”€â”€ Payment Mode Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ModeBadge extends StatelessWidget {
   final PaymentMode mode;
@@ -455,23 +447,23 @@ class _ModeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color:        ExpenseColors.summaryChipBg,
+        color: ExpenseColors.summaryChipBg,
         borderRadius: BorderRadius.circular(4),
-        border:       Border.all(color: ExpenseColors.bodyBorder),
+        border: Border.all(color: ExpenseColors.bodyBorder),
       ),
       child: Text(
         mode.displayLabel,
         style: const TextStyle(
-          fontSize:   10,
+          fontSize: 10,
           fontWeight: FontWeight.w700,
-          color:      ExpenseColors.textSecondary,
+          color: ExpenseColors.textSecondary,
         ),
       ),
     );
   }
 }
 
-// ── Detail Bottom Sheet ───────────────────────────────────────────────────────
+// â”€â”€ Detail Bottom Sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ExpenseDetailSheet extends StatelessWidget {
   final ExpenseModel item;
@@ -480,22 +472,22 @@ class _ExpenseDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:     const EdgeInsets.all(24),
-      decoration:  const BoxDecoration(
-        color:        ExpenseColors.bodyPanel,
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(
+        color: ExpenseColors.bodyPanel,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           // Handle bar
           Center(
             child: Container(
-              width:  40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
-                color:        ExpenseColors.bodyBorder,
+                color: ExpenseColors.bodyBorder,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -505,9 +497,10 @@ class _ExpenseDetailSheet extends StatelessWidget {
           // Header
           Row(children: [
             Container(
-              width:  44, height: 44,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color:        ExpenseColors.moduleAccentLight,
+                color: ExpenseColors.moduleAccentLight,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(ExpenseIcons.expense,
@@ -517,8 +510,7 @@ class _ExpenseDetailSheet extends StatelessWidget {
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(item.categoryLabel,
                   style: ExpenseStyles.labelPrimary.copyWith(fontSize: 16)),
-              Text(item.expenseId,
-                  style: ExpenseStyles.expenseId),
+              Text(item.expenseId, style: ExpenseStyles.expenseId),
             ]),
             const Spacer(),
             Text(item.displayAmount,
@@ -530,17 +522,15 @@ class _ExpenseDetailSheet extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Detail rows
-          _DetailRow('Date',         item.dateFormatted),
-          _DetailRow('Time',         item.timeFormatted),
+          _DetailRow('Date', item.dateFormatted),
+          _DetailRow('Time', item.timeFormatted),
           _DetailRow('Payment Mode', item.paymentMode.displayLabel),
-          if (item.partyName != null)
-            _DetailRow('Vendor',     item.partyName!),
-          if (item.description != null)
-            _DetailRow('Notes',      item.description!),
+          if (item.partyName != null) _DetailRow('Vendor', item.partyName!),
+          if (item.description != null) _DetailRow('Notes', item.description!),
           if (item.customLabel != null)
             _DetailRow('Custom Label', item.customLabel!),
-          _DetailRow('Entry Type',
-              item.isAutoGenerated ? 'Auto-generated' : 'Manual'),
+          _DetailRow(
+              'Entry Type', item.isAutoGenerated ? 'Auto-generated' : 'Manual'),
 
           const SizedBox(height: 24),
 
@@ -555,8 +545,7 @@ class _ExpenseDetailSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () => Navigator.pop(context),
-              child: Text('Close',
-                  style: ExpenseStyles.labelSecondary),
+              child: Text('Close', style: ExpenseStyles.labelSecondary),
             ),
           ),
         ],
@@ -582,8 +571,8 @@ class _DetailRow extends StatelessWidget {
             child: Text(label, style: ExpenseStyles.metaLabel),
           ),
           Expanded(
-            child: Text(value, style: ExpenseStyles.metaValue.copyWith(
-                fontSize: 13)),
+            child: Text(value,
+                style: ExpenseStyles.metaValue.copyWith(fontSize: 13)),
           ),
         ],
       ),
@@ -591,7 +580,7 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
-// ── Empty State ───────────────────────────────────────────────────────────────
+// â”€â”€ Empty State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _EmptyState extends StatelessWidget {
   final VoidCallback onAddExpense;
@@ -604,15 +593,15 @@ class _EmptyState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width:  72,
+            width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color:        ExpenseColors.moduleAccentLight,
+              color: ExpenseColors.moduleAccentLight,
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Icon(
               ExpenseIcons.moduleIcon,
-              size:  32,
+              size: 32,
               color: ExpenseColors.moduleAccent,
             ),
           ),
@@ -629,21 +618,19 @@ class _EmptyState extends StatelessWidget {
           GestureDetector(
             onTap: onAddExpense,
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
-                color:        ExpenseColors.moduleAccent,
+                color: ExpenseColors.moduleAccent,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(ExpenseIcons.addExpense,
-                    size: 16, color: Colors.white),
-                const SizedBox(width: 8),
+              child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(ExpenseIcons.addExpense, size: 16, color: Colors.white),
+                SizedBox(width: 8),
                 Text(ExpenseStrings.addExpense,
-                    style: const TextStyle(
-                      fontSize:   14,
+                    style: TextStyle(
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color:      Colors.white,
+                      color: Colors.white,
                     )),
               ]),
             ),

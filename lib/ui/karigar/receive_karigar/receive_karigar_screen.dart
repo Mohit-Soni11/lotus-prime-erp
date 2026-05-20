@@ -3,12 +3,12 @@
 // MODULE      : Karigar
 // LAYER       : UI / Screen
 // DESCRIPTION : Full production Receive from Karigar screen.
-//               Sections: Select Issue → Weight & Wastage Analysis →
-//               Making Charges → Payment Settlement → Notes
+//               Sections: Select Issue â†’ Weight & Wastage Analysis â†’
+//               Making Charges â†’ Payment Settlement â†’ Notes
 //               Key UX: Live wastage computation with color-coded alerts,
 //               auto making charge calculation, inline payment settlement.
 //               - App Bar extracted to receive_karigar_app_bar.dart
-//               - ListenableBuilder — zero setState in UI.
+//               - ListenableBuilder â€” zero setState in UI.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -121,11 +121,13 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
     ]) {
       f.dispose();
     }
-    for (final a in _secAnim) a.dispose();
+    for (final a in _secAnim) {
+      a.dispose();
+    }
     super.dispose();
   }
 
-  // ── ACTIONS ───────────────────────────────────────────────────────────────
+  // â”€â”€ ACTIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> _onSave() async {
     FocusScope.of(context).unfocus();
@@ -210,7 +212,7 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
         child: SlideTransition(position: _secSlide[i], child: child),
       );
 
-  // ── BUILD ──────────────────────────────────────────────────────────────────
+  // â”€â”€ BUILD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   @override
   Widget build(BuildContext context) {
@@ -251,7 +253,7 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
                             onDismiss: _ctrl.clearMessages,
                           ),
 
-                        // ── Section 1: Select Pending Issue ───────
+                        // â”€â”€ Section 1: Select Pending Issue â”€â”€â”€â”€â”€â”€â”€
                         _animated(
                             0,
                             KarigarSectionCard(
@@ -264,7 +266,7 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
                             )),
                         const SizedBox(height: 20),
 
-                        // ── Section 2: Weight & Wastage ───────────
+                        // â”€â”€ Section 2: Weight & Wastage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                         _animated(
                             1,
                             KarigarSectionCard(
@@ -276,7 +278,7 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
                             )),
                         const SizedBox(height: 20),
 
-                        // ── Section 3: Making Charges ─────────────
+                        // â”€â”€ Section 3: Making Charges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                         _animated(
                             2,
                             KarigarSectionCard(
@@ -288,7 +290,7 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
                             )),
                         const SizedBox(height: 20),
 
-                        // ── Section 4: Payment ────────────────────
+                        // â”€â”€ Section 4: Payment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                         _animated(
                             3,
                             KarigarSectionCard(
@@ -300,7 +302,7 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
                             )),
                         const SizedBox(height: 20),
 
-                        // ── Section 5: Notes ──────────────────────
+                        // â”€â”€ Section 5: Notes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                         _animated(
                             4,
                             KarigarSectionCard(
@@ -332,9 +334,9 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // SECTION BUILDERS
-  // ════════════════════════════════════════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   Widget _buildIssueSelectionSection() {
     if (_ctrl.isLoadingIssues) {
@@ -353,7 +355,8 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
         decoration: BoxDecoration(
           color: KarigarColors.warningBg,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: KarigarColors.warning.withOpacity(0.4)),
+          border:
+              Border.all(color: KarigarColors.warning.withValues(alpha: 0.4)),
         ),
         child: Row(children: [
           const Icon(KarigarIcons.info, color: KarigarColors.warning, size: 18),
@@ -399,7 +402,7 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
                       (issue) => DropdownMenuItem<KarigarIssueWithKarigar>(
                         value: issue,
                         child: Text(
-                          '${issue.issueNumber} — ${issue.karigarName} (${issue.netWeightIssued.toStringAsFixed(3)}g)',
+                          '${issue.issueNumber} â€” ${issue.karigarName} (${issue.netWeightIssued.toStringAsFixed(3)}g)',
                           style:
                               KarigarStyles.fieldInput.copyWith(fontSize: 13),
                           overflow: TextOverflow.ellipsis,
@@ -542,7 +545,7 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
           controller: _makingRateCtrl,
           focusNode: _rateFocus,
           nextFocus: _amountFocus,
-          prefixText: '₹',
+          prefixText: 'â‚¹',
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
@@ -564,7 +567,7 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
         controller: _makingAmountCtrl,
         focusNode: _amountFocus,
         nextFocus: _paidFocus,
-        prefixText: '₹',
+        prefixText: 'â‚¹',
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         inputFormatters: [
           FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
@@ -603,7 +606,7 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
           icon: KarigarIcons.money,
           controller: _paidCtrl,
           focusNode: _paidFocus,
-          prefixText: '₹',
+          prefixText: 'â‚¹',
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
@@ -615,7 +618,7 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
       // Balance due display
       KarigarReadOnlyField(
         label: KarigarStrings.lblBalanceDue,
-        value: '₹${balance.toStringAsFixed(2)}',
+        value: 'â‚¹${balance.toStringAsFixed(2)}',
         icon: KarigarIcons.statsMoney,
         color: balance > 0 ? KarigarColors.danger : KarigarColors.success,
         note: KarigarStrings.noteBalanceDue,
@@ -627,8 +630,8 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
     return Row(children: [
       OutlinedButton.icon(
         onPressed: _ctrl.isSaving ? null : _resetAll,
-        icon:
-            Icon(KarigarIcons.reset, size: 18, color: KarigarColors.textMuted),
+        icon: const Icon(KarigarIcons.reset,
+            size: 18, color: KarigarColors.textMuted),
         label:
             Text(KarigarStrings.btnReset, style: KarigarStyles.resetButtonText),
         style: OutlinedButton.styleFrom(
@@ -648,7 +651,8 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
                   height: 18,
                   child: CircularProgressIndicator(
                       strokeWidth: 2, color: Colors.white))
-              : Icon(KarigarIcons.save, size: 18, color: KarigarColors.shellBg),
+              : const Icon(KarigarIcons.save,
+                  size: 18, color: KarigarColors.shellBg),
           label: Text(
             _ctrl.isSaving
                 ? KarigarStrings.btnSaving
@@ -658,7 +662,8 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
           style: ElevatedButton.styleFrom(
             backgroundColor: KarigarColors.brandGold,
             foregroundColor: KarigarColors.shellBg,
-            disabledBackgroundColor: KarigarColors.brandGold.withOpacity(0.5),
+            disabledBackgroundColor:
+                KarigarColors.brandGold.withValues(alpha: 0.5),
             padding: const EdgeInsets.symmetric(vertical: 15),
             elevation: 0,
             shape:
@@ -670,9 +675,9 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // PRIVATE SUB-WIDGETS
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 class _SelectedIssueCard extends StatelessWidget {
   final KarigarIssueWithKarigar issue;
@@ -684,10 +689,10 @@ class _SelectedIssueCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: KarigarColors.info.withOpacity(0.06),
+        color: KarigarColors.info.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border:
-            Border.all(color: KarigarColors.info.withOpacity(0.35), width: 1.5),
+        border: Border.all(
+            color: KarigarColors.info.withValues(alpha: 0.35), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

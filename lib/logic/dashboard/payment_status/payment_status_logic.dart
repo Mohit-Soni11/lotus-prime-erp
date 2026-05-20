@@ -35,7 +35,6 @@ import '../../../models/dashboard/payment_bill_item.dart';
 import '../../../models/dashboard/payment_status_model.dart';
 
 class PaymentStatusLogic extends ChangeNotifier {
-
   // ── Dependencies ───────────────────────────────────────────────────────────
   final AppDatabase _db;
   PaymentStatusLogic({AppDatabase? db}) : _db = db ?? AppDatabase() {
@@ -45,21 +44,20 @@ class PaymentStatusLogic extends ChangeNotifier {
   // ── State ──────────────────────────────────────────────────────────────────
   PaymentStatusModel _data = PaymentStatusModel.loading();
   bool _isExpanded = false; // Show more / show less
-  bool _hasError   = false;
+  bool _hasError = false;
 
-  PaymentStatusModel get data       => _data;
-  bool               get isExpanded => _isExpanded;
-  bool               get hasError   => _hasError;
-  bool               get isLoading  => _data.isLoading;
+  PaymentStatusModel get data => _data;
+  bool get isExpanded => _isExpanded;
+  bool get hasError => _hasError;
+  bool get isLoading => _data.isLoading;
 
   // Max bills dikhane ki limit
-  static const int _kVisibleLimit  = 3;  // Collapsed mein
+  static const int _kVisibleLimit = 3; // Collapsed mein
   static const int _kExpandedLimit = 10; // Expanded mein
-  static const int _kFetchLimit    = 10; // DB se kitne lao
+  static const int _kFetchLimit = 10; // DB se kitne lao
 
   // Kitne bills dikhenge currently
-  int get visibleCount =>
-      _isExpanded ? _kExpandedLimit : _kVisibleLimit;
+  int get visibleCount => _isExpanded ? _kExpandedLimit : _kVisibleLimit;
 
   // ── DB Subscription ────────────────────────────────────────────────────────
   StreamSubscription? _billsSub;
@@ -93,34 +91,35 @@ class PaymentStatusLogic extends ChangeNotifier {
       for (final bill in bills) {
         // Customer data fetch karo (agar customerId available hai)
         String customerName = bill.customerName ?? 'Walk-in Customer';
-        int?   customerId   = bill.customerId;
+        int? customerId = bill.customerId;
 
         if (customerId != null) {
           final customer = await (_db.select(_db.customers)
-            ..where((t) => t.id.equals(customerId))).getSingleOrNull();
+                ..where((t) => t.id.equals(customerId)))
+              .getSingleOrNull();
           if (customer != null) {
             customerName = customer.name;
           }
         }
 
         // Amounts compute karo
-        final double total  = bill.finalAmount;
-        final double paid   = bill.paidAmount;        // v5 se naya column
-        final double due    = (total - paid).clamp(0.0, double.infinity);
+        final double total = bill.finalAmount;
+        final double paid = bill.paidAmount; // v5 se naya column
+        final double due = (total - paid).clamp(0.0, double.infinity);
         final PaymentStatus status = PaymentBillItem.computeStatus(paid, total);
 
         items.add(PaymentBillItem(
-          billId:           bill.id,
-          billNo:           bill.billNo,
-          customerName:     customerName,
+          billId: bill.id,
+          billNo: bill.billNo,
+          customerName: customerName,
           customerInitials: PaymentBillItem.extractInitials(customerName),
-          customerId:       customerId,
-          mobile:           bill.mobile ?? '',
-          totalAmount:      total,
-          paidAmount:       paid,
-          dueAmount:        due,
-          billDate:         bill.billDate,
-          status:           status,
+          customerId: customerId,
+          mobile: bill.mobile ?? '',
+          totalAmount: total,
+          paidAmount: paid,
+          dueAmount: due,
+          billDate: bill.billDate,
+          status: status,
         ));
       }
 
@@ -128,8 +127,8 @@ class PaymentStatusLogic extends ChangeNotifier {
       final summary = _computeSummary(items);
 
       _data = PaymentStatusModel(
-        summary:   summary,
-        bills:     items,
+        summary: summary,
+        bills: items,
         activeTab: _data.activeTab, // active tab same rakho
       );
       _hasError = false;
@@ -146,26 +145,32 @@ class PaymentStatusLogic extends ChangeNotifier {
   // ==========================================
   PaymentSummary _computeSummary(List<PaymentBillItem> items) {
     double collected = 0;
-    double pending   = 0;
+    double pending = 0;
     int paidCnt = 0, partialCnt = 0, unpaidCnt = 0;
 
     for (final item in items) {
       collected += item.paidAmount;
-      pending   += item.dueAmount;
+      pending += item.dueAmount;
       switch (item.status) {
-        case PaymentStatus.paid:    paidCnt++;    break;
-        case PaymentStatus.partial: partialCnt++; break;
-        case PaymentStatus.unpaid:  unpaidCnt++;  break;
+        case PaymentStatus.paid:
+          paidCnt++;
+          break;
+        case PaymentStatus.partial:
+          partialCnt++;
+          break;
+        case PaymentStatus.unpaid:
+          unpaidCnt++;
+          break;
       }
     }
 
     return PaymentSummary(
-      totalBills:     items.length,
+      totalBills: items.length,
       totalCollected: collected,
-      totalPending:   pending,
-      paidCount:      paidCnt,
-      partialCount:   partialCnt,
-      unpaidCount:    unpaidCnt,
+      totalPending: pending,
+      paidCount: paidCnt,
+      partialCount: partialCnt,
+      unpaidCount: unpaidCnt,
     );
   }
 
@@ -216,13 +221,13 @@ class PaymentStatusLogic extends ChangeNotifier {
 
   static String formatDate(DateTime date) {
     final now = DateTime.now();
-    final today    = DateTime(now.year, now.month, now.day);
-    final billDay  = DateTime(date.year, date.month, date.day);
-    final diff     = today.difference(billDay).inDays;
+    final today = DateTime(now.year, now.month, now.day);
+    final billDay = DateTime(date.year, date.month, date.day);
+    final diff = today.difference(billDay).inDays;
 
     if (diff == 0) return 'Today';
     if (diff == 1) return 'Yesterday';
-    if (diff < 7)  return '$diff days ago';
+    if (diff < 7) return '$diff days ago';
     return DateFormat('dd MMM').format(date);
   }
 

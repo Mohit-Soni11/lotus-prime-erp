@@ -26,7 +26,6 @@ import 'package:drift/drift.dart';
 import 'shop_session_manager.dart';
 
 class ShopSetupRepository {
-  
   final ShopDatabaseHelper _dbHelper = ShopDatabaseHelper();
 
   // ✅ Drift DB instance — Dashboard ke liye
@@ -35,14 +34,14 @@ class ShopSetupRepository {
   /// Master method to construct and push the final payload securely.
   Future<bool> submitMasterPayload({
     required ShopProfileModel basicInfo,
-    required Map<String, dynamic> addressData, 
+    required Map<String, dynamic> addressData,
     required TaxGstModel taxGst,
     required List<BankAccountModel> bankingList,
     required ShopBrandingModel branding,
   }) async {
     try {
       final String tenantId = await ShopSessionManager.getPermanentTenantId();
-      
+
       final masterModel = ShopMasterPayloadModel(
         tenantId: tenantId,
         basicInfo: basicInfo,
@@ -53,29 +52,32 @@ class ShopSetupRepository {
       );
 
       final masterPayloadMap = masterModel.toJson();
-      final String prettyJson = const JsonEncoder.withIndent('  ').convert(masterPayloadMap);
-      debugPrint("🚀 [SHOP SETUP] SECURE MASTER PAYLOAD ROUTED TO DB WITH PERMANENT ID: $tenantId");
+      final String prettyJson =
+          const JsonEncoder.withIndent('  ').convert(masterPayloadMap);
+      debugPrint(
+          "🚀 [SHOP SETUP] SECURE MASTER PAYLOAD ROUTED TO DB WITH PERMANENT ID: $tenantId");
       debugPrint(prettyJson);
 
       // 1. Existing local DB mein save karo (unchanged)
-      final bool isSaved = await _dbHelper.upsertMasterPayload(masterPayloadMap);
+      final bool isSaved =
+          await _dbHelper.upsertMasterPayload(masterPayloadMap);
 
       // ✅ 2. Drift ShopProfiles table mein bhi sync karo
       // Dashboard ShopCard yahan se padhta hai
       if (isSaved) {
         await _syncToDriftShopProfiles(
-          basicInfo:   basicInfo,
+          basicInfo: basicInfo,
           addressData: addressData,
-          taxGst:      taxGst,
-          banking:     bankingList,
+          taxGst: taxGst,
+          banking: bankingList,
         );
       }
 
-      return isSaved; 
+      return isSaved;
     } catch (e, stacktrace) {
       debugPrint("❌ [SHOP SETUP] REPOSITORY ERROR: $e");
       debugPrint(stacktrace.toString());
-      return false; 
+      return false;
     }
   }
 
@@ -92,62 +94,61 @@ class ShopSetupRepository {
   }) async {
     try {
       // Address data extract karo
-      final String city    = addressData['city']?.toString()    ?? '';
-      final String state   = addressData['state']?.toString()   ?? '';
+      final String city = addressData['city']?.toString() ?? '';
+      final String state = addressData['state']?.toString() ?? '';
       final String pincode = addressData['pincode']?.toString() ?? '';
-      final String address = addressData['addr1']?.toString()   ?? '';
+      final String address = addressData['addr1']?.toString() ?? '';
 
       // Banking (first account) — BankAccountModel fields: acc, bank, holder, upi, ifsc
-      String bankName      = '';
-      String bankAccNo     = '';
-      String bankIfsc      = '';
-      String upiId         = '';
-      String bankHolder    = '';
+      String bankName = '';
+      String bankAccNo = '';
+      String bankIfsc = '';
+      String upiId = '';
+      String bankHolder = '';
       if (banking.isNotEmpty) {
-        bankName   = banking.first.bank;    // ✅ .bank (not .bankName)
-        bankAccNo  = banking.first.acc;     // ✅ .acc (not .accountNumber)
-        bankIfsc   = banking.first.ifsc;    // ✅ .ifsc (not .ifscCode)
-        upiId      = banking.first.upi;     // ✅ .upi (not .upiId)
-        bankHolder = banking.first.holder;  // ✅ .holder (not .holderName)
+        bankName = banking.first.bank; // ✅ .bank (not .bankName)
+        bankAccNo = banking.first.acc; // ✅ .acc (not .accountNumber)
+        bankIfsc = banking.first.ifsc; // ✅ .ifsc (not .ifscCode)
+        upiId = banking.first.upi; // ✅ .upi (not .upiId)
+        bankHolder = banking.first.holder; // ✅ .holder (not .holderName)
       }
 
       // Companion banao — sirf woh fields jo fill karne hain
       final companion = ShopProfilesCompanion(
-        shopName:        Value(basicInfo.brandDisplayName.isNotEmpty
-                            ? basicInfo.brandDisplayName
-                            : basicInfo.displayName),
-        legalName:       Value(basicInfo.legalName),
-        tagline:         Value(basicInfo.tagline),
-        ownerName:       Value(basicInfo.ownerName),
-        ownerContact:    Value(basicInfo.ownerPhone),
-        ownerWhatsapp:   Value(basicInfo.ownerWhatsapp),
-        estYear:         Value(basicInfo.estYear),
-        branchCode:      Value(basicInfo.branchCode),
-        openingTime:     Value(basicInfo.openTime),
-        closingTime:     Value(basicInfo.closeTime),
-        weeklyOff:       Value(basicInfo.weeklyOff),
-        email:           Value(basicInfo.businessEmail),
-        contactNumber:   Value(basicInfo.shopPhone),
-        whatsappNumber:  Value(basicInfo.shopWhatsapp),
-        address:         Value(address),
-        city:            Value(city),
-        state:           Value(state),
-        pincode:         Value(pincode),
-        gstin:           Value(taxGst.gstin),
-        bisLicense:      Value(taxGst.bisLicenseNo),
-        bankName:        Value(bankName),
-        bankAccNo:       Value(bankAccNo),
-        bankIfsc:        Value(bankIfsc),
-        upiId:           Value(upiId),
-        bankHolderName:  Value(bankHolder),
-        showMobile:      const Value(true),
-        showEmail:       const Value(true),
-        showGst:         const Value(true),
+        shopName: Value(basicInfo.brandDisplayName.isNotEmpty
+            ? basicInfo.brandDisplayName
+            : basicInfo.displayName),
+        legalName: Value(basicInfo.legalName),
+        tagline: Value(basicInfo.tagline),
+        ownerName: Value(basicInfo.ownerName),
+        ownerContact: Value(basicInfo.ownerPhone),
+        ownerWhatsapp: Value(basicInfo.ownerWhatsapp),
+        estYear: Value(basicInfo.estYear),
+        branchCode: Value(basicInfo.branchCode),
+        openingTime: Value(basicInfo.openTime),
+        closingTime: Value(basicInfo.closeTime),
+        weeklyOff: Value(basicInfo.weeklyOff),
+        email: Value(basicInfo.businessEmail),
+        contactNumber: Value(basicInfo.shopPhone),
+        whatsappNumber: Value(basicInfo.shopWhatsapp),
+        address: Value(address),
+        city: Value(city),
+        state: Value(state),
+        pincode: Value(pincode),
+        gstin: Value(taxGst.gstin),
+        bisLicense: Value(taxGst.bisLicenseNo),
+        bankName: Value(bankName),
+        bankAccNo: Value(bankAccNo),
+        bankIfsc: Value(bankIfsc),
+        upiId: Value(upiId),
+        bankHolderName: Value(bankHolder),
+        showMobile: const Value(true),
+        showEmail: const Value(true),
+        showGst: const Value(true),
       );
 
       // Existing check karo
-      final existing = await (_driftDb.select(_driftDb.shopProfiles)
-            ..limit(1))
+      final existing = await (_driftDb.select(_driftDb.shopProfiles)..limit(1))
           .getSingleOrNull();
 
       if (existing != null) {

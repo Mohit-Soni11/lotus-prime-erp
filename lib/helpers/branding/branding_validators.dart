@@ -16,11 +16,11 @@ class BrandingValidators {
     if (value == null || value.trim().isEmpty) {
       return null; // Field is optional
     }
-    
+
     final cleanValue = value.trim();
     // Strict regex for exactly 10 digits
     final phoneRegex = RegExp(r'^[0-9]{10}$');
-    
+
     if (!phoneRegex.hasMatch(cleanValue)) {
       return 'Please enter a valid 10-digit number';
     }
@@ -47,7 +47,7 @@ class BrandingValidators {
     if (value == null || value.trim().isEmpty) {
       return null; // Field is optional
     }
-    
+
     // Basic sanitization: social handles and URLs should not contain spaces
     if (value.trim().contains(' ')) {
       return 'Links and handles cannot contain spaces';

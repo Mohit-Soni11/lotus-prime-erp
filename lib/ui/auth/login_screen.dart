@@ -344,7 +344,7 @@ class _LoginScreenState extends State<LoginScreen> {
         labelStyle: UV.styles.hint,
         prefixIcon: Icon(
           icon,
-          color: UV.colors.primary.withOpacity(0.7),
+          color: UV.colors.primary.withValues(alpha: 0.7),
           size: UV.layout.iconMd,
         ),
         suffixIcon: isPass
@@ -382,7 +382,7 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(UV.layout.radiusSm),
         boxShadow: [
           BoxShadow(
-            color: UV.colors.primary.withOpacity(0.3),
+            color: UV.colors.primary.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),

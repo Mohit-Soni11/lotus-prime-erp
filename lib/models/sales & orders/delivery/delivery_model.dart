@@ -17,9 +17,9 @@ import 'delivery_enums.dart';
 // 1. DELIVERY ORDER UI MODEL — for list rows & side panel
 // =============================================================================
 class DeliveryOrderUiModel {
-  final int    id;
+  final int id;
   final String deliveryNo;
-  final int    customerId;
+  final int customerId;
   final String customerName;
   final String customerMobile;
   final String itemName;
@@ -27,17 +27,17 @@ class DeliveryOrderUiModel {
   final String purity;
   final double approxWeight;
   final double lockedRate;
-  final DeliveryOrderStatus   status;
+  final DeliveryOrderStatus status;
   final DeliveryPaymentStatus paymentStatus;
   final double advancePaid;
   final double totalAmount;
   final double dueAmount;
-  final DateTime?  expectedDeliveryDate;
-  final DateTime?  actualDeliveryDate;
-  final String?    imagePath;
-  final String?    notes;
-  final String?    karigarName;
-  final String?    linkedBillNo;
+  final DateTime? expectedDeliveryDate;
+  final DateTime? actualDeliveryDate;
+  final String? imagePath;
+  final String? notes;
+  final String? karigarName;
+  final String? linkedBillNo;
   final List<DeliveryItemUiModel> items;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -74,7 +74,9 @@ class DeliveryOrderUiModel {
   /// True if delivery date has passed and order is not yet delivered
   bool get isOverdue {
     if (status == DeliveryOrderStatus.delivered ||
-        status == DeliveryOrderStatus.cancelled) return false;
+        status == DeliveryOrderStatus.cancelled) {
+      return false;
+    }
     if (expectedDeliveryDate == null) return false;
     return expectedDeliveryDate!.isBefore(
       DateTime.now().copyWith(hour: 0, minute: 0, second: 0, millisecond: 0),
@@ -84,22 +86,24 @@ class DeliveryOrderUiModel {
   bool get isToday {
     if (expectedDeliveryDate == null) return false;
     final now = DateTime.now();
-    final d   = expectedDeliveryDate!;
+    final d = expectedDeliveryDate!;
     return d.year == now.year && d.month == now.month && d.day == now.day;
   }
 
   bool get isTomorrow {
     if (expectedDeliveryDate == null) return false;
     final tmrw = DateTime.now().add(const Duration(days: 1));
-    final d    = expectedDeliveryDate!;
+    final d = expectedDeliveryDate!;
     return d.year == tmrw.year && d.month == tmrw.month && d.day == tmrw.day;
   }
 
   DeliveryUrgency? get urgency {
     if (status == DeliveryOrderStatus.delivered ||
-        status == DeliveryOrderStatus.cancelled) return null;
-    if (isOverdue)  return DeliveryUrgency.overdue;
-    if (isToday)    return DeliveryUrgency.today;
+        status == DeliveryOrderStatus.cancelled) {
+      return null;
+    }
+    if (isOverdue) return DeliveryUrgency.overdue;
+    if (isToday) return DeliveryUrgency.today;
     if (isTomorrow) return DeliveryUrgency.tomorrow;
     return null;
   }
@@ -119,14 +123,14 @@ class DeliveryOrderUiModel {
 // 2. DELIVERY ITEM UI MODEL — for partial delivery selector
 // =============================================================================
 class DeliveryItemUiModel {
-  final int    id;
-  final int    deliveryOrderId;
+  final int id;
+  final int deliveryOrderId;
   final String itemName;
   final String metalType;
   final String purity;
   final double approxWeight;
   final double finalWeight;
-  final int    quantity;
+  final int quantity;
   final String? imagePath;
   final String? notes;
   final DeliveryItemStatus itemStatus;
@@ -155,7 +159,7 @@ class DeliveryItemUiModel {
 // =============================================================================
 class DeliverySummaryModel {
   final int totalActive;
-  final int actionRequired;   // overdue + today + tomorrow
+  final int actionRequired; // overdue + today + tomorrow
   final int overdueCount;
   final int todayCount;
   final int dueLedgerCount;
@@ -175,13 +179,13 @@ class DeliverySummaryModel {
   });
 
   factory DeliverySummaryModel.empty() => const DeliverySummaryModel(
-    totalActive: 0,
-    actionRequired: 0,
-    overdueCount: 0,
-    todayCount: 0,
-    dueLedgerCount: 0,
-    completedCount: 0,
-    totalDueAmount: 0.0,
-    totalRecoveredToday: 0.0,
-  );
+        totalActive: 0,
+        actionRequired: 0,
+        overdueCount: 0,
+        todayCount: 0,
+        dueLedgerCount: 0,
+        completedCount: 0,
+        totalDueAmount: 0.0,
+        totalRecoveredToday: 0.0,
+      );
 }

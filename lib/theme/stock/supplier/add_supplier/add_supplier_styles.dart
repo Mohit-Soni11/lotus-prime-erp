@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 // FILE: add_supplier_styles.dart
-// MODULE: Supplier → Add Supplier
+// MODULE: Supplier â†’ Add Supplier
 // -----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
@@ -21,7 +21,7 @@ class AddSupplierStyles {
   static const EdgeInsets cardPadding = EdgeInsets.all(20.0);
   static const EdgeInsets fieldGap = EdgeInsets.only(bottom: 16.0);
 
-  // ── TYPOGRAPHY (Updated to Premium Style) ────────────────────────────────
+  // â”€â”€ TYPOGRAPHY (Updated to Premium Style) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get appBarTitle => GoogleFonts.inter(
         fontSize: 18, // Changed to 18
         fontWeight: FontWeight.w700,
@@ -82,8 +82,8 @@ class AddSupplierStyles {
   static BoxDecoration get sectionCard => BoxDecoration(
         color: AddSupplierColors.bodyPanelBg,
         borderRadius: BorderRadius.circular(cardRadius),
-        border:
-            Border.all(color: AddSupplierColors.bodyBorder.withOpacity(0.5)),
+        border: Border.all(
+            color: AddSupplierColors.bodyBorder.withValues(alpha: 0.5)),
         boxShadow: const [
           BoxShadow(
               color: AddSupplierColors.shadowLight,

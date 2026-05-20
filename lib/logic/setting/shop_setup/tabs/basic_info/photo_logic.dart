@@ -2,13 +2,12 @@
 // FILE: photo_logic.dart
 // TYPE: Service / Logic Layer
 // AUTHOR: Senior System Architect
-// DESCRIPTION: 🚀 UPGRADED: Added kIsWeb cross-platform safety. 
-//              High-performance image handling, optimized memory eviction, 
+// DESCRIPTION: 🚀 UPGRADED: Added kIsWeb cross-platform safety.
+//              High-performance image handling, optimized memory eviction,
 //              and storage leak prevention without UI coupling.
 // -----------------------------------------------------------------------------
 
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart'; // 🚀 UPGRADE: For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -18,9 +17,9 @@ import 'package:path/path.dart' as p;
 
 class PhotoUploadLogic {
   final ImagePicker _picker = ImagePicker();
-  
+
   // 🚀 UPGRADE: Globally synchronized with BasicInfoLogic
-  static const int maxFileSizeMb = 5; 
+  static const int maxFileSizeMb = 5;
 
   /// **1. Image Picking & Secure Validation**
   /// Throws an exception with a user-friendly message if validation fails.
@@ -37,7 +36,7 @@ class PhotoUploadLogic {
       // Using File(pickedFile.path).length() directly can cause Web issues.
       int sizeInBytes = await pickedFile.length();
       double sizeInMb = sizeInBytes / (1024 * 1024);
-      
+
       if (sizeInMb > maxFileSizeMb) {
         throw Exception("File too large. Maximum size is ${maxFileSizeMb}MB.");
       }
@@ -47,7 +46,8 @@ class PhotoUploadLogic {
       if (!kIsWeb) {
         String ext = p.extension(pickedFile.path).toLowerCase();
         if (ext != '.jpg' && ext != '.jpeg' && ext != '.png') {
-          throw Exception("Invalid format. Only JPG and PNG images are allowed.");
+          throw Exception(
+              "Invalid format. Only JPG and PNG images are allowed.");
         }
       }
 
@@ -61,10 +61,11 @@ class PhotoUploadLogic {
   /// **2. Mobile Native Cropping**
   Future<File?> cropImageMobile(File originalFile, Color toolbarColor) async {
     // 🚀 UPGRADE: Web does not support this native cropper UI
-    if (kIsWeb) return originalFile; 
+    if (kIsWeb) return originalFile;
 
     try {
-      native_crop.CroppedFile? croppedFile = await native_crop.ImageCropper().cropImage(
+      native_crop.CroppedFile? croppedFile =
+          await native_crop.ImageCropper().cropImage(
         sourcePath: originalFile.path,
         uiSettings: [
           native_crop.AndroidUiSettings(
@@ -95,13 +96,15 @@ class PhotoUploadLogic {
   Future<File> saveCroppedBitmap(Uint8List bytes) async {
     // 🚀 UPGRADE: Web doesn't support Temp Directories like Native
     if (kIsWeb) {
-      throw Exception("Web byte saving should be handled via memory, not File System.");
+      throw Exception(
+          "Web byte saving should be handled via memory, not File System.");
     }
-    
+
     try {
       final tempDir = await getTemporaryDirectory();
       // Unique naming convention for easy cleanup
-      final fileName = 'erp_img_crop_${DateTime.now().millisecondsSinceEpoch}.png';
+      final fileName =
+          'erp_img_crop_${DateTime.now().millisecondsSinceEpoch}.png';
       final tempFile = File(p.join(tempDir.path, fileName));
       await tempFile.writeAsBytes(bytes);
       return tempFile;
@@ -116,7 +119,7 @@ class PhotoUploadLogic {
     // 🚀 UPGRADE: FileImage().evict() crashes on Web. Bypassed for Web.
     if (image != null && !kIsWeb) {
       try {
-        FileImage(image).evict(); 
+        FileImage(image).evict();
       } catch (e) {
         debugPrint("Cache Eviction Error: $e");
       }
@@ -127,7 +130,7 @@ class PhotoUploadLogic {
   /// Deletes old temporary crop files from the device.
   Future<void> clearOldTempFiles() async {
     // 🚀 UPGRADE: Web file system bypass
-    if (kIsWeb) return; 
+    if (kIsWeb) return;
 
     try {
       final tempDir = await getTemporaryDirectory();

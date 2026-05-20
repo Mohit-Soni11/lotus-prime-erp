@@ -24,27 +24,27 @@ class KarigarDirectoryLogic extends ChangeNotifier {
   }
 
   // ── STATE ──────────────────────────────────────────────────────────────────
-  KarigarDirectoryState               _state         = KarigarDirectoryState.loading;
-  List<KarigarDirectoryItemModel>     _allKarigars   = [];
-  List<KarigarDirectoryItemModel>     _filteredList  = [];
-  KarigarDirectoryStatsModel          _stats         = KarigarDirectoryStatsModel.loading();
-  KarigarDirectoryFilter              _activeFilter  = KarigarDirectoryFilter.all;
-  KarigarDirectorySort                _activeSort    = KarigarDirectorySort.nameAsc;
-  String                              _searchQuery   = '';
-  String?                             _errorMessage;
-  Timer?                              _searchDebounce;
+  KarigarDirectoryState _state = KarigarDirectoryState.loading;
+  List<KarigarDirectoryItemModel> _allKarigars = [];
+  List<KarigarDirectoryItemModel> _filteredList = [];
+  KarigarDirectoryStatsModel _stats = KarigarDirectoryStatsModel.loading();
+  KarigarDirectoryFilter _activeFilter = KarigarDirectoryFilter.all;
+  KarigarDirectorySort _activeSort = KarigarDirectorySort.nameAsc;
+  String _searchQuery = '';
+  String? _errorMessage;
+  Timer? _searchDebounce;
 
   // ── GETTERS ────────────────────────────────────────────────────────────────
-  KarigarDirectoryState           get state         => _state;
-  List<KarigarDirectoryItemModel> get karigars      => _filteredList;
-  KarigarDirectoryStatsModel      get stats         => _stats;
-  KarigarDirectoryFilter          get activeFilter  => _activeFilter;
-  KarigarDirectorySort            get activeSort    => _activeSort;
-  String                          get searchQuery   => _searchQuery;
-  String?                         get errorMessage  => _errorMessage;
-  bool                            get isLoading     => _state == KarigarDirectoryState.loading;
-  bool                            get isEmpty       => _state == KarigarDirectoryState.empty;
-  bool                            get isSearching   => _searchQuery.isNotEmpty;
+  KarigarDirectoryState get state => _state;
+  List<KarigarDirectoryItemModel> get karigars => _filteredList;
+  KarigarDirectoryStatsModel get stats => _stats;
+  KarigarDirectoryFilter get activeFilter => _activeFilter;
+  KarigarDirectorySort get activeSort => _activeSort;
+  String get searchQuery => _searchQuery;
+  String? get errorMessage => _errorMessage;
+  bool get isLoading => _state == KarigarDirectoryState.loading;
+  bool get isEmpty => _state == KarigarDirectoryState.empty;
+  bool get isSearching => _searchQuery.isNotEmpty;
 
   // ── INIT ───────────────────────────────────────────────────────────────────
   Future<void> _init() async {
@@ -59,7 +59,7 @@ class KarigarDirectoryLogic extends ChangeNotifier {
 
     try {
       bool? activeOnly;
-      if (_activeFilter == KarigarDirectoryFilter.active)   activeOnly = true;
+      if (_activeFilter == KarigarDirectoryFilter.active) activeOnly = true;
       if (_activeFilter == KarigarDirectoryFilter.inactive) activeOnly = false;
 
       final data = await _repo.getAllKarigars(activeOnly: activeOnly);
@@ -73,7 +73,7 @@ class KarigarDirectoryLogic extends ChangeNotifier {
     } catch (e) {
       debugPrint('KarigarDirectoryLogic._loadKarigars error: $e');
       _errorMessage = 'Failed to load karigar list. Please try again.';
-      _state        = KarigarDirectoryState.error;
+      _state = KarigarDirectoryState.error;
     }
     notifyListeners();
   }
@@ -120,7 +120,7 @@ class KarigarDirectoryLogic extends ChangeNotifier {
   void setFilter(KarigarDirectoryFilter filter) {
     if (_activeFilter == filter) return;
     _activeFilter = filter;
-    _searchQuery  = '';
+    _searchQuery = '';
     _loadKarigars();
   }
 
@@ -175,7 +175,8 @@ class KarigarDirectoryLogic extends ChangeNotifier {
         list.sort((a, b) => b.activeJobCount.compareTo(a.activeJobCount));
         break;
       case KarigarDirectorySort.highestBalance:
-        list.sort((a, b) => b.outstandingBalance.compareTo(a.outstandingBalance));
+        list.sort(
+            (a, b) => b.outstandingBalance.compareTo(a.outstandingBalance));
         break;
     }
 

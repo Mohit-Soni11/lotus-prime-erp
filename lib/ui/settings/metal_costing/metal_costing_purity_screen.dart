@@ -2,7 +2,7 @@
 // FILE        : lib/ui/settings/metal_costing/metal_costing_purity_screen.dart
 // MODULE      : Metal Costing Analysis
 // LAYER       : UI / Presentation
-// DESCRIPTION : Level 2 — Purity cards (18K, 22K, 24K etc.) for one metal.
+// DESCRIPTION : Level 2 â€” Purity cards (18K, 22K, 24K etc.) for one metal.
 //               Stock DB se dynamically banata hai jo bhi purity stock mein hai.
 // =============================================================================
 
@@ -28,7 +28,7 @@ class MetalCostingPurityScreen extends StatelessWidget {
     required this.controller,
   });
 
-  String _fmt(double v) => '₹${v.abs().toStringAsFixed(0).replaceAllMapped(
+  String _fmt(double v) => 'â‚¹${v.abs().toStringAsFixed(0).replaceAllMapped(
         RegExp(r'(\d)(?=(\d{2})+\d$)'),
         (m) => '${m[1]},',
       )}';
@@ -70,7 +70,7 @@ class MetalCostingPurityScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 28),
               Text(
-                '${metalMeta.label.toUpperCase()} — PURITY WISE ANALYSIS',
+                '${metalMeta.label.toUpperCase()} â€” PURITY WISE ANALYSIS',
                 style: MetalCostingStyles.sectionLabel,
               ),
               const SizedBox(height: 16),
@@ -96,7 +96,7 @@ class MetalCostingPurityScreen extends StatelessWidget {
   }
 }
 
-// ── Empty State ───────────────────────────────────────────────────────────────
+// â”€â”€ Empty State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _EmptyState extends StatelessWidget {
   final String metalName;
   const _EmptyState({required this.metalName});
@@ -108,7 +108,7 @@ class _EmptyState extends StatelessWidget {
       child: Center(
         child: Column(
           children: [
-            Icon(MetalCostingIcons.itemCount,
+            const Icon(MetalCostingIcons.itemCount,
                 size: 48, color: MetalCostingColors.textHint),
             const SizedBox(height: 16),
             Text(
@@ -134,9 +134,9 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // PURITY CARD
-// ═════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 class _PurityCard extends StatefulWidget {
   final PuritySummary ps;
   final Color accent;
@@ -208,14 +208,14 @@ class _PurityCardState extends State<_PurityCard>
               borderRadius: BorderRadius.circular(MetalCostingStyles.rCard),
               border: Border.all(
                 color: _hovered
-                    ? accent.withOpacity(0.6)
+                    ? accent.withValues(alpha: 0.6)
                     : MetalCostingColors.cardBorder,
                 width: _hovered ? 1.5 : 1.0,
               ),
               boxShadow: [
                 BoxShadow(
                   color: _hovered
-                      ? accent.withOpacity(0.12)
+                      ? accent.withValues(alpha: 0.12)
                       : MetalCostingColors.shadowLight,
                   blurRadius: _hovered ? 18 : 8,
                   offset: const Offset(0, 4),
@@ -225,7 +225,7 @@ class _PurityCardState extends State<_PurityCard>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Header ──
+                // â”€â”€ Header â”€â”€
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -234,7 +234,7 @@ class _PurityCardState extends State<_PurityCard>
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: accent.withOpacity(0.10),
+                            color: accent.withValues(alpha: 0.10),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(MetalCostingIcons.purityIcon,
@@ -256,8 +256,8 @@ class _PurityCardState extends State<_PurityCard>
                               child: Text(ps.purity),
                             ),
                             Text(
-                              '${ps.items.length} items · '
-                              '${ps.soldItems.length} ${MetalCostingStrings.soldItems} · '
+                              '${ps.items.length} items Â· '
+                              '${ps.soldItems.length} ${MetalCostingStrings.soldItems} Â· '
                               '${ps.inStockItems.length} ${MetalCostingStrings.inStock}',
                               style: GoogleFonts.inter(
                                 fontSize: 11,
@@ -288,15 +288,15 @@ class _PurityCardState extends State<_PurityCard>
                 ),
                 const SizedBox(height: 16),
 
-                // ── Stats row ──
+                // â”€â”€ Stats row â”€â”€
                 Row(
                   children: [
                     Expanded(
                       child: _StatBox(
                         label: MetalCostingStrings.profitSold,
                         value: ps.soldItems.isEmpty
-                            ? '—'
-                            : '${isPos ? "+" : "−"}${widget.fmt(profit)}',
+                            ? 'â€”'
+                            : '${isPos ? "+" : "âˆ’"}${widget.fmt(profit)}',
                         valueColor: ps.soldItems.isEmpty
                             ? MetalCostingColors.textMuted
                             : isPos
@@ -314,7 +314,7 @@ class _PurityCardState extends State<_PurityCard>
                       child: _StatBox(
                         label: MetalCostingStrings.stockValue,
                         value: ps.inStockItems.isEmpty
-                            ? '—'
+                            ? 'â€”'
                             : widget.fmt(ps.totalStockValue),
                         valueColor: MetalCostingColors.textDark,
                         bg: MetalCostingColors.inputBg,
@@ -331,7 +331,7 @@ class _PurityCardState extends State<_PurityCard>
   }
 }
 
-// ── Stat Box ──────────────────────────────────────────────────────────────────
+// â”€â”€ Stat Box â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _StatBox extends StatelessWidget {
   final String label;
   final String value;

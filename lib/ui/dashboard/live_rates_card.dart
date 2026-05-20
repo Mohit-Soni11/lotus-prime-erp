@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
@@ -8,7 +7,7 @@ import '../../logic/dashboard/live_rates/live_rates_logic.dart';
 import '../../theme/dashboard/live_rates/live_rates_theme.dart';
 
 // ============================================================
-// 💎 LIVE RATES CARD
+// ðŸ’Ž LIVE RATES CARD
 // Dashboard mein "Sales Analytics Coming Soon" ke jagah lagega.
 // Gold + Silver rates with shimmer, animations, expand/collapse.
 // ============================================================
@@ -102,10 +101,10 @@ class _LiveRatesCardState extends State<LiveRatesCard>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── HEADER ──────────────────────────────────
+              // â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               _buildHeader(data, isLoading),
 
-              // ── ALWAYS VISIBLE: MAIN RATES ───────────────
+              // â”€â”€ ALWAYS VISIBLE: MAIN RATES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                 child: _buildMainRatesRow(data, isLoading),
@@ -113,10 +112,10 @@ class _LiveRatesCardState extends State<LiveRatesCard>
 
               const SizedBox(height: 12),
 
-              // ── SHOW MORE / LESS TOGGLE ──────────────────
+              // â”€â”€ SHOW MORE / LESS TOGGLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               _buildToggleButton(),
 
-              // ── EXPANDABLE SECTION ───────────────────────
+              // â”€â”€ EXPANDABLE SECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               SizeTransition(
                 sizeFactor: _expandAnim,
                 axisAlignment: -1,
@@ -126,7 +125,7 @@ class _LiveRatesCardState extends State<LiveRatesCard>
                 ),
               ),
 
-              // ── FOOTER: TIMESTAMP ────────────────────────
+              // â”€â”€ FOOTER: TIMESTAMP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               if (!_isExpanded)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
@@ -139,9 +138,9 @@ class _LiveRatesCardState extends State<LiveRatesCard>
     );
   }
 
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // HEADER
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildHeader(LiveRatesModel data, bool isLoading) {
     return Container(
       decoration: BoxDecoration(
@@ -149,7 +148,8 @@ class _LiveRatesCardState extends State<LiveRatesCard>
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         border: Border(
           bottom: BorderSide(
-              color: LiveRatesColors.goldMain.withOpacity(0.2), width: 0.5),
+              color: LiveRatesColors.goldMain.withValues(alpha: 0.2),
+              width: 0.5),
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -163,10 +163,11 @@ class _LiveRatesCardState extends State<LiveRatesCard>
               shape: BoxShape.circle,
               color: LiveRatesColors.goldBg,
               border: Border.all(
-                  color: LiveRatesColors.goldMain.withOpacity(0.4), width: 1),
+                  color: LiveRatesColors.goldMain.withValues(alpha: 0.4),
+                  width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: LiveRatesColors.goldMain.withOpacity(0.3),
+                  color: LiveRatesColors.goldMain.withValues(alpha: 0.3),
                   blurRadius: 10,
                   spreadRadius: 1,
                 ),
@@ -194,13 +195,12 @@ class _LiveRatesCardState extends State<LiveRatesCard>
           // Demo badge (DB mein data nahi hai tab)
           if (!data.isFromDb && !isLoading)
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: LiveRatesColors.demoBadgeBg,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                    color: LiveRatesColors.demoBadgeText.withOpacity(0.4),
+                    color: LiveRatesColors.demoBadgeText.withValues(alpha: 0.4),
                     width: 0.5),
               ),
               child: const Text(
@@ -227,11 +227,11 @@ class _LiveRatesCardState extends State<LiveRatesCard>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: LiveRatesColors.upGreen
-                        .withOpacity(_pulseAnim.value),
+                        .withValues(alpha: _pulseAnim.value),
                     boxShadow: [
                       BoxShadow(
                         color: LiveRatesColors.upGreen
-                            .withOpacity(_pulseAnim.value * 0.5),
+                            .withValues(alpha: _pulseAnim.value * 0.5),
                         blurRadius: 6,
                         spreadRadius: 2,
                       ),
@@ -245,7 +245,7 @@ class _LiveRatesCardState extends State<LiveRatesCard>
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: LiveRatesColors.upGreen
-                        .withOpacity(_pulseAnim.value),
+                        .withValues(alpha: _pulseAnim.value),
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -257,9 +257,9 @@ class _LiveRatesCardState extends State<LiveRatesCard>
     );
   }
 
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // MAIN RATES ROW: Gold + Divider + Silver
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildMainRatesRow(LiveRatesModel data, bool isLoading) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -280,7 +280,7 @@ class _LiveRatesCardState extends State<LiveRatesCard>
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  LiveRatesColors.goldMain.withOpacity(0.5),
+                  LiveRatesColors.goldMain.withValues(alpha: 0.5),
                   Colors.transparent,
                 ],
               ),
@@ -333,7 +333,9 @@ class _LiveRatesCardState extends State<LiveRatesCard>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                isGold ? LiveRatesStrings.goldTitle : LiveRatesStrings.silverTitle,
+                isGold
+                    ? LiveRatesStrings.goldTitle
+                    : LiveRatesStrings.silverTitle,
                 style: LiveRatesStyles.metalTitleStyle.copyWith(color: color),
               ),
               _buildChangeBadge(changePercent, isUp, isLoading),
@@ -358,7 +360,7 @@ class _LiveRatesCardState extends State<LiveRatesCard>
                     shaderCallback: (bounds) =>
                         LiveRatesColors.goldGradient.createShader(bounds),
                     child: Text(
-                      '₹ $mainRate',
+                      'â‚¹ $mainRate',
                       style: LiveRatesStyles.bigPriceStyle
                           .copyWith(color: Colors.white),
                     ),
@@ -400,14 +402,14 @@ class _LiveRatesCardState extends State<LiveRatesCard>
                 height: 4,
                 decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: LiveRatesColors.goldMain.withOpacity(0.6))),
+                    color: LiveRatesColors.goldMain.withValues(alpha: 0.6))),
             const SizedBox(width: 5),
             Text(label, style: LiveRatesStyles.subLabelStyle),
           ],
         ),
         isLoading
             ? _buildShimmer(width: 60, height: 12)
-            : Text('₹ $value', style: LiveRatesStyles.subPriceStyle),
+            : Text('â‚¹ $value', style: LiveRatesStyles.subPriceStyle),
       ],
     );
   }
@@ -417,14 +419,12 @@ class _LiveRatesCardState extends State<LiveRatesCard>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: isUp
-            ? LiveRatesColors.upGreenBg
-            : LiveRatesColors.downRedBg,
+        color: isUp ? LiveRatesColors.upGreenBg : LiveRatesColors.downRedBg,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color: isUp
-              ? LiveRatesColors.upGreen.withOpacity(0.3)
-              : LiveRatesColors.downRed.withOpacity(0.3),
+              ? LiveRatesColors.upGreen.withValues(alpha: 0.3)
+              : LiveRatesColors.downRed.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -447,9 +447,9 @@ class _LiveRatesCardState extends State<LiveRatesCard>
     );
   }
 
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // TOGGLE BUTTON
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildToggleButton() {
     return GestureDetector(
       onTap: _toggleExpand,
@@ -457,10 +457,11 @@ class _LiveRatesCardState extends State<LiveRatesCard>
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         padding: const EdgeInsets.symmetric(vertical: 9),
         decoration: BoxDecoration(
-          color: LiveRatesColors.goldMain.withOpacity(0.07),
+          color: LiveRatesColors.goldMain.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-              color: LiveRatesColors.goldMain.withOpacity(0.2), width: 0.5),
+              color: LiveRatesColors.goldMain.withValues(alpha: 0.2),
+              width: 0.5),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -489,9 +490,9 @@ class _LiveRatesCardState extends State<LiveRatesCard>
     );
   }
 
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // EXPANDED CONTENT: Old Gold + Price Tracker + Market Analysis
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildExpandedContent(LiveRatesModel data, bool isLoading) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -510,9 +511,9 @@ class _LiveRatesCardState extends State<LiveRatesCard>
     );
   }
 
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // OLD GOLD PURCHASE RATES
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildOldGoldSection(LiveRatesModel data, bool isLoading) {
     return Container(
       decoration: LiveRatesStyles.expandedSectionDecoration,
@@ -520,12 +521,10 @@ class _LiveRatesCardState extends State<LiveRatesCard>
         children: [
           // Header
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: const BoxDecoration(
               gradient: LiveRatesColors.headerGradient,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(14)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
             ),
             child: Row(
               children: [
@@ -561,14 +560,14 @@ class _LiveRatesCardState extends State<LiveRatesCard>
                             .copyWith(color: LiveRatesColors.goldMain),
                       ),
                       const SizedBox(height: 8),
-                      _buildOldRateRow(
-                          LiveRatesStrings.buy24k, data.oldGold24kBuy, isLoading),
+                      _buildOldRateRow(LiveRatesStrings.buy24k,
+                          data.oldGold24kBuy, isLoading),
                       const SizedBox(height: 4),
-                      _buildOldRateRow(
-                          LiveRatesStrings.buy22k, data.oldGold22kBuy, isLoading),
+                      _buildOldRateRow(LiveRatesStrings.buy22k,
+                          data.oldGold22kBuy, isLoading),
                       const SizedBox(height: 4),
-                      _buildOldRateRow(
-                          LiveRatesStrings.buy18k, data.oldGold18kBuy, isLoading),
+                      _buildOldRateRow(LiveRatesStrings.buy18k,
+                          data.oldGold18kBuy, isLoading),
                     ],
                   ),
                 ),
@@ -592,14 +591,14 @@ class _LiveRatesCardState extends State<LiveRatesCard>
                             .copyWith(color: LiveRatesColors.silverMain),
                       ),
                       const SizedBox(height: 8),
-                      _buildOldRateRow(
-                          LiveRatesStrings.silverBuyRate, data.oldSilverBuy, isLoading),
+                      _buildOldRateRow(LiveRatesStrings.silverBuyRate,
+                          data.oldSilverBuy, isLoading),
                       const SizedBox(height: 4),
                       _buildOldRateRow(
                           LiveRatesStrings.idols, data.silverIdols, isLoading),
                       const SizedBox(height: 4),
-                      _buildOldRateRow(
-                          LiveRatesStrings.jewellery, data.silverJewellery, isLoading),
+                      _buildOldRateRow(LiveRatesStrings.jewellery,
+                          data.silverJewellery, isLoading),
                     ],
                   ),
                 ),
@@ -618,16 +617,16 @@ class _LiveRatesCardState extends State<LiveRatesCard>
         Text(label, style: LiveRatesStyles.subLabelStyle),
         isLoading
             ? _buildShimmer(width: 65, height: 12)
-            : Text('₹ $value',
+            : Text('â‚¹ $value',
                 style: LiveRatesStyles.subPriceStyle
                     .copyWith(color: LiveRatesColors.goldText)),
       ],
     );
   }
 
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // PRICE TRACKER TABLE
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildPriceTrackerSection(LiveRatesModel data, bool isLoading) {
     // Last 5 days static labels (will be dynamic in future)
     final days = _getLast5Days();
@@ -639,10 +638,9 @@ class _LiveRatesCardState extends State<LiveRatesCard>
           // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LiveRatesColors.headerGradient,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(14)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
             ),
             child: Row(
               children: [
@@ -696,7 +694,7 @@ class _LiveRatesCardState extends State<LiveRatesCard>
     return Row(
       children: [
         // Label column
-        SizedBox(
+        const SizedBox(
           width: 55,
           child: Text('', style: LiveRatesStyles.subLabelStyle),
         ),
@@ -733,22 +731,34 @@ class _LiveRatesCardState extends State<LiveRatesCard>
     required String currentRate,
     required bool isLoading,
   }) {
-    // Demo historical prices (static — future mein DB se aayega)
-    final List<String> demoGold = ['71,000', '71,300', '72,400', '72,400', '74,000'];
-    final List<String> demoSilver = ['38,000', '37,700', '38,000', '38,100', '38,100'];
+    // Demo historical prices (static â€” future mein DB se aayega)
+    final List<String> demoGold = [
+      '71,000',
+      '71,300',
+      '72,400',
+      '72,400',
+      '74,000'
+    ];
+    final List<String> demoSilver = [
+      '38,000',
+      '37,700',
+      '38,000',
+      '38,100',
+      '38,100'
+    ];
     final historicalRates = isGold ? demoGold : demoSilver;
-    final color = isGold ? LiveRatesColors.goldMain : LiveRatesColors.silverMain;
+    final color =
+        isGold ? LiveRatesColors.goldMain : LiveRatesColors.silverMain;
     final label = isGold ? 'GOLD' : 'SILVER';
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       decoration: BoxDecoration(
         color: isGold
-            ? LiveRatesColors.goldBg.withOpacity(0.5)
-            : LiveRatesColors.silverBg.withOpacity(0.7),
+            ? LiveRatesColors.goldBg.withValues(alpha: 0.5)
+            : LiveRatesColors.silverBg.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-            color: color.withOpacity(0.15), width: 0.5),
+        border: Border.all(color: color.withValues(alpha: 0.15), width: 0.5),
       ),
       child: Row(
         children: [
@@ -757,8 +767,8 @@ class _LiveRatesCardState extends State<LiveRatesCard>
             width: 55,
             child: Text(
               label,
-              style: LiveRatesStyles.metalTitleStyle.copyWith(
-                  fontSize: 11, color: color),
+              style: LiveRatesStyles.metalTitleStyle
+                  .copyWith(fontSize: 11, color: color),
             ),
           ),
 
@@ -766,7 +776,7 @@ class _LiveRatesCardState extends State<LiveRatesCard>
           ...historicalRates.map((rate) => Expanded(
                 child: Center(
                   child: Text(
-                    '₹$rate',
+                    'â‚¹$rate',
                     style: const TextStyle(
                       fontSize: 10,
                       color: LiveRatesColors.textSecondary,
@@ -786,13 +796,13 @@ class _LiveRatesCardState extends State<LiveRatesCard>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 5, vertical: 3),
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.15),
+                        color: color.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(5),
                         border: Border.all(
-                            color: color.withOpacity(0.4), width: 0.5),
+                            color: color.withValues(alpha: 0.4), width: 0.5),
                       ),
                       child: Text(
-                        '₹$currentRate',
+                        'â‚¹$currentRate',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -807,12 +817,12 @@ class _LiveRatesCardState extends State<LiveRatesCard>
     );
   }
 
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // TIMESTAMP FOOTER
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildTimestamp(LiveRatesModel data) {
     final formatted =
-        DateFormat('MMM dd, yyyy – hh:mm a').format(data.rateDate);
+        DateFormat('MMM dd, yyyy â€“ hh:mm a').format(data.rateDate);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -847,9 +857,9 @@ class _LiveRatesCardState extends State<LiveRatesCard>
     );
   }
 
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // HELPERS
-  // ─────────────────────────────────────────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   List<String> _getLast5Days() {
     final now = DateTime.now();
     final format = DateFormat('d MMM');
@@ -874,9 +884,9 @@ class _LiveRatesCardState extends State<LiveRatesCard>
   }
 }
 
-// ─────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // AMBIENT GLOW BACKGROUND (Reusable)
-// ─────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class LiveRatesAmbientGlow extends StatelessWidget {
   const LiveRatesAmbientGlow({super.key});
 

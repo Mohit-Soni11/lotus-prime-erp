@@ -1,7 +1,7 @@
 // =============================================================================
 // FILE        : lib/ui/settings/billing_setup/purchase/purchase_metal_hub.dart
-// MODULE      : Billing Setup → Purchase
-// DESCRIPTION : 4 metal cards — Gold, Silver, Diamond, Platinum.
+// MODULE      : Billing Setup â†’ Purchase
+// DESCRIPTION : 4 metal cards â€” Gold, Silver, Diamond, Platinum.
 //               Each opens PurchaseMetalSettingsScreen with its metal.
 // =============================================================================
 
@@ -36,7 +36,7 @@ class PurchaseMetalHubScreen extends StatelessWidget {
   static const List<_MetalCard> _metals = [
     _MetalCard(
       metal: 'gold',
-      emoji: '🥇',
+      emoji: 'ðŸ¥‡',
       title: 'Gold',
       subtitle: 'Voucher display, HUID, return\npolicy & T&C for gold purchase',
       accent: Color(0xFFB8860B),
@@ -44,7 +44,7 @@ class PurchaseMetalHubScreen extends StatelessWidget {
     ),
     _MetalCard(
       metal: 'silver',
-      emoji: '🥈',
+      emoji: 'ðŸ¥ˆ',
       title: 'Silver',
       subtitle:
           'Voucher display, purity, return\npolicy & T&C for silver purchase',
@@ -53,7 +53,7 @@ class PurchaseMetalHubScreen extends StatelessWidget {
     ),
     _MetalCard(
       metal: 'diamond',
-      emoji: '💎',
+      emoji: 'ðŸ’Ž',
       title: 'Diamond',
       subtitle:
           'Carat, clarity, certification,\nreturn policy & T&C for diamond',
@@ -62,7 +62,7 @@ class PurchaseMetalHubScreen extends StatelessWidget {
     ),
     _MetalCard(
       metal: 'platinum',
-      emoji: '⬜',
+      emoji: 'â¬œ',
       title: 'Platinum',
       subtitle:
           'Voucher display, purity, return\npolicy & T&C for platinum purchase',
@@ -148,7 +148,7 @@ class PurchaseMetalHubScreen extends StatelessWidget {
 }
 
 // =============================================================================
-// METAL TILE — same design as Sales hub
+// METAL TILE â€” same design as Sales hub
 // =============================================================================
 class _MetalTile extends StatefulWidget {
   final _MetalCard card;
@@ -204,15 +204,16 @@ class _MetalTileState extends State<_MetalTile>
               color: _hovered ? c.bg : Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color:
-                    _hovered ? c.accent.withOpacity(0.5) : Colors.grey.shade200,
+                color: _hovered
+                    ? c.accent.withValues(alpha: 0.5)
+                    : Colors.grey.shade200,
                 width: _hovered ? 1.5 : 1,
               ),
               boxShadow: [
                 BoxShadow(
                   color: _hovered
-                      ? c.accent.withOpacity(0.12)
-                      : Colors.black.withOpacity(0.04),
+                      ? c.accent.withValues(alpha: 0.12)
+                      : Colors.black.withValues(alpha: 0.04),
                   blurRadius: _hovered ? 18 : 6,
                   offset: const Offset(0, 3),
                 ),
@@ -225,7 +226,7 @@ class _MetalTileState extends State<_MetalTile>
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: c.accent.withOpacity(_hovered ? 0.15 : 0.08),
+                    color: c.accent.withValues(alpha: _hovered ? 0.15 : 0.08),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(

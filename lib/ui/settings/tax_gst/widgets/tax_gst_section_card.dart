@@ -22,16 +22,16 @@ class TaxGstSectionCard extends StatefulWidget {
     required this.expandedChild,
   });
 
-  final int         index;
-  final IconData    icon;
-  final String      title;
-  final String      subtitle;
-  final String      tag;
-  final Color       accentColor;
-  final Color       accentLight;
-  final bool        isExpanded;
+  final int index;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String tag;
+  final Color accentColor;
+  final Color accentLight;
+  final bool isExpanded;
   final VoidCallback onTap;
-  final Widget      expandedChild;
+  final Widget expandedChild;
 
   @override
   State<TaxGstSectionCard> createState() => _TaxGstSectionCardState();
@@ -39,9 +39,8 @@ class TaxGstSectionCard extends StatefulWidget {
 
 class _TaxGstSectionCardState extends State<TaxGstSectionCard>
     with SingleTickerProviderStateMixin {
-
   late final AnimationController _expandCtrl;
-  late final Animation<double>   _expandAnim;
+  late final Animation<double> _expandAnim;
   bool _hovered = false;
 
   @override
@@ -53,7 +52,7 @@ class _TaxGstSectionCardState extends State<TaxGstSectionCard>
     );
     _expandAnim = CurvedAnimation(
       parent: _expandCtrl,
-      curve:  Curves.easeInOutCubic,
+      curve: Curves.easeInOutCubic,
     );
     if (widget.isExpanded) _expandCtrl.value = 1.0;
   }
@@ -62,9 +61,7 @@ class _TaxGstSectionCardState extends State<TaxGstSectionCard>
   void didUpdateWidget(TaxGstSectionCard old) {
     super.didUpdateWidget(old);
     if (widget.isExpanded != old.isExpanded) {
-      widget.isExpanded
-          ? _expandCtrl.forward()
-          : _expandCtrl.reverse();
+      widget.isExpanded ? _expandCtrl.forward() : _expandCtrl.reverse();
     }
   }
 
@@ -79,19 +76,18 @@ class _TaxGstSectionCardState extends State<TaxGstSectionCard>
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
-      onExit:  (_) => setState(() => _hovered = false),
+      onExit: (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
         duration: TaxGstStyles.animFast,
         decoration: TaxGstStyles.cardDecoration(
           accentColor: widget.accentColor,
-          isHovered:   _hovered,
-          isExpanded:  widget.isExpanded,
+          isHovered: _hovered,
+          isExpanded: widget.isExpanded,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-
-            // ── Card Header (always visible) ─────────────────────
+            // â”€â”€ Card Header (always visible) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             GestureDetector(
               onTap: widget.onTap,
               behavior: HitTestBehavior.opaque,
@@ -99,7 +95,6 @@ class _TaxGstSectionCardState extends State<TaxGstSectionCard>
                 padding: TaxGstStyles.cardPadding,
                 child: Row(
                   children: [
-
                     // Icon Box
                     AnimatedContainer(
                       duration: TaxGstStyles.animFast,
@@ -107,18 +102,19 @@ class _TaxGstSectionCardState extends State<TaxGstSectionCard>
                       height: TaxGstStyles.iconBoxSize,
                       decoration: BoxDecoration(
                         color: widget.isExpanded
-                            ? widget.accentColor.withOpacity(0.18)
+                            ? widget.accentColor.withValues(alpha: 0.18)
                             : widget.accentLight,
-                        borderRadius: BorderRadius.circular(
-                            TaxGstStyles.radiusIconBox),
+                        borderRadius:
+                            BorderRadius.circular(TaxGstStyles.radiusIconBox),
                         border: Border.all(
-                          color: widget.accentColor.withOpacity(
-                              widget.isExpanded ? 0.40 : 0.22),
+                          color: widget.accentColor.withValues(
+                              alpha: widget.isExpanded ? 0.40 : 0.22),
                         ),
                         boxShadow: widget.isExpanded
                             ? [
                                 BoxShadow(
-                                  color: widget.accentColor.withOpacity(0.2),
+                                  color:
+                                      widget.accentColor.withValues(alpha: 0.2),
                                   blurRadius: 12,
                                   offset: const Offset(0, 3),
                                 )
@@ -154,8 +150,8 @@ class _TaxGstSectionCardState extends State<TaxGstSectionCard>
                           // Tag pill
                           Container(
                             padding: TaxGstStyles.chipPadding,
-                            decoration: TaxGstStyles.tagDecoration(
-                                widget.accentColor),
+                            decoration:
+                                TaxGstStyles.tagDecoration(widget.accentColor),
                             child: Text(
                               widget.tag,
                               style: TaxGstStyles.cardTagText(
@@ -187,7 +183,7 @@ class _TaxGstSectionCardState extends State<TaxGstSectionCard>
               ),
             ),
 
-            // ── Animated Expand Panel ─────────────────────────────
+            // â”€â”€ Animated Expand Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             SizeTransition(
               sizeFactor: _expandAnim,
               axisAlignment: -1.0,
@@ -203,8 +199,8 @@ class _TaxGstSectionCardState extends State<TaxGstSectionCard>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(colors: [
                           Colors.transparent,
-                          widget.accentColor.withOpacity(0.3),
-                          widget.accentColor.withOpacity(0.3),
+                          widget.accentColor.withValues(alpha: 0.3),
+                          widget.accentColor.withValues(alpha: 0.3),
                           Colors.transparent,
                         ]),
                       ),

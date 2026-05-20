@@ -32,8 +32,7 @@ class LiveRatesRepository {
 
       // Today's rate dhundo
       final rate = await (_db.select(_db.dailyRates)
-            ..where((r) =>
-                r.rateDate.isBetweenValues(startOfDay, endOfDay))
+            ..where((r) => r.rateDate.isBetweenValues(startOfDay, endOfDay))
             ..limit(1))
           .getSingleOrNull();
 
@@ -61,7 +60,8 @@ class LiveRatesRepository {
       } else {
         // No rate set today — show demo
         _ratesController.add(LiveRatesModel.demo);
-        debugPrint('⚠️ No rates for today. Showing demo data. Set rates in Settings.');
+        debugPrint(
+            '⚠️ No rates for today. Showing demo data. Set rates in Settings.');
       }
     } catch (e) {
       debugPrint('❌ LiveRatesRepository error: $e');
@@ -76,23 +76,23 @@ class LiveRatesRepository {
       final rateDate = DateTime(today.year, today.month, today.day);
 
       await _db.into(_db.dailyRates).insertOnConflictUpdate(
-        DailyRatesCompanion(
-          rateDate: Value(rateDate),
-          gold24k: Value(model.gold24k.replaceAll(',', '')),
-          gold22k: Value(model.gold22k.replaceAll(',', '')),
-          gold18k: Value(model.gold18k.replaceAll(',', '')),
-          goldChangePercent: Value(model.goldChangePercent),
-          silverRateKg: Value(model.silverRateKg.replaceAll(',', '')),
-          silverJewellery: Value(model.silverJewellery.replaceAll(',', '')),
-          silverIdols: Value(model.silverIdols.replaceAll(',', '')),
-          silverChangePercent: Value(model.silverChangePercent),
-          oldGold24kBuy: Value(model.oldGold24kBuy.replaceAll(',', '')),
-          oldGold22kBuy: Value(model.oldGold22kBuy.replaceAll(',', '')),
-          oldGold18kBuy: Value(model.oldGold18kBuy.replaceAll(',', '')),
-          oldSilverBuy: Value(model.oldSilverBuy.replaceAll(',', '')),
-          source: const Value('Manual'),
-        ),
-      );
+            DailyRatesCompanion(
+              rateDate: Value(rateDate),
+              gold24k: Value(model.gold24k.replaceAll(',', '')),
+              gold22k: Value(model.gold22k.replaceAll(',', '')),
+              gold18k: Value(model.gold18k.replaceAll(',', '')),
+              goldChangePercent: Value(model.goldChangePercent),
+              silverRateKg: Value(model.silverRateKg.replaceAll(',', '')),
+              silverJewellery: Value(model.silverJewellery.replaceAll(',', '')),
+              silverIdols: Value(model.silverIdols.replaceAll(',', '')),
+              silverChangePercent: Value(model.silverChangePercent),
+              oldGold24kBuy: Value(model.oldGold24kBuy.replaceAll(',', '')),
+              oldGold22kBuy: Value(model.oldGold22kBuy.replaceAll(',', '')),
+              oldGold18kBuy: Value(model.oldGold18kBuy.replaceAll(',', '')),
+              oldSilverBuy: Value(model.oldSilverBuy.replaceAll(',', '')),
+              source: const Value('Manual'),
+            ),
+          );
       // Stream ko refresh karo
       await _fetchTodayRates();
       debugPrint('✅ Rates saved successfully!');

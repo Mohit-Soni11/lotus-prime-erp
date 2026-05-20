@@ -1,8 +1,8 @@
 // =============================================================================
 // FILE        : delivery_order_list.dart
-// MODULE      : Sales → Delivery Management
+// MODULE      : Sales â†’ Delivery Management
 // LAYER       : UI
-// DESCRIPTION : Left panel — search bar + scrollable list of DeliveryOrderCards.
+// DESCRIPTION : Left panel â€” search bar + scrollable list of DeliveryOrderCards.
 //               Shows empty state when list is empty.
 //               ListenableBuilder for zero-lag updates.
 // =============================================================================
@@ -50,7 +50,7 @@ class DeliveryOrderList extends StatelessWidget {
   }
 }
 
-// ── Search Bar ────────────────────────────────────────────────────────────────
+// â”€â”€ Search Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _SearchBar extends StatelessWidget {
   final DeliveryManagementController ctrl;
   const _SearchBar({required this.ctrl});
@@ -82,7 +82,7 @@ class _SearchBar extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: DeliveryStrings.searchHint,
                 hintStyle: TextStyle(
-                  color: DeliveryColors.bodyTextMuted.withOpacity(0.6),
+                  color: DeliveryColors.bodyTextMuted.withValues(alpha: 0.6),
                   fontSize: 13,
                 ),
                 prefixIcon: const Icon(
@@ -111,7 +111,7 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-// ── Empty State ───────────────────────────────────────────────────────────────
+// â”€â”€ Empty State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _EmptyState extends StatelessWidget {
   final DeliveryTab tab;
   const _EmptyState({required this.tab});
@@ -134,7 +134,7 @@ class _EmptyState extends StatelessWidget {
             Icon(
               DeliveryIcons.emptyState,
               size: 56,
-              color: DeliveryColors.bodyTextMuted.withOpacity(0.3),
+              color: DeliveryColors.bodyTextMuted.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(
@@ -142,7 +142,7 @@ class _EmptyState extends StatelessWidget {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: DeliveryColors.bodyTextMuted.withOpacity(0.7),
+                color: DeliveryColors.bodyTextMuted.withValues(alpha: 0.7),
               ),
               textAlign: TextAlign.center,
             ),
@@ -151,7 +151,7 @@ class _EmptyState extends StatelessWidget {
               DeliveryStrings.emptySubtitle,
               style: TextStyle(
                 fontSize: 12,
-                color: DeliveryColors.bodyTextMuted.withOpacity(0.5),
+                color: DeliveryColors.bodyTextMuted.withValues(alpha: 0.5),
               ),
               textAlign: TextAlign.center,
             ),
@@ -162,7 +162,7 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// ── Loading State ─────────────────────────────────────────────────────────────
+// â”€â”€ Loading State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _LoadingState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -234,7 +234,7 @@ class _ShimmerCardState extends State<_ShimmerCard>
         width: w,
         height: h,
         decoration: BoxDecoration(
-          color: DeliveryColors.bodyBorder.withOpacity(_anim.value + 0.3),
+          color: DeliveryColors.bodyBorder.withValues(alpha: _anim.value + 0.3),
           borderRadius: BorderRadius.circular(6),
         ),
       );

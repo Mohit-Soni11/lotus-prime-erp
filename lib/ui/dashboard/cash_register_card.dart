@@ -5,28 +5,28 @@
 // DESCRIPTION : Python "totals_card" ka Flutter premium version.
 //
 //               LAYOUT:
-//               ┌──────────────────────────────────────────────┐
-//               │ 🏧 CASH REGISTER    Today's Summary  [📋]    │
-//               │ ────────────────────────────────────────────  │
-//               │ Opening Balance                    ₹ 5,000   │
-//               │ ┌──────────────────┐ ┌──────────────────┐   │
-//               │ │ ↑ Received       │ │ ↓ Paid / Out     │   │
-//               │ │ ₹ 44,000         │ │ ₹ 18,200         │   │
-//               │ └──────────────────┘ └──────────────────┘   │
-//               │ ┌──────────────────────────────────────────┐ │
-//               │ │  Net Cash In Drawer        ₹25,800  ✓   │ │
-//               │ └──────────────────────────────────────────┘ │
-//               └──────────────────────────────────────────────┘
+//               â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//               â”‚ ðŸ§ CASH REGISTER    Today's Summary  [ðŸ“‹]    â”‚
+//               â”‚ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  â”‚
+//               â”‚ Opening Balance                    â‚¹ 5,000   â”‚
+//               â”‚ â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”‚
+//               â”‚ â”‚ â†‘ Received       â”‚ â”‚ â†“ Paid / Out     â”‚   â”‚
+//               â”‚ â”‚ â‚¹ 44,000         â”‚ â”‚ â‚¹ 18,200         â”‚   â”‚
+//               â”‚ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â”‚
+//               â”‚ â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”‚
+//               â”‚ â”‚  Net Cash In Drawer        â‚¹25,800  âœ“   â”‚ â”‚
+//               â”‚ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â”‚
+//               â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
 //               REPORT BUTTON (top right):
-//               • Icon: receipt_long_rounded
-//               • Click → dayBookRoute (future report page)
+//               â€¢ Icon: receipt_long_rounded
+//               â€¢ Click â†’ dayBookRoute (future report page)
 //
 //               ANIMATIONS:
-//               • Card slide + fade entry
-//               • Each amount — AnimatedSwitcher on data change
-//               • Footer — shimmer effect on loading
-//               • Report button — scale on press
+//               â€¢ Card slide + fade entry
+//               â€¢ Each amount â€” AnimatedSwitcher on data change
+//               â€¢ Footer â€” shimmer effect on loading
+//               â€¢ Report button â€” scale on press
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -51,13 +51,12 @@ class CashRegisterCard extends StatefulWidget {
 
 class _CashRegisterCardState extends State<CashRegisterCard>
     with SingleTickerProviderStateMixin {
-
   late final CashRegisterLogic _logic;
 
   // Entry animation
   late final AnimationController _entryCtrl;
-  late final Animation<double>   _entrySlide;
-  late final Animation<double>   _entryFade;
+  late final Animation<double> _entrySlide;
+  late final Animation<double> _entryFade;
 
   // Report button press
   bool _reportPressed = false;
@@ -73,9 +72,9 @@ class _CashRegisterCardState extends State<CashRegisterCard>
       duration: const Duration(milliseconds: 500),
     );
     _entrySlide = Tween<double>(begin: 18.0, end: 0.0).animate(
-      CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOutCubic));
-    _entryFade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOut));
+        CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOutCubic));
+    _entryFade = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOut));
 
     Future.delayed(const Duration(milliseconds: 120), () {
       if (mounted) _entryCtrl.forward();
@@ -135,8 +134,7 @@ class _CashRegisterCardState extends State<CashRegisterCard>
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-
-        // ── HEADER ──────────────────────────────────────────────────────
+        // â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         _buildHeader(),
 
         const SizedBox(height: 6),
@@ -147,9 +145,9 @@ class _CashRegisterCardState extends State<CashRegisterCard>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                CashRegisterColors.accentGold.withOpacity(0.0),
-                CashRegisterColors.accentGold.withOpacity(0.4),
-                CashRegisterColors.accentGold.withOpacity(0.0),
+                CashRegisterColors.accentGold.withValues(alpha: 0.0),
+                CashRegisterColors.accentGold.withValues(alpha: 0.4),
+                CashRegisterColors.accentGold.withValues(alpha: 0.0),
               ],
             ),
           ),
@@ -157,12 +155,12 @@ class _CashRegisterCardState extends State<CashRegisterCard>
 
         const SizedBox(height: 16),
 
-        // ── OPENING BALANCE ──────────────────────────────────────────────
+        // â”€â”€ OPENING BALANCE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         _buildOpeningBalance(data.openingBalanceStr),
 
         const SizedBox(height: 12),
 
-        // ── RECEIVED + PAID BLOCKS ───────────────────────────────────────
+        // â”€â”€ RECEIVED + PAID BLOCKS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         Row(children: [
           Expanded(child: _buildReceivedBlock(data.totalReceivedStr)),
           const SizedBox(width: 12),
@@ -171,24 +169,25 @@ class _CashRegisterCardState extends State<CashRegisterCard>
 
         const SizedBox(height: 16),
 
-        // ── NET CASH FOOTER ──────────────────────────────────────────────
+        // â”€â”€ NET CASH FOOTER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         _buildNetCashFooter(data.netCashDrawerStr),
       ],
     );
   }
 
-  // ── HEADER ────────────────────────────────────────────────────────────────
+  // â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildHeader() {
     return Row(
       children: [
         // Gold icon box
         Container(
-          width: 36, height: 36,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
-            color: CashRegisterColors.accentGold.withOpacity(0.12),
+            color: CashRegisterColors.accentGold.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-                color: CashRegisterColors.accentGold.withOpacity(0.25)),
+                color: CashRegisterColors.accentGold.withValues(alpha: 0.25)),
           ),
           child: Center(
             child: ShaderMask(
@@ -218,7 +217,7 @@ class _CashRegisterCardState extends State<CashRegisterCard>
 
         const Spacer(),
 
-        // ✅ REPORT BUTTON — future report page ke liye
+        // âœ… REPORT BUTTON â€” future report page ke liye
         GestureDetector(
           onTapDown: (_) => setState(() => _reportPressed = true),
           onTapCancel: () => setState(() => _reportPressed = false),
@@ -250,7 +249,7 @@ class _CashRegisterCardState extends State<CashRegisterCard>
     );
   }
 
-  // ── OPENING BALANCE ───────────────────────────────────────────────────────
+  // â”€â”€ OPENING BALANCE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildOpeningBalance(String amount) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -276,7 +275,7 @@ class _CashRegisterCardState extends State<CashRegisterCard>
     );
   }
 
-  // ── RECEIVED BLOCK ────────────────────────────────────────────────────────
+  // â”€â”€ RECEIVED BLOCK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildReceivedBlock(String amount) {
     return Container(
       padding: CashRegisterStyles.blockPadding,
@@ -288,7 +287,8 @@ class _CashRegisterCardState extends State<CashRegisterCard>
             const Icon(CashRegisterIcons.received,
                 size: 14, color: CashRegisterColors.receivedAccent),
             const SizedBox(width: 5),
-            const Text('Received',
+            const Text(
+              'Received',
               style: CashRegisterStyles.blockLabelStyle,
             ).withColor(CashRegisterColors.receivedAccent),
           ]),
@@ -307,7 +307,7 @@ class _CashRegisterCardState extends State<CashRegisterCard>
     );
   }
 
-  // ── PAID BLOCK ────────────────────────────────────────────────────────────
+  // â”€â”€ PAID BLOCK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildPaidBlock(String amount) {
     return Container(
       padding: CashRegisterStyles.blockPadding,
@@ -319,7 +319,8 @@ class _CashRegisterCardState extends State<CashRegisterCard>
             const Icon(CashRegisterIcons.paid,
                 size: 14, color: CashRegisterColors.paidAccent),
             const SizedBox(width: 5),
-            const Text('Paid / Out',
+            const Text(
+              'Paid / Out',
               style: CashRegisterStyles.blockLabelStyle,
             ).withColor(CashRegisterColors.paidAccent),
           ]),
@@ -338,7 +339,7 @@ class _CashRegisterCardState extends State<CashRegisterCard>
     );
   }
 
-  // ── NET CASH FOOTER ───────────────────────────────────────────────────────
+  // â”€â”€ NET CASH FOOTER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildNetCashFooter(String amount) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -351,8 +352,7 @@ class _CashRegisterCardState extends State<CashRegisterCard>
             children: [
               Text('Net Cash In Drawer',
                   style: CashRegisterStyles.footerLabelStyle),
-              Text('Closing Balance',
-                  style: CashRegisterStyles.footerSubStyle),
+              Text('Closing Balance', style: CashRegisterStyles.footerSubStyle),
             ],
           ),
 
@@ -426,16 +426,16 @@ class _CashRegisterCardState extends State<CashRegisterCard>
   }
 
   Widget _sBox(double w, double h, {double r = 6}) => Container(
-    width: w == double.infinity ? null : w,
-    height: h,
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(r),
-    ),
-  );
+        width: w == double.infinity ? null : w,
+        height: h,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(r),
+        ),
+      );
 }
 
-// ── Extension for withColor ────────────────────────────────────────────────────
+// â”€â”€ Extension for withColor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 extension _TextExtension on Text {
   Text withColor(Color color) {
     return Text(
@@ -446,7 +446,7 @@ extension _TextExtension on Text {
   }
 }
 
-// ── Ambient Glows ─────────────────────────────────────────────────────────────
+// â”€â”€ Ambient Glows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _AmbientGlows extends StatelessWidget {
   const _AmbientGlows();
 
@@ -455,30 +455,39 @@ class _AmbientGlows extends StatelessWidget {
     return RepaintBoundary(
       child: Stack(children: [
         Positioned(
-          top: -40, right: -30,
+          top: -40,
+          right: -30,
           child: Container(
-            width: 140, height: 140,
+            width: 140,
+            height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: CashRegisterColors.accentGold.withOpacity(0.05),
-              boxShadow: [BoxShadow(
-                color: CashRegisterColors.accentGold.withOpacity(0.07),
-                blurRadius: 70,
-              )],
+              color: CashRegisterColors.accentGold.withValues(alpha: 0.05),
+              boxShadow: [
+                BoxShadow(
+                  color: CashRegisterColors.accentGold.withValues(alpha: 0.07),
+                  blurRadius: 70,
+                )
+              ],
             ),
           ),
         ),
         Positioned(
-          bottom: -20, left: -20,
+          bottom: -20,
+          left: -20,
           child: Container(
-            width: 90, height: 90,
+            width: 90,
+            height: 90,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: CashRegisterColors.receivedAccent.withOpacity(0.04),
-              boxShadow: [BoxShadow(
-                color: CashRegisterColors.receivedAccent.withOpacity(0.05),
-                blurRadius: 50,
-              )],
+              color: CashRegisterColors.receivedAccent.withValues(alpha: 0.04),
+              boxShadow: [
+                BoxShadow(
+                  color:
+                      CashRegisterColors.receivedAccent.withValues(alpha: 0.05),
+                  blurRadius: 50,
+                )
+              ],
             ),
           ),
         ),

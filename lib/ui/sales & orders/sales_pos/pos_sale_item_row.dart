@@ -3,18 +3,17 @@
 // TYPE: Smart UI Component (UPGRADED)
 // AUTHOR: Senior System Architect
 // DESCRIPTION: Zero-lag row component for the main cart table.
-//              ✅ Strictly mapped Colors, Icons, and TextStyles.
+//              âœ… Strictly mapped Colors, Icons, and TextStyles.
 // ==========================================
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui';
 
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../models/sales & orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales & orders/sales_pos_models/sales_pos_models.dart';
 import '../../../logic/sales & orders/sales pos/pos_billing_controller.dart';
-import 'pos_stock_lookup_field.dart'; // ✅ FIX 1: Ab ye use ho raha hai
+import 'pos_stock_lookup_field.dart'; // âœ… FIX 1: Ab ye use ho raha hai
 import 'shared_pos_components.dart';
 // Note: Make sure PosStockLookupModel is exported in sales_pos_models.dart
 // ya usko explicitly import kar lena agar zaroorat ho.
@@ -185,7 +184,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                   Expanded(flex: 3, child: _buildMetalDropdown(metalColor)),
                   const SizedBox(width: 6),
 
-                  // 🚀 Description with autocomplete suggestions
+                  // ðŸš€ Description with autocomplete suggestions
                   Expanded(
                     flex: 4,
                     child: _DescriptionWithSuggestions(
@@ -200,7 +199,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                   const SizedBox(width: 6),
 
                   if (!isWholesale) ...[
-                    // ✅ FIX 2: HuidWithSuggestions ab ek clean widget ban gaya hai!
+                    // âœ… FIX 2: HuidWithSuggestions ab ek clean widget ban gaya hai!
                     Expanded(
                       flex: 2,
                       child: _HuidWithSuggestions(
@@ -282,7 +281,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                       flex: 3,
                       child: _buildAutoCell(
                         value:
-                            "₹${widget.item.wholesaleLabourAmt.toStringAsFixed(2)}",
+                            "â‚¹${widget.item.wholesaleLabourAmt.toStringAsFixed(2)}",
                         color: SalesPosColors.bodyTextMain,
                         align: TextAlign.right,
                         isBold: true,
@@ -308,7 +307,8 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                     Expanded(
                       flex: 3,
                       child: _buildAutoCell(
-                        value: "₹${widget.item.totalValue.toStringAsFixed(2)}",
+                        value:
+                            "â‚¹${widget.item.totalValue.toStringAsFixed(2)}",
                         color: SalesPosColors.bodyTextMain,
                         align: TextAlign.right,
                         isBold: true,
@@ -334,9 +334,9 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
         height: 32,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: metalColor.withOpacity(0.12),
+          color: metalColor.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(7),
-          border: Border.all(color: metalColor.withOpacity(0.35)),
+          border: Border.all(color: metalColor.withValues(alpha: 0.35)),
         ),
         child: Text(
           '$number',
@@ -355,8 +355,8 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
       height: 38,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: metalColor.withOpacity(0.10),
-        border: Border.all(color: metalColor.withOpacity(0.40)),
+        color: metalColor.withValues(alpha: 0.10),
+        border: Border.all(color: metalColor.withValues(alpha: 0.40)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: DropdownButtonHideUnderline(
@@ -398,8 +398,8 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
         ),
         decoration: InputDecoration(
           hintText: '1',
-          hintStyle: SalesPosStyles.subTitleMuted
-              .copyWith(color: SalesPosColors.bodyTextMain.withOpacity(0.40)),
+          hintStyle: SalesPosStyles.subTitleMuted.copyWith(
+              color: SalesPosColors.bodyTextMain.withValues(alpha: 0.40)),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
           filled: true,
@@ -443,9 +443,9 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
               height: 38,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: SalesPosColors.brandGold.withOpacity(0.12),
+                color: SalesPosColors.brandGold.withValues(alpha: 0.12),
                 border: Border.all(
-                    color: SalesPosColors.brandGold.withOpacity(0.40)),
+                    color: SalesPosColors.brandGold.withValues(alpha: 0.40)),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -468,7 +468,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
       decoration: BoxDecoration(
         color: SalesPosColors.bodyBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: metalColor.withOpacity(0.35)),
+        border: Border.all(color: metalColor.withValues(alpha: 0.35)),
       ),
       child: TextFormField(
         controller: widget.item.purityCtrl,
@@ -484,7 +484,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
           contentPadding: const EdgeInsets.symmetric(vertical: 11),
           hintText: "Tunch",
           hintStyle: TextStyle(
-              color: metalColor.withOpacity(0.50),
+              color: metalColor.withValues(alpha: 0.50),
               fontSize: 13,
               fontWeight: FontWeight.w800),
         ),
@@ -500,7 +500,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
       decoration: BoxDecoration(
         color: SalesPosColors.bodyBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: metalColor.withOpacity(0.35)),
+        border: Border.all(color: metalColor.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
@@ -571,9 +571,9 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
       alignment:
           align == TextAlign.center ? Alignment.center : Alignment.centerRight,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Text(
         value,
@@ -619,8 +619,9 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
         ),
         const SizedBox(width: 4),
         Tooltip(
-          message:
-              isWholesale ? "Toggle: /g ➔ /kg ➔ /pc" : "Toggle: Rate ➔ /pc ➔ %",
+          message: isWholesale
+              ? "Toggle: /g âž” /kg âž” /pc"
+              : "Toggle: Rate âž” /pc âž” %",
           waitDuration: const Duration(milliseconds: 400),
           child: InkWell(
             onTap: () =>
@@ -633,9 +634,9 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
               height: 38,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: SalesPosColors.brandGold.withOpacity(0.12),
+                color: SalesPosColors.brandGold.withValues(alpha: 0.12),
                 border: Border.all(
-                    color: SalesPosColors.brandGold.withOpacity(0.40)),
+                    color: SalesPosColors.brandGold.withValues(alpha: 0.40)),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -664,10 +665,10 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: SalesPosColors.danger.withOpacity(0.12),
+              color: SalesPosColors.danger.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
-              border:
-                  Border.all(color: SalesPosColors.danger.withOpacity(0.35)),
+              border: Border.all(
+                  color: SalesPosColors.danger.withValues(alpha: 0.35)),
             ),
             child: const Icon(SalesPosIcons.deleteItem,
                 color: SalesPosColors.danger, size: 20),
@@ -679,7 +680,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
 }
 
 // ==========================================
-// ✅ CLEAN WIDGETS USING PosStockLookupField
+// âœ… CLEAN WIDGETS USING PosStockLookupField
 // ==========================================
 
 class _DescriptionWithSuggestions extends StatelessWidget {
@@ -705,11 +706,11 @@ class _DescriptionWithSuggestions extends StatelessWidget {
       textInputAction: TextInputAction.next,
       onSubmitted: onSubmitted,
       onSearch: (query) async {
-        // ✅ FIX 3: Passed item.metal as the missing 3rd argument.
+        // âœ… FIX 3: Passed item.metal as the missing 3rd argument.
         // Agar aapke controller me 3rd arg kuch aur hai toh change it here.
         await ctrl.searchDescriptions(query, rowIndex, item.metal);
       },
-      // ✅ FIX 4: Automatically handles the PosStockLookupModel type!
+      // âœ… FIX 4: Automatically handles the PosStockLookupModel type!
       getSuggestions: () => ctrl.getDescSuggestionsForRow(rowIndex),
       onSelected: (selection) {
         item.descCtrl.text = selection.displayTitle;

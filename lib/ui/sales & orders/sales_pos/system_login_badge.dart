@@ -44,11 +44,11 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
     super.dispose();
   }
 
-  bool get _isOwner   => widget.userRole.toLowerCase() == 'owner';
+  bool get _isOwner => widget.userRole.toLowerCase() == 'owner';
   bool get _isManager => widget.userRole.toLowerCase() == 'manager';
 
   Color get _primaryColor {
-    if (_isOwner)   return SalesPosColors.roleOwner;
+    if (_isOwner) return SalesPosColors.roleOwner;
     if (_isManager) return SalesPosColors.roleManager;
     return SalesPosColors.roleStaff;
   }
@@ -59,36 +59,36 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
       animation: _glowController,
       builder: (context, child) {
         final double glowOpacity = 0.1 + (0.2 * _glowController.value);
-        final double spread     = 2 * _glowController.value;
+        final double spread = 2 * _glowController.value;
 
         return Container(
           height: 52,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
           decoration: BoxDecoration(
             // Layered dark glass background
-            gradient: LinearGradient(
+            gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
                 SalesPosColors.badgeBg,
-                const Color(0xFF111520), // Slightly deeper bottom
+                Color(0xFF111520), // Slightly deeper bottom
               ],
             ),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: _primaryColor.withOpacity(0.22),
+              color: _primaryColor.withValues(alpha: 0.22),
               width: 1,
             ),
             boxShadow: [
               // Role glow
               BoxShadow(
-                color: _primaryColor.withOpacity(glowOpacity),
+                color: _primaryColor.withValues(alpha: glowOpacity),
                 blurRadius: 16,
                 spreadRadius: spread,
               ),
               // Deep base shadow
               BoxShadow(
-                color: Colors.black.withOpacity(0.4),
+                color: Colors.black.withValues(alpha: 0.4),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -111,7 +111,7 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
     );
   }
 
-  // ── AVATAR ───────────────────────────────────────────────────
+  // â”€â”€ AVATAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildAvatar() {
     return SizedBox(
       width: 36,
@@ -126,7 +126,7 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
               gradient: SweepGradient(
                 colors: [
                   _primaryColor,
-                  _primaryColor.withOpacity(0.1),
+                  _primaryColor.withValues(alpha: 0.1),
                   _primaryColor,
                 ],
               ),
@@ -138,7 +138,7 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
             backgroundColor: SalesPosColors.badgeBg,
             child: CircleAvatar(
               radius: 14,
-              backgroundColor: _primaryColor.withOpacity(0.15),
+              backgroundColor: _primaryColor.withValues(alpha: 0.15),
               child: Text(
                 widget.userInitials,
                 style: TextStyle(
@@ -166,7 +166,8 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: SalesPosColors.onlineIndicator.withOpacity(0.6),
+                    color:
+                        SalesPosColors.onlineIndicator.withValues(alpha: 0.6),
                     blurRadius: 5,
                   ),
                 ],
@@ -178,7 +179,7 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
     );
   }
 
-  // ── USER INFO ─────────────────────────────────────────────────
+  // â”€â”€ USER INFO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildUserInfo() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -192,20 +193,20 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
           ),
         ),
         const SizedBox(height: 4),
-        // Role pill — gradient with refined style
+        // Role pill â€” gradient with refined style
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                _primaryColor.withOpacity(0.85),
-                _primaryColor.withOpacity(0.55),
+                _primaryColor.withValues(alpha: 0.85),
+                _primaryColor.withValues(alpha: 0.55),
               ],
             ),
             borderRadius: BorderRadius.circular(5),
             boxShadow: [
               BoxShadow(
-                color: _primaryColor.withOpacity(0.35),
+                color: _primaryColor.withValues(alpha: 0.35),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -224,12 +225,12 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
     );
   }
 
-  // ── VERTICAL DIVIDER ──────────────────────────────────────────
+  // â”€â”€ VERTICAL DIVIDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildVerticalDivider() {
     return Container(
       width: 1,
       height: 26,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -243,9 +244,9 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
     );
   }
 
-  // ── LOGOUT ICON ───────────────────────────────────────────────
+  // â”€â”€ LOGOUT ICON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildLogoutIcon() {
-    return Icon(
+    return const Icon(
       SalesPosIcons.logout,
       size: 16,
       color: SalesPosColors.shellTextMuted,

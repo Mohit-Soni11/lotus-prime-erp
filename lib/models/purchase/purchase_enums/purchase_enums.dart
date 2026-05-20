@@ -31,10 +31,14 @@ enum PurchaseMetalType {
 extension PurchaseMetalTypeExtension on PurchaseMetalType {
   String get displayName {
     switch (this) {
-      case PurchaseMetalType.gold:     return 'GOLD';
-      case PurchaseMetalType.silver:   return 'SILVER';
-      case PurchaseMetalType.platinum: return 'PLATINUM';
-      case PurchaseMetalType.diamond:  return 'DIAMOND';
+      case PurchaseMetalType.gold:
+        return 'GOLD';
+      case PurchaseMetalType.silver:
+        return 'SILVER';
+      case PurchaseMetalType.platinum:
+        return 'PLATINUM';
+      case PurchaseMetalType.diamond:
+        return 'DIAMOND';
     }
   }
 
@@ -51,9 +55,12 @@ enum PurchasePaymentMode {
 extension PurchasePaymentModeExtension on PurchasePaymentMode {
   String get displayName {
     switch (this) {
-      case PurchasePaymentMode.cash: return 'CASH';
-      case PurchasePaymentMode.upi:  return 'UPI / BANK';
-      case PurchasePaymentMode.card: return 'CARD';
+      case PurchasePaymentMode.cash:
+        return 'CASH';
+      case PurchasePaymentMode.upi:
+        return 'UPI / BANK';
+      case PurchasePaymentMode.card:
+        return 'CARD';
     }
   }
 }
@@ -74,8 +81,10 @@ enum PurchaseDiscountType {
 extension PurchaseDiscountTypeExtension on PurchaseDiscountType {
   String get symbol {
     switch (this) {
-      case PurchaseDiscountType.flatAmount: return '₹';
-      case PurchaseDiscountType.percentage: return '%';
+      case PurchaseDiscountType.flatAmount:
+        return '₹';
+      case PurchaseDiscountType.percentage:
+        return '%';
     }
   }
 }

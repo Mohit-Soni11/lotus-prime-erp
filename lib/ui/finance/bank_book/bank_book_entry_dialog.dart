@@ -6,7 +6,7 @@
 //               Credit / Debit toggle, category dropdown, payment mode,
 //               cheque fields (conditionally visible), party name, description,
 //               date picker, value date picker.
-//               ListenableBuilder — zero setState except for dialog animation.
+//               ListenableBuilder â€” zero setState except for dialog animation.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -41,19 +41,19 @@ class _DialogContent extends StatefulWidget {
 class _DialogContentState extends State<_DialogContent>
     with SingleTickerProviderStateMixin {
   late AnimationController _animCtrl;
-  late Animation<Offset>   _slideAnim;
-  late Animation<double>   _fadeAnim;
+  late Animation<Offset> _slideAnim;
+  late Animation<double> _fadeAnim;
 
   @override
   void initState() {
     super.initState();
     _animCtrl = AnimationController(
-      vsync:    this,
+      vsync: this,
       duration: const Duration(milliseconds: 320),
     );
     _slideAnim = Tween<Offset>(
       begin: const Offset(0, 0.08),
-      end:   Offset.zero,
+      end: Offset.zero,
     ).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic));
 
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
@@ -75,24 +75,23 @@ class _DialogContentState extends State<_DialogContent>
         child: Container(
           constraints: const BoxConstraints(maxWidth: 560),
           decoration: BoxDecoration(
-            color:        BankBookColors.bodyPanel,
+            color: BankBookColors.bodyPanel,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color:      Colors.black.withOpacity(0.18),
+                color: Colors.black.withValues(alpha: 0.18),
                 blurRadius: 40,
-                offset:     const Offset(0, 12),
+                offset: const Offset(0, 12),
               ),
             ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-
-              // ── Dialog Header ────────────────────────────────────────────
+              // â”€â”€ Dialog Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               _DialogHeader(ctrl: widget.ctrl),
 
-              // ── Form Body ────────────────────────────────────────────────
+              // â”€â”€ Form Body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Flexible(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
@@ -110,7 +109,7 @@ class _DialogContentState extends State<_DialogContent>
   }
 }
 
-// ── Dialog Header ──────────────────────────────────────────────────────────────
+// â”€â”€ Dialog Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _DialogHeader extends StatelessWidget {
   final BankBookController ctrl;
@@ -123,7 +122,7 @@ class _DialogHeader extends StatelessWidget {
       decoration: const BoxDecoration(
         color: BankBookColors.shellPanel,
         borderRadius: BorderRadius.only(
-          topLeft:  Radius.circular(20),
+          topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
         ),
       ),
@@ -131,7 +130,7 @@ class _DialogHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color:        BankBookColors.brandGoldLight,
+            color: BankBookColors.brandGoldLight,
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(BankBookIcons.moduleIcon,
@@ -149,8 +148,8 @@ class _DialogHeader extends StatelessWidget {
               builder: (_, __) => Text(
                 ctrl.selectedAccount?.accountName ?? '',
                 style: const TextStyle(
-                  fontSize:   11,
-                  color:      BankBookColors.shellMuted,
+                  fontSize: 11,
+                  color: BankBookColors.shellMuted,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -161,9 +160,10 @@ class _DialogHeader extends StatelessWidget {
         GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Container(
-            width: 32, height: 32,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
-              color:        BankBookColors.shellBorder,
+              color: BankBookColors.shellBorder,
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.close_rounded,
@@ -175,7 +175,7 @@ class _DialogHeader extends StatelessWidget {
   }
 }
 
-// ── Entry Form ─────────────────────────────────────────────────────────────────
+// â”€â”€ Entry Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _EntryForm extends StatelessWidget {
   final BankBookController ctrl;
@@ -193,77 +193,77 @@ class _EntryForm extends StatelessWidget {
         const SizedBox(height: 16),
 
         // 2. Amount
-        _FormLabel(BankBookStrings.amount),
+        const _FormLabel(BankBookStrings.amount),
         const SizedBox(height: 6),
         _AmountField(ctrl: ctrl),
         const SizedBox(height: 16),
 
         // 3. Category
-        _FormLabel(BankBookStrings.category),
+        const _FormLabel(BankBookStrings.category),
         const SizedBox(height: 6),
         _CategoryDropdown(ctrl: ctrl),
         const SizedBox(height: 16),
 
         // 4. Payment Mode
-        _FormLabel(BankBookStrings.paymentMode),
+        const _FormLabel(BankBookStrings.paymentMode),
         const SizedBox(height: 6),
         _PaymentModeSelector(ctrl: ctrl),
         const SizedBox(height: 16),
 
         // 5. Cheque Fields (conditional)
         if (ctrl.isChequeMode) ...[
-          _FormLabel(BankBookStrings.chequeNumber),
+          const _FormLabel(BankBookStrings.chequeNumber),
           const SizedBox(height: 6),
           _InputField(
             controller: ctrl.chequeNumberCtrl,
-            hint:       BankBookStrings.chequeNumberHint,
-            icon:       BankBookIcons.cheque,
+            hint: BankBookStrings.chequeNumberHint,
+            icon: BankBookIcons.cheque,
           ),
           const SizedBox(height: 12),
-          _FormLabel(BankBookStrings.chequeStatusLabel),
+          const _FormLabel(BankBookStrings.chequeStatusLabel),
           const SizedBox(height: 6),
           _ChequeStatusSelector(ctrl: ctrl),
           const SizedBox(height: 16),
         ],
 
         // 6. Party Name
-        _FormLabel(BankBookStrings.partyName),
+        const _FormLabel(BankBookStrings.partyName),
         const SizedBox(height: 6),
         _InputField(
           controller: ctrl.partyNameCtrl,
-          hint:       BankBookStrings.partyHint,
-          icon:       Icons.person_outline_rounded,
+          hint: BankBookStrings.partyHint,
+          icon: Icons.person_outline_rounded,
         ),
         const SizedBox(height: 16),
 
         // 7. Description
-        _FormLabel(BankBookStrings.description),
+        const _FormLabel(BankBookStrings.description),
         const SizedBox(height: 6),
         _InputField(
           controller: ctrl.descriptionCtrl,
-          hint:       BankBookStrings.descriptionHint,
-          icon:       Icons.notes_rounded,
-          maxLines:   2,
+          hint: BankBookStrings.descriptionHint,
+          icon: Icons.notes_rounded,
+          maxLines: 2,
         ),
         const SizedBox(height: 16),
 
         // 8. Transaction Date
-        _FormLabel(BankBookStrings.date),
+        const _FormLabel(BankBookStrings.date),
         const SizedBox(height: 6),
         _DatePickerField(
-          date:    ctrl.entryDate,
-          onPick:  (d) => ctrl.setEntryDate(d),
-          icon:    BankBookIcons.calendar,
+          date: ctrl.entryDate,
+          onPick: (d) => ctrl.setEntryDate(d),
+          icon: BankBookIcons.calendar,
         ),
         const SizedBox(height: 16),
 
-        // 9. Value Date (clearing date — optional)
-        _FormLabel('${BankBookStrings.valueDate} (Optional)'),
+        // 9. Value Date (clearing date â€” optional)
+        const _FormLabel('${BankBookStrings.valueDate} (Optional)'),
         const SizedBox(height: 6),
         _DatePickerField(
-          date:       ctrl.entryValueDate,
-          onPick:     (d) => ctrl.setEntryValueDate(d),
-          icon:       BankBookIcons.calendar,
+          date: ctrl.entryValueDate,
+          onPick: (d) => ctrl.setEntryValueDate(d),
+          icon: BankBookIcons.calendar,
           isOptional: true,
         ),
         const SizedBox(height: 24),
@@ -276,7 +276,7 @@ class _EntryForm extends StatelessWidget {
         Center(
           child: TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(BankBookStrings.cancel,
+            child: const Text(BankBookStrings.cancel,
                 style: TextStyle(color: BankBookColors.textSecondary)),
           ),
         ),
@@ -285,7 +285,7 @@ class _EntryForm extends StatelessWidget {
   }
 }
 
-// ── Type Toggle (Credit / Debit) ───────────────────────────────────────────────
+// â”€â”€ Type Toggle (Credit / Debit) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _TypeToggle extends StatelessWidget {
   final BankBookController ctrl;
@@ -296,13 +296,14 @@ class _TypeToggle extends StatelessWidget {
     return Container(
       height: 46,
       decoration: BoxDecoration(
-        color:        BankBookColors.toggleInactiveBg,
+        color: BankBookColors.toggleInactiveBg,
         borderRadius: BorderRadius.circular(12),
-        border:       Border.all(color: BankBookColors.bodyBorder),
+        border: Border.all(color: BankBookColors.bodyBorder),
       ),
-      child: Row(children: BankTransactionType.values.map((type) {
+      child: Row(
+          children: BankTransactionType.values.map((type) {
         final isActive = ctrl.entryType == type;
-        final color    = type == BankTransactionType.credit
+        final color = type == BankTransactionType.credit
             ? BankBookColors.creditAccent
             : BankBookColors.debitAccent;
 
@@ -313,10 +314,12 @@ class _TypeToggle extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               margin: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: isActive ? color.withOpacity(0.15) : Colors.transparent,
+                color: isActive
+                    ? color.withValues(alpha: 0.15)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
                 border: isActive
-                    ? Border.all(color: color.withOpacity(0.4))
+                    ? Border.all(color: color.withValues(alpha: 0.4))
                     : null,
               ),
               child: Row(
@@ -326,15 +329,16 @@ class _TypeToggle extends StatelessWidget {
                     type == BankTransactionType.credit
                         ? BankBookIcons.credit
                         : BankBookIcons.debit,
-                    size:  14,
+                    size: 14,
                     color: isActive ? color : BankBookColors.textMuted,
                   ),
                   const SizedBox(width: 6),
-                  Text(type.displayLabel, style: TextStyle(
-                    fontSize:   13,
-                    fontWeight: FontWeight.w700,
-                    color:      isActive ? color : BankBookColors.textMuted,
-                  )),
+                  Text(type.displayLabel,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: isActive ? color : BankBookColors.textMuted,
+                      )),
                 ],
               ),
             ),
@@ -345,7 +349,7 @@ class _TypeToggle extends StatelessWidget {
   }
 }
 
-// ── Amount Field ───────────────────────────────────────────────────────────────
+// â”€â”€ Amount Field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _AmountField extends StatelessWidget {
   final BankBookController ctrl;
@@ -354,24 +358,24 @@ class _AmountField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
-      controller:   ctrl.amountCtrl,
+      controller: ctrl.amountCtrl,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      style:        BankBookStyles.amountMedium,
+      style: BankBookStyles.amountMedium,
       decoration: InputDecoration(
-        hintText:    BankBookStrings.amountHint,
-        hintStyle:   BankBookStyles.labelMuted,
-        prefixText:  '₹  ',
+        hintText: BankBookStrings.amountHint,
+        hintStyle: BankBookStyles.labelMuted,
+        prefixText: 'â‚¹  ',
         prefixStyle: BankBookStyles.amountMedium,
-        filled:      true,
-        fillColor:   BankBookColors.toggleInactiveBg,
+        filled: true,
+        fillColor: BankBookColors.toggleInactiveBg,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:   const BorderSide(color: BankBookColors.bodyBorder),
+          borderSide: const BorderSide(color: BankBookColors.bodyBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-              color: BankBookColors.brandGold, width: 1.5),
+          borderSide:
+              const BorderSide(color: BankBookColors.brandGold, width: 1.5),
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -380,7 +384,7 @@ class _AmountField extends StatelessWidget {
   }
 }
 
-// ── Category Dropdown ──────────────────────────────────────────────────────────
+// â”€â”€ Category Dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _CategoryDropdown extends StatelessWidget {
   final BankBookController ctrl;
@@ -393,17 +397,17 @@ class _CategoryDropdown extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
       decoration: BoxDecoration(
-        color:        BankBookColors.toggleInactiveBg,
+        color: BankBookColors.toggleInactiveBg,
         borderRadius: BorderRadius.circular(12),
-        border:       Border.all(color: BankBookColors.bodyBorder),
+        border: Border.all(color: BankBookColors.bodyBorder),
       ),
       child: DropdownButton<String>(
-        value:         ctrl.entryCategory,
-        isExpanded:    true,
-        underline:     const SizedBox.shrink(),
+        value: ctrl.entryCategory,
+        isExpanded: true,
+        underline: const SizedBox.shrink(),
         icon: const Icon(Icons.keyboard_arrow_down_rounded,
             color: BankBookColors.textSecondary),
-        style:        BankBookStyles.labelPrimary,
+        style: BankBookStyles.labelPrimary,
         dropdownColor: BankBookColors.bodyPanel,
         items: categories.map((dbValue) {
           final label = ctrl.categoryLabel(dbValue, ctrl.entryType);
@@ -420,7 +424,7 @@ class _CategoryDropdown extends StatelessWidget {
   }
 }
 
-// ── Payment Mode Selector ──────────────────────────────────────────────────────
+// â”€â”€ Payment Mode Selector â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _PaymentModeSelector extends StatelessWidget {
   final BankBookController ctrl;
@@ -440,29 +444,31 @@ class _PaymentModeSelector extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: isActive
-                  ? BankBookColors.brandGold.withOpacity(0.15)
+                  ? BankBookColors.brandGold.withValues(alpha: 0.15)
                   : BankBookColors.toggleInactiveBg,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color:  isActive
+                color: isActive
                     ? BankBookColors.brandGold
                     : BankBookColors.bodyBorder,
-                width:  isActive ? 1.5 : 1,
+                width: isActive ? 1.5 : 1,
               ),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(_modeIcon(mode), size: 12,
-                color: isActive
-                    ? BankBookColors.brandGold
-                    : BankBookColors.textMuted),
+              Icon(_modeIcon(mode),
+                  size: 12,
+                  color: isActive
+                      ? BankBookColors.brandGold
+                      : BankBookColors.textMuted),
               const SizedBox(width: 5),
-              Text(mode.displayLabel, style: TextStyle(
-                fontSize:   12,
-                fontWeight: FontWeight.w600,
-                color: isActive
-                    ? BankBookColors.brandGold
-                    : BankBookColors.textSecondary,
-              )),
+              Text(mode.displayLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isActive
+                        ? BankBookColors.brandGold
+                        : BankBookColors.textSecondary,
+                  )),
             ]),
           ),
         );
@@ -472,20 +478,20 @@ class _PaymentModeSelector extends StatelessWidget {
 
   IconData _modeIcon(BankPaymentMode mode) {
     return switch (mode) {
-      BankPaymentMode.neft          => BankBookIcons.neft,
-      BankPaymentMode.rtgs          => BankBookIcons.neft,
-      BankPaymentMode.imps          => BankBookIcons.neft,
-      BankPaymentMode.upi           => BankBookIcons.upi,
-      BankPaymentMode.cheque        => BankBookIcons.cheque,
-      BankPaymentMode.cashDeposit   => BankBookIcons.cash,
-      BankPaymentMode.cashWithdrawal=> BankBookIcons.cash,
-      BankPaymentMode.card          => BankBookIcons.card,
-      BankPaymentMode.autoDebit     => Icons.autorenew_rounded,
+      BankPaymentMode.neft => BankBookIcons.neft,
+      BankPaymentMode.rtgs => BankBookIcons.neft,
+      BankPaymentMode.imps => BankBookIcons.neft,
+      BankPaymentMode.upi => BankBookIcons.upi,
+      BankPaymentMode.cheque => BankBookIcons.cheque,
+      BankPaymentMode.cashDeposit => BankBookIcons.cash,
+      BankPaymentMode.cashWithdrawal => BankBookIcons.cash,
+      BankPaymentMode.card => BankBookIcons.card,
+      BankPaymentMode.autoDebit => Icons.autorenew_rounded,
     };
   }
 }
 
-// ── Cheque Status Selector ─────────────────────────────────────────────────────
+// â”€â”€ Cheque Status Selector â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ChequeStatusSelector extends StatelessWidget {
   final BankBookController ctrl;
@@ -496,22 +502,25 @@ class _ChequeStatusSelector extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
       decoration: BoxDecoration(
-        color:        BankBookColors.chequeBg,
+        color: BankBookColors.chequeBg,
         borderRadius: BorderRadius.circular(12),
-        border:       Border.all(color: BankBookColors.chequeBorder),
+        border: Border.all(color: BankBookColors.chequeBorder),
       ),
       child: DropdownButton<ChequeStatus>(
-        value:         ctrl.entryChequeStatus,
-        isExpanded:    true,
-        underline:     const SizedBox.shrink(),
+        value: ctrl.entryChequeStatus,
+        isExpanded: true,
+        underline: const SizedBox.shrink(),
         icon: const Icon(Icons.keyboard_arrow_down_rounded,
             color: BankBookColors.chequeText),
-        style:         BankBookStyles.labelPrimary,
+        style: BankBookStyles.labelPrimary,
         dropdownColor: BankBookColors.bodyPanel,
-        items: ChequeStatus.values.map((s) => DropdownMenuItem(
-          value: s,
-          child: Text(s.displayLabel, style: BankBookStyles.labelPrimary),
-        )).toList(),
+        items: ChequeStatus.values
+            .map((s) => DropdownMenuItem(
+                  value: s,
+                  child:
+                      Text(s.displayLabel, style: BankBookStyles.labelPrimary),
+                ))
+            .toList(),
         onChanged: (v) {
           if (v != null) ctrl.setEntryChequeStatus(v);
         },
@@ -520,13 +529,13 @@ class _ChequeStatusSelector extends StatelessWidget {
   }
 }
 
-// ── Date Picker Field ──────────────────────────────────────────────────────────
+// â”€â”€ Date Picker Field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _DatePickerField extends StatelessWidget {
-  final DateTime?         date;
+  final DateTime? date;
   final ValueChanged<DateTime> onPick;
-  final IconData          icon;
-  final bool              isOptional;
+  final IconData icon;
+  final bool isOptional;
 
   const _DatePickerField({
     required this.date,
@@ -539,19 +548,21 @@ class _DatePickerField extends StatelessWidget {
   Widget build(BuildContext context) {
     final displayText = date != null
         ? DateFormat('d MMM yyyy').format(date!)
-        : (isOptional ? 'Not set' : DateFormat('d MMM yyyy').format(DateTime.now()));
+        : (isOptional
+            ? 'Not set'
+            : DateFormat('d MMM yyyy').format(DateTime.now()));
 
     return GestureDetector(
       onTap: () async {
         final picked = await showDatePicker(
-          context:      context,
-          initialDate:  date ?? DateTime.now(),
-          firstDate:    DateTime(2020),
-          lastDate:     DateTime.now().add(const Duration(days: 365)),
+          context: context,
+          initialDate: date ?? DateTime.now(),
+          firstDate: DateTime(2020),
+          lastDate: DateTime.now().add(const Duration(days: 365)),
           builder: (context, child) => Theme(
             data: Theme.of(context).copyWith(
               colorScheme: const ColorScheme.light(
-                primary:   BankBookColors.brandGold,
+                primary: BankBookColors.brandGold,
                 onPrimary: Color(0xFF111827),
               ),
             ),
@@ -563,31 +574,32 @@ class _DatePickerField extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color:        BankBookColors.toggleInactiveBg,
+          color: BankBookColors.toggleInactiveBg,
           borderRadius: BorderRadius.circular(12),
-          border:       Border.all(color: BankBookColors.bodyBorder),
+          border: Border.all(color: BankBookColors.bodyBorder),
         ),
         child: Row(children: [
           Icon(icon, size: 16, color: BankBookColors.textSecondary),
           const SizedBox(width: 10),
-          Text(displayText, style: BankBookStyles.labelPrimary.copyWith(
-            color: date == null && isOptional
-                ? BankBookColors.textMuted
-                : BankBookColors.textPrimary,
-          )),
+          Text(displayText,
+              style: BankBookStyles.labelPrimary.copyWith(
+                color: date == null && isOptional
+                    ? BankBookColors.textMuted
+                    : BankBookColors.textPrimary,
+              )),
         ]),
       ),
     );
   }
 }
 
-// ── Generic Input Field ────────────────────────────────────────────────────────
+// â”€â”€ Generic Input Field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _InputField extends StatelessWidget {
   final TextEditingController controller;
-  final String                hint;
-  final IconData              icon;
-  final int                   maxLines;
+  final String hint;
+  final IconData icon;
+  final int maxLines;
 
   const _InputField({
     required this.controller,
@@ -600,22 +612,22 @@ class _InputField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
-      style:      BankBookStyles.labelPrimary,
-      maxLines:   maxLines,
+      style: BankBookStyles.labelPrimary,
+      maxLines: maxLines,
       decoration: InputDecoration(
-        hintText:    hint,
-        hintStyle:   BankBookStyles.labelMuted,
-        prefixIcon:  Icon(icon, size: 16, color: BankBookColors.textSecondary),
-        filled:      true,
-        fillColor:   BankBookColors.toggleInactiveBg,
+        hintText: hint,
+        hintStyle: BankBookStyles.labelMuted,
+        prefixIcon: Icon(icon, size: 16, color: BankBookColors.textSecondary),
+        filled: true,
+        fillColor: BankBookColors.toggleInactiveBg,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:   const BorderSide(color: BankBookColors.bodyBorder),
+          borderSide: const BorderSide(color: BankBookColors.bodyBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-              color: BankBookColors.brandGold, width: 1.5),
+          borderSide:
+              const BorderSide(color: BankBookColors.brandGold, width: 1.5),
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -624,7 +636,7 @@ class _InputField extends StatelessWidget {
   }
 }
 
-// ── Form Label ─────────────────────────────────────────────────────────────────
+// â”€â”€ Form Label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _FormLabel extends StatelessWidget {
   final String text;
@@ -632,13 +644,14 @@ class _FormLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text, style: BankBookStyles.labelSecondary.copyWith(
-      fontWeight: FontWeight.w600,
-    ));
+    return Text(text,
+        style: BankBookStyles.labelSecondary.copyWith(
+          fontWeight: FontWeight.w600,
+        ));
   }
 }
 
-// ── Save Button ────────────────────────────────────────────────────────────────
+// â”€â”€ Save Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _SaveButton extends StatelessWidget {
   final BankBookController ctrl;
@@ -652,8 +665,8 @@ class _SaveButton extends StatelessWidget {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: BankBookColors.brandGold,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
         ),
         onPressed: ctrl.isSaving
@@ -667,20 +680,19 @@ class _SaveButton extends StatelessWidget {
                     SnackBar(
                       content: const Text('Entry saved successfully'),
                       backgroundColor: BankBookColors.creditAccent,
-                      behavior:        SnackBarBehavior.floating,
+                      behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
-                      margin:   const EdgeInsets.all(16),
+                      margin: const EdgeInsets.all(16),
                       duration: const Duration(seconds: 2),
                     ),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text(
-                          'Please enter a valid amount'),
+                      content: const Text('Please enter a valid amount'),
                       backgroundColor: BankBookColors.debitAccent,
-                      behavior:        SnackBarBehavior.floating,
+                      behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
                       margin: const EdgeInsets.all(16),
@@ -690,17 +702,19 @@ class _SaveButton extends StatelessWidget {
               },
         child: ctrl.isSaving
             ? const SizedBox(
-                width: 20, height: 20,
+                width: 20,
+                height: 20,
                 child: CircularProgressIndicator(
-                  color:       Color(0xFF111827),
+                  color: Color(0xFF111827),
                   strokeWidth: 2,
                 ),
               )
-            : Text(BankBookStrings.saveEntry, style: const TextStyle(
-                fontSize:   15,
-                fontWeight: FontWeight.w800,
-                color:      Color(0xFF111827),
-              )),
+            : const Text(BankBookStrings.saveEntry,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF111827),
+                )),
       ),
     );
   }

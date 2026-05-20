@@ -6,11 +6,11 @@ class AppLayout {
 
   // --- 1. SPACING & PADDING ---
   double get pXss => 4.0;
-  double get pXs  => 8.0;
-  double get pSm  => 12.0;
-  double get pMd  => 20.0;
-  double get pLg  => 40.0;
-  double get pXl  => 60.0;
+  double get pXs => 8.0;
+  double get pSm => 12.0;
+  double get pMd => 20.0;
+  double get pLg => 40.0;
+  double get pXl => 60.0;
 
   // --- 2. BORDER RADIUS ---
   double get radiusSm => 12.0;
@@ -25,12 +25,12 @@ class AppLayout {
   double get iconXl => 80.0;
 
   // --- 4. LAYOUT CONSTRAINTS (Ye MISSING tha aapke code mein) ---
-  double get cardMaxWidth => 1100.0; 
-  double get cardMaxHeight => 700.0; 
-  double get glowOrbSize => 400.0;   
+  double get cardMaxWidth => 1100.0;
+  double get cardMaxHeight => 700.0;
+  double get glowOrbSize => 400.0;
 
   // --- 5. EFFECTS (Ye bhi missing tha) ---
   double get blurSm => 5.0;
   double get blurMd => 10.0;
-  double get blurGlow => 80.0; 
+  double get blurGlow => 80.0;
 }

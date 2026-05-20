@@ -2,8 +2,8 @@
 // FILE: pos_invoice_preview_screen.dart
 // TYPE: Full Screen Master UI (The Hub)
 // DESCRIPTION: 2-Panel Invoice Generation Hub.
-//              ✅ UPGRADED: Tab-based Configuration
-//              ✅ UPGRADED: Inline Animated Save Button (No SnackBar)
+//              âœ… UPGRADED: Tab-based Configuration
+//              âœ… UPGRADED: Inline Animated Save Button (No SnackBar)
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -50,7 +50,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
   BillingMode _configMode = BillingMode.retail;
   BillType _configType = BillType.normal;
 
-  // 🚀 NAYA: Animation States for Save Button
+  // ðŸš€ NAYA: Animation States for Save Button
   bool _isSavingPdf = false;
   bool _isPdfSaved = false;
 
@@ -108,7 +108,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                           const SizedBox(height: 24),
                           _buildCategorizedCustomization(),
                           const SizedBox(height: 24),
-                          // ✅ NEW: Due Date section (balance due hone par)
+                          // âœ… NEW: Due Date section (balance due hone par)
                           _buildDueDateSection(),
                           _buildPrintOptions(),
                         ],
@@ -123,7 +123,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
             // ================= RIGHT PANEL: LIVE PREVIEW =================
             Expanded(
               child: Container(
-                color: SalesPosColors.bodyBorder.withOpacity(0.3),
+                color: SalesPosColors.bodyBorder.withValues(alpha: 0.3),
                 child: _buildRightPreviewPanel(),
               ),
             ),
@@ -234,7 +234,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? SalesPosColors.brandGold.withOpacity(0.15)
+                        ? SalesPosColors.brandGold.withValues(alpha: 0.15)
                         : SalesPosColors.shellPanelBg,
                     border: Border.all(
                         color: isSelected
@@ -341,10 +341,10 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                   () => _invCtrl.toggleCustomization(
                       'making', _configMode, _configType)),
               const Divider(color: SalesPosColors.shellBorder, height: 1),
-              // ✅ NEW: Exchange Breakdown toggle
+              // âœ… NEW: Exchange Breakdown toggle
               _buildToggleRow(
                 "Exchange Breakdown",
-                "ON: Gold/Silver alag  •  OFF: Combined total",
+                "ON: Gold/Silver alag  â€¢  OFF: Combined total",
                 activeSettings.showExchangeBreakdown,
                 () => _invCtrl.toggleCustomization(
                     'exchange', _configMode, _configType),
@@ -367,7 +367,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
               color: isActive
                   ? (isSub
                       ? SalesPosColors.shellBg
-                      : SalesPosColors.brandGold.withOpacity(0.1))
+                      : SalesPosColors.brandGold.withValues(alpha: 0.1))
                   : Colors.transparent,
               borderRadius: BorderRadius.only(
                 topLeft:
@@ -414,14 +414,14 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
       trailing: Switch(
         value: value,
         onChanged: (_) => onTap(),
-        activeColor: SalesPosColors.brandGold,
+        activeThumbColor: SalesPosColors.brandGold,
         inactiveTrackColor: SalesPosColors.shellBg,
       ),
       onTap: onTap,
     );
   }
 
-  // ✅ NEW: Due Date picker — balance due hone par show karo
+  // âœ… NEW: Due Date picker â€” balance due hone par show karo
   Widget _buildDueDateSection() {
     final hasDue = (_invCtrl.invoice?.balanceDue ?? 0) > 0.5;
     if (!hasDue) return const SizedBox();
@@ -491,7 +491,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         "Payment Due By",
                         style: TextStyle(
                           color: SalesPosColors.shellTextMuted,
@@ -560,10 +560,11 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                           icon: const Icon(Icons.remove_circle_outline,
                               color: SalesPosColors.brandGold),
                           onPressed: () {
-                            if (_invCtrl.printCopies > 1)
+                            if (_invCtrl.printCopies > 1) {
                               _invCtrl.updatePrintOptions(
                                   copies: _invCtrl.printCopies - 1,
                                   duplicate: _invCtrl.includeDuplicateStamp);
+                            }
                           }),
                       Text("${_invCtrl.printCopies}",
                           style: const TextStyle(
@@ -574,10 +575,11 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                           icon: const Icon(Icons.add_circle_outline,
                               color: SalesPosColors.brandGold),
                           onPressed: () {
-                            if (_invCtrl.printCopies < 5)
+                            if (_invCtrl.printCopies < 5) {
                               _invCtrl.updatePrintOptions(
                                   copies: _invCtrl.printCopies + 1,
                                   duplicate: _invCtrl.includeDuplicateStamp);
+                            }
                           }),
                     ],
                   )
@@ -605,7 +607,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                     value: _invCtrl.includeDuplicateStamp,
                     onChanged: (v) => _invCtrl.updatePrintOptions(
                         copies: _invCtrl.printCopies, duplicate: v),
-                    activeColor: SalesPosColors.brandGold,
+                    activeThumbColor: SalesPosColors.brandGold,
                     inactiveTrackColor: SalesPosColors.shellBg,
                   ),
                 ],
@@ -649,7 +651,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
               ),
               const SizedBox(width: 8),
 
-              // 🚀 NAYA WORKFLOW: Smart Animated Save Button
+              // ðŸš€ NAYA WORKFLOW: Smart Animated Save Button
               Expanded(
                 child: OutlinedButton(
                   onPressed: (isReady && !_isSavingPdf && !_isPdfSaved)
@@ -747,7 +749,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
             ),
           ),
 
-          // ✅ DONE BUTTON — Sale confirm, POS saaf karo
+          // âœ… DONE BUTTON â€” Sale confirm, POS saaf karo
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
@@ -763,7 +765,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            "✅ Sale complete! POS ready for next customer.",
+                            "âœ… Sale complete! POS ready for next customer.",
                           ),
                           backgroundColor: SalesPosColors.success,
                           behavior: SnackBarBehavior.floating,
@@ -774,7 +776,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                   : null,
               icon: const Icon(Icons.check_circle_outline_rounded, size: 20),
               label: const Text(
-                "DONE — NEW SALE",
+                "DONE â€” NEW SALE",
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 15,

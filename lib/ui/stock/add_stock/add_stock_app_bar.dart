@@ -65,9 +65,9 @@ class _AddStockAppBarState extends State<AddStockAppBar>
             bottom: false,
             child: Column(
               children: [
-                // ══════════════════════════════════════════════════════════════
+                // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
                 // TOP ROW: Premium Header
-                // ══════════════════════════════════════════════════════════════
+                // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
                 Container(
                   height: 70.0,
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -86,7 +86,7 @@ class _AddStockAppBarState extends State<AddStockAppBar>
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
-                              color: ui.accent.withOpacity(0.4),
+                              color: ui.accent.withValues(alpha: 0.4),
                               blurRadius: 10,
                               offset: const Offset(0, 3),
                             )
@@ -115,9 +115,9 @@ class _AddStockAppBarState extends State<AddStockAppBar>
                   ),
                 ),
 
-                // ══════════════════════════════════════════════════════════════
+                // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
                 // BOTTOM ROW: Clean Process Stepper (hidden when showStepper=false)
-                // ══════════════════════════════════════════════════════════════
+                // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
                 if (widget.showStepper)
                   Container(
                     height: 44.0,
@@ -161,13 +161,15 @@ class _AddStockAppBarState extends State<AddStockAppBar>
                           ),
                           decoration: BoxDecoration(
                             color: widget.ctrl.rowsWithErrorsCount == 0
-                                ? AddStockColors.success.withOpacity(0.12)
-                                : AddStockColors.danger.withOpacity(0.12),
+                                ? AddStockColors.success.withValues(alpha: 0.12)
+                                : AddStockColors.danger.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: widget.ctrl.rowsWithErrorsCount == 0
-                                  ? AddStockColors.success.withOpacity(0.3)
-                                  : AddStockColors.danger.withOpacity(0.3),
+                                  ? AddStockColors.success
+                                      .withValues(alpha: 0.3)
+                                  : AddStockColors.danger
+                                      .withValues(alpha: 0.3),
                             ),
                           ),
                           child: Text(
@@ -217,9 +219,9 @@ class _AddStockAppBarState extends State<AddStockAppBar>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: ui.accent.withOpacity(0.12),
+        color: ui.accent.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: ui.accent.withOpacity(0.4)),
+        border: Border.all(color: ui.accent.withValues(alpha: 0.4)),
       ),
       child: Text(
         ui.title.toUpperCase(),
@@ -234,9 +236,9 @@ class _AddStockAppBarState extends State<AddStockAppBar>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // REUSABLE COMPONENTS FOR APP BARS
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -282,7 +284,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
             decoration: BoxDecoration(
               color: _isHovered
                   ? AddStockColors.shellBg
-                  : AddStockColors.shellBorder.withOpacity(0.3),
+                  : AddStockColors.shellBorder.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isHovered
@@ -293,7 +295,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               boxShadow: _isHovered
                   ? [
                       BoxShadow(
-                        color: AddStockColors.brandGold.withOpacity(0.3),
+                        color: AddStockColors.brandGold.withValues(alpha: 0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
                       ),
@@ -323,10 +325,10 @@ class _RadarWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AddStockColors.onlineGreen.withOpacity(0.08),
+        color: AddStockColors.onlineGreen.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(30),
         border: Border.all(
-          color: AddStockColors.onlineGreen.withOpacity(0.3),
+          color: AddStockColors.onlineGreen.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -388,7 +390,7 @@ class _RadarWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AddStockColors.onlineGreen.withOpacity(0.5),
+                  color: AddStockColors.onlineGreen.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),
@@ -400,9 +402,9 @@ class _RadarWidget extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // STEPPER WIDGETS
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _StepDot extends StatelessWidget {
   final int index;
@@ -434,8 +436,8 @@ class _StepDot extends StatelessWidget {
             color: active
                 ? accentColor
                 : done
-                    ? accentColor.withOpacity(0.2)
-                    : AddStockColors.shellBorder.withOpacity(0.3),
+                    ? accentColor.withValues(alpha: 0.2)
+                    : AddStockColors.shellBorder.withValues(alpha: 0.3),
             shape: BoxShape.circle,
             border: Border.all(
               color: active || done ? accentColor : AddStockColors.shellBorder,
@@ -444,7 +446,7 @@ class _StepDot extends StatelessWidget {
             boxShadow: active
                 ? [
                     BoxShadow(
-                      color: accentColor.withOpacity(0.4),
+                      color: accentColor.withValues(alpha: 0.4),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     )
@@ -492,13 +494,14 @@ class _StepLine extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 12),
         height: 2.0,
         decoration: BoxDecoration(
-          color:
-              done ? accentColor : AddStockColors.shellBorder.withOpacity(0.5),
+          color: done
+              ? accentColor
+              : AddStockColors.shellBorder.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(999),
           boxShadow: done
               ? [
                   BoxShadow(
-                    color: accentColor.withOpacity(0.3),
+                    color: accentColor.withValues(alpha: 0.3),
                     blurRadius: 4,
                   )
                 ]

@@ -2,7 +2,7 @@
 // FILE: shop_database_helper.dart
 // TYPE: Local Database / Data Layer
 // AUTHOR: Senior System Architect
-// DESCRIPTION: 🚀 UPGRADED: Fixed CamelCase vs Snake_Case mismatch. 
+// DESCRIPTION: 🚀 UPGRADED: Fixed CamelCase vs Snake_Case mismatch.
 //              Added Auto-Update Engine (Migration) for future updates.
 // -----------------------------------------------------------------------------
 
@@ -41,7 +41,8 @@ class ShopDatabaseHelper {
 
   // --- 1. SCHEMA CREATION (Normalized Tables with EXACT Snake_Case Match) ---
   Future<void> _createSchema(Database db, int version) async {
-    debugPrint("🚀 [DB] Creating Enterprise Normalized Schema (v$_dbVersion)...");
+    debugPrint(
+        "🚀 [DB] Creating Enterprise Normalized Schema (v$_dbVersion)...");
 
     // Table 1: Basic Info (Names strictly matched with payload)
     await db.execute('''
@@ -98,13 +99,14 @@ class ShopDatabaseHelper {
         FOREIGN KEY (tenant_id) REFERENCES shop_profile (tenant_id) ON DELETE CASCADE
       )
     ''');
-    
+
     debugPrint("✅ [DB] Schema Created Successfully.");
   }
 
   // --- 🚀 AUTO-UPDATE LOGIC (MIGRATIONS) ---
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    debugPrint("🔄 [DB] Upgrading database from v$oldVersion to v$newVersion...");
+    debugPrint(
+        "🔄 [DB] Upgrading database from v$oldVersion to v$newVersion...");
     // Example for future:
     // if (oldVersion < 3) {
     //   await db.execute('ALTER TABLE shop_profile ADD COLUMN new_feature TEXT');
@@ -118,31 +120,30 @@ class ShopDatabaseHelper {
 
     try {
       await db.transaction((txn) async {
-        
         // 1. Upsert Basic Info
         await txn.insert(
-          'shop_profile', 
+          'shop_profile',
           {...payload['basic_info'], 'tenant_id': tenantId},
-          conflictAlgorithm: ConflictAlgorithm.replace, 
+          conflictAlgorithm: ConflictAlgorithm.replace,
         );
 
         // 2. Upsert Address
         await txn.insert(
-          'shop_address', 
+          'shop_address',
           {...payload['address'], 'tenant_id': tenantId},
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
 
         // 3. Upsert Tax & GST
         await txn.insert(
-          'shop_tax_gst', 
+          'shop_tax_gst',
           {...payload['tax_compliance'], 'tenant_id': tenantId},
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
 
         // 4. Upsert Branding
         await txn.insert(
-          'shop_branding', 
+          'shop_branding',
           {...payload['branding_social'], 'tenant_id': tenantId},
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
@@ -154,7 +155,7 @@ class ShopDatabaseHelper {
           where: 'tenant_id = ?',
           whereArgs: [tenantId],
         );
-        
+
         List<dynamic> bankingList = payload['banking_details'] ?? [];
         for (var bank in bankingList) {
           await txn.insert(
@@ -165,9 +166,9 @@ class ShopDatabaseHelper {
         }
       });
 
-      debugPrint("🚀 [DB] Master Payload Saved Successfully for Tenant: $tenantId");
+      debugPrint(
+          "🚀 [DB] Master Payload Saved Successfully for Tenant: $tenantId");
       return true;
-
     } catch (e, stacktrace) {
       debugPrint("❌ [DB TRANSACTION ERROR]: $e");
       debugPrint(stacktrace.toString());
@@ -178,19 +179,20 @@ class ShopDatabaseHelper {
   // --- 3. FETCH CONFIGURATION ---
   Future<Map<String, dynamic>?> getMasterPayload(String tenantId) async {
     final db = await database;
-    
-    final basicInfo = await db.query('shop_profile', where: 'tenant_id = ?', whereArgs: [tenantId]);
-    if (basicInfo.isEmpty) return null; 
 
-    final address = await db.query('shop_address', where: 'tenant_id = ?', whereArgs: [tenantId]);
-    final tax = await db.query('shop_tax_gst', where: 'tenant_id = ?', whereArgs: [tenantId]);
-    final branding = await db.query('shop_branding', where: 'tenant_id = ?', whereArgs: [tenantId]);
-    
-    final banks = await db.query(
-      'shop_bank_accounts', 
-      where: 'tenant_id = ? AND is_active = 1', 
-      whereArgs: [tenantId]
-    );
+    final basicInfo = await db
+        .query('shop_profile', where: 'tenant_id = ?', whereArgs: [tenantId]);
+    if (basicInfo.isEmpty) return null;
+
+    final address = await db
+        .query('shop_address', where: 'tenant_id = ?', whereArgs: [tenantId]);
+    final tax = await db
+        .query('shop_tax_gst', where: 'tenant_id = ?', whereArgs: [tenantId]);
+    final branding = await db
+        .query('shop_branding', where: 'tenant_id = ?', whereArgs: [tenantId]);
+
+    final banks = await db.query('shop_bank_accounts',
+        where: 'tenant_id = ? AND is_active = 1', whereArgs: [tenantId]);
 
     return {
       "tenant_id": tenantId,

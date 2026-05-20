@@ -22,18 +22,18 @@ class AddCustomerLogic extends ChangeNotifier {
       : _repo = repo ?? AddCustomerRepository();
 
   // ── STATE ─────────────────────────────────────────────────────────────────
-  AddCustomerFormModel _form   = const AddCustomerFormModel();
-  SaveState  _saveState        = SaveState.idle;
-  ActiveField _activeField     = ActiveField.none;
+  AddCustomerFormModel _form = const AddCustomerFormModel();
+  SaveState _saveState = SaveState.idle;
+  ActiveField _activeField = ActiveField.none;
   Timer? _mobileDebounce;
-  int _membershipSeq           = 1;
+  int _membershipSeq = 1;
 
   // ── GETTERS ──────────────────────────────────────────────────────────────
   AddCustomerFormModel get form => _form;
-  SaveState  get saveState      => _saveState;
-  ActiveField get activeField   => _activeField;
-  bool get isSaving             => _saveState == SaveState.saving;
-  bool get canSave              => _form.isReadyToSave && !isSaving;
+  SaveState get saveState => _saveState;
+  ActiveField get activeField => _activeField;
+  bool get isSaving => _saveState == SaveState.saving;
+  bool get canSave => _form.isReadyToSave && !isSaving;
 
   // ── FOCUS ────────────────────────────────────────────────────────────────
   void setActiveField(ActiveField f) {
@@ -52,8 +52,8 @@ class AddCustomerLogic extends ChangeNotifier {
     _form = _form.copyWith(
       firstName: v,
       clearFirstNameError: v.trim().length >= 2,
-      firstNameError: v.trim().isNotEmpty && v.trim().length < 2
-          ? 'Name too short' : null,
+      firstNameError:
+          v.trim().isNotEmpty && v.trim().length < 2 ? 'Name too short' : null,
     );
     notifyListeners();
   }
@@ -98,9 +98,9 @@ class AddCustomerLogic extends ChangeNotifier {
   void onMobileChanged(String v) {
     final liveErr = AddCustomerValidator.validateMobileLive(v);
     _form = _form.copyWith(
-      mobile:      v,
+      mobile: v,
       mobileError: liveErr,
-      whatsapp:    _form.sameAsWhatsApp ? v : _form.whatsapp,
+      whatsapp: _form.sameAsWhatsApp ? v : _form.whatsapp,
     );
     notifyListeners();
 
@@ -131,8 +131,8 @@ class AddCustomerLogic extends ChangeNotifier {
 
   void onEmailChanged(String v) {
     final err = AddCustomerValidator.validateEmailLive(v);
-    _form = _form.copyWith(
-        email: v, emailError: err, clearEmailError: err == null);
+    _form =
+        _form.copyWith(email: v, emailError: err, clearEmailError: err == null);
     notifyListeners();
   }
 
@@ -223,10 +223,10 @@ class AddCustomerLogic extends ChangeNotifier {
 
   String generateMembershipId() {
     final now = DateTime.now();
-    final ym  = DateFormat('yyyyMM').format(now);
+    final ym = DateFormat('yyyyMM').format(now);
     final seq = _membershipSeq.toString().padLeft(4, '0');
     _membershipSeq++;
-    final id  = 'LTMP-$ym-$seq';
+    final id = 'LTMP-$ym-$seq';
     _form = _form.copyWith(membershipId: id);
     notifyListeners();
     return id;
@@ -248,7 +248,7 @@ class AddCustomerLogic extends ChangeNotifier {
   }
 
   void addFamilyMember() {
-    final newId  = 'fm_${Random().nextInt(99999)}';
+    final newId = 'fm_${Random().nextInt(99999)}';
     final updated = [..._form.familyMembers, FamilyMember(id: newId)];
     _form = _form.copyWith(familyMembers: updated);
     notifyListeners();
@@ -261,9 +261,8 @@ class AddCustomerLogic extends ChangeNotifier {
   }
 
   void updateFamilyMember(String id, FamilyMember updated) {
-    final list = _form.familyMembers
-        .map((m) => m.id == id ? updated : m)
-        .toList();
+    final list =
+        _form.familyMembers.map((m) => m.id == id ? updated : m).toList();
     _form = _form.copyWith(familyMembers: list);
     notifyListeners();
   }
@@ -297,16 +296,18 @@ class AddCustomerLogic extends ChangeNotifier {
         ? AddCustomerValidator.validateCompanyName(_form.companyName)
         : AddCustomerValidator.validateName(_form.firstName);
     final mobileErr = AddCustomerValidator.validateMobile(_form.mobile);
-    final panErr    = AddCustomerValidator.validatePan(_form.panNumber);
-    final emailErr  = AddCustomerValidator.validateEmail(_form.email);
+    final panErr = AddCustomerValidator.validatePan(_form.panNumber);
+    final emailErr = AddCustomerValidator.validateEmail(_form.email);
 
-    if (nameErr != null || mobileErr != null ||
-        panErr  != null || emailErr  != null) {
+    if (nameErr != null ||
+        mobileErr != null ||
+        panErr != null ||
+        emailErr != null) {
       _form = _form.copyWith(
         firstNameError: nameErr,
-        mobileError:    mobileErr,
-        panError:       panErr,
-        emailError:     emailErr,
+        mobileError: mobileErr,
+        panError: panErr,
+        emailError: emailErr,
       );
       _saveState = SaveState.idle;
       notifyListeners();
@@ -336,8 +337,8 @@ class AddCustomerLogic extends ChangeNotifier {
 
   // ── RESET ─────────────────────────────────────────────────────────────────
   void resetForm() {
-    _form        = const AddCustomerFormModel();
-    _saveState   = SaveState.idle;
+    _form = const AddCustomerFormModel();
+    _saveState = SaveState.idle;
     _activeField = ActiveField.none;
     notifyListeners();
   }

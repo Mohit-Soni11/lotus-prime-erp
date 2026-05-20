@@ -93,11 +93,13 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
     _ctrl.dispose();
     _penaltyCtrl.dispose();
     _notesCtrl.dispose();
-    for (final a in _sectionAnim) a.dispose();
+    for (final a in _sectionAnim) {
+      a.dispose();
+    }
     super.dispose();
   }
 
-  // ── ACTIONS ───────────────────────────────────────────────────────────────
+  // â”€â”€ ACTIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> _onRelease() async {
     final confirmed = await _showConfirmDialog();
@@ -158,7 +160,7 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: GirviColors.textDark)),
-                      Text('₹ ${_fmt.format(_ctrl.total)}',
+                      Text('â‚¹ ${_fmt.format(_ctrl.total)}',
                           style: GoogleFonts.manrope(
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
@@ -222,7 +224,7 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
         child: SlideTransition(position: _sectionSlide[i], child: child),
       );
 
-  // ── BUILD ─────────────────────────────────────────────────────────────────
+  // â”€â”€ BUILD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   @override
   Widget build(BuildContext context) {
@@ -244,15 +246,15 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    // ── Loan Summary Card ──────────────────────────────────
+                    // â”€â”€ Loan Summary Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     _animated(0, _buildLoanSummaryCard(loan)),
                     const SizedBox(height: 16),
 
-                    // ── Settlement Breakdown ───────────────────────────────
+                    // â”€â”€ Settlement Breakdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     _animated(1, _buildSettlementCard()),
                     const SizedBox(height: 16),
 
-                    // ── Payment Mode + Notes ───────────────────────────────
+                    // â”€â”€ Payment Mode + Notes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     _animated(2, _buildPaymentSection()),
                   ]),
                 ),
@@ -265,17 +267,18 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
     );
   }
 
-  // ── LOAN SUMMARY CARD ─────────────────────────────────────────────────────
+  // â”€â”€ LOAN SUMMARY CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildLoanSummaryCard(GirviLoanModel loan) {
     return Container(
       decoration: BoxDecoration(
         color: GirviColors.shellBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: GirviColors.brandGold.withOpacity(0.25)),
+        border:
+            Border.all(color: GirviColors.brandGold.withValues(alpha: 0.25)),
         boxShadow: [
           BoxShadow(
-            color: GirviColors.brandGold.withOpacity(0.06),
+            color: GirviColors.brandGold.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           )
@@ -286,11 +289,10 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
           // Header
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               border:
                   Border(bottom: BorderSide(color: GirviColors.shellBorder)),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Row(children: [
               Container(
@@ -322,7 +324,8 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
                 decoration: BoxDecoration(
                   color: loan.statusBgColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: loan.statusColor.withOpacity(0.4)),
+                  border: Border.all(
+                      color: loan.statusColor.withValues(alpha: 0.4)),
                 ),
                 child: Text(loan.statusLabel,
                     style: GirviStyles.statusBadge
@@ -338,10 +341,10 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
               const SizedBox(height: 8),
               _DetailRow(
                   'Metal',
-                  '${loan.metalType} ${loan.metalPurity} · ${loan.netWeight.toStringAsFixed(2)}g',
+                  '${loan.metalType} ${loan.metalPurity} Â· ${loan.netWeight.toStringAsFixed(2)}g',
                   null),
               const SizedBox(height: 8),
-              _DetailRow('Loan Amount', '₹ ${_fmt.format(loan.loanAmount)}',
+              _DetailRow('Loan Amount', 'â‚¹ ${_fmt.format(loan.loanAmount)}',
                   GirviColors.brandGold),
               const SizedBox(height: 8),
               _DetailRow('Start Date', _dateFmt.format(loan.startDate), null),
@@ -367,7 +370,7 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
     );
   }
 
-  // ── SETTLEMENT BREAKDOWN ──────────────────────────────────────────────────
+  // â”€â”€ SETTLEMENT BREAKDOWN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildSettlementCard() {
     return GirviSectionCard(
@@ -427,7 +430,7 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
               decoration: GirviStyles.inputNormal,
               padding: const EdgeInsets.symmetric(horizontal: 14),
               child: Row(children: [
-                Text('₹ ',
+                Text('â‚¹ ',
                     style: GirviStyles.fieldInput
                         .copyWith(color: GirviColors.textMuted)),
                 Expanded(
@@ -462,8 +465,8 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                GirviColors.success.withOpacity(0.08),
-                GirviColors.success.withOpacity(0.03),
+                GirviColors.success.withValues(alpha: 0.08),
+                GirviColors.success.withValues(alpha: 0.03),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -480,7 +483,7 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
                     fontWeight: FontWeight.w700,
                     color: GirviColors.textDark)),
             const Spacer(),
-            Text('₹ ${_fmt.format(_ctrl.total)}',
+            Text('â‚¹ ${_fmt.format(_ctrl.total)}',
                 style: GirviStyles.amountLarge
                     .copyWith(color: GirviColors.success)),
           ]),
@@ -489,7 +492,7 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
     );
   }
 
-  // ── PAYMENT + NOTES ───────────────────────────────────────────────────────
+  // â”€â”€ PAYMENT + NOTES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildPaymentSection() {
     return GirviSectionCard(
@@ -514,17 +517,17 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
     );
   }
 
-  // ── BOTTOM BAR ────────────────────────────────────────────────────────────
+  // â”€â”€ BOTTOM BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Widget _buildBottomBar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       decoration: BoxDecoration(
         color: GirviColors.cardBg,
-        border: Border(top: BorderSide(color: GirviColors.cardBorder)),
+        border: const Border(top: BorderSide(color: GirviColors.cardBorder)),
         boxShadow: [
           BoxShadow(
-            color: GirviColors.shellBg.withOpacity(0.08),
+            color: GirviColors.shellBg.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, -4),
           )
@@ -543,7 +546,7 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: GirviColors.textMuted)),
-                Text('₹ ${_fmt.format(_ctrl.total)}',
+                Text('â‚¹ ${_fmt.format(_ctrl.total)}',
                     style: GoogleFonts.manrope(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
@@ -576,7 +579,7 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
                             const Icon(GirviIcons.release, size: 18),
                             const SizedBox(width: 8),
                             Text(
-                                'Release Girvi & Collect ₹${_fmt.format(_ctrl.total)}',
+                                'Release Girvi & Collect â‚¹${_fmt.format(_ctrl.total)}',
                                 style: GirviStyles.saveButtonText
                                     .copyWith(color: Colors.white)),
                           ]),
@@ -589,7 +592,7 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
   }
 }
 
-// ── Helper widgets ─────────────────────────────────────────────────────────────
+// â”€â”€ Helper widgets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _DetailRow extends StatelessWidget {
   final String label;
@@ -637,7 +640,7 @@ class _SettlementLine extends StatelessWidget {
       Icon(icon, color: color, size: 14),
       const SizedBox(width: 8),
       Expanded(child: Text(label, style: GirviStyles.fieldLabel)),
-      Text('₹ ${fmt.format(amount)}',
+      Text('â‚¹ ${fmt.format(amount)}',
           style: GoogleFonts.manrope(
               fontSize: 15, fontWeight: FontWeight.w800, color: color)),
     ]);
@@ -664,7 +667,7 @@ class _PaymentModeSelector extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? GirviColors.brandGold.withOpacity(0.12)
+                    ? GirviColors.brandGold.withValues(alpha: 0.12)
                     : GirviColors.inputBg,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(

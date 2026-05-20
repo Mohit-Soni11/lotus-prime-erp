@@ -32,8 +32,10 @@ class DailyRates extends Table with BaseTable {
   TextColumn get oldSilverBuy => text().withDefault(const Constant('0'))();
 
   // Change Percentage (vs yesterday)
-  TextColumn get goldChangePercent => text().withDefault(const Constant('+0.0'))();
-  TextColumn get silverChangePercent => text().withDefault(const Constant('+0.0'))();
+  TextColumn get goldChangePercent =>
+      text().withDefault(const Constant('+0.0'))();
+  TextColumn get silverChangePercent =>
+      text().withDefault(const Constant('+0.0'))();
 
   // Source / Notes
   TextColumn get source => text().withDefault(const Constant('Manual'))();

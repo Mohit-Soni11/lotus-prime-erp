@@ -29,7 +29,7 @@ class PurchaseEntryStyles {
   static TextStyle get subTitleMuted => TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w800,
-        color: PurchaseEntryColors.textMuted.withOpacity(0.70),
+        color: PurchaseEntryColors.textMuted.withValues(alpha: 0.70),
       );
 
   static const TextStyle grandTotalText = TextStyle(

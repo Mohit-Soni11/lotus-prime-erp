@@ -17,40 +17,38 @@ import '../../models/karigar/karigar_stats_model.dart';
 import '../../repositories/karigar/karigar_repository.dart';
 
 class PendingJobsController extends ChangeNotifier {
-
   final KarigarRepository _repo;
 
-  PendingJobsController(AppDatabase db)
-      : _repo = KarigarRepository(db);
+  PendingJobsController(AppDatabase db) : _repo = KarigarRepository(db);
 
   // ── STATE ──────────────────────────────────────────────────────────────────
 
-  bool    _isLoading    = false;
+  bool _isLoading = false;
   String? _errorMessage;
 
-  List<KarigarIssueWithKarigar> _allJobs      = [];
+  List<KarigarIssueWithKarigar> _allJobs = [];
   List<KarigarIssueWithKarigar> _filteredJobs = [];
-  OverallKarigarStats           _stats        = OverallKarigarStats.empty();
+  OverallKarigarStats _stats = OverallKarigarStats.empty();
 
-  String            _searchQuery  = '';
+  String _searchQuery = '';
   PendingJobsFilter _activeFilter = PendingJobsFilter.all;
 
   // ── GETTERS ────────────────────────────────────────────────────────────────
 
-  bool    get isLoading     => _isLoading;
-  String? get errorMessage  => _errorMessage;
-  bool    get hasError      => _errorMessage != null;
-  bool    get hasJobs       => _filteredJobs.isNotEmpty;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+  bool get hasError => _errorMessage != null;
+  bool get hasJobs => _filteredJobs.isNotEmpty;
 
   List<KarigarIssueWithKarigar> get filteredJobs => _filteredJobs;
-  OverallKarigarStats           get stats        => _stats;
-  PendingJobsFilter             get activeFilter => _activeFilter;
-  String                        get searchQuery  => _searchQuery;
+  OverallKarigarStats get stats => _stats;
+  PendingJobsFilter get activeFilter => _activeFilter;
+  String get searchQuery => _searchQuery;
 
   // ── LOAD ───────────────────────────────────────────────────────────────────
 
   Future<void> loadData() async {
-    _isLoading    = true;
+    _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
@@ -61,7 +59,7 @@ class PendingJobsController extends ChangeNotifier {
       ]);
 
       _allJobs = results[0] as List<KarigarIssueWithKarigar>;
-      _stats   = results[1] as OverallKarigarStats;
+      _stats = results[1] as OverallKarigarStats;
       _applyFilterAndSearch();
     } catch (e) {
       debugPrint('PendingJobsController.loadData error: $e');
@@ -96,9 +94,8 @@ class PendingJobsController extends ChangeNotifier {
         result = result.where((j) => j.statusEnum.isActive).toList();
         break;
       case PendingJobsFilter.pending:
-        result = result
-            .where((j) => j.statusEnum == IssueStatus.pending)
-            .toList();
+        result =
+            result.where((j) => j.statusEnum == IssueStatus.pending).toList();
         break;
       case PendingJobsFilter.inProgress:
         result = result

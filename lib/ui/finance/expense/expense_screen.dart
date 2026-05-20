@@ -1,30 +1,30 @@
 // =============================================================================
 // FILE        : expense_screen.dart
 // MODULE      : Expense Entry
-// LAYER       : UI — Master Screen Assembly
+// LAYER       : UI â€” Master Screen Assembly
 // DESCRIPTION : Top-level shell connecting all Expense Entry components.
 //               Follows exact same layout pattern as CashBookScreen.
 //
 //               LAYOUT:
-//               ┌──────────────────────────────────────────────────────────┐
-//               │  DARK APP BAR (module title, sort, add expense)          │
-//               ├───────────────────┬──────────────────────────────────────┤
-//               │  LEFT PANEL 330px │  CENTER PANEL (flex)                 │
-//               │  ─────────────── │  ───────────────────────────────────  │
-//               │  View Toggle      │  Search Bar + Category Filter Chips  │
-//               │  Date Navigator   │  Grouped Expense List                │
-//               │  Total Card       │  (swipe left to void, tap = detail)  │
-//               │  Stats Row        │                                       │
-//               │  Cat. Breakdown   │                                       │
-//               │  Mode Breakdown   │                                       │
-//               └───────────────────┴──────────────────────────────────────┘
+//               â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//               â”‚  DARK APP BAR (module title, sort, add expense)          â”‚
+//               â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+//               â”‚  LEFT PANEL 330px â”‚  CENTER PANEL (flex)                 â”‚
+//               â”‚  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ â”‚  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  â”‚
+//               â”‚  View Toggle      â”‚  Search Bar + Category Filter Chips  â”‚
+//               â”‚  Date Navigator   â”‚  Grouped Expense List                â”‚
+//               â”‚  Total Card       â”‚  (swipe left to void, tap = detail)  â”‚
+//               â”‚  Stats Row        â”‚                                       â”‚
+//               â”‚  Cat. Breakdown   â”‚                                       â”‚
+//               â”‚  Mode Breakdown   â”‚                                       â”‚
+//               â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
-//               ✅ Dark AppBar + Cream body (matches all ERP modules)
-//               ✅ Left panel fixed 330px | Center panel flex
-//               ✅ ListenableBuilder — zero setState in UI layer
-//               ✅ Entry dialog — slide-up animated
-//               ✅ Swipe-to-void with confirmation dialog
-//               ✅ Wired to CashTransactions table — auto-reflected in Cash Book
+//               âœ… Dark AppBar + Cream body (matches all ERP modules)
+//               âœ… Left panel fixed 330px | Center panel flex
+//               âœ… ListenableBuilder â€” zero setState in UI layer
+//               âœ… Entry dialog â€” slide-up animated
+//               âœ… Swipe-to-void with confirmation dialog
+//               âœ… Wired to CashTransactions table â€” auto-reflected in Cash Book
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -45,7 +45,6 @@ class ExpenseScreen extends StatefulWidget {
 }
 
 class _ExpenseScreenState extends State<ExpenseScreen> {
-
   late final ExpenseController _ctrl;
 
   @override
@@ -60,18 +59,18 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
     super.dispose();
   }
 
-  // ── Show Add Expense Dialog ────────────────────────────────────────────────
+  // â”€â”€ Show Add Expense Dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   void _showAddExpenseDialog() {
     showDialog(
-      context:            context,
+      context: context,
       barrierDismissible: true,
-      barrierColor:       Colors.black.withOpacity(0.45),
+      barrierColor: Colors.black.withValues(alpha: 0.45),
       builder: (_) => ExpenseEntryDialog(ctrl: _ctrl),
     );
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
+  // â”€â”€ Build â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   @override
   Widget build(BuildContext context) {
@@ -80,10 +79,10 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       child: Scaffold(
         backgroundColor: ExpenseColors.bodyBg,
 
-        // ── Dark App Bar ─────────────────────────────────────────────────
+        // â”€â”€ Dark App Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         appBar: ExpenseAppBar(
-          onBack:       widget.onBack ?? () => Navigator.pop(context),
-          ctrl:         _ctrl,
+          onBack: widget.onBack ?? () => Navigator.pop(context),
+          ctrl: _ctrl,
           onAddExpense: _showAddExpenseDialog,
         ),
 
@@ -91,20 +90,19 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-              // ── LEFT PANEL — Summary + Navigator ──────────────────────
+              // â”€â”€ LEFT PANEL â€” Summary + Navigator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               ExpenseLeftPanel(ctrl: _ctrl),
 
-              // ── Vertical Divider ──────────────────────────────────────
+              // â”€â”€ Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Container(
                 width: 1,
                 color: ExpenseColors.bodyBorder,
               ),
 
-              // ── CENTER PANEL — Expense List ───────────────────────────
+              // â”€â”€ CENTER PANEL â€” Expense List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Expanded(
                 child: ExpenseList(
-                  ctrl:        _ctrl,
+                  ctrl: _ctrl,
                   onAddExpense: _showAddExpenseDialog,
                 ),
               ),

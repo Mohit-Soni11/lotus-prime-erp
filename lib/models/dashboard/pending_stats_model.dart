@@ -1,6 +1,6 @@
 class PendingStatsModel {
-  final String totalCount;  // Main Big Number
-  final String goldCount;   // "02"
+  final String totalCount; // Main Big Number
+  final String goldCount; // "02"
   final String silverCount; // "03"
   final String syncTime;
 

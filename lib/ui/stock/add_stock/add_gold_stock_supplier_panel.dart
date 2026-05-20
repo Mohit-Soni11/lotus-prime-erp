@@ -211,7 +211,7 @@ class _AddGoldStockSupplierPanelState extends State<AddGoldStockSupplierPanel>
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: AddStockColors.brandGold.withOpacity(0.10),
+                color: AddStockColors.brandGold.withValues(alpha: 0.10),
                 blurRadius: 24,
                 spreadRadius: 1,
                 offset: const Offset(0, 4),
@@ -223,7 +223,7 @@ class _AddGoldStockSupplierPanelState extends State<AddGoldStockSupplierPanel>
               ),
             ],
             border: Border.all(
-              color: AddStockColors.brandGold.withOpacity(0.22),
+              color: AddStockColors.brandGold.withValues(alpha: 0.22),
               width: 1.5,
             ),
           ),
@@ -237,8 +237,8 @@ class _AddGoldStockSupplierPanelState extends State<AddGoldStockSupplierPanel>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AddStockColors.brandGold.withOpacity(0.48),
-                      AddStockColors.brandGold.withOpacity(0.10),
+                      AddStockColors.brandGold.withValues(alpha: 0.48),
+                      AddStockColors.brandGold.withValues(alpha: 0.10),
                       Colors.transparent,
                     ],
                   ),
@@ -356,10 +356,10 @@ class _AddGoldStockSupplierPanelState extends State<AddGoldStockSupplierPanel>
         : Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AddStockColors.brandGold.withOpacity(0.12),
+              color: AddStockColors.brandGold.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: AddStockColors.brandGold.withOpacity(0.28),
+                color: AddStockColors.brandGold.withValues(alpha: 0.28),
               ),
             ),
             child: Row(
@@ -433,7 +433,7 @@ class _AddGoldStockSupplierPanelState extends State<AddGoldStockSupplierPanel>
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: AddStockColors.brandGold.withOpacity(0.35),
+                    color: AddStockColors.brandGold.withValues(alpha: 0.35),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -474,9 +474,10 @@ class _AddGoldStockSupplierPanelState extends State<AddGoldStockSupplierPanel>
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AddStockColors.warning.withOpacity(0.08),
+          color: AddStockColors.warning.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AddStockColors.warning.withOpacity(0.25)),
+          border:
+              Border.all(color: AddStockColors.warning.withValues(alpha: 0.25)),
         ),
         child: Row(
           children: [
@@ -512,9 +513,10 @@ class _AddGoldStockSupplierPanelState extends State<AddGoldStockSupplierPanel>
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AddStockColors.success.withOpacity(0.08),
+        color: AddStockColors.success.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AddStockColors.success.withOpacity(0.24)),
+        border:
+            Border.all(color: AddStockColors.success.withValues(alpha: 0.24)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -523,7 +525,7 @@ class _AddGoldStockSupplierPanelState extends State<AddGoldStockSupplierPanel>
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: AddStockColors.success.withOpacity(0.12),
+              color: AddStockColors.success.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -631,7 +633,7 @@ class _AddGoldStockSupplierPanelState extends State<AddGoldStockSupplierPanel>
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
-                color: AddStockColors.textMuted.withOpacity(0.6),
+                color: AddStockColors.textMuted.withValues(alpha: 0.6),
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -705,7 +707,7 @@ class _GoldSupplierLookupDropdown extends StatelessWidget {
           return ListTile(
             dense: true,
             leading: CircleAvatar(
-              backgroundColor: AddStockColors.brandGold.withOpacity(0.12),
+              backgroundColor: AddStockColors.brandGold.withValues(alpha: 0.12),
               child: Text(
                 supplier.avatarInitial,
                 style: const TextStyle(
@@ -746,7 +748,7 @@ class _ActionButton extends StatefulWidget {
     required this.title,
     required this.icon,
     required this.onTap,
-    this.isPrimary = false,
+    required this.isPrimary,
   });
 
   @override
@@ -774,18 +776,18 @@ class _ActionButtonState extends State<_ActionButton> {
           height: 44,
           decoration: BoxDecoration(
             color: _isHovered
-                ? background.withOpacity(widget.isPrimary ? 0.92 : 1)
+                ? background.withValues(alpha: widget.isPrimary ? 0.92 : 1)
                 : background,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: widget.isPrimary
                   ? AddStockColors.brandGold
-                  : AddStockColors.brandGold.withOpacity(0.25),
+                  : AddStockColors.brandGold.withValues(alpha: 0.25),
             ),
             boxShadow: _isHovered && widget.isPrimary
                 ? [
                     BoxShadow(
-                      color: AddStockColors.brandGold.withOpacity(0.24),
+                      color: AddStockColors.brandGold.withValues(alpha: 0.24),
                       blurRadius: 14,
                       offset: const Offset(0, 4),
                     ),
@@ -839,7 +841,7 @@ class _PrimaryActionChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: AddStockColors.brandGold.withOpacity(0.28),
+              color: AddStockColors.brandGold.withValues(alpha: 0.28),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),

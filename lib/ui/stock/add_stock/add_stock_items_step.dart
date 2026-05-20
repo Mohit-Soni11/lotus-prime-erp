@@ -77,7 +77,7 @@ class AddStockItemsStep extends StatelessWidget {
             decoration: BoxDecoration(
               color: ui.softSurface,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: ui.accent.withOpacity(0.18)),
+              border: Border.all(color: ui.accent.withValues(alpha: 0.18)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,7 +161,7 @@ class AddStockItemsStep extends StatelessWidget {
                   Switch(
                     value: ctrl.sameForAll,
                     onChanged: ctrl.setSameForAll,
-                    activeColor: ui.accent,
+                    activeThumbColor: ui.accent,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ],
@@ -186,13 +186,13 @@ class AddStockItemsStep extends StatelessWidget {
   Widget _buildSaveBar(StockMetalUiData ui) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AddStockColors.cardBg,
         boxShadow: [
           BoxShadow(
             color: AddStockColors.shadowMedium,
             blurRadius: 16,
-            offset: const Offset(0, -4),
+            offset: Offset(0, -4),
           ),
         ],
       ),
@@ -208,7 +208,7 @@ class AddStockItemsStep extends StatelessWidget {
                 color: AddStockColors.dangerBg,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AddStockColors.danger.withOpacity(0.2),
+                  color: AddStockColors.danger.withValues(alpha: 0.2),
                 ),
               ),
               child: Text(
@@ -229,9 +229,10 @@ class AddStockItemsStep extends StatelessWidget {
                     vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: ui.accent.withOpacity(0.08),
+                    color: ui.accent.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: ui.accent.withOpacity(0.16)),
+                    border:
+                        Border.all(color: ui.accent.withValues(alpha: 0.16)),
                   ),
                   child: Text(
                     ctrl.rowsWithErrorsCount == 0
@@ -249,7 +250,7 @@ class AddStockItemsStep extends StatelessWidget {
               OutlinedButton(
                 onPressed: ctrl.prevStep,
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: ui.accent.withOpacity(0.4)),
+                  side: BorderSide(color: ui.accent.withValues(alpha: 0.4)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -334,7 +335,7 @@ class AddStockItemsStep extends StatelessWidget {
       width: 132,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.85),
+        color: Colors.white.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AddStockColors.cardBorder),
       ),
@@ -367,9 +368,9 @@ class AddStockItemsStep extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.12),
+        color: accent.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: accent.withOpacity(0.18)),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
       ),
       child: Text(
         text,

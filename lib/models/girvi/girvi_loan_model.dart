@@ -11,9 +11,9 @@
 import 'package:flutter/material.dart';
 import 'girvi_enums.dart';
 
-// ════════════════════════════════════════════════════════════════════════════
-// GIRVI LOAN WITH CUSTOMER — JOIN MODEL
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// GIRVI LOAN WITH CUSTOMER â€” JOIN MODEL
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 class GirviLoanWithCustomer {
   final GirviLoanModel loan;
@@ -29,46 +29,46 @@ class GirviLoanWithCustomer {
   });
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// GIRVI LOAN MODEL — MAIN DOMAIN OBJECT
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// GIRVI LOAN MODEL â€” MAIN DOMAIN OBJECT
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 class GirviLoanModel {
-  final int         id;
-  final String      ticketNo;
-  final int         customerId;
-  final String      itemDescription;
-  final int         itemCount;
-  final String      metalType;
-  final String      metalPurity;
-  final double      grossWeight;
-  final double      stoneWeight;
-  final double      netWeight;
-  final double      ratePerGram;
-  final double      totalValue;
-  final double      ltvPercent;
-  final double      loanAmount;
-  final double      interestRate;
-  final int         durationMonths;
-  final String      disbursementMode;
-  final DateTime    startDate;
-  final DateTime?   maturityDate;
-  final DateTime?   releaseDate;
-  final DateTime?   lastInterestPaidDate;
-  final String?     idProofType;
-  final String?     idProofNumber;
-  final String?     idProofImagePath;
-  final String      status;
-  final String?     notes;
+  final int id;
+  final String ticketNo;
+  final int customerId;
+  final String itemDescription;
+  final int itemCount;
+  final String metalType;
+  final String metalPurity;
+  final double grossWeight;
+  final double stoneWeight;
+  final double netWeight;
+  final double ratePerGram;
+  final double totalValue;
+  final double ltvPercent;
+  final double loanAmount;
+  final double interestRate;
+  final int durationMonths;
+  final String disbursementMode;
+  final DateTime startDate;
+  final DateTime? maturityDate;
+  final DateTime? releaseDate;
+  final DateTime? lastInterestPaidDate;
+  final String? idProofType;
+  final String? idProofNumber;
+  final String? idProofImagePath;
+  final String status;
+  final String? notes;
 
   // Release data
-  final double?  releasePrincipal;
-  final double?  releaseInterest;
-  final double?  releasePenalty;
-  final double?  releaseTotalAmount;
-  final String?  releasePaymentMode;
-  final String?  releaseNotes;
-  final String?  releasedBy;
+  final double? releasePrincipal;
+  final double? releaseInterest;
+  final double? releasePenalty;
+  final double? releaseTotalAmount;
+  final String? releasePaymentMode;
+  final String? releaseNotes;
+  final String? releasedBy;
 
   final DateTime createdAt;
   final DateTime? updatedAt;
@@ -111,7 +111,7 @@ class GirviLoanModel {
     this.updatedAt,
   });
 
-  // ── COMPUTED PROPERTIES ────────────────────────────────────────────────────
+  // â”€â”€ COMPUTED PROPERTIES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   /// Days since loan started
   int get daysElapsed {
@@ -134,7 +134,7 @@ class GirviLoanModel {
     return days / 30.0;
   }
 
-  /// Accrued interest = loanAmount × (interestRate/100) × monthsElapsed
+  /// Accrued interest = loanAmount Ã— (interestRate/100) Ã— monthsElapsed
   double get accruedInterest =>
       loanAmount * (interestRate / 100) * monthsElapsed;
 
@@ -164,25 +164,30 @@ class GirviLoanModel {
   }
 
   GirviStatus get girviStatus => GirviStatus.fromDb(status);
-  MetalType   get metalTypeEnum => MetalType.fromDb(metalType);
+  MetalType get metalTypeEnum => MetalType.fromDb(metalType);
   MetalPurity get metalPurityEnum => MetalPurity.fromDb(metalPurity);
 
-  bool get isActive   => girviStatus.isActive;
-  bool get isClosed   => girviStatus.isClosed;
-  bool get isOverdue  => isPastMaturity && isActive;
+  bool get isActive => girviStatus.isActive;
+  bool get isClosed => girviStatus.isClosed;
+  bool get isOverdue => isPastMaturity && isActive;
 
   /// Color for status badge
   Color get statusColor {
     switch (girviStatus) {
-      case GirviStatus.active:        return isOverdue ? const Color(0xFFEF4444) : const Color(0xFF10B981);
-      case GirviStatus.overdue:       return const Color(0xFFEF4444);
-      case GirviStatus.released:      return const Color(0xFF3B82F6);
-      case GirviStatus.partialRelease:return const Color(0xFFF59E0B);
-      case GirviStatus.auctioned:     return const Color(0xFF6B7280);
+      case GirviStatus.active:
+        return isOverdue ? const Color(0xFFEF4444) : const Color(0xFF10B981);
+      case GirviStatus.overdue:
+        return const Color(0xFFEF4444);
+      case GirviStatus.released:
+        return const Color(0xFF3B82F6);
+      case GirviStatus.partialRelease:
+        return const Color(0xFFF59E0B);
+      case GirviStatus.auctioned:
+        return const Color(0xFF6B7280);
     }
   }
 
-  Color get statusBgColor => statusColor.withOpacity(0.12);
+  Color get statusBgColor => statusColor.withValues(alpha: 0.12);
 
   String get statusLabel {
     if (girviStatus.isActive && isOverdue) return 'Overdue';
@@ -191,26 +196,26 @@ class GirviLoanModel {
 
   /// Short description for list card subtitle
   String get itemSummary =>
-      '$itemCount item${itemCount > 1 ? 's' : ''} · ${metalTypeEnum.displayName} ${metalPurity} · ${netWeight.toStringAsFixed(2)}g';
+      '$itemCount item${itemCount > 1 ? 's' : ''} Â· ${metalTypeEnum.displayName} $metalPurity Â· ${netWeight.toStringAsFixed(2)}g';
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // GIRVI PAYMENT MODEL
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 class GirviPaymentModel {
-  final int      id;
-  final int      girviId;
+  final int id;
+  final int girviId;
   final DateTime paymentDate;
-  final double   amount;
-  final String   paymentType;
-  final String   paymentMode;
-  final int?     monthsCovered;
+  final double amount;
+  final String paymentType;
+  final String paymentMode;
+  final int? monthsCovered;
   final DateTime? interestFromDate;
   final DateTime? interestToDate;
-  final double   balanceAfter;
-  final String?  receiptNo;
-  final String?  notes;
+  final double balanceAfter;
+  final String? receiptNo;
+  final String? notes;
   final DateTime createdAt;
 
   const GirviPaymentModel({
@@ -233,15 +238,15 @@ class GirviPaymentModel {
   GirviPaymentMode get mode => GirviPaymentMode.fromDb(paymentMode);
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// GIRVI SUMMARY MODEL — for dashboard/overview
-// ════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// GIRVI SUMMARY MODEL â€” for dashboard/overview
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 class GirviSummaryModel {
-  final int    totalActive;
-  final int    totalOverdue;
-  final int    totalReleased;
-  final int    totalAuctioned;
+  final int totalActive;
+  final int totalOverdue;
+  final int totalReleased;
+  final int totalAuctioned;
   final double totalPrincipalActive;
   final double totalInterestDue;
   final double totalPortfolioValue;
@@ -259,15 +264,15 @@ class GirviSummaryModel {
   });
 
   factory GirviSummaryModel.empty() => const GirviSummaryModel(
-    totalActive: 0,
-    totalOverdue: 0,
-    totalReleased: 0,
-    totalAuctioned: 0,
-    totalPrincipalActive: 0,
-    totalInterestDue: 0,
-    totalPortfolioValue: 0,
-    totalCollectedThisMonth: 0,
-  );
+        totalActive: 0,
+        totalOverdue: 0,
+        totalReleased: 0,
+        totalAuctioned: 0,
+        totalPrincipalActive: 0,
+        totalInterestDue: 0,
+        totalPortfolioValue: 0,
+        totalCollectedThisMonth: 0,
+      );
 
   int get totalLoans => totalActive + totalReleased + totalAuctioned;
 }

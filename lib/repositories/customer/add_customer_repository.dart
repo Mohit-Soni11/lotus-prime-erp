@@ -25,69 +25,69 @@ class AddCustomerRepository {
           : '${f.firstName.trim()} ${f.lastName.trim()}'.trim();
 
       await _db.into(_db.customers).insert(
-        CustomersCompanion.insert(
-          // Legacy
-          name:   displayName.isEmpty ? f.mobile : displayName,
-          mobile: f.mobile.trim(),
-          city:   drift.Value(f.city.trim().isEmpty ? null : f.city.trim()),
-          type:   drift.Value(f.customerTier.label),
+            CustomersCompanion.insert(
+              // Legacy
+              name: displayName.isEmpty ? f.mobile : displayName,
+              mobile: f.mobile.trim(),
+              city: drift.Value(f.city.trim().isEmpty ? null : f.city.trim()),
+              type: drift.Value(f.customerTier.label),
 
-          // Entity
-          entityType:        drift.Value(f.entityType.label),
+              // Entity
+              entityType: drift.Value(f.entityType.label),
 
-          // Personal
-          firstName:         drift.Value(_n(f.firstName)),
-          lastName:          drift.Value(_n(f.lastName)),
-          companyName:       drift.Value(_n(f.companyName)),
-          contactPersonName: drift.Value(_n(f.contactPersonName)),
-          dateOfBirth:       drift.Value(f.dateOfBirth?.toIso8601String()),
-          gender:            drift.Value(f.gender?.label),
-          anniversaryDate:   drift.Value(f.anniversaryDate?.toIso8601String()),
+              // Personal
+              firstName: drift.Value(_n(f.firstName)),
+              lastName: drift.Value(_n(f.lastName)),
+              companyName: drift.Value(_n(f.companyName)),
+              contactPersonName: drift.Value(_n(f.contactPersonName)),
+              dateOfBirth: drift.Value(f.dateOfBirth?.toIso8601String()),
+              gender: drift.Value(f.gender?.label),
+              anniversaryDate:
+                  drift.Value(f.anniversaryDate?.toIso8601String()),
 
-          // Contact
-          whatsapp:          drift.Value(_n(f.whatsapp)),
-          email:             drift.Value(_n(f.email)),
-          alternateContact:  drift.Value(_n(f.alternateContact)),
+              // Contact
+              whatsapp: drift.Value(_n(f.whatsapp)),
+              email: drift.Value(_n(f.email)),
+              alternateContact: drift.Value(_n(f.alternateContact)),
 
-          // KYC
-          panNumber:         drift.Value(_n(f.panNumber)),
-          idProofType:       drift.Value(f.idProofType?.label),
-          idProofNumber:     drift.Value(_n(f.idProofNumber)),
-          idProofDocPath:    drift.Value(f.idProofDocPath),
-          gstNumber:         drift.Value(_n(f.gstNumber)),
+              // KYC
+              panNumber: drift.Value(_n(f.panNumber)),
+              idProofType: drift.Value(f.idProofType?.label),
+              idProofNumber: drift.Value(_n(f.idProofNumber)),
+              idProofDocPath: drift.Value(f.idProofDocPath),
+              gstNumber: drift.Value(_n(f.gstNumber)),
 
-          // Address
-          addressLine1:      drift.Value(_n(f.addressLine1)),
-          addressLine2:      drift.Value(_n(f.addressLine2)),
-          country:           drift.Value(f.country),
-          state:             drift.Value(_n(f.state)),
-          pincode:           drift.Value(_n(f.pincode)),
+              // Address
+              addressLine1: drift.Value(_n(f.addressLine1)),
+              addressLine2: drift.Value(_n(f.addressLine2)),
+              country: drift.Value(f.country),
+              state: drift.Value(_n(f.state)),
+              pincode: drift.Value(_n(f.pincode)),
 
-          // Billing
-          openingBalance:    drift.Value(f.openingBalance),
-          creditLimit:       drift.Value(f.creditLimit),
-          customerTier:      drift.Value(f.customerTier.label),
-          membershipId:      drift.Value(_n(f.membershipId)),
+              // Billing
+              openingBalance: drift.Value(f.openingBalance),
+              creditLimit: drift.Value(f.creditLimit),
+              customerTier: drift.Value(f.customerTier.label),
+              membershipId: drift.Value(_n(f.membershipId)),
 
-          // Preferences
-          ringSize:          drift.Value(f.ringSize?.label),
-          bangleSize:        drift.Value(f.bangleSize?.label),
-          familyDetailsJson: drift.Value(
-            f.familyMembers.isEmpty
-                ? null
-                : FamilyMember.encodeList(f.familyMembers),
-          ),
+              // Preferences
+              ringSize: drift.Value(f.ringSize?.label),
+              bangleSize: drift.Value(f.bangleSize?.label),
+              familyDetailsJson: drift.Value(
+                f.familyMembers.isEmpty
+                    ? null
+                    : FamilyMember.encodeList(f.familyMembers),
+              ),
 
-          // Additional
-          referralSource:    drift.Value(f.referralSource?.label),
-          notes:             drift.Value(_n(f.notes)),
-          profileImagePath:  drift.Value(f.profileImagePath),
-        ),
-      );
+              // Additional
+              referralSource: drift.Value(f.referralSource?.label),
+              notes: drift.Value(_n(f.notes)),
+              profileImagePath: drift.Value(f.profileImagePath),
+            ),
+          );
 
       debugPrint('✅ Customer saved: $displayName (${f.mobile})');
       return SaveResult.success;
-
     } on Exception catch (e) {
       final msg = e.toString().toLowerCase();
       if (msg.contains('unique') || msg.contains('constraint')) {
@@ -108,8 +108,9 @@ class AddCustomerRepository {
   Future<bool> _checkMobileExists(String mobile) async {
     try {
       final r = await (_db.select(_db.customers)
-        ..where((t) => t.mobile.equals(mobile))
-        ..limit(1)).getSingleOrNull();
+            ..where((t) => t.mobile.equals(mobile))
+            ..limit(1))
+          .getSingleOrNull();
       return r != null;
     } catch (_) {
       return false;

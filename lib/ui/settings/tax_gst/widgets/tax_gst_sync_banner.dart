@@ -19,7 +19,7 @@ class TaxGstSyncBanner extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: TaxGstColors.accentPrimary.withOpacity(0.15),
+              color: TaxGstColors.accentPrimary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(7),
             ),
             child: const Icon(
@@ -44,7 +44,8 @@ class TaxGstSyncBanner extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
-                        color: TaxGstColors.accentPrimary.withOpacity(0.12),
+                        color:
+                            TaxGstColors.accentPrimary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../constants/app_routes.dart';
-// ✅ Manager Import
+// âœ… Manager Import
 import '../../../theme/sidebar/sidebar_theme.dart';
 
 class CustomSidebar extends StatefulWidget {
@@ -18,38 +18,37 @@ class CustomSidebar extends StatefulWidget {
 }
 
 class _CustomSidebarState extends State<CustomSidebar> {
-  final Map<String, ExpansionTileController> _controllers = {};
-  int? _expandedIndex; 
-  bool _isCollapsed = false; 
-  int? _hoveredIndex; 
-  String? _hoveredSubItemRouteId; 
+  final Map<String, ExpansibleController> _controllers = {};
+  int? _expandedIndex;
+  bool _isCollapsed = false;
+  int? _hoveredIndex;
+  String? _hoveredSubItemRouteId;
 
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      // ✅ FIX 1: Faster Animation (250ms -> 150ms)
+      // âœ… FIX 1: Faster Animation (250ms -> 150ms)
       duration: const Duration(milliseconds: 150),
-      curve: Curves.easeOut, 
-      width: _isCollapsed ? 70 : 260, 
+      curve: Curves.easeOut,
+      width: _isCollapsed ? 70 : 260,
       decoration: const BoxDecoration(
         color: SidebarColors.background,
-        border: Border(right: BorderSide(color: SidebarColors.glassBorder, width: 1)),
+        border: Border(
+            right: BorderSide(color: SidebarColors.glassBorder, width: 1)),
       ),
-      child: ClipRect( // Prevents content from bleeding during animation
+      child: ClipRect(
+        // Prevents content from bleeding during animation
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(),
             const SizedBox(height: 10),
-            
             Expanded(
               child: ListView.builder(
-                // ✅ FIX 2: Overflow Error Fixed
+                // âœ… FIX 2: Overflow Error Fixed
                 // Jab chhota ho, toh padding kam kar do (12 -> 8)
                 padding: EdgeInsets.symmetric(
-                  horizontal: _isCollapsed ? 8 : 12, 
-                  vertical: 10
-                ),
+                    horizontal: _isCollapsed ? 8 : 12, vertical: 10),
                 itemCount: SidebarMenu.menuItems.length + 1,
                 itemBuilder: (context, index) {
                   // Dashboard Item
@@ -57,21 +56,20 @@ class _CustomSidebarState extends State<CustomSidebar> {
                     return _buildSingleTile(
                       title: AppRoutes.getTitle(AppRoutes.dashboardRoute),
                       icon: SidebarIcons.dashboard,
-                      routeId: AppRoutes.dashboardRoute, 
-                      index: -1, 
+                      routeId: AppRoutes.dashboardRoute,
+                      index: -1,
                     );
                   }
-                  
+
                   final menuIndex = index - 1;
                   final item = SidebarMenu.menuItems[menuIndex];
-                  return _isCollapsed 
-                    ? _buildCollapsedIcon(item, menuIndex) 
-                    : _buildExpandableTile(item, menuIndex);
+                  return _isCollapsed
+                      ? _buildCollapsedIcon(item, menuIndex)
+                      : _buildExpandableTile(item, menuIndex);
                 },
               ),
             ),
-            
-            _buildFooter(), 
+            _buildFooter(),
           ],
         ),
       ),
@@ -86,28 +84,30 @@ class _CustomSidebarState extends State<CustomSidebar> {
         border: Border(bottom: BorderSide(color: SidebarColors.glassBorder)),
       ),
       child: Row(
-        mainAxisAlignment: _isCollapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
+        mainAxisAlignment:
+            _isCollapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
         children: [
           if (!_isCollapsed) ...[
-             const SizedBox(width: 16),
-             const Expanded(
-               child: Text(
-                 "LOTUS ERP",
-                 style: SidebarStyles.hero,
-                 overflow: TextOverflow.ellipsis,
-                 maxLines: 1,
-               ),
-             ),
+            const SizedBox(width: 16),
+            const Expanded(
+              child: Text(
+                "LOTUS ERP",
+                style: SidebarStyles.hero,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
           ],
           IconButton(
             icon: Icon(
-              _isCollapsed ? SidebarIcons.expand : SidebarIcons.collapse, 
-              color: _isCollapsed ? SidebarColors.primary : SidebarColors.textSecondary
-            ),
+                _isCollapsed ? SidebarIcons.expand : SidebarIcons.collapse,
+                color: _isCollapsed
+                    ? SidebarColors.primary
+                    : SidebarColors.textSecondary),
             onPressed: () {
               setState(() {
                 _isCollapsed = !_isCollapsed;
-                if(_isCollapsed) _closeAllExpandables();
+                if (_isCollapsed) _closeAllExpandables();
               });
             },
           ),
@@ -118,12 +118,11 @@ class _CustomSidebarState extends State<CustomSidebar> {
   }
 
   // --- SINGLE TILE ---
-  Widget _buildSingleTile({
-    required String title, 
-    required IconData icon, 
-    required String routeId,
-    required int index
-  }) {
+  Widget _buildSingleTile(
+      {required String title,
+      required IconData icon,
+      required String routeId,
+      required int index}) {
     bool isActive = widget.activePageRouteId == routeId;
     bool isHovered = _hoveredIndex == index;
 
@@ -132,21 +131,26 @@ class _CustomSidebarState extends State<CustomSidebar> {
       margin: EdgeInsets.only(bottom: (index >= 99) ? 2 : 6),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
-        color: isActive 
-            ? SidebarColors.primary.withOpacity(0.15) 
-            : (isHovered ? SidebarColors.textPrimary.withOpacity(0.05) : Colors.transparent),
+        color: isActive
+            ? SidebarColors.primary.withValues(alpha: 0.15)
+            : (isHovered
+                ? SidebarColors.textPrimary.withValues(alpha: 0.05)
+                : Colors.transparent),
         borderRadius: BorderRadius.circular(8),
-        border: (!_isCollapsed && isActive) ? const Border(
-          left: BorderSide(color: SidebarColors.primary, width: 4)
-        ) : null,
+        border: (!_isCollapsed && isActive)
+            ? const Border(
+                left: BorderSide(color: SidebarColors.primary, width: 4))
+            : null,
       ),
       child: Row(
-        mainAxisAlignment: _isCollapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
+        mainAxisAlignment:
+            _isCollapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
         children: [
           Icon(
-            icon, 
-            color: isActive ? SidebarColors.primary : SidebarColors.textSecondary, 
-            size: 22, 
+            icon,
+            color:
+                isActive ? SidebarColors.primary : SidebarColors.textSecondary,
+            size: 22,
           ),
           if (!_isCollapsed) ...[
             const SizedBox(width: 14),
@@ -164,11 +168,11 @@ class _CustomSidebarState extends State<CustomSidebar> {
 
     if (_isCollapsed) {
       tileContent = Tooltip(
-        message: title,
-        textStyle: SidebarStyles.tooltip,
-        decoration: BoxDecoration(color: Colors.grey[900], borderRadius: BorderRadius.circular(4)),
-        child: tileContent
-      );
+          message: title,
+          textStyle: SidebarStyles.tooltip,
+          decoration: BoxDecoration(
+              color: Colors.grey[900], borderRadius: BorderRadius.circular(4)),
+          child: tileContent);
     }
 
     return MouseRegion(
@@ -187,8 +191,9 @@ class _CustomSidebarState extends State<CustomSidebar> {
 
   // --- COLLAPSED ICON ---
   Widget _buildCollapsedIcon(SidebarItem item, int index) {
-    bool isParentActive = item.subItems.any((sub) => sub.routeId == widget.activePageRouteId);
-    bool isHovered = _hoveredIndex == index; 
+    bool isParentActive =
+        item.subItems.any((sub) => sub.routeId == widget.activePageRouteId);
+    bool isHovered = _hoveredIndex == index;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredIndex = index),
@@ -199,38 +204,43 @@ class _CustomSidebarState extends State<CustomSidebar> {
         child: Tooltip(
           message: item.title,
           textStyle: SidebarStyles.tooltip,
-          decoration: BoxDecoration(color: Colors.grey[900], borderRadius: BorderRadius.circular(4)),
+          decoration: BoxDecoration(
+              color: Colors.grey[900], borderRadius: BorderRadius.circular(4)),
           child: InkWell(
             onTap: () {
               setState(() {
                 _isCollapsed = false;
                 _expandedIndex = index;
               });
-              // ✅ FIX 3: Reduced Delay drastically (250ms -> 50ms)
+              // âœ… FIX 3: Reduced Delay drastically (250ms -> 50ms)
               // Ab ye "lag" nahi karega, almost instant open hoga.
               Future.delayed(const Duration(milliseconds: 50), () {
-                 final String itemKey = item.title;
-                 _controllers[itemKey]?.expand();
-                 for (var key in _controllers.keys) {
-                   if (key != itemKey) _controllers[key]?.collapse();
-                 }
+                final String itemKey = item.title;
+                _controllers[itemKey]?.expand();
+                for (var key in _controllers.keys) {
+                  if (key != itemKey) _controllers[key]?.collapse();
+                }
               });
             },
             borderRadius: BorderRadius.circular(8),
             child: Container(
-              padding: const EdgeInsets.all(10), // Reduced padding slightly to prevent overflow
+              padding: const EdgeInsets.all(
+                  10), // Reduced padding slightly to prevent overflow
               decoration: BoxDecoration(
-                 color: (isParentActive || isHovered) 
-                     ? SidebarColors.primary.withOpacity(0.15)
-                     : Colors.transparent,
-                 borderRadius: BorderRadius.circular(8),
-                 border: isParentActive ? const Border(left: BorderSide(color: SidebarColors.primary, width: 3)) : null
-              ),
-              child: Icon(
-                item.icon, 
-                color: (isParentActive || isHovered) ? SidebarColors.primary : SidebarColors.textSecondary, 
-                size: 24
-              ),
+                  color: (isParentActive || isHovered)
+                      ? SidebarColors.primary.withValues(alpha: 0.15)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  border: isParentActive
+                      ? const Border(
+                          left: BorderSide(
+                              color: SidebarColors.primary, width: 3))
+                      : null),
+              child: Icon(item.icon,
+                  color: (isParentActive || isHovered)
+                      ? SidebarColors.primary
+                      : SidebarColors.textSecondary,
+                  size: 24),
             ),
           ),
         ),
@@ -240,10 +250,11 @@ class _CustomSidebarState extends State<CustomSidebar> {
 
   // --- EXPANDABLE TILE ---
   Widget _buildExpandableTile(SidebarItem item, int index) {
-    bool isParentActive = item.subItems.any((sub) => sub.routeId == widget.activePageRouteId);
+    bool isParentActive =
+        item.subItems.any((sub) => sub.routeId == widget.activePageRouteId);
     final String itemKey = item.title;
 
-    _controllers.putIfAbsent(itemKey, () => ExpansionTileController());
+    _controllers.putIfAbsent(itemKey, () => ExpansibleController());
 
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -252,7 +263,7 @@ class _CustomSidebarState extends State<CustomSidebar> {
         key: PageStorageKey(itemKey),
         initiallyExpanded: isParentActive,
         onExpansionChanged: (isOpen) {
-          // ✅ FIX: setState during build error — addPostFrameCallback use karo
+          // âœ… FIX: setState during build error â€” addPostFrameCallback use karo
           // ExpansionTile initiallyExpanded=true hone par initState mein
           // expand hota hai jo build ke dauran setState trigger karta hai.
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -268,14 +279,16 @@ class _CustomSidebarState extends State<CustomSidebar> {
           });
         },
         tilePadding: const EdgeInsets.symmetric(horizontal: 8),
-        leading: Icon(
-          item.icon, 
-          size: 20, 
-          color: (_expandedIndex == index || isParentActive) ? SidebarColors.primary : SidebarColors.textSecondary
-        ),
+        leading: Icon(item.icon,
+            size: 20,
+            color: (_expandedIndex == index || isParentActive)
+                ? SidebarColors.primary
+                : SidebarColors.textSecondary),
         title: Text(
           item.title,
-          style: (_expandedIndex == index || isParentActive) ? SidebarStyles.action : SidebarStyles.body,
+          style: (_expandedIndex == index || isParentActive)
+              ? SidebarStyles.action
+              : SidebarStyles.body,
         ),
         iconColor: SidebarColors.primary,
         collapsedIconColor: SidebarColors.textSecondary,
@@ -303,25 +316,30 @@ class _CustomSidebarState extends State<CustomSidebar> {
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(6),
-            color: isActive 
-                ? SidebarColors.primary.withOpacity(0.1) 
-                : (isHovered ? SidebarColors.textPrimary.withOpacity(0.03) : Colors.transparent),
+            color: isActive
+                ? SidebarColors.primary.withValues(alpha: 0.1)
+                : (isHovered
+                    ? SidebarColors.textPrimary.withValues(alpha: 0.03)
+                    : Colors.transparent),
           ),
           child: Row(
             children: [
               Container(
-                width: 6, height: 6,
+                width: 6,
+                height: 6,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isActive ? SidebarColors.primary : SidebarColors.textSecondary.withOpacity(0.5),
+                  color: isActive
+                      ? SidebarColors.primary
+                      : SidebarColors.textSecondary.withValues(alpha: 0.5),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   data.displayTitle,
-                  style: isActive 
-                      ? SidebarStyles.action.copyWith(fontSize: 13) 
+                  style: isActive
+                      ? SidebarStyles.action.copyWith(fontSize: 13)
                       : SidebarStyles.body.copyWith(fontSize: 13),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
@@ -345,29 +363,24 @@ class _CustomSidebarState extends State<CustomSidebar> {
   Widget _buildFooter() {
     return Padding(
       padding: EdgeInsets.symmetric(
-        // ✅ FIX 2: Dynamic Padding for Footer too
-        horizontal: _isCollapsed ? 8 : 12, 
-        vertical: 10
-      ),
+          // âœ… FIX 2: Dynamic Padding for Footer too
+          horizontal: _isCollapsed ? 8 : 12,
+          vertical: 10),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, 
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Divider(color: SidebarColors.glassBorder, height: 1),
           const SizedBox(height: 10),
-          
           _buildSingleTile(
-            title: AppRoutes.getTitle(AppRoutes.settingsRoute), 
-            icon: SidebarIcons.settings, 
-            routeId: AppRoutes.settingsRoute, 
-            index: 99
-          ),
-          
+              title: AppRoutes.getTitle(AppRoutes.settingsRoute),
+              icon: SidebarIcons.settings,
+              routeId: AppRoutes.settingsRoute,
+              index: 99),
           _buildSingleTile(
-            title: AppRoutes.getTitle(AppRoutes.exitAppRoute), 
-            icon: SidebarIcons.logout, 
-            routeId: AppRoutes.exitAppRoute, 
-            index: 100
-          ),
+              title: AppRoutes.getTitle(AppRoutes.exitAppRoute),
+              icon: SidebarIcons.logout,
+              routeId: AppRoutes.exitAppRoute,
+              index: 100),
         ],
       ),
     );

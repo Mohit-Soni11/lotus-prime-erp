@@ -12,9 +12,9 @@
 
 enum DefaulterRiskLevel {
   critical, // > 90 days overdue
-  high,     // 60–90 days
-  medium,   // 30–60 days
-  low,      // < 30 days (newly flagged)
+  high, // 60–90 days
+  medium, // 30–60 days
+  low, // < 30 days (newly flagged)
 }
 
 enum DefaulterType {
@@ -46,13 +46,13 @@ class DefaulterModel {
   final String customerName;
   final String mobile;
   final String city;
-  final String customerType;    // 'Regular' | 'VIP'
+  final String customerType; // 'Regular' | 'VIP'
   final DefaulterType defaulterType;
-  final String referenceNo;     // e.g. "LN-205" or "INV-26-1012"
+  final String referenceNo; // e.g. "LN-205" or "INV-26-1012"
   final double principalAmount;
-  final double interestRate;    // % per month
+  final double interestRate; // % per month
   final double interestAccrued; // Calculated: P × R × months
-  final double totalDue;        // principal + interest
+  final double totalDue; // principal + interest
   final DateTime startDate;
   final int daysOverdue;
   final DefaulterRiskLevel riskLevel;
@@ -116,20 +116,20 @@ class DefaulterModel {
     DefaulterRiskLevel? riskLevel,
   }) {
     return DefaulterModel(
-      customerId:      customerId      ?? this.customerId,
-      customerName:    customerName    ?? this.customerName,
-      mobile:          mobile          ?? this.mobile,
-      city:            city            ?? this.city,
-      customerType:    customerType    ?? this.customerType,
-      defaulterType:   defaulterType   ?? this.defaulterType,
-      referenceNo:     referenceNo     ?? this.referenceNo,
+      customerId: customerId ?? this.customerId,
+      customerName: customerName ?? this.customerName,
+      mobile: mobile ?? this.mobile,
+      city: city ?? this.city,
+      customerType: customerType ?? this.customerType,
+      defaulterType: defaulterType ?? this.defaulterType,
+      referenceNo: referenceNo ?? this.referenceNo,
       principalAmount: principalAmount ?? this.principalAmount,
-      interestRate:    interestRate    ?? this.interestRate,
+      interestRate: interestRate ?? this.interestRate,
       interestAccrued: interestAccrued ?? this.interestAccrued,
-      totalDue:        totalDue        ?? this.totalDue,
-      startDate:       startDate       ?? this.startDate,
-      daysOverdue:     daysOverdue     ?? this.daysOverdue,
-      riskLevel:       riskLevel       ?? this.riskLevel,
+      totalDue: totalDue ?? this.totalDue,
+      startDate: startDate ?? this.startDate,
+      daysOverdue: daysOverdue ?? this.daysOverdue,
+      riskLevel: riskLevel ?? this.riskLevel,
     );
   }
 
@@ -182,11 +182,14 @@ class DefaulterStatsModel {
 
     return DefaulterStatsModel(
       totalDefaulters: list.length,
-      totalAmountDue:  list.fold(0.0, (sum, d) => sum + d.totalDue),
-      criticalCount:   list.where((d) => d.riskLevel == DefaulterRiskLevel.critical).length,
-      highCount:       list.where((d) => d.riskLevel == DefaulterRiskLevel.high).length,
-      mediumCount:     list.where((d) => d.riskLevel == DefaulterRiskLevel.medium).length,
-      lowCount:        list.where((d) => d.riskLevel == DefaulterRiskLevel.low).length,
+      totalAmountDue: list.fold(0.0, (sum, d) => sum + d.totalDue),
+      criticalCount:
+          list.where((d) => d.riskLevel == DefaulterRiskLevel.critical).length,
+      highCount:
+          list.where((d) => d.riskLevel == DefaulterRiskLevel.high).length,
+      mediumCount:
+          list.where((d) => d.riskLevel == DefaulterRiskLevel.medium).length,
+      lowCount: list.where((d) => d.riskLevel == DefaulterRiskLevel.low).length,
       lastRefreshedAt: time,
     );
   }
@@ -219,36 +222,36 @@ class DefaulterScreenState {
 
   factory DefaulterScreenState.initial() {
     return DefaulterScreenState(
-      allDefaulters:       [],
+      allDefaulters: [],
       displayedDefaulters: [],
-      stats:               DefaulterStatsModel.empty(),
-      activeFilter:        DefaulterFilterBy.all,
-      activeSort:          DefaulterSortBy.daysOverdue,
-      searchQuery:         '',
-      isLoading:           true,
-      errorMessage:        null,
+      stats: DefaulterStatsModel.empty(),
+      activeFilter: DefaulterFilterBy.all,
+      activeSort: DefaulterSortBy.daysOverdue,
+      searchQuery: '',
+      isLoading: true,
+      errorMessage: null,
     );
   }
 
   DefaulterScreenState copyWith({
     List<DefaulterModel>? allDefaulters,
     List<DefaulterModel>? displayedDefaulters,
-    DefaulterStatsModel?  stats,
-    DefaulterFilterBy?    activeFilter,
-    DefaulterSortBy?      activeSort,
-    String?               searchQuery,
-    bool?                 isLoading,
-    String?               errorMessage,
+    DefaulterStatsModel? stats,
+    DefaulterFilterBy? activeFilter,
+    DefaulterSortBy? activeSort,
+    String? searchQuery,
+    bool? isLoading,
+    String? errorMessage,
   }) {
     return DefaulterScreenState(
-      allDefaulters:       allDefaulters       ?? this.allDefaulters,
+      allDefaulters: allDefaulters ?? this.allDefaulters,
       displayedDefaulters: displayedDefaulters ?? this.displayedDefaulters,
-      stats:               stats               ?? this.stats,
-      activeFilter:        activeFilter         ?? this.activeFilter,
-      activeSort:          activeSort           ?? this.activeSort,
-      searchQuery:         searchQuery          ?? this.searchQuery,
-      isLoading:           isLoading            ?? this.isLoading,
-      errorMessage:        errorMessage,
+      stats: stats ?? this.stats,
+      activeFilter: activeFilter ?? this.activeFilter,
+      activeSort: activeSort ?? this.activeSort,
+      searchQuery: searchQuery ?? this.searchQuery,
+      isLoading: isLoading ?? this.isLoading,
+      errorMessage: errorMessage,
     );
   }
 }

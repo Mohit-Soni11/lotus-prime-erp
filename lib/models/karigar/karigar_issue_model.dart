@@ -16,22 +16,22 @@ import 'karigar_enums/karigar_enums.dart';
 // =============================================================================
 
 class KarigarIssueWithKarigar {
-  final int      id;
-  final String   issueNumber;
-  final int      karigarId;
-  final String   karigarName;
-  final String   karigarPhone;
+  final int id;
+  final String issueNumber;
+  final int karigarId;
+  final String karigarName;
+  final String karigarPhone;
   final DateTime issueDate;
-  final String   itemDescription;
-  final String   itemCategory;
-  final int      quantity;
-  final String   metalType;
-  final String?  purity;
-  final double   grossWeightIssued;
-  final double   netWeightIssued;
+  final String itemDescription;
+  final String itemCategory;
+  final int quantity;
+  final String metalType;
+  final String? purity;
+  final double grossWeightIssued;
+  final double netWeightIssued;
   final DateTime? expectedDelivery;
-  final String   status;
-  final String?  notes;
+  final String status;
+  final String? notes;
   final DateTime createdAt;
 
   const KarigarIssueWithKarigar({
@@ -88,7 +88,9 @@ class KarigarIssueWithKarigar {
     if (parts.length >= 2) {
       return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
     }
-    return karigarName.substring(0, karigarName.length >= 2 ? 2 : 1).toUpperCase();
+    return karigarName
+        .substring(0, karigarName.length >= 2 ? 2 : 1)
+        .toUpperCase();
   }
 }
 
@@ -97,25 +99,25 @@ class KarigarIssueWithKarigar {
 // =============================================================================
 
 class KarigarReceiptWithDetails {
-  final int      id;
-  final String   receiptNumber;
-  final int      issueId;
-  final String   issueNumber;
-  final int      karigarId;
-  final String   karigarName;
+  final int id;
+  final String receiptNumber;
+  final int issueId;
+  final String issueNumber;
+  final int karigarId;
+  final String karigarName;
   final DateTime receiptDate;
-  final int      quantityReceived;
-  final double   grossWeightReceived;
-  final double   stoneWeight;
-  final double   netWeightReceived;
-  final double   wastageWeight;
-  final double   wastagePercent;
-  final String   makingChargesType;
-  final double   makingChargeRate;
-  final double   makingChargesAmount;
-  final String   paymentStatus;
-  final double   paidAmount;
-  final String?  notes;
+  final int quantityReceived;
+  final double grossWeightReceived;
+  final double stoneWeight;
+  final double netWeightReceived;
+  final double wastageWeight;
+  final double wastagePercent;
+  final String makingChargesType;
+  final double makingChargeRate;
+  final double makingChargesAmount;
+  final String paymentStatus;
+  final double paidAmount;
+  final String? notes;
   final DateTime createdAt;
 
   const KarigarReceiptWithDetails({
@@ -154,9 +156,9 @@ class KarigarReceiptWithDetails {
 // =============================================================================
 
 class KarigarTxnEntry {
-  final KarigarTxnType         type;
-  final DateTime               date;
-  final KarigarIssueWithKarigar?   issue;
+  final KarigarTxnType type;
+  final DateTime date;
+  final KarigarIssueWithKarigar? issue;
   final KarigarReceiptWithDetails? receipt;
 
   const KarigarTxnEntry._({
@@ -168,20 +170,20 @@ class KarigarTxnEntry {
 
   factory KarigarTxnEntry.fromIssue(KarigarIssueWithKarigar i) =>
       KarigarTxnEntry._(
-        type:    KarigarTxnType.issue,
-        date:    i.issueDate,
-        issue:   i,
+        type: KarigarTxnType.issue,
+        date: i.issueDate,
+        issue: i,
         receipt: null,
       );
 
   factory KarigarTxnEntry.fromReceipt(KarigarReceiptWithDetails r) =>
       KarigarTxnEntry._(
-        type:    KarigarTxnType.receipt,
-        date:    r.receiptDate,
-        issue:   null,
+        type: KarigarTxnType.receipt,
+        date: r.receiptDate,
+        issue: null,
         receipt: r,
       );
 
-  bool get isIssue   => type == KarigarTxnType.issue;
+  bool get isIssue => type == KarigarTxnType.issue;
   bool get isReceipt => type == KarigarTxnType.receipt;
 }

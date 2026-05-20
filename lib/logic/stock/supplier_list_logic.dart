@@ -25,23 +25,23 @@ class SupplierListLogic extends ChangeNotifier {
 
   // ── STATE ──────────────────────────────────────────────────────────────
 
-  List<SupplierListItemModel> _allSuppliers  = [];
-  List<SupplierListItemModel> _displayed     = [];
-  SupplierListState           _state         = SupplierListState.loading;
-  SupplierStats               _stats         = SupplierStats.loading;
-  SupplierFilter              _activeFilter  = SupplierFilter.all;
-  String                      _searchQuery   = '';
-  bool                        _isSearching   = false;
-  String?                     _errorMessage;
+  List<SupplierListItemModel> _allSuppliers = [];
+  List<SupplierListItemModel> _displayed = [];
+  SupplierListState _state = SupplierListState.loading;
+  SupplierStats _stats = SupplierStats.loading;
+  SupplierFilter _activeFilter = SupplierFilter.all;
+  String _searchQuery = '';
+  bool _isSearching = false;
+  String? _errorMessage;
 
   // ── GETTERS ────────────────────────────────────────────────────────────
 
-  List<SupplierListItemModel> get suppliers     => _displayed;
-  SupplierListState           get state         => _state;
-  SupplierStats               get stats         => _stats;
-  SupplierFilter              get activeFilter  => _activeFilter;
-  bool                        get isSearching   => _isSearching;
-  String?                     get errorMessage  => _errorMessage;
+  List<SupplierListItemModel> get suppliers => _displayed;
+  SupplierListState get state => _state;
+  SupplierStats get stats => _stats;
+  SupplierFilter get activeFilter => _activeFilter;
+  bool get isSearching => _isSearching;
+  String? get errorMessage => _errorMessage;
 
   // ── INIT ───────────────────────────────────────────────────────────────
 
@@ -56,7 +56,7 @@ class SupplierListLogic extends ChangeNotifier {
       _allSuppliers = await _repo.getAllSuppliers();
       _applyFilterAndSearch();
     } catch (e) {
-      _state        = SupplierListState.error;
+      _state = SupplierListState.error;
       _errorMessage = 'Failed to load suppliers. Please try again.';
       debugPrint('SupplierListLogic._loadSuppliers: $e');
       notifyListeners();
@@ -108,24 +108,26 @@ class SupplierListLogic extends ChangeNotifier {
 
     // 1. Type filter
     if (_activeFilter != SupplierFilter.all) {
-      result = result.where((s) =>
-          s.supplierType.label == _activeFilter.label).toList();
+      result = result
+          .where((s) => s.supplierType.label == _activeFilter.label)
+          .toList();
     }
 
     // 2. Search
     if (_searchQuery.trim().isNotEmpty) {
       final q = _searchQuery.trim().toLowerCase();
-      result = result.where((s) =>
-          s.businessName.toLowerCase().contains(q) ||
-          s.mobile.contains(q) ||
-          (s.contactPersonName?.toLowerCase().contains(q) ?? false) ||
-          (s.gstNumber?.toLowerCase().contains(q) ?? false)).toList();
+      result = result
+          .where((s) =>
+              s.businessName.toLowerCase().contains(q) ||
+              s.mobile.contains(q) ||
+              (s.contactPersonName?.toLowerCase().contains(q) ?? false) ||
+              (s.gstNumber?.toLowerCase().contains(q) ?? false))
+          .toList();
     }
 
     _displayed = result;
-    _state = _displayed.isEmpty
-        ? SupplierListState.empty
-        : SupplierListState.loaded;
+    _state =
+        _displayed.isEmpty ? SupplierListState.empty : SupplierListState.loaded;
   }
 
   // ── DEACTIVATE ─────────────────────────────────────────────────────────

@@ -2,11 +2,11 @@
 // FILE        : expense_app_bar.dart
 // MODULE      : Expense Entry
 // LAYER       : UI
-// DESCRIPTION : Dark-shell AppBar — matches Cash Book & Purchase Entry pattern.
-//               ✅ Radar-blink live indicator
-//               ✅ Gold hover back button
-//               ✅ Shop name from session
-//               ✅ Sort dropdown + Add Expense CTA button
+// DESCRIPTION : Dark-shell AppBar â€” matches Cash Book & Purchase Entry pattern.
+//               âœ… Radar-blink live indicator
+//               âœ… Gold hover back button
+//               âœ… Shop name from session
+//               âœ… Sort dropdown + Add Expense CTA button
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -17,9 +17,9 @@ import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
 import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
 
 class ExpenseAppBar extends StatefulWidget implements PreferredSizeWidget {
-  final VoidCallback        onBack;
-  final ExpenseController   ctrl;
-  final VoidCallback        onAddExpense;
+  final VoidCallback onBack;
+  final ExpenseController ctrl;
+  final VoidCallback onAddExpense;
 
   const ExpenseAppBar({
     super.key,
@@ -37,10 +37,9 @@ class ExpenseAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _ExpenseAppBarState extends State<ExpenseAppBar>
     with SingleTickerProviderStateMixin {
-
   String _shopName = '';
   late AnimationController _blinkCtrl;
-  late Animation<double>   _blinkAnim;
+  late Animation<double> _blinkAnim;
 
   @override
   void initState() {
@@ -48,7 +47,7 @@ class _ExpenseAppBarState extends State<ExpenseAppBar>
     _fetchShopName();
 
     _blinkCtrl = AnimationController(
-      vsync:    this,
+      vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
 
@@ -60,7 +59,7 @@ class _ExpenseAppBarState extends State<ExpenseAppBar>
   Future<void> _fetchShopName() async {
     try {
       final tenantId = await ShopSessionManager.getPermanentTenantId();
-      final data     = await ShopSetupRepository().fetchExistingSetup(tenantId);
+      final data = await ShopSetupRepository().fetchExistingSetup(tenantId);
       if (data != null && data['basic_info'] != null && mounted) {
         setState(() {
           _shopName = data['basic_info']['display_name']?.toString() ?? '';
@@ -78,8 +77,8 @@ class _ExpenseAppBarState extends State<ExpenseAppBar>
   @override
   Widget build(BuildContext context) {
     return Container(
-      width:   double.infinity,
-      height:  70.0,
+      width: double.infinity,
+      height: 70.0,
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       decoration: const BoxDecoration(
         color: ExpenseColors.shellPanel,
@@ -93,36 +92,35 @@ class _ExpenseAppBarState extends State<ExpenseAppBar>
           listenable: widget.ctrl,
           builder: (_, __) => Row(
             children: [
-
-              // ── Back Button ───────────────────────────────────────────────
+              // â”€â”€ Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               _HoverBackButton(onTap: widget.onBack),
               const SizedBox(width: 16),
 
-              // ── Divider ───────────────────────────────────────────────────
+              // â”€â”€ Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               _vertDivider(),
               const SizedBox(width: 16),
 
-              // ── Module Icon ───────────────────────────────────────────────
+              // â”€â”€ Module Icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Container(
-                width:  36,
+                width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color:        ExpenseColors.moduleAccentLight,
+                  color: ExpenseColors.moduleAccentLight,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                      color: ExpenseColors.moduleAccent.withOpacity(0.3)),
+                      color: ExpenseColors.moduleAccent.withValues(alpha: 0.3)),
                 ),
                 child: const Icon(
                   ExpenseIcons.moduleIcon,
                   color: ExpenseColors.moduleAccent,
-                  size:  18,
+                  size: 18,
                 ),
               ),
               const SizedBox(width: 12),
 
-              // ── Title + Shop Name ─────────────────────────────────────────
+              // â”€â”€ Title + Shop Name â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Column(
-                mainAxisAlignment:  MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(ExpenseStrings.moduleTitle,
@@ -134,26 +132,28 @@ class _ExpenseAppBarState extends State<ExpenseAppBar>
 
               const Spacer(),
 
-              // ── Live Indicator ────────────────────────────────────────────
+              // â”€â”€ Live Indicator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               AnimatedBuilder(
                 animation: _blinkAnim,
                 builder: (_, __) => Opacity(
                   opacity: _blinkAnim.value,
                   child: Row(children: [
                     Container(
-                      width: 7, height: 7,
+                      width: 7,
+                      height: 7,
                       decoration: const BoxDecoration(
                         color: ExpenseColors.moduleAccent,
                         shape: BoxShape.circle,
                       ),
                     ),
                     const SizedBox(width: 6),
-                    Text('LIVE', style: TextStyle(
-                      fontSize:      10,
-                      fontWeight:    FontWeight.w800,
-                      color:         ExpenseColors.moduleAccent,
-                      letterSpacing: 1.2,
-                    )),
+                    const Text('LIVE',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: ExpenseColors.moduleAccent,
+                          letterSpacing: 1.2,
+                        )),
                   ]),
                 ),
               ),
@@ -162,30 +162,30 @@ class _ExpenseAppBarState extends State<ExpenseAppBar>
               _vertDivider(),
               const SizedBox(width: 16),
 
-              // ── Sort Dropdown ─────────────────────────────────────────────
+              // â”€â”€ Sort Dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               _SortDropdown(ctrl: widget.ctrl),
 
               const SizedBox(width: 12),
 
-              // ── Add Expense Button ────────────────────────────────────────
+              // â”€â”€ Add Expense Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               GestureDetector(
                 onTap: widget.onAddExpense,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 9),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
                   decoration: BoxDecoration(
-                    color:        ExpenseColors.moduleAccent,
+                    color: ExpenseColors.moduleAccent,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Row(children: [
-                    const Icon(ExpenseIcons.addExpense,
+                  child: const Row(children: [
+                    Icon(ExpenseIcons.addExpense,
                         size: 16, color: Colors.white),
-                    const SizedBox(width: 6),
+                    SizedBox(width: 6),
                     Text(ExpenseStrings.addExpense,
-                        style: const TextStyle(
-                          fontSize:   13,
+                        style: TextStyle(
+                          fontSize: 13,
                           fontWeight: FontWeight.w800,
-                          color:      Colors.white,
+                          color: Colors.white,
                         )),
                   ]),
                 ),
@@ -198,12 +198,13 @@ class _ExpenseAppBarState extends State<ExpenseAppBar>
   }
 
   Widget _vertDivider() => Container(
-    width: 1, height: 30,
-    color: ExpenseColors.shellBorder,
-  );
+        width: 1,
+        height: 30,
+        color: ExpenseColors.shellBorder,
+      );
 }
 
-// ── Sort Dropdown ─────────────────────────────────────────────────────────────
+// â”€â”€ Sort Dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _SortDropdown extends StatelessWidget {
   final ExpenseController ctrl;
@@ -212,35 +213,36 @@ class _SortDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height:  36,
+      height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color:        ExpenseColors.shellBg,
+        color: ExpenseColors.shellBg,
         borderRadius: BorderRadius.circular(8),
-        border:       Border.all(color: ExpenseColors.shellBorder),
+        border: Border.all(color: ExpenseColors.shellBorder),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<ExpenseSortOrder>(
-          value:         ctrl.sortOrder,
-          isDense:       true,
-          style:         TextStyle(
-            fontSize:   12,
+          value: ctrl.sortOrder,
+          isDense: true,
+          style: const TextStyle(
+            fontSize: 12,
             fontWeight: FontWeight.w600,
-            color:      ExpenseColors.shellMuted,
+            color: ExpenseColors.shellMuted,
           ),
           dropdownColor: ExpenseColors.shellPanel,
           icon: const Icon(Icons.unfold_more_rounded,
               size: 14, color: ExpenseColors.shellMuted),
-          items: ExpenseSortOrder.values.map((s) =>
-            DropdownMenuItem(
-              value: s,
-              child: Text(s.displayLabel,
-                  style: const TextStyle(
-                    fontSize:   12,
-                    color:      ExpenseColors.shellMuted,
-                    fontWeight: FontWeight.w500,
-                  )),
-            )).toList(),
+          items: ExpenseSortOrder.values
+              .map((s) => DropdownMenuItem(
+                    value: s,
+                    child: Text(s.displayLabel,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: ExpenseColors.shellMuted,
+                          fontWeight: FontWeight.w500,
+                        )),
+                  ))
+              .toList(),
           onChanged: (v) {
             if (v != null) ctrl.setSortOrder(v);
           },
@@ -250,7 +252,7 @@ class _SortDropdown extends StatelessWidget {
   }
 }
 
-// ── Hover Back Button ─────────────────────────────────────────────────────────
+// â”€â”€ Hover Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
@@ -266,27 +268,27 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      onEnter:  (_) => setState(() => _hovered = true),
-      onExit:   (_) => setState(() => _hovered = false),
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          width: 36, height: 36,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
-            color: _hovered
-                ? ExpenseColors.moduleAccentLight
-                : Colors.transparent,
+            color:
+                _hovered ? ExpenseColors.moduleAccentLight : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: _hovered
-                  ? ExpenseColors.moduleAccent.withOpacity(0.4)
+                  ? ExpenseColors.moduleAccent.withValues(alpha: 0.4)
                   : ExpenseColors.shellBorder,
             ),
           ),
           child: Icon(
             Icons.arrow_back_ios_new_rounded,
-            size:  16,
+            size: 16,
             color: _hovered
                 ? ExpenseColors.moduleAccent
                 : ExpenseColors.shellMuted,

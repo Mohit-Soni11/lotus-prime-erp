@@ -2,7 +2,7 @@
 // FILE: branding_strings.dart
 // TYPE: Theme Layer / Strings Constants
 // AUTHOR: Senior System Architect
-// DESCRIPTION: Centralized string constants for the Branding tab to eliminate 
+// DESCRIPTION: Centralized string constants for the Branding tab to eliminate
 //              hardcoded text and ensure a clean, maintainable UI architecture.
 // -----------------------------------------------------------------------------
 
@@ -12,7 +12,8 @@ class BrandingStrings {
 
   // --- Page Header ---
   static const String pageTitle = "Digital Brand Assets";
-  static const String pageSubtitle = "Manage social identity, community links, and support channels";
+  static const String pageSubtitle =
+      "Manage social identity, community links, and support channels";
 
   // --- Card Titles ---
   static const String cardSocialTitle = "Social Media Presence";

@@ -67,12 +67,12 @@ class PlatinumStockCard extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    ui.accent.withOpacity(0.12),
-                    Colors.white.withOpacity(0.88),
+                    ui.accent.withValues(alpha: 0.12),
+                    Colors.white.withValues(alpha: 0.88),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: ui.accent.withOpacity(0.2)),
+                border: Border.all(color: ui.accent.withValues(alpha: 0.2)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,7 +127,7 @@ class PlatinumStockCard extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF728996).withOpacity(0.35),
+            color: const Color(0xFF728996).withValues(alpha: 0.35),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -148,9 +148,9 @@ class PlatinumStockCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.8),
+        color: Colors.white.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: accent.withOpacity(0.22)),
+        border: Border.all(color: accent.withValues(alpha: 0.22)),
       ),
       child: Text(
         label,

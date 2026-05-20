@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 // FILE: add_supplier_app_bar.dart
-// MODULE: Supplier → Add Supplier
+// MODULE: Supplier â†’ Add Supplier
 // DESCRIPTION: Separated App Bar widget matching the premium design of other modules.
 // -----------------------------------------------------------------------------
 
@@ -69,15 +69,15 @@ class _AddSupplierAppBarState extends State<AddSupplierAppBar>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ── 1. Animated Back Button ──────────────────────────────────────
+            // â”€â”€ 1. Animated Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _HoverBackButton(onTap: widget.onBack),
             const SizedBox(width: 18),
 
-            // ── 2. Vertical Divider ──────────────────────────────────────────
+            // â”€â”€ 2. Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _buildVerticalDivider(),
             const SizedBox(width: 18),
 
-            // ── 3. Premium Gradient Module Icon ──────────────────────────────
+            // â”€â”€ 3. Premium Gradient Module Icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Container(
               width: 34,
               height: 34,
@@ -97,7 +97,7 @@ class _AddSupplierAppBarState extends State<AddSupplierAppBar>
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: AddSupplierColors.brandGold.withOpacity(0.5),
+                    color: AddSupplierColors.brandGold.withValues(alpha: 0.5),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   )
@@ -111,7 +111,7 @@ class _AddSupplierAppBarState extends State<AddSupplierAppBar>
             ),
             const SizedBox(width: 14),
 
-            // ── 4. Main Title ────────────────────────────────────────────────
+            // â”€â”€ 4. Main Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             ListenableBuilder(
               listenable: widget.logic,
               builder: (context, _) => Text(
@@ -125,7 +125,7 @@ class _AddSupplierAppBarState extends State<AddSupplierAppBar>
             // Spacer pushes everything else to the right
             const Spacer(),
 
-            // ── 5. Premium Radar Widget ──────────────────────────────────────
+            // â”€â”€ 5. Premium Radar Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _RadarWidget(blinkCtrl: _blinkCtrl),
           ],
         ),
@@ -152,9 +152,9 @@ class _AddSupplierAppBarState extends State<AddSupplierAppBar>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Animated Back Button
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
   const _HoverBackButton({required this.onTap});
@@ -186,7 +186,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
             decoration: BoxDecoration(
               color: _isHovered
                   ? AddSupplierColors.shellBg
-                  : AddSupplierColors.shellBorder.withOpacity(0.3),
+                  : AddSupplierColors.shellBorder.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isHovered
@@ -197,7 +197,8 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               boxShadow: _isHovered
                   ? [
                       BoxShadow(
-                        color: AddSupplierColors.brandGold.withOpacity(0.25),
+                        color:
+                            AddSupplierColors.brandGold.withValues(alpha: 0.25),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
                       )
@@ -218,9 +219,9 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Radar Widget
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _RadarWidget extends StatelessWidget {
   final AnimationController blinkCtrl;
   const _RadarWidget({required this.blinkCtrl});
@@ -230,10 +231,10 @@ class _RadarWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AddSupplierColors.onlineGreen.withOpacity(0.08),
+        color: AddSupplierColors.onlineGreen.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(30),
         border: Border.all(
-          color: AddSupplierColors.onlineGreen.withOpacity(0.3),
+          color: AddSupplierColors.onlineGreen.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -290,7 +291,7 @@ class _RadarWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AddSupplierColors.onlineGreen.withOpacity(0.5),
+                  color: AddSupplierColors.onlineGreen.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),

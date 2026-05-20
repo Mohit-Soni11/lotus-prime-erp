@@ -2,7 +2,7 @@
 // FILE        : lib/ui/settings/metal_costing/metal_costing_app_bar.dart
 // MODULE      : Metal Costing Analysis
 // LAYER       : UI / Shared
-// DESCRIPTION : Reusable dark shell AppBar — exact BillingSetupAppBar pattern.
+// DESCRIPTION : Reusable dark shell AppBar â€” exact BillingSetupAppBar pattern.
 //               Back button | divider | gold dot + title | SYSTEM ONLINE | badge
 // =============================================================================
 
@@ -56,8 +56,8 @@ class MetalCostingAppBar extends StatelessWidget
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color:
-                                MetalCostingColors.brandGold.withOpacity(0.6),
+                            color: MetalCostingColors.brandGold
+                                .withValues(alpha: 0.6),
                             blurRadius: 6,
                           ),
                         ],
@@ -80,7 +80,7 @@ class MetalCostingAppBar extends StatelessWidget
   }
 }
 
-// ── Hover Back Button ─────────────────────────────────────────────────────────
+// â”€â”€ Hover Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
   const _HoverBackButton({required this.onTap});
@@ -121,7 +121,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               boxShadow: [
                 if (_hovered)
                   BoxShadow(
-                    color: MetalCostingColors.brandGold.withOpacity(0.25),
+                    color: MetalCostingColors.brandGold.withValues(alpha: 0.25),
                     blurRadius: 12,
                     offset: const Offset(0, 3),
                   ),
@@ -141,7 +141,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-// ── Vertical Divider ──────────────────────────────────────────────────────────
+// â”€â”€ Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _VerticalDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -163,7 +163,7 @@ class _VerticalDivider extends StatelessWidget {
   }
 }
 
-// ── Radar Status Badge ────────────────────────────────────────────────────────
+// â”€â”€ Radar Status Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _RadarStatusBadge extends StatefulWidget {
   const _RadarStatusBadge();
   @override
@@ -215,7 +215,7 @@ class _RadarStatusBadgeState extends State<_RadarStatusBadge>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: MetalCostingColors.onlineGreen.withOpacity(0.5),
+                  color: MetalCostingColors.onlineGreen.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
               ),
@@ -241,7 +241,7 @@ class _RadarStatusBadgeState extends State<_RadarStatusBadge>
               Container(
                 width: 6,
                 height: 6,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: MetalCostingColors.onlineGreen,
                   shape: BoxShape.circle,
                   boxShadow: [
@@ -260,10 +260,10 @@ class _RadarStatusBadgeState extends State<_RadarStatusBadge>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
-            color: MetalCostingColors.onlineGreen.withOpacity(0.08),
+            color: MetalCostingColors.onlineGreen.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: MetalCostingColors.onlineGreen.withOpacity(0.2),
+              color: MetalCostingColors.onlineGreen.withValues(alpha: 0.2),
             ),
           ),
           child: Text(
@@ -281,7 +281,7 @@ class _RadarStatusBadgeState extends State<_RadarStatusBadge>
   }
 }
 
-// ── Module Badge ──────────────────────────────────────────────────────────────
+// â”€â”€ Module Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ModuleBadge extends StatelessWidget {
   final String subtitle;
   const _ModuleBadge({required this.subtitle});
@@ -301,7 +301,7 @@ class _ModuleBadge extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: MetalCostingColors.brandGold.withOpacity(0.15),
+              color: MetalCostingColors.brandGold.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(6),
             ),
             child: const Icon(

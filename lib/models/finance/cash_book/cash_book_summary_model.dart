@@ -13,12 +13,12 @@ import 'cash_book_enums.dart';
 // ── Per-category line in the breakdown panel ──────────────────────────────────
 
 class CategoryBreakdownItem {
-  final String          label;
-  final String          categoryDbValue;
+  final String label;
+  final String categoryDbValue;
   final CashTransactionType type;
-  final double          amount;
-  final String          amountFormatted;
-  final double          percentage; // % of total income or expense
+  final double amount;
+  final String amountFormatted;
+  final double percentage; // % of total income or expense
 
   const CategoryBreakdownItem({
     required this.label,
@@ -33,7 +33,6 @@ class CategoryBreakdownItem {
 // ── Main summary snapshot ─────────────────────────────────────────────────────
 
 class CashBookSummaryModel {
-
   final double openingBalance;
   final double totalIncome;
   final double totalExpense;
@@ -79,49 +78,49 @@ class CashBookSummaryModel {
   // ── Factory: Loading placeholder ─────────────────────────────────────────
 
   factory CashBookSummaryModel.loading() => const CashBookSummaryModel(
-    openingBalance:    0,
-    totalIncome:       0,
-    totalExpense:      0,
-    closingBalance:    0,
-    netFlow:           0,
-    openingBalanceStr: '--',
-    totalIncomeStr:    '--',
-    totalExpenseStr:   '--',
-    closingBalanceStr: '--',
-    netFlowStr:        '--',
-    incomeBreakdown:   [],
-    expenseBreakdown:  [],
-    totalTransactions: 0,
-    incomeCount:       0,
-    expenseCount:      0,
-    isLoading:         true,
-  );
+        openingBalance: 0,
+        totalIncome: 0,
+        totalExpense: 0,
+        closingBalance: 0,
+        netFlow: 0,
+        openingBalanceStr: '--',
+        totalIncomeStr: '--',
+        totalExpenseStr: '--',
+        closingBalanceStr: '--',
+        netFlowStr: '--',
+        incomeBreakdown: [],
+        expenseBreakdown: [],
+        totalTransactions: 0,
+        incomeCount: 0,
+        expenseCount: 0,
+        isLoading: true,
+      );
 
   // ── Factory: Zero state ───────────────────────────────────────────────────
 
   factory CashBookSummaryModel.zero() => CashBookSummaryModel(
-    openingBalance:    0,
-    totalIncome:       0,
-    totalExpense:      0,
-    closingBalance:    0,
-    netFlow:           0,
-    openingBalanceStr: _fmt(0),
-    totalIncomeStr:    _fmt(0),
-    totalExpenseStr:   _fmt(0),
-    closingBalanceStr: _fmt(0),
-    netFlowStr:        _fmt(0),
-    incomeBreakdown:   [],
-    expenseBreakdown:  [],
-    totalTransactions: 0,
-    incomeCount:       0,
-    expenseCount:      0,
-  );
+        openingBalance: 0,
+        totalIncome: 0,
+        totalExpense: 0,
+        closingBalance: 0,
+        netFlow: 0,
+        openingBalanceStr: _fmt(0),
+        totalIncomeStr: _fmt(0),
+        totalExpenseStr: _fmt(0),
+        closingBalanceStr: _fmt(0),
+        netFlowStr: _fmt(0),
+        incomeBreakdown: [],
+        expenseBreakdown: [],
+        totalTransactions: 0,
+        incomeCount: 0,
+        expenseCount: 0,
+      );
 
   // ── Formatter ─────────────────────────────────────────────────────────────
 
   static final _currencyFmt = NumberFormat.currency(
-    locale:        'en_IN',
-    symbol:        '₹ ',
+    locale: 'en_IN',
+    symbol: '₹ ',
     decimalDigits: 2,
   );
 

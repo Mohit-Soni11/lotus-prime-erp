@@ -26,8 +26,8 @@ class SetupHeader extends StatefulWidget {
   State<SetupHeader> createState() => _SetupHeaderState();
 }
 
-class _SetupHeaderState extends State<SetupHeader> with SingleTickerProviderStateMixin {
-  
+class _SetupHeaderState extends State<SetupHeader>
+    with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return ClipRect(
@@ -39,7 +39,7 @@ class _SetupHeaderState extends State<SetupHeader> with SingleTickerProviderStat
           padding: const EdgeInsets.symmetric(horizontal: 40),
           decoration: BoxDecoration(
             // Navy Blue tint for Glass
-            color: LayoutColors.panelBg.withOpacity(0.85), 
+            color: LayoutColors.panelBg.withValues(alpha: 0.85),
             border: const Border(
               bottom: BorderSide(color: LayoutColors.borderStroke, width: 1),
             ),
@@ -47,22 +47,22 @@ class _SetupHeaderState extends State<SetupHeader> with SingleTickerProviderStat
           child: Row(
             children: [
               // ------------------------------------
-              // 1️⃣ LEFT: BACK + TITLE
+              // 1ï¸âƒ£ LEFT: BACK + TITLE
               // ------------------------------------
               _buildNavyBackButton(),
               const SizedBox(width: 24),
-              
+
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "SHOP CONFIGURATION", // ✅ Fixed Name
-                    style: LayoutStyles.headerTitle, 
+                    "SHOP CONFIGURATION", // âœ… Fixed Name
+                    style: LayoutStyles.headerTitle,
                   ),
                   const SizedBox(height: 6),
-                  
-                  // 🔥 THE RADAR PULSE WIDGET
+
+                  // ðŸ”¥ THE RADAR PULSE WIDGET
                   const RadarStatusWidget(),
                 ],
               ),
@@ -70,7 +70,7 @@ class _SetupHeaderState extends State<SetupHeader> with SingleTickerProviderStat
               const Spacer(),
 
               // ------------------------------------
-              // 2️⃣ RIGHT: STEPPER
+              // 2ï¸âƒ£ RIGHT: STEPPER
               // ------------------------------------
               SizedBox(
                 height: 50,
@@ -93,22 +93,23 @@ class _SetupHeaderState extends State<SetupHeader> with SingleTickerProviderStat
       child: InkWell(
         onTap: widget.onBack,
         borderRadius: BorderRadius.circular(10),
-        hoverColor: LayoutColors.goldPrimary.withOpacity(0.1),
+        hoverColor: LayoutColors.goldPrimary.withValues(alpha: 0.1),
         child: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             border: Border.all(color: LayoutColors.borderStroke),
             borderRadius: BorderRadius.circular(10),
-            color: LayoutColors.scaffoldBg.withOpacity(0.5),
+            color: LayoutColors.scaffoldBg.withValues(alpha: 0.5),
           ),
-          child: const Icon(LayoutIcons.backArrow, color: LayoutColors.textTitle, size: 18),
+          child: const Icon(LayoutIcons.backArrow,
+              color: LayoutColors.textTitle, size: 18),
         ),
       ),
     );
   }
 }
 
-// 🔥🔥 ADVANCED RADAR ANIMATION WIDGET 🔥🔥
+// ðŸ”¥ðŸ”¥ ADVANCED RADAR ANIMATION WIDGET ðŸ”¥ðŸ”¥
 // Isko alag class banaya taaki performance best rahe
 class RadarStatusWidget extends StatefulWidget {
   const RadarStatusWidget({super.key});
@@ -117,7 +118,8 @@ class RadarStatusWidget extends StatefulWidget {
   State<RadarStatusWidget> createState() => _RadarStatusWidgetState();
 }
 
-class _RadarStatusWidgetState extends State<RadarStatusWidget> with SingleTickerProviderStateMixin {
+class _RadarStatusWidgetState extends State<RadarStatusWidget>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -139,9 +141,9 @@ class _RadarStatusWidgetState extends State<RadarStatusWidget> with SingleTicker
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // 📡 The Radar Visual
+        // ðŸ“¡ The Radar Visual
         SizedBox(
-          width: 16, 
+          width: 16,
           height: 16,
           child: Stack(
             alignment: Alignment.center,
@@ -150,25 +152,27 @@ class _RadarStatusWidgetState extends State<RadarStatusWidget> with SingleTicker
               _buildWave(delay: 0.0, size: 16),
               // Wave 2 (Choti wali)
               _buildWave(delay: 0.5, size: 16),
-              
+
               // Core Solid Dot
               Container(
                 width: 6,
                 height: 6,
                 decoration: const BoxDecoration(
-                  color: LayoutColors.success, // Emerald Green
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: LayoutColors.success, blurRadius: 6, spreadRadius: 1)
-                  ]
-                ),
+                    color: LayoutColors.success, // Emerald Green
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                          color: LayoutColors.success,
+                          blurRadius: 6,
+                          spreadRadius: 1)
+                    ]),
               ),
             ],
           ),
         ),
-        
+
         const SizedBox(width: 10),
-        
+
         // Text
         const Text(
           "SYSTEM ONLINE",
@@ -202,9 +206,8 @@ class _RadarStatusWidgetState extends State<RadarStatusWidget> with SingleTicker
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: LayoutColors.success.withOpacity(0.5), 
-                  width: 1.5
-                ),
+                    color: LayoutColors.success.withValues(alpha: 0.5),
+                    width: 1.5),
               ),
             ),
           ),

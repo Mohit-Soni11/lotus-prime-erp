@@ -23,7 +23,7 @@ class BasicInfoIcons {
   static const IconData brandDisplay = Icons.badge_rounded;
   static const IconData email = Icons.mail_rounded;
   static const IconData edit = Icons.edit_rounded;
-  static const IconData save = Icons.check_circle_rounded; 
+  static const IconData save = Icons.check_circle_rounded;
   static const IconData statusActive = Icons.verified_rounded;
   static const IconData brandIdentity = Icons.branding_watermark_rounded;
   static const IconData authSignature = Icons.draw_rounded;
@@ -36,12 +36,12 @@ class BasicInfoIcons {
   static const IconData logoStore = Icons.storefront_rounded;
 
   // 2. UI Variables (Lock/Unlock, States)
-  static const IconData lock = Icons.lock_outline_rounded; 
-  static const IconData unlock = Icons.lock_open_rounded;  
-  static const IconData dropdown = Icons.keyboard_arrow_down_rounded; 
-  static const IconData error = Icons.error_outline_rounded; 
-  static const IconData warning = Icons.warning_amber_rounded; 
-  static const IconData success = Icons.check_circle_outline_rounded; 
+  static const IconData lock = Icons.lock_outline_rounded;
+  static const IconData unlock = Icons.lock_open_rounded;
+  static const IconData dropdown = Icons.keyboard_arrow_down_rounded;
+  static const IconData error = Icons.error_outline_rounded;
+  static const IconData warning = Icons.warning_amber_rounded;
+  static const IconData success = Icons.check_circle_outline_rounded;
 
   // 3. 🚀 UPGRADE: Extracted Photo Widget Specific Icons
   static const IconData arrowForwardIos = Icons.arrow_forward_ios_rounded;

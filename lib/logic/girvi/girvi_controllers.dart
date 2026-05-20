@@ -14,32 +14,31 @@ import '../../models/girvi/girvi_loan_model.dart';
 import '../../repositories/girvi/girvi_repository.dart';
 
 class GirviListController extends ChangeNotifier {
-
   final GirviRepository _repo;
 
   GirviListController(AppDatabase db) : _repo = GirviRepository(db);
 
   // ── STATE ──────────────────────────────────────────────────────────────────
-  List<GirviLoanWithCustomer> _allLoans      = [];
+  List<GirviLoanWithCustomer> _allLoans = [];
   List<GirviLoanWithCustomer> _filteredLoans = [];
-  GirviSummaryModel           _summary       = GirviSummaryModel.empty();
-  GirviFilter                 _filter        = GirviFilter.all;
-  String                      _searchQuery   = '';
-  bool                        _isLoading     = true;
-  String?                     _errorMessage;
+  GirviSummaryModel _summary = GirviSummaryModel.empty();
+  GirviFilter _filter = GirviFilter.all;
+  String _searchQuery = '';
+  bool _isLoading = true;
+  String? _errorMessage;
 
   // ── GETTERS ────────────────────────────────────────────────────────────────
-  List<GirviLoanWithCustomer> get loans       => _filteredLoans;
-  GirviSummaryModel           get summary     => _summary;
-  GirviFilter                 get filter      => _filter;
-  bool                        get isLoading   => _isLoading;
-  String?                     get errorMessage => _errorMessage;
-  bool                        get hasLoans    => _allLoans.isNotEmpty;
+  List<GirviLoanWithCustomer> get loans => _filteredLoans;
+  GirviSummaryModel get summary => _summary;
+  GirviFilter get filter => _filter;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+  bool get hasLoans => _allLoans.isNotEmpty;
 
   // ── LOAD ───────────────────────────────────────────────────────────────────
 
   Future<void> load() async {
-    _isLoading    = true;
+    _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
@@ -54,7 +53,7 @@ class GirviListController extends ChangeNotifier {
       ]);
 
       _allLoans = results[0] as List<GirviLoanWithCustomer>;
-      _summary  = results[1] as GirviSummaryModel;
+      _summary = results[1] as GirviSummaryModel;
       _applyFilter();
     } catch (e) {
       debugPrint('GirviListController.load error: $e');
@@ -89,7 +88,8 @@ class GirviListController extends ChangeNotifier {
           case GirviFilter.active:
             return g.loan.isActive && !g.loan.isOverdue;
           case GirviFilter.overdue:
-            return g.loan.isOverdue || g.loan.girviStatus == GirviStatus.overdue;
+            return g.loan.isOverdue ||
+                g.loan.girviStatus == GirviStatus.overdue;
           case GirviFilter.released:
             return g.loan.girviStatus == GirviStatus.released;
           case GirviFilter.auctioned:
@@ -102,12 +102,13 @@ class GirviListController extends ChangeNotifier {
 
     // Search filter
     if (_searchQuery.isNotEmpty) {
-      list = list.where((g) =>
-        g.loan.ticketNo.toLowerCase().contains(_searchQuery)  ||
-        g.customerName.toLowerCase().contains(_searchQuery)   ||
-        g.customerMobile.contains(_searchQuery)               ||
-        g.loan.itemDescription.toLowerCase().contains(_searchQuery)
-      ).toList();
+      list = list
+          .where((g) =>
+              g.loan.ticketNo.toLowerCase().contains(_searchQuery) ||
+              g.customerName.toLowerCase().contains(_searchQuery) ||
+              g.customerMobile.contains(_searchQuery) ||
+              g.loan.itemDescription.toLowerCase().contains(_searchQuery))
+          .toList();
     }
 
     _filteredLoans = list;
@@ -116,7 +117,6 @@ class GirviListController extends ChangeNotifier {
   // ── RELOAD (after release/update) ─────────────────────────────────────────
   Future<void> reload() => load();
 }
-
 
 // =============================================================================
 // FILE        : girvi_release_controller.dart
@@ -128,10 +128,9 @@ class GirviListController extends ChangeNotifier {
 // =============================================================================
 
 class GirviReleaseController extends ChangeNotifier {
-
   final GirviRepository _repo;
-  final GirviLoanModel  loan;
-  final String          customerName;
+  final GirviLoanModel loan;
+  final String customerName;
 
   GirviReleaseController({
     required AppDatabase db,
@@ -144,18 +143,18 @@ class GirviReleaseController extends ChangeNotifier {
   // ── COMPUTED ───────────────────────────────────────────────────────────────
   late double _principal;
   late double _interest;
-  double      _penalty       = 0.0;
+  double _penalty = 0.0;
   late double _total;
 
   double get principal => _principal;
-  double get interest  => _interest;
-  double get penalty   => _penalty;
-  double get total     => _total;
+  double get interest => _interest;
+  double get penalty => _penalty;
+  double get total => _total;
 
   void _initComputed() {
     _principal = loan.loanAmount;
-    _interest  = loan.accruedInterest;
-    _penalty   = loan.isOverdue ? _computeDefaultPenalty() : 0.0;
+    _interest = loan.accruedInterest;
+    _penalty = loan.isOverdue ? _computeDefaultPenalty() : 0.0;
     _recomputeTotal();
   }
 
@@ -185,12 +184,12 @@ class GirviReleaseController extends ChangeNotifier {
   }
 
   // ── STATUS ─────────────────────────────────────────────────────────────────
-  bool    _isProcessing  = false;
+  bool _isProcessing = false;
   String? _errorMessage;
   String? _successMessage;
 
-  bool    get isProcessing  => _isProcessing;
-  String? get errorMessage  => _errorMessage;
+  bool get isProcessing => _isProcessing;
+  String? get errorMessage => _errorMessage;
   String? get successMessage => _successMessage;
 
   // ── RELEASE ACTION ─────────────────────────────────────────────────────────
@@ -208,14 +207,14 @@ class GirviReleaseController extends ChangeNotifier {
 
     try {
       final ok = await _repo.releaseLoan(
-        loanId:       loan.id,
-        principal:    _principal,
-        interest:     _interest,
-        penalty:      _penalty,
-        totalAmount:  _total,
-        paymentMode:  _paymentMode.dbValue,
-        notes:        notes,
-        releasedBy:   releasedBy,
+        loanId: loan.id,
+        principal: _principal,
+        interest: _interest,
+        penalty: _penalty,
+        totalAmount: _total,
+        paymentMode: _paymentMode.dbValue,
+        notes: notes,
+        releasedBy: releasedBy,
       );
 
       if (ok) {
@@ -237,7 +236,6 @@ class GirviReleaseController extends ChangeNotifier {
   }
 }
 
-
 // =============================================================================
 // FILE        : interest_calc_controller.dart
 // MODULE      : Girvi / Pawn
@@ -249,28 +247,23 @@ class GirviReleaseController extends ChangeNotifier {
 // =============================================================================
 
 class InterestCalcController extends ChangeNotifier {
-
   // ── INPUTS ─────────────────────────────────────────────────────────────────
-  double _principal    = 0.0;
+  double _principal = 0.0;
   double _ratePerMonth = 2.0;
-  int    _months       = 12;
+  int _months = 12;
 
-  double get principal    => _principal;
+  double get principal => _principal;
   double get ratePerMonth => _ratePerMonth;
-  int    get months       => _months;
+  int get months => _months;
 
   // ── COMPUTED ───────────────────────────────────────────────────────────────
-  double get monthlyInterest =>
-      _principal * (_ratePerMonth / 100);
+  double get monthlyInterest => _principal * (_ratePerMonth / 100);
 
-  double get totalInterest =>
-      monthlyInterest * _months;
+  double get totalInterest => monthlyInterest * _months;
 
-  double get totalDue =>
-      _principal + totalInterest;
+  double get totalDue => _principal + totalInterest;
 
-  double get annualRate =>
-      _ratePerMonth * 12;
+  double get annualRate => _ratePerMonth * 12;
 
   /// Month-wise interest table
   List<MonthRow> get monthTable {
@@ -278,14 +271,16 @@ class InterestCalcController extends ChangeNotifier {
     double balance = _principal;
     for (int m = 1; m <= _months; m++) {
       final interest = balance * (_ratePerMonth / 100);
-      rows.add(MonthRow(month: m, interest: interest, balance: balance + interest));
+      rows.add(
+          MonthRow(month: m, interest: interest, balance: balance + interest));
     }
     return rows;
   }
 
   /// Compound interest total (for comparison)
   double get compoundTotalDue =>
-      _principal * (1 + _ratePerMonth / 100).abs().toDouble() *
+      _principal *
+      (1 + _ratePerMonth / 100).abs().toDouble() *
       (1.0 + (_ratePerMonth / 100)) //  simplified for display
           .clamp(1, double.infinity);
 
@@ -307,15 +302,15 @@ class InterestCalcController extends ChangeNotifier {
   }
 
   void reset() {
-    _principal    = 0.0;
+    _principal = 0.0;
     _ratePerMonth = 2.0;
-    _months       = 12;
+    _months = 12;
     notifyListeners();
   }
 }
 
 class MonthRow {
-  final int    month;
+  final int month;
   final double interest;
   final double balance;
 

@@ -1,37 +1,37 @@
 // =============================================================================
 // FILE        : day_book_screen.dart
-// MODULE      : Reports & Analytics → Day Book
-// LAYER       : UI — Master Screen Assembly
+// MODULE      : Reports & Analytics â†’ Day Book
+// LAYER       : UI â€” Master Screen Assembly
 // DESCRIPTION : Top-level shell connecting all Day Book components.
 //               Follows exact same pattern as CashBookScreen.
 //
 //               LAYOUT:
-//               ┌──────────────────────────────────────────────────────────┐
-//               │  DARK APP BAR (module title, date nav, export buttons)   │
-//               ├──────────────────────────────────────────────────────────┤
-//               │  SCROLLABLE BODY (Cream bg)                              │
-//               │  ─────────────────────────────────────────────────────── │
-//               │  Opening Balance Card (dark)                             │
-//               │  Anomaly Alert Banner (if any)                           │
-//               │  Cash Inward Section  (expandable)                       │
-//               │    └─ GST Bills Sub-section   (teal)                     │
-//               │    └─ Non-GST Bills Sub-section (blue)                   │
-//               │    └─ Other inflows...                                   │
-//               │  Cash Outward Section (expandable, red)                  │
-//               │  Payment Mode Breakup (expandable)                       │
-//               │  Metal Inward  Section (expandable, amber)               │
-//               │  Metal Outward Section (expandable, purple)              │
-//               │  Net Flow + Closing Balance Card                         │
-//               │  Predicted Closing Card (today only)                     │
-//               │  EOD Settlement Button (today only)                      │
-//               └──────────────────────────────────────────────────────────┘
+//               â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//               â”‚  DARK APP BAR (module title, date nav, export buttons)   â”‚
+//               â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+//               â”‚  SCROLLABLE BODY (Cream bg)                              â”‚
+//               â”‚  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ â”‚
+//               â”‚  Opening Balance Card (dark)                             â”‚
+//               â”‚  Anomaly Alert Banner (if any)                           â”‚
+//               â”‚  Cash Inward Section  (expandable)                       â”‚
+//               â”‚    â””â”€ GST Bills Sub-section   (teal)                     â”‚
+//               â”‚    â””â”€ Non-GST Bills Sub-section (blue)                   â”‚
+//               â”‚    â””â”€ Other inflows...                                   â”‚
+//               â”‚  Cash Outward Section (expandable, red)                  â”‚
+//               â”‚  Payment Mode Breakup (expandable)                       â”‚
+//               â”‚  Metal Inward  Section (expandable, amber)               â”‚
+//               â”‚  Metal Outward Section (expandable, purple)              â”‚
+//               â”‚  Net Flow + Closing Balance Card                         â”‚
+//               â”‚  Predicted Closing Card (today only)                     â”‚
+//               â”‚  EOD Settlement Button (today only)                      â”‚
+//               â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
-//               ✅ Dark AppBar + Cream body
-//               ✅ ListenableBuilder — zero setState in UI layer
-//               ✅ GST and Non-GST bills shown separately
-//               ✅ Anomaly detection alerts
-//               ✅ EOD denomination dialog + day lock
-//               ✅ Export PDF / Excel / WhatsApp
+//               âœ… Dark AppBar + Cream body
+//               âœ… ListenableBuilder â€” zero setState in UI layer
+//               âœ… GST and Non-GST bills shown separately
+//               âœ… Anomaly detection alerts
+//               âœ… EOD denomination dialog + day lock
+//               âœ… Export PDF / Excel / WhatsApp
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -66,17 +66,17 @@ class _DayBookScreenState extends State<DayBookScreen> {
     super.dispose();
   }
 
-  // ── EOD Dialog ─────────────────────────────────────────────────────────────
+  // â”€â”€ EOD Dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   void _showEodDialog() {
     showDialog(
       context: context,
       barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.5),
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (_) => DayBookEodDialog(ctrl: _ctrl),
     );
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
+  // â”€â”€ Build â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -84,13 +84,13 @@ class _DayBookScreenState extends State<DayBookScreen> {
       child: Scaffold(
         backgroundColor: DayBookColors.bodyBg,
 
-        // ── Dark App Bar ──────────────────────────────────────────────
+        // â”€â”€ Dark App Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         appBar: DayBookAppBar(
           onBack: widget.onBack ?? () => Navigator.of(context).pop(),
           ctrl: _ctrl,
         ),
 
-        // ── Body ──────────────────────────────────────────────────────
+        // â”€â”€ Body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         body: ListenableBuilder(
           listenable: _ctrl,
           builder: (_, __) {
@@ -126,11 +126,11 @@ class _DayBookScreenState extends State<DayBookScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // ── 1. Opening Balance Card ─────────────────────
+                    // â”€â”€ 1. Opening Balance Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     DayBookOpeningCard(summary: summary),
                     const SizedBox(height: 12),
 
-                    // ── 2. Anomaly Alerts ───────────────────────────
+                    // â”€â”€ 2. Anomaly Alerts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     if (summary.anomalies.isNotEmpty) ...[
                       ...summary.anomalies.asMap().entries.map(
                             (e) => Padding(
@@ -144,49 +144,49 @@ class _DayBookScreenState extends State<DayBookScreen> {
                       const SizedBox(height: 4),
                     ],
 
-                    // ── 3. Cash Inward (GST + Non-GST + others) ─────
+                    // â”€â”€ 3. Cash Inward (GST + Non-GST + others) â”€â”€â”€â”€â”€
                     CashInwardSection(ctrl: _ctrl),
                     const SizedBox(height: 10),
 
-                    // ── 4. Cash Outward ─────────────────────────────
+                    // â”€â”€ 4. Cash Outward â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     CashOutwardSection(ctrl: _ctrl),
                     const SizedBox(height: 10),
 
-                    // ── 5. Payment Mode Breakup ─────────────────────
+                    // â”€â”€ 5. Payment Mode Breakup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     PaymentModeSection(ctrl: _ctrl),
                     const SizedBox(height: 10),
 
-                    // ── 6. Metal Inward ─────────────────────────────
+                    // â”€â”€ 6. Metal Inward â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     MetalInwardSection(ctrl: _ctrl),
                     const SizedBox(height: 10),
 
-                    // ── 7. Metal Outward ────────────────────────────
+                    // â”€â”€ 7. Metal Outward â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     MetalOutwardSection(ctrl: _ctrl),
                     const SizedBox(height: 10),
 
-                    // ── 8. Net Flow + Closing Balances ──────────────
+                    // â”€â”€ 8. Net Flow + Closing Balances â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     NetFlowCard(summary: summary),
                     const SizedBox(height: 10),
 
-                    // ── 9. Predictive Closing (today only) ──────────
+                    // â”€â”€ 9. Predictive Closing (today only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     if (_ctrl.isToday && summary.prediction != null) ...[
                       PredictedClosingCard(prediction: summary.prediction!),
                       const SizedBox(height: 10),
                     ],
 
-                    // ── 10. GST Summary Card ─────────────────────────
+                    // â”€â”€ 10. GST Summary Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     if (summary.totalGstCollected > 0) ...[
                       _GstSummaryCard(summary: summary),
                       const SizedBox(height: 10),
                     ],
 
-                    // ── 11. EOD Button (today only, not locked) ──────
+                    // â”€â”€ 11. EOD Button (today only, not locked) â”€â”€â”€â”€â”€â”€
                     if (_ctrl.isToday && !summary.isDayLocked) ...[
                       _EodButton(onTap: _showEodDialog),
                       const SizedBox(height: 16),
                     ],
 
-                    // ── 12. Day Locked Banner ────────────────────────
+                    // â”€â”€ 12. Day Locked Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     if (summary.isDayLocked) ...[
                       _DayLockedBanner(),
                       const SizedBox(height: 16),
@@ -202,9 +202,9 @@ class _DayBookScreenState extends State<DayBookScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // GST Summary Card (quick glance at day's GST)
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _GstSummaryCard extends StatelessWidget {
   final summary;
   const _GstSummaryCard({required this.summary});
@@ -227,12 +227,12 @@ class _GstSummaryCard extends StatelessWidget {
               style: DayBookStyles.labelBold
                   .copyWith(color: DayBookColors.gstText)),
           Text('Today\'s total GST liability',
-              style: DayBookStyles.labelMuted
-                  .copyWith(color: DayBookColors.gstText.withOpacity(0.6))),
+              style: DayBookStyles.labelMuted.copyWith(
+                  color: DayBookColors.gstText.withValues(alpha: 0.6))),
         ]),
         const Spacer(),
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text('₹${summary.totalGstCollected.toStringAsFixed(2)}',
+          Text('â‚¹${summary.totalGstCollected.toStringAsFixed(2)}',
               style: DayBookStyles.amountMedium
                   .copyWith(color: DayBookColors.gstAccent)),
           Text('CGST + SGST', style: DayBookStyles.labelMuted),
@@ -242,9 +242,9 @@ class _GstSummaryCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // EOD Button
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _EodButton extends StatelessWidget {
   final VoidCallback onTap;
   const _EodButton({required this.onTap});
@@ -262,7 +262,7 @@ class _EodButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: DayBookColors.brandGold.withOpacity(0.2),
+              color: DayBookColors.brandGold.withValues(alpha: 0.2),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -277,8 +277,8 @@ class _EodButton extends StatelessWidget {
               decoration: BoxDecoration(
                 color: DayBookColors.brandGoldLight,
                 borderRadius: BorderRadius.circular(8),
-                border:
-                    Border.all(color: DayBookColors.brandGold.withOpacity(0.4)),
+                border: Border.all(
+                    color: DayBookColors.brandGold.withValues(alpha: 0.4)),
               ),
               child: const Icon(DayBookIcons.eodSettle,
                   color: DayBookColors.brandGold, size: 16),
@@ -300,9 +300,9 @@ class _EodButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Day Locked Banner
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _DayLockedBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -328,9 +328,9 @@ class _DayLockedBanner extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Error State
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ErrorState extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
@@ -367,9 +367,9 @@ class _ErrorState extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Empty State
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
@@ -379,7 +379,7 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(DayBookIcons.moduleIcon,
+          const Icon(DayBookIcons.moduleIcon,
               color: DayBookColors.textMuted, size: 56),
           const SizedBox(height: 16),
           Text('No transactions recorded',

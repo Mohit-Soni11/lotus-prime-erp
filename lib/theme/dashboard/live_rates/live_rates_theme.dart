@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 // ============================================================
-// 🎨 LIVE RATES CARD THEME
+// ðŸŽ¨ LIVE RATES CARD THEME
 // Saare colors, styles, strings ek jagah
-// Kuch bhi change karna ho — sirf yahan aao
+// Kuch bhi change karna ho â€” sirf yahan aao
 // ============================================================
 
 // --- COLORS ---
@@ -84,7 +84,8 @@ class LiveRatesStrings {
   static const String kt18 = '18 KT';
   static const String idols = 'Idols & Utensils';
   static const String jewellery = 'Jewellery';
-  static const String purchaseHeader = 'OLD GOLD & SILVER — PURCHASE / EXCHANGE RATE';
+  static const String purchaseHeader =
+      'OLD GOLD & SILVER â€” PURCHASE / EXCHANGE RATE';
   static const String priceTrackerHeader = 'PRICE TRACKER TREND';
   static const String marketAnalysisHeader = 'MARKET ANALYSIS & RATE BREAKDOWN';
   static const String goldBuyLabel = 'GOLD';
@@ -93,8 +94,8 @@ class LiveRatesStrings {
   static const String buy22k = '22 KT (Buy)';
   static const String buy18k = '18 KT (Buy)';
   static const String silverBuyRate = 'Silver Buy Rate';
-  static const String demoNote = 'Demo Data — Set rates in Settings';
-  static const String setRatesTip = 'Go to Settings → Set Daily Rates';
+  static const String demoNote = 'Demo Data â€” Set rates in Settings';
+  static const String setRatesTip = 'Go to Settings â†’ Set Daily Rates';
 }
 
 // --- STYLES ---
@@ -109,15 +110,15 @@ class LiveRatesStyles {
   static BoxDecoration cardDecoration = BoxDecoration(
     color: LiveRatesColors.cardBg,
     borderRadius: BorderRadius.circular(cardBorderRadius),
-    border: Border.all(color: Colors.white.withOpacity(0.06)),
+    border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
     boxShadow: [
       BoxShadow(
-        color: LiveRatesColors.goldMain.withOpacity(0.08),
+        color: LiveRatesColors.goldMain.withValues(alpha: 0.08),
         blurRadius: 24,
         offset: const Offset(0, 8),
       ),
       BoxShadow(
-        color: Colors.black.withOpacity(0.4),
+        color: Colors.black.withValues(alpha: 0.4),
         blurRadius: 16,
         offset: const Offset(0, 4),
       ),
@@ -125,26 +126,27 @@ class LiveRatesStyles {
   );
 
   static BoxDecoration sectionDecoration({bool isGold = true}) => BoxDecoration(
-    color: isGold ? LiveRatesColors.goldBg : LiveRatesColors.silverBg,
-    borderRadius: BorderRadius.circular(14),
-    border: Border.all(
-      color: isGold
-          ? LiveRatesColors.goldMain.withOpacity(0.2)
-          : LiveRatesColors.silverMain.withOpacity(0.15),
-    ),
-    boxShadow: [
-      BoxShadow(
-        color: isGold ? LiveRatesColors.goldGlow : LiveRatesColors.silverGlow,
-        blurRadius: 20,
-        spreadRadius: 0,
-      ),
-    ],
-  );
+        color: isGold ? LiveRatesColors.goldBg : LiveRatesColors.silverBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isGold
+              ? LiveRatesColors.goldMain.withValues(alpha: 0.2)
+              : LiveRatesColors.silverMain.withValues(alpha: 0.15),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color:
+                isGold ? LiveRatesColors.goldGlow : LiveRatesColors.silverGlow,
+            blurRadius: 20,
+            spreadRadius: 0,
+          ),
+        ],
+      );
 
   static BoxDecoration expandedSectionDecoration = BoxDecoration(
     color: LiveRatesColors.expandedBg,
     borderRadius: BorderRadius.circular(14),
-    border: Border.all(color: Colors.white.withOpacity(0.05)),
+    border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
   );
 
   // Text Styles

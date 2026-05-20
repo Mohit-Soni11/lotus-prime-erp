@@ -58,7 +58,7 @@ class AddGoldStockItemsStep extends StatelessWidget {
         decoration: BoxDecoration(
           color: ui.softSurface,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: ui.accent.withOpacity(0.16)),
+          border: Border.all(color: ui.accent.withValues(alpha: 0.16)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,12 +97,12 @@ class AddGoldStockItemsStep extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: ctrl.gstEnabled
-                        ? AddStockColors.success.withOpacity(0.12)
+                        ? AddStockColors.success.withValues(alpha: 0.12)
                         : AddStockColors.bodyBg,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: ctrl.gstEnabled
-                          ? AddStockColors.success.withOpacity(0.25)
+                          ? AddStockColors.success.withValues(alpha: 0.25)
                           : AddStockColors.cardBorder,
                     ),
                   ),
@@ -154,13 +154,13 @@ class AddGoldStockItemsStep extends StatelessWidget {
   Widget _buildFooter(StockMetalUiData ui) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 22),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AddStockColors.cardBg,
         boxShadow: [
           BoxShadow(
             color: AddStockColors.shadowMedium,
             blurRadius: 16,
-            offset: const Offset(0, -4),
+            offset: Offset(0, -4),
           ),
         ],
       ),
@@ -176,7 +176,7 @@ class AddGoldStockItemsStep extends StatelessWidget {
                 color: AddStockColors.dangerBg,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AddStockColors.danger.withOpacity(0.2),
+                  color: AddStockColors.danger.withValues(alpha: 0.2),
                 ),
               ),
               child: Text(
@@ -199,12 +199,12 @@ class AddGoldStockItemsStep extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: ctrl.gstEnabled
-                      ? AddStockColors.success.withOpacity(0.08)
+                      ? AddStockColors.success.withValues(alpha: 0.08)
                       : AddStockColors.bodyBg,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: ctrl.gstEnabled
-                        ? AddStockColors.success.withOpacity(0.24)
+                        ? AddStockColors.success.withValues(alpha: 0.24)
                         : AddStockColors.cardBorder,
                   ),
                 ),
@@ -222,7 +222,7 @@ class AddGoldStockItemsStep extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             ctrl.gstEnabled
-                                ? 'CGST ${_money(ctrl.cgstAmount)}  •  SGST ${_money(ctrl.sgstAmount)}'
+                                ? 'CGST ${_money(ctrl.cgstAmount)}  â€¢  SGST ${_money(ctrl.sgstAmount)}'
                                 : 'Turn on to add 3% GST breakup to this batch.',
                             style: AddStockStyles.caption.copyWith(
                               fontSize: 11,
@@ -235,7 +235,7 @@ class AddGoldStockItemsStep extends StatelessWidget {
                     Switch(
                       value: ctrl.gstEnabled,
                       onChanged: ctrl.toggleGst,
-                      activeColor: ui.accent,
+                      activeThumbColor: ui.accent,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ],
@@ -248,13 +248,13 @@ class AddGoldStockItemsStep extends StatelessWidget {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: ui.accent.withOpacity(0.08),
+                  color: ui.accent.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: ui.accent.withOpacity(0.18)),
+                  border: Border.all(color: ui.accent.withValues(alpha: 0.18)),
                 ),
                 child: Text(
                   ctrl.rowsWithErrorsCount == 0
-                      ? 'Ready to save • ${ctrl.enteredRowCount} entered row${ctrl.enteredRowCount == 1 ? '' : 's'}'
+                      ? 'Ready to save â€¢ ${ctrl.enteredRowCount} entered row${ctrl.enteredRowCount == 1 ? '' : 's'}'
                       : '${ctrl.rowsWithErrorsCount} entered row${ctrl.rowsWithErrorsCount == 1 ? '' : 's'} need attention',
                   style: GoogleFonts.inter(
                     fontSize: 12,
@@ -287,7 +287,7 @@ class AddGoldStockItemsStep extends StatelessWidget {
               OutlinedButton(
                 onPressed: ctrl.prevStep,
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: ui.accent.withOpacity(0.35)),
+                  side: BorderSide(color: ui.accent.withValues(alpha: 0.35)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -376,7 +376,7 @@ class AddGoldStockItemsStep extends StatelessWidget {
       width: 154,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.86),
+        color: Colors.white.withValues(alpha: 0.86),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AddStockColors.cardBorder),
       ),
@@ -409,9 +409,9 @@ class AddGoldStockItemsStep extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.12),
+        color: accent.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: accent.withOpacity(0.18)),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
       ),
       child: Text(
         text,
@@ -425,9 +425,9 @@ class AddGoldStockItemsStep extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Gold Rate Reference Card
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _GoldRateReferenceCard extends StatelessWidget {
   final AddStockController ctrl;
 
@@ -460,7 +460,7 @@ class _GoldRateReferenceCard extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: AddStockColors.brandGold.withOpacity(0.10),
+              color: AddStockColors.brandGold.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(12),
             ),
             child: ctrl.isLoadingGoldRates
@@ -551,7 +551,7 @@ class _GoldRateReferenceCard extends StatelessWidget {
         color: AddStockColors.bodyBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AddStockColors.brandGold.withOpacity(0.45),
+          color: AddStockColors.brandGold.withValues(alpha: 0.45),
           width: 1.5,
         ),
       ),
@@ -587,7 +587,7 @@ class _GoldRateReferenceCard extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            'Editable • tap to change',
+            'Editable â€¢ tap to change',
             style: AddStockStyles.caption.copyWith(
               fontSize: 10,
               color: AddStockColors.brandGold,
@@ -599,9 +599,9 @@ class _GoldRateReferenceCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // FAST GOLD ENTRY TABLE
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _GoldEntryTable extends StatelessWidget {
   final AddStockController ctrl;
 
@@ -618,17 +618,18 @@ class _GoldEntryTable extends StatelessWidget {
           builder: (context, constraints) {
             final needsScroll = constraints.maxWidth < _tableWidth;
 
-            // ✅ F2 Shortcut — same pattern as POS table
+            // âœ… F2 Shortcut â€” same pattern as POS table
             return CallbackShortcuts(
               bindings: {
                 const SingleActivator(LogicalKeyboardKey.f2): () =>
                     ctrl.addRow(requestFocus: true),
-                // ✅ FIX: Delete key — removes active row (like POS removeActiveItem)
+                // âœ… FIX: Delete key â€” removes active row (like POS removeActiveItem)
                 const SingleActivator(LogicalKeyboardKey.delete): () =>
                     ctrl.removeActiveRow(),
               },
               child: Focus(
-                autofocus: true, // ✅ FIX: was false — F2 wasn't working at all!
+                autofocus:
+                    true, // âœ… FIX: was false â€” F2 wasn't working at all!
                 child: Container(
                   decoration: BoxDecoration(
                     color: AddStockColors.cardBg,
@@ -660,7 +661,7 @@ class _GoldEntryTable extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _buildColumnHeaders(),
-                              // ✅ Empty state when no rows entered
+                              // âœ… Empty state when no rows entered
                               ctrl.rows.isEmpty
                                   ? _buildEmptyState()
                                   : ListView.builder(
@@ -670,7 +671,7 @@ class _GoldEntryTable extends StatelessWidget {
                                       itemCount: ctrl.rows.length,
                                       itemBuilder: (context, index) =>
                                           _GoldStockTableRow(
-                                        // ✅ ObjectKey prevents state mix-up on delete
+                                        // âœ… ObjectKey prevents state mix-up on delete
                                         key: ObjectKey(ctrl.rows[index]),
                                         index: index,
                                         row: ctrl.rows[index],
@@ -681,7 +682,7 @@ class _GoldEntryTable extends StatelessWidget {
                           ),
                         ),
                       ),
-                      // ✅ Bottom bar with ADD NEW ITEM button
+                      // âœ… Bottom bar with ADD NEW ITEM button
                       _buildBottomBar(context),
                     ],
                   ),
@@ -698,7 +699,7 @@ class _GoldEntryTable extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        color: AddStockColors.brandGold.withOpacity(0.04),
+        color: AddStockColors.brandGold.withValues(alpha: 0.04),
         border: const Border(
           bottom: BorderSide(color: AddStockColors.cardBorder, width: 1.5),
         ),
@@ -711,10 +712,10 @@ class _GoldEntryTable extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AddStockColors.brandGold.withOpacity(0.12),
+              color: AddStockColors.brandGold.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: AddStockColors.brandGold.withOpacity(0.40),
+                color: AddStockColors.brandGold.withValues(alpha: 0.40),
               ),
             ),
             child: const Icon(
@@ -813,14 +814,14 @@ class _GoldEntryTable extends StatelessWidget {
           SizedBox(width: 8),
           _GoldHeaderCell('ROW TOTAL', width: 150, right: true),
           SizedBox(width: 8),
-          // ✅ Wider ACT column for 2 buttons
+          // âœ… Wider ACT column for 2 buttons
           _GoldHeaderCell('ACT', width: 96, center: true),
         ],
       ),
     );
   }
 
-  // ✅ Empty state widget
+  // âœ… Empty state widget
   Widget _buildEmptyState() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 56),
@@ -863,7 +864,7 @@ class _GoldEntryTable extends StatelessWidget {
     );
   }
 
-  // ✅ Bottom bar with ADD NEW ITEM button (like POS)
+  // âœ… Bottom bar with ADD NEW ITEM button (like POS)
   Widget _buildBottomBar(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
@@ -877,16 +878,16 @@ class _GoldEntryTable extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // ✅ ADD NEW ITEM button — same style as POS
+          // âœ… ADD NEW ITEM button â€” same style as POS
           InkWell(
             onTap: () => ctrl.addRow(requestFocus: true),
             borderRadius: BorderRadius.circular(10),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: AddStockColors.success.withOpacity(0.08),
+                color: AddStockColors.success.withValues(alpha: 0.08),
                 border: Border.all(
-                  color: AddStockColors.success.withOpacity(0.35),
+                  color: AddStockColors.success.withValues(alpha: 0.35),
                   width: 1.5,
                 ),
                 borderRadius: BorderRadius.circular(10),
@@ -910,12 +911,12 @@ class _GoldEntryTable extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 14),
-                  // ✅ F2 badge
+                  // âœ… F2 badge
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AddStockColors.success.withOpacity(0.15),
+                      color: AddStockColors.success.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Text(
@@ -933,7 +934,7 @@ class _GoldEntryTable extends StatelessWidget {
             ),
           ),
 
-          // ✅ Totals summary on the right
+          // âœ… Totals summary on the right
           if (ctrl.enteredRowCount > 0)
             Row(
               children: [
@@ -965,8 +966,8 @@ class _GoldEntryTable extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.09),
-        border: Border.all(color: color.withOpacity(0.28), width: 1.5),
+        color: color.withValues(alpha: 0.09),
+        border: Border.all(color: color.withValues(alpha: 0.28), width: 1.5),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -996,9 +997,9 @@ class _GoldEntryTable extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Column Header Cell
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _GoldHeaderCell extends StatelessWidget {
   final String title;
   final double width;
@@ -1032,9 +1033,9 @@ class _GoldHeaderCell extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Table Row Widget
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _GoldStockTableRow extends StatefulWidget {
   final int index;
   final StockRowEntry row;
@@ -1137,13 +1138,13 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
     final isEven = widget.index.isEven;
     final error = ctrl.validateRow(row);
     final background = error != null
-        ? AddStockColors.danger.withOpacity(0.04)
+        ? AddStockColors.danger.withValues(alpha: 0.04)
         : _isHovered
             ? AddStockColors.cardHoverBg
             : (isEven ? AddStockColors.cardBg : AddStockColors.bodyBg);
 
     return Focus(
-      // ✅ FIX: Track which row is active — needed for Delete key shortcut (like POS activeRowIndex)
+      // âœ… FIX: Track which row is active â€” needed for Delete key shortcut (like POS activeRowIndex)
       onFocusChange: (hasFocus) {
         if (hasFocus) widget.ctrl.setActiveRow(widget.row.id);
       },
@@ -1159,7 +1160,7 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
             border: Border(
               bottom: BorderSide(
                 color: error != null
-                    ? AddStockColors.danger.withOpacity(0.18)
+                    ? AddStockColors.danger.withValues(alpha: 0.18)
                     : AddStockColors.cardBorder,
                 width: 1,
               ),
@@ -1245,7 +1246,7 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
                 isBold: true,
               ),
               const SizedBox(width: 8),
-              // ✅ Action cell — delete + duplicate
+              // âœ… Action cell â€” delete + duplicate
               _actionCell(ctrl, row),
             ],
           ),
@@ -1263,10 +1264,10 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
           height: 34,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: AddStockColors.brandGold.withOpacity(0.12),
+            color: AddStockColors.brandGold.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: AddStockColors.brandGold.withOpacity(0.32),
+              color: AddStockColors.brandGold.withValues(alpha: 0.32),
             ),
           ),
           child: Text(
@@ -1282,15 +1283,15 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
     );
   }
 
-  // ✅ FIXED: dropdownColor + explicit item text color — no more black text
+  // âœ… FIXED: dropdownColor + explicit item text color â€” no more black text
   Widget _subCategoryCell(StockRowEntry row, AddStockController ctrl) {
     return SizedBox(
       width: 170,
       child: DropdownButtonFormField<StockSubCategory>(
-        value: row.subCategory,
+        initialValue: row.subCategory,
         decoration: _inputDecoration(),
         dropdownColor: Colors.white,
-        // ✅ FIX: Force selected value text color
+        // âœ… FIX: Force selected value text color
         style: AddStockStyles.fieldInput.copyWith(
           fontSize: 13,
           color: AddStockColors.textDark,
@@ -1307,7 +1308,7 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
                 child: Text(
                   value.label,
                   overflow: TextOverflow.ellipsis,
-                  // ✅ FIX: Explicit color in menu items
+                  // âœ… FIX: Explicit color in menu items
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: AddStockColors.textDark,
@@ -1326,15 +1327,15 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
     );
   }
 
-  // ✅ FIXED: dropdownColor + explicit item text color — no more black text
+  // âœ… FIXED: dropdownColor + explicit item text color â€” no more black text
   Widget _makingTypeCell(StockRowEntry row, AddStockController ctrl) {
     return SizedBox(
       width: 156,
       child: DropdownButtonFormField<MakingChargesType>(
-        value: row.makingChargesType,
+        initialValue: row.makingChargesType,
         decoration: _inputDecoration(),
         dropdownColor: Colors.white,
-        // ✅ FIX: Force selected value text color
+        // âœ… FIX: Force selected value text color
         style: AddStockStyles.fieldInput.copyWith(
           fontSize: 13,
           color: AddStockColors.textDark,
@@ -1351,7 +1352,7 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
                 child: Text(
                   value.label,
                   overflow: TextOverflow.ellipsis,
-                  // ✅ FIX: Explicit color in menu items
+                  // âœ… FIX: Explicit color in menu items
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: AddStockColors.textDark,
@@ -1438,9 +1439,9 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
       padding: const EdgeInsets.symmetric(horizontal: 10),
       alignment: alignRight ? Alignment.centerRight : Alignment.centerLeft,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.24)),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
       ),
       child: Text(
         value,
@@ -1454,7 +1455,7 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
     );
   }
 
-  // ✅ NEW: Action cell with DELETE + DUPLICATE buttons
+  // âœ… NEW: Action cell with DELETE + DUPLICATE buttons
   Widget _actionCell(AddStockController ctrl, StockRowEntry row) {
     final canDelete = ctrl.rows.length > 1;
 
@@ -1474,10 +1475,10 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: AddStockColors.brandGold.withOpacity(0.10),
+                  color: AddStockColors.brandGold.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(7),
                   border: Border.all(
-                    color: AddStockColors.brandGold.withOpacity(0.32),
+                    color: AddStockColors.brandGold.withValues(alpha: 0.32),
                   ),
                 ),
                 child: const Icon(
@@ -1502,12 +1503,12 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
                 height: 32,
                 decoration: BoxDecoration(
                   color: canDelete
-                      ? AddStockColors.danger.withOpacity(0.10)
-                      : AddStockColors.cardBorder.withOpacity(0.40),
+                      ? AddStockColors.danger.withValues(alpha: 0.10)
+                      : AddStockColors.cardBorder.withValues(alpha: 0.40),
                   borderRadius: BorderRadius.circular(7),
                   border: Border.all(
                     color: canDelete
-                        ? AddStockColors.danger.withOpacity(0.32)
+                        ? AddStockColors.danger.withValues(alpha: 0.32)
                         : AddStockColors.cardBorder,
                   ),
                 ),
@@ -1533,7 +1534,7 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
       filled: true,
       fillColor: AddStockColors.inputBg,
       hintStyle: TextStyle(
-        color: AddStockColors.textMuted.withOpacity(0.52),
+        color: AddStockColors.textMuted.withValues(alpha: 0.52),
         fontSize: 12,
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -1556,9 +1557,9 @@ class _GoldStockTableRowState extends State<_GoldStockTableRow> {
   }
 }
 
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Helpers
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 double _wt(double value) => double.parse(value.toStringAsFixed(3));
 
 String _money(double amount) {

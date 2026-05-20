@@ -54,9 +54,9 @@ class PurchaseVoucherPrintService {
           pw.SizedBox(height: 18),
           pw.Container(
             padding: const pw.EdgeInsets.all(12),
-            decoration: pw.BoxDecoration(
+            decoration: const pw.BoxDecoration(
               color: PdfColors.grey100,
-              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+              borderRadius: pw.BorderRadius.all(pw.Radius.circular(6)),
             ),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,

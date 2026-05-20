@@ -42,16 +42,15 @@ class QuickActionPopupOption {
 // MAIN LOGIC CLASS
 // ==========================================
 class QuickActionsLogic extends ChangeNotifier {
-
   // ── State ──────────────────────────────────────────────────────────────────
   String? _pressedId;
   String? _hoveredId;
   bool _isProcessing = false;
   Timer? _pressTimer;
 
-  String? get pressedId    => _pressedId;
-  String? get hoveredId    => _hoveredId;
-  bool   get isProcessing  => _isProcessing;
+  String? get pressedId => _pressedId;
+  String? get hoveredId => _hoveredId;
+  bool get isProcessing => _isProcessing;
 
   bool isPressed(String id) => _pressedId == id;
   bool isHovered(String id) => _hoveredId == id;
@@ -62,36 +61,36 @@ class QuickActionsLogic extends ChangeNotifier {
   // ✅ Button 3: "Adjust"     — popup
   // ==========================================
   static final List<QuickActionItemModel> actions = [
-    QuickActionItemModel(
+    const QuickActionItemModel(
       id: 'new_entry',
       label: 'New Entry',
       icon: Icons.add_circle_outline_rounded,
-      routeId: '',                          // Handled via popup
-      accentColor: const Color(0xFFF59E0B), // Gold
+      routeId: '', // Handled via popup
+      accentColor: Color(0xFFF59E0B), // Gold
       hasPopup: true,
     ),
-    QuickActionItemModel(
+    const QuickActionItemModel(
       id: 'add_stock',
       label: 'Add Stock',
       icon: Icons.inventory_2_rounded,
       routeId: AppRoutes.addStockRoute,
-      accentColor: const Color(0xFF10B981), // Emerald
+      accentColor: Color(0xFF10B981), // Emerald
       hasPopup: false,
     ),
-    QuickActionItemModel(
+    const QuickActionItemModel(
       id: 'adjust',
       label: 'Adjust',
       icon: Icons.tune_rounded,
-      routeId: '',                          // Handled via popup
-      accentColor: const Color(0xFF6366F1), // Indigo
+      routeId: '', // Handled via popup
+      accentColor: Color(0xFF6366F1), // Indigo
       hasPopup: true,
     ),
-    QuickActionItemModel(
+    const QuickActionItemModel(
       id: 'cash_book',
       label: 'Cash Book',
       icon: Icons.account_balance_wallet_rounded,
       routeId: AppRoutes.cashBookRoute,
-      accentColor: const Color(0xFFEC4899), // Pink
+      accentColor: Color(0xFFEC4899), // Pink
       hasPopup: false,
     ),
   ];
@@ -159,14 +158,14 @@ class QuickActionsLogic extends ChangeNotifier {
   // Retrieve popup options based on button ID
   List<QuickActionPopupOption> getPopupOptions(String buttonId) {
     if (buttonId == 'new_entry') return newEntryOptions;
-    if (buttonId == 'adjust')    return adjustOptions;
+    if (buttonId == 'adjust') return adjustOptions;
     return [];
   }
 
   // Retrieve popup title based on button ID
   String getPopupTitle(String buttonId) {
     if (buttonId == 'new_entry') return 'Select an Action';
-    if (buttonId == 'adjust')    return 'Select Adjustment Type';
+    if (buttonId == 'adjust') return 'Select Adjustment Type';
     return '';
   }
 

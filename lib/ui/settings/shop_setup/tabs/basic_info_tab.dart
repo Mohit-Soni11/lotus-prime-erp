@@ -2,7 +2,7 @@
 // FILE: basic_info_tab.dart
 // TYPE: Presentation Layer (UI)
 // AUTHOR: Senior UI/UX Engineer & System Architect
-// DESCRIPTION: 🚀 UPGRADED: True ZERO-LAG granular rebuilds.
+// DESCRIPTION: ðŸš€ UPGRADED: True ZERO-LAG granular rebuilds.
 //              Controllers and FocusNodes successfully moved to UI State.
 //              Memory Leaks eliminated. 60-FPS guaranteed.
 //              [FIXED: White Page Header & Support Display Auto-Sync Bug]
@@ -14,11 +14,11 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 // NOTE: Adjust paths according to your actual folder structure
-import '../../../../logic/setting/shop_setup/tabs/basic_info/basic_info_logic.dart'; 
-import '../../../../theme/settings/shop_setup/tabs/basic_info_tab/basic_info_theme.dart'; 
+import '../../../../logic/setting/shop_setup/tabs/basic_info/basic_info_logic.dart';
+import '../../../../theme/settings/shop_setup/tabs/basic_info_tab/basic_info_theme.dart';
 import '../../../../../../models/setting/shop_setup/shop_profile_model.dart';
 import '../../../../../../models/setting/shop_setup/enums/basic_info_enums.dart';
-import '../../../../ui/settings/shop_setup/tabs/professional_photo_widget.dart'; 
+import '../../../../ui/settings/shop_setup/tabs/professional_photo_widget.dart';
 
 class BasicInfoTab extends StatefulWidget {
   final ShopProfileModel? initialData;
@@ -31,7 +31,7 @@ class BasicInfoTab extends StatefulWidget {
 class BasicInfoTabState extends State<BasicInfoTab> {
   late BasicInfoLogic logic;
 
-  // --- 🚀 UPGRADE: UI ELEMENTS MOVED FROM LOGIC TO STATE ---
+  // --- ðŸš€ UPGRADE: UI ELEMENTS MOVED FROM LOGIC TO STATE ---
   final GlobalKey<FormState> entKey = GlobalKey<FormState>();
   final GlobalKey<FormState> opsKey = GlobalKey<FormState>();
   final GlobalKey<FormState> commKey = GlobalKey<FormState>();
@@ -60,11 +60,11 @@ class BasicInfoTabState extends State<BasicInfoTab> {
   final FocusNode ownerWaFocus = FocusNode();
   final FocusNode estYearFocus = FocusNode();
   final FocusNode branchCodeFocus = FocusNode();
-  
+
   final FocusNode openTimeFocus = FocusNode();
   final FocusNode closeTimeFocus = FocusNode();
   final FocusNode holidayFocus = FocusNode();
-  
+
   final FocusNode brandDisplayFocus = FocusNode();
   final FocusNode emailFocus = FocusNode();
   final FocusNode shopPhoneFocus = FocusNode();
@@ -89,7 +89,9 @@ class BasicInfoTabState extends State<BasicInfoTab> {
     ownerPhoneCtrl.text = data.ownerPhone;
     ownerWaCtrl.text = data.ownerWhatsapp;
     estYearCtrl.text = data.estYear;
-    branchCodeCtrl.text = data.branchCode.isNotEmpty ? data.branchCode : BasicInfoStrings.valDefaultBranch;
+    branchCodeCtrl.text = data.branchCode.isNotEmpty
+        ? data.branchCode
+        : BasicInfoStrings.valDefaultBranch;
 
     openTimeCtrl.text = data.openTime;
     closeTimeCtrl.text = data.closeTime;
@@ -104,13 +106,34 @@ class BasicInfoTabState extends State<BasicInfoTab> {
   void dispose() {
     logic.dispose();
     final disposables = [
-      legalNameCtrl, displayNameCtrl, taglineCtrl, ownerNameCtrl,
-      ownerPhoneCtrl, ownerWaCtrl, estYearCtrl, branchCodeCtrl,
-      openTimeCtrl, closeTimeCtrl, brandDisplayCtrl, emailCtrl,
-      shopPhoneCtrl, shopWaCtrl, legalNameFocus, displayNameFocus,
-      taglineFocus, ownerNameFocus, ownerPhoneFocus, ownerWaFocus,
-      estYearFocus, branchCodeFocus, openTimeFocus, closeTimeFocus,
-      holidayFocus, brandDisplayFocus, emailFocus, shopPhoneFocus,
+      legalNameCtrl,
+      displayNameCtrl,
+      taglineCtrl,
+      ownerNameCtrl,
+      ownerPhoneCtrl,
+      ownerWaCtrl,
+      estYearCtrl,
+      branchCodeCtrl,
+      openTimeCtrl,
+      closeTimeCtrl,
+      brandDisplayCtrl,
+      emailCtrl,
+      shopPhoneCtrl,
+      shopWaCtrl,
+      legalNameFocus,
+      displayNameFocus,
+      taglineFocus,
+      ownerNameFocus,
+      ownerPhoneFocus,
+      ownerWaFocus,
+      estYearFocus,
+      branchCodeFocus,
+      openTimeFocus,
+      closeTimeFocus,
+      holidayFocus,
+      brandDisplayFocus,
+      emailFocus,
+      shopPhoneFocus,
       shopWaFocus
     ];
     for (var item in disposables) {
@@ -119,19 +142,29 @@ class BasicInfoTabState extends State<BasicInfoTab> {
     super.dispose();
   }
 
-  // --- 🚀 UPGRADE: SAFE FOCUS MAPPING ---
+  // --- ðŸš€ UPGRADE: SAFE FOCUS MAPPING ---
   FocusNode? _getNodeByKey(String key) {
     switch (key) {
-      case BasicInfoStrings.keyDisplayName: return displayNameFocus;
-      case BasicInfoStrings.keyOwnerName: return ownerNameFocus;
-      case BasicInfoStrings.keyOwnerPhone: return ownerPhoneFocus;
-      case BasicInfoStrings.keyOwnerWa: return ownerWaFocus;
-      case BasicInfoStrings.keyOpenTime: return openTimeFocus;
-      case BasicInfoStrings.keyCloseTime: return closeTimeFocus;
-      case BasicInfoStrings.keyEmail: return emailFocus;
-      case BasicInfoStrings.keyShopPhone: return shopPhoneFocus;
-      case BasicInfoStrings.keyShopWa: return shopWaFocus;
-      default: return null;
+      case BasicInfoStrings.keyDisplayName:
+        return displayNameFocus;
+      case BasicInfoStrings.keyOwnerName:
+        return ownerNameFocus;
+      case BasicInfoStrings.keyOwnerPhone:
+        return ownerPhoneFocus;
+      case BasicInfoStrings.keyOwnerWa:
+        return ownerWaFocus;
+      case BasicInfoStrings.keyOpenTime:
+        return openTimeFocus;
+      case BasicInfoStrings.keyCloseTime:
+        return closeTimeFocus;
+      case BasicInfoStrings.keyEmail:
+        return emailFocus;
+      case BasicInfoStrings.keyShopPhone:
+        return shopPhoneFocus;
+      case BasicInfoStrings.keyShopWa:
+        return shopWaFocus;
+      default:
+        return null;
     }
   }
 
@@ -140,9 +173,15 @@ class BasicInfoTabState extends State<BasicInfoTab> {
 
     bool isLocked;
     switch (section) {
-      case FormSection.enterprise: isLocked = logic.enterpriseLocked.value; break;
-      case FormSection.operations: isLocked = logic.operationsLocked.value; break;
-      case FormSection.communication: isLocked = logic.commLocked.value; break;
+      case FormSection.enterprise:
+        isLocked = logic.enterpriseLocked.value;
+        break;
+      case FormSection.operations:
+        isLocked = logic.operationsLocked.value;
+        break;
+      case FormSection.communication:
+        isLocked = logic.commLocked.value;
+        break;
     }
 
     if (isLocked) {
@@ -151,7 +190,7 @@ class BasicInfoTabState extends State<BasicInfoTab> {
       if (section == FormSection.enterprise) targetNode = legalNameFocus;
       if (section == FormSection.operations) targetNode = openTimeFocus;
       if (section == FormSection.communication) targetNode = brandDisplayFocus;
-      
+
       if (targetNode != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) FocusScope.of(context).requestFocus(targetNode);
@@ -163,15 +202,20 @@ class BasicInfoTabState extends State<BasicInfoTab> {
 
       if (section == FormSection.enterprise) {
         errors = logic.validateEnterprise(
-          displayName: displayNameCtrl.text, ownerName: ownerNameCtrl.text,
-          ownerPhone: ownerPhoneCtrl.text, ownerWa: ownerWaCtrl.text
-        );
+            displayName: displayNameCtrl.text,
+            ownerName: ownerNameCtrl.text,
+            ownerPhone: ownerPhoneCtrl.text,
+            ownerWa: ownerWaCtrl.text);
         saved = await logic.saveEnterprise(errors);
       } else if (section == FormSection.operations) {
-        errors = logic.validateOperations(openTime: openTimeCtrl.text, closeTime: closeTimeCtrl.text);
+        errors = logic.validateOperations(
+            openTime: openTimeCtrl.text, closeTime: closeTimeCtrl.text);
         saved = await logic.saveOperations(errors);
       } else if (section == FormSection.communication) {
-        errors = logic.validateCommunication(email: emailCtrl.text, shopPhone: shopPhoneCtrl.text, shopWa: shopWaCtrl.text);
+        errors = logic.validateCommunication(
+            email: emailCtrl.text,
+            shopPhone: shopPhoneCtrl.text,
+            shopWa: shopWaCtrl.text);
         saved = await logic.saveCommunication(errors);
       }
 
@@ -184,62 +228,80 @@ class BasicInfoTabState extends State<BasicInfoTab> {
     }
   }
 
-  void _showSnackBar({required String message, required IconData icon, required Color color}) {
+  void _showSnackBar(
+      {required String message, required IconData icon, required Color color}) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(icon, color: BasicInfoColors.surfaceWhite, size: 20),
-            const SizedBox(width: 8),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: color,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(BasicInfoStyles.rInputRadius)),
-        duration: const Duration(seconds: 2),
-      )
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Row(
+        children: [
+          Icon(icon, color: BasicInfoColors.surfaceWhite, size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: Text(message)),
+        ],
+      ),
+      backgroundColor: color,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(BasicInfoStyles.rInputRadius)),
+      duration: const Duration(seconds: 2),
+    ));
   }
 
   ShopProfileModel? validateAndSave() {
-    final entErrs = logic.validateEnterprise(displayName: displayNameCtrl.text, ownerName: ownerNameCtrl.text, ownerPhone: ownerPhoneCtrl.text, ownerWa: ownerWaCtrl.text);
-    final opsErrs = logic.validateOperations(openTime: openTimeCtrl.text, closeTime: closeTimeCtrl.text);
-    final commErrs = logic.validateCommunication(email: emailCtrl.text, shopPhone: shopPhoneCtrl.text, shopWa: shopWaCtrl.text);
+    final entErrs = logic.validateEnterprise(
+        displayName: displayNameCtrl.text,
+        ownerName: ownerNameCtrl.text,
+        ownerPhone: ownerPhoneCtrl.text,
+        ownerWa: ownerWaCtrl.text);
+    final opsErrs = logic.validateOperations(
+        openTime: openTimeCtrl.text, closeTime: closeTimeCtrl.text);
+    final commErrs = logic.validateCommunication(
+        email: emailCtrl.text,
+        shopPhone: shopPhoneCtrl.text,
+        shopWa: shopWaCtrl.text);
 
     if (entErrs.isNotEmpty || opsErrs.isNotEmpty || commErrs.isNotEmpty) {
-      _showSnackBar(message: BasicInfoStrings.msgFixErrors, icon: BasicInfoIcons.warning, color: BasicInfoColors.btnDanger);
+      _showSnackBar(
+          message: BasicInfoStrings.msgFixErrors,
+          icon: BasicInfoIcons.warning,
+          color: BasicInfoColors.btnDanger);
       return null;
     }
 
     return logic.generateFinalModel(
-      legalName: legalNameCtrl.text, displayName: displayNameCtrl.text, tagline: taglineCtrl.text,
-      ownerName: ownerNameCtrl.text, ownerPhone: ownerPhoneCtrl.text, ownerWhatsapp: ownerWaCtrl.text,
-      estYear: estYearCtrl.text, branchCode: branchCodeCtrl.text, openTime: openTimeCtrl.text,
-      closeTime: closeTimeCtrl.text, brandDisplayName: brandDisplayCtrl.text, businessEmail: emailCtrl.text,
-      shopPhone: shopPhoneCtrl.text, shopWhatsapp: shopWaCtrl.text,
+      legalName: legalNameCtrl.text,
+      displayName: displayNameCtrl.text,
+      tagline: taglineCtrl.text,
+      ownerName: ownerNameCtrl.text,
+      ownerPhone: ownerPhoneCtrl.text,
+      ownerWhatsapp: ownerWaCtrl.text,
+      estYear: estYearCtrl.text,
+      branchCode: branchCodeCtrl.text,
+      openTime: openTimeCtrl.text,
+      closeTime: closeTimeCtrl.text,
+      brandDisplayName: brandDisplayCtrl.text,
+      businessEmail: emailCtrl.text,
+      shopPhone: shopPhoneCtrl.text,
+      shopWhatsapp: shopWaCtrl.text,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        bool isDesktop = constraints.maxWidth > 900;
-        return SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 50),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildPageHeader(),
-              const SizedBox(height: 30),
-              if (isDesktop) _buildDesktopLayout() else _buildMobileLayout(),
-            ],
-          ),
-        );
-      }
-    );
+    return LayoutBuilder(builder: (context, constraints) {
+      bool isDesktop = constraints.maxWidth > 900;
+      return SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 50),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildPageHeader(),
+            const SizedBox(height: 30),
+            if (isDesktop) _buildDesktopLayout() else _buildMobileLayout(),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildDesktopLayout() {
@@ -286,11 +348,14 @@ class BasicInfoTabState extends State<BasicInfoTab> {
           subtitle: BasicInfoStrings.subIdentity,
           icon: BasicInfoIcons.brandIdentity,
           defaultShape: "circle",
-          heroTag: "hero_identity_logo", 
+          heroTag: "hero_identity_logo",
           onImageSaved: (File? file) async {
             String? error = await logic.updateLogo(file);
             if (error != null && mounted) {
-              _showSnackBar(message: error, icon: BasicInfoIcons.error, color: BasicInfoColors.btnDanger);
+              _showSnackBar(
+                  message: error,
+                  icon: BasicInfoIcons.error,
+                  color: BasicInfoColors.btnDanger);
             }
           },
         ),
@@ -300,11 +365,14 @@ class BasicInfoTabState extends State<BasicInfoTab> {
           subtitle: BasicInfoStrings.subSignature,
           icon: BasicInfoIcons.authSignature,
           defaultShape: "square",
-          heroTag: "hero_auth_signature", 
+          heroTag: "hero_auth_signature",
           onImageSaved: (File? file) async {
             String? error = await logic.updateSignature(file);
             if (error != null && mounted) {
-              _showSnackBar(message: error, icon: BasicInfoIcons.error, color: BasicInfoColors.btnDanger);
+              _showSnackBar(
+                  message: error,
+                  icon: BasicInfoIcons.error,
+                  color: BasicInfoColors.btnDanger);
             }
           },
         ),
@@ -322,19 +390,20 @@ class BasicInfoTabState extends State<BasicInfoTab> {
             Text(
               BasicInfoStrings.pageTitle,
               style: GoogleFonts.manrope(
-                fontSize: BasicInfoStyles.szPageTitle, 
-                fontWeight: FontWeight.w800, 
-                color: BasicInfoColors.surfaceWhite, // 🚀 FIX: Updated to White
-                letterSpacing: -0.5
-              ),
+                  fontSize: BasicInfoStyles.szPageTitle,
+                  fontWeight: FontWeight.w800,
+                  color: BasicInfoColors
+                      .surfaceWhite, // ðŸš€ FIX: Updated to White
+                  letterSpacing: -0.5),
             ),
             const SizedBox(height: 4),
             Text(
               BasicInfoStrings.pageSub,
               style: GoogleFonts.inter(
-                fontSize: BasicInfoStyles.szPageSub, 
-                color: BasicInfoColors.surfaceWhite.withOpacity(0.7) // 🚀 FIX: Updated to White with opacity
-              ),
+                  fontSize: BasicInfoStyles.szPageSub,
+                  color: BasicInfoColors.surfaceWhite.withValues(
+                      alpha: 0.7) // ðŸš€ FIX: Updated to White with opacity
+                  ),
             ),
           ],
         ),
@@ -343,20 +412,21 @@ class BasicInfoTabState extends State<BasicInfoTab> {
           decoration: BoxDecoration(
             color: BasicInfoColors.statusActiveBg,
             borderRadius: BorderRadius.circular(BasicInfoStyles.rStatusPill),
-            border: Border.all(color: BasicInfoColors.statusActiveText.withOpacity(0.3)),
+            border: Border.all(
+                color: BasicInfoColors.statusActiveText.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
-              const Icon(BasicInfoIcons.statusActive, size: 16, color: BasicInfoColors.statusActiveText),
+              const Icon(BasicInfoIcons.statusActive,
+                  size: 16, color: BasicInfoColors.statusActiveText),
               const SizedBox(width: 8),
               Text(
                 BasicInfoStrings.statusActive,
                 style: GoogleFonts.inter(
-                  color: BasicInfoColors.statusActiveText, 
-                  fontWeight: FontWeight.w700, 
-                  fontSize: BasicInfoStyles.szBadgeText,
-                  letterSpacing: 0.5
-                ),
+                    color: BasicInfoColors.statusActiveText,
+                    fontWeight: FontWeight.w700,
+                    fontSize: BasicInfoStyles.szBadgeText,
+                    letterSpacing: 0.5),
               ),
             ],
           ),
@@ -365,287 +435,406 @@ class BasicInfoTabState extends State<BasicInfoTab> {
     );
   }
 
-  // 🚀 UPGRADE: GRANULAR LISTENABLE BUILDERS
+  // ðŸš€ UPGRADE: GRANULAR LISTENABLE BUILDERS
   Widget _buildEnterpriseCard() {
     return ListenableBuilder(
-      listenable: Listenable.merge([logic.enterpriseLocked, logic.loadingSection]), 
-      builder: (context, _) {
-        bool isLocked = logic.enterpriseLocked.value;
-        return _buildThemeCard(
-          section: FormSection.enterprise,
-          title: BasicInfoStrings.secEnterprise,
-          icon: BasicInfoIcons.enterprise,
-          isLocked: isLocked,
-          onToggle: () => _handleSectionToggle(FormSection.enterprise, BasicInfoStrings.secEnterprise),
-          isVerified: displayNameCtrl.text.isNotEmpty && ownerPhoneCtrl.text.length == 10,
-          formKey: entKey,
-          children: [
-            _buildSectionLabel(BasicInfoStrings.subEnterprise),
-            const SizedBox(height: 16),
-            _ThemeInputField(
-              label: BasicInfoStrings.lblLegalName, hint: BasicInfoStrings.hintLegalName, 
-              icon: BasicInfoIcons.legalName, ctrl: legalNameCtrl, 
-              isLocked: isLocked, focusNode: legalNameFocus, nextFocus: displayNameFocus,
-              brandColor: BasicInfoColors.brandIdentity, 
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: _ThemeInputField(
-                  label: BasicInfoStrings.lblDisplayName, hint: BasicInfoStrings.hintDisplayName, 
-                  icon: BasicInfoIcons.displayName, ctrl: displayNameCtrl, 
-                  isLocked: isLocked, focusNode: displayNameFocus, nextFocus: taglineFocus,
-                  brandColor: BasicInfoColors.brandDisplay,
-                  onChanged: (val) {
-                    // 🚀 FIX: logic.markBrandDisplayTouched() removed from here!
-                    if(logic.shouldSyncBrandDisplay) brandDisplayCtrl.text = val;
-                  },
-                )),
-                const SizedBox(width: 20),
-                Expanded(child: _ThemeInputField(
-                  label: BasicInfoStrings.lblTagline, hint: BasicInfoStrings.hintTagline, 
-                  icon: BasicInfoIcons.tagline, ctrl: taglineCtrl, 
-                  isLocked: isLocked, focusNode: taglineFocus, nextFocus: ownerNameFocus,
-                  brandColor: BasicInfoColors.brandIdentity, 
-                )),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildSectionLabel(BasicInfoStrings.subProprietor),
-            const SizedBox(height: 16),
-            _ThemeInputField(
-              label: BasicInfoStrings.lblOwner, hint: BasicInfoStrings.hintOwner, 
-              icon: BasicInfoIcons.owner, ctrl: ownerNameCtrl, 
-              isLocked: isLocked, focusNode: ownerNameFocus, nextFocus: ownerPhoneFocus,
-              brandColor: BasicInfoColors.brandIdentity, 
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: _ThemeInputField(
-                  label: BasicInfoStrings.lblPhone, hint: BasicInfoStrings.hintPhone, 
-                  icon: BasicInfoIcons.phone, ctrl: ownerPhoneCtrl, 
-                  isLocked: isLocked, inputType: TextInputType.phone, focusNode: ownerPhoneFocus, nextFocus: ownerWaFocus,
-                  maxLength: 10, brandColor: BasicInfoColors.brandPhone, 
-                  onChanged: (val) {
-                     if (logic.shouldSyncOwnerWa) ownerWaCtrl.text = val;
-                     if (logic.shouldSyncShopPhone) shopPhoneCtrl.text = val;
-                     if (logic.shouldSyncShopWa) shopWaCtrl.text = val;
-                  },
-                )),
-                const SizedBox(width: 20),
-                Expanded(child: _ThemeInputField(
-                  label: BasicInfoStrings.lblWhatsapp, hint: BasicInfoStrings.hintWhatsapp, 
-                  icon: BasicInfoIcons.whatsapp, brandColor: BasicInfoColors.brandWhatsapp,
-                  ctrl: ownerWaCtrl, isLocked: isLocked, inputType: TextInputType.phone, focusNode: ownerWaFocus, nextFocus: estYearFocus,
-                  maxLength: 10,
-                  onChanged: (val) {
-                     logic.markWaTouched(); 
-                     if (logic.shouldSyncShopWa) shopWaCtrl.text = val;
-                  },
-                )),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildSectionLabel(BasicInfoStrings.subMeta),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: _ThemeInputField(
-                  label: BasicInfoStrings.lblEstYear, hint: BasicInfoStrings.hintEstYear, 
-                  icon: BasicInfoIcons.calendar, ctrl: estYearCtrl, 
-                  isLocked: isLocked, inputType: TextInputType.number, focusNode: estYearFocus, nextFocus: branchCodeFocus,
-                  brandColor: BasicInfoColors.brandTime, 
-                )),
-                const SizedBox(width: 20),
-                Expanded(child: _ThemeInputField(
-                  label: BasicInfoStrings.lblBranch, hint: BasicInfoStrings.hintBranch, 
-                  icon: BasicInfoIcons.branchCode, ctrl: branchCodeCtrl, 
-                  isLocked: isLocked, focusNode: branchCodeFocus, isLastField: true,
-                  brandColor: BasicInfoColors.brandLocation, 
-                  onFieldSubmitted: (_) => _handleSectionToggle(FormSection.enterprise, BasicInfoStrings.secEnterprise),
-                )),
-              ],
-            ),
-          ],
-        );
-      }
-    );
+        listenable:
+            Listenable.merge([logic.enterpriseLocked, logic.loadingSection]),
+        builder: (context, _) {
+          bool isLocked = logic.enterpriseLocked.value;
+          return _buildThemeCard(
+            section: FormSection.enterprise,
+            title: BasicInfoStrings.secEnterprise,
+            icon: BasicInfoIcons.enterprise,
+            isLocked: isLocked,
+            onToggle: () => _handleSectionToggle(
+                FormSection.enterprise, BasicInfoStrings.secEnterprise),
+            isVerified: displayNameCtrl.text.isNotEmpty &&
+                ownerPhoneCtrl.text.length == 10,
+            formKey: entKey,
+            children: [
+              _buildSectionLabel(BasicInfoStrings.subEnterprise),
+              const SizedBox(height: 16),
+              _ThemeInputField(
+                label: BasicInfoStrings.lblLegalName,
+                hint: BasicInfoStrings.hintLegalName,
+                icon: BasicInfoIcons.legalName,
+                ctrl: legalNameCtrl,
+                isLocked: isLocked,
+                focusNode: legalNameFocus,
+                nextFocus: displayNameFocus,
+                brandColor: BasicInfoColors.brandIdentity,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                      child: _ThemeInputField(
+                    label: BasicInfoStrings.lblDisplayName,
+                    hint: BasicInfoStrings.hintDisplayName,
+                    icon: BasicInfoIcons.displayName,
+                    ctrl: displayNameCtrl,
+                    isLocked: isLocked,
+                    focusNode: displayNameFocus,
+                    nextFocus: taglineFocus,
+                    brandColor: BasicInfoColors.brandDisplay,
+                    onChanged: (val) {
+                      // ðŸš€ FIX: logic.markBrandDisplayTouched() removed from here!
+                      if (logic.shouldSyncBrandDisplay) {
+                        brandDisplayCtrl.text = val;
+                      }
+                    },
+                  )),
+                  const SizedBox(width: 20),
+                  Expanded(
+                      child: _ThemeInputField(
+                    label: BasicInfoStrings.lblTagline,
+                    hint: BasicInfoStrings.hintTagline,
+                    icon: BasicInfoIcons.tagline,
+                    ctrl: taglineCtrl,
+                    isLocked: isLocked,
+                    focusNode: taglineFocus,
+                    nextFocus: ownerNameFocus,
+                    brandColor: BasicInfoColors.brandIdentity,
+                  )),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _buildSectionLabel(BasicInfoStrings.subProprietor),
+              const SizedBox(height: 16),
+              _ThemeInputField(
+                label: BasicInfoStrings.lblOwner,
+                hint: BasicInfoStrings.hintOwner,
+                icon: BasicInfoIcons.owner,
+                ctrl: ownerNameCtrl,
+                isLocked: isLocked,
+                focusNode: ownerNameFocus,
+                nextFocus: ownerPhoneFocus,
+                brandColor: BasicInfoColors.brandIdentity,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                      child: _ThemeInputField(
+                    label: BasicInfoStrings.lblPhone,
+                    hint: BasicInfoStrings.hintPhone,
+                    icon: BasicInfoIcons.phone,
+                    ctrl: ownerPhoneCtrl,
+                    isLocked: isLocked,
+                    inputType: TextInputType.phone,
+                    focusNode: ownerPhoneFocus,
+                    nextFocus: ownerWaFocus,
+                    maxLength: 10,
+                    brandColor: BasicInfoColors.brandPhone,
+                    onChanged: (val) {
+                      if (logic.shouldSyncOwnerWa) ownerWaCtrl.text = val;
+                      if (logic.shouldSyncShopPhone) shopPhoneCtrl.text = val;
+                      if (logic.shouldSyncShopWa) shopWaCtrl.text = val;
+                    },
+                  )),
+                  const SizedBox(width: 20),
+                  Expanded(
+                      child: _ThemeInputField(
+                    label: BasicInfoStrings.lblWhatsapp,
+                    hint: BasicInfoStrings.hintWhatsapp,
+                    icon: BasicInfoIcons.whatsapp,
+                    brandColor: BasicInfoColors.brandWhatsapp,
+                    ctrl: ownerWaCtrl,
+                    isLocked: isLocked,
+                    inputType: TextInputType.phone,
+                    focusNode: ownerWaFocus,
+                    nextFocus: estYearFocus,
+                    maxLength: 10,
+                    onChanged: (val) {
+                      logic.markWaTouched();
+                      if (logic.shouldSyncShopWa) shopWaCtrl.text = val;
+                    },
+                  )),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _buildSectionLabel(BasicInfoStrings.subMeta),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                      child: _ThemeInputField(
+                    label: BasicInfoStrings.lblEstYear,
+                    hint: BasicInfoStrings.hintEstYear,
+                    icon: BasicInfoIcons.calendar,
+                    ctrl: estYearCtrl,
+                    isLocked: isLocked,
+                    inputType: TextInputType.number,
+                    focusNode: estYearFocus,
+                    nextFocus: branchCodeFocus,
+                    brandColor: BasicInfoColors.brandTime,
+                  )),
+                  const SizedBox(width: 20),
+                  Expanded(
+                      child: _ThemeInputField(
+                    label: BasicInfoStrings.lblBranch,
+                    hint: BasicInfoStrings.hintBranch,
+                    icon: BasicInfoIcons.branchCode,
+                    ctrl: branchCodeCtrl,
+                    isLocked: isLocked,
+                    focusNode: branchCodeFocus,
+                    isLastField: true,
+                    brandColor: BasicInfoColors.brandLocation,
+                    onFieldSubmitted: (_) => _handleSectionToggle(
+                        FormSection.enterprise, BasicInfoStrings.secEnterprise),
+                  )),
+                ],
+              ),
+            ],
+          );
+        });
   }
 
   Widget _buildOperationsCard() {
     return ListenableBuilder(
-      listenable: Listenable.merge([logic.operationsLocked, logic.loadingSection, holidayFocus]),
-      builder: (context, _) {
-        bool isLocked = logic.operationsLocked.value;
-        bool isHolidayFocused = holidayFocus.hasFocus && !isLocked;
+        listenable: Listenable.merge(
+            [logic.operationsLocked, logic.loadingSection, holidayFocus]),
+        builder: (context, _) {
+          bool isLocked = logic.operationsLocked.value;
+          bool isHolidayFocused = holidayFocus.hasFocus && !isLocked;
 
-        return _buildThemeCard(
-          section: FormSection.operations,
-          title: BasicInfoStrings.secOperations,
-          icon: BasicInfoIcons.operations,
-          isLocked: isLocked,
-          onToggle: () => _handleSectionToggle(FormSection.operations, BasicInfoStrings.secOperations),
-          isVerified: openTimeCtrl.text.isNotEmpty && closeTimeCtrl.text.isNotEmpty,
-          formKey: opsKey,
-          children: [
-            _buildSectionLabel(BasicInfoStrings.subHours),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: _ThemeInputField(
-                  label: BasicInfoStrings.lblOpenTime, hint: "HH:MM AM", icon: BasicInfoIcons.timeOpen,
-                  ctrl: openTimeCtrl, isLocked: isLocked, focusNode: openTimeFocus, nextFocus: closeTimeFocus, 
-                  brandColor: BasicInfoColors.brandTime, 
-                )),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                  child: Icon(BasicInfoIcons.arrowRight, color: BasicInfoColors.textMuted),
-                ),
-                Expanded(child: _ThemeInputField(
-                  label: BasicInfoStrings.lblCloseTime, hint: "HH:MM PM", icon: BasicInfoIcons.timeClose,
-                  ctrl: closeTimeCtrl, isLocked: isLocked, focusNode: closeTimeFocus, isLastField: false,
-                  brandColor: BasicInfoColors.textDark, 
-                  onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(holidayFocus),
-                )),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(BasicInfoStrings.lblHoliday,
-                    style: GoogleFonts.manrope(fontSize: BasicInfoStyles.szFieldLabel, fontWeight: FontWeight.w700, color: BasicInfoColors.textBody)
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  height: BasicInfoStyles.hInputField,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: isLocked ? BasicInfoColors.inputBgLocked : BasicInfoColors.inputBg,
-                    borderRadius: BorderRadius.circular(BasicInfoStyles.rInputRadius),
-                    border: isHolidayFocused
-                        ? Border.all(color: BasicInfoColors.goldAccent, width: 2)
-                        : Border.all(color: BasicInfoColors.borderLight),
+          return _buildThemeCard(
+            section: FormSection.operations,
+            title: BasicInfoStrings.secOperations,
+            icon: BasicInfoIcons.operations,
+            isLocked: isLocked,
+            onToggle: () => _handleSectionToggle(
+                FormSection.operations, BasicInfoStrings.secOperations),
+            isVerified:
+                openTimeCtrl.text.isNotEmpty && closeTimeCtrl.text.isNotEmpty,
+            formKey: opsKey,
+            children: [
+              _buildSectionLabel(BasicInfoStrings.subHours),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                      child: _ThemeInputField(
+                    label: BasicInfoStrings.lblOpenTime,
+                    hint: "HH:MM AM",
+                    icon: BasicInfoIcons.timeOpen,
+                    ctrl: openTimeCtrl,
+                    isLocked: isLocked,
+                    focusNode: openTimeFocus,
+                    nextFocus: closeTimeFocus,
+                    brandColor: BasicInfoColors.brandTime,
+                  )),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                    child: Icon(BasicInfoIcons.arrowRight,
+                        color: BasicInfoColors.textMuted),
                   ),
-                  child: isLocked ? _buildLockedDropdown() : _buildUnlockedDropdown(isHolidayFocused),
-                ),
-              ],
-            )
-          ],
-        );
-      }
-    );
+                  Expanded(
+                      child: _ThemeInputField(
+                    label: BasicInfoStrings.lblCloseTime,
+                    hint: "HH:MM PM",
+                    icon: BasicInfoIcons.timeClose,
+                    ctrl: closeTimeCtrl,
+                    isLocked: isLocked,
+                    focusNode: closeTimeFocus,
+                    isLastField: false,
+                    brandColor: BasicInfoColors.textDark,
+                    onFieldSubmitted: (_) =>
+                        FocusScope.of(context).requestFocus(holidayFocus),
+                  )),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(BasicInfoStrings.lblHoliday,
+                      style: GoogleFonts.manrope(
+                          fontSize: BasicInfoStyles.szFieldLabel,
+                          fontWeight: FontWeight.w700,
+                          color: BasicInfoColors.textBody)),
+                  const SizedBox(height: 8),
+                  Container(
+                    height: BasicInfoStyles.hInputField,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: isLocked
+                          ? BasicInfoColors.inputBgLocked
+                          : BasicInfoColors.inputBg,
+                      borderRadius:
+                          BorderRadius.circular(BasicInfoStyles.rInputRadius),
+                      border: isHolidayFocused
+                          ? Border.all(
+                              color: BasicInfoColors.goldAccent, width: 2)
+                          : Border.all(color: BasicInfoColors.borderLight),
+                    ),
+                    child: isLocked
+                        ? _buildLockedDropdown()
+                        : _buildUnlockedDropdown(isHolidayFocused),
+                  ),
+                ],
+              )
+            ],
+          );
+        });
   }
 
   Widget _buildLockedDropdown() {
     return ValueListenableBuilder<String>(
-      valueListenable: logic.selectedClosureDay,
-      builder: (context, day, _) {
-        return Row(
-          children: [
-            const Icon(BasicInfoIcons.calendar, size: 20, color: BasicInfoColors.brandIdentity),
-            const SizedBox(width: 12),
-            Container(width: 1, height: 24, color: BasicInfoColors.borderLight),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                day,
-                style: GoogleFonts.manrope(fontSize: BasicInfoStyles.szFieldText, fontWeight: FontWeight.w700, color: BasicInfoColors.textDark),
+        valueListenable: logic.selectedClosureDay,
+        builder: (context, day, _) {
+          return Row(
+            children: [
+              const Icon(BasicInfoIcons.calendar,
+                  size: 20, color: BasicInfoColors.brandIdentity),
+              const SizedBox(width: 12),
+              Container(
+                  width: 1, height: 24, color: BasicInfoColors.borderLight),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  day,
+                  style: GoogleFonts.manrope(
+                      fontSize: BasicInfoStyles.szFieldText,
+                      fontWeight: FontWeight.w700,
+                      color: BasicInfoColors.textDark),
+                ),
               ),
-            ),
-            Icon(BasicInfoIcons.lock, size: 16, color: BasicInfoColors.textHint.withOpacity(0.5)),
-          ],
-        );
-      }
-    );
+              Icon(BasicInfoIcons.lock,
+                  size: 16,
+                  color: BasicInfoColors.textHint.withValues(alpha: 0.5)),
+            ],
+          );
+        });
   }
 
   Widget _buildUnlockedDropdown(bool isFocused) {
     return ValueListenableBuilder<String>(
-      valueListenable: logic.selectedClosureDay,
-      builder: (context, day, _) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            focusColor: BasicInfoColors.goldAccent.withOpacity(0.2), hoverColor: BasicInfoColors.goldAccent.withOpacity(0.1), canvasColor: BasicInfoColors.cardBg, 
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: day, focusNode: holidayFocus, isExpanded: true,
-              icon: Icon(BasicInfoIcons.dropdown, color: isFocused ? BasicInfoColors.goldAccent : BasicInfoColors.textHint),
-              style: GoogleFonts.manrope(fontSize: BasicInfoStyles.szFieldText, fontWeight: FontWeight.w700, color: BasicInfoColors.textDark),
-              onChanged: (val) => logic.updateClosureDay(val),
-              items: logic.weekDays.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+        valueListenable: logic.selectedClosureDay,
+        builder: (context, day, _) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              focusColor: BasicInfoColors.goldAccent.withValues(alpha: 0.2),
+              hoverColor: BasicInfoColors.goldAccent.withValues(alpha: 0.1),
+              canvasColor: BasicInfoColors.cardBg,
             ),
-          ),
-        );
-      }
-    );
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: day,
+                focusNode: holidayFocus,
+                isExpanded: true,
+                icon: Icon(BasicInfoIcons.dropdown,
+                    color: isFocused
+                        ? BasicInfoColors.goldAccent
+                        : BasicInfoColors.textHint),
+                style: GoogleFonts.manrope(
+                    fontSize: BasicInfoStyles.szFieldText,
+                    fontWeight: FontWeight.w700,
+                    color: BasicInfoColors.textDark),
+                onChanged: (val) => logic.updateClosureDay(val),
+                items: logic.weekDays
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
+              ),
+            ),
+          );
+        });
   }
 
   Widget _buildCommunicationCard() {
     return ListenableBuilder(
-      listenable: Listenable.merge([logic.commLocked, logic.loadingSection]),
-      builder: (context, _) {
-        bool isLocked = logic.commLocked.value;
-        
-        return _buildThemeCard(
-          section: FormSection.communication,
-          title: BasicInfoStrings.secCommunication,
-          icon: BasicInfoIcons.communication,
-          isLocked: isLocked,
-          onToggle: () => _handleSectionToggle(FormSection.communication, BasicInfoStrings.secCommunication),
-          isVerified: shopPhoneCtrl.text.length == 10,
-          formKey: commKey,
-          children: [
-            _buildSectionLabel(BasicInfoStrings.subTouchpoints),
-            const SizedBox(height: 16),
-            _ThemeInputField(
-              label: BasicInfoStrings.lblBrandDisplay, hint: BasicInfoStrings.hintBrandDisplay, 
-              icon: BasicInfoIcons.brandDisplay, ctrl: brandDisplayCtrl, 
-              isLocked: isLocked, focusNode: brandDisplayFocus, nextFocus: emailFocus,
-              brandColor: BasicInfoColors.brandDisplay, 
-              onChanged: (val) => logic.markBrandDisplayTouched(),
-            ),
-            const SizedBox(height: 16),
-            _ThemeInputField(
-              label: BasicInfoStrings.lblEmail, hint: BasicInfoStrings.hintEmail, 
-              icon: BasicInfoIcons.email, ctrl: emailCtrl, 
-              isLocked: isLocked, inputType: TextInputType.emailAddress, focusNode: emailFocus, nextFocus: shopPhoneFocus,
-              brandColor: BasicInfoColors.brandEmail, 
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: _ThemeInputField(
-                  label: BasicInfoStrings.lblHelpPhone, hint: BasicInfoStrings.hintPhone, 
-                  icon: BasicInfoIcons.phone, ctrl: shopPhoneCtrl, 
-                  isLocked: isLocked, inputType: TextInputType.phone, focusNode: shopPhoneFocus, nextFocus: shopWaFocus,
-                  maxLength: 10, brandColor: BasicInfoColors.brandPhone, 
-                  onChanged: (val) => logic.markShopPhoneTouched(),
-                )),
-                const SizedBox(width: 20),
-                Expanded(child: _ThemeInputField(
-                  label: BasicInfoStrings.lblBizWhatsapp, hint: BasicInfoStrings.hintWhatsapp, 
-                  icon: BasicInfoIcons.whatsapp, brandColor: BasicInfoColors.brandWhatsapp,
-                  ctrl: shopWaCtrl, isLocked: isLocked, inputType: TextInputType.phone, focusNode: shopWaFocus,
-                  maxLength: 10, isLastField: true,
-                  onFieldSubmitted: (_) => _handleSectionToggle(FormSection.communication, BasicInfoStrings.secCommunication),
-                  onChanged: (val) => logic.markShopWaTouched(), 
-                )),
-              ],
-            ),
-          ],
-        );
-      }
-    );
+        listenable: Listenable.merge([logic.commLocked, logic.loadingSection]),
+        builder: (context, _) {
+          bool isLocked = logic.commLocked.value;
+
+          return _buildThemeCard(
+            section: FormSection.communication,
+            title: BasicInfoStrings.secCommunication,
+            icon: BasicInfoIcons.communication,
+            isLocked: isLocked,
+            onToggle: () => _handleSectionToggle(
+                FormSection.communication, BasicInfoStrings.secCommunication),
+            isVerified: shopPhoneCtrl.text.length == 10,
+            formKey: commKey,
+            children: [
+              _buildSectionLabel(BasicInfoStrings.subTouchpoints),
+              const SizedBox(height: 16),
+              _ThemeInputField(
+                label: BasicInfoStrings.lblBrandDisplay,
+                hint: BasicInfoStrings.hintBrandDisplay,
+                icon: BasicInfoIcons.brandDisplay,
+                ctrl: brandDisplayCtrl,
+                isLocked: isLocked,
+                focusNode: brandDisplayFocus,
+                nextFocus: emailFocus,
+                brandColor: BasicInfoColors.brandDisplay,
+                onChanged: (val) => logic.markBrandDisplayTouched(),
+              ),
+              const SizedBox(height: 16),
+              _ThemeInputField(
+                label: BasicInfoStrings.lblEmail,
+                hint: BasicInfoStrings.hintEmail,
+                icon: BasicInfoIcons.email,
+                ctrl: emailCtrl,
+                isLocked: isLocked,
+                inputType: TextInputType.emailAddress,
+                focusNode: emailFocus,
+                nextFocus: shopPhoneFocus,
+                brandColor: BasicInfoColors.brandEmail,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                      child: _ThemeInputField(
+                    label: BasicInfoStrings.lblHelpPhone,
+                    hint: BasicInfoStrings.hintPhone,
+                    icon: BasicInfoIcons.phone,
+                    ctrl: shopPhoneCtrl,
+                    isLocked: isLocked,
+                    inputType: TextInputType.phone,
+                    focusNode: shopPhoneFocus,
+                    nextFocus: shopWaFocus,
+                    maxLength: 10,
+                    brandColor: BasicInfoColors.brandPhone,
+                    onChanged: (val) => logic.markShopPhoneTouched(),
+                  )),
+                  const SizedBox(width: 20),
+                  Expanded(
+                      child: _ThemeInputField(
+                    label: BasicInfoStrings.lblBizWhatsapp,
+                    hint: BasicInfoStrings.hintWhatsapp,
+                    icon: BasicInfoIcons.whatsapp,
+                    brandColor: BasicInfoColors.brandWhatsapp,
+                    ctrl: shopWaCtrl,
+                    isLocked: isLocked,
+                    inputType: TextInputType.phone,
+                    focusNode: shopWaFocus,
+                    maxLength: 10,
+                    isLastField: true,
+                    onFieldSubmitted: (_) => _handleSectionToggle(
+                        FormSection.communication,
+                        BasicInfoStrings.secCommunication),
+                    onChanged: (val) => logic.markShopWaTouched(),
+                  )),
+                ],
+              ),
+            ],
+          );
+        });
   }
 
   // --- HELPER WIDGETS ---
 
   Widget _buildThemeCard({
-    required FormSection section, required String title, required IconData icon, required bool isLocked,
-    required VoidCallback onToggle, required List<Widget> children, required GlobalKey<FormState> formKey, 
+    required FormSection section,
+    required String title,
+    required IconData icon,
+    required bool isLocked,
+    required VoidCallback onToggle,
+    required List<Widget> children,
+    required GlobalKey<FormState> formKey,
     bool isVerified = false,
   }) {
     bool isSaving = logic.loadingSection.value == section;
@@ -663,40 +852,80 @@ class BasicInfoTabState extends State<BasicInfoTab> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: BasicInfoColors.goldAccent.withOpacity(0.1), borderRadius: BorderRadius.circular(BasicInfoStyles.rHeaderIcon)),
-                    child: Icon(icon, color: BasicInfoColors.goldAccent, size: 22),
+                    decoration: BoxDecoration(
+                        color:
+                            BasicInfoColors.goldAccent.withValues(alpha: 0.1),
+                        borderRadius:
+                            BorderRadius.circular(BasicInfoStyles.rHeaderIcon)),
+                    child:
+                        Icon(icon, color: BasicInfoColors.goldAccent, size: 22),
                   ),
                   const SizedBox(width: 12),
-                  Text(title, style: GoogleFonts.manrope(fontSize: BasicInfoStyles.szSectionTitle, fontWeight: FontWeight.w700, color: BasicInfoColors.textDark)),
+                  Text(title,
+                      style: GoogleFonts.manrope(
+                          fontSize: BasicInfoStyles.szSectionTitle,
+                          fontWeight: FontWeight.w700,
+                          color: BasicInfoColors.textDark)),
                   if (isVerified) ...[
-                    const SizedBox(width: 8), const Icon(BasicInfoIcons.statusActive, color: BasicInfoColors.iconDefaultSuccess, size: 18),
+                    const SizedBox(width: 8),
+                    const Icon(BasicInfoIcons.statusActive,
+                        color: BasicInfoColors.iconDefaultSuccess, size: 18),
                   ]
                 ],
               ),
-              
               Material(
-                color: BasicInfoColors.transparent, 
+                color: BasicInfoColors.transparent,
                 child: InkWell(
                   onTap: isSaving ? null : onToggle,
-                  borderRadius: BorderRadius.circular(BasicInfoStyles.rStatusPill),
+                  borderRadius:
+                      BorderRadius.circular(BasicInfoStyles.rStatusPill),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
-                      color: isLocked ? BasicInfoColors.inputBgLocked : BasicInfoColors.statusActiveBg, 
-                      borderRadius: BorderRadius.circular(BasicInfoStyles.rStatusPill),
-                      border: Border.all(color: isLocked ? BasicInfoColors.textHint.withOpacity(0.3) : BasicInfoColors.statusActiveText.withOpacity(0.3))
-                    ),
+                        color: isLocked
+                            ? BasicInfoColors.inputBgLocked
+                            : BasicInfoColors.statusActiveBg,
+                        borderRadius:
+                            BorderRadius.circular(BasicInfoStyles.rStatusPill),
+                        border: Border.all(
+                            color: isLocked
+                                ? BasicInfoColors.textHint
+                                    .withValues(alpha: 0.3)
+                                : BasicInfoColors.statusActiveText
+                                    .withValues(alpha: 0.3))),
                     child: Row(
                       children: [
                         if (isSaving)
-                           const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: BasicInfoColors.statusActiveText))
+                          const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: BasicInfoColors.statusActiveText))
                         else
-                           Icon(isLocked ? BasicInfoIcons.lock : BasicInfoIcons.save, size: 16, color: isLocked ? BasicInfoColors.textMuted : BasicInfoColors.statusActiveText),
+                          Icon(
+                              isLocked
+                                  ? BasicInfoIcons.lock
+                                  : BasicInfoIcons.save,
+                              size: 16,
+                              color: isLocked
+                                  ? BasicInfoColors.textMuted
+                                  : BasicInfoColors.statusActiveText),
                         const SizedBox(width: 6),
                         Text(
-                          isSaving ? "Saving..." : (isLocked ? BasicInfoStrings.lblLocked : "Save"),
-                          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: isLocked ? BasicInfoColors.textMuted : BasicInfoColors.statusActiveText),
+                          isSaving
+                              ? "Saving..."
+                              : (isLocked
+                                  ? BasicInfoStrings.lblLocked
+                                  : "Save"),
+                          style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isLocked
+                                  ? BasicInfoColors.textMuted
+                                  : BasicInfoColors.statusActiveText),
                         ),
                       ],
                     ),
@@ -705,10 +934,14 @@ class BasicInfoTabState extends State<BasicInfoTab> {
               )
             ],
           ),
-          const Divider(height: 40, thickness: 1, color: BasicInfoColors.borderLight),
+          const Divider(
+              height: 40, thickness: 1, color: BasicInfoColors.borderLight),
           Form(
-            key: formKey, autovalidateMode: AutovalidateMode.disabled,
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+            key: formKey,
+            autovalidateMode: AutovalidateMode.disabled,
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: children),
           )
         ],
       ),
@@ -716,21 +949,44 @@ class BasicInfoTabState extends State<BasicInfoTab> {
   }
 
   Widget _buildSectionLabel(String text) {
-    return Text(text, style: GoogleFonts.inter(fontSize: BasicInfoStyles.szSectionSub, fontWeight: FontWeight.w800, color: BasicInfoColors.textMuted, letterSpacing: 1.2));
+    return Text(text,
+        style: GoogleFonts.inter(
+            fontSize: BasicInfoStyles.szSectionSub,
+            fontWeight: FontWeight.w800,
+            color: BasicInfoColors.textMuted,
+            letterSpacing: 1.2));
   }
 }
 
 class _ThemeInputField extends StatefulWidget {
-  final String label; final String hint; final IconData icon; final TextEditingController ctrl;
-  final bool isLocked; final FocusNode? focusNode; final FocusNode? nextFocus; final Color? brandColor;
-  final TextInputType inputType; final bool isLastField; final Function(String)? onFieldSubmitted;
-  final int? maxLength; final Function(String)? onChanged;
+  final String label;
+  final String hint;
+  final IconData icon;
+  final TextEditingController ctrl;
+  final bool isLocked;
+  final FocusNode? focusNode;
+  final FocusNode? nextFocus;
+  final Color? brandColor;
+  final TextInputType inputType;
+  final bool isLastField;
+  final Function(String)? onFieldSubmitted;
+  final int? maxLength;
+  final Function(String)? onChanged;
 
   const _ThemeInputField({
-    required this.label, required this.hint, required this.icon, required this.ctrl,
-    required this.isLocked, this.focusNode, this.nextFocus, this.brandColor,
-    this.inputType = TextInputType.text, this.isLastField = false, this.onFieldSubmitted,
-    this.maxLength, this.onChanged,
+    required this.label,
+    required this.hint,
+    required this.icon,
+    required this.ctrl,
+    required this.isLocked,
+    this.focusNode,
+    this.nextFocus,
+    this.brandColor,
+    this.inputType = TextInputType.text,
+    this.isLastField = false,
+    this.onFieldSubmitted,
+    this.maxLength,
+    this.onChanged,
   });
 
   @override
@@ -769,35 +1025,76 @@ class _ThemeInputFieldState extends State<_ThemeInputField> {
 
   @override
   Widget build(BuildContext context) {
-    BoxDecoration boxDecoration = (!widget.isLocked && _hasFocus) ? BasicInfoStyles.activeInputDecoration : BasicInfoStyles.inputDecoration(widget.isLocked);
-    Color iconColor = _hasFocus ? BasicInfoColors.goldAccent : (widget.ctrl.text.isNotEmpty ? (widget.brandColor ?? BasicInfoColors.iconDefaultSuccess) : BasicInfoColors.textHint);
+    BoxDecoration boxDecoration = (!widget.isLocked && _hasFocus)
+        ? BasicInfoStyles.activeInputDecoration
+        : BasicInfoStyles.inputDecoration(widget.isLocked);
+    Color iconColor = _hasFocus
+        ? BasicInfoColors.goldAccent
+        : (widget.ctrl.text.isNotEmpty
+            ? (widget.brandColor ?? BasicInfoColors.iconDefaultSuccess)
+            : BasicInfoColors.textHint);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label, style: GoogleFonts.manrope(fontSize: BasicInfoStyles.szFieldLabel, fontWeight: FontWeight.w700, color: BasicInfoColors.textBody)),
+        Text(widget.label,
+            style: GoogleFonts.manrope(
+                fontSize: BasicInfoStyles.szFieldLabel,
+                fontWeight: FontWeight.w700,
+                color: BasicInfoColors.textBody)),
         const SizedBox(height: 8),
         Container(
-          height: BasicInfoStyles.hInputField, decoration: boxDecoration, padding: const EdgeInsets.symmetric(horizontal: 16),
+          height: BasicInfoStyles.hInputField,
+          decoration: boxDecoration,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              AnimatedSwitcher(duration: const Duration(milliseconds: 300), child: Icon(widget.icon, key: ValueKey(iconColor), size: 20, color: iconColor)),
-              const SizedBox(width: 12), Container(width: 1, height: 24, color: BasicInfoColors.borderLight), const SizedBox(width: 12),
+              AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Icon(widget.icon,
+                      key: ValueKey(iconColor), size: 20, color: iconColor)),
+              const SizedBox(width: 12),
+              Container(
+                  width: 1, height: 24, color: BasicInfoColors.borderLight),
+              const SizedBox(width: 12),
               Expanded(
                 child: TextFormField(
-                  controller: widget.ctrl, readOnly: widget.isLocked, keyboardType: widget.inputType,
-                  focusNode: widget.focusNode, maxLength: widget.maxLength, onChanged: widget.onChanged, 
-                  inputFormatters: widget.maxLength != null ? [LengthLimitingTextInputFormatter(widget.maxLength), FilteringTextInputFormatter.digitsOnly] : [],
-                  textInputAction: widget.isLastField ? TextInputAction.done : TextInputAction.next,
+                  controller: widget.ctrl,
+                  readOnly: widget.isLocked,
+                  keyboardType: widget.inputType,
+                  focusNode: widget.focusNode,
+                  maxLength: widget.maxLength,
+                  onChanged: widget.onChanged,
+                  inputFormatters: widget.maxLength != null
+                      ? [
+                          LengthLimitingTextInputFormatter(widget.maxLength),
+                          FilteringTextInputFormatter.digitsOnly
+                        ]
+                      : [],
+                  textInputAction: widget.isLastField
+                      ? TextInputAction.done
+                      : TextInputAction.next,
                   onFieldSubmitted: (val) {
-                    if (!widget.isLastField && widget.nextFocus != null) FocusScope.of(context).requestFocus(widget.nextFocus);
-                    if (widget.onFieldSubmitted != null) widget.onFieldSubmitted!(val);
+                    if (!widget.isLastField && widget.nextFocus != null) {
+                      FocusScope.of(context).requestFocus(widget.nextFocus);
+                    }
+                    if (widget.onFieldSubmitted != null) {
+                      widget.onFieldSubmitted!(val);
+                    }
                   },
-                  style: GoogleFonts.manrope(fontSize: BasicInfoStyles.szFieldText, fontWeight: FontWeight.w700, color: BasicInfoColors.textDark),
+                  style: GoogleFonts.manrope(
+                      fontSize: BasicInfoStyles.szFieldText,
+                      fontWeight: FontWeight.w700,
+                      color: BasicInfoColors.textDark),
                   decoration: InputDecoration(
-                    border: InputBorder.none, counterText: "", hintText: widget.hint,
-                    hintStyle: GoogleFonts.inter(color: BasicInfoColors.textHint, fontSize: BasicInfoStyles.szFieldHint),
-                    contentPadding: const EdgeInsets.only(bottom: 2), errorStyle: const TextStyle(height: 0),
+                    border: InputBorder.none,
+                    counterText: "",
+                    hintText: widget.hint,
+                    hintStyle: GoogleFonts.inter(
+                        color: BasicInfoColors.textHint,
+                        fontSize: BasicInfoStyles.szFieldHint),
+                    contentPadding: const EdgeInsets.only(bottom: 2),
+                    errorStyle: const TextStyle(height: 0),
                   ),
                 ),
               )

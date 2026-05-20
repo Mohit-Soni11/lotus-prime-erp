@@ -6,14 +6,15 @@ import '../../../models/dashboard/bill_stats_model.dart';
 
 class BillCardLogic {
   // ❌ Singleton Removed: Har widget ka apna dimag (logic) hona chahiye
-  
+
   // Dependency Injection (Testable)
   final AppDatabase _db;
   BillCardLogic({AppDatabase? db}) : _db = db ?? AppDatabase();
 
   // ✅ Simple Controller (Broadcast nahi chahiye kyunki 1-to-1 connection hai)
-  final StreamController<BillStatsModel> _controller = StreamController<BillStatsModel>();
-  
+  final StreamController<BillStatsModel> _controller =
+      StreamController<BillStatsModel>();
+
   Stream<BillStatsModel> get statsStream => _controller.stream;
   StreamSubscription? _dbSubscription;
 
@@ -48,13 +49,13 @@ class BillCardLogic {
 
           // Formatting: ₹ 1,200.50
           final formattedRevenue = NumberFormat.currency(
-            locale: 'en_IN', 
-            symbol: '₹ ', 
-            decimalDigits: 2
-          ).format(totalAmount);
+                  locale: 'en_IN', symbol: '₹ ', decimalDigits: 2)
+              .format(totalAmount);
 
           _controller.add(BillStatsModel(
-            count: totalCount.toString().padLeft(2, '0'), // 01, 05 format looks better
+            count: totalCount
+                .toString()
+                .padLeft(2, '0'), // 01, 05 format looks better
             totalRevenue: formattedRevenue,
           ));
         } else {

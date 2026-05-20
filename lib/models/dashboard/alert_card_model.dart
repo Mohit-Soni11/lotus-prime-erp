@@ -9,19 +9,19 @@
 
 /// Python ke status_level (0, 1, 2) ka Flutter equivalent
 enum AlertStatus {
-  safe,     // 0 → Green strip  → "Normal"
-  warning,  // 1 → Orange strip → "Attention"
+  safe, // 0 → Green strip  → "Normal"
+  warning, // 1 → Orange strip → "Attention"
   critical, // 2 → Red strip    → "Action Needed"
 }
 
 /// Ek alert card ka complete data snapshot
 class AlertCardModel {
-  final String id;           // 'inventory' / 'orders' / 'collections' / 'deliveries'
-  final String title;        // Card header label
-  final String mainValue;    // Big bold text — "GOLD LOW", "3 PENDING", etc
-  final String subText;      // Explanation text below main value
-  final AlertStatus status;  // Determines strip + badge color
-  final String routeId;      // Navigation target
+  final String id; // 'inventory' / 'orders' / 'collections' / 'deliveries'
+  final String title; // Card header label
+  final String mainValue; // Big bold text — "GOLD LOW", "3 PENDING", etc
+  final String subText; // Explanation text below main value
+  final AlertStatus status; // Determines strip + badge color
+  final String routeId; // Navigation target
 
   const AlertCardModel({
     required this.id,

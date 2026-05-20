@@ -14,23 +14,23 @@ import '../karigar_enums/karigar_enums.dart';
 // =============================================================================
 
 class KarigarDirectoryItemModel {
-  final int      id;
-  final String   name;
-  final String   phone;
-  final String?  alternatePhone;
-  final String   specialization;
-  final String   rateType;
-  final double   rateAmount;
-  final String?  address;
-  final String?  city;
-  final double   openingBalance;
-  final bool     isActive;
-  final String?  notes;
+  final int id;
+  final String name;
+  final String phone;
+  final String? alternatePhone;
+  final String specialization;
+  final String rateType;
+  final double rateAmount;
+  final String? address;
+  final String? city;
+  final double openingBalance;
+  final bool isActive;
+  final String? notes;
   final DateTime createdAt;
 
   // Aggregated from issues + receipts
-  final int    activeJobCount;
-  final int    overdueJobCount;
+  final int activeJobCount;
+  final int overdueJobCount;
   final double outstandingBalance;
   final double totalWeightPending; // grams
 
@@ -74,20 +74,33 @@ class KarigarDirectoryItemModel {
   String get rateDisplay {
     final formatted = rateAmount.toStringAsFixed(2);
     switch (KarigarRateType.fromLabel(rateType)) {
-      case KarigarRateType.perGram:  return '₹$formatted/g';
-      case KarigarRateType.perPiece: return '₹$formatted/pc';
-      case KarigarRateType.percent:  return '$formatted%';
+      case KarigarRateType.perGram:
+        return '₹$formatted/g';
+      case KarigarRateType.perPiece:
+        return '₹$formatted/pc';
+      case KarigarRateType.percent:
+        return '$formatted%';
     }
   }
 
-  bool get hasActiveJobs    => activeJobCount > 0;
-  bool get hasOverdueJobs   => overdueJobCount > 0;
-  bool get hasOutstanding   => outstandingBalance > 0;
+  bool get hasActiveJobs => activeJobCount > 0;
+  bool get hasOverdueJobs => overdueJobCount > 0;
+  bool get hasOutstanding => outstandingBalance > 0;
 
   String get memberSince {
     final months = [
-      'Jan','Feb','Mar','Apr','May','Jun',
-      'Jul','Aug','Sep','Oct','Nov','Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[createdAt.month - 1]} ${createdAt.year}';
   }
@@ -98,12 +111,12 @@ class KarigarDirectoryItemModel {
 // =============================================================================
 
 class KarigarDirectoryStatsModel {
-  final int    totalActive;
-  final int    totalInactive;
-  final int    newThisMonth;
-  final int    withActiveJobs;
+  final int totalActive;
+  final int totalInactive;
+  final int newThisMonth;
+  final int withActiveJobs;
   final double totalOutstanding;
-  final bool   isLoading;
+  final bool isLoading;
 
   const KarigarDirectoryStatsModel({
     required this.totalActive,
@@ -116,20 +129,20 @@ class KarigarDirectoryStatsModel {
 
   factory KarigarDirectoryStatsModel.loading() =>
       const KarigarDirectoryStatsModel(
-        totalActive:      0,
-        totalInactive:    0,
-        newThisMonth:     0,
-        withActiveJobs:   0,
+        totalActive: 0,
+        totalInactive: 0,
+        newThisMonth: 0,
+        withActiveJobs: 0,
         totalOutstanding: 0.0,
-        isLoading:        true,
+        isLoading: true,
       );
 
   factory KarigarDirectoryStatsModel.empty() =>
       const KarigarDirectoryStatsModel(
-        totalActive:      0,
-        totalInactive:    0,
-        newThisMonth:     0,
-        withActiveJobs:   0,
+        totalActive: 0,
+        totalInactive: 0,
+        newThisMonth: 0,
+        withActiveJobs: 0,
         totalOutstanding: 0.0,
       );
 }

@@ -163,8 +163,9 @@ class AuthService {
 
       return "SUCCESS";
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'email-already-in-use')
+      if (e.code == 'email-already-in-use') {
         return "Email is already registered.";
+      }
       if (e.code == 'weak-password') return "Password is too weak.";
       return e.message ?? "Registration Error";
     } catch (e, stackTrace) {
