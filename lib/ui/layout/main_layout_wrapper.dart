@@ -209,12 +209,21 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              SupplierProfileScreen(supplierId: supplierId),
+                          builder: (_) => SupplierProfileScreen(
+                            supplierId: supplierId,
+                            onBack: () => Navigator.pop(context),
+                            onDeleted: () => Navigator.pop(context),
+                            onNewStock: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const AddStockHubScreen(),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       );
-                      return;
-                      // TODO: SupplierProfileScreen â€” coming soon
                     },
                   )));
     } else if (routeId == AppRoutes.addSupplierRoute) {

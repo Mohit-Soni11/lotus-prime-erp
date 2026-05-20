@@ -122,27 +122,27 @@ class InventoryController extends ChangeNotifier {
 
       _stats = InventoryStats(
         openingCount: opening.fold(0, (s, i) => s + i.quantity),
-        openingWeight: opening.fold(0.0, (s, i) => s + i.grossWeight),
+        openingWeight: opening.fold(0.0, (s, i) => s + _grossWeightOf(i)),
         openingValue:
             opening.fold(0.0, (s, i) => s + _valuationOf(i) * i.quantity),
         closingCount: closing.fold(0, (s, i) => s + i.quantity),
-        closingWeight: closing.fold(0.0, (s, i) => s + i.grossWeight),
+        closingWeight: closing.fold(0.0, (s, i) => s + _grossWeightOf(i)),
         closingValue:
             closing.fold(0.0, (s, i) => s + _valuationOf(i) * i.quantity),
         todayAdded: todayIn.fold(0, (s, i) => s + i.quantity),
         todaySold: todaySold.fold(0, (s, i) => s + i.quantity),
         goldCount: gold.fold(0, (s, i) => s + i.quantity),
-        goldWeight: gold.fold(0.0, (s, i) => s + i.grossWeight),
+        goldWeight: gold.fold(0.0, (s, i) => s + _grossWeightOf(i)),
         goldValue: gold.fold(0.0, (s, i) => s + _valuationOf(i) * i.quantity),
         silverCount: silver.fold(0, (s, i) => s + i.quantity),
-        silverWeight: silver.fold(0.0, (s, i) => s + i.grossWeight),
+        silverWeight: silver.fold(0.0, (s, i) => s + _grossWeightOf(i)),
         silverValue:
             silver.fold(0.0, (s, i) => s + _valuationOf(i) * i.quantity),
         diamondCount: diamond.fold(0, (s, i) => s + i.quantity),
         diamondValue:
             diamond.fold(0.0, (s, i) => s + _valuationOf(i) * i.quantity),
         platinumCount: platinum.fold(0, (s, i) => s + i.quantity),
-        platinumWeight: platinum.fold(0.0, (s, i) => s + i.grossWeight),
+        platinumWeight: platinum.fold(0.0, (s, i) => s + _grossWeightOf(i)),
       );
     } catch (e) {
       debugPrint('InventoryController.loadStats error: $e');
@@ -169,4 +169,6 @@ class InventoryController extends ChangeNotifier {
     }
     return item.purchasePrice;
   }
+
+  double _grossWeightOf(StockItem item) => item.grossWeight * item.quantity;
 }

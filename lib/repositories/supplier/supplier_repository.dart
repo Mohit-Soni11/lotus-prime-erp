@@ -224,8 +224,12 @@ class SupplierRepository {
     if (raw == null || raw.trim().isEmpty) {
       return const {};
     }
-    final decoded = jsonDecode(raw);
-    return decoded is Map<String, dynamic> ? decoded : const {};
+    try {
+      final decoded = jsonDecode(raw);
+      return decoded is Map<String, dynamic> ? decoded : const {};
+    } catch (_) {
+      return const {};
+    }
   }
 
   double _readDouble(Object? value) {
