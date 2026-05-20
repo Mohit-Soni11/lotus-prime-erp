@@ -69,16 +69,13 @@ class _SilverDesktopWorkspace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: _silverDesktopTopCardHeight,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(child: _SilverTopCards(ctrl: ctrl)),
-          const SizedBox(width: 16),
-          SizedBox(width: 360, child: AddSilverStockSupplierPanel(ctrl: ctrl)),
-        ],
-      ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _SilverTopCards(ctrl: ctrl)),
+        const SizedBox(width: 16),
+        SizedBox(width: 360, child: AddSilverStockSupplierPanel(ctrl: ctrl)),
+      ],
     );
   }
 }
@@ -96,7 +93,7 @@ class _SilverTopCards extends StatelessWidget {
 
         if (sideBySide) {
           return Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(flex: 42, child: SilverBatchOverviewCard(ctrl: ctrl)),
               const SizedBox(width: 16),

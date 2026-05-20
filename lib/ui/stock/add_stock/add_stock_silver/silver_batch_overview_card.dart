@@ -36,7 +36,7 @@ class SilverBatchOverviewCard extends StatelessWidget {
         ],
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -74,7 +74,7 @@ class SilverBatchOverviewCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${ui.title} intake â€¢ ${ctrl.enteredRowCount} entered row${ctrl.enteredRowCount == 1 ? '' : 's'}',
+                            '${ui.title} intake • ${ctrl.enteredRowCount} entered row${ctrl.enteredRowCount == 1 ? '' : 's'}',
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -97,31 +97,32 @@ class SilverBatchOverviewCard extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 12),
           Container(
             height: 1,
             width: double.infinity,
-            margin: const EdgeInsets.symmetric(vertical: 16),
             color: AddStockColors.cardBorder,
           ),
+          const SizedBox(height: 12),
           Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   gradient: ui.gradient,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: ui.accent.withValues(alpha: 0.18),
-                      blurRadius: 10,
+                      color: ui.accent.withOpacity(0.22),
+                      blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                child: Icon(ui.icon, color: ui.textOnGradient, size: 20),
+                child: Icon(ui.icon, color: ui.textOnGradient, size: 22),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Wrap(
                   spacing: 8,
@@ -135,6 +136,7 @@ class SilverBatchOverviewCard extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -175,7 +177,7 @@ class SilverBatchOverviewCard extends StatelessWidget {
       width: width,
       height: 3,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: opacity),
+        color: color.withOpacity(opacity),
         borderRadius: BorderRadius.circular(2),
       ),
     );
@@ -183,18 +185,18 @@ class SilverBatchOverviewCard extends StatelessWidget {
 
   Widget _pill(String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.20)),
+        border: Border.all(color: color.withOpacity(0.25)),
       ),
       child: Text(
         label,
         style: GoogleFonts.inter(
-          fontSize: 10,
+          fontSize: 12,
           fontWeight: FontWeight.w800,
-          letterSpacing: 0.5,
+          letterSpacing: 0.4,
           color: color,
         ),
       ),
@@ -224,9 +226,9 @@ class _GstStatusPill extends StatelessWidget {
         duration: const Duration(milliseconds: 220),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: activeColor.withValues(alpha: 0.08),
+          color: activeColor.withOpacity(0.08),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: activeColor.withValues(alpha: 0.28)),
+          border: Border.all(color: activeColor.withOpacity(0.28)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -287,7 +289,7 @@ class _StatTile extends StatelessWidget {
                 width: 20,
                 height: 20,
                 decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.12),
+                  color: iconColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Icon(icon, size: 12, color: iconColor),
