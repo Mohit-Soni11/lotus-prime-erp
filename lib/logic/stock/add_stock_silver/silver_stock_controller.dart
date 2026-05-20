@@ -54,13 +54,55 @@ class SilverStockController extends AddStockController {
       enteredSilverRows.fold(0.0, (sum, row) => sum + row.fineWeight);
   double get totalMakingAmount =>
       enteredSilverRows.fold(0.0, (sum, row) => sum + row.makingAmount);
-  SilverPaymentSnapshot get paymentSnapshot => payment.buildSnapshot(
-        totalFineGrams: totalFineWeight,
-        makingAmount: totalMakingAmount,
-        gstEnabled: gstEnabled,
-      );
+
+  // ✨ FIXED: Updated Snapshot logic dynamically linking to the new Payment Controller
+  SilverPaymentSnapshot get paymentSnapshot {
+    payment.updateInvoiceSummary(
+      fine: totalFineWeight,
+      making: totalMakingAmount,
+      notify: false,
+    );
+    payment.syncGstEnabled(gstEnabled, notify: false);
+
+    return SilverPaymentSnapshot(
+      paymentMode: payment.paymentMode,
+      settlementPreference: payment.metalDueReturnType,
+      ratePerKg: payment.todayRatePerKg,
+      ratePerGram: payment.todayRatePerGram,
+      fineValueAmount: payment.fineValueAmount,
+      totalMakingAmount: payment.totalMakingFromItems,
+      subtotalAmount: payment.subTotalAmount,
+      gstPercent: payment.taxPercentage,
+      appliedGstAmount: payment.taxAmount,
+      totalBillAmount: payment.finalBillAmount,
+      cashPaid: payment.cashPaid,
+      upiPaid: payment.upiPaid,
+      bankingPaid: payment.bankPaid,
+      cardPaid: payment.cardPaid,
+      cashBankPaidTotal: payment.cashBankPaidTotal,
+      totalPaidValue: payment.totalPaidValue,
+      dueAmount: payment.dueAmount,
+      returnAmount: payment.returnAmount,
+      hasDue: payment.hasDue,
+      hasReturn: payment.hasReturn,
+      isSettled: payment.isSettled,
+      metalGrossWeight: payment.metalGivenWeight,
+      metalPurity: payment.metalGivenPurity,
+      metalFineCalculated: payment.fineReceived,
+      metalPaidValue: payment.metalReceivedValue,
+      metalFineShortage: payment.fineShortage,
+      metalFineExcess: payment.fineExcess,
+      metalFineShortageValue: payment.fineShortageValue,
+      metalFineExcessValue: payment.fineExcessValue,
+      metalFineEquivalentCash: payment.differenceInCashValue,
+      cashTargetAmount: payment.cashTargetAmount,
+      balanceLabel: payment.balanceLabel,
+    );
+  }
+
   SilverInvoiceSummaryData get invoiceSummary =>
       SilverInvoiceSummaryData.fromController(this);
+
   @override
   int get totalQuantity =>
       enteredSilverRows.fold(0, (sum, row) => sum + row.pieces);
@@ -207,7 +249,8 @@ class SilverStockController extends AddStockController {
     if (rowsToSave.isEmpty) {
       return null;
     }
-    if (!payment.hasRate) {
+    // ✨ FIXED: Check updated rate condition
+    if (payment.todayRatePerKg <= 0) {
       return 'Enter the silver invoice rate before saving this batch.';
     }
     return null;
@@ -255,11 +298,29 @@ class SilverStockController extends AddStockController {
       metalPaidGrossWeight: snapshot.metalGrossWeight,
       metalPaidPurity: snapshot.metalPurity,
       metalPaidFine: snapshot.metalFineCalculated,
-      metalPaidValue: snapshot.metalFineEquivalentCash,
-      dueMode: snapshot.hasDue ? payment.dueSettleMode.name : null,
-      excessMode: snapshot.hasReturn ? payment.excessSettleMode.name : null,
+      metalPaidValue: snapshot.metalPaidValue,
+      // ✨ FIXED: Using the new enum values
+      dueMode: snapshot.hasDue ? snapshot.settlementPreference.name : null,
+      excessMode:
+          snapshot.hasReturn ? snapshot.settlementPreference.name : null,
       promiseDate: snapshot.hasDue ? payment.promiseDate : null,
-      paymentMeta: jsonEncode(payment.buildPersistenceMap(snapshot: snapshot)),
+      paymentMeta: jsonEncode({
+        'mode': snapshot.paymentMode.name,
+        'taxMode': payment.taxMode.name,
+        'gstRatePercent': snapshot.gstPercent,
+        'metalGstPercent': payment.metalGstPercent,
+        'cashGstPercent': payment.cashGstPercent,
+        'settlementPreference': snapshot.settlementPreference.name,
+        'promiseDate':
+            snapshot.hasDue ? payment.promiseDate?.toIso8601String() : null,
+        'cashBankPaidTotal': snapshot.cashBankPaidTotal,
+        'cashTargetAmount': snapshot.cashTargetAmount,
+        'metalFineShortage': snapshot.metalFineShortage,
+        'metalFineExcess': snapshot.metalFineExcess,
+        'metalFineShortageValue': snapshot.metalFineShortageValue,
+        'metalFineExcessValue': snapshot.metalFineExcessValue,
+        'balanceLabel': snapshot.balanceLabel,
+      }),
       party: PurchaseVoucherPartyDraft(
         supplierId: linkedSupplier?.id ?? sessionSupplierId,
         name: supplierName.isEmpty ? 'Walk-in Supplier' : supplierName,
@@ -413,7 +474,8 @@ class SilverStockController extends AddStockController {
   void resetForNewBatch() {
     _silverBatchCode = _generateSilverBatchCode();
     supplierInvoiceNumberCtrl.clear();
-    payment.reset(); // ✅ payment fields bhi reset
+    // ✨ FIXED: Replaced payment.reset()
+    payment.resetSettlement();
     _clearSilverRows();
     super.resetForNewBatch();
     _loadSilverRateSnapshot();
@@ -432,7 +494,7 @@ class SilverStockController extends AddStockController {
   @override
   void dispose() {
     supplierInvoiceNumberCtrl.dispose();
-    payment.dispose(); // ✅ payment controller dispose
+    payment.dispose();
     for (final row in _silverRows) {
       row.removeListener(notifyListeners);
       row.disposeAll();
@@ -461,7 +523,8 @@ class SilverStockController extends AddStockController {
         _silverRateDate = null;
       }
 
-      payment.seedRatePerGram(silverRatePerGram);
+      // ✨ FIXED: Convert gram rate to Kg and feed to controller
+      payment.setTodayRate(silverRatePerGram * 1000);
 
       for (final row in _silverRows) {
         row.applyPurchaseRate(silverRatePerGram);

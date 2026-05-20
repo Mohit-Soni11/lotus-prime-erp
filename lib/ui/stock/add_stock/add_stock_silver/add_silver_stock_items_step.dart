@@ -130,7 +130,8 @@ class _SilverSettlementWorkspace extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SilverPaymentRecordCard(ctrl: ctrl, payment: ctrl.payment),
+          // ✨ FIXED: Updated Constructor Parameter
+          SilverPaymentRecordCard(ctrl: ctrl),
           const SizedBox(height: 16),
           SilverInvoiceSummaryPanel(ctrl: ctrl),
         ],
@@ -145,7 +146,8 @@ class _SilverSettlementWorkspace extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SilverPaymentRecordCard(ctrl: ctrl, payment: ctrl.payment),
+              // ✨ FIXED: Updated Constructor Parameter
+              SilverPaymentRecordCard(ctrl: ctrl),
               const SizedBox(height: 16),
               SilverInvoiceSummaryPanel(ctrl: ctrl),
             ],
@@ -157,7 +159,8 @@ class _SilverSettlementWorkspace extends StatelessWidget {
           children: [
             Expanded(
               flex: 58,
-              child: SilverPaymentRecordCard(ctrl: ctrl, payment: ctrl.payment),
+              // ✨ FIXED: Updated Constructor Parameter
+              child: SilverPaymentRecordCard(ctrl: ctrl),
             ),
             const SizedBox(width: 16),
             Expanded(flex: 42, child: SilverInvoiceSummaryPanel(ctrl: ctrl)),

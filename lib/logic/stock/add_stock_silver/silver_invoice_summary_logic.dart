@@ -3,6 +3,77 @@ import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.d
 import 'package:lotus_erp/models/stock/stock_item_model/add_stock_silver/silver_item_model.dart';
 import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
 
+// ✨ Added Missing Snapshot Class to bridge the logic
+class SilverPaymentSnapshot {
+  final PaymentMode paymentMode;
+  final DueReturnType settlementPreference;
+  final double ratePerKg;
+  final double ratePerGram;
+  final double fineValueAmount;
+  final double totalMakingAmount;
+  final double subtotalAmount;
+  final double gstPercent;
+  final double appliedGstAmount;
+  final double totalBillAmount;
+  final double cashPaid;
+  final double upiPaid;
+  final double bankingPaid;
+  final double cardPaid;
+  final double cashBankPaidTotal;
+  final double totalPaidValue;
+  final double dueAmount;
+  final double returnAmount;
+  final bool hasDue;
+  final bool hasReturn;
+  final bool isSettled;
+  final double metalGrossWeight;
+  final double metalPurity;
+  final double metalFineCalculated;
+  final double metalPaidValue;
+  final double metalFineShortage;
+  final double metalFineExcess;
+  final double metalFineShortageValue;
+  final double metalFineExcessValue;
+  final double metalFineEquivalentCash;
+  final double cashTargetAmount;
+  final String balanceLabel;
+
+  const SilverPaymentSnapshot({
+    required this.paymentMode,
+    required this.settlementPreference,
+    required this.ratePerKg,
+    required this.ratePerGram,
+    required this.fineValueAmount,
+    required this.totalMakingAmount,
+    required this.subtotalAmount,
+    required this.gstPercent,
+    required this.appliedGstAmount,
+    required this.totalBillAmount,
+    required this.cashPaid,
+    required this.upiPaid,
+    required this.bankingPaid,
+    required this.cardPaid,
+    required this.cashBankPaidTotal,
+    required this.totalPaidValue,
+    required this.dueAmount,
+    required this.returnAmount,
+    required this.hasDue,
+    required this.hasReturn,
+    required this.isSettled,
+    required this.metalGrossWeight,
+    required this.metalPurity,
+    required this.metalFineCalculated,
+    required this.metalPaidValue,
+    required this.metalFineShortage,
+    required this.metalFineExcess,
+    required this.metalFineShortageValue,
+    required this.metalFineExcessValue,
+    required this.metalFineEquivalentCash,
+    required this.cashTargetAmount,
+    required this.balanceLabel,
+  });
+}
+
 class SilverInvoiceLineSnapshot {
   final String id;
   final String itemName;
