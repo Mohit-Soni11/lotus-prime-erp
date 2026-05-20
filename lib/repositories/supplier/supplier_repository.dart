@@ -6,6 +6,8 @@
 //               Single source of truth — pattern mirrors karigar_repository.dart.
 // =============================================================================
 
+import 'dart:convert';
+
 import 'package:drift/drift.dart' as drift;
 
 import '../../database/db/app_database.dart';
@@ -57,6 +59,63 @@ class SupplierRepository {
     final row = await (_db.select(_db.suppliers)..where((s) => s.id.equals(id)))
         .getSingleOrNull();
     return row != null ? _toModel(row) : null;
+  }
+
+  Future<SupplierLedgerSnapshot> getLedgerSnapshot(int supplierId) async {
+    final supplier = await getById(supplierId);
+    final rows = await _db.customSelect(
+      '''
+      SELECT
+        id,
+        voucher_no,
+        supplier_invoice_no,
+        party_name,
+        gross_amount,
+        grand_total,
+        total_paid,
+        balance_due,
+        rate_per_kg,
+        metal_paid_gross_weight,
+        metal_paid_purity,
+        metal_paid_fine,
+        metal_paid_value,
+        due_mode,
+        excess_mode,
+        promise_date,
+        payment_meta,
+        payment_status,
+        stock_entry_count,
+        created_at
+      FROM purchase_vouchers
+      WHERE supplier_id = ?
+      ORDER BY created_at DESC
+      ''',
+      variables: [drift.Variable<int>(supplierId)],
+      readsFrom: {_db.suppliers},
+    ).get();
+
+    final history = rows.map(_toPurchaseHistoryItem).toList(growable: false);
+    final openingBalance = supplier?.openingBalance ?? 0.0;
+    final voucherDue = history.fold<double>(
+      0.0,
+      (sum, item) => sum + item.balanceDue,
+    );
+    final oldDueAdjusted = history.fold<double>(
+      0.0,
+      (sum, item) => sum + item.oldDueAdjustedAmount,
+    );
+    final outstanding = (openingBalance + voucherDue - oldDueAdjusted)
+        .clamp(0.0, double.infinity);
+
+    return SupplierLedgerSnapshot(
+      supplierId: supplierId,
+      supplierName: supplier?.businessName ?? '',
+      openingBalance: openingBalance,
+      voucherDueTotal: voucherDue,
+      oldDueAdjustedTotal: oldDueAdjusted,
+      outstandingDue: outstanding.toDouble(),
+      history: history,
+    );
   }
 
   /// Stats for header strip
@@ -132,6 +191,60 @@ class SupplierRepository {
         createdAt: row.createdAt,
       );
 
+  SupplierPurchaseHistoryItem _toPurchaseHistoryItem(drift.QueryRow row) {
+    final meta = _decodeMeta(row.readNullable<String>('payment_meta'));
+    return SupplierPurchaseHistoryItem(
+      voucherId: row.read<int>('id'),
+      voucherNo: row.read<String>('voucher_no'),
+      supplierInvoiceNo: row.readNullable<String>('supplier_invoice_no'),
+      partyName: row.read<String>('party_name'),
+      grossAmount: row.read<double>('gross_amount'),
+      grandTotal: row.read<double>('grand_total'),
+      totalPaid: row.read<double>('total_paid'),
+      balanceDue: row.read<double>('balance_due'),
+      ratePerKg: row.read<double>('rate_per_kg'),
+      metalPaidGrossWeight: row.read<double>('metal_paid_gross_weight'),
+      metalPaidPurity: row.read<double>('metal_paid_purity'),
+      metalPaidFine: row.read<double>('metal_paid_fine'),
+      metalPaidValue: row.read<double>('metal_paid_value'),
+      dueMode: row.readNullable<String>('due_mode'),
+      excessMode: row.readNullable<String>('excess_mode'),
+      promiseDate: _dateFromMillis(row.readNullable<int>('promise_date')),
+      paymentStatus: row.read<String>('payment_status'),
+      stockEntryCount: row.read<int>('stock_entry_count'),
+      createdAt: _dateFromMillis(row.read<int>('created_at')) ?? DateTime.now(),
+      billPhotoPath: meta['billPhotoPath'] as String?,
+      oldDueBefore: _readDouble(meta['oldDueBefore']),
+      oldDueAdjustedAmount: _readDouble(meta['oldDueAdjustedAmount']),
+      metalLineCount: (meta['metalLines'] as List?)?.length ?? 0,
+    );
+  }
+
+  Map<String, dynamic> _decodeMeta(String? raw) {
+    if (raw == null || raw.trim().isEmpty) {
+      return const {};
+    }
+    final decoded = jsonDecode(raw);
+    return decoded is Map<String, dynamic> ? decoded : const {};
+  }
+
+  double _readDouble(Object? value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+    if (value is String) {
+      return double.tryParse(value) ?? 0.0;
+    }
+    return 0.0;
+  }
+
+  DateTime? _dateFromMillis(int? millis) {
+    if (millis == null || millis <= 0) {
+      return null;
+    }
+    return DateTime.fromMillisecondsSinceEpoch(millis);
+  }
+
   SuppliersCompanion _toCompanion(SupplierModel m) => SuppliersCompanion.insert(
         businessName: m.businessName.trim(),
         contactPersonName: drift.Value(m.contactPersonName?.trim()),
@@ -190,4 +303,80 @@ class SupplierStats {
   });
 
   static const loading = SupplierStats(isLoading: true);
+}
+
+class SupplierLedgerSnapshot {
+  final int supplierId;
+  final String supplierName;
+  final double openingBalance;
+  final double voucherDueTotal;
+  final double oldDueAdjustedTotal;
+  final double outstandingDue;
+  final List<SupplierPurchaseHistoryItem> history;
+
+  const SupplierLedgerSnapshot({
+    required this.supplierId,
+    required this.supplierName,
+    required this.openingBalance,
+    required this.voucherDueTotal,
+    required this.oldDueAdjustedTotal,
+    required this.outstandingDue,
+    required this.history,
+  });
+
+  bool get hasOutstandingDue => outstandingDue > 0.005;
+}
+
+class SupplierPurchaseHistoryItem {
+  final int voucherId;
+  final String voucherNo;
+  final String? supplierInvoiceNo;
+  final String partyName;
+  final double grossAmount;
+  final double grandTotal;
+  final double totalPaid;
+  final double balanceDue;
+  final double ratePerKg;
+  final double metalPaidGrossWeight;
+  final double metalPaidPurity;
+  final double metalPaidFine;
+  final double metalPaidValue;
+  final String? dueMode;
+  final String? excessMode;
+  final DateTime? promiseDate;
+  final String paymentStatus;
+  final int stockEntryCount;
+  final DateTime createdAt;
+  final String? billPhotoPath;
+  final double oldDueBefore;
+  final double oldDueAdjustedAmount;
+  final int metalLineCount;
+
+  const SupplierPurchaseHistoryItem({
+    required this.voucherId,
+    required this.voucherNo,
+    this.supplierInvoiceNo,
+    required this.partyName,
+    required this.grossAmount,
+    required this.grandTotal,
+    required this.totalPaid,
+    required this.balanceDue,
+    required this.ratePerKg,
+    required this.metalPaidGrossWeight,
+    required this.metalPaidPurity,
+    required this.metalPaidFine,
+    required this.metalPaidValue,
+    this.dueMode,
+    this.excessMode,
+    this.promiseDate,
+    required this.paymentStatus,
+    required this.stockEntryCount,
+    required this.createdAt,
+    this.billPhotoPath,
+    this.oldDueBefore = 0.0,
+    this.oldDueAdjustedAmount = 0.0,
+    this.metalLineCount = 0,
+  });
+
+  bool get hasBillPhoto => billPhotoPath != null && billPhotoPath!.isNotEmpty;
 }

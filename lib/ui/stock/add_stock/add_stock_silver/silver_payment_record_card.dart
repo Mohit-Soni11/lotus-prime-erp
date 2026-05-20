@@ -468,38 +468,40 @@ class _MetalSettlementPanel extends StatelessWidget {
                 'Enter metal received, then decide how shortage or excess is handled.',
           ),
           const SizedBox(height: 12),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final stacked = constraints.maxWidth < 720;
-              final gross = _PaymentInput(
-                label: 'Metal Given',
-                hint: '0.000',
-                suffixText: 'g',
-                icon: SilverStockIcons.weight,
-                controller: payment.metalGrossCtrl,
-              );
-              final purity = _PaymentInput(
-                label: 'Purity',
-                hint: '0.00',
-                suffixText: '%',
-                icon: SilverStockIcons.purity,
-                controller: payment.metalPurityCtrl,
-              );
-
-              if (stacked) {
-                return Column(
-                  children: [gross, const SizedBox(height: 10), purity],
-                );
-              }
-
-              return Row(
-                children: [
-                  Expanded(child: gross),
-                  const SizedBox(width: 10),
-                  Expanded(child: purity),
-                ],
-              );
-            },
+          Column(
+            children: [
+              for (var i = 0; i < payment.metalLines.length; i++) ...[
+                _MetalGivingLineRow(
+                  index: i,
+                  line: payment.metalLines[i],
+                  canRemove: payment.metalLines.length > 1,
+                  onRemove: () =>
+                      payment.removeMetalLine(payment.metalLines[i].id),
+                ),
+                if (i < payment.metalLines.length - 1)
+                  const SizedBox(height: 10),
+              ],
+            ],
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: payment.addMetalLine,
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text('ADD METAL GIVEN'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: SilverStockColors.paymentFine,
+                side: BorderSide(
+                  color: SilverStockColors.paymentFine.withValues(alpha: 0.35),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              ),
+            ),
           ),
           const SizedBox(height: 12),
           _MetalMathStrip(payment: payment),
@@ -509,6 +511,10 @@ class _MetalSettlementPanel extends StatelessWidget {
             _MetalSettlementChoice(payment: payment),
           ],
           const SizedBox(height: 14),
+          if (payment.hasSupplierPreviousDue) ...[
+            _PreviousDueAdjustmentPanel(payment: payment),
+            const SizedBox(height: 12),
+          ],
           _CashTargetNote(payment: payment),
           const SizedBox(height: 12),
           _CashSplitFields(payment: payment),
@@ -535,11 +541,289 @@ class _CashSettlementPanel extends StatelessWidget {
             subtitle: 'Collect the payable through cash, UPI, bank or card.',
           ),
           const SizedBox(height: 12),
+          if (payment.hasSupplierPreviousDue) ...[
+            _PreviousDueAdjustmentPanel(payment: payment),
+            const SizedBox(height: 12),
+          ],
           _CashTargetNote(payment: payment),
           const SizedBox(height: 12),
           _CashSplitFields(payment: payment),
         ],
       ),
+    );
+  }
+}
+
+class _MetalGivingLineRow extends StatelessWidget {
+  final int index;
+  final SilverMetalSettlementLine line;
+  final bool canRemove;
+  final VoidCallback onRemove;
+
+  const _MetalGivingLineRow({
+    required this.index,
+    required this.line,
+    required this.canRemove,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: line,
+      builder: (context, _) {
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: SilverStockColors.inputBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: SilverStockColors.cardBorder),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final stacked = constraints.maxWidth < 760;
+              final serial = _LineNumberBadge(index: index);
+              final gross = _PaymentInput(
+                label: 'Metal Given',
+                hint: '0.000',
+                suffixText: 'g',
+                icon: SilverStockIcons.weight,
+                controller: line.grossCtrl,
+              );
+              final purity = _PaymentInput(
+                label: 'Purity',
+                hint: '0.00',
+                suffixText: '%',
+                icon: SilverStockIcons.purity,
+                controller: line.purityCtrl,
+              );
+              final fine = _ReadOnlyMetricBox(
+                label: 'Fine',
+                value: _weight(line.fineWeight),
+                color: SilverStockColors.paymentFine,
+              );
+              final remove = IconButton(
+                tooltip: canRemove ? 'Remove metal box' : 'Clear first box',
+                onPressed: onRemove,
+                icon: Icon(
+                  canRemove
+                      ? Icons.delete_outline_rounded
+                      : Icons.backspace_outlined,
+                  size: 19,
+                ),
+                color: SilverStockColors.paymentDue,
+              );
+
+              if (stacked) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(children: [serial, const Spacer(), remove]),
+                    const SizedBox(height: 10),
+                    gross,
+                    const SizedBox(height: 10),
+                    purity,
+                    const SizedBox(height: 10),
+                    fine,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  serial,
+                  const SizedBox(width: 10),
+                  Expanded(flex: 34, child: gross),
+                  const SizedBox(width: 10),
+                  Expanded(flex: 28, child: purity),
+                  const SizedBox(width: 10),
+                  Expanded(flex: 24, child: fine),
+                  const SizedBox(width: 4),
+                  remove,
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PreviousDueAdjustmentPanel extends StatelessWidget {
+  final SilverPaymentController payment;
+
+  const _PreviousDueAdjustmentPanel({required this.payment});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: SilverStockColors.paymentDue.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: SilverStockColors.paymentDue.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const _IconBox(
+                icon: Icons.history_rounded,
+                color: SilverStockColors.paymentDue,
+                size: 34,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'OLD SUPPLIER DUE FOUND',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.9,
+                        color: SilverStockColors.paymentDue,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Current supplier baki: ${_money(payment.supplierPreviousDue)}',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: SilverStockColors.textBody,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: payment.adjustPreviousDue,
+                activeColor: SilverStockColors.paymentDue,
+                onChanged: payment.setAdjustPreviousDue,
+              ),
+            ],
+          ),
+          if (payment.adjustPreviousDue) ...[
+            const SizedBox(height: 12),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final stacked = constraints.maxWidth < 640;
+                final amount = _PaymentInput(
+                  label: 'Adjust Old Due',
+                  hint: '0.00',
+                  icon: Icons.currency_rupee_rounded,
+                  controller: payment.previousDueAdjustmentCtrl,
+                );
+                final fine = _ReadOnlyMetricBox(
+                  label: 'Fine Equivalent',
+                  value: _weight(payment.previousDueFineEquivalent),
+                  color: SilverStockColors.paymentFine,
+                );
+                if (stacked) {
+                  return Column(children: [
+                    amount,
+                    const SizedBox(height: 10),
+                    fine,
+                  ]);
+                }
+                return Row(
+                  children: [
+                    Expanded(child: amount),
+                    const SizedBox(width: 10),
+                    Expanded(child: fine),
+                  ],
+                );
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LineNumberBadge extends StatelessWidget {
+  final int index;
+
+  const _LineNumberBadge({required this.index});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 36,
+      height: 36,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: SilverStockColors.paymentFine.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: SilverStockColors.paymentFine.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Text(
+        '${index + 1}',
+        style: GoogleFonts.manrope(
+          fontSize: 14,
+          fontWeight: FontWeight.w900,
+          color: SilverStockColors.paymentFine,
+        ),
+      ),
+    );
+  }
+}
+
+class _ReadOnlyMetricBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _ReadOnlyMetricBox({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.8,
+            color: SilverStockColors.textMuted,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          height: 46,
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: color.withValues(alpha: 0.18)),
+          ),
+          child: Text(
+            value,
+            style: GoogleFonts.manrope(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -685,6 +969,11 @@ class _CashTargetNote extends StatelessWidget {
                 label: 'GST ${payment.taxPercentage.toStringAsFixed(2)}%',
                 value: _money(payment.taxAmount),
               ),
+            if (payment.previousDueAdjustment > 0)
+              _TargetLine(
+                label: 'Old supplier due adjusted',
+                value: _money(payment.previousDueAdjustment),
+              ),
           ]
         : [
             _TargetLine(
@@ -699,6 +988,11 @@ class _CashTargetNote extends StatelessWidget {
               _TargetLine(
                 label: 'GST ${payment.taxPercentage.toStringAsFixed(2)}%',
                 value: _money(payment.taxAmount),
+              ),
+            if (payment.previousDueAdjustment > 0)
+              _TargetLine(
+                label: 'Old supplier due adjusted',
+                value: _money(payment.previousDueAdjustment),
               ),
           ];
 
@@ -1039,15 +1333,21 @@ String _settlementSummary(
   SilverPaymentController payment,
 ) {
   if (snapshot.paymentMode == PaymentMode.cash) {
-    return 'Cash paid ${_money(snapshot.cashBankPaidTotal)} against bill ${_money(snapshot.totalBillAmount)}';
+    final oldDue = snapshot.previousSupplierDueAdjustment > 0
+        ? ' | old due adjusted ${_money(snapshot.previousSupplierDueAdjustment)}'
+        : '';
+    return 'Cash paid ${_money(snapshot.cashBankPaidTotal)} against bill ${_money(snapshot.totalBillAmount)}$oldDue';
   }
 
   if (snapshot.hasDue &&
       snapshot.settlementPreference == DueReturnType.metal &&
       snapshot.metalFineShortage > 0) {
     final cashDue = payment.cashDueBeforePayment;
+    final oldDue = snapshot.previousSupplierDueAdjustment > 0
+        ? ' | old due adjusted ${_money(snapshot.previousSupplierDueAdjustment)}'
+        : '';
     final cashPart = cashDue > 0 ? ' | cash due ${_money(cashDue)}' : '';
-    return 'Fine due ${_weight(snapshot.metalFineShortage)}$cashPart';
+    return 'Fine due ${_weight(snapshot.metalFineShortage)}$cashPart$oldDue';
   }
 
   if (snapshot.hasReturn &&
@@ -1056,7 +1356,10 @@ String _settlementSummary(
     return 'Return fine ${_weight(snapshot.metalFineExcess)} | cash paid ${_money(snapshot.cashBankPaidTotal)}';
   }
 
-  return 'Fine received ${_weight(snapshot.metalFineCalculated)} | cash paid ${_money(snapshot.cashBankPaidTotal)}';
+  final oldDue = snapshot.previousSupplierDueAdjustment > 0
+      ? ' | old due adjusted ${_money(snapshot.previousSupplierDueAdjustment)}'
+      : '';
+  return 'Fine received ${_weight(snapshot.metalFineCalculated)} | cash paid ${_money(snapshot.cashBankPaidTotal)}$oldDue';
 }
 
 class _SectionShell extends StatelessWidget {

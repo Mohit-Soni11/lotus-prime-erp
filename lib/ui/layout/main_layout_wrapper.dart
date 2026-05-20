@@ -53,6 +53,7 @@ import '../customer/defaulter/defaulter_list_screen.dart';
 // âœ… v7: SUPPLIER MODULE
 import '../stock/supplier/supplier_list/supplier_list_screen.dart';
 import '../stock/supplier/add_supplier/add_supplier_screen.dart';
+import '../stock/supplier/supplier_profile/supplier_profile_screen.dart';
 
 // PURCHASE
 import '../purchase & orders/purchase_entry/purchase_entry_screen.dart';
@@ -205,6 +206,14 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
                                   )));
                     },
                     onSupplierTap: (supplierId) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              SupplierProfileScreen(supplierId: supplierId),
+                        ),
+                      );
+                      return;
                       // TODO: SupplierProfileScreen â€” coming soon
                     },
                   )));

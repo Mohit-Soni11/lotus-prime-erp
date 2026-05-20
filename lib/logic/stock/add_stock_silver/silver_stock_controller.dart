@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:drift/drift.dart' as drift;
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/logic/stock/add_stock_controller.dart';
@@ -9,8 +11,12 @@ import 'package:lotus_erp/logic/stock/add_stock_silver/silver_payment_controller
 import 'package:lotus_erp/models/purchase/purchase_enums/purchase_enums.dart';
 import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
 import 'package:lotus_erp/repositories/purchase/purchase_entry_repository.dart';
+import 'package:lotus_erp/repositories/supplier/supplier_repository.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import '../../../models/stock/stock_item_model/add_stock_silver/silver_item_model.dart';
+import '../../../models/stock/supplier_model/supplier_model.dart';
 
 class SilverStockController extends AddStockController {
   String _silverBatchCode;
@@ -26,6 +32,10 @@ class SilverStockController extends AddStockController {
 
   String? _pendingSilverFocusId;
   String? _activeSilverRowId;
+  SupplierLedgerSnapshot? _supplierLedger;
+  String? _billPhotoPath;
+  bool _isPickingBillPhoto = false;
+  bool _isLoadingSupplierLedger = false;
   double _silverRatePer10g = 0.0;
   DateTime? _silverRateDate;
   bool _isLoadingSilverRate = false;
@@ -43,6 +53,15 @@ class SilverStockController extends AddStockController {
 
   List<SilverItemModel> get enteredSilverRows =>
       _silverRows.where((row) => row.hasAnyInput).toList(growable: false);
+
+  SupplierLedgerSnapshot? get supplierLedger => _supplierLedger;
+  double get supplierOutstandingDue => _supplierLedger?.outstandingDue ?? 0.0;
+  bool get isLoadingSupplierLedger => _isLoadingSupplierLedger;
+  String? get billPhotoPath => _billPhotoPath;
+  String get billPhotoName =>
+      _billPhotoPath == null ? '' : p.basename(_billPhotoPath!);
+  bool get hasBillPhoto => _billPhotoPath != null && _billPhotoPath!.isNotEmpty;
+  bool get isPickingBillPhoto => _isPickingBillPhoto;
 
   bool get isLoadingSilverRate => _isLoadingSilverRate;
   DateTime? get silverRateDate => _silverRateDate;
@@ -96,6 +115,9 @@ class SilverStockController extends AddStockController {
       metalFineExcessValue: payment.fineExcessValue,
       metalFineEquivalentCash: payment.differenceInCashValue,
       cashTargetAmount: payment.cashTargetAmount,
+      previousSupplierDue: payment.supplierPreviousDue,
+      previousSupplierDueAdjustment: payment.previousDueAdjustment,
+      previousSupplierDueFineEquivalent: payment.previousDueFineEquivalent,
       balanceLabel: payment.balanceLabel,
     );
   }
@@ -115,6 +137,99 @@ class SilverStockController extends AddStockController {
       return 'Rate missing';
     }
     return 'Rs ${silverRatePerGram.toStringAsFixed(2)}/g';
+  }
+
+  @override
+  void setSessionSupplier(SupplierListItemModel? supplier) {
+    super.setSessionSupplier(supplier);
+    _loadSupplierLedger(supplier?.id);
+  }
+
+  @override
+  void setSessionSupplierText(String value) {
+    super.setSessionSupplierText(value);
+    _clearSupplierLedger();
+  }
+
+  @override
+  void clearSessionSupplier({bool clearFields = true}) {
+    super.clearSessionSupplier(clearFields: clearFields);
+    _clearSupplierLedger();
+  }
+
+  Future<void> pickBillPhoto() async {
+    if (_isPickingBillPhoto) {
+      return;
+    }
+
+    _isPickingBillPhoto = true;
+    notifyListeners();
+
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+      final sourcePath = result?.files.single.path;
+      if (sourcePath == null || sourcePath.trim().isEmpty) {
+        return;
+      }
+
+      final source = File(sourcePath);
+      final docDir = await getApplicationDocumentsDirectory();
+      final targetDir = Directory(
+        p.join(docDir.path, 'lotus_erp', 'supplier_bills'),
+      );
+      await targetDir.create(recursive: true);
+      final extension =
+          p.extension(source.path).isEmpty ? '.jpg' : p.extension(source.path);
+      final fileName =
+          '${batchCode}_${DateTime.now().millisecondsSinceEpoch}$extension';
+      final target = File(p.join(targetDir.path, fileName));
+      final copied = await source.copy(target.path);
+      _billPhotoPath = copied.path;
+    } finally {
+      _isPickingBillPhoto = false;
+      notifyListeners();
+    }
+  }
+
+  void clearBillPhoto() {
+    _billPhotoPath = null;
+    notifyListeners();
+  }
+
+  Future<void> _loadSupplierLedger(int? supplierId) async {
+    if (supplierId == null) {
+      _clearSupplierLedger();
+      return;
+    }
+
+    _isLoadingSupplierLedger = true;
+    notifyListeners();
+
+    try {
+      final repo = SupplierRepository(_rateDb);
+      final ledger = await repo.getLedgerSnapshot(supplierId);
+      if (linkedSupplier?.id != supplierId && sessionSupplierId != supplierId) {
+        return;
+      }
+      _supplierLedger = ledger;
+      payment.setSupplierPreviousDue(ledger.outstandingDue);
+    } catch (_) {
+      _supplierLedger = null;
+      payment.setSupplierPreviousDue(0.0);
+    } finally {
+      _isLoadingSupplierLedger = false;
+      notifyListeners();
+    }
+  }
+
+  void _clearSupplierLedger() {
+    _supplierLedger = null;
+    _isLoadingSupplierLedger = false;
+    payment.setSupplierPreviousDue(0.0);
+    notifyListeners();
   }
 
   @override
@@ -320,6 +435,11 @@ class SilverStockController extends AddStockController {
         'metalFineShortageValue': snapshot.metalFineShortageValue,
         'metalFineExcessValue': snapshot.metalFineExcessValue,
         'balanceLabel': snapshot.balanceLabel,
+        'billPhotoPath': _billPhotoPath,
+        'oldDueBefore': snapshot.previousSupplierDue,
+        'oldDueAdjustedAmount': snapshot.previousSupplierDueAdjustment,
+        'oldDueFineEquivalent': snapshot.previousSupplierDueFineEquivalent,
+        'metalLines': payment.metalLinePayloads,
       }),
       party: PurchaseVoucherPartyDraft(
         supplierId: linkedSupplier?.id ?? sessionSupplierId,
@@ -474,6 +594,9 @@ class SilverStockController extends AddStockController {
   void resetForNewBatch() {
     _silverBatchCode = _generateSilverBatchCode();
     supplierInvoiceNumberCtrl.clear();
+    _billPhotoPath = null;
+    _supplierLedger = null;
+    _isLoadingSupplierLedger = false;
     // ✨ FIXED: Replaced payment.reset()
     payment.resetSettlement();
     _clearSilverRows();

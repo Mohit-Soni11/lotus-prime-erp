@@ -11,8 +11,6 @@ import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_items_table
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_payment_record_card.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_supplier_panel.dart';
 
-const double _silverDesktopTopCardHeight = 352;
-
 class AddSilverStockItemsStep extends StatelessWidget {
   final SilverStockController ctrl;
   final Future<void> Function() onSave;

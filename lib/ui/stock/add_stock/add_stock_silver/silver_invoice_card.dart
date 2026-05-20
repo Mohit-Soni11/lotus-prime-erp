@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lotus_erp/logic/dashboard/date_card/date_card_logic.dart';
@@ -297,6 +299,8 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard> {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          _BillPhotoPicker(ctrl: widget.ctrl, accent: accent),
           // NOTE: Applied Silver Rate moved to SilverPaymentRecordCard
           //       (Rate is now entered manually per-batch in the Payment Record
           //        section as rate per kg, not loaded from daily rates here.)
@@ -312,6 +316,105 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard> {
       decoration: BoxDecoration(
         color: color.withOpacity(opacity),
         borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+}
+
+class _BillPhotoPicker extends StatelessWidget {
+  final SilverStockController ctrl;
+  final Color accent;
+
+  const _BillPhotoPicker({required this.ctrl, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    final photoPath = ctrl.billPhotoPath;
+    final hasPhoto = photoPath != null && photoPath.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AddStockColors.inputBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AddStockColors.cardBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: accent.withValues(alpha: 0.20)),
+            ),
+            child: hasPhoto && File(photoPath).existsSync()
+                ? Image.file(File(photoPath), fit: BoxFit.cover)
+                : Icon(Icons.image_outlined, color: accent, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'SUPPLIER BILL PHOTO',
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                    color: AddStockColors.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  hasPhoto ? ctrl.billPhotoName : 'Attach supplier paper bill',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: hasPhoto
+                        ? AddStockColors.textDark
+                        : AddStockColors.textBody,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          if (hasPhoto)
+            IconButton(
+              tooltip: 'Remove bill photo',
+              onPressed: ctrl.clearBillPhoto,
+              icon: const Icon(Icons.close_rounded, size: 18),
+              color: AddStockColors.danger,
+            ),
+          OutlinedButton.icon(
+            onPressed: ctrl.isPickingBillPhoto ? null : ctrl.pickBillPhoto,
+            icon: ctrl.isPickingBillPhoto
+                ? SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: accent,
+                    ),
+                  )
+                : Icon(Icons.upload_file_rounded, size: 16, color: accent),
+            label: Text(hasPhoto ? 'CHANGE' : 'UPLOAD'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: accent,
+              side: BorderSide(color: accent.withValues(alpha: 0.35)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

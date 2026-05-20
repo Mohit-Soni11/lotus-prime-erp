@@ -36,6 +36,9 @@ class SilverPaymentSnapshot {
   final double metalFineExcessValue;
   final double metalFineEquivalentCash;
   final double cashTargetAmount;
+  final double previousSupplierDue;
+  final double previousSupplierDueAdjustment;
+  final double previousSupplierDueFineEquivalent;
   final String balanceLabel;
 
   const SilverPaymentSnapshot({
@@ -70,6 +73,9 @@ class SilverPaymentSnapshot {
     required this.metalFineExcessValue,
     required this.metalFineEquivalentCash,
     required this.cashTargetAmount,
+    required this.previousSupplierDue,
+    required this.previousSupplierDueAdjustment,
+    required this.previousSupplierDueFineEquivalent,
     required this.balanceLabel,
   });
 }

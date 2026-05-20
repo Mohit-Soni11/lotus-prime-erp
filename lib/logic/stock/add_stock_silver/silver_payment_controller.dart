@@ -6,6 +6,77 @@ enum TaxMode { estimate, gst }
 
 enum DueReturnType { metal, cash }
 
+class SilverMetalSettlementLine extends ChangeNotifier {
+  final String id;
+  final TextEditingController grossCtrl = TextEditingController();
+  final TextEditingController purityCtrl = TextEditingController();
+  bool _syncingText = false;
+
+  SilverMetalSettlementLine({required this.id}) {
+    grossCtrl.addListener(_handleInputChanged);
+    purityCtrl.addListener(_handleInputChanged);
+  }
+
+  double get grossWeight => _parseAmount(grossCtrl.text);
+  double get purity =>
+      _parseAmount(purityCtrl.text).clamp(0.0, 100.0).toDouble();
+  double get fineWeight => grossWeight * (purity / 100.0);
+  bool get hasInput => grossWeight > 0 || purity > 0;
+
+  void setValues(double grossWeight, double purity) {
+    _syncText(grossCtrl, _formatNumber(grossWeight, maxFraction: 3));
+    _syncText(purityCtrl, _formatNumber(purity, maxFraction: 2));
+    notifyListeners();
+  }
+
+  Map<String, double> toPayload() {
+    return {
+      'grossWeight': grossWeight,
+      'purity': purity,
+      'fineWeight': fineWeight,
+    };
+  }
+
+  void _handleInputChanged() {
+    if (_syncingText) {
+      return;
+    }
+    notifyListeners();
+  }
+
+  void _syncText(TextEditingController controller, String value) {
+    if (controller.text == value) {
+      return;
+    }
+    _syncingText = true;
+    controller.text = value;
+    controller.selection = TextSelection.collapsed(offset: value.length);
+    _syncingText = false;
+  }
+
+  double _parseAmount(String raw) {
+    final normalized =
+        raw.replaceAll(',', '').replaceAll(RegExp(r'[^0-9.]'), '');
+    return double.tryParse(normalized) ?? 0.0;
+  }
+
+  String _formatNumber(double value, {required int maxFraction}) {
+    if (value <= 0) {
+      return '';
+    }
+    final fixed = value.toStringAsFixed(maxFraction);
+    return fixed.replaceFirst(RegExp(r'\.?0+$'), '');
+  }
+
+  void disposeAll() {
+    grossCtrl.removeListener(_handleInputChanged);
+    purityCtrl.removeListener(_handleInputChanged);
+    grossCtrl.dispose();
+    purityCtrl.dispose();
+    dispose();
+  }
+}
+
 extension PaymentModeLabel on PaymentMode {
   String get label {
     return switch (this) {
@@ -43,8 +114,6 @@ class SilverPaymentController extends ChangeNotifier {
   static const double _epsilon = 0.005;
 
   final TextEditingController todayRatePerKgCtrl = TextEditingController();
-  final TextEditingController metalGrossCtrl = TextEditingController();
-  final TextEditingController metalPurityCtrl = TextEditingController();
   final TextEditingController metalGstPercentCtrl = TextEditingController(
     text: '5',
   );
@@ -55,26 +124,31 @@ class SilverPaymentController extends ChangeNotifier {
   final TextEditingController upiCtrl = TextEditingController();
   final TextEditingController bankCtrl = TextEditingController();
   final TextEditingController cardCtrl = TextEditingController();
+  final TextEditingController previousDueAdjustmentCtrl =
+      TextEditingController();
 
   double _todayRatePerKg = 0.0;
   double _totalFineFromItems = 0.0;
   double _totalMakingFromItems = 0.0;
+  double _supplierPreviousDue = 0.0;
   bool _gstEnabled = false;
   PaymentMode _paymentMode = PaymentMode.metalToMetal;
   DueReturnType _metalDueReturnType = DueReturnType.cash;
   DateTime? _promiseDate;
+  bool _adjustPreviousDue = false;
   bool _syncingText = false;
+  final List<SilverMetalSettlementLine> _metalLines = [];
 
   SilverPaymentController() {
+    addMetalLine(notify: false);
     todayRatePerKgCtrl.addListener(_handleRateChanged);
-    metalGrossCtrl.addListener(_handleInputChanged);
-    metalPurityCtrl.addListener(_handleInputChanged);
     metalGstPercentCtrl.addListener(_handleInputChanged);
     cashGstPercentCtrl.addListener(_handleInputChanged);
     cashCtrl.addListener(_handleInputChanged);
     upiCtrl.addListener(_handleInputChanged);
     bankCtrl.addListener(_handleInputChanged);
     cardCtrl.addListener(_handleInputChanged);
+    previousDueAdjustmentCtrl.addListener(_handleInputChanged);
   }
 
   double get todayRatePerKg => _todayRatePerKg;
@@ -88,10 +162,13 @@ class SilverPaymentController extends ChangeNotifier {
   TaxMode get taxMode => _gstEnabled ? TaxMode.gst : TaxMode.estimate;
   PaymentMode get paymentMode => _paymentMode;
   DueReturnType get metalDueReturnType => _metalDueReturnType;
+  List<SilverMetalSettlementLine> get metalLines =>
+      List.unmodifiable(_metalLines);
 
-  double get metalGivenWeight => _parseAmount(metalGrossCtrl.text);
+  double get metalGivenWeight =>
+      _metalLines.fold(0.0, (sum, line) => sum + line.grossWeight);
   double get metalGivenPurity =>
-      _parseAmount(metalPurityCtrl.text).clamp(0.0, 100.0).toDouble();
+      metalGivenWeight > 0 ? fineReceived / metalGivenWeight * 100.0 : 0.0;
 
   double get cashPaid => _parseAmount(cashCtrl.text);
   double get upiPaid => _parseAmount(upiCtrl.text);
@@ -107,6 +184,20 @@ class SilverPaymentController extends ChangeNotifier {
       );
   double get amountPaid => cashPaid;
   double get cashBankPaidTotal => cashPaid + upiPaid + bankPaid + cardPaid;
+  double get supplierPreviousDue => _supplierPreviousDue;
+  bool get hasSupplierPreviousDue => _supplierPreviousDue > _epsilon;
+  bool get adjustPreviousDue => _adjustPreviousDue;
+  double get previousDueAdjustment {
+    if (!_adjustPreviousDue || !hasSupplierPreviousDue) {
+      return 0.0;
+    }
+    return _parseAmount(previousDueAdjustmentCtrl.text)
+        .clamp(0.0, _supplierPreviousDue)
+        .toDouble();
+  }
+
+  double get previousDueFineEquivalent =>
+      todayRatePerGram > 0 ? previousDueAdjustment / todayRatePerGram : 0.0;
 
   double get fineValueAmount => _totalFineFromItems * todayRatePerGram;
   double get subTotalAmount => fineValueAmount + _totalMakingFromItems;
@@ -127,7 +218,7 @@ class SilverPaymentController extends ChangeNotifier {
     if (_paymentMode != PaymentMode.metalToMetal) {
       return 0.0;
     }
-    return metalGivenWeight * (metalGivenPurity / 100.0);
+    return _metalLines.fold(0.0, (sum, line) => sum + line.fineWeight);
   }
 
   double get fineDifference => fineReceived - _totalFineFromItems;
@@ -154,14 +245,17 @@ class SilverPaymentController extends ChangeNotifier {
 
   double get cashTargetAmount {
     if (_paymentMode == PaymentMode.cash) {
-      return finalBillAmount;
+      return finalBillAmount + previousDueAdjustment;
     }
 
     final shortageAsCash =
         isDueMetal && _metalDueReturnType == DueReturnType.cash
             ? fineShortageValue
             : 0.0;
-    return _totalMakingFromItems + taxAmount + shortageAsCash;
+    return _totalMakingFromItems +
+        taxAmount +
+        shortageAsCash +
+        previousDueAdjustment;
   }
 
   double get cashBalance => cashBankPaidTotal - cashTargetAmount;
@@ -170,19 +264,14 @@ class SilverPaymentController extends ChangeNotifier {
     if (_paymentMode == PaymentMode.cash) {
       return cashBankPaidTotal;
     }
-
-    final metalDueValue =
-        isDueMetal && _metalDueReturnType == DueReturnType.metal
-            ? fineShortageValue
-            : 0.0;
-    return (finalBillAmount - dueAmount + returnAmount - metalDueValue)
+    return (metalAppliedValue + cashBankPaidTotal)
         .clamp(0.0, double.infinity)
         .toDouble();
   }
 
   double get dueAmount {
     if (_paymentMode == PaymentMode.cash) {
-      return (finalBillAmount - cashBankPaidTotal)
+      return (cashTargetAmount - cashBankPaidTotal)
           .clamp(0.0, double.infinity)
           .toDouble();
     }
@@ -199,7 +288,7 @@ class SilverPaymentController extends ChangeNotifier {
 
   double get returnAmount {
     if (_paymentMode == PaymentMode.cash) {
-      return (cashBankPaidTotal - finalBillAmount)
+      return (cashBankPaidTotal - cashTargetAmount)
           .clamp(0.0, double.infinity)
           .toDouble();
     }
@@ -278,8 +367,69 @@ class SilverPaymentController extends ChangeNotifier {
   }
 
   void setMetalInput(double weight, double purity) {
-    _syncText(metalGrossCtrl, _formatNumber(weight, maxFraction: 3));
-    _syncText(metalPurityCtrl, _formatNumber(purity, maxFraction: 2));
+    if (_metalLines.isEmpty) {
+      addMetalLine(notify: false);
+    }
+    _metalLines.first.setValues(weight, purity);
+    notifyListeners();
+  }
+
+  void addMetalLine({bool notify = true}) {
+    final line = SilverMetalSettlementLine(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+    );
+    line.addListener(_handleInputChanged);
+    _metalLines.add(line);
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
+  void removeMetalLine(String id) {
+    if (_metalLines.length <= 1) {
+      _metalLines.first.setValues(0.0, 0.0);
+      notifyListeners();
+      return;
+    }
+    final index = _metalLines.indexWhere((line) => line.id == id);
+    if (index == -1) {
+      return;
+    }
+    final line = _metalLines.removeAt(index);
+    line.removeListener(_handleInputChanged);
+    line.disposeAll();
+    notifyListeners();
+  }
+
+  List<Map<String, double>> get metalLinePayloads => _metalLines
+      .where((line) => line.hasInput)
+      .map((line) => line.toPayload())
+      .toList(growable: false);
+
+  void setSupplierPreviousDue(double amount) {
+    final next = amount < 0 ? 0.0 : amount;
+    _supplierPreviousDue = next;
+    if (next <= _epsilon) {
+      _adjustPreviousDue = false;
+      _syncText(previousDueAdjustmentCtrl, '');
+    } else if (_adjustPreviousDue &&
+        (previousDueAdjustment <= 0 || previousDueAdjustment > next)) {
+      _syncText(previousDueAdjustmentCtrl, _formatNumber(next, maxFraction: 2));
+    }
+    notifyListeners();
+  }
+
+  void setAdjustPreviousDue(bool value) {
+    if (!hasSupplierPreviousDue) {
+      value = false;
+    }
+    _adjustPreviousDue = value;
+    if (value && previousDueAdjustmentCtrl.text.trim().isEmpty) {
+      _syncText(
+        previousDueAdjustmentCtrl,
+        _formatNumber(_supplierPreviousDue, maxFraction: 2),
+      );
+    }
     notifyListeners();
   }
 
@@ -312,14 +462,20 @@ class SilverPaymentController extends ChangeNotifier {
     _paymentMode = PaymentMode.metalToMetal;
     _metalDueReturnType = DueReturnType.cash;
     _promiseDate = null;
-    _syncText(metalGrossCtrl, '');
-    _syncText(metalPurityCtrl, '');
+    for (final line in _metalLines) {
+      line.removeListener(_handleInputChanged);
+      line.disposeAll();
+    }
+    _metalLines.clear();
+    addMetalLine(notify: false);
     _syncText(metalGstPercentCtrl, '5');
     _syncText(cashGstPercentCtrl, '3');
     _syncText(cashCtrl, '');
     _syncText(upiCtrl, '');
     _syncText(bankCtrl, '');
     _syncText(cardCtrl, '');
+    _adjustPreviousDue = false;
+    _syncText(previousDueAdjustmentCtrl, '');
     notifyListeners();
   }
 
@@ -372,14 +528,18 @@ class SilverPaymentController extends ChangeNotifier {
   @override
   void dispose() {
     todayRatePerKgCtrl.dispose();
-    metalGrossCtrl.dispose();
-    metalPurityCtrl.dispose();
+    for (final line in _metalLines) {
+      line.removeListener(_handleInputChanged);
+      line.disposeAll();
+    }
+    _metalLines.clear();
     metalGstPercentCtrl.dispose();
     cashGstPercentCtrl.dispose();
     cashCtrl.dispose();
     upiCtrl.dispose();
     bankCtrl.dispose();
     cardCtrl.dispose();
+    previousDueAdjustmentCtrl.dispose();
     super.dispose();
   }
 }

@@ -584,6 +584,90 @@ class _AddSilverStockSupplierPanelState
                     '${SilverStockStrings.contactPrefix}${linked.contactPersonName}',
                   ),
                 ],
+                const SizedBox(height: 10),
+                _buildLedgerDueStrip(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLedgerDueStrip() {
+    if (widget.ctrl.isLoadingSupplierLedger) {
+      return _buildLedgerBox(
+        title: 'Checking supplier history',
+        value: 'Please wait...',
+        tone: SilverStockColors.textMuted,
+        icon: Icons.sync_rounded,
+      );
+    }
+
+    final ledger = widget.ctrl.supplierLedger;
+    if (ledger == null) {
+      return _buildLedgerBox(
+        title: 'Supplier history',
+        value: 'No purchase history loaded yet',
+        tone: SilverStockColors.textMuted,
+        icon: Icons.history_rounded,
+      );
+    }
+
+    final hasDue = ledger.hasOutstandingDue;
+    final recentCount = ledger.history.length;
+    final value = hasDue
+        ? 'Baki Rs ${ledger.outstandingDue.toStringAsFixed(2)}'
+        : 'No old baki';
+    final subText = recentCount == 0
+        ? 'No saved silver/purchase voucher found'
+        : '$recentCount purchase voucher${recentCount == 1 ? '' : 's'} linked';
+
+    return _buildLedgerBox(
+      title: subText,
+      value: value,
+      tone: hasDue ? SilverStockColors.paymentDue : SilverStockColors.success,
+      icon: hasDue ? Icons.warning_amber_rounded : Icons.verified_rounded,
+    );
+  }
+
+  Widget _buildLedgerBox({
+    required String title,
+    required String value,
+    required Color tone,
+    required IconData icon,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: tone.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: tone, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: SilverStockStyles.sectionTitle.copyWith(
+                    fontSize: 13,
+                    color: tone,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  title,
+                  style: SilverStockStyles.caption.copyWith(
+                    fontSize: 11,
+                    color: SilverStockColors.textBody,
+                  ),
+                ),
               ],
             ),
           ),
