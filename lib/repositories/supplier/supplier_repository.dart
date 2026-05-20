@@ -34,10 +34,12 @@ class SupplierRepository {
     if (query.trim().isEmpty) return getAllSuppliers();
     final q = query.trim().toLowerCase();
     final rows = await (_db.select(_db.suppliers)
-          ..where((s) =>
-              s.businessName.lower().contains(q) |
-              s.mobile.contains(q) |
-              s.contactPersonName.lower().contains(q))
+          ..where(
+            (s) =>
+                s.businessName.lower().contains(q) |
+                s.mobile.contains(q) |
+                s.contactPersonName.lower().contains(q),
+          )
           ..orderBy([(s) => drift.OrderingTerm.asc(s.businessName)]))
         .get();
     return rows.map(_toListItem).toList();
@@ -46,9 +48,11 @@ class SupplierRepository {
   /// Filter by supplier type
   Future<List<SupplierListItemModel>> getByType(SupplierType type) async {
     final rows = await (_db.select(_db.suppliers)
-          ..where((s) =>
-              s.supplierType.equals(type.label) &
-              s.status.equals(SupplierStatus.active.label))
+          ..where(
+            (s) =>
+                s.supplierType.equals(type.label) &
+                s.status.equals(SupplierStatus.active.label),
+          )
           ..orderBy([(s) => drift.OrderingTerm.asc(s.businessName)]))
         .get();
     return rows.map(_toListItem).toList();
@@ -56,7 +60,9 @@ class SupplierRepository {
 
   /// Full supplier record for profile / edit
   Future<SupplierModel?> getById(int id) async {
-    final row = await (_db.select(_db.suppliers)..where((s) => s.id.equals(id)))
+    final row = await (_db.select(
+      _db.suppliers,
+    )..where((s) => s.id.equals(id)))
         .getSingleOrNull();
     return row != null ? _toModel(row) : null;
   }
@@ -104,8 +110,10 @@ class SupplierRepository {
       0.0,
       (sum, item) => sum + item.oldDueAdjustedAmount,
     );
-    final outstanding = (openingBalance + voucherDue - oldDueAdjusted)
-        .clamp(0.0, double.infinity);
+    final outstanding = (openingBalance + voucherDue - oldDueAdjusted).clamp(
+      0.0,
+      double.infinity,
+    );
 
     return SupplierLedgerSnapshot(
       supplierId: supplierId,
@@ -132,7 +140,10 @@ class SupplierRepository {
           d.day == today.day;
     }).length;
     return SupplierStats(
-        total: active, todayCount: todayNew, manufacturerCount: manufacturer);
+      total: active,
+      todayCount: todayNew,
+      manufacturerCount: manufacturer,
+    );
   }
 
   // ── WRITE ───────────────────────────────────────────────────────────────
@@ -143,13 +154,28 @@ class SupplierRepository {
 
   Future<bool> updateSupplier(SupplierModel m) async {
     if (m.id == null) return false;
-    final n = await (_db.update(_db.suppliers)
-          ..where((s) => s.id.equals(m.id!)))
+    final n = await (_db.update(
+      _db.suppliers,
+    )..where((s) => s.id.equals(m.id!)))
         .write(_toCompanionUpdate(m));
     return n > 0;
   }
 
   /// Soft delete — mark Inactive
+  Future<bool> isMobileDuplicate(
+    String mobile, {
+    int? excludeSupplierId,
+  }) async {
+    final normalized = mobile.trim();
+    if (normalized.isEmpty) return false;
+
+    final rows = await (_db.select(
+      _db.suppliers,
+    )..where((s) => s.mobile.equals(normalized)))
+        .get();
+    return rows.any((row) => row.id != excludeSupplierId);
+  }
+
   Future<bool> deactivateSupplier(int id) async {
     final n = await (_db.update(_db.suppliers)..where((s) => s.id.equals(id)))
         .write(const SuppliersCompanion(status: drift.Value('Inactive')));

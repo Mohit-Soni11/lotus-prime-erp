@@ -1,162 +1,267 @@
-// =============================================================================
-// FILE        : add_supplier_logic.dart
-// MODULE      : Supplier
-// LAYER       : Logic / Controller
-// DESCRIPTION : ChangeNotifier for Add / Edit Supplier form.
-//               Pattern identical to AddCustomerLogic.
-// =============================================================================
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
 import '../../database/db/app_database.dart';
-import '../../models/stock/supplier_model/supplier_model.dart';
+import '../../helpers/add_supplier/add_supplier_validator.dart';
+import '../../models/stock/supplier_model/add_supplier_form_model.dart';
 import '../../models/stock/supplier_model/supplier_enums.dart';
+import '../../models/stock/supplier_model/supplier_model.dart';
 import '../../repositories/supplier/supplier_repository.dart';
 
-enum AddSupplierFormState { idle, saving, success, error }
+enum AddSupplierFormState {
+  idle,
+  validating,
+  saving,
+  success,
+  duplicate,
+  error,
+}
 
 class AddSupplierLogic extends ChangeNotifier {
   late final SupplierRepository _repo;
 
-  /// Pass existing model for Edit mode, null for Add mode.
-  AddSupplierLogic({SupplierModel? existing}) {
-    _repo = SupplierRepository(AppDatabase());
+  AddSupplierLogic({SupplierModel? existing, SupplierRepository? repo}) {
+    _repo = repo ?? SupplierRepository(AppDatabase());
     _isEdit = existing != null;
-    _existingId = existing?.id;
-    if (existing != null) _populateFromExisting(existing);
+    _form = existing == null
+        ? const AddSupplierFormModel()
+        : AddSupplierFormModel.fromSupplier(existing);
   }
 
-  // ── STATE ──────────────────────────────────────────────────────────────
-
   bool _isEdit = false;
-  int? _existingId;
+  AddSupplierFormModel _form = const AddSupplierFormModel();
   AddSupplierFormState _formState = AddSupplierFormState.idle;
+  SupplierActiveField _activeField = SupplierActiveField.none;
   String? _errorMessage;
   String? _successMessage;
-
-  // ── FORM VALUES (kept as plain fields for direct binding) ─────────────
-
-  String businessName = '';
-  String contactPerson = '';
-  SupplierType supplierType = SupplierType.manufacturer;
-  String mobile = '';
-  String whatsapp = '';
-  String email = '';
-  String alternateContact = '';
-  String panNumber = '';
-  String gstNumber = '';
-  String addressLine1 = '';
-  String addressLine2 = '';
-  String state = '';
-  String pincode = '';
-  double openingBalance = 0.0;
-  String notes = '';
-
-  // ── GETTERS ────────────────────────────────────────────────────────────
+  Timer? _mobileDebounce;
 
   bool get isEditMode => _isEdit;
+  AddSupplierFormModel get form => _form;
   AddSupplierFormState get formState => _formState;
+  SupplierActiveField get activeField => _activeField;
   String? get errorMessage => _errorMessage;
   String? get successMessage => _successMessage;
   bool get isSaving => _formState == AddSupplierFormState.saving;
+  bool get canSave => _form.isReadyToSave && !isSaving;
 
-  // ── POPULATE FOR EDIT ──────────────────────────────────────────────────
-
-  void _populateFromExisting(SupplierModel m) {
-    businessName = m.businessName;
-    contactPerson = m.contactPersonName ?? '';
-    supplierType = m.supplierType;
-    mobile = m.mobile;
-    whatsapp = m.whatsapp ?? '';
-    email = m.email ?? '';
-    alternateContact = m.alternateContact ?? '';
-    panNumber = m.panNumber ?? '';
-    gstNumber = m.gstNumber ?? '';
-    addressLine1 = m.addressLine1 ?? '';
-    addressLine2 = m.addressLine2 ?? '';
-    state = m.state ?? '';
-    pincode = m.pincode ?? '';
-    openingBalance = m.openingBalance;
-    notes = m.notes ?? '';
-  }
-
-  // ── SETTERS ────────────────────────────────────────────────────────────
-
-  void setSupplierType(SupplierType val) {
-    supplierType = val;
+  void setActiveField(SupplierActiveField field) {
+    _activeField = field;
     notifyListeners();
   }
 
-  void setOpeningBalance(String val) {
-    openingBalance = double.tryParse(val) ?? 0.0;
+  void onBusinessNameChanged(String value) {
+    final err = AddSupplierValidator.validateBusinessNameLive(value);
+    _form = _form.copyWith(
+      businessName: value,
+      businessNameError: err,
+      clearBusinessNameError: err == null,
+    );
+    notifyListeners();
   }
 
-  // ── VALIDATORS ─────────────────────────────────────────────────────────
-
-  String? validateBusinessName(String? val) {
-    if (val == null || val.trim().isEmpty) return 'Business name is required';
-    if (val.trim().length < 2) return 'Name must be at least 2 characters';
-    return null;
+  void onContactPersonChanged(String value) {
+    _form = _form.copyWith(contactPersonName: value);
+    notifyListeners();
   }
 
-  String? validateMobile(String? val) {
-    if (val == null || val.trim().isEmpty) return 'Mobile number is required';
-    final digits = val.trim().replaceAll(RegExp(r'\D'), '');
-    if (digits.length < 10) return 'Enter a valid 10-digit mobile number';
-    return null;
+  void setSupplierType(SupplierType value) {
+    _form = _form.copyWith(supplierType: value);
+    notifyListeners();
   }
 
-  String? validateGstNumber(String? val) {
-    if (val == null || val.trim().isEmpty) return null; // optional
-    if (val.trim().length != 15) return 'GST number must be 15 characters';
-    return null;
+  void onMobileChanged(String value) {
+    final err = AddSupplierValidator.validateMobileLive(value);
+    _form = _form.copyWith(
+      mobile: value,
+      mobileError: err,
+      clearMobileError: err == null,
+      whatsapp: _form.sameAsWhatsApp ? value : _form.whatsapp,
+    );
+    notifyListeners();
+
+    _mobileDebounce?.cancel();
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    if (digits.length == 10 && err == null) {
+      _mobileDebounce = Timer(const Duration(milliseconds: 550), () async {
+        final duplicate = await _repo.isMobileDuplicate(
+          value.trim(),
+          excludeSupplierId: _form.id,
+        );
+        if (duplicate) {
+          _form = _form.copyWith(
+            mobileError: 'This mobile number already exists',
+          );
+          notifyListeners();
+        }
+      });
+    }
   }
 
-  String? validatePanNumber(String? val) {
-    if (val == null || val.trim().isEmpty) return null; // optional
-    if (val.trim().length != 10) return 'PAN must be 10 characters';
-    return null;
+  void setSameAsWhatsApp(bool value) {
+    _form = _form.copyWith(
+      sameAsWhatsApp: value,
+      whatsapp: value ? _form.mobile : '',
+      clearWhatsappError: true,
+    );
+    notifyListeners();
   }
 
-  // ── SAVE ───────────────────────────────────────────────────────────────
+  void onWhatsappChanged(String value) {
+    final err = AddSupplierValidator.validateWhatsapp(value);
+    _form = _form.copyWith(
+      whatsapp: value,
+      whatsappError: err,
+      clearWhatsappError: err == null,
+      sameAsWhatsApp: false,
+    );
+    notifyListeners();
+  }
+
+  void onEmailChanged(String value) {
+    final err = AddSupplierValidator.validateEmail(value);
+    _form = _form.copyWith(
+      email: value,
+      emailError: err,
+      clearEmailError: err == null,
+    );
+    notifyListeners();
+  }
+
+  void onAlternateContactChanged(String value) {
+    _form = _form.copyWith(alternateContact: value);
+    notifyListeners();
+  }
+
+  void onPanChanged(String value) {
+    final normalized = value.toUpperCase();
+    final err = AddSupplierValidator.validatePan(normalized);
+    _form = _form.copyWith(
+      panNumber: normalized,
+      panError: err,
+      clearPanError: err == null,
+    );
+    notifyListeners();
+  }
+
+  void onGstChanged(String value) {
+    final normalized = value.toUpperCase();
+    final err = AddSupplierValidator.validateGst(normalized);
+    _form = _form.copyWith(
+      gstNumber: normalized,
+      gstError: err,
+      clearGstError: err == null,
+    );
+    notifyListeners();
+  }
+
+  void onAddressLine1Changed(String value) {
+    _form = _form.copyWith(addressLine1: value);
+    notifyListeners();
+  }
+
+  void onAddressLine2Changed(String value) {
+    _form = _form.copyWith(addressLine2: value);
+    notifyListeners();
+  }
+
+  void setCountry(String value) {
+    _form = _form.copyWith(country: value, state: '');
+    notifyListeners();
+  }
+
+  void setStateName(String value) {
+    _form = _form.copyWith(state: value);
+    notifyListeners();
+  }
+
+  void onPincodeChanged(String value) {
+    final err = AddSupplierValidator.validatePincode(value);
+    _form = _form.copyWith(
+      pincode: value,
+      pincodeError: err,
+      clearPincodeError: err == null,
+    );
+    notifyListeners();
+  }
+
+  void onOpeningBalanceChanged(String value) {
+    final err = AddSupplierValidator.validateOpeningBalance(value);
+    _form = _form.copyWith(
+      openingBalance: double.tryParse(value.trim()) ?? 0.0,
+      openingBalanceError: err,
+      clearOpeningBalanceError: err == null,
+    );
+    notifyListeners();
+  }
+
+  void onNotesChanged(String value) {
+    _form = _form.copyWith(notes: value);
+    notifyListeners();
+  }
 
   Future<bool> save() async {
-    _formState = AddSupplierFormState.saving;
+    _formState = AddSupplierFormState.validating;
     _errorMessage = null;
     _successMessage = null;
     notifyListeners();
 
-    try {
-      final model = SupplierModel(
-        id: _existingId,
-        businessName: businessName.trim(),
-        contactPersonName:
-            contactPerson.trim().isEmpty ? null : contactPerson.trim(),
-        supplierType: supplierType,
-        mobile: mobile.trim(),
-        whatsapp: whatsapp.trim().isEmpty ? null : whatsapp.trim(),
-        email: email.trim().isEmpty ? null : email.trim(),
-        alternateContact:
-            alternateContact.trim().isEmpty ? null : alternateContact.trim(),
-        panNumber:
-            panNumber.trim().isEmpty ? null : panNumber.trim().toUpperCase(),
-        gstNumber:
-            gstNumber.trim().isEmpty ? null : gstNumber.trim().toUpperCase(),
-        addressLine1: addressLine1.trim().isEmpty ? null : addressLine1.trim(),
-        addressLine2: addressLine2.trim().isEmpty ? null : addressLine2.trim(),
-        state: state.trim().isEmpty ? null : state.trim(),
-        pincode: pincode.trim().isEmpty ? null : pincode.trim(),
-        openingBalance: openingBalance,
-        notes: notes.trim().isEmpty ? null : notes.trim(),
-      );
+    final businessErr = AddSupplierValidator.validateBusinessName(
+      _form.businessName,
+    );
+    final mobileErr = AddSupplierValidator.validateMobile(_form.mobile);
+    final whatsappErr = AddSupplierValidator.validateWhatsapp(_form.whatsapp);
+    final emailErr = AddSupplierValidator.validateEmail(_form.email);
+    final panErr = AddSupplierValidator.validatePan(_form.panNumber);
+    final gstErr = AddSupplierValidator.validateGst(_form.gstNumber);
+    final pincodeErr = AddSupplierValidator.validatePincode(_form.pincode);
 
+    if (businessErr != null ||
+        mobileErr != null ||
+        whatsappErr != null ||
+        emailErr != null ||
+        panErr != null ||
+        gstErr != null ||
+        pincodeErr != null ||
+        _form.openingBalanceError != null) {
+      _form = _form.copyWith(
+        businessNameError: businessErr,
+        mobileError: mobileErr,
+        whatsappError: whatsappErr,
+        emailError: emailErr,
+        panError: panErr,
+        gstError: gstErr,
+        pincodeError: pincodeErr,
+      );
+      _formState = AddSupplierFormState.idle;
+      notifyListeners();
+      return false;
+    }
+
+    final duplicate = await _repo.isMobileDuplicate(
+      _form.mobile.trim(),
+      excludeSupplierId: _form.id,
+    );
+    if (duplicate) {
+      _form = _form.copyWith(mobileError: 'This mobile number already exists');
+      _formState = AddSupplierFormState.duplicate;
+      notifyListeners();
+      return false;
+    }
+
+    _formState = AddSupplierFormState.saving;
+    notifyListeners();
+
+    try {
+      final model = _form.toSupplierModel();
       if (_isEdit) {
-        await _repo.updateSupplier(model);
-        _successMessage = 'Supplier "${model.businessName}" updated!';
+        final ok = await _repo.updateSupplier(model);
+        if (!ok) throw StateError('Supplier update failed');
+        _successMessage = 'Supplier "${model.businessName}" updated';
       } else {
         await _repo.addSupplier(model);
-        _successMessage =
-            'Supplier "${model.businessName}" added successfully!';
+        _successMessage = 'Supplier "${model.businessName}" added';
       }
 
       _formState = AddSupplierFormState.success;
@@ -164,21 +269,36 @@ class AddSupplierLogic extends ChangeNotifier {
       return true;
     } catch (e) {
       debugPrint('AddSupplierLogic.save error: $e');
-      if (e.toString().contains('UNIQUE')) {
-        _errorMessage = 'A supplier with this mobile number already exists.';
-      } else {
-        _errorMessage = 'Could not save supplier. Please try again.';
-      }
+      _errorMessage = e.toString().contains('UNIQUE')
+          ? 'A supplier with this mobile number already exists.'
+          : 'Could not save supplier. Please try again.';
       _formState = AddSupplierFormState.error;
       notifyListeners();
       return false;
     }
   }
 
+  void resetForm() {
+    _form = const AddSupplierFormModel();
+    _formState = AddSupplierFormState.idle;
+    _activeField = SupplierActiveField.none;
+    _errorMessage = null;
+    _successMessage = null;
+    notifyListeners();
+  }
+
   void clearMessages() {
     _errorMessage = null;
     _successMessage = null;
-    _formState = AddSupplierFormState.idle;
+    if (_formState != AddSupplierFormState.saving) {
+      _formState = AddSupplierFormState.idle;
+    }
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _mobileDebounce?.cancel();
+    super.dispose();
   }
 }

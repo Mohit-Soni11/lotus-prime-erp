@@ -278,13 +278,13 @@ class _SilverInvoiceCardState extends State<SilverInvoiceCard> {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
+                    borderSide: const BorderSide(
                       color: AddStockColors.cardBorder,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
+                    borderSide: const BorderSide(
                       color: AddStockColors.cardBorder,
                     ),
                   ),

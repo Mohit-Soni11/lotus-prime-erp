@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 // FILE: add_supplier_strings.dart
-// MODULE: Supplier → Add Supplier
+// MODULE: Supplier > Add Supplier
 // -----------------------------------------------------------------------------
 
 class AddSupplierStrings {
@@ -8,19 +8,22 @@ class AddSupplierStrings {
 
   static const String appBarTitleAdd = 'ADD NEW SUPPLIER';
   static const String appBarTitleEdit = 'EDIT SUPPLIER';
-  static const String appBarSubtitle = 'ENTERPRISE POS TERMINAL';
+  static const String appBarSubtitle = 'LOTUS PRIME ERP';
   static const String systemOnline = 'SYSTEM ONLINE';
 
+  static const String secIdentity = 'Supplier Identity';
+  static const String secIdentitySub = 'Profile preview and account type';
   static const String secBasic = 'Business Information';
-  static const String secBasicSub = 'REQUIRED INFORMATION';
+  static const String secBasicSub = 'Business name, contact person and type';
   static const String secContact = 'Contact Details';
-  static const String secContactSub = 'COMMUNICATION';
+  static const String secContactSub =
+      'Mobile, WhatsApp, email and backup phone';
   static const String secKyc = 'KYC & Compliance';
-  static const String secKycSub = 'LEGAL DOCUMENTS';
+  static const String secKycSub = 'GST and PAN details';
   static const String secAddress = 'Address';
-  static const String secAddressSub = 'LOCATION';
+  static const String secAddressSub = 'Business billing and delivery address';
   static const String secFinance = 'Financial Details';
-  static const String secFinanceSub = 'ACCOUNT INFO';
+  static const String secFinanceSub = 'Opening balance and internal notes';
 
   static const String lblBusinessName = 'Business / Company Name';
   static const String lblContactPerson = 'Contact Person Name';
@@ -34,8 +37,9 @@ class AddSupplierStrings {
   static const String lblAddress1 = 'Address Line 1';
   static const String lblAddress2 = 'Address Line 2';
   static const String lblState = 'State';
+  static const String lblCountry = 'Country';
   static const String lblPincode = 'Pincode';
-  static const String lblOpeningBal = 'Opening Balance (₹)';
+  static const String lblOpeningBal = 'Opening Balance (Rs)';
   static const String lblNotes = 'Notes / Remarks';
 
   static const String hintBusinessName = 'e.g. Zaveri Traders Pvt Ltd';
@@ -49,6 +53,7 @@ class AddSupplierStrings {
   static const String hintAddress1 = 'Shop no, building, street';
   static const String hintAddress2 = 'Area, landmark';
   static const String hintState = 'State name';
+  static const String hintCountry = 'Country';
   static const String hintPincode = '6-digit pincode';
   static const String hintOpeningBal = '0.00';
   static const String hintNotes = 'Any remarks about this supplier...';
@@ -56,6 +61,9 @@ class AddSupplierStrings {
   static const String btnSaveAdd = 'Save Supplier';
   static const String btnSaveEdit = 'Update Supplier';
   static const String btnSaving = 'Saving...';
+  static const String btnClear = 'Clear Form';
+  static const String requiredNote =
+      'Business name and mobile number are required.';
 
   static const String errNameEmpty = 'Business name is required';
   static const String errNameShort = 'Name must be at least 2 characters';

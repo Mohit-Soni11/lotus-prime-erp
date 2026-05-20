@@ -125,6 +125,15 @@ class _AddSilverStockSupplierPanelState
       return;
     }
     setState(() {});
+
+    // ✅ FIX: Supplier already linked hai toh overlay dobara mat dikhao.
+    // setSessionSupplier() ke baad controller notify hota hai aur yahan
+    // phir se suggestions show ho jaate the — isliye yeh check zaroori hai.
+    if (widget.ctrl.hasLinkedSupplier) {
+      _removeSuggestionOverlay();
+      return;
+    }
+
     if (_activeSuggestions.isEmpty) {
       _removeSuggestionOverlay();
     } else {
