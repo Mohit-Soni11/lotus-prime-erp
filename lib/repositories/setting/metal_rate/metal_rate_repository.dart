@@ -35,9 +35,8 @@ class MetalRateRepository {
           decoded
               .whereType<Map>()
               .map(
-                (item) => MetalRateProfile.fromJson(
-                  Map<String, dynamic>.from(item),
-                ),
+                (item) =>
+                    MetalRateProfile.fromJson(Map<String, dynamic>.from(item)),
               )
               .toList(),
         );
@@ -109,9 +108,8 @@ class MetalRateRepository {
       final entries = decoded
           .whereType<Map>()
           .map(
-            (item) => MetalRateHistoryEntry.fromJson(
-              Map<String, dynamic>.from(item),
-            ),
+            (item) =>
+                MetalRateHistoryEntry.fromJson(Map<String, dynamic>.from(item)),
           )
           .where((entry) => entry.profile.metal == metal)
           .toList();
@@ -137,8 +135,10 @@ class MetalRateRepository {
       CREATE TABLE IF NOT EXISTS "$_historyTable" (
         "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
         "metal" TEXT NOT NULL,
+        "metal_key" TEXT NOT NULL,
         "rate_date" INTEGER NOT NULL,
         "profile_json" TEXT NOT NULL,
+        "snapshot_json" TEXT NOT NULL,
         "source" TEXT NOT NULL,
         "created_at" INTEGER NOT NULL
       )
@@ -158,14 +158,46 @@ class MetalRateRepository {
     }
 
     await addMissingColumn('metal', 'TEXT');
+    await addMissingColumn('metal_key', 'TEXT');
     await addMissingColumn('rate_date', 'INTEGER');
     await addMissingColumn('profile_json', 'TEXT');
+    await addMissingColumn('snapshot_json', 'TEXT');
     await addMissingColumn('source', 'TEXT');
     await addMissingColumn('created_at', 'INTEGER');
+
+    if (columns.contains('metal') && columns.contains('metal_key')) {
+      await _db.customStatement(
+        'UPDATE "$_historyTable" SET "metal" = "metal_key" '
+        'WHERE ("metal" IS NULL OR "metal" = \'\') '
+        'AND "metal_key" IS NOT NULL',
+      );
+      await _db.customStatement(
+        'UPDATE "$_historyTable" SET "metal_key" = "metal" '
+        'WHERE ("metal_key" IS NULL OR "metal_key" = \'\') '
+        'AND "metal" IS NOT NULL',
+      );
+    }
+
+    if (columns.contains('profile_json') && columns.contains('snapshot_json')) {
+      await _db.customStatement(
+        'UPDATE "$_historyTable" SET "profile_json" = "snapshot_json" '
+        'WHERE ("profile_json" IS NULL OR "profile_json" = \'\') '
+        'AND "snapshot_json" IS NOT NULL',
+      );
+      await _db.customStatement(
+        'UPDATE "$_historyTable" SET "snapshot_json" = "profile_json" '
+        'WHERE ("snapshot_json" IS NULL OR "snapshot_json" = \'\') '
+        'AND "profile_json" IS NOT NULL',
+      );
+    }
 
     await _db.customStatement(
       'CREATE INDEX IF NOT EXISTS "idx_${_historyTable}_metal_date" '
       'ON "$_historyTable" ("metal", "rate_date" DESC)',
+    );
+    await _db.customStatement(
+      'CREATE INDEX IF NOT EXISTS "idx_${_historyTable}_metal_key_date" '
+      'ON "$_historyTable" ("metal_key", "rate_date" DESC)',
     );
   }
 
@@ -182,12 +214,17 @@ class MetalRateRepository {
     MetalRateMetal metal,
   ) async {
     await _ensureHistoryTable();
+    final columns = await _historyTableColumns();
+    final hasMetalKey = columns.contains('metal_key');
 
     final rows = await _db.customSelect(
-      'SELECT profile_json, rate_date, source FROM "$_historyTable" '
-      'WHERE metal = ? ORDER BY rate_date DESC LIMIT ?',
+      'SELECT profile_json, snapshot_json, rate_date, source '
+      'FROM "$_historyTable" '
+      'WHERE ${hasMetalKey ? '(metal = ? OR metal_key = ?)' : 'metal = ?'} '
+      'ORDER BY rate_date DESC LIMIT ?',
       variables: [
         Variable.withString(metal.key),
+        if (hasMetalKey) Variable.withString(metal.key),
         Variable.withInt(_historyLimit),
       ],
     ).get();
@@ -195,7 +232,11 @@ class MetalRateRepository {
     return rows
         .map((row) {
           try {
-            final profileJson = row.read<String>('profile_json');
+            final profileJson = (row.data['profile_json'] ??
+                row.data['snapshot_json']) as String?;
+            if (profileJson == null || profileJson.isEmpty) {
+              return null;
+            }
             final profile = MetalRateProfile.fromJson(
               Map<String, dynamic>.from(jsonDecode(profileJson) as Map),
             );
@@ -204,7 +245,7 @@ class MetalRateRepository {
               changedAt: DateTime.fromMillisecondsSinceEpoch(
                 row.read<int>('rate_date'),
               ),
-              source: row.read<String>('source'),
+              source: row.data['source'] as String? ?? 'Metal Rate Master',
             );
           } catch (_) {
             return null;
@@ -491,17 +532,38 @@ class MetalRateRepository {
     );
 
     await _ensureHistoryTable();
+    final columns = await _historyTableColumns();
+    final profileJson = jsonEncode(profile.toJson());
+    final insertColumns = <String>['metal'];
+    final placeholders = <String>['?'];
+    final values = <Object?>[profile.metal.key];
+
+    if (columns.contains('metal_key')) {
+      insertColumns.add('metal_key');
+      placeholders.add('?');
+      values.add(profile.metal.key);
+    }
+
+    insertColumns.addAll(['rate_date', 'profile_json']);
+    placeholders.addAll(const ['?', '?']);
+    values.addAll([profile.updatedAt.millisecondsSinceEpoch, profileJson]);
+
+    if (columns.contains('snapshot_json')) {
+      insertColumns.add('snapshot_json');
+      placeholders.add('?');
+      values.add(profileJson);
+    }
+
+    insertColumns.addAll(['source', 'created_at']);
+    placeholders.addAll(const ['?', '?']);
+    values
+        .addAll([profile.marketSource, DateTime.now().millisecondsSinceEpoch]);
+
     await _db.customStatement(
       'INSERT INTO "$_historyTable" '
-      '(metal, rate_date, profile_json, source, created_at) '
-      'VALUES (?, ?, ?, ?, ?)',
-      [
-        profile.metal.key,
-        profile.updatedAt.millisecondsSinceEpoch,
-        jsonEncode(profile.toJson()),
-        profile.marketSource,
-        DateTime.now().millisecondsSinceEpoch,
-      ],
+      '(${insertColumns.map((column) => '"$column"').join(', ')}) '
+      'VALUES (${placeholders.join(', ')})',
+      values,
     );
 
     final compact = entries.take(_historyLimit * MetalRateMetal.values.length);
