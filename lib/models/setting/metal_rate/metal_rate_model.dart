@@ -344,20 +344,13 @@ class MetalRateProfile {
   });
 
   double get marketBaseRatePer10g {
-    final mcx = mcxRatePer10g > 0 ? mcxRatePer10g : marketRatePer10g;
-    final physical = physicalMarketRatePer10g > 0
-        ? physicalMarketRatePer10g
-        : marketRatePer10g;
-    if (mcx <= 0 && physical <= 0) {
+    if (physicalMarketRatePer10g > 0) {
+      return physicalMarketRatePer10g;
+    }
+    if (marketRatePer10g > 0) {
       return marketRatePer10g;
     }
-    if (mcx <= 0) {
-      return physical;
-    }
-    if (physical <= 0) {
-      return mcx;
-    }
-    return (mcx * 0.45) + (physical * 0.55);
+    return 0.0;
   }
 
   double brandAverageRateFor(MetalRatePurityPlan plan) {
@@ -663,7 +656,7 @@ class MetalRateProfile {
               buyRatePer10g: 65400,
               supplierBillingPercent: 92.0,
               shopMarkupPercent: 4.0,
-              makingChargePercent: 6.0,
+              makingChargePercent: 10.0,
             ),
             MetalRatePurityPlan(
               label: '18K',
@@ -672,9 +665,9 @@ class MetalRateProfile {
               targetMarginPercent: 4.5,
               manualDisplayRatePer10g: 54600,
               buyRatePer10g: 53500,
-              supplierBillingPercent: 80.0,
+              supplierBillingPercent: 79.0,
               shopMarkupPercent: 4.0,
-              makingChargePercent: 7.5,
+              makingChargePercent: 12.0,
             ),
             MetalRatePurityPlan(
               label: '14K',
@@ -685,7 +678,7 @@ class MetalRateProfile {
               buyRatePer10g: 41700,
               supplierBillingPercent: 62.0,
               shopMarkupPercent: 4.0,
-              makingChargePercent: 8.5,
+              makingChargePercent: 15.0,
             ),
             MetalRatePurityPlan(
               label: '9K',
@@ -696,7 +689,7 @@ class MetalRateProfile {
               buyRatePer10g: 26700,
               supplierBillingPercent: 40.0,
               shopMarkupPercent: 4.0,
-              makingChargePercent: 10.0,
+              makingChargePercent: 18.0,
             ),
           ],
         );
@@ -843,6 +836,25 @@ class MetalRateHistoryEntry {
     required this.changedAt,
     required this.source,
   });
+
+  Map<String, dynamic> toJson() => {
+        'profile': profile.toJson(),
+        'changedAt': changedAt.millisecondsSinceEpoch,
+        'source': source,
+      };
+
+  factory MetalRateHistoryEntry.fromJson(Map<String, dynamic> json) {
+    return MetalRateHistoryEntry(
+      profile: MetalRateProfile.fromJson(
+        Map<String, dynamic>.from(json['profile'] as Map? ?? const {}),
+      ),
+      changedAt: DateTime.fromMillisecondsSinceEpoch(
+        (json['changedAt'] as num?)?.toInt() ??
+            DateTime.now().millisecondsSinceEpoch,
+      ),
+      source: json['source'] as String? ?? 'Manual Rate Master',
+    );
+  }
 }
 
 double _toDouble(Object? value, {double fallback = 0.0}) {

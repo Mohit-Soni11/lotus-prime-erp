@@ -2,7 +2,7 @@
 // FILE        : lib/logic/setting/metal_rate/metal_rate_controller.dart
 // MODULE      : Metal Rate Setting
 // LAYER       : Logic / Controller
-// DESCRIPTION : ChangeNotifier controller for smart rate hub and detail screens.
+// DESCRIPTION : ChangeNotifier controller for manual metal rate master screens.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -27,6 +27,7 @@ class MetalRateController extends ChangeNotifier {
 
   MetalRateLoadState get state => _state;
   String? get errorMessage => _errorMessage;
+
   List<MetalRateProfile> get profiles =>
       MetalRateMetal.values.map(profileFor).toList(growable: false);
 
@@ -47,9 +48,11 @@ class MetalRateController extends ChangeNotifier {
       _profiles
         ..clear()
         ..addEntries(loaded.map((profile) => MapEntry(profile.metal, profile)));
+
       for (final profile in loaded) {
         _history[profile.metal] = await _repo.loadHistory(profile.metal);
       }
+
       _state = MetalRateLoadState.loaded;
     } catch (error) {
       _errorMessage = error.toString();
@@ -103,25 +106,12 @@ class MetalRateController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateMarketRate(MetalRateMetal metal, double value) {
-    final profile = profileFor(metal);
-    final safeValue = value.clamp(0, 9999999).toDouble();
-    stageProfile(
-      profile.copyWith(
-        mcxRatePer10g: safeValue,
-        physicalMarketRatePer10g: safeValue,
-        marketRatePer10g: safeValue,
-      ),
-    );
-  }
-
   void updateReferenceRate(MetalRateMetal metal, double value) {
     final profile = profileFor(metal);
     final safeValue = value.clamp(0, 9999999).toDouble();
     stageProfile(
       profile.copyWith(
         mcxRatePer10g: safeValue,
-        marketRatePer10g: safeValue,
         marketSource: 'Manual Rate Master',
       ),
     );
@@ -137,24 +127,30 @@ class MetalRateController extends ChangeNotifier {
     stageProfile(next.copyWith(marketRatePer10g: next.marketBaseRatePer10g));
   }
 
+  void updateMarketInputs({
+    required MetalRateMetal metal,
+    double? mcxRate,
+    double? physicalRate,
+  }) {
+    final profile = profileFor(metal);
+    final next = profile.copyWith(
+      mcxRatePer10g: mcxRate?.clamp(0, 9999999).toDouble(),
+      physicalMarketRatePer10g: physicalRate?.clamp(0, 9999999).toDouble(),
+      marketSource: 'Manual Rate Master',
+    );
+    stageProfile(next.copyWith(marketRatePer10g: next.marketBaseRatePer10g));
+  }
+
   void updateShopRate({
     required MetalRateMetal metal,
     required int index,
     required double value,
   }) {
-    final profile = profileFor(metal);
-    if (index < 0 || index >= profile.purityPlans.length) {
-      return;
-    }
-
-    final plans = List<MetalRatePurityPlan>.from(profile.purityPlans);
-    plans[index] = plans[index].copyWith(
-      manualDisplayRatePer10g: value.clamp(0, 9999999).toDouble(),
-    );
-    stageProfile(
-      profile.copyWith(
-        marketSource: 'Manual Rate Master',
-        purityPlans: plans,
+    _updatePlan(
+      metal: metal,
+      index: index,
+      patch: (plan) => plan.copyWith(
+        manualDisplayRatePer10g: value.clamp(0, 9999999).toDouble(),
       ),
     );
   }
@@ -164,19 +160,11 @@ class MetalRateController extends ChangeNotifier {
     required int index,
     required double value,
   }) {
-    final profile = profileFor(metal);
-    if (index < 0 || index >= profile.purityPlans.length) {
-      return;
-    }
-
-    final plans = List<MetalRatePurityPlan>.from(profile.purityPlans);
-    plans[index] = plans[index].copyWith(
-      buyRatePer10g: value.clamp(0, 9999999).toDouble(),
-    );
-    stageProfile(
-      profile.copyWith(
-        marketSource: 'Manual Rate Master',
-        purityPlans: plans,
+    _updatePlan(
+      metal: metal,
+      index: index,
+      patch: (plan) => plan.copyWith(
+        buyRatePer10g: value.clamp(0, 9999999).toDouble(),
       ),
     );
   }
@@ -187,35 +175,39 @@ class MetalRateController extends ChangeNotifier {
     double? supplierBillingPercent,
     double? shopMarkupPercent,
   }) {
-    final profile = profileFor(metal);
-    if (index < 0 || index >= profile.purityPlans.length) {
-      return;
-    }
-
-    final plans = List<MetalRatePurityPlan>.from(profile.purityPlans);
-    plans[index] = plans[index].copyWith(
-      supplierBillingPercent: supplierBillingPercent?.clamp(0, 150).toDouble(),
-      shopMarkupPercent: shopMarkupPercent?.clamp(0, 99).toDouble(),
-    );
-    stageProfile(
-      profile.copyWith(
-        marketSource: 'Manual Rate Master',
-        purityPlans: plans,
+    _updatePlan(
+      metal: metal,
+      index: index,
+      patch: (plan) => plan.copyWith(
+        supplierBillingPercent:
+            supplierBillingPercent?.clamp(0, 150).toDouble(),
+        shopMarkupPercent: shopMarkupPercent?.clamp(0, 99).toDouble(),
       ),
     );
   }
 
-  void updateMarketInputs({
+  void updatePurityPlan({
     required MetalRateMetal metal,
-    double? mcxRate,
-    double? physicalRate,
+    required int index,
+    double? supplierPremium,
+    double? targetMargin,
+    double? landedCost,
+    double? displayRate,
+    double? makingPercent,
+    double? makingPerGram,
   }) {
-    final profile = profileFor(metal);
-    final next = profile.copyWith(
-      mcxRatePer10g: mcxRate?.clamp(0, 9999999).toDouble(),
-      physicalMarketRatePer10g: physicalRate?.clamp(0, 9999999).toDouble(),
+    _updatePlan(
+      metal: metal,
+      index: index,
+      patch: (plan) => plan.copyWith(
+        supplierPremiumPercent: supplierPremium?.clamp(0, 50).toDouble(),
+        targetMarginPercent: targetMargin?.clamp(0, 80).toDouble(),
+        landedCostOverridePer10g: landedCost?.clamp(0, 9999999).toDouble(),
+        manualDisplayRatePer10g: displayRate?.clamp(0, 9999999).toDouble(),
+        makingChargePercent: makingPercent?.clamp(0, 99).toDouble(),
+        makingChargePerGram: makingPerGram?.clamp(0, 999999).toDouble(),
+      ),
     );
-    stageProfile(next.copyWith(marketRatePer10g: next.marketBaseRatePer10g));
   }
 
   void updatePercent({
@@ -248,33 +240,6 @@ class MetalRateController extends ChangeNotifier {
     stageProfile(profile.copyWith(posture: posture));
   }
 
-  void updatePurityPlan({
-    required MetalRateMetal metal,
-    required int index,
-    double? supplierPremium,
-    double? targetMargin,
-    double? landedCost,
-    double? displayRate,
-    double? makingPercent,
-    double? makingPerGram,
-  }) {
-    final profile = profileFor(metal);
-    if (index < 0 || index >= profile.purityPlans.length) {
-      return;
-    }
-
-    final plans = List<MetalRatePurityPlan>.from(profile.purityPlans);
-    plans[index] = plans[index].copyWith(
-      supplierPremiumPercent: supplierPremium?.clamp(0, 50).toDouble(),
-      targetMarginPercent: targetMargin?.clamp(0, 80).toDouble(),
-      landedCostOverridePer10g: landedCost?.clamp(0, 9999999).toDouble(),
-      manualDisplayRatePer10g: displayRate?.clamp(0, 9999999).toDouble(),
-      makingChargePercent: makingPercent?.clamp(0, 99).toDouble(),
-      makingChargePerGram: makingPerGram?.clamp(0, 999999).toDouble(),
-    );
-    stageProfile(profile.copyWith(purityPlans: plans));
-  }
-
   void updateBrandBenchmark({
     required MetalRateMetal metal,
     required int index,
@@ -297,6 +262,7 @@ class MetalRateController extends ChangeNotifier {
     final high = makingHigh ?? current.makingHighPercent;
     final rateByPurity = Map<String, double>.from(current.rateByPurity);
     final makingByPurity = Map<String, double>.from(current.makingByPurity);
+
     if (purityLabel != null && purityRate != null) {
       rateByPurity[_purityKey(purityLabel)] =
           purityRate.clamp(0, 9999999).toDouble();
@@ -314,6 +280,26 @@ class MetalRateController extends ChangeNotifier {
       makingByPurity: makingByPurity,
     );
     stageProfile(profile.copyWith(brandBenchmarks: benchmarks));
+  }
+
+  void _updatePlan({
+    required MetalRateMetal metal,
+    required int index,
+    required MetalRatePurityPlan Function(MetalRatePurityPlan plan) patch,
+  }) {
+    final profile = profileFor(metal);
+    if (index < 0 || index >= profile.purityPlans.length) {
+      return;
+    }
+
+    final plans = List<MetalRatePurityPlan>.from(profile.purityPlans);
+    plans[index] = patch(plans[index]);
+    stageProfile(
+      profile.copyWith(
+        marketSource: 'Manual Rate Master',
+        purityPlans: plans,
+      ),
+    );
   }
 }
 

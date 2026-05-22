@@ -18,9 +18,9 @@ class MetalRateStrings {
 
   static const String marketBase = 'Market Base Rate';
   static const String brandBenchmark = 'Rate History';
-  static const String costEngine = 'Buy Rate Master';
+  static const String costEngine = 'Old Buy Rate Master';
   static const String smartOutput = 'Shop Selling Rates';
-  static const String makingEngine = 'Making Charge Engine';
+  static const String makingEngine = 'Default Making Charges';
   static const String saveProfile = 'Save Rates';
   static const String resetDefaults = 'Reset Defaults';
 }
