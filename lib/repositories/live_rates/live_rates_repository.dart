@@ -75,24 +75,60 @@ class LiveRatesRepository {
       final today = DateTime.now();
       final rateDate = DateTime(today.year, today.month, today.day);
 
-      await _db.into(_db.dailyRates).insertOnConflictUpdate(
-            DailyRatesCompanion(
-              rateDate: Value(rateDate),
-              gold24k: Value(model.gold24k.replaceAll(',', '')),
-              gold22k: Value(model.gold22k.replaceAll(',', '')),
-              gold18k: Value(model.gold18k.replaceAll(',', '')),
-              goldChangePercent: Value(model.goldChangePercent),
-              silverRateKg: Value(model.silverRateKg.replaceAll(',', '')),
-              silverJewellery: Value(model.silverJewellery.replaceAll(',', '')),
-              silverIdols: Value(model.silverIdols.replaceAll(',', '')),
-              silverChangePercent: Value(model.silverChangePercent),
-              oldGold24kBuy: Value(model.oldGold24kBuy.replaceAll(',', '')),
-              oldGold22kBuy: Value(model.oldGold22kBuy.replaceAll(',', '')),
-              oldGold18kBuy: Value(model.oldGold18kBuy.replaceAll(',', '')),
-              oldSilverBuy: Value(model.oldSilverBuy.replaceAll(',', '')),
-              source: const Value('Manual'),
-            ),
-          );
+      await _db.customUpdate(
+        '''
+        INSERT INTO "daily_rates" (
+          "rate_date",
+          "gold24k",
+          "gold22k",
+          "gold18k",
+          "gold_change_percent",
+          "silver_rate_kg",
+          "silver_jewellery",
+          "silver_idols",
+          "silver_change_percent",
+          "old_gold24k_buy",
+          "old_gold22k_buy",
+          "old_gold18k_buy",
+          "old_silver_buy",
+          "source",
+          "updated_at"
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT("rate_date") DO UPDATE SET
+          "gold24k" = excluded."gold24k",
+          "gold22k" = excluded."gold22k",
+          "gold18k" = excluded."gold18k",
+          "gold_change_percent" = excluded."gold_change_percent",
+          "silver_rate_kg" = excluded."silver_rate_kg",
+          "silver_jewellery" = excluded."silver_jewellery",
+          "silver_idols" = excluded."silver_idols",
+          "silver_change_percent" = excluded."silver_change_percent",
+          "old_gold24k_buy" = excluded."old_gold24k_buy",
+          "old_gold22k_buy" = excluded."old_gold22k_buy",
+          "old_gold18k_buy" = excluded."old_gold18k_buy",
+          "old_silver_buy" = excluded."old_silver_buy",
+          "source" = excluded."source",
+          "updated_at" = excluded."updated_at"
+        ''',
+        variables: [
+          Variable.withDateTime(rateDate),
+          Variable.withString(model.gold24k.replaceAll(',', '')),
+          Variable.withString(model.gold22k.replaceAll(',', '')),
+          Variable.withString(model.gold18k.replaceAll(',', '')),
+          Variable.withString(model.goldChangePercent),
+          Variable.withString(model.silverRateKg.replaceAll(',', '')),
+          Variable.withString(model.silverJewellery.replaceAll(',', '')),
+          Variable.withString(model.silverIdols.replaceAll(',', '')),
+          Variable.withString(model.silverChangePercent),
+          Variable.withString(model.oldGold24kBuy.replaceAll(',', '')),
+          Variable.withString(model.oldGold22kBuy.replaceAll(',', '')),
+          Variable.withString(model.oldGold18kBuy.replaceAll(',', '')),
+          Variable.withString(model.oldSilverBuy.replaceAll(',', '')),
+          Variable.withString('Manual'),
+          Variable.withDateTime(DateTime.now()),
+        ],
+        updates: {_db.dailyRates},
+      );
       // Stream ko refresh karo
       await _fetchTodayRates();
       debugPrint('✅ Rates saved successfully!');

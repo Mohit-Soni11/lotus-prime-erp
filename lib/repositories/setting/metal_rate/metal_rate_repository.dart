@@ -143,10 +143,39 @@ class MetalRateRepository {
         "created_at" INTEGER NOT NULL
       )
     ''');
+
+    final columns = await _historyTableColumns();
+
+    Future<void> addMissingColumn(String name, String definition) async {
+      if (columns.contains(name)) {
+        return;
+      }
+
+      await _db.customStatement(
+        'ALTER TABLE "$_historyTable" ADD COLUMN "$name" $definition',
+      );
+      columns.add(name);
+    }
+
+    await addMissingColumn('metal', 'TEXT');
+    await addMissingColumn('rate_date', 'INTEGER');
+    await addMissingColumn('profile_json', 'TEXT');
+    await addMissingColumn('source', 'TEXT');
+    await addMissingColumn('created_at', 'INTEGER');
+
     await _db.customStatement(
       'CREATE INDEX IF NOT EXISTS "idx_${_historyTable}_metal_date" '
       'ON "$_historyTable" ("metal", "rate_date" DESC)',
     );
+  }
+
+  Future<Set<String>> _historyTableColumns() async {
+    final rows = await _db.customSelect(
+      'PRAGMA table_info("$_historyTable")',
+      readsFrom: const {},
+    ).get();
+
+    return rows.map((row) => row.data['name']).whereType<String>().toSet();
   }
 
   Future<List<MetalRateHistoryEntry>> _loadDatabaseHistory(
@@ -306,60 +335,125 @@ class MetalRateRepository {
     }
 
     final date = _dateOnly(profile.updatedAt);
-    final existing = await (_db.select(_db.dailyRates)
-          ..where((table) => table.rateDate.equals(date)))
-        .getSingleOrNull();
-
-    String value(String? existingValue) => existingValue ?? '0';
-
-    var gold24 = value(existing?.gold24k);
-    var gold22 = value(existing?.gold22k);
-    var gold18 = value(existing?.gold18k);
-    var oldGold24 = value(existing?.oldGold24kBuy);
-    var oldGold22 = value(existing?.oldGold22kBuy);
-    var oldGold18 = value(existing?.oldGold18kBuy);
-    var silverKg = value(existing?.silverRateKg);
-    var silverJewellery = value(existing?.silverJewellery);
-    var silverIdols = value(existing?.silverIdols);
-    var oldSilver = value(existing?.oldSilverBuy);
+    final updatedAt = DateTime.now();
 
     if (profile.metal == MetalRateMetal.gold) {
-      gold24 = _rateText(_planSellRate(profile, '24K'));
-      gold22 = _rateText(_planSellRate(profile, '22K'));
-      gold18 = _rateText(_planSellRate(profile, '18K'));
-      oldGold24 = _rateText(_planBuyRate(profile, '24K'));
-      oldGold22 = _rateText(_planBuyRate(profile, '22K'));
-      oldGold18 = _rateText(_planBuyRate(profile, '18K'));
-    } else if (profile.metal == MetalRateMetal.silver) {
-      final sell = profile.purityPlans.isEmpty
-          ? profile.marketBaseRatePer10g
-          : profile.purityPlans.first.manualDisplayRatePer10g;
-      final buy = profile.purityPlans.isEmpty
-          ? 0.0
-          : profile.purityPlans.first.buyRatePer10g;
-      silverJewellery = _rateText(sell);
-      silverIdols = _rateText(sell);
-      silverKg = _rateText(sell * 100);
-      oldSilver = _rateText(buy);
+      await _upsertGoldDailyRate(
+        rateDate: date,
+        updatedAt: updatedAt,
+        gold24: _rateText(_planSellRate(profile, '24K')),
+        gold22: _rateText(_planSellRate(profile, '22K')),
+        gold18: _rateText(_planSellRate(profile, '18K')),
+        oldGold24: _rateText(_planBuyRate(profile, '24K')),
+        oldGold22: _rateText(_planBuyRate(profile, '22K')),
+        oldGold18: _rateText(_planBuyRate(profile, '18K')),
+      );
+      return;
     }
 
-    await _db.into(_db.dailyRates).insertOnConflictUpdate(
-          DailyRatesCompanion(
-            rateDate: Value(date),
-            gold24k: Value(gold24),
-            gold22k: Value(gold22),
-            gold18k: Value(gold18),
-            silverRateKg: Value(silverKg),
-            silverJewellery: Value(silverJewellery),
-            silverIdols: Value(silverIdols),
-            oldGold24kBuy: Value(oldGold24),
-            oldGold22kBuy: Value(oldGold22),
-            oldGold18kBuy: Value(oldGold18),
-            oldSilverBuy: Value(oldSilver),
-            source: const Value('Metal Rate Master'),
-            updatedAt: Value(DateTime.now()),
-          ),
-        );
+    final sell = profile.purityPlans.isEmpty
+        ? profile.marketBaseRatePer10g
+        : profile.purityPlans.first.manualDisplayRatePer10g;
+    final buy = profile.purityPlans.isEmpty
+        ? 0.0
+        : profile.purityPlans.first.buyRatePer10g;
+
+    await _upsertSilverDailyRate(
+      rateDate: date,
+      updatedAt: updatedAt,
+      silverKg: _rateText(sell * 100),
+      silverJewellery: _rateText(sell),
+      silverIdols: _rateText(sell),
+      oldSilver: _rateText(buy),
+    );
+  }
+
+  Future<void> _upsertGoldDailyRate({
+    required DateTime rateDate,
+    required DateTime updatedAt,
+    required String gold24,
+    required String gold22,
+    required String gold18,
+    required String oldGold24,
+    required String oldGold22,
+    required String oldGold18,
+  }) {
+    return _db.customUpdate(
+      '''
+      INSERT INTO "daily_rates" (
+        "rate_date",
+        "gold24k",
+        "gold22k",
+        "gold18k",
+        "old_gold24k_buy",
+        "old_gold22k_buy",
+        "old_gold18k_buy",
+        "source",
+        "updated_at"
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT("rate_date") DO UPDATE SET
+        "gold24k" = excluded."gold24k",
+        "gold22k" = excluded."gold22k",
+        "gold18k" = excluded."gold18k",
+        "old_gold24k_buy" = excluded."old_gold24k_buy",
+        "old_gold22k_buy" = excluded."old_gold22k_buy",
+        "old_gold18k_buy" = excluded."old_gold18k_buy",
+        "source" = excluded."source",
+        "updated_at" = excluded."updated_at"
+      ''',
+      variables: [
+        Variable.withDateTime(rateDate),
+        Variable.withString(gold24),
+        Variable.withString(gold22),
+        Variable.withString(gold18),
+        Variable.withString(oldGold24),
+        Variable.withString(oldGold22),
+        Variable.withString(oldGold18),
+        Variable.withString('Metal Rate Master'),
+        Variable.withDateTime(updatedAt),
+      ],
+      updates: {_db.dailyRates},
+    ).then((_) {});
+  }
+
+  Future<void> _upsertSilverDailyRate({
+    required DateTime rateDate,
+    required DateTime updatedAt,
+    required String silverKg,
+    required String silverJewellery,
+    required String silverIdols,
+    required String oldSilver,
+  }) {
+    return _db.customUpdate(
+      '''
+      INSERT INTO "daily_rates" (
+        "rate_date",
+        "silver_rate_kg",
+        "silver_jewellery",
+        "silver_idols",
+        "old_silver_buy",
+        "source",
+        "updated_at"
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT("rate_date") DO UPDATE SET
+        "silver_rate_kg" = excluded."silver_rate_kg",
+        "silver_jewellery" = excluded."silver_jewellery",
+        "silver_idols" = excluded."silver_idols",
+        "old_silver_buy" = excluded."old_silver_buy",
+        "source" = excluded."source",
+        "updated_at" = excluded."updated_at"
+      ''',
+      variables: [
+        Variable.withDateTime(rateDate),
+        Variable.withString(silverKg),
+        Variable.withString(silverJewellery),
+        Variable.withString(silverIdols),
+        Variable.withString(oldSilver),
+        Variable.withString('Metal Rate Master'),
+        Variable.withDateTime(updatedAt),
+      ],
+      updates: {_db.dailyRates},
+    ).then((_) {});
   }
 
   Future<void> _appendHistory(
