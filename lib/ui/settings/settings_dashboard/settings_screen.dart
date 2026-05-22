@@ -20,6 +20,7 @@ import '../billing_setup/billing_setup_hub_screen.dart';
 
 // âœ… Metal Costing Analysis
 import '../metal_costing/metal_costing_hub_screen.dart';
+import '../metal_rate/metal_rate_hub_screen.dart';
 
 // âœ… v13: Tax & GST Hub
 import '../tax_gst/tax_gst_hub_screen.dart';
@@ -81,6 +82,23 @@ class SettingsScreen extends StatelessWidget {
         break;
 
       // âœ… v13: Tax & GST Hub â€” fade transition
+      case 'gold_rate_settings':
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (_, animation, __) => const MetalRateHubScreen(),
+            transitionsBuilder: (_, animation, __, child) => FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              ),
+              child: child,
+            ),
+            transitionDuration: const Duration(milliseconds: 260),
+          ),
+        );
+        break;
+
       case 'gst_config':
         Navigator.push(
           context,
