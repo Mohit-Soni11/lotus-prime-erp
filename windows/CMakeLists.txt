@@ -35,6 +35,7 @@ add_definitions(-DUNICODE -D_UNICODE)
 
 if(MSVC)
   add_compile_options(/FS)
+  add_compile_definitions(_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
 endif()
 
 # Compilation settings that should be applied to most targets.

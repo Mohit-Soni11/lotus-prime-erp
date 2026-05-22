@@ -23,11 +23,15 @@ class MetalRateController extends ChangeNotifier {
   MetalRateLoadState _state = MetalRateLoadState.idle;
   String? _errorMessage;
   final Map<MetalRateMetal, MetalRateProfile> _profiles = {};
+  final Map<MetalRateMetal, List<MetalRateHistoryEntry>> _history = {};
 
   MetalRateLoadState get state => _state;
   String? get errorMessage => _errorMessage;
   List<MetalRateProfile> get profiles =>
       MetalRateMetal.values.map(profileFor).toList(growable: false);
+
+  List<MetalRateHistoryEntry> historyFor(MetalRateMetal metal) =>
+      _history[metal] ?? const [];
 
   MetalRateProfile profileFor(MetalRateMetal metal) {
     return _profiles[metal] ?? MetalRateProfile.defaultFor(metal);
@@ -43,6 +47,9 @@ class MetalRateController extends ChangeNotifier {
       _profiles
         ..clear()
         ..addEntries(loaded.map((profile) => MapEntry(profile.metal, profile)));
+      for (final profile in loaded) {
+        _history[profile.metal] = await _repo.loadHistory(profile.metal);
+      }
       _state = MetalRateLoadState.loaded;
     } catch (error) {
       _errorMessage = error.toString();
@@ -64,6 +71,7 @@ class MetalRateController extends ChangeNotifier {
       await _repo.saveProfile(profile);
       final saved = await _repo.loadProfile(profile.metal);
       _profiles[profile.metal] = saved;
+      _history[profile.metal] = await _repo.loadHistory(profile.metal);
       _state = MetalRateLoadState.loaded;
     } catch (error) {
       _errorMessage = error.toString();
@@ -80,6 +88,7 @@ class MetalRateController extends ChangeNotifier {
     try {
       await _repo.resetProfile(metal);
       _profiles[metal] = await _repo.loadProfile(metal);
+      _history[metal] = await _repo.loadHistory(metal);
       _state = MetalRateLoadState.loaded;
     } catch (error) {
       _errorMessage = error.toString();
@@ -102,6 +111,96 @@ class MetalRateController extends ChangeNotifier {
         mcxRatePer10g: safeValue,
         physicalMarketRatePer10g: safeValue,
         marketRatePer10g: safeValue,
+      ),
+    );
+  }
+
+  void updateReferenceRate(MetalRateMetal metal, double value) {
+    final profile = profileFor(metal);
+    final safeValue = value.clamp(0, 9999999).toDouble();
+    stageProfile(
+      profile.copyWith(
+        mcxRatePer10g: safeValue,
+        marketRatePer10g: safeValue,
+        marketSource: 'Manual Rate Master',
+      ),
+    );
+  }
+
+  void updatePhysicalRate(MetalRateMetal metal, double value) {
+    final profile = profileFor(metal);
+    final safeValue = value.clamp(0, 9999999).toDouble();
+    final next = profile.copyWith(
+      physicalMarketRatePer10g: safeValue,
+      marketSource: 'Manual Rate Master',
+    );
+    stageProfile(next.copyWith(marketRatePer10g: next.marketBaseRatePer10g));
+  }
+
+  void updateShopRate({
+    required MetalRateMetal metal,
+    required int index,
+    required double value,
+  }) {
+    final profile = profileFor(metal);
+    if (index < 0 || index >= profile.purityPlans.length) {
+      return;
+    }
+
+    final plans = List<MetalRatePurityPlan>.from(profile.purityPlans);
+    plans[index] = plans[index].copyWith(
+      manualDisplayRatePer10g: value.clamp(0, 9999999).toDouble(),
+    );
+    stageProfile(
+      profile.copyWith(
+        marketSource: 'Manual Rate Master',
+        purityPlans: plans,
+      ),
+    );
+  }
+
+  void updateBuyRate({
+    required MetalRateMetal metal,
+    required int index,
+    required double value,
+  }) {
+    final profile = profileFor(metal);
+    if (index < 0 || index >= profile.purityPlans.length) {
+      return;
+    }
+
+    final plans = List<MetalRatePurityPlan>.from(profile.purityPlans);
+    plans[index] = plans[index].copyWith(
+      buyRatePer10g: value.clamp(0, 9999999).toDouble(),
+    );
+    stageProfile(
+      profile.copyWith(
+        marketSource: 'Manual Rate Master',
+        purityPlans: plans,
+      ),
+    );
+  }
+
+  void updateSupplierBasis({
+    required MetalRateMetal metal,
+    required int index,
+    double? supplierBillingPercent,
+    double? shopMarkupPercent,
+  }) {
+    final profile = profileFor(metal);
+    if (index < 0 || index >= profile.purityPlans.length) {
+      return;
+    }
+
+    final plans = List<MetalRatePurityPlan>.from(profile.purityPlans);
+    plans[index] = plans[index].copyWith(
+      supplierBillingPercent: supplierBillingPercent?.clamp(0, 150).toDouble(),
+      shopMarkupPercent: shopMarkupPercent?.clamp(0, 99).toDouble(),
+    );
+    stageProfile(
+      profile.copyWith(
+        marketSource: 'Manual Rate Master',
+        purityPlans: plans,
       ),
     );
   }

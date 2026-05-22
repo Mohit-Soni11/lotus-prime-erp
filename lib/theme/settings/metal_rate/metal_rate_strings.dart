@@ -8,19 +8,19 @@ class MetalRateStrings {
   MetalRateStrings._();
 
   static const String hubTitle = 'Metal Rate Setting';
-  static const String hubSub = 'Smart pricing intelligence';
-  static const String moduleBadge = 'RATE ENGINE';
+  static const String hubSub = 'Daily shop rate master';
+  static const String moduleBadge = 'RATE MASTER';
   static const String systemOnline = 'MANUAL MODE';
   static const String selectMetal = 'SELECT METAL';
-  static const String configure = 'Open intelligence';
+  static const String configure = 'Set rates';
   static const String hubInfo =
-      'The rate engine uses saved manual benchmarks today. Live MCX/API sync can be connected later when you choose a data provider.';
+      'Set the exact shop rates you want to use in billing. Market reference is optional, and every save creates a rate history entry for verification.';
 
   static const String marketBase = 'Market Base Rate';
-  static const String brandBenchmark = 'Top Brand Benchmark';
-  static const String costEngine = 'My Cost Engine';
-  static const String smartOutput = 'Smart Suggested Rates';
+  static const String brandBenchmark = 'Rate History';
+  static const String costEngine = 'Buy Rate Master';
+  static const String smartOutput = 'Shop Selling Rates';
   static const String makingEngine = 'Making Charge Engine';
-  static const String saveProfile = 'Save Profile';
+  static const String saveProfile = 'Save Rates';
   static const String resetDefaults = 'Reset Defaults';
 }

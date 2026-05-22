@@ -166,6 +166,9 @@ class MetalRatePurityPlan {
   final double targetMarginPercent;
   final double landedCostOverridePer10g;
   final double manualDisplayRatePer10g;
+  final double buyRatePer10g;
+  final double supplierBillingPercent;
+  final double shopMarkupPercent;
   final double makingChargePercent;
   final double makingChargePerGram;
 
@@ -176,11 +179,20 @@ class MetalRatePurityPlan {
     required this.targetMarginPercent,
     this.landedCostOverridePer10g = 0.0,
     this.manualDisplayRatePer10g = 0.0,
+    this.buyRatePer10g = 0.0,
+    this.supplierBillingPercent = 0.0,
+    this.shopMarkupPercent = 4.0,
     this.makingChargePercent = 0.0,
     this.makingChargePerGram = 0.0,
   });
 
   double get purityFactor => purityPercent <= 0 ? 1.0 : purityPercent / 100.0;
+
+  double get supplierBillingFactor {
+    final effective =
+        supplierBillingPercent > 0 ? supplierBillingPercent : purityPercent;
+    return effective <= 0 ? purityFactor : effective / 100.0;
+  }
 
   MetalRatePurityPlan copyWith({
     String? label,
@@ -189,6 +201,9 @@ class MetalRatePurityPlan {
     double? targetMarginPercent,
     double? landedCostOverridePer10g,
     double? manualDisplayRatePer10g,
+    double? buyRatePer10g,
+    double? supplierBillingPercent,
+    double? shopMarkupPercent,
     double? makingChargePercent,
     double? makingChargePerGram,
   }) {
@@ -202,6 +217,10 @@ class MetalRatePurityPlan {
           landedCostOverridePer10g ?? this.landedCostOverridePer10g,
       manualDisplayRatePer10g:
           manualDisplayRatePer10g ?? this.manualDisplayRatePer10g,
+      buyRatePer10g: buyRatePer10g ?? this.buyRatePer10g,
+      supplierBillingPercent:
+          supplierBillingPercent ?? this.supplierBillingPercent,
+      shopMarkupPercent: shopMarkupPercent ?? this.shopMarkupPercent,
       makingChargePercent: makingChargePercent ?? this.makingChargePercent,
       makingChargePerGram: makingChargePerGram ?? this.makingChargePerGram,
     );
@@ -214,6 +233,9 @@ class MetalRatePurityPlan {
         'targetMarginPercent': targetMarginPercent,
         'landedCostOverridePer10g': landedCostOverridePer10g,
         'manualDisplayRatePer10g': manualDisplayRatePer10g,
+        'buyRatePer10g': buyRatePer10g,
+        'supplierBillingPercent': supplierBillingPercent,
+        'shopMarkupPercent': shopMarkupPercent,
         'makingChargePercent': makingChargePercent,
         'makingChargePerGram': makingChargePerGram,
       };
@@ -227,6 +249,9 @@ class MetalRatePurityPlan {
           _toDouble(json['targetMarginPercent'], fallback: 4.0),
       landedCostOverridePer10g: _toDouble(json['landedCostOverridePer10g']),
       manualDisplayRatePer10g: _toDouble(json['manualDisplayRatePer10g']),
+      buyRatePer10g: _toDouble(json['buyRatePer10g']),
+      supplierBillingPercent: _toDouble(json['supplierBillingPercent']),
+      shopMarkupPercent: _toDouble(json['shopMarkupPercent'], fallback: 4.0),
       makingChargePercent: _toDouble(json['makingChargePercent']),
       makingChargePerGram: _toDouble(json['makingChargePerGram']),
     );
@@ -377,6 +402,39 @@ class MetalRateProfile {
     );
     return averageBrandMakingFor(plan);
   }
+
+  double get primaryShopRatePer10g {
+    if (purityPlans.isEmpty) {
+      return marketBaseRatePer10g;
+    }
+    final first = purityPlans.first;
+    return first.manualDisplayRatePer10g > 0
+        ? first.manualDisplayRatePer10g
+        : marketBaseRatePer10g * first.purityFactor;
+  }
+
+  double get primaryBuyRatePer10g {
+    if (purityPlans.isEmpty) {
+      return 0.0;
+    }
+    return purityPlans.first.buyRatePer10g;
+  }
+
+  double get supplierBaseRatePer10g {
+    if (physicalMarketRatePer10g > 0) {
+      return physicalMarketRatePer10g;
+    }
+    if (mcxRatePer10g > 0) {
+      return mcxRatePer10g;
+    }
+    return marketBaseRatePer10g;
+  }
+
+  double supplierCostFor(MetalRatePurityPlan plan) =>
+      supplierBaseRatePer10g * plan.supplierBillingFactor;
+
+  double suggestedShopRateFor(MetalRatePurityPlan plan) =>
+      _roundRetail(supplierCostFor(plan) * (1 + plan.shopMarkupPercent / 100));
 
   double get allInOverheadPercent =>
       gstPercent +
@@ -590,6 +648,10 @@ class MetalRateProfile {
               purityPercent: 99.9,
               supplierPremiumPercent: 2.0,
               targetMarginPercent: 3.2,
+              manualDisplayRatePer10g: 72800,
+              buyRatePer10g: 71400,
+              supplierBillingPercent: 100.0,
+              shopMarkupPercent: 4.0,
               makingChargePercent: 4.0,
             ),
             MetalRatePurityPlan(
@@ -597,6 +659,10 @@ class MetalRateProfile {
               purityPercent: 91.6,
               supplierPremiumPercent: 4.5,
               targetMarginPercent: 4.0,
+              manualDisplayRatePer10g: 66700,
+              buyRatePer10g: 65400,
+              supplierBillingPercent: 92.0,
+              shopMarkupPercent: 4.0,
               makingChargePercent: 6.0,
             ),
             MetalRatePurityPlan(
@@ -604,6 +670,10 @@ class MetalRateProfile {
               purityPercent: 75.0,
               supplierPremiumPercent: 5.0,
               targetMarginPercent: 4.5,
+              manualDisplayRatePer10g: 54600,
+              buyRatePer10g: 53500,
+              supplierBillingPercent: 80.0,
+              shopMarkupPercent: 4.0,
               makingChargePercent: 7.5,
             ),
             MetalRatePurityPlan(
@@ -611,6 +681,10 @@ class MetalRateProfile {
               purityPercent: 58.5,
               supplierPremiumPercent: 5.8,
               targetMarginPercent: 5.0,
+              manualDisplayRatePer10g: 42600,
+              buyRatePer10g: 41700,
+              supplierBillingPercent: 62.0,
+              shopMarkupPercent: 4.0,
               makingChargePercent: 8.5,
             ),
             MetalRatePurityPlan(
@@ -618,6 +692,10 @@ class MetalRateProfile {
               purityPercent: 37.5,
               supplierPremiumPercent: 6.5,
               targetMarginPercent: 6.0,
+              manualDisplayRatePer10g: 27300,
+              buyRatePer10g: 26700,
+              supplierBillingPercent: 40.0,
+              shopMarkupPercent: 4.0,
               makingChargePercent: 10.0,
             ),
           ],
@@ -753,6 +831,18 @@ double _roundRetail(double value) {
   }
   final rounded = (value / 10).ceil() * 10;
   return rounded.toDouble();
+}
+
+class MetalRateHistoryEntry {
+  final MetalRateProfile profile;
+  final DateTime changedAt;
+  final String source;
+
+  const MetalRateHistoryEntry({
+    required this.profile,
+    required this.changedAt,
+    required this.source,
+  });
 }
 
 double _toDouble(Object? value, {double fallback = 0.0}) {
