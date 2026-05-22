@@ -279,7 +279,7 @@ class _AddSilverStockSupplierPanelState
             onTap: _openCreateSupplier,
           )
         : widget.ctrl.hasLinkedSupplier
-            ? _SilverStatusBadge(
+            ? const _SilverStatusBadge(
                 label: SilverStockStrings.ledgerLinked,
               )
             : const SizedBox.shrink();

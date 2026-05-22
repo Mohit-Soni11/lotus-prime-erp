@@ -4,26 +4,28 @@ class _CounterRateSection extends StatelessWidget {
   final MetalRateProfile profile;
   final Color accent;
   final MetalRateController controller;
+  final bool enabled;
 
   const _CounterRateSection({
     required this.profile,
     required this.accent,
     required this.controller,
+    required this.enabled,
   });
 
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
       icon: MetalRateIcons.save,
-      title: 'Counter Rate Master',
+      title: 'Counter Rate Control',
       subtitle:
-          'Directly edit shop selling rates and old-gold buying rates for every purity.',
+          'Manage the final selling and old-metal purchase rate for each purity.',
       color: accent,
       child: Column(
         children: [
           const _InfoLine(
             text:
-                'Supplier cost is intentionally not shown here. Keep billing simple: local market for reference, shop sell and old buy as final manual rates.',
+                'These are the authoritative counter rates used by billing and purchase workflows. Enable Edit Mode from the Live Rate panel before changing values.',
             color: MetalRateColors.success,
           ),
           const SizedBox(height: 12),
@@ -39,6 +41,7 @@ class _CounterRateSection extends StatelessWidget {
                     index: entry.key,
                     accent: accent,
                     controller: controller,
+                    enabled: enabled,
                   ),
                 ),
               ),
@@ -54,6 +57,7 @@ class _PurityRateCard extends StatelessWidget {
   final int index;
   final Color accent;
   final MetalRateController controller;
+  final bool enabled;
 
   const _PurityRateCard({
     required this.profile,
@@ -61,6 +65,7 @@ class _PurityRateCard extends StatelessWidget {
     required this.index,
     required this.accent,
     required this.controller,
+    required this.enabled,
   });
 
   @override
@@ -69,6 +74,7 @@ class _PurityRateCard extends StatelessWidget {
     final sellRate = plan.manualDisplayRatePer10g;
     final buyRate = plan.buyRatePer10g;
     final retailGap = sellRate > 0 && buyRate > 0 ? sellRate - buyRate : 0.0;
+    final gapPercent = buyRate <= 0 ? 0.0 : (retailGap / buyRate) * 100;
 
     return Container(
       padding: const EdgeInsets.all(13),
@@ -107,7 +113,7 @@ class _PurityRateCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'Manual counter rate used in billing and old buy calculation.',
+                      'Final counter rate pair used across sales and purchase entries.',
                       style: MetalRateStyles.cardSubtitle,
                     ),
                   ],
@@ -137,14 +143,15 @@ class _PurityRateCard extends StatelessWidget {
                     label: 'Market Parity',
                     value: _money(parityRate),
                     color: accent,
-                    helper: 'Local base x purity',
+                    helper: 'Local rate x purity',
                   ),
                   _AmountInputTile(
                     width: width,
-                    label: 'Shop Selling Rate',
+                    label: 'Counter Selling Rate',
                     value: sellRate,
                     color: MetalRateColors.success,
-                    helper: 'Final billing metal rate',
+                    helper: 'Used for sales billing',
+                    enabled: enabled,
                     onChanged: (value) => controller.updateShopRate(
                       metal: profile.metal,
                       index: index,
@@ -153,10 +160,11 @@ class _PurityRateCard extends StatelessWidget {
                   ),
                   _AmountInputTile(
                     width: width,
-                    label: 'Old Buy Rate',
+                    label: 'Old Metal Purchase Rate',
                     value: buyRate,
                     color: MetalRateColors.warning,
-                    helper: 'Purchase or exchange rate',
+                    helper: 'Used for exchange or buyback',
+                    enabled: enabled,
                     onChanged: (value) => controller.updateBuyRate(
                       metal: profile.metal,
                       index: index,
@@ -165,10 +173,12 @@ class _PurityRateCard extends StatelessWidget {
                   ),
                   _ValueTile(
                     width: width,
-                    label: 'Sell-Buy Gap',
+                    label: 'Trading Spread',
                     value: _money(retailGap),
                     color: MetalRateColors.violet,
-                    helper: 'Counter spread per 10g',
+                    helper: gapPercent <= 0
+                        ? 'Spread per 10g'
+                        : '${_percent(gapPercent)}% above purchase',
                   ),
                 ],
               );

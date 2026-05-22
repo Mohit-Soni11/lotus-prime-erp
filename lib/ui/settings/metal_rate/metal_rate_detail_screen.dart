@@ -5,7 +5,10 @@
 // DESCRIPTION : Daily rate master shell with focused widget parts.
 // =============================================================================
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -18,7 +21,6 @@ part 'widgets/metal_rate_counter_section.dart';
 part 'widgets/metal_rate_detail_shared.dart';
 part 'widgets/metal_rate_header_reference.dart';
 part 'widgets/metal_rate_history_card.dart';
-part 'widgets/metal_rate_making_engine_section.dart';
 
 class MetalRateDetailScreen extends StatefulWidget {
   final MetalRateMetal metal;
@@ -35,11 +37,12 @@ class MetalRateDetailScreen extends StatefulWidget {
 }
 
 class _MetalRateDetailScreenState extends State<MetalRateDetailScreen> {
-  int _activeTab = 0;
+  bool _isEditing = false;
 
   Future<void> _save(MetalRateProfile profile) async {
     await widget.controller.saveProfile(profile);
     if (!mounted) return;
+    setState(() => _isEditing = false);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -56,6 +59,7 @@ class _MetalRateDetailScreenState extends State<MetalRateDetailScreen> {
   Future<void> _reset() async {
     await widget.controller.resetProfile(widget.metal);
     if (!mounted) return;
+    setState(() => _isEditing = false);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -83,23 +87,7 @@ class _MetalRateDetailScreenState extends State<MetalRateDetailScreen> {
           backgroundColor: MetalRateColors.bodyBg,
           appBar: MetalRateAppBar(
             screenTitle: '${widget.metal.label} Rate Master',
-            screenSubtitle: 'Daily selling and old-buy rates',
             onBack: () => Navigator.maybePop(context),
-            actions: [
-              _AppBarAction(
-                label: MetalRateStrings.resetDefaults,
-                icon: MetalRateIcons.reset,
-                color: MetalRateColors.warning,
-                onTap: isSaving ? null : _reset,
-              ),
-              const SizedBox(width: 8),
-              _AppBarAction(
-                label: isSaving ? 'Saving...' : 'Save Rates',
-                icon: MetalRateIcons.save,
-                color: MetalRateColors.success,
-                onTap: isSaving ? null : () => _save(profile),
-              ),
-            ],
           ),
           body: SafeArea(
             top: false,
@@ -108,34 +96,31 @@ class _MetalRateDetailScreenState extends State<MetalRateDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _HeaderCard(profile: profile, accent: accent),
+                  _HeaderCard(
+                    profile: profile,
+                    accent: accent,
+                    isEditing: _isEditing,
+                    isSaving: isSaving,
+                    onEdit: () => setState(() => _isEditing = true),
+                    onSave: () => _save(profile),
+                    onReset: _reset,
+                  ),
                   const SizedBox(height: 14),
                   _MarketReferenceSection(
                     profile: profile,
                     accent: accent,
                     controller: widget.controller,
+                    enabled: _isEditing,
                   ),
                   const SizedBox(height: 14),
-                  _RateMasterTabs(
-                    activeIndex: _activeTab,
-                    onChanged: (index) => setState(() => _activeTab = index),
+                  _CounterRateSection(
+                    profile: profile,
+                    accent: accent,
+                    controller: widget.controller,
+                    enabled: _isEditing,
                   ),
                   const SizedBox(height: 14),
-                  if (_activeTab == 0) ...[
-                    _CounterRateSection(
-                      profile: profile,
-                      accent: accent,
-                      controller: widget.controller,
-                    ),
-                    const SizedBox(height: 14),
-                    _HistoryCard(history: history, accent: accent),
-                  ] else ...[
-                    _RateMakingEngineSection(
-                      profile: profile,
-                      accent: accent,
-                      controller: widget.controller,
-                    ),
-                  ],
+                  _HistoryCard(history: history, accent: accent),
                 ],
               ),
             ),

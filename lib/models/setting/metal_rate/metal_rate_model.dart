@@ -621,10 +621,10 @@ class MetalRateProfile {
       case MetalRateMetal.gold:
         return MetalRateProfile(
           metal: metal,
-          marketSource: 'MCX / Local Bullion Manual',
-          mcxRatePer10g: 72500,
-          physicalMarketRatePer10g: 72800,
-          marketRatePer10g: 72665,
+          marketSource: 'Metal Rate Master',
+          mcxRatePer10g: 0,
+          physicalMarketRatePer10g: 0,
+          marketRatePer10g: 0,
           gstPercent: 3.0,
           importDutyPercent: 0.0,
           logisticsPercent: 0.35,
@@ -634,15 +634,15 @@ class MetalRateProfile {
           minimumMarginPercent: 3.25,
           posture: PricingPosture.balanced,
           updatedAt: DateTime.now(),
-          brandBenchmarks: _defaultGoldBenchmarks(),
+          brandBenchmarks: const [],
           purityPlans: const [
             MetalRatePurityPlan(
               label: '24K',
               purityPercent: 99.9,
               supplierPremiumPercent: 2.0,
               targetMarginPercent: 3.2,
-              manualDisplayRatePer10g: 72800,
-              buyRatePer10g: 71400,
+              manualDisplayRatePer10g: 0,
+              buyRatePer10g: 0,
               supplierBillingPercent: 100.0,
               shopMarkupPercent: 4.0,
               makingChargePercent: 4.0,
@@ -652,8 +652,8 @@ class MetalRateProfile {
               purityPercent: 91.6,
               supplierPremiumPercent: 4.5,
               targetMarginPercent: 4.0,
-              manualDisplayRatePer10g: 66700,
-              buyRatePer10g: 65400,
+              manualDisplayRatePer10g: 0,
+              buyRatePer10g: 0,
               supplierBillingPercent: 92.0,
               shopMarkupPercent: 4.0,
               makingChargePercent: 10.0,
@@ -663,8 +663,8 @@ class MetalRateProfile {
               purityPercent: 75.0,
               supplierPremiumPercent: 5.0,
               targetMarginPercent: 4.5,
-              manualDisplayRatePer10g: 54600,
-              buyRatePer10g: 53500,
+              manualDisplayRatePer10g: 0,
+              buyRatePer10g: 0,
               supplierBillingPercent: 79.0,
               shopMarkupPercent: 4.0,
               makingChargePercent: 12.0,
@@ -674,8 +674,8 @@ class MetalRateProfile {
               purityPercent: 58.5,
               supplierPremiumPercent: 5.8,
               targetMarginPercent: 5.0,
-              manualDisplayRatePer10g: 42600,
-              buyRatePer10g: 41700,
+              manualDisplayRatePer10g: 0,
+              buyRatePer10g: 0,
               supplierBillingPercent: 62.0,
               shopMarkupPercent: 4.0,
               makingChargePercent: 15.0,
@@ -685,8 +685,8 @@ class MetalRateProfile {
               purityPercent: 37.5,
               supplierPremiumPercent: 6.5,
               targetMarginPercent: 6.0,
-              manualDisplayRatePer10g: 27300,
-              buyRatePer10g: 26700,
+              manualDisplayRatePer10g: 0,
+              buyRatePer10g: 0,
               supplierBillingPercent: 40.0,
               shopMarkupPercent: 4.0,
               makingChargePercent: 18.0,
@@ -697,7 +697,7 @@ class MetalRateProfile {
         return _simpleDefault(
           metal: metal,
           source: 'Silver Spot / Local Bullion Manual',
-          rate: 920,
+          rate: 0,
           gst: 3.0,
           margin: 5.0,
           purities: const [
@@ -728,7 +728,7 @@ class MetalRateProfile {
         return _simpleDefault(
           metal: metal,
           source: 'Diamond Counter Benchmark Manual',
-          rate: 58500,
+          rate: 0,
           gst: 3.0,
           margin: 9.0,
           purities: const [
@@ -759,7 +759,7 @@ class MetalRateProfile {
         return _simpleDefault(
           metal: metal,
           source: 'Platinum Spot / Local Supplier Manual',
-          rate: 33500,
+          rate: 0,
           gst: 3.0,
           margin: 6.0,
           purities: const [
@@ -812,7 +812,7 @@ class MetalRateProfile {
       minimumMarginPercent: margin,
       posture: PricingPosture.balanced,
       updatedAt: DateTime.now(),
-      brandBenchmarks: _defaultGenericBenchmarks(metal, rate),
+      brandBenchmarks: const [],
       purityPlans: purities,
     );
   }
@@ -895,132 +895,4 @@ double _suggestedMakingPercent({
     PricingPosture.growth => 0.70,
   };
   return math.max(plan.targetMarginPercent, brandMaking * multiplier);
-}
-
-List<MetalRateBrandBenchmark> _defaultGoldBenchmarks() {
-  return [
-    _brandBenchmark(
-      name: 'Tanishq',
-      rate24: 73850,
-      makingLow: 8,
-      makingHigh: 24,
-      notes: 'Premium national benchmark',
-    ),
-    _brandBenchmark(
-      name: 'Malabar Gold',
-      rate24: 73680,
-      makingLow: 7,
-      makingHigh: 22,
-    ),
-    _brandBenchmark(
-      name: 'Kalyan Jewellers',
-      rate24: 73740,
-      makingLow: 8,
-      makingHigh: 21,
-    ),
-    _brandBenchmark(
-      name: 'Joyalukkas',
-      rate24: 73620,
-      makingLow: 7,
-      makingHigh: 22,
-    ),
-    _brandBenchmark(
-      name: 'Senco Gold',
-      rate24: 73560,
-      makingLow: 7,
-      makingHigh: 20,
-    ),
-    _brandBenchmark(
-      name: 'PC Jeweller',
-      rate24: 73480,
-      makingLow: 7,
-      makingHigh: 19,
-    ),
-    _brandBenchmark(
-      name: 'Reliance Jewels',
-      rate24: 73590,
-      makingLow: 7,
-      makingHigh: 21,
-    ),
-    _brandBenchmark(
-      name: 'CaratLane',
-      rate24: 73920,
-      makingLow: 9,
-      makingHigh: 26,
-    ),
-    _brandBenchmark(
-      name: 'BlueStone',
-      rate24: 73810,
-      makingLow: 9,
-      makingHigh: 25,
-    ),
-    _brandBenchmark(
-      name: 'Local Premium',
-      rate24: 73350,
-      makingLow: 5,
-      makingHigh: 16,
-      notes: 'Area competitor benchmark',
-    ),
-  ];
-}
-
-MetalRateBrandBenchmark _brandBenchmark({
-  required String name,
-  required double rate24,
-  required double makingLow,
-  required double makingHigh,
-  String notes = '',
-}) {
-  final average = (makingLow + makingHigh) / 2.0;
-  return MetalRateBrandBenchmark(
-    brandName: name,
-    referenceRatePer10g: rate24,
-    makingLowPercent: makingLow,
-    makingHighPercent: makingHigh,
-    rateByPurity: _purityRateMap(rate24),
-    makingByPurity: {
-      '24K': math.max(2.0, average - 2.0),
-      '22K': average,
-      '18K': average + 1.5,
-      '14K': average + 2.5,
-      '9K': average + 3.5,
-    },
-    notes: notes,
-  );
-}
-
-Map<String, double> _purityRateMap(double rate24) {
-  return {
-    '24K': _roundRetail(rate24 * 0.999),
-    '22K': _roundRetail(rate24 * 0.916),
-    '18K': _roundRetail(rate24 * 0.750),
-    '14K': _roundRetail(rate24 * 0.585),
-    '9K': _roundRetail(rate24 * 0.375),
-  };
-}
-
-List<MetalRateBrandBenchmark> _defaultGenericBenchmarks(
-  MetalRateMetal metal,
-  double rate,
-) {
-  return [
-    _brandBenchmark(
-      name: '${metal.label} Premium',
-      rate24: rate * 1.035,
-      makingLow: 6,
-      makingHigh: 18,
-    ),
-    _brandBenchmark(
-      name: '${metal.label} Retail',
-      rate24: rate * 1.025,
-      makingLow: 5,
-      makingHigh: 15,
-    ),
-    _brandBenchmark(
-      name: 'Local Benchmark',
-      rate24: rate * 1.015,
-      makingLow: 4,
-      makingHigh: 12,
-    ),
-  ];
 }

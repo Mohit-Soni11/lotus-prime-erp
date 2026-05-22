@@ -7,14 +7,14 @@
 class MetalRateStrings {
   MetalRateStrings._();
 
-  static const String hubTitle = 'Metal Rate Setting';
-  static const String hubSub = 'Daily shop rate master';
+  static const String hubTitle = 'Metal Rate Master';
+  static const String hubSub = 'Daily metal selling and old-buy rates';
   static const String moduleBadge = 'RATE MASTER';
-  static const String systemOnline = 'MANUAL MODE';
+  static const String systemOnline = 'SYSTEM ONLINE';
   static const String selectMetal = 'SELECT METAL';
   static const String configure = 'Set rates';
   static const String hubInfo =
-      'Set the exact shop rates you want to use in billing. Market reference is optional, and every save creates a rate history entry for verification.';
+      'Maintain authoritative metal rates for billing, old-metal purchase, stock entry reference and daily audit history.';
 
   static const String marketBase = 'Market Base Rate';
   static const String brandBenchmark = 'Rate History';

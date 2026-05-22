@@ -6,22 +6,17 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../theme/settings/metal_rate/metal_rate_theme.dart';
 
 class MetalRateAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String screenTitle;
-  final String screenSubtitle;
   final VoidCallback onBack;
-  final List<Widget> actions;
 
   const MetalRateAppBar({
     super.key,
     required this.screenTitle,
-    required this.screenSubtitle,
     required this.onBack,
-    this.actions = const [],
   });
 
   @override
@@ -61,51 +56,44 @@ class _MetalRateAppBarState extends State<MetalRateAppBar>
         child: Row(
           children: [
             _HoverBackButton(onTap: widget.onBack),
-            const SizedBox(width: 16),
+            const SizedBox(width: 18),
             const _VerticalDivider(),
-            const SizedBox(width: 16),
+            const SizedBox(width: 18),
             Container(
-              width: 30,
-              height: 30,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                   colors: [MetalRateColors.gold, MetalRateColors.teal],
                 ),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: MetalRateColors.gold.withValues(alpha: 0.30),
+                    color: MetalRateColors.gold.withValues(alpha: 0.42),
                     blurRadius: 10,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
               child: const Icon(
                 MetalRateIcons.moduleIcon,
                 color: Colors.white,
-                size: 17,
+                size: 18,
               ),
             ),
-            const SizedBox(width: 12),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(widget.screenTitle, style: MetalRateStyles.appBarTitle),
-                const SizedBox(height: 2),
-                Text(
-                  widget.screenSubtitle,
-                  style: MetalRateStyles.appBarSubtitle,
-                ),
-                const SizedBox(height: 4),
-                _RadarStatus(controller: _pulseCtrl),
-              ],
+            const SizedBox(width: 14),
+            Flexible(
+              child: Text(
+                widget.screenTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: MetalRateStyles.appBarTitle,
+              ),
             ),
             const Spacer(),
-            ...widget.actions,
-            if (widget.actions.isNotEmpty) const SizedBox(width: 14),
-            const _VerticalDivider(),
-            const SizedBox(width: 14),
-            const _ModuleBadge(),
+            _RadarStatus(controller: _pulseCtrl),
           ],
         ),
       ),
@@ -283,54 +271,6 @@ class _Wave extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _ModuleBadge extends StatelessWidget {
-  const _ModuleBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: MetalRateColors.moduleBadgeBg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: MetalRateColors.moduleBadgeBorder),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            MetalRateIcons.shield,
-            color: MetalRateColors.gold,
-            size: 15,
-          ),
-          const SizedBox(width: 7),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                MetalRateStrings.moduleBadge,
-                style: GoogleFonts.inter(
-                  color: MetalRateColors.gold,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.6,
-                ),
-              ),
-              Text(
-                MetalRateStrings.hubSub,
-                style: GoogleFonts.inter(
-                  color: MetalRateColors.shellTextMuted,
-                  fontSize: 9,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }

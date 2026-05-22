@@ -6,6 +6,7 @@ class _AmountInputTile extends StatefulWidget {
   final double value;
   final Color color;
   final String helper;
+  final bool enabled;
   final ValueChanged<double> onChanged;
 
   const _AmountInputTile({
@@ -14,6 +15,7 @@ class _AmountInputTile extends StatefulWidget {
     required this.value,
     required this.color,
     required this.helper,
+    this.enabled = true,
     required this.onChanged,
   });
 
@@ -66,11 +68,16 @@ class _AmountInputTileState extends State<_AmountInputTile> {
             TextField(
               controller: _textCtrl,
               focusNode: _focusNode,
+              readOnly: !widget.enabled,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              onChanged: (raw) => widget.onChanged(_parseNumber(raw)),
+              onChanged: widget.enabled
+                  ? (raw) => widget.onChanged(_parseNumber(raw))
+                  : null,
               style: GoogleFonts.manrope(
-                color: MetalRateColors.textDark,
+                color: widget.enabled
+                    ? MetalRateColors.textDark
+                    : MetalRateColors.textMuted,
                 fontSize: 17,
                 fontWeight: FontWeight.w900,
               ),
@@ -78,94 +85,6 @@ class _AmountInputTileState extends State<_AmountInputTile> {
                 color: widget.color,
                 prefix: 'Rs ',
                 suffix: 'per 10g',
-              ),
-            ),
-            const SizedBox(height: 6),
-            _HelperText(widget.helper),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PercentInputTile extends StatefulWidget {
-  final double width;
-  final String label;
-  final double value;
-  final Color color;
-  final String helper;
-  final ValueChanged<double> onChanged;
-
-  const _PercentInputTile({
-    required this.width,
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.helper,
-    required this.onChanged,
-  });
-
-  @override
-  State<_PercentInputTile> createState() => _PercentInputTileState();
-}
-
-class _PercentInputTileState extends State<_PercentInputTile> {
-  late final TextEditingController _textCtrl;
-  late final FocusNode _focusNode;
-
-  @override
-  void initState() {
-    super.initState();
-    _textCtrl = TextEditingController(text: _percentInputValue(widget.value));
-    _focusNode = FocusNode();
-  }
-
-  @override
-  void didUpdateWidget(covariant _PercentInputTile oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    final next = _percentInputValue(widget.value);
-    if (!_focusNode.hasFocus && _textCtrl.text != next) {
-      _textCtrl.text = next;
-    }
-  }
-
-  @override
-  void dispose() {
-    _textCtrl.dispose();
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: widget.width,
-      child: Container(
-        padding: const EdgeInsets.all(11),
-        decoration: MetalRateStyles.softPanel(widget.color),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.label,
-              style: MetalRateStyles.smallLabel.copyWith(color: widget.color),
-            ),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _textCtrl,
-              focusNode: _focusNode,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              onChanged: (raw) => widget.onChanged(_parseNumber(raw)),
-              style: GoogleFonts.manrope(
-                color: MetalRateColors.textDark,
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
-              ),
-              decoration: _inputDecoration(
-                color: widget.color,
-                suffix: '%',
               ),
             ),
             const SizedBox(height: 6),
@@ -218,68 +137,6 @@ class _ValueTile extends StatelessWidget {
             const SizedBox(height: 6),
             _HelperText(helper),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionTile extends StatelessWidget {
-  final double width;
-  final String label;
-  final String value;
-  final Color color;
-  final String helper;
-  final VoidCallback onTap;
-
-  const _ActionTile({
-    required this.width,
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.helper,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(MetalRateStyles.rInner),
-        child: Container(
-          padding: const EdgeInsets.all(11),
-          decoration: MetalRateStyles.softPanel(color),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: MetalRateStyles.smallLabel.copyWith(color: color),
-                    ),
-                  ),
-                  Icon(MetalRateIcons.arrow, color: color, size: 16),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.manrope(
-                  color: MetalRateColors.textDark,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 6),
-              _HelperText(helper),
-            ],
-          ),
         ),
       ),
     );
@@ -430,53 +287,6 @@ class _MetricChip extends StatelessWidget {
   }
 }
 
-class _AppBarAction extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback? onTap;
-
-  const _AppBarAction({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Opacity(
-        opacity: onTap == null ? 0.55 : 1,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: color.withValues(alpha: 0.28)),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, color: color, size: 15),
-              const SizedBox(width: 7),
-              Text(
-                label,
-                style: GoogleFonts.inter(
-                  color: color,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 InputDecoration _inputDecoration({
   required Color color,
   String? prefix,
@@ -525,14 +335,6 @@ String _inputValue(double value) {
     return '';
   }
   return value.round().toString();
-}
-
-String _percentInputValue(double value) {
-  if (value <= 0) {
-    return '';
-  }
-  final whole = value.roundToDouble() == value;
-  return whole ? value.toStringAsFixed(0) : value.toStringAsFixed(2);
 }
 
 String _purityLabel(String label) {

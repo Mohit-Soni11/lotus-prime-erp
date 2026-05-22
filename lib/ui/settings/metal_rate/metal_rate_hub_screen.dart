@@ -59,7 +59,6 @@ class _MetalRateHubScreenState extends State<MetalRateHubScreen> {
       backgroundColor: MetalRateColors.bodyBg,
       appBar: MetalRateAppBar(
         screenTitle: MetalRateStrings.hubTitle,
-        screenSubtitle: MetalRateStrings.hubSub,
         onBack: () => Navigator.maybePop(context),
       ),
       body: SafeArea(
@@ -189,8 +188,6 @@ class _MetalRateCardState extends State<_MetalRateCard>
   Widget build(BuildContext context) {
     final profile = widget.profile;
     final accent = _metalAccent(profile.metal);
-    final rec =
-        profile.recommendations.isEmpty ? null : profile.recommendations.first;
 
     return MouseRegion(
       onEnter: (_) {
@@ -237,21 +234,19 @@ class _MetalRateCardState extends State<_MetalRateCard>
                         runSpacing: 8,
                         children: [
                           _SmallMetric(
-                            label: 'Base',
-                            value: _money(profile.marketRatePer10g),
+                            label: 'Local Base',
+                            value: _money(profile.marketBaseRatePer10g),
                             color: accent,
                           ),
                           _SmallMetric(
-                            label: 'Brand Avg',
-                            value: _money(profile.brandAverageRatePer10g),
-                            color: MetalRateColors.violet,
+                            label: 'Primary Sell',
+                            value: _money(profile.primaryShopRatePer10g),
+                            color: MetalRateColors.success,
                           ),
                           _SmallMetric(
-                            label: 'Suggested',
-                            value: rec == null
-                                ? '--'
-                                : _money(rec.suggestedRatePer10g),
-                            color: MetalRateColors.success,
+                            label: 'Primary Buy',
+                            value: _money(profile.primaryBuyRatePer10g),
+                            color: MetalRateColors.warning,
                           ),
                         ],
                       ),

@@ -70,8 +70,8 @@ class SettingsData {
     SettingsModel(
       id: 'gold_rate_settings',
       icon: SettingsIcons.goldRate,
-      title: 'Gold Rate Settings',
-      subtitle: 'Set default rates, IBJA sync & rate rounding rules',
+      title: 'Metal Rate Master',
+      subtitle: 'Set daily selling and old-buy rates for all metals',
       category: SettingsCategory.finance,
       accentColor: Color(0xFFD97706),
     ),
