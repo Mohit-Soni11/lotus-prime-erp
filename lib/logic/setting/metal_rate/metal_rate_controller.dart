@@ -124,7 +124,12 @@ class MetalRateController extends ChangeNotifier {
       physicalMarketRatePer10g: safeValue,
       marketSource: 'Manual Rate Master',
     );
-    stageProfile(next.copyWith(marketRatePer10g: next.marketBaseRatePer10g));
+    stageProfile(
+      _syncMarketFollowerRates(
+        previous: profile,
+        next: next.copyWith(marketRatePer10g: next.marketBaseRatePer10g),
+      ),
+    );
   }
 
   void updateMarketInputs({
@@ -138,7 +143,12 @@ class MetalRateController extends ChangeNotifier {
       physicalMarketRatePer10g: physicalRate?.clamp(0, 9999999).toDouble(),
       marketSource: 'Manual Rate Master',
     );
-    stageProfile(next.copyWith(marketRatePer10g: next.marketBaseRatePer10g));
+    final updated = next.copyWith(marketRatePer10g: next.marketBaseRatePer10g);
+    stageProfile(
+      physicalRate == null
+          ? updated
+          : _syncMarketFollowerRates(previous: profile, next: updated),
+    );
   }
 
   void updateShopRate({
@@ -301,6 +311,63 @@ class MetalRateController extends ChangeNotifier {
       ),
     );
   }
+}
+
+MetalRateProfile _syncMarketFollowerRates({
+  required MetalRateProfile previous,
+  required MetalRateProfile next,
+}) {
+  final oldBase = previous.marketBaseRatePer10g;
+  final newBase = next.marketBaseRatePer10g;
+  if (newBase <= 0 || next.purityPlans.isEmpty) {
+    return next;
+  }
+
+  final plans = <MetalRatePurityPlan>[];
+  for (var index = 0; index < next.purityPlans.length; index++) {
+    final plan = next.purityPlans[index];
+    final oldPlan = index < previous.purityPlans.length
+        ? previous.purityPlans[index]
+        : plan;
+    final oldFollowRate = _marketFollowerRate(oldBase, oldPlan, index);
+    final newFollowRate = _marketFollowerRate(newBase, plan, index);
+
+    if (_shouldFollowMarket(oldPlan.manualDisplayRatePer10g, oldFollowRate)) {
+      plans.add(plan.copyWith(manualDisplayRatePer10g: newFollowRate));
+    } else {
+      plans.add(plan);
+    }
+  }
+
+  return next.copyWith(purityPlans: plans);
+}
+
+double _marketFollowerRate(
+  double base,
+  MetalRatePurityPlan plan,
+  int index,
+) {
+  if (base <= 0) {
+    return 0.0;
+  }
+  final key = _purityKey(plan.label);
+  if (index == 0 || key == '24K' || key == '999') {
+    return base;
+  }
+  final value = base * plan.purityFactor;
+  return ((value / 10).round() * 10).toDouble();
+}
+
+bool _shouldFollowMarket(double currentRate, double oldFollowRate) {
+  if (currentRate <= 0) {
+    return true;
+  }
+  if (oldFollowRate <= 0) {
+    return false;
+  }
+  final tolerance = oldFollowRate * 0.03;
+  final safeTolerance = tolerance < 100 ? 100 : tolerance;
+  return (currentRate - oldFollowRate).abs() <= safeTolerance;
 }
 
 String _purityKey(String value) {

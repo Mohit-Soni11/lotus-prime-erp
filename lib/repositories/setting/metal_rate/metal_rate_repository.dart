@@ -140,7 +140,8 @@ class MetalRateRepository {
         "profile_json" TEXT NOT NULL,
         "snapshot_json" TEXT NOT NULL,
         "source" TEXT NOT NULL,
-        "created_at" INTEGER NOT NULL
+        "created_at" INTEGER NOT NULL,
+        "changed_at" INTEGER NOT NULL
       )
     ''');
 
@@ -164,6 +165,7 @@ class MetalRateRepository {
     await addMissingColumn('snapshot_json', 'TEXT');
     await addMissingColumn('source', 'TEXT');
     await addMissingColumn('created_at', 'INTEGER');
+    await addMissingColumn('changed_at', 'INTEGER');
 
     if (columns.contains('metal') && columns.contains('metal_key')) {
       await _db.customStatement(
@@ -188,6 +190,19 @@ class MetalRateRepository {
         'UPDATE "$_historyTable" SET "snapshot_json" = "profile_json" '
         'WHERE ("snapshot_json" IS NULL OR "snapshot_json" = \'\') '
         'AND "profile_json" IS NOT NULL',
+      );
+    }
+
+    if (columns.contains('rate_date') && columns.contains('changed_at')) {
+      await _db.customStatement(
+        'UPDATE "$_historyTable" SET "rate_date" = "changed_at" '
+        'WHERE ("rate_date" IS NULL OR "rate_date" = 0) '
+        'AND "changed_at" IS NOT NULL',
+      );
+      await _db.customStatement(
+        'UPDATE "$_historyTable" SET "changed_at" = "rate_date" '
+        'WHERE ("changed_at" IS NULL OR "changed_at" = 0) '
+        'AND "rate_date" IS NOT NULL',
       );
     }
 
@@ -218,7 +233,7 @@ class MetalRateRepository {
     final hasMetalKey = columns.contains('metal_key');
 
     final rows = await _db.customSelect(
-      'SELECT profile_json, snapshot_json, rate_date, source '
+      'SELECT profile_json, snapshot_json, rate_date, changed_at, source '
       'FROM "$_historyTable" '
       'WHERE ${hasMetalKey ? '(metal = ? OR metal_key = ?)' : 'metal = ?'} '
       'ORDER BY rate_date DESC LIMIT ?',
@@ -240,10 +255,12 @@ class MetalRateRepository {
             final profile = MetalRateProfile.fromJson(
               Map<String, dynamic>.from(jsonDecode(profileJson) as Map),
             );
+            final changedAt =
+                (row.data['rate_date'] ?? row.data['changed_at']) as int?;
             return MetalRateHistoryEntry(
               profile: profile,
               changedAt: DateTime.fromMillisecondsSinceEpoch(
-                row.read<int>('rate_date'),
+                changedAt ?? DateTime.now().millisecondsSinceEpoch,
               ),
               source: row.data['source'] as String? ?? 'Metal Rate Master',
             );
@@ -382,9 +399,9 @@ class MetalRateRepository {
       await _upsertGoldDailyRate(
         rateDate: date,
         updatedAt: updatedAt,
-        gold24: _rateText(_planSellRate(profile, '24K')),
-        gold22: _rateText(_planSellRate(profile, '22K')),
-        gold18: _rateText(_planSellRate(profile, '18K')),
+        gold24: _rateText(_planSellRateOrMarket(profile, '24K')),
+        gold22: _rateText(_planSellRateOrMarket(profile, '22K')),
+        gold18: _rateText(_planSellRateOrMarket(profile, '18K')),
         oldGold24: _rateText(_planBuyRate(profile, '24K')),
         oldGold22: _rateText(_planBuyRate(profile, '22K')),
         oldGold18: _rateText(_planBuyRate(profile, '18K')),
@@ -394,7 +411,9 @@ class MetalRateRepository {
 
     final sell = profile.purityPlans.isEmpty
         ? profile.marketBaseRatePer10g
-        : profile.purityPlans.first.manualDisplayRatePer10g;
+        : profile.purityPlans.first.manualDisplayRatePer10g > 0
+            ? profile.purityPlans.first.manualDisplayRatePer10g
+            : profile.marketBaseRatePer10g;
     final buy = profile.purityPlans.isEmpty
         ? 0.0
         : profile.purityPlans.first.buyRatePer10g;
@@ -554,10 +573,18 @@ class MetalRateRepository {
       values.add(profileJson);
     }
 
+    if (columns.contains('changed_at')) {
+      insertColumns.add('changed_at');
+      placeholders.add('?');
+      values.add(profile.updatedAt.millisecondsSinceEpoch);
+    }
+
     insertColumns.addAll(['source', 'created_at']);
     placeholders.addAll(const ['?', '?']);
-    values
-        .addAll([profile.marketSource, DateTime.now().millisecondsSinceEpoch]);
+    values.addAll([
+      profile.marketSource,
+      DateTime.now().millisecondsSinceEpoch,
+    ]);
 
     await _db.customStatement(
       'INSERT INTO "$_historyTable" '
@@ -580,14 +607,31 @@ DateTime _dateOnly(DateTime value) =>
 String _planKey(String label) =>
     label.trim().toUpperCase().replaceAll('KT', 'K');
 
-double _planSellRate(MetalRateProfile profile, String label) {
+double _planSellRateOrMarket(MetalRateProfile profile, String label) {
   final key = _planKey(label);
   for (final plan in profile.purityPlans) {
     if (_planKey(plan.label) == key) {
-      return plan.manualDisplayRatePer10g;
+      if (plan.manualDisplayRatePer10g > 0) {
+        return plan.manualDisplayRatePer10g;
+      }
+      return _marketRateForPlan(profile.marketBaseRatePer10g, plan, key);
     }
   }
   return 0.0;
+}
+
+double _marketRateForPlan(
+  double base,
+  MetalRatePurityPlan plan,
+  String key,
+) {
+  if (base <= 0) {
+    return 0.0;
+  }
+  if (key == '24K' || key == '999') {
+    return base;
+  }
+  return base * plan.purityFactor;
 }
 
 double _planBuyRate(MetalRateProfile profile, String label) {
