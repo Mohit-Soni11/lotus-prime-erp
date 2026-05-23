@@ -7,8 +7,13 @@ import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
 class SilverPaymentSnapshot {
   final PaymentMode paymentMode;
   final DueReturnType settlementPreference;
+  final SilverDiscountMode discountMode;
   final double ratePerKg;
   final double ratePerGram;
+  final double grossFineWeight;
+  final double payableFineWeight;
+  final double fineDiscountWeight;
+  final double cashDiscountAmount;
   final double fineValueAmount;
   final double totalMakingAmount;
   final double subtotalAmount;
@@ -44,8 +49,13 @@ class SilverPaymentSnapshot {
   const SilverPaymentSnapshot({
     required this.paymentMode,
     required this.settlementPreference,
+    required this.discountMode,
     required this.ratePerKg,
     required this.ratePerGram,
+    required this.grossFineWeight,
+    required this.payableFineWeight,
+    required this.fineDiscountWeight,
+    required this.cashDiscountAmount,
     required this.fineValueAmount,
     required this.totalMakingAmount,
     required this.subtotalAmount,
@@ -178,7 +188,7 @@ class SilverInvoiceSummaryData {
       rowCount: items.length,
       totalPieces: ctrl.totalQuantity,
       totalGrossWeight: ctrl.totalGrossWeight,
-      totalFineWeight: ctrl.totalFineWeight,
+      totalFineWeight: paymentSnapshot.payableFineWeight,
       totalMakingAmount: ctrl.totalMakingAmount,
       itemSnapshotAmount: itemSnapshotAmount,
       invoiceSubtotal: paymentSnapshot.subtotalAmount,

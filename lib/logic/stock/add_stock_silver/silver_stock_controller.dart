@@ -91,8 +91,13 @@ class SilverStockController extends AddStockController {
     return SilverPaymentSnapshot(
       paymentMode: payment.paymentMode,
       settlementPreference: payment.metalDueReturnType,
+      discountMode: payment.discountMode,
       ratePerKg: payment.todayRatePerKg,
       ratePerGram: payment.todayRatePerGram,
+      grossFineWeight: payment.grossFineFromItems,
+      payableFineWeight: payment.totalFineFromItems,
+      fineDiscountWeight: payment.fineDiscountWeight,
+      cashDiscountAmount: payment.cashDiscountAmount,
       fineValueAmount: payment.fineValueAmount,
       totalMakingAmount: payment.totalMakingFromItems,
       subtotalAmount: payment.subTotalAmount,
@@ -440,6 +445,9 @@ class SilverStockController extends AddStockController {
       paymentMeta: jsonEncode({
         'mode': snapshot.paymentMode.name,
         'taxMode': payment.taxMode.name,
+        'discountMode': payment.discountMode.name,
+        'fineDiscountWeight': snapshot.fineDiscountWeight,
+        'cashDiscountAmount': snapshot.cashDiscountAmount,
         'gstRatePercent': snapshot.gstPercent,
         'metalGstPercent': payment.metalGstPercent,
         'cashGstPercent': payment.cashGstPercent,

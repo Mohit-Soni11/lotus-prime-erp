@@ -6,11 +6,14 @@ enum TaxMode { estimate, gst }
 
 enum DueReturnType { metal, cash }
 
+enum SilverDiscountMode { fine, cash }
+
 class SilverMetalSettlementLine extends ChangeNotifier {
   final String id;
   final TextEditingController grossCtrl = TextEditingController();
   final TextEditingController purityCtrl = TextEditingController();
   bool _syncingText = false;
+  double? _fineWeightOverride;
 
   SilverMetalSettlementLine({required this.id}) {
     grossCtrl.addListener(_handleInputChanged);
@@ -20,14 +23,21 @@ class SilverMetalSettlementLine extends ChangeNotifier {
   double get grossWeight => _parseAmount(grossCtrl.text);
   double get purity =>
       _parseAmount(purityCtrl.text).clamp(0.0, 100.0).toDouble();
-  double get fineWeight => grossWeight * (purity / 100.0);
+  double get computedFineWeight => grossWeight * (purity / 100.0);
+  double get fineWeight => _fineWeightOverride ?? computedFineWeight;
   bool get hasInput => grossWeight > 0 || purity > 0;
   bool get hasFractionalGrossWeight {
     final value = grossWeight;
     return value > 0 && (value - value.floorToDouble()).abs() > 0.0001;
   }
 
+  bool get hasFractionalFineWeight {
+    final value = fineWeight;
+    return value > 0 && (value - value.floorToDouble()).abs() > 0.0001;
+  }
+
   void setValues(double grossWeight, double purity) {
+    _fineWeightOverride = null;
     _syncText(grossCtrl, _formatNumber(grossWeight, maxFraction: 3));
     _syncText(purityCtrl, _formatNumber(purity, maxFraction: 2));
     notifyListeners();
@@ -45,6 +55,18 @@ class SilverMetalSettlementLine extends ChangeNotifier {
     notifyListeners();
   }
 
+  void roundFineWeightToNearestGram() {
+    final value = fineWeight;
+    if (value <= 0) {
+      return;
+    }
+
+    final floorValue = value.floorToDouble();
+    _fineWeightOverride =
+        value - floorValue >= 0.5 ? floorValue + 1 : floorValue;
+    notifyListeners();
+  }
+
   Map<String, double> toPayload() {
     return {
       'grossWeight': grossWeight,
@@ -57,6 +79,7 @@ class SilverMetalSettlementLine extends ChangeNotifier {
     if (_syncingText) {
       return;
     }
+    _fineWeightOverride = null;
     notifyListeners();
   }
 
@@ -142,6 +165,7 @@ class SilverPaymentController extends ChangeNotifier {
   final TextEditingController cardCtrl = TextEditingController();
   final TextEditingController previousDueAdjustmentCtrl =
       TextEditingController();
+  final TextEditingController discountCtrl = TextEditingController();
 
   double _todayRatePerKg = 0.0;
   double _totalFineFromItems = 0.0;
@@ -150,13 +174,13 @@ class SilverPaymentController extends ChangeNotifier {
   bool _gstEnabled = false;
   PaymentMode _paymentMode = PaymentMode.metalToMetal;
   DueReturnType _metalDueReturnType = DueReturnType.cash;
+  SilverDiscountMode _discountMode = SilverDiscountMode.fine;
   DateTime? _promiseDate;
   bool _adjustPreviousDue = false;
   bool _syncingText = false;
   final List<SilverMetalSettlementLine> _metalLines = [];
 
   SilverPaymentController() {
-    addMetalLine(notify: false);
     todayRatePerKgCtrl.addListener(_handleRateChanged);
     metalGstPercentCtrl.addListener(_handleInputChanged);
     cashGstPercentCtrl.addListener(_handleInputChanged);
@@ -165,14 +189,41 @@ class SilverPaymentController extends ChangeNotifier {
     bankCtrl.addListener(_handleInputChanged);
     cardCtrl.addListener(_handleInputChanged);
     previousDueAdjustmentCtrl.addListener(_handleInputChanged);
+    discountCtrl.addListener(_handleInputChanged);
   }
 
   double get todayRatePerKg => _todayRatePerKg;
   double get todayRatePerGram =>
       _todayRatePerKg > 0 ? _todayRatePerKg / 1000 : 0.0;
 
-  double get totalFineFromItems => _totalFineFromItems;
+  double get grossFineFromItems => _totalFineFromItems;
+  double get totalFineFromItems => discountedFineFromItems;
   double get totalMakingFromItems => _totalMakingFromItems;
+  SilverDiscountMode get discountMode => _discountMode;
+  double get discountInput => _parseAmount(discountCtrl.text);
+  double get fineDiscountWeight {
+    if (_discountMode != SilverDiscountMode.fine) {
+      return 0.0;
+    }
+    return discountInput.clamp(0.0, _totalFineFromItems).toDouble();
+  }
+
+  double get discountedFineFromItems =>
+      (_totalFineFromItems - fineDiscountWeight)
+          .clamp(0.0, double.infinity)
+          .toDouble();
+  double get fineValueBeforeCashDiscount =>
+      discountedFineFromItems * todayRatePerGram;
+  double get cashDiscountAmount {
+    if (_discountMode != SilverDiscountMode.cash) {
+      return 0.0;
+    }
+    final preDiscount = fineValueBeforeCashDiscount + _totalMakingFromItems;
+    return discountInput.clamp(0.0, preDiscount).toDouble();
+  }
+
+  bool get hasDiscount =>
+      fineDiscountWeight > _epsilon || cashDiscountAmount > _epsilon;
 
   bool get gstEnabled => _gstEnabled;
   TaxMode get taxMode => _gstEnabled ? TaxMode.gst : TaxMode.estimate;
@@ -182,7 +233,9 @@ class SilverPaymentController extends ChangeNotifier {
       List.unmodifiable(_metalLines);
   bool get canRoundMetalGrossWeights =>
       _paymentMode == PaymentMode.metalToMetal &&
-      _metalLines.any((line) => line.hasFractionalGrossWeight);
+      _metalLines.any(
+        (line) => line.hasFractionalGrossWeight || line.hasFractionalFineWeight,
+      );
 
   double get metalGivenWeight =>
       _metalLines.fold(0.0, (sum, line) => sum + line.grossWeight);
@@ -218,8 +271,11 @@ class SilverPaymentController extends ChangeNotifier {
   double get previousDueFineEquivalent =>
       todayRatePerGram > 0 ? previousDueAdjustment / todayRatePerGram : 0.0;
 
-  double get fineValueAmount => _totalFineFromItems * todayRatePerGram;
-  double get subTotalAmount => fineValueAmount + _totalMakingFromItems;
+  double get fineValueAmount => fineValueBeforeCashDiscount;
+  double get subTotalAmount =>
+      (fineValueAmount + _totalMakingFromItems - cashDiscountAmount)
+          .clamp(0.0, double.infinity)
+          .toDouble();
 
   double get taxPercentage {
     if (!_gstEnabled) {
@@ -240,7 +296,7 @@ class SilverPaymentController extends ChangeNotifier {
     return _metalLines.fold(0.0, (sum, line) => sum + line.fineWeight);
   }
 
-  double get fineDifference => fineReceived - _totalFineFromItems;
+  double get fineDifference => fineReceived - totalFineFromItems;
   bool get isExtraMetal => fineDifference > _epsilon;
   bool get isDueMetal => fineDifference < -_epsilon;
   double get fineShortage => isDueMetal ? fineDifference.abs() : 0.0;
@@ -253,7 +309,7 @@ class SilverPaymentController extends ChangeNotifier {
     if (_paymentMode != PaymentMode.metalToMetal) {
       return 0.0;
     }
-    return fineReceived.clamp(0.0, _totalFineFromItems).toDouble();
+    return fineReceived.clamp(0.0, totalFineFromItems).toDouble();
   }
 
   double get metalAppliedValue => metalAppliedFine * todayRatePerGram;
@@ -271,10 +327,13 @@ class SilverPaymentController extends ChangeNotifier {
         isDueMetal && _metalDueReturnType == DueReturnType.cash
             ? fineShortageValue
             : 0.0;
-    return _totalMakingFromItems +
-        taxAmount +
-        shortageAsCash +
-        previousDueAdjustment;
+    return (_totalMakingFromItems +
+            taxAmount +
+            shortageAsCash +
+            previousDueAdjustment -
+            cashDiscountAmount)
+        .clamp(0.0, double.infinity)
+        .toDouble();
   }
 
   double get cashBalance => cashBankPaidTotal - cashTargetAmount;
@@ -385,6 +444,14 @@ class SilverPaymentController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setDiscountMode(SilverDiscountMode mode) {
+    if (_discountMode == mode) {
+      return;
+    }
+    _discountMode = mode;
+    notifyListeners();
+  }
+
   void setMetalInput(double weight, double purity) {
     if (_metalLines.isEmpty) {
       addMetalLine(notify: false);
@@ -405,11 +472,6 @@ class SilverPaymentController extends ChangeNotifier {
   }
 
   void removeMetalLine(String id) {
-    if (_metalLines.length <= 1) {
-      _metalLines.first.setValues(0.0, 0.0);
-      notifyListeners();
-      return;
-    }
     final index = _metalLines.indexWhere((line) => line.id == id);
     if (index == -1) {
       return;
@@ -425,6 +487,10 @@ class SilverPaymentController extends ChangeNotifier {
     for (final line in _metalLines) {
       if (line.hasFractionalGrossWeight) {
         line.roundGrossWeightToNearestGram();
+        changed = true;
+      }
+      if (line.hasFractionalFineWeight) {
+        line.roundFineWeightToNearestGram();
         changed = true;
       }
     }
@@ -499,13 +565,14 @@ class SilverPaymentController extends ChangeNotifier {
       line.disposeAll();
     }
     _metalLines.clear();
-    addMetalLine(notify: false);
     _syncText(metalGstPercentCtrl, '5');
     _syncText(cashGstPercentCtrl, '3');
     _syncText(cashCtrl, '');
     _syncText(upiCtrl, '');
     _syncText(bankCtrl, '');
     _syncText(cardCtrl, '');
+    _discountMode = SilverDiscountMode.fine;
+    _syncText(discountCtrl, '');
     _adjustPreviousDue = false;
     _syncText(previousDueAdjustmentCtrl, '');
     notifyListeners();
@@ -572,6 +639,7 @@ class SilverPaymentController extends ChangeNotifier {
     bankCtrl.dispose();
     cardCtrl.dispose();
     previousDueAdjustmentCtrl.dispose();
+    discountCtrl.dispose();
     super.dispose();
   }
 }

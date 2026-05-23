@@ -65,7 +65,7 @@ class SilverPaymentRecordCard extends StatelessWidget {
                           key: ValueKey(ctrl.payment.paymentMode),
                           child: ctrl.payment.paymentMode ==
                                   PaymentMode.metalToMetal
-                              ? _MetalSettlementPanel(payment: ctrl.payment)
+                              ? _MetalSettlementPanel(ctrl: ctrl)
                               : _CashSettlementPanel(payment: ctrl.payment),
                         ),
                       ),
@@ -187,6 +187,8 @@ class _RateAndInvoiceBoard extends StatelessWidget {
             _GstPercentBoard(payment: payment),
           ],
           const SizedBox(height: 14),
+          _DiscountBoard(payment: payment),
+          const SizedBox(height: 14),
           _InvoiceStatement(summary: summary),
         ],
       ),
@@ -230,7 +232,10 @@ class _RateMetrics extends StatelessWidget {
         ),
         _MiniMetric(
           label: 'Total Fine',
-          value: _weight(summary.totalFineWeight),
+          value: _weight(snapshot.payableFineWeight),
+          caption: snapshot.fineDiscountWeight > 0
+              ? 'Gross ${_weight(snapshot.grossFineWeight)}'
+              : null,
           tone: SilverStockColors.paymentFine,
         ),
         _MiniMetric(
@@ -270,8 +275,14 @@ class _InvoiceStatement extends StatelessWidget {
         children: [
           _StatementRow(
             label: 'Total Fine',
-            value: _weight(summary.totalFineWeight),
+            value: _weight(snapshot.payableFineWeight),
           ),
+          if (snapshot.fineDiscountWeight > 0)
+            _StatementRow(
+              label: 'Fine Discount',
+              value: '- ${_weight(snapshot.fineDiscountWeight)}',
+              valueColor: SilverStockColors.paymentReturn,
+            ),
           _StatementRow(
             label: 'Rate',
             value: '${_money(snapshot.ratePerGram)} /g',
@@ -284,6 +295,12 @@ class _InvoiceStatement extends StatelessWidget {
             label: 'Making',
             value: _money(snapshot.totalMakingAmount),
           ),
+          if (snapshot.cashDiscountAmount > 0)
+            _StatementRow(
+              label: 'Cash Discount',
+              value: '- ${_money(snapshot.cashDiscountAmount)}',
+              valueColor: SilverStockColors.paymentReturn,
+            ),
           if (snapshot.gstPercent > 0)
             _StatementRow(
               label: 'GST (${snapshot.gstPercent.toStringAsFixed(0)}%)',
@@ -450,10 +467,92 @@ class _GstPercentBoard extends StatelessWidget {
   }
 }
 
-class _MetalSettlementPanel extends StatelessWidget {
+class _DiscountBoard extends StatelessWidget {
   final SilverPaymentController payment;
 
-  const _MetalSettlementPanel({required this.payment});
+  const _DiscountBoard({required this.payment});
+
+  @override
+  Widget build(BuildContext context) {
+    final fineActive = payment.discountMode == SilverDiscountMode.fine;
+    final tone = fineActive
+        ? SilverStockColors.paymentFine
+        : SilverStockColors.accentPricing;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: tone.withValues(alpha: 0.18)),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final stacked = constraints.maxWidth < 720;
+          final modePicker = Row(
+            children: [
+              Expanded(
+                child: _ChoicePill(
+                  label: 'Fine',
+                  icon: SilverStockIcons.fineWeight,
+                  active: fineActive,
+                  color: SilverStockColors.paymentFine,
+                  onTap: () => payment.setDiscountMode(SilverDiscountMode.fine),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _ChoicePill(
+                  label: 'Cash',
+                  icon: SilverStockIcons.amountReceived,
+                  active: !fineActive,
+                  color: SilverStockColors.accentPricing,
+                  onTap: () => payment.setDiscountMode(SilverDiscountMode.cash),
+                ),
+              ),
+            ],
+          );
+          final input = _PaymentInput(
+            label: fineActive ? 'Fine Discount' : 'Cash Discount',
+            hint: fineActive ? '0.000' : '0.00',
+            suffixText: fineActive ? 'g' : null,
+            icon: fineActive
+                ? SilverStockIcons.fineWeight
+                : SilverStockIcons.amountReceived,
+            controller: payment.discountCtrl,
+          );
+
+          if (stacked) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                modePicker,
+                const SizedBox(height: 10),
+                input,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              SizedBox(width: 240, child: modePicker),
+              const SizedBox(width: 12),
+              Expanded(child: input),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _MetalSettlementPanel extends StatelessWidget {
+  final SilverStockController ctrl;
+
+  const _MetalSettlementPanel({required this.ctrl});
+
+  SilverPaymentController get payment => ctrl.payment;
 
   @override
   Widget build(BuildContext context) {
@@ -474,7 +573,7 @@ class _MetalSettlementPanel extends StatelessWidget {
                 _MetalGivingLineRow(
                   index: i,
                   line: payment.metalLines[i],
-                  canRemove: payment.metalLines.length > 1,
+                  canRemove: true,
                   onRemove: () =>
                       payment.removeMetalLine(payment.metalLines[i].id),
                 ),
@@ -497,25 +596,6 @@ class _MetalSettlementPanel extends StatelessWidget {
                   side: BorderSide(
                     color:
                         SilverStockColors.paymentFine.withValues(alpha: 0.35),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                ),
-              ),
-              OutlinedButton.icon(
-                onPressed: payment.canRoundMetalGrossWeights
-                    ? payment.roundMetalGrossWeights
-                    : null,
-                icon: const Icon(Icons.exposure_plus_1_rounded, size: 18),
-                label: const Text('ROUND OFF GROSS'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: SilverStockColors.accentPricing,
-                  side: BorderSide(
-                    color:
-                        SilverStockColors.accentPricing.withValues(alpha: 0.35),
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -992,6 +1072,11 @@ class _CashTargetNote extends StatelessWidget {
                 label: 'GST ${payment.taxPercentage.toStringAsFixed(2)}%',
                 value: _money(payment.taxAmount),
               ),
+            if (payment.cashDiscountAmount > 0)
+              _TargetLine(
+                label: 'Cash discount',
+                value: '- ${_money(payment.cashDiscountAmount)}',
+              ),
             if (payment.previousDueAdjustment > 0)
               _TargetLine(
                 label: 'Old supplier due adjusted',
@@ -1011,6 +1096,11 @@ class _CashTargetNote extends StatelessWidget {
               _TargetLine(
                 label: 'GST ${payment.taxPercentage.toStringAsFixed(2)}%',
                 value: _money(payment.taxAmount),
+              ),
+            if (payment.cashDiscountAmount > 0)
+              _TargetLine(
+                label: 'Cash discount',
+                value: '- ${_money(payment.cashDiscountAmount)}',
               ),
             if (payment.previousDueAdjustment > 0)
               _TargetLine(
