@@ -66,12 +66,15 @@ class _MetalRateAppBarState extends State<MetalRateAppBar>
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [MetalRateColors.gold, MetalRateColors.teal],
+                  colors: [
+                    MetalRateColors.goldGradientStart,
+                    MetalRateColors.gold,
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: MetalRateColors.gold.withValues(alpha: 0.42),
+                    color: MetalRateColors.gold.withValues(alpha: 0.5),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -84,7 +87,7 @@ class _MetalRateAppBarState extends State<MetalRateAppBar>
               ),
             ),
             const SizedBox(width: 14),
-            Flexible(
+            Expanded(
               child: Text(
                 widget.screenTitle,
                 maxLines: 1,
@@ -92,7 +95,7 @@ class _MetalRateAppBarState extends State<MetalRateAppBar>
                 style: MetalRateStyles.appBarTitle,
               ),
             ),
-            const Spacer(),
+            const SizedBox(width: 16),
             _RadarStatus(controller: _pulseCtrl),
           ],
         ),
@@ -123,9 +126,10 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
         onTap: widget.onTap,
         child: AnimatedScale(
           scale: _hovered ? 1.05 : 1.0,
-          duration: const Duration(milliseconds: 180),
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
+            duration: const Duration(milliseconds: 250),
             width: 42,
             height: 42,
             alignment: Alignment.center,
@@ -154,7 +158,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
               color: _hovered
                   ? MetalRateColors.gold
                   : MetalRateColors.shellTextTitle,
-              size: 18,
+              size: 20,
             ),
           ),
         ),
@@ -169,7 +173,7 @@ class _VerticalDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 1,
+      width: 1.5,
       height: 32,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -223,12 +227,12 @@ class _RadarStatus extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: MetalRateColors.onlineGreen.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(30),
             border: Border.all(
-              color: MetalRateColors.onlineGreen.withValues(alpha: 0.25),
+              color: MetalRateColors.onlineGreen.withValues(alpha: 0.30),
             ),
           ),
           child: Text(

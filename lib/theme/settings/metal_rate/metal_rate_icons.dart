@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 class MetalRateIcons {
   MetalRateIcons._();
 
-  static const IconData backArrow = Icons.arrow_back_ios_new_rounded;
+  static const IconData backArrow = Icons.arrow_back_rounded;
   static const IconData moduleIcon = Icons.auto_graph_rounded;
   static const IconData market = Icons.show_chart_rounded;
   static const IconData benchmark = Icons.workspace_premium_rounded;

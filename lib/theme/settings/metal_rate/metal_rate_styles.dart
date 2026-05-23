@@ -12,16 +12,16 @@ import 'metal_rate_colors.dart';
 class MetalRateStyles {
   MetalRateStyles._();
 
-  static const double appBarHeight = 72.0;
+  static const double appBarHeight = 70.0;
   static const double rCard = 14.0;
   static const double rInner = 9.0;
   static const EdgeInsets pagePadding = EdgeInsets.fromLTRB(20, 26, 20, 50);
 
   static TextStyle get appBarTitle => GoogleFonts.inter(
-        fontSize: 15,
-        fontWeight: FontWeight.w800,
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
         color: MetalRateColors.shellTextTitle,
-        letterSpacing: 0.5,
+        letterSpacing: 1.2,
       );
 
   static TextStyle get appBarSubtitle => GoogleFonts.inter(
@@ -31,10 +31,10 @@ class MetalRateStyles {
       );
 
   static TextStyle get systemOnline => GoogleFonts.inter(
-        fontSize: 9,
-        fontWeight: FontWeight.w800,
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
         color: MetalRateColors.onlineGreen,
-        letterSpacing: 1.0,
+        letterSpacing: 0.5,
       );
 
   static TextStyle get sectionLabel => GoogleFonts.inter(
@@ -77,7 +77,7 @@ class MetalRateStyles {
         ),
         boxShadow: [
           BoxShadow(
-            color: Color(0x22000000),
+            color: Color(0x26000000),
             blurRadius: 16,
             offset: Offset(0, 4),
           ),

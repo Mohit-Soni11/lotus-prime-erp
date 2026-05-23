@@ -131,6 +131,21 @@ class MetalRateRepository {
   }
 
   Future<void> _ensureHistoryTable() async {
+    try {
+      await _ensureHistoryTableSchema();
+    } catch (error) {
+      if (!_isRecoverableHistoryError(error)) {
+        rethrow;
+      }
+
+      await _rebuildHistoryTable();
+      await _ensureHistoryTableSchema(runLegacyBackfill: false);
+    }
+  }
+
+  Future<void> _ensureHistoryTableSchema({
+    bool runLegacyBackfill = true,
+  }) async {
     await _db.customStatement('''
       CREATE TABLE IF NOT EXISTS "$_historyTable" (
         "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -167,7 +182,9 @@ class MetalRateRepository {
     await addMissingColumn('created_at', 'INTEGER');
     await addMissingColumn('changed_at', 'INTEGER');
 
-    if (columns.contains('metal') && columns.contains('metal_key')) {
+    if (runLegacyBackfill &&
+        columns.contains('metal') &&
+        columns.contains('metal_key')) {
       await _db.customStatement(
         'UPDATE "$_historyTable" SET "metal" = "metal_key" '
         'WHERE ("metal" IS NULL OR "metal" = \'\') '
@@ -180,7 +197,9 @@ class MetalRateRepository {
       );
     }
 
-    if (columns.contains('profile_json') && columns.contains('snapshot_json')) {
+    if (runLegacyBackfill &&
+        columns.contains('profile_json') &&
+        columns.contains('snapshot_json')) {
       await _db.customStatement(
         'UPDATE "$_historyTable" SET "profile_json" = "snapshot_json" '
         'WHERE ("profile_json" IS NULL OR "profile_json" = \'\') '
@@ -193,7 +212,9 @@ class MetalRateRepository {
       );
     }
 
-    if (columns.contains('rate_date') && columns.contains('changed_at')) {
+    if (runLegacyBackfill &&
+        columns.contains('rate_date') &&
+        columns.contains('changed_at')) {
       await _db.customStatement(
         'UPDATE "$_historyTable" SET "rate_date" = "changed_at" '
         'WHERE ("rate_date" IS NULL OR "rate_date" = 0) '
@@ -216,6 +237,20 @@ class MetalRateRepository {
     );
   }
 
+  Future<void> _rebuildHistoryTable() async {
+    final cleanupStatements = [
+      'DROP INDEX IF EXISTS "idx_${_historyTable}_metal_date"',
+      'DROP INDEX IF EXISTS "idx_${_historyTable}_metal_key_date"',
+      'DROP TABLE IF EXISTS "$_historyTable"',
+    ];
+
+    for (final statement in cleanupStatements) {
+      try {
+        await _db.customStatement(statement);
+      } catch (_) {}
+    }
+  }
+
   Future<Set<String>> _historyTableColumns() async {
     final rows = await _db.customSelect(
       'PRAGMA table_info("$_historyTable")',
@@ -228,48 +263,55 @@ class MetalRateRepository {
   Future<List<MetalRateHistoryEntry>> _loadDatabaseHistory(
     MetalRateMetal metal,
   ) async {
-    await _ensureHistoryTable();
-    final columns = await _historyTableColumns();
-    final hasMetalKey = columns.contains('metal_key');
+    try {
+      await _ensureHistoryTable();
+      final columns = await _historyTableColumns();
+      final hasMetalKey = columns.contains('metal_key');
 
-    final rows = await _db.customSelect(
-      'SELECT profile_json, snapshot_json, rate_date, changed_at, source '
-      'FROM "$_historyTable" '
-      'WHERE ${hasMetalKey ? '(metal = ? OR metal_key = ?)' : 'metal = ?'} '
-      'ORDER BY rate_date DESC LIMIT ?',
-      variables: [
-        Variable.withString(metal.key),
-        if (hasMetalKey) Variable.withString(metal.key),
-        Variable.withInt(_historyLimit),
-      ],
-    ).get();
+      final rows = await _db.customSelect(
+        'SELECT profile_json, snapshot_json, rate_date, changed_at, source '
+        'FROM "$_historyTable" '
+        'WHERE ${hasMetalKey ? '(metal = ? OR metal_key = ?)' : 'metal = ?'} '
+        'ORDER BY rate_date DESC LIMIT ?',
+        variables: [
+          Variable.withString(metal.key),
+          if (hasMetalKey) Variable.withString(metal.key),
+          Variable.withInt(_historyLimit),
+        ],
+      ).get();
 
-    return rows
-        .map((row) {
-          try {
-            final profileJson = (row.data['profile_json'] ??
-                row.data['snapshot_json']) as String?;
-            if (profileJson == null || profileJson.isEmpty) {
+      return rows
+          .map((row) {
+            try {
+              final profileJson = (row.data['profile_json'] ??
+                  row.data['snapshot_json']) as String?;
+              if (profileJson == null || profileJson.isEmpty) {
+                return null;
+              }
+              final profile = MetalRateProfile.fromJson(
+                Map<String, dynamic>.from(jsonDecode(profileJson) as Map),
+              );
+              final changedAt =
+                  (row.data['rate_date'] ?? row.data['changed_at']) as int?;
+              return MetalRateHistoryEntry(
+                profile: profile,
+                changedAt: DateTime.fromMillisecondsSinceEpoch(
+                  changedAt ?? DateTime.now().millisecondsSinceEpoch,
+                ),
+                source: row.data['source'] as String? ?? 'Metal Rate Master',
+              );
+            } catch (_) {
               return null;
             }
-            final profile = MetalRateProfile.fromJson(
-              Map<String, dynamic>.from(jsonDecode(profileJson) as Map),
-            );
-            final changedAt =
-                (row.data['rate_date'] ?? row.data['changed_at']) as int?;
-            return MetalRateHistoryEntry(
-              profile: profile,
-              changedAt: DateTime.fromMillisecondsSinceEpoch(
-                changedAt ?? DateTime.now().millisecondsSinceEpoch,
-              ),
-              source: row.data['source'] as String? ?? 'Metal Rate Master',
-            );
-          } catch (_) {
-            return null;
-          }
-        })
-        .whereType<MetalRateHistoryEntry>()
-        .toList(growable: false);
+          })
+          .whereType<MetalRateHistoryEntry>()
+          .toList(growable: false);
+    } catch (error) {
+      if (_isRecoverableHistoryError(error)) {
+        return const [];
+      }
+      rethrow;
+    }
   }
 
   Future<void> _mergeLatestDailyRate(List<MetalRateProfile> profiles) async {
@@ -550,7 +592,21 @@ class MetalRateRepository {
       ),
     );
 
-    await _ensureHistoryTable();
+    final compact = entries.take(_historyLimit * MetalRateMetal.values.length);
+    await prefs.setString(
+      _historyKey,
+      jsonEncode(compact.map((entry) => entry.toJson()).toList()),
+    );
+
+    try {
+      await _ensureHistoryTable();
+    } catch (error) {
+      if (_isRecoverableHistoryError(error)) {
+        return;
+      }
+      rethrow;
+    }
+
     final columns = await _historyTableColumns();
     final profileJson = jsonEncode(profile.toJson());
     final insertColumns = <String>['metal'];
@@ -586,18 +642,18 @@ class MetalRateRepository {
       DateTime.now().millisecondsSinceEpoch,
     ]);
 
-    await _db.customStatement(
-      'INSERT INTO "$_historyTable" '
-      '(${insertColumns.map((column) => '"$column"').join(', ')}) '
-      'VALUES (${placeholders.join(', ')})',
-      values,
-    );
-
-    final compact = entries.take(_historyLimit * MetalRateMetal.values.length);
-    await prefs.setString(
-      _historyKey,
-      jsonEncode(compact.map((entry) => entry.toJson()).toList()),
-    );
+    try {
+      await _db.customStatement(
+        'INSERT INTO "$_historyTable" '
+        '(${insertColumns.map((column) => '"$column"').join(', ')}) '
+        'VALUES (${placeholders.join(', ')})',
+        values,
+      );
+    } catch (error) {
+      if (!_isRecoverableHistoryError(error)) {
+        rethrow;
+      }
+    }
   }
 }
 
@@ -653,4 +709,12 @@ String _rateText(double value) {
   }
   final rounded = value.roundToDouble();
   return rounded == value ? value.toStringAsFixed(0) : value.toStringAsFixed(2);
+}
+
+bool _isRecoverableHistoryError(Object error) {
+  final message = error.toString().toLowerCase();
+  return message.contains('metal_rate_history') ||
+      message.contains('database disk image is malformed') ||
+      message.contains('code 779') ||
+      message.contains('sqlite_corrupt');
 }
