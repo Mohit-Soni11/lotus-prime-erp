@@ -22,10 +22,11 @@ class SilverItemModel extends ChangeNotifier {
   ];
 
   static const List<String> purityPresets = [
-    '999',
-    '925',
-    '800',
-    '700',
+    '99.99%',
+    '92.50%',
+    '80.00%',
+    '70.00%',
+    '60.00%',
     'Other',
   ];
 

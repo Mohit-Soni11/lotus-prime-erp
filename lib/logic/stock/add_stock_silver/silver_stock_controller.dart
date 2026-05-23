@@ -742,6 +742,18 @@ class SilverStockController extends AddStockController {
     if (codeMatch != null) {
       return codeMatch.group(1)!;
     }
+    final percentMatch =
+        RegExp(r'(\d{1,3}(?:\.\d+)?)\s*%').firstMatch(normalized);
+    if (percentMatch != null) {
+      final percent = double.tryParse(percentMatch.group(1) ?? '');
+      if (percent != null) {
+        if (percent >= 99.5) return '999';
+        if ((percent - 92.5).abs() <= 0.2) return '925';
+        if ((percent - 80.0).abs() <= 0.2) return '800';
+        if ((percent - 70.0).abs() <= 0.2) return '700';
+        return percent.toStringAsFixed(2);
+      }
+    }
     return normalized.replaceAll(' ', '');
   }
 

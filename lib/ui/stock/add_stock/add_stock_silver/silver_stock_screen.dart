@@ -7,7 +7,7 @@ import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/add_silver_stock_items_step.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_app_bar.dart';
-import 'package:lotus_erp/ui/stock/add_stock/add_stock_purity_step.dart';
+import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_purity_step.dart';
 
 class SilverStockScreen extends StatefulWidget {
   const SilverStockScreen({super.key});
@@ -49,7 +49,7 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
               switchInCurve: Curves.easeOutQuart,
               switchOutCurve: Curves.easeInQuart,
               child: _ctrl.step == AddStockStep.purity
-                  ? AddStockPurityStep(
+                  ? SilverPurityStep(
                       key: const ValueKey('silver-purity-step'),
                       ctrl: _ctrl,
                     )
