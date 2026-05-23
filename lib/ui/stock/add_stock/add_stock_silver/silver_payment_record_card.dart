@@ -188,6 +188,7 @@ class _RateAndInvoiceBoard extends StatelessWidget {
             const SizedBox(height: 14),
             _GstPercentBoard(payment: payment),
           ],
+          const SizedBox(height: 14),
           _InvoiceStatement(summary: summary),
         ],
       ),
@@ -405,6 +406,21 @@ class _GstPercentBoard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final metalActive = payment.paymentMode == PaymentMode.metalToMetal;
+    final activeField = _PaymentInput(
+      label: metalActive ? 'Metal Settlement GST' : 'Cash / Bank GST',
+      hint: metalActive ? '5' : '3',
+      suffixText: '%',
+      icon: Icons.percent_rounded,
+      controller: metalActive
+          ? payment.metalGstPercentCtrl
+          : payment.cashGstPercentCtrl,
+    );
+    final summary = _ReadOnlyMetricBox(
+      label: 'Applied GST',
+      value:
+          '${payment.taxPercentage.toStringAsFixed(payment.taxPercentage.truncateToDouble() == payment.taxPercentage ? 0 : 2)}%',
+      color: SilverStockColors.success,
+    );
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -429,8 +445,8 @@ class _GstPercentBoard extends StatelessWidget {
               Expanded(
                 child: Text(
                   metalActive
-                      ? 'GST percentage for metal settlement.'
-                      : 'GST percentage for cash and bank settlement.',
+                      ? 'Metal to Metal settlement applies the metal GST rate.'
+                      : 'Cash / Bank settlement applies the cash GST rate.',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -443,33 +459,24 @@ class _GstPercentBoard extends StatelessWidget {
           const SizedBox(height: 12),
           LayoutBuilder(
             builder: (context, constraints) {
-              final stacked = constraints.maxWidth < 620;
-              final metalField = _PaymentInput(
-                label: 'Metal GST',
-                hint: '5',
-                suffixText: '%',
-                icon: Icons.percent_rounded,
-                controller: payment.metalGstPercentCtrl,
-              );
-              final cashField = _PaymentInput(
-                label: 'Cash / Bank GST',
-                hint: '3',
-                suffixText: '%',
-                icon: Icons.percent_rounded,
-                controller: payment.cashGstPercentCtrl,
-              );
+              final stacked = constraints.maxWidth < 560;
 
               if (stacked) {
                 return Column(
-                  children: [metalField, const SizedBox(height: 10), cashField],
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    activeField,
+                    const SizedBox(height: 10),
+                    summary,
+                  ],
                 );
               }
 
               return Row(
                 children: [
-                  Expanded(child: metalField),
+                  Expanded(flex: 2, child: activeField),
                   const SizedBox(width: 10),
-                  Expanded(child: cashField),
+                  Expanded(child: summary),
                 ],
               );
             },
@@ -638,6 +645,28 @@ class _MetalSettlementPanel extends StatelessWidget {
                   side: BorderSide(
                     color:
                         SilverStockColors.paymentFine.withValues(alpha: 0.35),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: payment.canRoundMetalGrossWeights
+                    ? payment.roundMetalGrossWeights
+                    : null,
+                icon: const Icon(Icons.exposure_plus_1_rounded, size: 18),
+                label: const Text('ROUND METAL FINE'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: SilverStockColors.accentPricing,
+                  disabledForegroundColor: SilverStockColors.textMuted,
+                  side: BorderSide(
+                    color: (payment.canRoundMetalGrossWeights
+                            ? SilverStockColors.accentPricing
+                            : SilverStockColors.textMuted)
+                        .withValues(alpha: 0.32),
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

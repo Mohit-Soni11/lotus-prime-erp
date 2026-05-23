@@ -4,6 +4,7 @@ import 'package:lotus_erp/logic/stock/add_stock_controller.dart'
     show AddStockStep;
 import 'package:lotus_erp/logic/stock/add_stock_silver/silver_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
+import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/add_silver_stock_items_step.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_app_bar.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_purity_step.dart';
@@ -80,42 +81,18 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
 
     final shouldDiscard = await showDialog<bool>(
       context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.28),
       builder: (dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-          title: Text(
-            AddStockStrings.confirmExitTitle,
-            style: AddStockStyles.sectionTitle,
-          ),
-          content: Text(
-            AddStockStrings.confirmExitBody,
-            style: AddStockStyles.caption,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(
-                AddStockStrings.btnKeepEditing,
-                style: GoogleFonts.inter(
-                  color: AddStockColors.textBody,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AddStockColors.danger,
-                foregroundColor: Colors.white,
-              ),
-              child: Text(
-                AddStockStrings.btnDiscard,
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
-              ),
-            ),
-          ],
+        return _SilverConfirmDialog(
+          icon: Icons.warning_amber_rounded,
+          iconColor: SilverStockColors.danger,
+          title: AddStockStrings.confirmExitTitle,
+          message: AddStockStrings.confirmExitBody,
+          primaryLabel: AddStockStrings.btnKeepEditing,
+          secondaryLabel: AddStockStrings.btnDiscard,
+          secondaryColor: SilverStockColors.danger,
+          onPrimary: () => Navigator.of(dialogContext).pop(false),
+          onSecondary: () => Navigator.of(dialogContext).pop(true),
         );
       },
     );
@@ -135,42 +112,18 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
 
     final confirm = await showDialog<bool>(
       context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.28),
       builder: (dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-          title: Text(
-            AddStockStrings.confirmResetTitle,
-            style: AddStockStyles.sectionTitle,
-          ),
-          content: Text(
-            AddStockStrings.confirmResetBody,
-            style: AddStockStyles.caption,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(
-                AddStockStrings.btnCancel,
-                style: GoogleFonts.inter(
-                  color: AddStockColors.textBody,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF748A98),
-                foregroundColor: Colors.white,
-              ),
-              child: Text(
-                AddStockStrings.btnResetBatch,
-                style: GoogleFonts.inter(fontWeight: FontWeight.w800),
-              ),
-            ),
-          ],
+        return _SilverConfirmDialog(
+          icon: Icons.restart_alt_rounded,
+          iconColor: SilverStockColors.paymentPrimary,
+          title: AddStockStrings.confirmResetTitle,
+          message: AddStockStrings.confirmResetBody,
+          primaryLabel: AddStockStrings.btnCancel,
+          secondaryLabel: AddStockStrings.btnResetBatch,
+          secondaryColor: SilverStockColors.paymentPrimary,
+          onPrimary: () => Navigator.of(dialogContext).pop(false),
+          onSecondary: () => Navigator.of(dialogContext).pop(true),
         );
       },
     );
@@ -303,6 +256,144 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
           ],
         );
       },
+    );
+  }
+}
+
+class _SilverConfirmDialog extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String message;
+  final String primaryLabel;
+  final String secondaryLabel;
+  final Color secondaryColor;
+  final VoidCallback onPrimary;
+  final VoidCallback onSecondary;
+
+  const _SilverConfirmDialog({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.message,
+    required this.primaryLabel,
+    required this.secondaryLabel,
+    required this.secondaryColor,
+    required this.onPrimary,
+    required this.onSecondary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        width: 420,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: SilverStockColors.cardBg,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: SilverStockColors.cardBorder),
+          boxShadow: const [
+            BoxShadow(
+              color: SilverStockColors.shadowMedium,
+              blurRadius: 28,
+              offset: Offset(0, 14),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: iconColor.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(14),
+                    border:
+                        Border.all(color: iconColor.withValues(alpha: 0.22)),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: GoogleFonts.manrope(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: SilverStockColors.textDark,
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        message,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          height: 1.45,
+                          fontWeight: FontWeight.w600,
+                          color: SilverStockColors.textBody,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onPrimary,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: SilverStockColors.textBody,
+                      side:
+                          const BorderSide(color: SilverStockColors.cardBorder),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                    ),
+                    child: Text(
+                      primaryLabel,
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: onSecondary,
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0,
+                      backgroundColor: secondaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                    ),
+                    child: Text(
+                      secondaryLabel,
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

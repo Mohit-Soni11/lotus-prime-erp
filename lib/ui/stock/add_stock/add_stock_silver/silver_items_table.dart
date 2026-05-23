@@ -207,9 +207,9 @@ class SilverItemsTable extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _h('S.NO', flex: 1, center: true),
+          _h('NO.', flex: 1, center: true),
           const SizedBox(width: 6),
-          _h('CATEGORY', flex: 3),
+          _h('ITEM TYPE', flex: 3),
           const SizedBox(width: 6),
           _h('ITEM NAME', flex: 4),
           const SizedBox(width: 6),
@@ -217,17 +217,17 @@ class SilverItemsTable extends StatelessWidget {
           const SizedBox(width: 6),
           _h('HUID', flex: 2),
           const SizedBox(width: 6),
-          _h('GR. WT', flex: 2),
+          _h('GROSS', flex: 2),
           const SizedBox(width: 6),
           _h('LESS/PC', flex: 2),
           const SizedBox(width: 6),
           _h('LESS TOTAL', flex: 2, center: true),
           const SizedBox(width: 6),
-          _h('NET WT', flex: 2, center: true),
+          _h('NET', flex: 2, center: true),
           const SizedBox(width: 6),
-          _h('BASE PURITY', flex: 2, center: true),
+          _h('PURITY', flex: 2, center: true),
           const SizedBox(width: 6),
-          _h('WASTAGE %', flex: 2, center: true),
+          _h('WASTAGE', flex: 2, center: true),
           const SizedBox(width: 6),
           _h('TOTAL PURITY', flex: 2, center: true),
           const SizedBox(width: 6),
@@ -235,7 +235,7 @@ class SilverItemsTable extends StatelessWidget {
           const SizedBox(width: 6),
           _h('MAKING', flex: 3),
           const SizedBox(width: 6),
-          _h('TOTAL', flex: 3, right: true),
+          _h('AMOUNT', flex: 3, right: true),
           const SizedBox(width: 6),
           _h('ACT', flex: 1, center: true),
         ],
@@ -432,15 +432,15 @@ class SilverItemsTable extends StatelessWidget {
   }
 
   Widget _buildRoundOffButton() {
-    final enabled = ctrl.canRoundOffInvoiceAndMetal;
+    final enabled = ctrl.canRoundOffInvoiceFine;
     final color =
         enabled ? SilverStockColors.accentPricing : SilverStockColors.textMuted;
 
     return Tooltip(
-      message: 'Round invoice fine and metal given',
+      message: 'Round invoice fine only',
       waitDuration: const Duration(milliseconds: 400),
       child: InkWell(
-        onTap: enabled ? ctrl.roundOffInvoiceAndMetal : null,
+        onTap: enabled ? ctrl.roundOffInvoiceFine : null,
         borderRadius: BorderRadius.circular(10),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -458,7 +458,7 @@ class SilverItemsTable extends StatelessWidget {
               Icon(Icons.exposure_plus_1_rounded, color: color, size: 20),
               const SizedBox(width: 8),
               Text(
-                'ROUND OFF FINE + METAL',
+                'ROUND INVOICE FINE',
                 style: TextStyle(
                   color: color,
                   fontSize: 14,

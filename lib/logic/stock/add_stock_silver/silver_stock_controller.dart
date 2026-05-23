@@ -41,6 +41,7 @@ class SilverStockController extends AddStockController {
   double _silverRatePer10g = 0.0;
   DateTime? _silverRateDate;
   bool _isLoadingSilverRate = false;
+  bool _roundOffInvoiceFine = false;
 
   SilverStockController()
       : _silverBatchCode = _generateSilverBatchCode(),
@@ -75,9 +76,8 @@ class SilverStockController extends AddStockController {
       enteredSilverRows.fold(0.0, (sum, row) => sum + row.fineWeight);
   double get totalMakingAmount =>
       enteredSilverRows.fold(0.0, (sum, row) => sum + row.makingAmount);
-  bool get canRoundOffInvoiceAndMetal =>
-      enteredSilverRows.any((row) => row.hasFractionalFineWeight) ||
-      payment.canRoundMetalGrossWeights;
+  bool get canRoundOffInvoiceFine =>
+      enteredSilverRows.any((row) => row.hasFractionalFineWeight);
 
   // ✨ FIXED: Updated Snapshot logic dynamically linking to the new Payment Controller
   SilverPaymentSnapshot get paymentSnapshot {
@@ -541,6 +541,7 @@ class SilverStockController extends AddStockController {
       initialPurchaseRate: silverRatePerGram,
       initialPieces: 1,
     );
+    model.setFineRoundOffEnabled(_roundOffInvoiceFine, notify: false);
     model.addListener(notifyListeners);
     _silverRows.add(model);
     if (requestFocus) {
@@ -610,22 +611,23 @@ class SilverStockController extends AddStockController {
     _addSilverModel(requestFocus: true);
   }
 
-  void roundOffInvoiceAndMetal() {
-    if (!canRoundOffInvoiceAndMetal) {
+  void roundOffInvoiceFine() {
+    if (!canRoundOffInvoiceFine) {
       return;
     }
 
+    _roundOffInvoiceFine = true;
     for (final row in enteredSilverRows) {
-      if (row.hasFractionalFineWeight) {
+      if (row.hasAnyInput) {
         row.roundFineWeightToNearestGram();
       }
     }
-    payment.roundMetalGrossWeights();
     notifyListeners();
   }
 
   @override
   void resetAllRows() {
+    _roundOffInvoiceFine = false;
     _clearSilverRows();
     notifyListeners();
   }
@@ -637,6 +639,7 @@ class SilverStockController extends AddStockController {
     _billPhotoPath = null;
     _supplierLedger = null;
     _isLoadingSupplierLedger = false;
+    _roundOffInvoiceFine = false;
     // ✨ FIXED: Replaced payment.reset()
     payment.resetSettlement();
     _clearSilverRows();

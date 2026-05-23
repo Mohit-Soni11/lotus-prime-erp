@@ -53,6 +53,7 @@ class SilverItemModel extends ChangeNotifier {
   final FocusNode makingFocus = FocusNode();
 
   MakingChargesType makingChargesType = MakingChargesType.perGram;
+  bool _fineRoundOffEnabled = false;
   double? _fineWeightOverride;
 
   SilverItemModel({
@@ -124,7 +125,8 @@ class SilverItemModel extends ChangeNotifier {
 
   double get computedFineWeight => netWeight * (totalPurityPercent / 100.0);
   double get fineWeight => _fineWeightOverride ?? computedFineWeight;
-  bool get hasRoundedFineWeight => _fineWeightOverride != null;
+  bool get hasRoundedFineWeight =>
+      _fineRoundOffEnabled || _fineWeightOverride != null;
   bool get hasFractionalFineWeight {
     final value = fineWeight;
     return value > 0 && (value - value.floorToDouble()).abs() > 0.0001;
@@ -212,17 +214,40 @@ class SilverItemModel extends ChangeNotifier {
   }
 
   void roundFineWeightToNearestGram() {
-    final value = fineWeight;
-    if (value <= 0) {
+    _fineRoundOffEnabled = true;
+    _refreshFineRoundOff();
+    notifyListeners();
+  }
+
+  void setFineRoundOffEnabled(bool enabled, {bool notify = true}) {
+    if (_fineRoundOffEnabled == enabled) {
+      if (enabled) {
+        _refreshFineRoundOff();
+      }
       return;
+    }
+    _fineRoundOffEnabled = enabled;
+    _refreshFineRoundOff();
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
+  void _refreshFineRoundOff() {
+    if (!_fineRoundOffEnabled) {
+      _fineWeightOverride = null;
+      return;
+    }
+
+    _fineWeightOverride = _roundClassic(computedFineWeight);
+  }
+
+  double _roundClassic(double value) {
+    if (value <= 0) {
+      return 0.0;
     }
     final floorValue = value.floorToDouble();
-    final rounded = value - floorValue >= 0.5 ? floorValue + 1 : floorValue;
-    if ((rounded - value).abs() < 0.0001 && _fineWeightOverride != null) {
-      return;
-    }
-    _fineWeightOverride = rounded;
-    notifyListeners();
+    return value - floorValue >= 0.5 ? floorValue + 1 : floorValue;
   }
 
   String get makingTypeSymbol {
@@ -280,7 +305,7 @@ class SilverItemModel extends ChangeNotifier {
   void _fieldChanged() => notifyListeners();
 
   void _weightPurityFieldChanged() {
-    _fineWeightOverride = null;
+    _refreshFineRoundOff();
     notifyListeners();
   }
 

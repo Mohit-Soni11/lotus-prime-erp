@@ -13,6 +13,7 @@ class SilverMetalSettlementLine extends ChangeNotifier {
   final TextEditingController grossCtrl = TextEditingController();
   final TextEditingController purityCtrl = TextEditingController();
   bool _syncingText = false;
+  bool _fineRoundOffEnabled = false;
   double? _fineWeightOverride;
 
   SilverMetalSettlementLine({required this.id}) {
@@ -37,9 +38,9 @@ class SilverMetalSettlementLine extends ChangeNotifier {
   }
 
   void setValues(double grossWeight, double purity) {
-    _fineWeightOverride = null;
     _syncText(grossCtrl, _formatNumber(grossWeight, maxFraction: 3));
     _syncText(purityCtrl, _formatNumber(purity, maxFraction: 2));
+    _refreshFineRoundOff();
     notifyListeners();
   }
 
@@ -56,15 +57,41 @@ class SilverMetalSettlementLine extends ChangeNotifier {
   }
 
   void roundFineWeightToNearestGram() {
-    final value = fineWeight;
-    if (value <= 0) {
+    _fineRoundOffEnabled = true;
+    _refreshFineRoundOff();
+    notifyListeners();
+  }
+
+  void setFineRoundOffEnabled(bool enabled, {bool notify = true}) {
+    if (_fineRoundOffEnabled == enabled) {
+      if (enabled) {
+        _refreshFineRoundOff();
+      }
+      return;
+    }
+    _fineRoundOffEnabled = enabled;
+    _refreshFineRoundOff();
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
+  void _refreshFineRoundOff() {
+    if (!_fineRoundOffEnabled) {
+      _fineWeightOverride = null;
       return;
     }
 
+    _fineWeightOverride = _roundClassic(computedFineWeight);
+  }
+
+  double _roundClassic(double value) {
+    if (value <= 0) {
+      return 0.0;
+    }
+
     final floorValue = value.floorToDouble();
-    _fineWeightOverride =
-        value - floorValue >= 0.5 ? floorValue + 1 : floorValue;
-    notifyListeners();
+    return value - floorValue >= 0.5 ? floorValue + 1 : floorValue;
   }
 
   Map<String, double> toPayload() {
@@ -79,7 +106,7 @@ class SilverMetalSettlementLine extends ChangeNotifier {
     if (_syncingText) {
       return;
     }
-    _fineWeightOverride = null;
+    _refreshFineRoundOff();
     notifyListeners();
   }
 
@@ -178,6 +205,7 @@ class SilverPaymentController extends ChangeNotifier {
   DateTime? _promiseDate;
   bool _adjustPreviousDue = false;
   bool _syncingText = false;
+  bool _roundMetalFineToGram = false;
   final List<SilverMetalSettlementLine> _metalLines = [];
 
   SilverPaymentController() {
@@ -464,6 +492,7 @@ class SilverPaymentController extends ChangeNotifier {
     final line = SilverMetalSettlementLine(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
     );
+    line.setFineRoundOffEnabled(_roundMetalFineToGram, notify: false);
     line.addListener(_handleInputChanged);
     _metalLines.add(line);
     if (notify) {
@@ -483,13 +512,14 @@ class SilverPaymentController extends ChangeNotifier {
   }
 
   void roundMetalGrossWeights() {
+    _roundMetalFineToGram = true;
     var changed = false;
     for (final line in _metalLines) {
       if (line.hasFractionalGrossWeight) {
         line.roundGrossWeightToNearestGram();
         changed = true;
       }
-      if (line.hasFractionalFineWeight) {
+      if (line.hasInput) {
         line.roundFineWeightToNearestGram();
         changed = true;
       }
@@ -559,6 +589,7 @@ class SilverPaymentController extends ChangeNotifier {
   void resetSettlement() {
     _paymentMode = PaymentMode.metalToMetal;
     _metalDueReturnType = DueReturnType.cash;
+    _roundMetalFineToGram = false;
     _promiseDate = null;
     for (final line in _metalLines) {
       line.removeListener(_handleInputChanged);

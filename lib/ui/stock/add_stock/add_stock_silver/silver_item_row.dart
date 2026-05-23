@@ -179,7 +179,19 @@ class _SilverItemRowState extends State<SilverItemRow> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Expanded(flex: 2, child: _buildPurityField()),
+                  Expanded(
+                    flex: 2,
+                    child: _SilverTextField(
+                      controller: widget.model.purityCtrl,
+                      focusNode: widget.model.purityFocus,
+                      hint: 'Purity',
+                      isNumber: true,
+                      textAlign: TextAlign.center,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) =>
+                          widget.model.wastageFocus.requestFocus(),
+                    ),
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     flex: 2,
@@ -256,7 +268,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
     return _SilverPopupField(
       controller: widget.model.categoryCtrl,
       focusNode: widget.model.categoryFocus,
-      hint: 'Category',
+      hint: 'Item type',
       popupItems: SilverItemModel.categoryPresets,
       onSelected: (value) {
         if (value == 'Other') {
@@ -278,32 +290,6 @@ class _SilverItemRowState extends State<SilverItemRow> {
       },
       textInputAction: TextInputAction.next,
       onSubmitted: (_) => widget.model.itemNameFocus.requestFocus(),
-    );
-  }
-
-  Widget _buildPurityField() {
-    return _SilverPopupField(
-      controller: widget.model.purityCtrl,
-      focusNode: widget.model.purityFocus,
-      hint: 'Base',
-      popupItems: SilverItemModel.purityPresets,
-      textAlign: TextAlign.center,
-      onSelected: (value) {
-        if (value == 'Other') {
-          widget.model.purityCtrl.clear();
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              widget.model.purityFocus.requestFocus();
-            }
-          });
-          return;
-        }
-
-        _setText(widget.model.purityCtrl, value);
-        widget.model.wastageFocus.requestFocus();
-      },
-      textInputAction: TextInputAction.next,
-      onSubmitted: (_) => widget.model.wastageFocus.requestFocus(),
     );
   }
 
@@ -496,6 +482,7 @@ class _SilverTextField extends StatelessWidget {
                 : null),
         textInputAction: textInputAction,
         textAlign: textAlign,
+        textAlignVertical: TextAlignVertical.center,
         onFieldSubmitted: onSubmitted,
         style: const TextStyle(
           fontSize: 14,
@@ -504,16 +491,14 @@ class _SilverTextField extends StatelessWidget {
           fontFeatures: [FontFeature.tabularFigures()],
         ),
         decoration: InputDecoration(
+          isDense: true,
           hintText: hint,
           hintStyle: TextStyle(
             color: SilverStockColors.textMuted.withValues(alpha: 0.50),
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: 0,
-          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10),
           filled: true,
           fillColor: SilverStockColors.inputBg,
           enabledBorder: OutlineInputBorder(
@@ -544,7 +529,6 @@ class _SilverPopupField extends StatelessWidget {
   final ValueChanged<String> onSelected;
   final TextInputAction textInputAction;
   final ValueChanged<String>? onSubmitted;
-  final TextAlign textAlign;
 
   const _SilverPopupField({
     required this.controller,
@@ -554,7 +538,6 @@ class _SilverPopupField extends StatelessWidget {
     this.focusNode,
     this.textInputAction = TextInputAction.next,
     this.onSubmitted,
-    this.textAlign = TextAlign.left,
   });
 
   @override
@@ -574,7 +557,8 @@ class _SilverPopupField extends StatelessWidget {
               focusNode: focusNode,
               textInputAction: textInputAction,
               onFieldSubmitted: onSubmitted,
-              textAlign: textAlign,
+              textAlign: TextAlign.left,
+              textAlignVertical: TextAlignVertical.center,
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -582,6 +566,7 @@ class _SilverPopupField extends StatelessWidget {
                 fontFeatures: [FontFeature.tabularFigures()],
               ),
               decoration: InputDecoration(
+                isDense: true,
                 hintText: hint,
                 hintStyle: TextStyle(
                   color: SilverStockColors.textMuted.withValues(alpha: 0.50),
@@ -589,45 +574,46 @@ class _SilverPopupField extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 0,
-                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10),
               ),
             ),
           ),
-          PopupMenuButton<String>(
-            icon: const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: SilverStockColors.brandSilver,
-              size: 20,
-            ),
-            color: SilverStockColors.cardBg,
-            position: PopupMenuPosition.under,
-            padding: EdgeInsets.zero,
-            splashRadius: 18,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-              side: const BorderSide(color: SilverStockColors.cardBorder),
-            ),
-            onSelected: onSelected,
-            itemBuilder: (context) => popupItems
-                .map(
-                  (choice) => PopupMenuItem<String>(
-                    value: choice,
-                    height: 38,
-                    child: Text(
-                      choice,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: SilverStockColors.textDark,
+          SizedBox(
+            width: 36,
+            height: 38,
+            child: PopupMenuButton<String>(
+              icon: const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: SilverStockColors.brandSilver,
+                size: 20,
+              ),
+              color: SilverStockColors.cardBg,
+              position: PopupMenuPosition.under,
+              padding: EdgeInsets.zero,
+              splashRadius: 18,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: const BorderSide(color: SilverStockColors.cardBorder),
+              ),
+              onSelected: onSelected,
+              itemBuilder: (context) => popupItems
+                  .map(
+                    (choice) => PopupMenuItem<String>(
+                      value: choice,
+                      height: 38,
+                      child: Text(
+                        choice,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: SilverStockColors.textDark,
+                        ),
                       ),
                     ),
-                  ),
-                )
-                .toList(),
+                  )
+                  .toList(),
+            ),
           ),
         ],
       ),
