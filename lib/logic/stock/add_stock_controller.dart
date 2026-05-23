@@ -2,9 +2,11 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/models/purchase/purchase_enums/purchase_enums.dart';
+import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
 import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
 import 'package:lotus_erp/models/stock/supplier_model/supplier_model.dart';
 import 'package:lotus_erp/repositories/purchase/purchase_entry_repository.dart';
+import 'package:lotus_erp/repositories/setting/metal_rate/metal_rate_repository.dart';
 import 'package:lotus_erp/repositories/supplier/supplier_repository.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 
@@ -147,7 +149,7 @@ class AddStockController extends ChangeNotifier {
           '22K (916)',
           '18K (750)',
           '14K (585)',
-          '10K (417)',
+          '9K (375)',
           'Custom',
         ];
       case StockCategory.silver:
@@ -225,15 +227,20 @@ class AddStockController extends ChangeNotifier {
   double _gold24kRatePer10g = 0.0;
   double _gold22kRatePer10g = 0.0;
   double _gold18kRatePer10g = 0.0;
+  double _gold14kRatePer10g = 0.0;
+  double _gold9kRatePer10g = 0.0;
   double? _manualGold24kRatePer10g;
   DateTime? _goldRateDate;
   bool _isLoadingGoldRates = false;
+  Map<String, double> _goldRateByPurityPer10g = {};
 
   bool get isLoadingGoldRates => _isLoadingGoldRates;
   DateTime? get goldRateDate => _goldRateDate;
   double get gold24kRatePer10g => _gold24kRatePer10g;
   double get gold22kRatePer10g => _gold22kRatePer10g;
   double get gold18kRatePer10g => _gold18kRatePer10g;
+  double get gold14kRatePer10g => _gold14kRatePer10g;
+  double get gold9kRatePer10g => _gold9kRatePer10g;
 
   String get selectedPurityShortLabel => _shortPurityLabel(_purityDisplay);
 
@@ -256,6 +263,11 @@ class AddStockController extends ChangeNotifier {
       return 0.0;
     }
 
+    final masterRate = _goldRateByPurityPer10g[selectedPurityShortLabel] ?? 0.0;
+    if (masterRate > 0) {
+      return masterRate;
+    }
+
     final basePercent = selectedPurityBasePercent;
     final pureRate = effectiveGold24kRatePer10g;
     if (basePercent <= 0 || pureRate <= 0) {
@@ -271,8 +283,7 @@ class AddStockController extends ChangeNotifier {
   double get selectedPurityRatePerGram =>
       selectedPurityRatePer10g > 0 ? selectedPurityRatePer10g / 10.0 : 0.0;
 
-  bool get hasActiveRateSnapshot =>
-      pureGoldRatePerGram > 0 && selectedPurityRatePer10g > 0;
+  bool get hasActiveRateSnapshot => selectedPurityRatePer10g > 0;
 
   String? _pendingFocusRowId;
   String? _activeRowId;
@@ -383,26 +394,50 @@ class AddStockController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final masterProfile =
+          await MetalRateRepository().loadProfile(MetalRateMetal.gold);
+      final masterRates = <String, double>{};
+      for (final plan in masterProfile.purityPlans) {
+        final key = _normaliseRateKey(plan.label);
+        final rate = plan.manualDisplayRatePer10g > 0
+            ? plan.manualDisplayRatePer10g
+            : masterProfile.marketBaseRatePer10g * plan.purityFactor;
+        if (key.isNotEmpty && rate > 0) {
+          masterRates[key] = rate;
+        }
+      }
+
       final latestRate = await (_db.select(_db.dailyRates)
             ..orderBy([(r) => drift.OrderingTerm.desc(r.rateDate)])
             ..limit(1))
           .getSingleOrNull();
 
       if (latestRate != null) {
-        _gold24kRatePer10g = _parseRateText(latestRate.gold24k);
-        _gold22kRatePer10g = _parseRateText(latestRate.gold22k);
-        _gold18kRatePer10g = _parseRateText(latestRate.gold18k);
-        _goldRateDate = latestRate.rateDate;
-      } else {
-        _gold24kRatePer10g = 0.0;
-        _gold22kRatePer10g = 0.0;
-        _gold18kRatePer10g = 0.0;
-        _goldRateDate = null;
+        masterRates.putIfAbsent(
+            '24K', () => _parseRateText(latestRate.gold24k));
+        masterRates.putIfAbsent(
+            '22K', () => _parseRateText(latestRate.gold22k));
+        masterRates.putIfAbsent(
+            '18K', () => _parseRateText(latestRate.gold18k));
       }
+
+      _goldRateByPurityPer10g = masterRates;
+      _gold24kRatePer10g = masterRates['24K'] ?? 0.0;
+      _gold22kRatePer10g = masterRates['22K'] ?? 0.0;
+      _gold18kRatePer10g = masterRates['18K'] ?? 0.0;
+      _gold14kRatePer10g = masterRates['14K'] ?? 0.0;
+      _gold9kRatePer10g = masterRates['9K'] ?? 0.0;
+      _goldRateDate = masterProfile.updatedAt
+              .isAfter(DateTime.fromMillisecondsSinceEpoch(0))
+          ? masterProfile.updatedAt
+          : latestRate?.rateDate;
     } catch (_) {
       _gold24kRatePer10g = 0.0;
       _gold22kRatePer10g = 0.0;
       _gold18kRatePer10g = 0.0;
+      _gold14kRatePer10g = 0.0;
+      _gold9kRatePer10g = 0.0;
+      _goldRateByPurityPer10g = {};
       _goldRateDate = null;
     }
 
@@ -849,7 +884,9 @@ class AddStockController extends ChangeNotifier {
       return row.costPrice;
     }
     if (pureGoldRatePerGram <= 0) {
-      return 0.0;
+      return selectedPurityRatePerGram > 0
+          ? row.netWeight * selectedPurityRatePerGram
+          : 0.0;
     }
     return fineWeightOf(row) * pureGoldRatePerGram;
   }
@@ -1354,10 +1391,27 @@ class AddStockController extends ChangeNotifier {
     if (value.contains('585')) {
       return '14K';
     }
+    if (value.contains('375')) {
+      return '9K';
+    }
     if (value.contains('417')) {
       return '10K';
     }
     return value.trim();
+  }
+
+  String _normaliseRateKey(String value) {
+    final normalized = value.trim().toUpperCase().replaceAll('KT', 'K');
+    final karatMatch = RegExp(r'(\d{1,2}K)').firstMatch(normalized);
+    if (karatMatch != null) {
+      return karatMatch.group(1)!;
+    }
+    if (normalized.contains('999')) return '24K';
+    if (normalized.contains('916')) return '22K';
+    if (normalized.contains('750')) return '18K';
+    if (normalized.contains('585')) return '14K';
+    if (normalized.contains('375')) return '9K';
+    return normalized;
   }
 
   double _resolvePurityPercent(String value) {

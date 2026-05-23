@@ -9,8 +9,10 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import '../../../database/db/app_database.dart';
+import '../../../models/setting/metal_rate/metal_rate_model.dart';
 import '../../../models/setting/metal_costing/metal_costing_model.dart';
 import '../../../repositories/setting/metal_costing/metal_costing_repository.dart';
+import '../../../repositories/setting/metal_rate/metal_rate_repository.dart';
 
 enum MetalCostingState { idle, loading, loaded, error }
 
@@ -52,6 +54,14 @@ class MetalCostingController extends ChangeNotifier {
 
     try {
       // 1. Get latest daily rate from DB
+      final metalRateProfiles = await MetalRateRepository().loadProfiles();
+      final profileRates = {
+        for (final profile in metalRateProfiles)
+          profile.metal.key: profile.primaryShopRatePer10g > 0
+              ? profile.primaryShopRatePer10g * 10
+              : 0.0,
+      };
+
       final rateQuery = _db.select(_db.dailyRates)
         ..orderBy([(r) => drift.OrderingTerm.desc(r.rateDate)])
         ..limit(1);
@@ -63,10 +73,17 @@ class MetalCostingController extends ChangeNotifier {
         final g24 = (double.tryParse(row.gold24k) ?? 0) * 10;
         final sil = (double.tryParse(row.silverJewellery) ?? 0) * 10;
         _todayRates = {
-          'gold': g24,
-          'silver': sil,
-          'platinum': 0.0,
-          'diamond': g24,
+          'gold': _positive(profileRates[MetalRateMetal.gold.key], g24),
+          'silver': _positive(profileRates[MetalRateMetal.silver.key], sil),
+          'platinum': _positive(profileRates[MetalRateMetal.platinum.key], 0),
+          'diamond': _positive(profileRates[MetalRateMetal.diamond.key], 0),
+        };
+      } else {
+        _todayRates = {
+          'gold': profileRates[MetalRateMetal.gold.key] ?? 0.0,
+          'silver': profileRates[MetalRateMetal.silver.key] ?? 0.0,
+          'platinum': profileRates[MetalRateMetal.platinum.key] ?? 0.0,
+          'diamond': profileRates[MetalRateMetal.diamond.key] ?? 0.0,
         };
       }
 
@@ -108,4 +125,11 @@ class MetalCostingController extends ChangeNotifier {
 
   double getTodayRateForMetal(String metal) =>
       _todayRates[metal.toLowerCase()] ?? 0.0;
+}
+
+double _positive(double? value, double fallback) {
+  if (value != null && value > 0) {
+    return value;
+  }
+  return fallback;
 }

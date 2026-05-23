@@ -9,8 +9,10 @@ import 'package:lotus_erp/logic/stock/add_stock_controller.dart';
 import 'package:lotus_erp/logic/stock/add_stock_silver/silver_invoice_summary_logic.dart';
 import 'package:lotus_erp/logic/stock/add_stock_silver/silver_payment_controller.dart';
 import 'package:lotus_erp/models/purchase/purchase_enums/purchase_enums.dart';
+import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
 import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
 import 'package:lotus_erp/repositories/purchase/purchase_entry_repository.dart';
+import 'package:lotus_erp/repositories/setting/metal_rate/metal_rate_repository.dart';
 import 'package:lotus_erp/repositories/supplier/supplier_repository.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -120,6 +122,18 @@ class SilverStockController extends AddStockController {
       previousSupplierDueFineEquivalent: payment.previousDueFineEquivalent,
       balanceLabel: payment.balanceLabel,
     );
+  }
+
+  @override
+  void setPurity(String option) {
+    super.setPurity(option);
+    _loadSilverRateSnapshot();
+  }
+
+  @override
+  void setCustomPurity(String value) {
+    super.setCustomPurity(value);
+    _loadSilverRateSnapshot();
   }
 
   SilverInvoiceSummaryData get invoiceSummary =>
@@ -631,12 +645,35 @@ class SilverStockController extends AddStockController {
     notifyListeners();
 
     try {
+      final masterProfile =
+          await MetalRateRepository().loadProfile(MetalRateMetal.silver);
+      final selectedKey = _normaliseSilverRateKey(_defaultSilverPurityLabel());
+      var masterRate = 0.0;
+      for (final plan in masterProfile.purityPlans) {
+        final planKey = _normaliseSilverRateKey(plan.label);
+        if (planKey == selectedKey) {
+          masterRate = plan.manualDisplayRatePer10g > 0
+              ? plan.manualDisplayRatePer10g
+              : masterProfile.marketBaseRatePer10g * plan.purityFactor;
+          break;
+        }
+      }
+      if (masterRate <= 0 && masterProfile.purityPlans.isNotEmpty) {
+        final first = masterProfile.purityPlans.first;
+        masterRate = first.manualDisplayRatePer10g > 0
+            ? first.manualDisplayRatePer10g
+            : masterProfile.marketBaseRatePer10g * first.purityFactor;
+      }
+
       final latestRate = await (_rateDb.select(_rateDb.dailyRates)
             ..orderBy([(r) => drift.OrderingTerm.desc(r.rateDate)])
             ..limit(1))
           .getSingleOrNull();
 
-      if (latestRate != null) {
+      if (masterRate > 0) {
+        _silverRatePer10g = masterRate;
+        _silverRateDate = masterProfile.updatedAt;
+      } else if (latestRate != null) {
         final jewelleryRate = _parseSilverRate(latestRate.silverJewellery);
         final kgRate = _parseSilverRate(latestRate.silverRateKg);
         _silverRatePer10g = jewelleryRate > 0 ? jewelleryRate : kgRate / 100.0;
@@ -668,6 +705,15 @@ class SilverStockController extends AddStockController {
       return codeMatch.group(1)!;
     }
     return trimmed;
+  }
+
+  String _normaliseSilverRateKey(String value) {
+    final normalized = value.trim().toUpperCase();
+    final codeMatch = RegExp(r'\b(999|925|800|700)\b').firstMatch(normalized);
+    if (codeMatch != null) {
+      return codeMatch.group(1)!;
+    }
+    return normalized.replaceAll(' ', '');
   }
 
   StockSubCategory _mapSilverSubCategory(String categoryLabel) {

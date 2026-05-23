@@ -17,6 +17,7 @@ class MetalRateRepository {
   static const String _profilesKey = 'metal_rate_profiles_v2';
   static const String _historyKey = 'metal_rate_history_v2';
   static const String _historyTable = 'metal_rate_history';
+  static const String _currentTable = 'metal_rate_current';
   static const int _historyLimit = 25;
 
   final AppDatabase _db;
@@ -53,7 +54,9 @@ class MetalRateRepository {
     }
 
     await _mergeLatestDailyRate(profiles);
+    await _mergeCurrentRates(profiles);
     await _writeProfiles(prefs, profiles);
+    await _syncCurrentTablesForExistingProfiles(profiles);
     return profiles;
   }
 
@@ -78,6 +81,7 @@ class MetalRateRepository {
     }
 
     await _writeProfiles(prefs, profiles);
+    await _syncCurrentRates(updatedProfile);
     await _syncDailyRate(updatedProfile);
     await _appendHistory(prefs, updatedProfile);
   }
@@ -141,6 +145,231 @@ class MetalRateRepository {
       await _rebuildHistoryTable();
       await _ensureHistoryTableSchema(runLegacyBackfill: false);
     }
+  }
+
+  Future<void> _ensureCurrentTable() async {
+    await _db.customStatement('''
+      CREATE TABLE IF NOT EXISTS "$_currentTable" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "metal_key" TEXT NOT NULL,
+        "purity_label" TEXT NOT NULL,
+        "purity_percent" REAL NOT NULL DEFAULT 0,
+        "selling_rate_per10g" REAL NOT NULL DEFAULT 0,
+        "buy_rate_per10g" REAL NOT NULL DEFAULT 0,
+        "making_charge_percent" REAL NOT NULL DEFAULT 0,
+        "making_charge_per_gram" REAL NOT NULL DEFAULT 0,
+        "market_parity_per10g" REAL NOT NULL DEFAULT 0,
+        "source" TEXT NOT NULL DEFAULT 'Metal Rate Master',
+        "sort_order" INTEGER NOT NULL DEFAULT 0,
+        "created_at" INTEGER NOT NULL,
+        "updated_at" INTEGER NOT NULL,
+        UNIQUE("metal_key", "purity_label")
+      )
+    ''');
+
+    final columns = await _currentTableColumns();
+
+    Future<void> addMissingColumn(String name, String definition) async {
+      if (columns.contains(name)) {
+        return;
+      }
+      await _db.customStatement(
+        'ALTER TABLE "$_currentTable" ADD COLUMN "$name" $definition',
+      );
+      columns.add(name);
+    }
+
+    await addMissingColumn('metal_key', 'TEXT');
+    await addMissingColumn('purity_label', 'TEXT');
+    await addMissingColumn('purity_percent', 'REAL NOT NULL DEFAULT 0');
+    await addMissingColumn('selling_rate_per10g', 'REAL NOT NULL DEFAULT 0');
+    await addMissingColumn('buy_rate_per10g', 'REAL NOT NULL DEFAULT 0');
+    await addMissingColumn('making_charge_percent', 'REAL NOT NULL DEFAULT 0');
+    await addMissingColumn('making_charge_per_gram', 'REAL NOT NULL DEFAULT 0');
+    await addMissingColumn('market_parity_per10g', 'REAL NOT NULL DEFAULT 0');
+    await addMissingColumn(
+      'source',
+      'TEXT NOT NULL DEFAULT \'Metal Rate Master\'',
+    );
+    await addMissingColumn('sort_order', 'INTEGER NOT NULL DEFAULT 0');
+    await addMissingColumn('created_at', 'INTEGER NOT NULL DEFAULT 0');
+    await addMissingColumn('updated_at', 'INTEGER NOT NULL DEFAULT 0');
+
+    await _db.customStatement(
+      'CREATE UNIQUE INDEX IF NOT EXISTS "idx_${_currentTable}_metal_purity" '
+      'ON "$_currentTable" ("metal_key", "purity_label")',
+    );
+    await _db.customStatement(
+      'CREATE INDEX IF NOT EXISTS "idx_${_currentTable}_metal_sort" '
+      'ON "$_currentTable" ("metal_key", "sort_order")',
+    );
+  }
+
+  Future<Set<String>> _currentTableColumns() async {
+    final rows = await _db.customSelect(
+      'PRAGMA table_info("$_currentTable")',
+      readsFrom: const {},
+    ).get();
+
+    return rows.map((row) => row.data['name']).whereType<String>().toSet();
+  }
+
+  Future<void> _syncCurrentTablesForExistingProfiles(
+    List<MetalRateProfile> profiles,
+  ) async {
+    for (final profile in profiles) {
+      if (_profileHasRateData(profile)) {
+        await _syncCurrentRates(profile);
+      }
+    }
+  }
+
+  Future<void> _syncCurrentRates(MetalRateProfile profile) async {
+    await _ensureCurrentTable();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final activeLabels = <String>[];
+
+    for (var index = 0; index < profile.purityPlans.length; index++) {
+      final plan = profile.purityPlans[index];
+      final label = _planKey(plan.label);
+      activeLabels.add(label);
+      final parity =
+          _marketRateForPlan(profile.marketBaseRatePer10g, plan, label);
+      final selling = plan.manualDisplayRatePer10g > 0
+          ? plan.manualDisplayRatePer10g
+          : parity;
+
+      await _db.customStatement(
+        '''
+        INSERT INTO "$_currentTable" (
+          "metal_key",
+          "purity_label",
+          "purity_percent",
+          "selling_rate_per10g",
+          "buy_rate_per10g",
+          "making_charge_percent",
+          "making_charge_per_gram",
+          "market_parity_per10g",
+          "source",
+          "sort_order",
+          "created_at",
+          "updated_at"
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT("metal_key", "purity_label") DO UPDATE SET
+          "purity_percent" = excluded."purity_percent",
+          "selling_rate_per10g" = excluded."selling_rate_per10g",
+          "buy_rate_per10g" = excluded."buy_rate_per10g",
+          "making_charge_percent" = excluded."making_charge_percent",
+          "making_charge_per_gram" = excluded."making_charge_per_gram",
+          "market_parity_per10g" = excluded."market_parity_per10g",
+          "source" = excluded."source",
+          "sort_order" = excluded."sort_order",
+          "updated_at" = excluded."updated_at"
+        ''',
+        [
+          profile.metal.key,
+          label,
+          plan.purityPercent,
+          selling,
+          plan.buyRatePer10g,
+          plan.makingChargePercent,
+          plan.makingChargePerGram,
+          parity,
+          'Metal Rate Master',
+          index,
+          now,
+          now,
+        ],
+      );
+    }
+
+    if (activeLabels.isEmpty) {
+      return;
+    }
+
+    final placeholders = List.filled(activeLabels.length, '?').join(', ');
+    await _db.customStatement(
+      'DELETE FROM "$_currentTable" '
+      'WHERE "metal_key" = ? AND "purity_label" NOT IN ($placeholders)',
+      [profile.metal.key, ...activeLabels],
+    );
+  }
+
+  Future<void> _mergeCurrentRates(List<MetalRateProfile> profiles) async {
+    await _ensureCurrentTable();
+    final rows = await _db.customSelect(
+      'SELECT metal_key, purity_label, selling_rate_per10g, buy_rate_per10g, '
+      'making_charge_percent, making_charge_per_gram, updated_at '
+      'FROM "$_currentTable" ORDER BY metal_key, sort_order',
+      readsFrom: const {},
+    ).get();
+
+    if (rows.isEmpty) {
+      return;
+    }
+
+    final byMetal = <String, Map<String, QueryRow>>{};
+    for (final row in rows) {
+      final metalKey = row.data['metal_key'] as String?;
+      final purityLabel = row.data['purity_label'] as String?;
+      if (metalKey == null || purityLabel == null) {
+        continue;
+      }
+      byMetal.putIfAbsent(metalKey, () => {})[purityLabel] = row;
+    }
+
+    for (var index = 0; index < profiles.length; index++) {
+      final profile = profiles[index];
+      final rowsForMetal = byMetal[profile.metal.key];
+      if (rowsForMetal == null || rowsForMetal.isEmpty) {
+        continue;
+      }
+
+      var updatedAt = profile.updatedAt;
+      final plans = profile.purityPlans.map((plan) {
+        final row = rowsForMetal[_planKey(plan.label)];
+        if (row == null) {
+          return plan;
+        }
+
+        final updatedMs = _toInt(row.data['updated_at']);
+        if (updatedMs > 0) {
+          final rowUpdatedAt = DateTime.fromMillisecondsSinceEpoch(updatedMs);
+          if (rowUpdatedAt.isAfter(updatedAt)) {
+            updatedAt = rowUpdatedAt;
+          }
+        }
+
+        return plan.copyWith(
+          manualDisplayRatePer10g:
+              _toDoubleObject(row.data['selling_rate_per10g']),
+          buyRatePer10g: _toDoubleObject(row.data['buy_rate_per10g']),
+          makingChargePercent:
+              _toDoubleObject(row.data['making_charge_percent']),
+          makingChargePerGram:
+              _toDoubleObject(row.data['making_charge_per_gram']),
+        );
+      }).toList(growable: false);
+
+      profiles[index] = profile.copyWith(
+        marketSource: 'Metal Rate Master',
+        updatedAt: updatedAt,
+        purityPlans: plans,
+      );
+    }
+  }
+
+  Future<Map<String, double>> loadCurrentSellingRates(
+    MetalRateMetal metal,
+  ) async {
+    final profile = await loadProfile(metal);
+    return {
+      for (final plan in profile.purityPlans)
+        _planKey(plan.label): plan.manualDisplayRatePer10g > 0
+            ? plan.manualDisplayRatePer10g
+            : _marketRateForPlan(
+                profile.marketBaseRatePer10g, plan, _planKey(plan.label)),
+    };
   }
 
   Future<void> _ensureHistoryTableSchema({
@@ -703,6 +932,29 @@ double _planBuyRate(MetalRateProfile profile, String label) {
 double _toDouble(String value) =>
     double.tryParse(value.replaceAll(',', '')) ?? 0.0;
 
+double _toDoubleObject(Object? value) {
+  if (value is num) {
+    return value.toDouble();
+  }
+  if (value is String) {
+    return double.tryParse(value.replaceAll(',', '').trim()) ?? 0.0;
+  }
+  return 0.0;
+}
+
+int _toInt(Object? value) {
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  if (value is String) {
+    return int.tryParse(value) ?? 0;
+  }
+  return 0;
+}
+
 String _rateText(double value) {
   if (value <= 0) {
     return '0';
@@ -717,4 +969,21 @@ bool _isRecoverableHistoryError(Object error) {
       message.contains('database disk image is malformed') ||
       message.contains('code 779') ||
       message.contains('sqlite_corrupt');
+}
+
+bool _profileHasRateData(MetalRateProfile profile) {
+  if (profile.marketBaseRatePer10g > 0 ||
+      profile.mcxRatePer10g > 0 ||
+      profile.primaryShopRatePer10g > 0 ||
+      profile.primaryBuyRatePer10g > 0) {
+    return true;
+  }
+
+  return profile.purityPlans.any(
+    (plan) =>
+        plan.manualDisplayRatePer10g > 0 ||
+        plan.buyRatePer10g > 0 ||
+        plan.makingChargePercent > 0 ||
+        plan.makingChargePerGram > 0,
+  );
 }
