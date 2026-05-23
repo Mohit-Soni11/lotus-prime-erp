@@ -57,6 +57,8 @@ class SilverPaymentRecordCard extends StatelessWidget {
                       const SizedBox(height: 14),
                       _PaymentModePicker(payment: ctrl.payment),
                       const SizedBox(height: 14),
+                      _DiscountBoard(payment: ctrl.payment),
+                      const SizedBox(height: 14),
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 220),
                         switchInCurve: Curves.easeOut,
@@ -112,7 +114,7 @@ class _PaymentHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  SilverStockStrings.paymentRecordTitle.toUpperCase(),
+                  'Payment & Settlement'.toUpperCase(),
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
@@ -122,7 +124,7 @@ class _PaymentHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  SilverStockStrings.paymentRecordSubtitle,
+                  'Invoice calculation, discounts and supplier settlement.',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -154,8 +156,8 @@ class _RateAndInvoiceBoard extends StatelessWidget {
         children: [
           const _SectionHeader(
             icon: SilverStockIcons.rateChart,
-            title: 'Rate and Invoice Definition',
-            subtitle: 'Silver rate, fine value, making and final payable.',
+            title: 'Invoice Calculation',
+            subtitle: 'Rate, fine value, making charges and tax summary.',
           ),
           const SizedBox(height: 14),
           LayoutBuilder(
@@ -186,9 +188,6 @@ class _RateAndInvoiceBoard extends StatelessWidget {
             const SizedBox(height: 14),
             _GstPercentBoard(payment: payment),
           ],
-          const SizedBox(height: 14),
-          _DiscountBoard(payment: payment),
-          const SizedBox(height: 14),
           _InvoiceStatement(summary: summary),
         ],
       ),
@@ -221,36 +220,52 @@ class _RateMetrics extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final snapshot = summary.paymentSnapshot;
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: [
-        _MiniMetric(
-          label: 'Per Gram',
-          value: _money(snapshot.ratePerGram),
-          tone: SilverStockColors.paymentPrimary,
-        ),
-        _MiniMetric(
-          label: 'Total Fine',
-          value: _weight(snapshot.payableFineWeight),
-          caption: snapshot.fineDiscountWeight > 0
-              ? 'Gross ${_weight(snapshot.grossFineWeight)}'
-              : null,
-          tone: SilverStockColors.paymentFine,
-        ),
-        _MiniMetric(
-          label: 'Making',
-          value: _money(summary.totalMakingAmount),
-          tone: SilverStockColors.accentPricing,
-        ),
-        _MiniMetric(
-          label: 'Final Bill',
-          value: _money(snapshot.totalBillAmount),
-          tone: summary.gstEnabled
-              ? SilverStockColors.success
-              : SilverStockColors.paymentPrimary,
-        ),
-      ],
+    final metrics = [
+      _MiniMetric(
+        label: 'Rate / Gram',
+        value: _money(snapshot.ratePerGram),
+        tone: SilverStockColors.paymentPrimary,
+      ),
+      _MiniMetric(
+        label: 'Payable Fine',
+        value: _weight(snapshot.payableFineWeight),
+        caption: snapshot.fineDiscountWeight > 0
+            ? 'Gross ${_weight(snapshot.grossFineWeight)}'
+            : null,
+        tone: SilverStockColors.paymentFine,
+      ),
+      _MiniMetric(
+        label: 'Making Charges',
+        value: _money(summary.totalMakingAmount),
+        tone: SilverStockColors.accentPricing,
+      ),
+      _MiniMetric(
+        label: 'Final Payable',
+        value: _money(snapshot.totalBillAmount),
+        tone: summary.gstEnabled
+            ? SilverStockColors.success
+            : SilverStockColors.paymentPrimary,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 620
+            ? 4
+            : constraints.maxWidth >= 340
+                ? 2
+                : 1;
+        const gap = 10.0;
+        final width = (constraints.maxWidth - ((columns - 1) * gap)) / columns;
+
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: metrics
+              .map((metric) => SizedBox(width: width, child: metric))
+              .toList(growable: false),
+        );
+      },
     );
   }
 }
@@ -274,7 +289,7 @@ class _InvoiceStatement extends StatelessWidget {
       child: Column(
         children: [
           _StatementRow(
-            label: 'Total Fine',
+            label: 'Payable Fine',
             value: _weight(snapshot.payableFineWeight),
           ),
           if (snapshot.fineDiscountWeight > 0)
@@ -309,7 +324,7 @@ class _InvoiceStatement extends StatelessWidget {
             ),
           const Divider(height: 18, color: SilverStockColors.cardBorder),
           _StatementRow(
-            label: 'Total Bill Amount',
+            label: 'Final Payable',
             value: _money(snapshot.totalBillAmount),
             emphasized: true,
             valueColor: summary.gstEnabled
@@ -335,8 +350,8 @@ class _PaymentModePicker extends StatelessWidget {
         children: [
           const _SectionHeader(
             icon: SilverStockIcons.paymentStatement,
-            title: SilverStockStrings.paymentModesTitle,
-            subtitle: 'GST is controlled only from Batch Overview.',
+            title: 'Settlement Method',
+            subtitle: 'Choose how this purchase will be settled.',
           ),
           const SizedBox(height: 12),
           LayoutBuilder(
@@ -345,8 +360,7 @@ class _PaymentModePicker extends StatelessWidget {
               final tiles = [
                 _PaymentModeTile(
                   title: 'Metal to Metal',
-                  subtitle:
-                      'Fine adjusts against fine; due or extra can stay in fine or value.',
+                  subtitle: 'Settle payable fine with received metal.',
                   icon: SilverStockIcons.metalAdjust,
                   active: payment.paymentMode == PaymentMode.metalToMetal,
                   color: SilverStockColors.paymentFine,
@@ -354,8 +368,7 @@ class _PaymentModePicker extends StatelessWidget {
                 ),
                 _PaymentModeTile(
                   title: 'Cash / Bank',
-                  subtitle:
-                      'Full fine value, making and GST settle through payment split.',
+                  subtitle: 'Collect the payable amount through payment split.',
                   icon: SilverStockIcons.cashPayment,
                   active: payment.paymentMode == PaymentMode.cash,
                   color: SilverStockColors.accentPricing,
@@ -416,8 +429,8 @@ class _GstPercentBoard extends StatelessWidget {
               Expanded(
                 child: Text(
                   metalActive
-                      ? 'Metal to metal GST percent yahan set karo.'
-                      : 'Cash / bank GST percent yahan set karo.',
+                      ? 'GST percentage for metal settlement.'
+                      : 'GST percentage for cash and bank settlement.',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -479,69 +492,99 @@ class _DiscountBoard extends StatelessWidget {
         ? SilverStockColors.paymentFine
         : SilverStockColors.accentPricing;
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: tone.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: tone.withValues(alpha: 0.18)),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final stacked = constraints.maxWidth < 720;
-          final modePicker = Row(
-            children: [
-              Expanded(
-                child: _ChoicePill(
-                  label: 'Fine',
-                  icon: SilverStockIcons.fineWeight,
-                  active: fineActive,
-                  color: SilverStockColors.paymentFine,
-                  onTap: () => payment.setDiscountMode(SilverDiscountMode.fine),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ChoicePill(
-                  label: 'Cash',
-                  icon: SilverStockIcons.amountReceived,
-                  active: !fineActive,
-                  color: SilverStockColors.accentPricing,
-                  onTap: () => payment.setDiscountMode(SilverDiscountMode.cash),
-                ),
-              ),
-            ],
-          );
-          final input = _PaymentInput(
-            label: fineActive ? 'Fine Discount' : 'Cash Discount',
-            hint: fineActive ? '0.000' : '0.00',
-            suffixText: fineActive ? 'g' : null,
-            icon: fineActive
-                ? SilverStockIcons.fineWeight
-                : SilverStockIcons.amountReceived,
-            controller: payment.discountCtrl,
-          );
+    return _SectionShell(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _SectionHeader(
+            icon: Icons.discount_rounded,
+            title: 'Discount Control',
+            subtitle: 'Apply one discount type before settlement details.',
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final stacked = constraints.maxWidth < 760;
+              final modePicker = Row(
+                children: [
+                  Expanded(
+                    child: _ChoicePill(
+                      label: 'Fine Weight',
+                      icon: SilverStockIcons.fineWeight,
+                      active: fineActive,
+                      color: SilverStockColors.paymentFine,
+                      onTap: () =>
+                          payment.setDiscountMode(SilverDiscountMode.fine),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _ChoicePill(
+                      label: 'Cash Amount',
+                      icon: SilverStockIcons.amountReceived,
+                      active: !fineActive,
+                      color: SilverStockColors.accentPricing,
+                      onTap: () =>
+                          payment.setDiscountMode(SilverDiscountMode.cash),
+                    ),
+                  ),
+                ],
+              );
+              final input = _PaymentInput(
+                label: fineActive ? 'Discount Fine' : 'Discount Amount',
+                hint: fineActive ? '0.000' : '0.00',
+                suffixText: fineActive ? 'g' : null,
+                prefixText: fineActive ? null : 'Rs ',
+                icon: fineActive
+                    ? SilverStockIcons.fineWeight
+                    : SilverStockIcons.amountReceived,
+                controller: payment.discountCtrl,
+              );
+              final applied = _ReadOnlyMetricBox(
+                label: fineActive ? 'Fine Discount' : 'Cash Discount',
+                value: fineActive
+                    ? _weight(payment.fineDiscountWeight)
+                    : _money(payment.cashDiscountAmount),
+                color: tone,
+              );
+              final payable = _ReadOnlyMetricBox(
+                label: fineActive ? 'Payable Fine' : 'Final Payable',
+                value: fineActive
+                    ? _weight(payment.totalFineFromItems)
+                    : _money(payment.finalBillAmount),
+                color: SilverStockColors.paymentPrimary,
+              );
 
-          if (stacked) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                modePicker,
-                const SizedBox(height: 10),
-                input,
-              ],
-            );
-          }
+              if (stacked) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    modePicker,
+                    const SizedBox(height: 10),
+                    input,
+                    const SizedBox(height: 10),
+                    applied,
+                    const SizedBox(height: 10),
+                    payable,
+                  ],
+                );
+              }
 
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              SizedBox(width: 240, child: modePicker),
-              const SizedBox(width: 12),
-              Expanded(child: input),
-            ],
-          );
-        },
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  SizedBox(width: 270, child: modePicker),
+                  const SizedBox(width: 12),
+                  Expanded(flex: 2, child: input),
+                  const SizedBox(width: 12),
+                  Expanded(child: applied),
+                  const SizedBox(width: 12),
+                  Expanded(child: payable),
+                ],
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -562,9 +605,8 @@ class _MetalSettlementPanel extends StatelessWidget {
         children: [
           const _SectionHeader(
             icon: SilverStockIcons.metalExchange,
-            title: 'Metal Settlement Board',
-            subtitle:
-                'Enter metal received, then decide how shortage or excess is handled.',
+            title: 'Metal Settlement',
+            subtitle: 'Record received metal and resolve fine difference.',
           ),
           const SizedBox(height: 12),
           Column(
@@ -640,8 +682,8 @@ class _CashSettlementPanel extends StatelessWidget {
         children: [
           const _SectionHeader(
             icon: SilverStockIcons.cashPayment,
-            title: 'Cash / Bank Settlement',
-            subtitle: 'Collect the payable through cash, UPI, bank or card.',
+            title: 'Cash Collection',
+            subtitle: 'Record cash, UPI, bank transfer and card payment.',
           ),
           const SizedBox(height: 12),
           if (payment.hasSupplierPreviousDue) ...[
@@ -786,7 +828,7 @@ class _PreviousDueAdjustmentPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'OLD SUPPLIER DUE FOUND',
+                      'SUPPLIER OPENING DUE',
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
@@ -796,7 +838,7 @@ class _PreviousDueAdjustmentPanel extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'Current supplier baki: ${_money(payment.supplierPreviousDue)}',
+                      'Outstanding balance: ${_money(payment.supplierPreviousDue)}',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -819,8 +861,9 @@ class _PreviousDueAdjustmentPanel extends StatelessWidget {
               builder: (context, constraints) {
                 final stacked = constraints.maxWidth < 640;
                 final amount = _PaymentInput(
-                  label: 'Adjust Old Due',
+                  label: 'Apply Old Due',
                   hint: '0.00',
+                  prefixText: 'Rs ',
                   icon: Icons.currency_rupee_rounded,
                   controller: payment.previousDueAdjustmentCtrl,
                 );
@@ -950,7 +993,7 @@ class _MetalMathStrip extends StatelessWidget {
       runSpacing: 10,
       children: [
         _MiniMetric(
-          label: 'Required Fine',
+          label: 'Payable Fine',
           value: _weight(payment.totalFineFromItems),
           tone: SilverStockColors.paymentFine,
         ),
@@ -1050,11 +1093,11 @@ class _CashTargetNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = payment.paymentMode == PaymentMode.metalToMetal
-        ? 'Cash side target'
-        : 'Payable target';
+        ? 'Cash Requirement'
+        : 'Amount Payable';
     final subtitle = payment.paymentMode == PaymentMode.metalToMetal
-        ? 'Making, GST and cash-converted short fine are settled here.'
-        : 'Full bill amount is settled here.';
+        ? 'Making, GST, old due and cash-converted fine are collected here.'
+        : 'Bill value, GST, discounts and old due are collected here.';
     final breakdown = payment.paymentMode == PaymentMode.metalToMetal
         ? [
             if (payment.isDueMetal &&
@@ -1079,7 +1122,7 @@ class _CashTargetNote extends StatelessWidget {
               ),
             if (payment.previousDueAdjustment > 0)
               _TargetLine(
-                label: 'Old supplier due adjusted',
+                label: 'Opening due applied',
                 value: _money(payment.previousDueAdjustment),
               ),
           ]
@@ -1104,7 +1147,7 @@ class _CashTargetNote extends StatelessWidget {
               ),
             if (payment.previousDueAdjustment > 0)
               _TargetLine(
-                label: 'Old supplier due adjusted',
+                label: 'Opening due applied',
                 value: _money(payment.previousDueAdjustment),
               ),
           ];
@@ -1238,24 +1281,28 @@ class _CashSplitFields extends StatelessWidget {
       _PaymentInput(
         label: SilverStockStrings.cashLabel,
         hint: '0.00',
+        prefixText: 'Rs ',
         icon: SilverStockIcons.cashPayment,
         controller: payment.cashCtrl,
       ),
       _PaymentInput(
         label: SilverStockStrings.upiLabel,
         hint: '0.00',
+        prefixText: 'Rs ',
         icon: SilverStockIcons.upi,
         controller: payment.upiCtrl,
       ),
       _PaymentInput(
         label: SilverStockStrings.bankLabel,
         hint: '0.00',
+        prefixText: 'Rs ',
         icon: SilverStockIcons.bank,
         controller: payment.bankCtrl,
       ),
       _PaymentInput(
         label: SilverStockStrings.cardLabel,
         hint: '0.00',
+        prefixText: 'Rs ',
         icon: SilverStockIcons.cardPayment,
         controller: payment.cardCtrl,
       ),
@@ -1447,7 +1494,7 @@ String _settlementSummary(
 ) {
   if (snapshot.paymentMode == PaymentMode.cash) {
     final oldDue = snapshot.previousSupplierDueAdjustment > 0
-        ? ' | old due adjusted ${_money(snapshot.previousSupplierDueAdjustment)}'
+        ? ' | opening due applied ${_money(snapshot.previousSupplierDueAdjustment)}'
         : '';
     return 'Cash paid ${_money(snapshot.cashBankPaidTotal)} against bill ${_money(snapshot.totalBillAmount)}$oldDue';
   }
@@ -1457,7 +1504,7 @@ String _settlementSummary(
       snapshot.metalFineShortage > 0) {
     final cashDue = payment.cashDueBeforePayment;
     final oldDue = snapshot.previousSupplierDueAdjustment > 0
-        ? ' | old due adjusted ${_money(snapshot.previousSupplierDueAdjustment)}'
+        ? ' | opening due applied ${_money(snapshot.previousSupplierDueAdjustment)}'
         : '';
     final cashPart = cashDue > 0 ? ' | cash due ${_money(cashDue)}' : '';
     return 'Fine due ${_weight(snapshot.metalFineShortage)}$cashPart$oldDue';
@@ -1470,7 +1517,7 @@ String _settlementSummary(
   }
 
   final oldDue = snapshot.previousSupplierDueAdjustment > 0
-      ? ' | old due adjusted ${_money(snapshot.previousSupplierDueAdjustment)}'
+      ? ' | opening due applied ${_money(snapshot.previousSupplierDueAdjustment)}'
       : '';
   return 'Fine received ${_weight(snapshot.metalFineCalculated)} | cash paid ${_money(snapshot.cashBankPaidTotal)}$oldDue';
 }
@@ -1680,6 +1727,7 @@ class _PaymentInput extends StatelessWidget {
   final String label;
   final String hint;
   final String? suffixText;
+  final String? prefixText;
   final IconData icon;
   final TextEditingController controller;
 
@@ -1689,6 +1737,7 @@ class _PaymentInput extends StatelessWidget {
     required this.icon,
     required this.controller,
     this.suffixText,
+    this.prefixText,
   });
 
   @override
@@ -1721,7 +1770,7 @@ class _PaymentInput extends StatelessWidget {
             ),
             decoration: InputDecoration(
               hintText: hint,
-              prefixText: suffixText == '/kg' ? 'Rs ' : null,
+              prefixText: prefixText ?? (suffixText == '/kg' ? 'Rs ' : null),
               suffixText: suffixText,
               prefixIcon: Icon(
                 icon,
@@ -1782,7 +1831,7 @@ class _MiniMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 142),
+      constraints: const BoxConstraints(minHeight: 82),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: tone.withValues(alpha: 0.07),

@@ -164,6 +164,15 @@ class _SilverItemRowState extends State<SilverItemRow> {
                   Expanded(
                     flex: 2,
                     child: _buildAutoCell(
+                      value: widget.model.lessWeight.toStringAsFixed(3),
+                      color: SilverStockColors.textMuted,
+                      align: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    flex: 2,
+                    child: _buildAutoCell(
                       value: widget.model.netWeight.toStringAsFixed(3),
                       color: SilverStockColors.brandSilver,
                       align: TextAlign.center,

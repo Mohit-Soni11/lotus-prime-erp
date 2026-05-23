@@ -64,7 +64,7 @@ class SilverItemModel extends ChangeNotifier {
   }) {
     categoryCtrl.addListener(_fieldChanged);
     itemNameCtrl.addListener(_fieldChanged);
-    piecesCtrl.addListener(_fieldChanged);
+    piecesCtrl.addListener(_weightPurityFieldChanged);
     huidCtrl.addListener(_fieldChanged);
     grossCtrl.addListener(_weightPurityFieldChanged);
     lessCtrl.addListener(_weightPurityFieldChanged);
@@ -91,7 +91,8 @@ class SilverItemModel extends ChangeNotifier {
   }
 
   double get grossWeight => _parseNumeric(grossCtrl.text);
-  double get lessWeight => _parseNumeric(lessCtrl.text);
+  double get lessPerPieceWeight => _parseNumeric(lessCtrl.text);
+  double get lessWeight => lessPerPieceWeight * (pieces > 0 ? pieces : 1);
   double get netWeight =>
       (grossWeight - lessWeight).clamp(0.0, double.infinity);
 
@@ -149,7 +150,7 @@ class SilverItemModel extends ChangeNotifier {
       _hasMeaningfulPiecesInput ||
       huid.isNotEmpty ||
       grossWeight > 0 ||
-      lessWeight > 0 ||
+      lessPerPieceWeight > 0 ||
       makingValue > 0;
 
   bool get _hasMeaningfulPiecesInput {
@@ -243,7 +244,7 @@ class SilverItemModel extends ChangeNotifier {
   void disposeAll() {
     categoryCtrl.removeListener(_fieldChanged);
     itemNameCtrl.removeListener(_fieldChanged);
-    piecesCtrl.removeListener(_fieldChanged);
+    piecesCtrl.removeListener(_weightPurityFieldChanged);
     huidCtrl.removeListener(_fieldChanged);
     grossCtrl.removeListener(_weightPurityFieldChanged);
     lessCtrl.removeListener(_weightPurityFieldChanged);
