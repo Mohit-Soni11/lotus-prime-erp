@@ -22,10 +22,26 @@ class SilverMetalSettlementLine extends ChangeNotifier {
       _parseAmount(purityCtrl.text).clamp(0.0, 100.0).toDouble();
   double get fineWeight => grossWeight * (purity / 100.0);
   bool get hasInput => grossWeight > 0 || purity > 0;
+  bool get hasFractionalGrossWeight {
+    final value = grossWeight;
+    return value > 0 && (value - value.floorToDouble()).abs() > 0.0001;
+  }
 
   void setValues(double grossWeight, double purity) {
     _syncText(grossCtrl, _formatNumber(grossWeight, maxFraction: 3));
     _syncText(purityCtrl, _formatNumber(purity, maxFraction: 2));
+    notifyListeners();
+  }
+
+  void roundGrossWeightToNearestGram() {
+    final value = grossWeight;
+    if (value <= 0) {
+      return;
+    }
+
+    final floorValue = value.floorToDouble();
+    final rounded = value - floorValue >= 0.5 ? floorValue + 1 : floorValue;
+    _syncText(grossCtrl, _formatNumber(rounded, maxFraction: 0));
     notifyListeners();
   }
 
@@ -164,6 +180,9 @@ class SilverPaymentController extends ChangeNotifier {
   DueReturnType get metalDueReturnType => _metalDueReturnType;
   List<SilverMetalSettlementLine> get metalLines =>
       List.unmodifiable(_metalLines);
+  bool get canRoundMetalGrossWeights =>
+      _paymentMode == PaymentMode.metalToMetal &&
+      _metalLines.any((line) => line.hasFractionalGrossWeight);
 
   double get metalGivenWeight =>
       _metalLines.fold(0.0, (sum, line) => sum + line.grossWeight);
@@ -399,6 +418,19 @@ class SilverPaymentController extends ChangeNotifier {
     line.removeListener(_handleInputChanged);
     line.disposeAll();
     notifyListeners();
+  }
+
+  void roundMetalGrossWeights() {
+    var changed = false;
+    for (final line in _metalLines) {
+      if (line.hasFractionalGrossWeight) {
+        line.roundGrossWeightToNearestGram();
+        changed = true;
+      }
+    }
+    if (changed) {
+      notifyListeners();
+    }
   }
 
   List<Map<String, double>> get metalLinePayloads => _metalLines

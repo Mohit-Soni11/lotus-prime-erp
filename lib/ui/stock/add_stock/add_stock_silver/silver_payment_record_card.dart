@@ -484,24 +484,47 @@ class _MetalSettlementPanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: payment.addMetalLine,
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text('ADD METAL GIVEN'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: SilverStockColors.paymentFine,
-                side: BorderSide(
-                  color: SilverStockColors.paymentFine.withValues(alpha: 0.35),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: payment.addMetalLine,
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('ADD METAL GIVEN'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: SilverStockColors.paymentFine,
+                  side: BorderSide(
+                    color:
+                        SilverStockColors.paymentFine.withValues(alpha: 0.35),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               ),
-            ),
+              OutlinedButton.icon(
+                onPressed: payment.canRoundMetalGrossWeights
+                    ? payment.roundMetalGrossWeights
+                    : null,
+                icon: const Icon(Icons.exposure_plus_1_rounded, size: 18),
+                label: const Text('ROUND OFF GROSS'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: SilverStockColors.accentPricing,
+                  side: BorderSide(
+                    color:
+                        SilverStockColors.accentPricing.withValues(alpha: 0.35),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           _MetalMathStrip(payment: payment),

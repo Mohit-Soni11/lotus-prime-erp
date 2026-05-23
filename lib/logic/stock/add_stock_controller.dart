@@ -1117,6 +1117,14 @@ class AddStockController extends ChangeNotifier {
     return '${rowsToSave.length} ${_selectedMetal.label} item${rowsToSave.length > 1 ? 's' : ''} saved under voucher ${result.voucherNo}.';
   }
 
+  String _purchaseSaveFailureMessage(String fallback) {
+    final detail = _purchaseRepo.lastErrorMessage?.trim();
+    if (detail == null || detail.isEmpty) {
+      return fallback;
+    }
+    return '$fallback Detail: $detail';
+  }
+
   Future<bool> saveAll() async {
     if (_isSaving) {
       return false;
@@ -1149,8 +1157,9 @@ class AddStockController extends ChangeNotifier {
       if (purchaseDraft != null) {
         final result = await _purchaseRepo.savePurchase(purchaseDraft);
         if (result == null) {
-          _errorMessage =
-              '${_selectedMetal.label} stock batch could not be saved. Please review the rows and try again.';
+          _errorMessage = _purchaseSaveFailureMessage(
+            '${_selectedMetal.label} stock batch could not be saved. Please review the rows and try again.',
+          );
           _isSaving = false;
           notifyListeners();
           return false;
@@ -1309,8 +1318,9 @@ class AddStockController extends ChangeNotifier {
     );
 
     if (result == null) {
-      _errorMessage =
-          'Gold stock batch could not be saved. Please review the rows and try again.';
+      _errorMessage = _purchaseSaveFailureMessage(
+        'Gold stock batch could not be saved. Please review the rows and try again.',
+      );
       return false;
     }
 

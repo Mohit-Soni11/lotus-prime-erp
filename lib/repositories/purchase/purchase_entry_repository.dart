@@ -153,8 +153,11 @@ class PurchaseSaveResult {
 
 class PurchaseEntryRepository {
   final AppDatabase _db;
+  String? _lastErrorMessage;
 
   PurchaseEntryRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
+
+  String? get lastErrorMessage => _lastErrorMessage;
 
   Future<int> getNextSequence() async {
     try {
@@ -172,7 +175,9 @@ class PurchaseEntryRepository {
   }
 
   Future<PurchaseSaveResult?> savePurchase(PurchaseVoucherDraft draft) async {
+    _lastErrorMessage = null;
     try {
+      await _ensurePurchaseSchemaCompatibility();
       return await _db.transaction(() async {
         final now = DateTime.now();
         final createdAtMs = now.millisecondsSinceEpoch;
@@ -477,8 +482,55 @@ class PurchaseEntryRepository {
         );
       });
     } catch (error) {
+      _lastErrorMessage = error.toString();
       debugPrint('PurchaseEntryRepository.savePurchase: $error');
       return null;
+    }
+  }
+
+  Future<void> _ensurePurchaseSchemaCompatibility() async {
+    await _ensureTableColumns(
+      'purchase_vouchers',
+      const {
+        'supplier_invoice_no': 'TEXT',
+        'upi_paid': 'REAL NOT NULL DEFAULT 0.0',
+        'rate_per_kg': 'REAL NOT NULL DEFAULT 0.0',
+        'metal_paid_gross_weight': 'REAL NOT NULL DEFAULT 0.0',
+        'metal_paid_purity': 'REAL NOT NULL DEFAULT 0.0',
+        'metal_paid_fine': 'REAL NOT NULL DEFAULT 0.0',
+        'metal_paid_value': 'REAL NOT NULL DEFAULT 0.0',
+        'due_mode': 'TEXT',
+        'excess_mode': 'TEXT',
+        'promise_date': 'INTEGER',
+        'payment_meta': 'TEXT',
+      },
+    );
+    await _ensureTableColumns(
+      'purchase_voucher_items',
+      const {
+        'quantity': 'INTEGER NOT NULL DEFAULT 1',
+      },
+    );
+  }
+
+  Future<void> _ensureTableColumns(
+    String tableName,
+    Map<String, String> columns,
+  ) async {
+    final rows =
+        await _db.customSelect('PRAGMA table_info("$tableName")').get();
+    if (rows.isEmpty) {
+      return;
+    }
+
+    final existingColumns = rows.map((row) => row.read<String>('name')).toSet();
+    for (final entry in columns.entries) {
+      if (existingColumns.contains(entry.key)) {
+        continue;
+      }
+      await _db.customStatement(
+        'ALTER TABLE "$tableName" ADD COLUMN "${entry.key}" ${entry.value}',
+      );
     }
   }
 
