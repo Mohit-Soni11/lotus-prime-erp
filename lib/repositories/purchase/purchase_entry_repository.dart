@@ -490,6 +490,39 @@ class PurchaseEntryRepository {
 
   Future<void> _ensurePurchaseSchemaCompatibility() async {
     await _ensureTableColumns(
+      'stock_items',
+      const {
+        'description': 'TEXT',
+        'category': "TEXT NOT NULL DEFAULT ''",
+        'sub_category': "TEXT NOT NULL DEFAULT 'Purchase Inward'",
+        'metal_type': "TEXT NOT NULL DEFAULT 'Gold'",
+        'purity': 'TEXT',
+        'gross_weight': 'REAL NOT NULL DEFAULT 0.0',
+        'stone_weight': 'REAL NOT NULL DEFAULT 0.0',
+        'net_weight': 'REAL NOT NULL DEFAULT 0.0',
+        'wastage': 'REAL NOT NULL DEFAULT 0.0',
+        'stone_type': "TEXT NOT NULL DEFAULT 'None'",
+        'stone_carats': 'REAL NOT NULL DEFAULT 0.0',
+        'stone_pieces': 'INTEGER NOT NULL DEFAULT 0',
+        'stone_value': 'REAL NOT NULL DEFAULT 0.0',
+        'making_charge': 'REAL NOT NULL DEFAULT 0.0',
+        'making_charge_type': "TEXT NOT NULL DEFAULT 'Per Gram (Rs/g)'",
+        'purchase_rate': 'REAL NOT NULL DEFAULT 0.0',
+        'purchase_price': 'REAL NOT NULL DEFAULT 0.0',
+        'mrp': 'REAL NOT NULL DEFAULT 0.0',
+        'hsn_code': 'TEXT',
+        'huid': 'TEXT',
+        'gst_rate': 'REAL NOT NULL DEFAULT 3.0',
+        'quantity': 'INTEGER NOT NULL DEFAULT 1',
+        'location': 'TEXT',
+        'supplier_id': 'INTEGER',
+        'supplier_name': 'TEXT',
+        'status': "TEXT NOT NULL DEFAULT 'Available'",
+        'is_active': 'INTEGER NOT NULL DEFAULT 1',
+        'image_path': 'TEXT',
+      },
+    );
+    await _ensureTableColumns(
       'purchase_vouchers',
       const {
         'supplier_invoice_no': 'TEXT',

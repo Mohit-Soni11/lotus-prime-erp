@@ -75,6 +75,9 @@ class SilverStockController extends AddStockController {
       enteredSilverRows.fold(0.0, (sum, row) => sum + row.fineWeight);
   double get totalMakingAmount =>
       enteredSilverRows.fold(0.0, (sum, row) => sum + row.makingAmount);
+  bool get canRoundOffInvoiceAndMetal =>
+      enteredSilverRows.any((row) => row.hasFractionalFineWeight) ||
+      payment.canRoundMetalGrossWeights;
 
   // ✨ FIXED: Updated Snapshot logic dynamically linking to the new Payment Controller
   SilverPaymentSnapshot get paymentSnapshot {
@@ -262,7 +265,7 @@ class SilverStockController extends AddStockController {
       row.huid = rowModel.huid;
       row.grossWeight = rowModel.grossWeight / lotDivisor;
       row.stoneWeight = rowModel.lessWeight / lotDivisor;
-      row.touchPercent = rowModel.totalPurityPercent;
+      row.touchPercent = rowModel.effectiveTotalPurityPercent;
       row.purityLabel = rowModel.purityLabel;
       row.purchaseRate = rowModel.purchaseRate;
       row.purchasePriceOverride = rowModel.totalAmount / lotDivisor;
@@ -358,7 +361,8 @@ class SilverStockController extends AddStockController {
     if (row.purityLabel.isEmpty) {
       return 'Base purity is required';
     }
-    if (row.totalPurityPercent <= 0 || row.totalPurityPercent > 100) {
+    if (row.effectiveTotalPurityPercent <= 0 ||
+        row.effectiveTotalPurityPercent > 100) {
       return 'Total purity must be between 0 and 100';
     }
     if (row.purchaseRate <= 0) {
@@ -596,6 +600,20 @@ class SilverStockController extends AddStockController {
     }
 
     _addSilverModel(requestFocus: true);
+  }
+
+  void roundOffInvoiceAndMetal() {
+    if (!canRoundOffInvoiceAndMetal) {
+      return;
+    }
+
+    for (final row in enteredSilverRows) {
+      if (row.hasFractionalFineWeight) {
+        row.roundFineWeightToNearestGram();
+      }
+    }
+    payment.roundMetalGrossWeights();
+    notifyListeners();
   }
 
   @override

@@ -331,7 +331,7 @@ class SilverItemsTable extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildAddItemButton(),
+                _buildActionButtons(),
                 const SizedBox(height: 12),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -344,7 +344,7 @@ class SilverItemsTable extends StatelessWidget {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _buildAddItemButton(),
+              _buildActionButtons(),
               const SizedBox(width: 16),
               Expanded(
                 child: SingleChildScrollView(
@@ -360,6 +360,17 @@ class SilverItemsTable extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 8,
+      children: [
+        _buildAddItemButton(),
+        _buildRoundOffButton(),
+      ],
     );
   }
 
@@ -413,6 +424,48 @@ class SilverItemsTable extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoundOffButton() {
+    final enabled = ctrl.canRoundOffInvoiceAndMetal;
+    final color =
+        enabled ? SilverStockColors.accentPricing : SilverStockColors.textMuted;
+
+    return Tooltip(
+      message: 'Round invoice fine and metal given',
+      waitDuration: const Duration(milliseconds: 400),
+      child: InkWell(
+        onTap: enabled ? ctrl.roundOffInvoiceAndMetal : null,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: enabled ? 0.08 : 0.04),
+            border: Border.all(
+              color: color.withValues(alpha: enabled ? 0.35 : 0.18),
+              width: 1.5,
+            ),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.exposure_plus_1_rounded, color: color, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'ROUND OFF FINE + METAL',
+                style: TextStyle(
+                  color: color,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

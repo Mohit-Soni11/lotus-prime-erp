@@ -53,6 +53,7 @@ class SilverItemModel extends ChangeNotifier {
   final FocusNode makingFocus = FocusNode();
 
   MakingChargesType makingChargesType = MakingChargesType.perGram;
+  double? _fineWeightOverride;
 
   SilverItemModel({
     required this.id,
@@ -65,10 +66,10 @@ class SilverItemModel extends ChangeNotifier {
     itemNameCtrl.addListener(_fieldChanged);
     piecesCtrl.addListener(_fieldChanged);
     huidCtrl.addListener(_fieldChanged);
-    grossCtrl.addListener(_fieldChanged);
-    lessCtrl.addListener(_fieldChanged);
-    purityCtrl.addListener(_fieldChanged);
-    wastageCtrl.addListener(_fieldChanged);
+    grossCtrl.addListener(_weightPurityFieldChanged);
+    lessCtrl.addListener(_weightPurityFieldChanged);
+    purityCtrl.addListener(_weightPurityFieldChanged);
+    wastageCtrl.addListener(_weightPurityFieldChanged);
     rateCtrl.addListener(_fieldChanged);
     makingCtrl.addListener(_fieldChanged);
 
@@ -103,12 +104,31 @@ class SilverItemModel extends ChangeNotifier {
   double get basePurityPercent => _purityLabelToPercent(purityLabel);
   double get wastagePercent => _parseNumeric(wastageCtrl.text);
   double get totalPurityPercent => basePurityPercent + wastagePercent;
+  double get effectiveTotalPurityPercent {
+    if (_fineWeightOverride != null && netWeight > 0) {
+      return (fineWeight / netWeight * 100.0)
+          .clamp(0.0, double.infinity)
+          .toDouble();
+    }
+    return totalPurityPercent;
+  }
+
   bool get hasValidTotalPurity =>
-      totalPurityPercent > 0 && totalPurityPercent <= 100;
+      effectiveTotalPurityPercent > 0 && effectiveTotalPurityPercent <= 100;
   String get totalPurityLabel =>
       totalPurityPercent <= 0 ? '--' : _formatDecimal(totalPurityPercent);
+  String get effectiveTotalPurityLabel => effectiveTotalPurityPercent <= 0
+      ? '--'
+      : _formatDecimal(effectiveTotalPurityPercent);
 
-  double get fineWeight => netWeight * (totalPurityPercent / 100.0);
+  double get computedFineWeight => netWeight * (totalPurityPercent / 100.0);
+  double get fineWeight => _fineWeightOverride ?? computedFineWeight;
+  bool get hasRoundedFineWeight => _fineWeightOverride != null;
+  bool get hasFractionalFineWeight {
+    final value = fineWeight;
+    return value > 0 && (value - value.floorToDouble()).abs() > 0.0001;
+  }
+
   double get purchaseRate => _parseNumeric(rateCtrl.text);
   double get makingValue => _parseNumeric(makingCtrl.text);
   double get metalCost => fineWeight * purchaseRate;
@@ -190,6 +210,20 @@ class SilverItemModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void roundFineWeightToNearestGram() {
+    final value = fineWeight;
+    if (value <= 0) {
+      return;
+    }
+    final floorValue = value.floorToDouble();
+    final rounded = value - floorValue >= 0.5 ? floorValue + 1 : floorValue;
+    if ((rounded - value).abs() < 0.0001 && _fineWeightOverride != null) {
+      return;
+    }
+    _fineWeightOverride = rounded;
+    notifyListeners();
+  }
+
   String get makingTypeSymbol {
     return switch (makingChargesType) {
       MakingChargesType.perGram => '/g',
@@ -211,10 +245,10 @@ class SilverItemModel extends ChangeNotifier {
     itemNameCtrl.removeListener(_fieldChanged);
     piecesCtrl.removeListener(_fieldChanged);
     huidCtrl.removeListener(_fieldChanged);
-    grossCtrl.removeListener(_fieldChanged);
-    lessCtrl.removeListener(_fieldChanged);
-    purityCtrl.removeListener(_fieldChanged);
-    wastageCtrl.removeListener(_fieldChanged);
+    grossCtrl.removeListener(_weightPurityFieldChanged);
+    lessCtrl.removeListener(_weightPurityFieldChanged);
+    purityCtrl.removeListener(_weightPurityFieldChanged);
+    wastageCtrl.removeListener(_weightPurityFieldChanged);
     rateCtrl.removeListener(_fieldChanged);
     makingCtrl.removeListener(_fieldChanged);
 
@@ -243,6 +277,11 @@ class SilverItemModel extends ChangeNotifier {
   }
 
   void _fieldChanged() => notifyListeners();
+
+  void _weightPurityFieldChanged() {
+    _fineWeightOverride = null;
+    notifyListeners();
+  }
 
   double _purityLabelToPercent(String rawPurity) {
     final value = rawPurity.trim().toUpperCase();
