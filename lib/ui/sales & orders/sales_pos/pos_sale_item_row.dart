@@ -6,6 +6,8 @@
 //              âœ… Strictly mapped Colors, Icons, and TextStyles.
 // ==========================================
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -71,6 +73,10 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
     if (widget.ctrl.billingMode == BillingMode.retail && existing.isEmpty) {
       widget.item.purityCtrl.text = _selectedPurity;
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(widget.ctrl.applySaleItemMasterRate(widget.item));
+    });
     widget.ctrl.addListener(_onCtrlChanged);
   }
 
@@ -118,12 +124,14 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
     } else {
       setState(() => _lastMetal = newMetal);
     }
+    unawaited(widget.ctrl.applySaleItemMasterRate(widget.item, force: true));
   }
 
   void _onPurityChanged(String value) {
     if (_selectedPurity != value) {
       setState(() => _selectedPurity = value);
     }
+    unawaited(widget.ctrl.applySaleItemMasterRate(widget.item));
   }
 
   Color _metalColor(MetalType metal) {
@@ -540,6 +548,12 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                 widget.item.purityCtrl.selection = TextSelection.fromPosition(
                     TextPosition(offset: val.length));
               });
+              unawaited(
+                widget.ctrl.applySaleItemMasterRate(
+                  widget.item,
+                  force: true,
+                ),
+              );
             },
             itemBuilder: (context) => purities
                 .map((choice) => PopupMenuItem<String>(

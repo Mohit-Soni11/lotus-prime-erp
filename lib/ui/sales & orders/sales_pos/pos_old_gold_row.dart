@@ -6,6 +6,8 @@
 //              âœ… Strictly mapped Colors, Icons, and TextStyles.
 // ==========================================
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
@@ -42,6 +44,10 @@ class _PosOldGoldRowState extends State<PosOldGoldRow> {
     if (widget.item.purityCtrl.text.isEmpty) {
       widget.item.purityCtrl.text = "100";
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(widget.ctrl.applyOldMetalMasterBuyRate(widget.item));
+    });
   }
 
   void _onMetalChanged(MetalType newMetal) {
@@ -55,6 +61,7 @@ class _PosOldGoldRowState extends State<PosOldGoldRow> {
         widget.item.purityCtrl.text = "100";
       }
     });
+    unawaited(widget.ctrl.applyOldMetalMasterBuyRate(widget.item, force: true));
   }
 
   Color _metalColor(MetalType metal) {
@@ -250,6 +257,8 @@ class _PosOldGoldRowState extends State<PosOldGoldRow> {
       child: TextFormField(
         controller: widget.item.purityCtrl,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        onChanged: (_) =>
+            unawaited(widget.ctrl.applyOldMetalMasterBuyRate(widget.item)),
         textAlign: TextAlign.left,
         style: SalesPosStyles.inputText.copyWith(
             color: metalColor,

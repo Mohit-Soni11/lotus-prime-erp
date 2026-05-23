@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -33,6 +35,10 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
     if (widget.item.purityCtrl.text.isEmpty) {
       widget.item.purityCtrl.text = '100';
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(widget.ctrl.applyPurchaseMasterBuyRate(widget.item));
+    });
   }
 
   void _onMetalChanged(PurchaseMetalType metal) {
@@ -40,6 +46,7 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
       _metal = metal;
       widget.item.updateMetal(metal);
     });
+    unawaited(widget.ctrl.applyPurchaseMasterBuyRate(widget.item, force: true));
   }
 
   Color get _metalColor {
@@ -251,6 +258,8 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
         inputFormatters: [
           FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
         ],
+        onChanged: (_) =>
+            unawaited(widget.ctrl.applyPurchaseMasterBuyRate(widget.item)),
         textAlign: TextAlign.left,
         style: PurchaseEntryStyles.inputText.copyWith(
           color: _metalColor,

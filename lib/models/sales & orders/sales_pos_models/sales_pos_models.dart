@@ -45,6 +45,18 @@ double _purityLabelToPercent(String label) {
   return raw.clamp(0.0, 100.0);
 }
 
+String _formatMasterInput(double value) {
+  if (value <= 0) return '';
+  final rounded = value.roundToDouble();
+  if ((value - rounded).abs() < 0.0001) {
+    return rounded.toStringAsFixed(0);
+  }
+  return value
+      .toStringAsFixed(2)
+      .replaceFirst(RegExp(r'0+$'), '')
+      .replaceFirst(RegExp(r'\.$'), '');
+}
+
 class SaleItemModel extends ChangeNotifier {
   MetalType _metal;
   MakingChargeType _makingChargeType;
@@ -77,6 +89,12 @@ class SaleItemModel extends ChangeNotifier {
   double _lessWt = 0.0;
   double _rate = 0.0;
   double _makingInput = 0.0;
+  bool _isApplyingMasterRate = false;
+  bool _isApplyingMasterMaking = false;
+  bool _rateFromMetalRateMaster = false;
+  bool _makingFromMetalRateMaster = false;
+  String? _rateSourceLabel;
+  String? _makingSourceLabel;
   // ✅ FIX: Track purity as label string ("22KT","925") not stripped number
   String _tunchLabel = '';
 
@@ -117,6 +135,10 @@ class SaleItemModel extends ChangeNotifier {
       final val = _parseSafeNumber(rateCtrl.text);
       if (_rate != val) {
         _rate = val;
+        if (!_isApplyingMasterRate) {
+          _rateFromMetalRateMaster = false;
+          _rateSourceLabel = null;
+        }
         notifyListeners();
       }
     });
@@ -125,6 +147,10 @@ class SaleItemModel extends ChangeNotifier {
       final val = _parseSafeNumber(makingCtrl.text);
       if (_makingInput != val) {
         _makingInput = val;
+        if (!_isApplyingMasterMaking) {
+          _makingFromMetalRateMaster = false;
+          _makingSourceLabel = null;
+        }
         notifyListeners();
       }
     });
@@ -146,6 +172,10 @@ class SaleItemModel extends ChangeNotifier {
   int? get linkedStockItemId => _linkedStockItemId;
   String? get linkedStockSku => _linkedStockSku;
   bool get hasLinkedStock => _linkedStockItemId != null;
+  bool get rateFromMetalRateMaster => _rateFromMetalRateMaster;
+  bool get makingFromMetalRateMaster => _makingFromMetalRateMaster;
+  String? get rateSourceLabel => _rateSourceLabel;
+  String? get makingSourceLabel => _makingSourceLabel;
 
   // --- CORE WEIGHT LOGIC ---
   int get pcs => _pcs;
@@ -194,12 +224,100 @@ class SaleItemModel extends ChangeNotifier {
     }
   }
 
+  bool applyMasterRate({
+    required double rate,
+    required String sourceLabel,
+    bool force = false,
+  }) {
+    if (rate <= 0) {
+      return false;
+    }
+    final hasManualRate =
+        rateCtrl.text.trim().isNotEmpty && !_rateFromMetalRateMaster;
+    if (hasManualRate && !force) {
+      return false;
+    }
+
+    final formatted = _formatMasterInput(rate);
+    _isApplyingMasterRate = true;
+    rateCtrl.text = formatted;
+    rateCtrl.selection = TextSelection.collapsed(offset: formatted.length);
+    _isApplyingMasterRate = false;
+
+    _rate = rate;
+    _rateFromMetalRateMaster = true;
+    _rateSourceLabel = sourceLabel;
+    notifyListeners();
+    return true;
+  }
+
+  void clearMasterRateIfOwned() {
+    if (!_rateFromMetalRateMaster) {
+      return;
+    }
+    _isApplyingMasterRate = true;
+    rateCtrl.clear();
+    _isApplyingMasterRate = false;
+    _rate = 0.0;
+    _rateFromMetalRateMaster = false;
+    _rateSourceLabel = null;
+    notifyListeners();
+  }
+
+  bool applyMasterMaking({
+    required double makingPercent,
+    required double makingPerGram,
+    required String sourceLabel,
+    bool force = false,
+  }) {
+    if (makingPercent <= 0 && makingPerGram <= 0) {
+      return false;
+    }
+    final hasManualMaking =
+        makingCtrl.text.trim().isNotEmpty && !_makingFromMetalRateMaster;
+    if (hasManualMaking && !force) {
+      return false;
+    }
+
+    final usePerGram = makingPerGram > 0;
+    _makingChargeType =
+        usePerGram ? MakingChargeType.perGram : MakingChargeType.percentage;
+    final value = usePerGram ? makingPerGram : makingPercent;
+    final formatted = _formatMasterInput(value);
+
+    _isApplyingMasterMaking = true;
+    makingCtrl.text = formatted;
+    makingCtrl.selection = TextSelection.collapsed(offset: formatted.length);
+    _isApplyingMasterMaking = false;
+
+    _makingInput = value;
+    _makingFromMetalRateMaster = true;
+    _makingSourceLabel = sourceLabel;
+    notifyListeners();
+    return true;
+  }
+
+  void clearMasterMakingIfOwned() {
+    if (!_makingFromMetalRateMaster) {
+      return;
+    }
+    _isApplyingMasterMaking = true;
+    makingCtrl.clear();
+    _isApplyingMasterMaking = false;
+    _makingInput = 0.0;
+    _makingFromMetalRateMaster = false;
+    _makingSourceLabel = null;
+    notifyListeners();
+  }
+
   void toggleLessWeightType() {
     _isLessPerPiece = !_isLessPerPiece;
     notifyListeners();
   }
 
   void toggleMakingChargeType({required bool isWholesale}) {
+    _makingFromMetalRateMaster = false;
+    _makingSourceLabel = null;
     if (isWholesale) {
       // Wholesale: Only perGram -> perKg -> perPiece
       if (_makingChargeType == MakingChargeType.perGram) {
@@ -284,6 +402,9 @@ class OldGoldItemModel extends ChangeNotifier {
   double _lessWt = 0.0;
   double _purity = 100.0;
   double _rate = 0.0;
+  bool _isApplyingMasterRate = false;
+  bool _rateFromMetalRateMaster = false;
+  String? _rateSourceLabel;
 
   OldGoldItemModel({
     MetalType metal = MetalType.gold,
@@ -319,6 +440,10 @@ class OldGoldItemModel extends ChangeNotifier {
       final val = _parseSafeNumber(rateCtrl.text);
       if (_rate != val) {
         _rate = val;
+        if (!_isApplyingMasterRate) {
+          _rateFromMetalRateMaster = false;
+          _rateSourceLabel = null;
+        }
         notifyListeners();
       }
     });
@@ -327,6 +452,9 @@ class OldGoldItemModel extends ChangeNotifier {
   MetalType get metal => _metal;
   double get netWt => _grossWt - _lessWt;
   double get rate => _rate;
+  double get purityPercent => _purity;
+  bool get rateFromMetalRateMaster => _rateFromMetalRateMaster;
+  String? get rateSourceLabel => _rateSourceLabel;
 
   double get fineWt {
     if (_metal == MetalType.silver && purityCtrl.text.isEmpty) {
@@ -354,6 +482,46 @@ class OldGoldItemModel extends ChangeNotifier {
       }
       notifyListeners();
     }
+  }
+
+  bool applyMasterRate({
+    required double rate,
+    required String sourceLabel,
+    bool force = false,
+  }) {
+    if (rate <= 0) {
+      return false;
+    }
+    final hasManualRate =
+        rateCtrl.text.trim().isNotEmpty && !_rateFromMetalRateMaster;
+    if (hasManualRate && !force) {
+      return false;
+    }
+
+    final formatted = _formatMasterInput(rate);
+    _isApplyingMasterRate = true;
+    rateCtrl.text = formatted;
+    rateCtrl.selection = TextSelection.collapsed(offset: formatted.length);
+    _isApplyingMasterRate = false;
+
+    _rate = rate;
+    _rateFromMetalRateMaster = true;
+    _rateSourceLabel = sourceLabel;
+    notifyListeners();
+    return true;
+  }
+
+  void clearMasterRateIfOwned() {
+    if (!_rateFromMetalRateMaster) {
+      return;
+    }
+    _isApplyingMasterRate = true;
+    rateCtrl.clear();
+    _isApplyingMasterRate = false;
+    _rate = 0.0;
+    _rateFromMetalRateMaster = false;
+    _rateSourceLabel = null;
+    notifyListeners();
   }
 
   @override

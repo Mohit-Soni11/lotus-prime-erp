@@ -33,8 +33,10 @@ import '../../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../../helpers/search/fuzzy_search_helper.dart';
 import '../../../repositories/sales & orders/pos/pos_hold_repository.dart';
 import '../../../repositories/sales & orders/pos/pos_stock_lookup_repository.dart';
+import '../../../repositories/setting/metal_rate/metal_rate_quote_service.dart';
 import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
 import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
+import '../../../models/setting/metal_rate/metal_rate_model.dart';
 
 // ✅ NAYA IMPORT — Customer History in POS
 import '../../../repositories/customer/customer_profile_repository.dart';
@@ -55,6 +57,7 @@ class PosBillingController extends ChangeNotifier {
   final PosHoldRepository _holdRepo = PosHoldRepository();
   final ShopSetupRepository _shopRepo = ShopSetupRepository();
   final PosStockLookupRepository _stockLookupRepo = PosStockLookupRepository();
+  final MetalRateQuoteService _rateQuoteService = MetalRateQuoteService();
 
   Future<void> _initShopName() async {
     try {
@@ -330,7 +333,7 @@ class PosBillingController extends ChangeNotifier {
     item.purityCtrl.text = suggestion.purity.trim();
     item.grossCtrl.text = _formatLookupNumber(suggestion.grossWeight);
     item.lessCtrl.text = _formatLookupNumber(suggestion.lessWeight);
-    item.rateCtrl.clear();
+    item.clearMasterRateIfOwned();
     item.makingCtrl.clear();
     item.attachStockReference(
       stockItemId: suggestion.stockItemId,
@@ -338,6 +341,7 @@ class PosBillingController extends ChangeNotifier {
     );
     activeRowIndex = rowIndex;
     clearAllStockSuggestions();
+    unawaited(applySaleItemMasterRate(item, force: true));
   }
 
   String _formatLookupNumber(double value) {
@@ -346,6 +350,163 @@ class PosBillingController extends ChangeNotifier {
     }
     return value
         .toStringAsFixed(3)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
+  }
+
+  Future<void> applySaleItemMasterRate(
+    SaleItemModel item, {
+    bool force = false,
+  }) async {
+    final metalSnapshot = item.metal;
+    final puritySnapshot = item.purityCtrl.text.trim();
+    final quote = await _rateQuoteService.sellingQuote(
+      metal: _rateMetalFromSales(metalSnapshot),
+      purityLabel: puritySnapshot,
+    );
+
+    if (item.metal != metalSnapshot ||
+        item.purityCtrl.text.trim() != puritySnapshot) {
+      return;
+    }
+
+    if (quote == null || !quote.hasRate) {
+      if (force) {
+        item.clearMasterRateIfOwned();
+        item.clearMasterMakingIfOwned();
+      }
+      return;
+    }
+
+    final changed = item.applyMasterRate(
+      rate: quote.billingRate,
+      sourceLabel: quote.rateSourceLabel,
+      force: force,
+    );
+
+    if (billingMode == BillingMode.retail) {
+      item.applyMasterMaking(
+        makingPercent: quote.makingChargePercent,
+        makingPerGram: quote.makingChargePerGram,
+        sourceLabel: quote.rateSourceLabel,
+      );
+    }
+
+    if (changed) {
+      notifyListeners();
+    }
+  }
+
+  Future<void> applyOldMetalMasterBuyRate(
+    OldGoldItemModel item, {
+    bool force = false,
+  }) async {
+    final metalSnapshot = item.metal;
+    final purityText = item.purityCtrl.text.trim();
+    final purityPercent = item.purityPercent;
+    final quote = await _rateQuoteService.buyingQuote(
+      metal: _rateMetalFromSales(metalSnapshot),
+      purityLabel: purityText.isEmpty ? null : purityText,
+      purityPercent: purityText.isEmpty ? null : purityPercent,
+    );
+
+    if (item.metal != metalSnapshot ||
+        item.purityCtrl.text.trim() != purityText) {
+      return;
+    }
+
+    if (quote == null || !quote.hasRate) {
+      if (force) {
+        item.clearMasterRateIfOwned();
+      }
+      return;
+    }
+
+    final changed = item.applyMasterRate(
+      rate: quote.billingRate,
+      sourceLabel: quote.rateSourceLabel,
+      force: force,
+    );
+    if (changed) {
+      notifyListeners();
+    }
+  }
+
+  Future<void> _prefillWholesaleBhawFromMaster({bool force = false}) async {
+    final quotes = await _rateQuoteService.defaultSellingQuotes();
+    _setBhawIfEmpty(
+      goldBhawCtrl,
+      _wholesaleBhawInput(quotes[MetalRateMetal.gold]),
+      force: force,
+    );
+    _setBhawIfEmpty(
+      silverBhawCtrl,
+      _wholesaleBhawInput(quotes[MetalRateMetal.silver]),
+      force: force,
+    );
+    _setBhawIfEmpty(
+      platBhawCtrl,
+      _wholesaleBhawInput(quotes[MetalRateMetal.platinum]),
+      force: force,
+    );
+    _setBhawIfEmpty(
+      diaBhawCtrl,
+      _wholesaleBhawInput(quotes[MetalRateMetal.diamond]),
+      force: force,
+    );
+  }
+
+  void _setBhawIfEmpty(
+    TextEditingController controller,
+    double value, {
+    bool force = false,
+  }) {
+    if (value <= 0) {
+      return;
+    }
+    if (!force && controller.text.trim().isNotEmpty) {
+      return;
+    }
+    final formatted = _formatRateInput(value);
+    controller.text = formatted;
+    controller.selection = TextSelection.collapsed(offset: formatted.length);
+  }
+
+  double _wholesaleBhawInput(MetalRateQuote? quote) {
+    if (quote == null || !quote.hasRate) {
+      return 0.0;
+    }
+    switch (quote.metal) {
+      case MetalRateMetal.gold:
+      case MetalRateMetal.platinum:
+        return quote.ratePer10g;
+      case MetalRateMetal.silver:
+        return quote.ratePer10g * 100.0;
+      case MetalRateMetal.diamond:
+        return quote.billingRate;
+    }
+  }
+
+  MetalRateMetal _rateMetalFromSales(MetalType metal) {
+    switch (metal) {
+      case MetalType.gold:
+        return MetalRateMetal.gold;
+      case MetalType.silver:
+        return MetalRateMetal.silver;
+      case MetalType.platinum:
+        return MetalRateMetal.platinum;
+      case MetalType.diamond:
+        return MetalRateMetal.diamond;
+    }
+  }
+
+  String _formatRateInput(double value) {
+    final rounded = value.roundToDouble();
+    if ((value - rounded).abs() < 0.0001) {
+      return rounded.toStringAsFixed(0);
+    }
+    return value
+        .toStringAsFixed(2)
         .replaceFirst(RegExp(r'0+$'), '')
         .replaceFirst(RegExp(r'\.$'), '');
   }
@@ -437,6 +598,7 @@ class PosBillingController extends ChangeNotifier {
       _diaBhawInput = _parseSafeNumber(diaBhawCtrl.text);
       notifyListeners();
     });
+    unawaited(_prefillWholesaleBhawFromMaster());
   }
 
   double _parseSafeNumber(String text) {
@@ -710,9 +872,11 @@ class PosBillingController extends ChangeNotifier {
   void addNewSaleItem() {
     var newItem = SaleItemModel();
     newItem.addListener(_onChildItemChanged);
+    newItem.purityCtrl.text = '24KT';
     saleItems.add(newItem);
     activeRowIndex = saleItems.length - 1;
     notifyListeners();
+    unawaited(applySaleItemMasterRate(newItem, force: true));
 
     Future.delayed(const Duration(milliseconds: 100), () {
       if (tableScrollCtrl.hasClients) {
@@ -753,6 +917,7 @@ class PosBillingController extends ChangeNotifier {
     newItem.addListener(_onChildItemChanged);
     oldGoldItems.add(newItem);
     notifyListeners();
+    unawaited(applyOldMetalMasterBuyRate(newItem, force: true));
   }
 
   void removeOldGoldItem(int index) {
@@ -771,6 +936,9 @@ class PosBillingController extends ChangeNotifier {
   void toggleBillingMode(BillingMode mode) {
     billingMode = mode;
     notifyListeners();
+    if (mode == BillingMode.wholesale) {
+      unawaited(_prefillWholesaleBhawFromMaster());
+    }
   }
 
   void toggleBillType(BillType type) {

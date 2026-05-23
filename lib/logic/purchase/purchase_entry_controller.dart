@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../database/db/app_database.dart';
@@ -6,8 +8,10 @@ import '../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../models/customer/customer_list/customer_list_ui_model.dart';
 import '../../models/purchase/purchase_enums/purchase_enums.dart';
 import '../../models/purchase/purchase_entry/purchase_item_model.dart';
+import '../../models/setting/metal_rate/metal_rate_model.dart';
 import '../../models/stock/supplier_model/supplier_model.dart';
 import '../../repositories/purchase/purchase_entry_repository.dart';
+import '../../repositories/setting/metal_rate/metal_rate_quote_service.dart';
 import '../../repositories/supplier/supplier_repository.dart';
 
 class PurchaseEntryController extends ChangeNotifier {
@@ -20,6 +24,7 @@ class PurchaseEntryController extends ChangeNotifier {
   late final SupplierRepository _supplierRepository = SupplierRepository(_db);
   late final PurchaseEntryRepository _purchaseRepository =
       PurchaseEntryRepository(db: _db);
+  final MetalRateQuoteService _rateQuoteService = MetalRateQuoteService();
 
   PurchaseSource purchaseSource = PurchaseSource.fromCustomer;
   PurchaseTaxType taxType = PurchaseTaxType.normal;
@@ -125,6 +130,7 @@ class PurchaseEntryController extends ChangeNotifier {
     item.addListener(_notify);
     items.add(item);
     notifyListeners();
+    unawaited(applyPurchaseMasterBuyRate(item, force: true));
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (tableScrollCtrl.hasClients) {
@@ -145,6 +151,54 @@ class PurchaseEntryController extends ChangeNotifier {
     item.removeListener(_notify);
     item.dispose();
     notifyListeners();
+  }
+
+  Future<void> applyPurchaseMasterBuyRate(
+    PurchaseItemModel item, {
+    bool force = false,
+  }) async {
+    final metalSnapshot = item.metal;
+    final purityText = item.purityCtrl.text.trim();
+    final purityPercent = item.purity;
+    final quote = await _rateQuoteService.buyingQuote(
+      metal: _rateMetalFromPurchase(metalSnapshot),
+      purityLabel: purityText.isEmpty ? null : purityText,
+      purityPercent: purityText.isEmpty ? null : purityPercent,
+    );
+
+    if (item.metal != metalSnapshot ||
+        item.purityCtrl.text.trim() != purityText) {
+      return;
+    }
+
+    if (quote == null || !quote.hasRate) {
+      if (force) {
+        item.clearMasterRateIfOwned();
+      }
+      return;
+    }
+
+    final changed = item.applyMasterRate(
+      rate: quote.billingRate,
+      sourceLabel: quote.rateSourceLabel,
+      force: force,
+    );
+    if (changed) {
+      notifyListeners();
+    }
+  }
+
+  MetalRateMetal _rateMetalFromPurchase(PurchaseMetalType metal) {
+    switch (metal) {
+      case PurchaseMetalType.gold:
+        return MetalRateMetal.gold;
+      case PurchaseMetalType.silver:
+        return MetalRateMetal.silver;
+      case PurchaseMetalType.platinum:
+        return MetalRateMetal.platinum;
+      case PurchaseMetalType.diamond:
+        return MetalRateMetal.diamond;
+    }
   }
 
   Future<void> searchCounterparty(String query) async {
