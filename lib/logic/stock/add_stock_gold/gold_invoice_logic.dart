@@ -3,7 +3,7 @@
 // MODULE      : Stock & Inventory — Gold
 // LAYER       : Logic / Invoice
 // DESCRIPTION : Isolated Invoice Logic for Gold Add Stock.
-//               ✅ Auto-generates System Batch ID (SIL-YYYYMMDD-XXXX format).
+//               ✅ Auto-generates System Batch ID (GOL-YYYYMMDD-XXXX format).
 //               ✅ Manages supplier invoice TextEditingController.
 //               ✅ Exposes live date/time stream via DateCardLogic.
 //               ✅ Tracks GST status for invoice type label (Tax / Estimate).
@@ -18,7 +18,7 @@
 // USAGE:
 //   final invoice = GoldInvoiceLogic();
 //   invoice.init();
-//   String code = invoice.batchCode;          // SIL-20250511-0001
+//   String code = invoice.batchCode;          // GOL-20250511-0001
 //   String type = invoice.invoiceTypeLabel;   // "Tax Invoice — GST" or "Standard Estimate"
 //   // Always call invoice.dispose() in parent's dispose().
 // =============================================================================
@@ -38,7 +38,7 @@ class GoldInvoiceLogic {
 
   // ── BATCH CODE ───────────────────────────────────────────────
   /// System-generated batch ID — immutable for the lifetime of this session.
-  /// Format: SIL-YYYYMMDD-XXXX (e.g. SIL-20250511-0042)
+  /// Format: GOL-YYYYMMDD-XXXX (e.g. GOL-20250511-0042)
   late final String _batchCode;
 
   String get batchCode => _batchCode;
@@ -116,18 +116,18 @@ class GoldInvoiceLogic {
 
   /// Generates a unique system batch ID for this Gold intake session.
   ///
-  /// Format: SIL-YYYYMMDD-XXXX
-  ///   SIL   — Gold module prefix (3 chars, fixed)
+  /// Format: GOL-YYYYMMDD-XXXX
+  ///   GOL   — Gold module prefix (3 chars, fixed)
   ///   YYYYMMDD — Session date
   ///   XXXX  — 4-digit microsecond-derived suffix for uniqueness within a day
   ///
-  /// Example: SIL-20250511-0327
+  /// Example: GOL-20250511-0327
   String _generateBatchCode() {
     final now = DateTime.now();
     final datePart =
         '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
     final suffix =
         (now.microsecondsSinceEpoch % 9999).toString().padLeft(4, '0');
-    return 'SIL-$datePart-$suffix';
+    return 'GOL-$datePart-$suffix';
   }
 }

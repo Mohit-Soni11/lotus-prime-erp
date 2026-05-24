@@ -817,6 +817,6 @@ class GoldStockController extends AddStockController {
     final timePart = '${now.hour.toString().padLeft(2, '0')}'
         '${now.minute.toString().padLeft(2, '0')}'
         '${now.second.toString().padLeft(2, '0')}';
-    return 'SIL-$datePart-$timePart';
+    return 'GOL-$datePart-$timePart';
   }
 }
