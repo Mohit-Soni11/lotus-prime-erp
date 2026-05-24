@@ -144,7 +144,8 @@ class GoldStockController extends AddStockController {
       GoldInvoiceSummaryData.fromController(this);
 
   @override
-  int get totalQuantity => enteredGoldRows.length;
+  int get totalQuantity =>
+      enteredGoldRows.fold(0, (sum, row) => sum + row.pieces);
 
   String get goldRateDisplay {
     if (_isLoadingGoldRate) {
@@ -255,20 +256,22 @@ class GoldStockController extends AddStockController {
     final supplierName = supplierDisplayName;
 
     return enteredGoldRows.map((rowModel) {
+      final pieces = rowModel.pieces;
+      final lotDivisor = pieces > 0 ? pieces : 1;
       final row = StockRowEntry(id: rowModel.id, hsnCode: defaultHsnCode);
       row.itemName = rowModel.itemName;
       row.description = rowModel.categoryLabel;
       row.subCategory = _mapGoldSubCategory(rowModel.categoryLabel);
       row.subCategoryLabel = rowModel.categoryLabel;
       row.huid = rowModel.huid;
-      row.grossWeight = rowModel.grossWeight;
-      row.stoneWeight = 0.0;
+      row.grossWeight = rowModel.grossWeight / lotDivisor;
+      row.stoneWeight = rowModel.lessWeight / lotDivisor;
       row.touchPercent = rowModel.effectiveTotalPurityPercent;
       row.purityLabel = rowModel.purityLabel;
       row.purchaseRate = rowModel.purchaseRate;
-      row.purchasePriceOverride = rowModel.totalAmount;
+      row.purchasePriceOverride = rowModel.totalAmount / lotDivisor;
       row.makingCharges = switch (rowModel.makingChargesType) {
-        MakingChargesType.flat => rowModel.makingValue,
+        MakingChargesType.flat => rowModel.makingValue / lotDivisor,
         MakingChargesType.perGram ||
         MakingChargesType.percent =>
           rowModel.makingValue,
@@ -277,7 +280,7 @@ class GoldStockController extends AddStockController {
       row.gstRate = gstEnabled ? gstRate : 0.0;
       row.supplierId = supplierId;
       row.supplierName = supplierName;
-      row.quantity = 1;
+      row.quantity = pieces;
       return row;
     }).toList(growable: false);
   }
@@ -344,8 +347,17 @@ class GoldStockController extends AddStockController {
     if (row.itemName.length < 2) {
       return 'Item name must be at least 2 characters';
     }
+    if (row.pieces < 1) {
+      return 'Pieces must be at least 1';
+    }
     if (row.grossWeight <= 0) {
       return 'Gross weight must be greater than 0';
+    }
+    if (row.lessWeight < 0) {
+      return 'Less weight cannot be negative';
+    }
+    if (row.lessWeight > row.grossWeight) {
+      return 'Less weight cannot exceed gross weight';
     }
     if (row.purityLabel.isEmpty) {
       return 'Base purity is required';
@@ -521,6 +533,7 @@ class GoldStockController extends AddStockController {
       initialPurityLabel: _defaultGoldPurityLabel(),
       initialWastagePercent: 0.0,
       initialPurchaseRate: goldRatePerGram,
+      initialPieces: 1,
     );
     model.addListener(notifyListeners);
     _goldRows.add(model);

@@ -140,8 +140,9 @@ class _MetricGrid extends StatelessWidget {
     final tiles = <_MetricTileData>[
       _MetricTileData(
         label: GoldStockStrings.overviewPieces,
-        value: '${summary.rowCount}',
-        caption: 'One Gold item per row',
+        value: '${summary.totalPieces}',
+        caption:
+            '${summary.rowCount} row${summary.rowCount == 1 ? '' : 's'} entered',
         tone: GoldStockColors.paymentPrimary,
       ),
       _MetricTileData(
@@ -372,6 +373,10 @@ class _SnapshotRow extends StatelessWidget {
             spacing: 12,
             runSpacing: 10,
             children: [
+              _DetailPill(
+                label: GoldStockStrings.overviewPieces,
+                value: '${item.pieces}',
+              ),
               _DetailPill(
                 label: GoldStockStrings.overviewGross,
                 value: '${item.grossWeight.toStringAsFixed(3)} g',

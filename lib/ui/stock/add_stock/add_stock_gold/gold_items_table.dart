@@ -6,7 +6,7 @@ import 'package:lotus_erp/theme/stock/add_stock/add_stock_gold/gold_stock_colors
 import 'gold_item_row.dart';
 
 class GoldItemsTable extends StatelessWidget {
-  static const double _minTableWidth = 1560;
+  static const double _minTableWidth = 1700;
 
   final GoldStockController ctrl;
 
@@ -145,8 +145,8 @@ class GoldItemsTable extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 needsHorizontalScroll
-                    ? 'Scroll to review every column. Each row captures one Gold item with transparent purity.'
-                    : 'Enter one Gold item per row. Total purity = base purity + wastage.',
+                    ? 'Scroll to review every column. Capture pieces, lot weight and flat less weight.'
+                    : 'Enter total pieces and combined lot weight. Less Weight is deducted once from the lot.',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -213,9 +213,13 @@ class GoldItemsTable extends StatelessWidget {
           const SizedBox(width: 6),
           _h('ITEM NAME', flex: 4),
           const SizedBox(width: 6),
+          _h('PCS', flex: 2, center: true),
+          const SizedBox(width: 6),
           _h('HUID', flex: 2),
           const SizedBox(width: 6),
           _h('GROSS', flex: 2),
+          const SizedBox(width: 6),
+          _h('LESS WT', flex: 2),
           const SizedBox(width: 6),
           _h('NET', flex: 2, center: true),
           const SizedBox(width: 6),
@@ -430,6 +434,12 @@ class GoldItemsTable extends StatelessWidget {
         'ROWS',
         '${ctrl.enteredRowCount}',
         GoldStockColors.textDark,
+      ),
+      const SizedBox(width: 12),
+      _buildTotalBox(
+        'PCS',
+        '${ctrl.totalQuantity}',
+        GoldStockColors.accentPricing,
       ),
       const SizedBox(width: 12),
       _buildTotalBox(

@@ -96,7 +96,7 @@ class GoldStockStrings {
       'Metal type, purity, supplier and running inventory totals.';
 
   // ── BATCH OVERVIEW STATS ─────────────────────────────────────
-  static const String overviewPieces = 'Items';
+  static const String overviewPieces = 'Pieces';
   static const String overviewGross = 'Gross Wt';
   static const String overviewNet = 'Net Wt';
   static const String overviewCost = 'Est. Cost';

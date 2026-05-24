@@ -32,8 +32,10 @@ class GoldItemModel extends ChangeNotifier {
 
   final TextEditingController categoryCtrl = TextEditingController();
   final TextEditingController itemNameCtrl = TextEditingController();
+  final TextEditingController piecesCtrl = TextEditingController();
   final TextEditingController huidCtrl = TextEditingController();
   final TextEditingController grossCtrl = TextEditingController();
+  final TextEditingController lessCtrl = TextEditingController();
   final TextEditingController purityCtrl = TextEditingController();
   final TextEditingController wastageCtrl = TextEditingController();
   final TextEditingController rateCtrl = TextEditingController();
@@ -41,8 +43,10 @@ class GoldItemModel extends ChangeNotifier {
 
   final FocusNode categoryFocus = FocusNode();
   final FocusNode itemNameFocus = FocusNode();
+  final FocusNode piecesFocus = FocusNode();
   final FocusNode huidFocus = FocusNode();
   final FocusNode grossFocus = FocusNode();
+  final FocusNode lessFocus = FocusNode();
   final FocusNode purityFocus = FocusNode();
   final FocusNode wastageFocus = FocusNode();
   final FocusNode makingFocus = FocusNode();
@@ -54,15 +58,22 @@ class GoldItemModel extends ChangeNotifier {
     String initialPurityLabel = '',
     double initialWastagePercent = 0.0,
     double initialPurchaseRate = 0.0,
+    int initialPieces = 1,
   }) {
     categoryCtrl.addListener(_fieldChanged);
     itemNameCtrl.addListener(_fieldChanged);
+    piecesCtrl.addListener(_weightPurityFieldChanged);
     huidCtrl.addListener(_fieldChanged);
     grossCtrl.addListener(_weightPurityFieldChanged);
+    lessCtrl.addListener(_weightPurityFieldChanged);
     purityCtrl.addListener(_weightPurityFieldChanged);
     wastageCtrl.addListener(_weightPurityFieldChanged);
     rateCtrl.addListener(_fieldChanged);
     makingCtrl.addListener(_fieldChanged);
+
+    if (initialPieces > 0) {
+      piecesCtrl.text = initialPieces.toString();
+    }
 
     if (initialPurityLabel.trim().isNotEmpty) {
       purityCtrl.text = initialPurityLabel.trim().toUpperCase();
@@ -78,11 +89,13 @@ class GoldItemModel extends ChangeNotifier {
   }
 
   double get grossWeight => _parseNumeric(grossCtrl.text);
-  double get lessWeight => 0.0;
-  double get netWeight => grossWeight;
+  double get lessWeight => _parseNumeric(lessCtrl.text);
+  double get netWeight =>
+      (grossWeight - lessWeight).clamp(0.0, double.infinity);
 
   String get categoryLabel => categoryCtrl.text.trim();
   String get itemName => itemNameCtrl.text.trim();
+  int get pieces => _parseWholeNumber(piecesCtrl.text);
   String get huid => huidCtrl.text.trim().toUpperCase();
   String get purityLabel => purityCtrl.text.trim().toUpperCase();
 
@@ -119,9 +132,19 @@ class GoldItemModel extends ChangeNotifier {
   bool get hasAnyInput =>
       categoryLabel.isNotEmpty ||
       itemName.isNotEmpty ||
+      _hasMeaningfulPiecesInput ||
       huid.isNotEmpty ||
       grossWeight > 0 ||
+      lessWeight > 0 ||
       makingValue > 0;
+
+  bool get _hasMeaningfulPiecesInput {
+    final raw = piecesCtrl.text.trim();
+    if (raw.isEmpty) {
+      return false;
+    }
+    return pieces != 1;
+  }
 
   void applyPurchaseRate(double rate, {bool onlyIfEmpty = true}) {
     if (rate <= 0) {
@@ -192,8 +215,10 @@ class GoldItemModel extends ChangeNotifier {
   void disposeAll() {
     categoryCtrl.removeListener(_fieldChanged);
     itemNameCtrl.removeListener(_fieldChanged);
+    piecesCtrl.removeListener(_weightPurityFieldChanged);
     huidCtrl.removeListener(_fieldChanged);
     grossCtrl.removeListener(_weightPurityFieldChanged);
+    lessCtrl.removeListener(_weightPurityFieldChanged);
     purityCtrl.removeListener(_weightPurityFieldChanged);
     wastageCtrl.removeListener(_weightPurityFieldChanged);
     rateCtrl.removeListener(_fieldChanged);
@@ -201,8 +226,10 @@ class GoldItemModel extends ChangeNotifier {
 
     categoryCtrl.dispose();
     itemNameCtrl.dispose();
+    piecesCtrl.dispose();
     huidCtrl.dispose();
     grossCtrl.dispose();
+    lessCtrl.dispose();
     purityCtrl.dispose();
     wastageCtrl.dispose();
     rateCtrl.dispose();
@@ -210,8 +237,10 @@ class GoldItemModel extends ChangeNotifier {
 
     categoryFocus.dispose();
     itemNameFocus.dispose();
+    piecesFocus.dispose();
     huidFocus.dispose();
     grossFocus.dispose();
+    lessFocus.dispose();
     purityFocus.dispose();
     wastageFocus.dispose();
     makingFocus.dispose();
@@ -260,6 +289,11 @@ class GoldItemModel extends ChangeNotifier {
   double _parseNumeric(String raw) {
     final normalized = raw.replaceAll(',', '').trim();
     return double.tryParse(normalized) ?? 0.0;
+  }
+
+  int _parseWholeNumber(String raw) {
+    final normalized = raw.replaceAll(',', '').trim();
+    return int.tryParse(normalized) ?? 0;
   }
 
   String _formatDecimal(double value, {int maxFraction = 2}) {

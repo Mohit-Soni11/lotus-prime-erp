@@ -141,7 +141,7 @@ class GoldBatchOverviewCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _StatTile(
-                  label: 'ITEMS',
+                  label: 'PIECES',
                   value: '${ctrl.totalQuantity}',
                   icon: Icons.tag_rounded,
                   iconColor: AddStockColors.accentInventory,

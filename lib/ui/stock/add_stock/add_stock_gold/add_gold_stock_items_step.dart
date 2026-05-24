@@ -353,7 +353,7 @@ class _ActionColumn extends StatelessWidget {
           ),
           child: Text(
             ctrl.rowsWithErrorsCount == 0
-                ? 'Ready to save ${ctrl.enteredRowCount} Gold item${ctrl.enteredRowCount == 1 ? '' : 's'}'
+                ? 'Ready to save ${ctrl.totalQuantity} pcs in ${ctrl.enteredRowCount} row${ctrl.enteredRowCount == 1 ? '' : 's'}'
                 : '${ctrl.rowsWithErrorsCount} row${ctrl.rowsWithErrorsCount == 1 ? '' : 's'} need attention',
             style: GoogleFonts.inter(
               fontSize: 12,

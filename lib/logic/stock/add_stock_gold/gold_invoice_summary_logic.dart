@@ -95,6 +95,7 @@ class GoldInvoiceLineSnapshot {
   final String itemName;
   final String categoryLabel;
   final String purityLabel;
+  final int pieces;
   final double grossWeight;
   final double netWeight;
   final double fineWeight;
@@ -110,6 +111,7 @@ class GoldInvoiceLineSnapshot {
     required this.itemName,
     required this.categoryLabel,
     required this.purityLabel,
+    required this.pieces,
     required this.grossWeight,
     required this.netWeight,
     required this.fineWeight,
@@ -135,6 +137,7 @@ class GoldInvoiceSummaryData {
   final GoldPaymentSnapshot paymentSnapshot;
   final bool gstEnabled;
   final int rowCount;
+  final int totalPieces;
   final double totalGrossWeight;
   final double totalFineWeight;
   final double totalMakingAmount;
@@ -149,6 +152,7 @@ class GoldInvoiceSummaryData {
     required this.paymentSnapshot,
     required this.gstEnabled,
     required this.rowCount,
+    required this.totalPieces,
     required this.totalGrossWeight,
     required this.totalFineWeight,
     required this.totalMakingAmount,
@@ -182,6 +186,7 @@ class GoldInvoiceSummaryData {
       paymentSnapshot: paymentSnapshot,
       gstEnabled: ctrl.gstEnabled,
       rowCount: items.length,
+      totalPieces: ctrl.totalQuantity,
       totalGrossWeight: ctrl.totalGrossWeight,
       totalFineWeight: paymentSnapshot.payableFineWeight,
       totalMakingAmount: ctrl.totalMakingAmount,
@@ -199,6 +204,7 @@ class GoldInvoiceSummaryData {
       itemName: row.itemName,
       categoryLabel: row.categoryLabel,
       purityLabel: row.purityLabel,
+      pieces: row.pieces,
       grossWeight: row.grossWeight,
       netWeight: row.netWeight,
       fineWeight: row.fineWeight,

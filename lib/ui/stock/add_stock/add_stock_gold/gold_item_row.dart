@@ -99,6 +99,22 @@ class _GoldItemRowState extends State<GoldItemRow> {
                       focusNode: widget.model.itemNameFocus,
                       hint: 'Item name',
                       textInputAction: TextInputAction.next,
+                      onSubmitted: (_) =>
+                          widget.model.piecesFocus.requestFocus(),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    flex: 2,
+                    child: _GoldTextField(
+                      controller: widget.model.piecesCtrl,
+                      focusNode: widget.model.piecesFocus,
+                      hint: 'PCS',
+                      isNumber: true,
+                      allowDecimal: false,
+                      textAlign: TextAlign.center,
+                      textInputAction: TextInputAction.next,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       onSubmitted: (_) => widget.model.huidFocus.requestFocus(),
                     ),
                   ),
@@ -127,6 +143,18 @@ class _GoldItemRowState extends State<GoldItemRow> {
                     child: _GoldTextField(
                       controller: widget.model.grossCtrl,
                       focusNode: widget.model.grossFocus,
+                      hint: '0.000',
+                      isNumber: true,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) => widget.model.lessFocus.requestFocus(),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    flex: 2,
+                    child: _GoldTextField(
+                      controller: widget.model.lessCtrl,
+                      focusNode: widget.model.lessFocus,
                       hint: '0.000',
                       isNumber: true,
                       textInputAction: TextInputAction.next,
@@ -403,6 +431,7 @@ class _GoldTextField extends StatelessWidget {
   final FocusNode? focusNode;
   final String hint;
   final bool isNumber;
+  final bool allowDecimal;
   final TextInputAction textInputAction;
   final ValueChanged<String>? onSubmitted;
   final TextCapitalization textCapitalization;
@@ -414,6 +443,7 @@ class _GoldTextField extends StatelessWidget {
     required this.hint,
     this.focusNode,
     this.isNumber = false,
+    this.allowDecimal = true,
     this.textInputAction = TextInputAction.next,
     this.onSubmitted,
     this.textCapitalization = TextCapitalization.none,
@@ -443,16 +473,18 @@ class _GoldTextField extends StatelessWidget {
           controller: controller,
           focusNode: focusNode,
           keyboardType: isNumber
-              ? const TextInputType.numberWithOptions(decimal: true)
+              ? TextInputType.numberWithOptions(decimal: allowDecimal)
               : TextInputType.text,
           textCapitalization: textCapitalization,
           inputFormatters: inputFormatters ??
               (isNumber
-                  ? [
-                      FilteringTextInputFormatter.allow(
-                        RegExp(r'^\d*\.?\d*'),
-                      ),
-                    ]
+                  ? (allowDecimal
+                      ? [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d*'),
+                          ),
+                        ]
+                      : [FilteringTextInputFormatter.digitsOnly])
                   : null),
           textInputAction: textInputAction,
           textAlign: textAlign,
