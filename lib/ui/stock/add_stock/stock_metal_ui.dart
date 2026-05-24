@@ -56,7 +56,7 @@ StockMetalUiData stockMetalUiFor(StockCategory metal) {
         hindiTitle: 'Sona',
         tagLine: 'Hallmarked bridal and daily-wear inventory',
         helperLine: 'HUID, purity presets and cost-led pricing ready',
-        quickTag: '22K · 18K · 24K',
+        quickTag: '22K / 18K / 24K',
         icon: Icons.workspace_premium_rounded,
         accent: AddStockColors.brandGold,
         softSurface: Color(0xFFFFFBF2),

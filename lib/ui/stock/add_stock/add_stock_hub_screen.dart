@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_screen.dart';
+import 'package:lotus_erp/ui/stock/add_stock/add_stock_gold/gold_stock_screen.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_silver/silver_stock_screen.dart';
 import 'add_stock_hub_app_bar.dart';
 import 'diamond_stock_card.dart';
-import 'gold_stock_card.dart';
+import 'add_stock_gold/gold_stock_card.dart';
 import 'platinum_stock_card.dart';
 import '../add_stock/add_stock_silver/silver_stock_card.dart';
 
@@ -46,7 +47,9 @@ class _AddStockHubScreenState extends State<AddStockHubScreen>
       PageRouteBuilder(
         pageBuilder: (_, animation, __) => metal == StockCategory.silver
             ? const SilverStockScreen()
-            : AddStockScreen(metal: metal),
+            : metal == StockCategory.gold
+                ? const GoldStockScreen()
+                : AddStockScreen(metal: metal),
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(
             opacity: CurvedAnimation(
