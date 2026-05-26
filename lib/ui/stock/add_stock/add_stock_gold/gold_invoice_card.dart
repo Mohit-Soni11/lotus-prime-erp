@@ -316,7 +316,7 @@ class _GoldInvoiceCardState extends State<GoldInvoiceCard> {
           _BillPhotoPicker(ctrl: widget.ctrl, accent: accent),
           // NOTE: Applied Gold Rate moved to GoldPaymentRecordCard
           //       (Rate is now entered manually per-batch in the Payment Record
-          //        section as rate per kg, not loaded from daily rates here.)
+          //        section as 24K rate per 10g.)
         ],
       ),
     );

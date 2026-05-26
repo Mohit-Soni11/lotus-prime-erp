@@ -2073,4 +2073,4 @@ String _money(double amount) {
   return formatter.format(amount);
 }
 
-String _weight(double value) => '${value.toStringAsFixed(4)} g';
+String _weight(double value) => '${value.toStringAsFixed(3)} g';

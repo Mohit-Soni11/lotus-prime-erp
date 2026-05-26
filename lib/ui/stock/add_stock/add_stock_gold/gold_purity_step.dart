@@ -776,7 +776,7 @@ class _StockGroupRow extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerRight,
                   child: Text(
-                    '${group.fineWeight.toStringAsFixed(4)} g',
+                    '${group.fineWeight.toStringAsFixed(3)} g',
                     maxLines: 1,
                     softWrap: false,
                     style: GoogleFonts.manrope(

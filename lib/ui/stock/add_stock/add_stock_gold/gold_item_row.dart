@@ -221,7 +221,7 @@ class _GoldItemRowState extends State<GoldItemRow> {
                   Expanded(
                     flex: 2,
                     child: _buildAutoCell(
-                      value: widget.model.fineWeight.toStringAsFixed(4),
+                      value: widget.model.fineWeight.toStringAsFixed(3),
                       color: GoldStockColors.success,
                       align: TextAlign.center,
                       isBold: true,
@@ -234,7 +234,7 @@ class _GoldItemRowState extends State<GoldItemRow> {
                     flex: 3,
                     child: Tooltip(
                       message:
-                          'Fine ${widget.model.fineWeight.toStringAsFixed(4)} g at ${widget.model.effectiveTotalPurityLabel}% purity x Rs ${widget.model.purchaseRate.toStringAsFixed(2)}/g',
+                          'Fine ${widget.model.fineWeight.toStringAsFixed(3)} g at ${widget.model.effectiveTotalPurityLabel}% purity x Rs ${widget.model.purchaseRate.toStringAsFixed(2)}/g',
                       waitDuration: const Duration(milliseconds: 400),
                       child: _buildAutoCell(
                         value:

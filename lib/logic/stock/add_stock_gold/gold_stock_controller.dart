@@ -45,6 +45,7 @@ class GoldStockController extends AddStockController {
   GoldStockController()
       : _goldBatchCode = _generateGoldBatchCode(),
         super(initialMetal: StockCategory.gold) {
+    payment.addListener(_handlePaymentChanged);
     _loadGoldRateSnapshot();
   }
 
@@ -71,9 +72,15 @@ class GoldStockController extends AddStockController {
   double get goldRatePer10g => _goldRatePer10g;
   double get goldRatePerGram =>
       _goldRatePer10g > 0 ? _goldRatePer10g / 10.0 : 0.0;
+  double get _activeInvoiceRatePerGram {
+    final paymentRate = payment.todayRatePerGram;
+    return paymentRate > 0 ? paymentRate : goldRatePerGram;
+  }
+
   bool get hasGoldRateSnapshot => goldRatePerGram > 0;
-  double get totalFineWeight =>
-      enteredGoldRows.fold(0.0, (sum, row) => sum + row.fineWeight);
+  double get totalFineWeight => _roundGoldWeight(
+        enteredGoldRows.fold(0.0, (sum, row) => sum + row.fineWeight),
+      );
   double get totalMakingAmount =>
       enteredGoldRows.fold(0.0, (sum, row) => sum + row.makingAmount);
   GoldPaymentSnapshot get paymentSnapshot {
@@ -130,13 +137,17 @@ class GoldStockController extends AddStockController {
 
   @override
   void setPurity(String option) {
+    final previousDefault = _defaultGoldPurityLabel();
     super.setPurity(option);
+    _syncGoldRowsWithBatchPurity(previousDefault);
     _loadGoldRateSnapshot();
   }
 
   @override
   void setCustomPurity(String value) {
+    final previousDefault = _defaultGoldPurityLabel();
     super.setCustomPurity(value);
+    _syncGoldRowsWithBatchPurity(previousDefault);
     _loadGoldRateSnapshot();
   }
 
@@ -427,6 +438,8 @@ class GoldStockController extends AddStockController {
       cardPaid: snapshot.cardPaid,
       totalPaid: snapshot.totalPaidValue,
       balanceDue: snapshot.dueAmount,
+      // Legacy purchase schema stores the Gold 24K/10g invoice rate in this
+      // field name. UI and calculation code use ratePer10g/ratePerGram.
       ratePerKg: snapshot.ratePer10g,
       metalPaidGrossWeight: snapshot.metalGrossWeight,
       metalPaidPurity: snapshot.metalPurity,
@@ -488,7 +501,9 @@ class GoldStockController extends AddStockController {
               lessWeight: row.lessWeight,
               netWeight: row.netWeight,
               purity: row.resolveTouch(selectedPurityBasePercent),
-              fineWeight: row.fineWeight(selectedPurityBasePercent),
+              fineWeight: _roundGoldWeight(
+                row.fineWeight(selectedPurityBasePercent),
+              ),
               rate: snapshot.ratePerGram > 0
                   ? snapshot.ratePerGram
                   : row.purchaseRate,
@@ -505,7 +520,9 @@ class GoldStockController extends AddStockController {
               labourCharge: row.makingCharges,
               labourType: row.makingChargesType,
               purityLabel: resolvedPurityStorageLabel(row),
-              effectiveRatePerGram: row.purchaseRate,
+              effectiveRatePerGram: snapshot.ratePerGram > 0
+                  ? snapshot.ratePerGram
+                  : row.purchaseRate,
               gstRate: gstEnabled ? gstRate : 0.0,
             ),
           )
@@ -532,7 +549,7 @@ class GoldStockController extends AddStockController {
       id: id,
       initialPurityLabel: _defaultGoldPurityLabel(),
       initialWastagePercent: 0.0,
-      initialPurchaseRate: goldRatePerGram,
+      initialPurchaseRate: _activeInvoiceRatePerGram,
       initialPieces: 1,
     );
     model.addListener(notifyListeners);
@@ -587,6 +604,44 @@ class GoldStockController extends AddStockController {
     }
   }
 
+  void _handlePaymentChanged() {
+    if (!_syncGoldRowRatesWithPayment()) {
+      notifyListeners();
+    }
+  }
+
+  bool _syncGoldRowRatesWithPayment() {
+    final ratePerGram = payment.todayRatePerGram;
+    if (ratePerGram <= 0) {
+      return false;
+    }
+
+    var changed = false;
+    for (final row in _goldRows) {
+      changed =
+          row.applyPurchaseRate(ratePerGram, onlyIfEmpty: false) || changed;
+    }
+    return changed;
+  }
+
+  void _syncGoldRowsWithBatchPurity(String previousDefault) {
+    final nextDefault = _defaultGoldPurityLabel();
+    if (nextDefault.trim().isEmpty) {
+      return;
+    }
+
+    for (final row in _goldRows) {
+      final current = row.purityLabel;
+      if (current.isEmpty || current == previousDefault) {
+        row.applyPurityDefaults(
+          nextDefault,
+          wastagePercent: 0.0,
+          overwriteWhenBlank: false,
+        );
+      }
+    }
+  }
+
   void completeRowAndAdvanceGold(String rowId) {
     final index = _goldRows.indexWhere((row) => row.id == rowId);
     if (index == -1) {
@@ -636,6 +691,7 @@ class GoldStockController extends AddStockController {
   @override
   void dispose() {
     supplierInvoiceNumberCtrl.dispose();
+    payment.removeListener(_handlePaymentChanged);
     payment.dispose();
     for (final row in _goldRows) {
       row.removeListener(notifyListeners);
@@ -674,7 +730,7 @@ class GoldStockController extends AddStockController {
       payment.setTodayRatePer10g(_goldRatePer10g);
 
       for (final row in _goldRows) {
-        row.applyPurchaseRate(goldRatePerGram);
+        row.applyPurchaseRate(_activeInvoiceRatePerGram, onlyIfEmpty: false);
       }
     } catch (_) {
       _goldRatePer10g = 0.0;
@@ -796,6 +852,13 @@ class GoldStockController extends AddStockController {
   double _parseGoldRate(String raw) {
     final normalized = raw.replaceAll(',', '').replaceAll('--', '0').trim();
     return double.tryParse(normalized) ?? 0.0;
+  }
+
+  double _roundGoldWeight(double value) {
+    if (value <= 0) {
+      return 0.0;
+    }
+    return (value * 1000).roundToDouble() / 1000.0;
   }
 
   static String _generateGoldBatchCode() {

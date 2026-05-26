@@ -458,7 +458,7 @@ class GoldItemsTable extends StatelessWidget {
       const SizedBox(width: 12),
       _buildTotalBox(
         'FINE WT',
-        '${ctrl.totalFineWeight.toStringAsFixed(4)} g',
+        '${ctrl.totalFineWeight.toStringAsFixed(3)} g',
         GoldStockColors.accentPricing,
       ),
       const SizedBox(width: 12),

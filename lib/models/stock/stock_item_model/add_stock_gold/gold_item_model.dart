@@ -113,7 +113,7 @@ class GoldItemModel extends ChangeNotifier {
       : _formatDecimal(effectiveTotalPurityPercent);
 
   double get computedFineWeight => netWeight * (totalPurityPercent / 100.0);
-  double get fineWeight => computedFineWeight;
+  double get fineWeight => _roundGoldWeight(computedFineWeight);
 
   double get purchaseRate => _parseNumeric(rateCtrl.text);
   double get makingValue => _parseNumeric(makingCtrl.text);
@@ -146,21 +146,22 @@ class GoldItemModel extends ChangeNotifier {
     return pieces != 1;
   }
 
-  void applyPurchaseRate(double rate, {bool onlyIfEmpty = true}) {
+  bool applyPurchaseRate(double rate, {bool onlyIfEmpty = true}) {
     if (rate <= 0) {
-      return;
+      return false;
     }
     if (onlyIfEmpty && purchaseRate > 0) {
-      return;
+      return false;
     }
     final next = _formatDecimal(rate);
     if (rateCtrl.text == next) {
-      return;
+      return false;
     }
     rateCtrl.text = next;
     rateCtrl.selection = TextSelection.fromPosition(
       TextPosition(offset: next.length),
     );
+    return true;
   }
 
   void applyPurityDefaults(
@@ -299,5 +300,12 @@ class GoldItemModel extends ChangeNotifier {
   String _formatDecimal(double value, {int maxFraction = 2}) {
     final fixed = value.toStringAsFixed(maxFraction);
     return fixed.replaceFirst(RegExp(r'\.?0+$'), '');
+  }
+
+  double _roundGoldWeight(double value) {
+    if (value <= 0) {
+      return 0.0;
+    }
+    return (value * 1000).roundToDouble() / 1000.0;
   }
 }

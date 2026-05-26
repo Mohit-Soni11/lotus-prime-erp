@@ -8,6 +8,14 @@ enum DueReturnType { metal, cash }
 
 enum GoldDiscountMode { fine, cash }
 
+double _roundGoldWeight(double value) {
+  if (value == 0) {
+    return 0.0;
+  }
+  final rounded = (value * 1000).roundToDouble() / 1000.0;
+  return rounded == -0.0 ? 0.0 : rounded;
+}
+
 class GoldMetalSettlementLine extends ChangeNotifier {
   final String id;
   final TextEditingController grossCtrl = TextEditingController();
@@ -23,7 +31,7 @@ class GoldMetalSettlementLine extends ChangeNotifier {
   double get purity =>
       _parseAmount(purityCtrl.text).clamp(0.0, 100.0).toDouble();
   double get computedFineWeight => grossWeight * (purity / 100.0);
-  double get fineWeight => computedFineWeight;
+  double get fineWeight => _roundGoldWeight(computedFineWeight);
   bool get hasInput => grossWeight > 0 || purity > 0;
 
   void setValues(double grossWeight, double purity) {
@@ -114,7 +122,7 @@ extension DueReturnTypeLabel on DueReturnType {
 class GoldPaymentController extends ChangeNotifier {
   static const double metalGstRatePercent = 5.0;
   static const double cashGstRatePercent = 3.0;
-  static const double _epsilon = 0.005;
+  static const double _epsilon = 0.0005;
 
   final TextEditingController todayRatePer10gCtrl = TextEditingController();
   final TextEditingController metalGstPercentCtrl = TextEditingController(
@@ -169,13 +177,16 @@ class GoldPaymentController extends ChangeNotifier {
     if (_discountMode != GoldDiscountMode.fine) {
       return 0.0;
     }
-    return discountInput.clamp(0.0, _totalFineFromItems).toDouble();
+    return _roundGoldWeight(
+      discountInput.clamp(0.0, _totalFineFromItems).toDouble(),
+    );
   }
 
-  double get discountedFineFromItems =>
-      (_totalFineFromItems - fineDiscountWeight)
-          .clamp(0.0, double.infinity)
-          .toDouble();
+  double get discountedFineFromItems => _roundGoldWeight(
+        (_totalFineFromItems - fineDiscountWeight)
+            .clamp(0.0, double.infinity)
+            .toDouble(),
+      );
   double get fineValueBeforeCashDiscount =>
       discountedFineFromItems * todayRatePerGram;
   double get cashDiscountAmount {
@@ -227,8 +238,9 @@ class GoldPaymentController extends ChangeNotifier {
         .toDouble();
   }
 
-  double get previousDueFineEquivalent =>
-      todayRatePerGram > 0 ? previousDueAdjustment / todayRatePerGram : 0.0;
+  double get previousDueFineEquivalent => todayRatePerGram > 0
+      ? _roundGoldWeight(previousDueAdjustment / todayRatePerGram)
+      : 0.0;
 
   double get fineValueAmount => fineValueBeforeCashDiscount;
   double get subTotalAmount =>
@@ -252,10 +264,13 @@ class GoldPaymentController extends ChangeNotifier {
     if (_paymentMode != PaymentMode.metalToMetal) {
       return 0.0;
     }
-    return _metalLines.fold(0.0, (sum, line) => sum + line.fineWeight);
+    return _roundGoldWeight(
+      _metalLines.fold(0.0, (sum, line) => sum + line.fineWeight),
+    );
   }
 
-  double get fineDifference => fineReceived - totalFineFromItems;
+  double get fineDifference =>
+      _roundGoldWeight(fineReceived - totalFineFromItems);
   bool get isExtraMetal => fineDifference > _epsilon;
   bool get isDueMetal => fineDifference < -_epsilon;
   double get fineShortage => isDueMetal ? fineDifference.abs() : 0.0;
@@ -268,7 +283,9 @@ class GoldPaymentController extends ChangeNotifier {
     if (_paymentMode != PaymentMode.metalToMetal) {
       return 0.0;
     }
-    return fineReceived.clamp(0.0, totalFineFromItems).toDouble();
+    return _roundGoldWeight(
+      fineReceived.clamp(0.0, totalFineFromItems).toDouble(),
+    );
   }
 
   double get metalAppliedValue => metalAppliedFine * todayRatePerGram;
@@ -359,7 +376,7 @@ class GoldPaymentController extends ChangeNotifier {
     required double making,
     bool notify = true,
   }) {
-    final nextFine = fine < 0 ? 0.0 : fine;
+    final nextFine = _roundGoldWeight(fine);
     final nextMaking = making < 0 ? 0.0 : making;
     if (_near(_totalFineFromItems, nextFine) &&
         _near(_totalMakingFromItems, nextMaking)) {
