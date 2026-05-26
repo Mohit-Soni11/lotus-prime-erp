@@ -89,6 +89,8 @@ class _GoldInvoiceCardState extends State<GoldInvoiceCard> {
                         children: [
                           Text(
                             'INVOICE NUMBER',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w900,
@@ -101,6 +103,8 @@ class _GoldInvoiceCardState extends State<GoldInvoiceCard> {
                             widget.ctrl.gstEnabled
                                 ? 'Tax Intake Reference'
                                 : 'Standard Stock Intake',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -131,7 +135,7 @@ class _GoldInvoiceCardState extends State<GoldInvoiceCard> {
           const SizedBox(height: 12),
           LayoutBuilder(
             builder: (context, constraints) {
-              final stacked = constraints.maxWidth < 560;
+              final stacked = constraints.maxWidth < 700;
 
               final invoiceBlock = Row(
                 mainAxisSize: MainAxisSize.min,
@@ -166,14 +170,23 @@ class _GoldInvoiceCardState extends State<GoldInvoiceCard> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        widget.ctrl.batchCode,
-                        style: GoogleFonts.manrope(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.0,
-                          color: accent,
-                          height: 1,
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 230),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            widget.ctrl.batchCode,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: GoogleFonts.manrope(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.0,
+                              color: accent,
+                              height: 1,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -452,6 +465,8 @@ class _StatusPill extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               fontSize: 10,
               fontWeight: FontWeight.w900,
@@ -551,6 +566,8 @@ class _DateChip extends StatelessWidget {
             children: [
               Text(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   fontSize: 9,
                   fontWeight: FontWeight.w900,
@@ -559,14 +576,20 @@ class _DateChip extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              Text(
-                value,
-                style: GoogleFonts.manrope(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.3,
-                  color: valueColor,
-                  height: 1,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  softWrap: false,
+                  style: GoogleFonts.manrope(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.3,
+                    color: valueColor,
+                    height: 1,
+                  ),
                 ),
               ),
             ],

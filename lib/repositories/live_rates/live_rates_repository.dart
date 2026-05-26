@@ -25,8 +25,11 @@ class LiveRatesRepository {
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
     final query = _db.select(_db.dailyRates)
-      ..where((r) => r.rateDate.isBetweenValues(startOfDay, endOfDay))
-      ..orderBy([(r) => OrderingTerm.desc(r.updatedAt)])
+      ..where((r) => r.rateDate.isSmallerThanValue(endOfDay))
+      ..orderBy([
+        (r) => OrderingTerm.desc(r.rateDate),
+        (r) => OrderingTerm.desc(r.updatedAt),
+      ])
       ..limit(1);
 
     _dailyRateSub = query.watchSingleOrNull().listen(
@@ -46,8 +49,11 @@ class LiveRatesRepository {
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
     final rate = await (_db.select(_db.dailyRates)
-          ..where((r) => r.rateDate.isBetweenValues(startOfDay, endOfDay))
-          ..orderBy([(r) => OrderingTerm.desc(r.updatedAt)])
+          ..where((r) => r.rateDate.isSmallerThanValue(endOfDay))
+          ..orderBy([
+            (r) => OrderingTerm.desc(r.rateDate),
+            (r) => OrderingTerm.desc(r.updatedAt),
+          ])
           ..limit(1))
         .getSingleOrNull();
     _emitRate(rate);
@@ -60,7 +66,6 @@ class LiveRatesRepository {
 
     if (rate == null) {
       _ratesController.add(LiveRatesModel.demo);
-      debugPrint('No rates for today. Showing demo data.');
       return;
     }
 

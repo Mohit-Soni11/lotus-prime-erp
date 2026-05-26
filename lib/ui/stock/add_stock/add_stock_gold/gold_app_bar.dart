@@ -71,15 +71,22 @@ class _GoldAppBarState extends State<GoldAppBar>
           const SizedBox(width: 16),
 
           // â”€â”€ TITLE â”€â”€
-          Text(
-            GoldStockStrings.headerTitle,
-            style: GoldStockStyles.shellTitle,
+          Expanded(
+            child: Text(
+              GoldStockStrings.headerTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoldStockStyles.shellTitle,
+            ),
           ),
 
-          const Spacer(),
+          const SizedBox(width: 16),
 
           // â”€â”€ SYSTEM ONLINE RADAR â”€â”€
-          _buildSystemOnlineBadge(),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 180),
+            child: _buildSystemOnlineBadge(),
+          ),
         ],
       ),
     );
@@ -154,11 +161,15 @@ class _GoldAppBarState extends State<GoldAppBar>
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            GoldStockStrings.systemOnline,
-            style: GoldStockStyles.tagLine.copyWith(
-              color: GoldStockColors.success,
-              fontWeight: FontWeight.w800,
+          Flexible(
+            child: Text(
+              GoldStockStrings.systemOnline,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoldStockStyles.tagLine.copyWith(
+                color: GoldStockColors.success,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ],

@@ -114,6 +114,8 @@ class _PaymentHeader extends StatelessWidget {
               children: [
                 Text(
                   'Payment & Settlement'.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
@@ -124,6 +126,8 @@ class _PaymentHeader extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   'Invoice calculation, discounts and supplier settlement.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -134,7 +138,10 @@ class _PaymentHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          _StatusPill(label: gstLabel, color: accent),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 220),
+            child: _StatusPill(label: gstLabel, color: accent),
+          ),
         ],
       ),
     );
@@ -448,6 +455,8 @@ class _GstPercentBoard extends StatelessWidget {
                   metalActive
                       ? 'Metal to Metal settlement applies the metal GST rate.'
                       : 'Cash / Bank settlement applies the cash GST rate.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -836,6 +845,8 @@ class _PreviousDueAdjustmentPanel extends StatelessWidget {
                   children: [
                     Text(
                       'SUPPLIER OPENING DUE',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
@@ -846,6 +857,8 @@ class _PreviousDueAdjustmentPanel extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       'Outstanding balance: ${_money(payment.supplierPreviousDue)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -950,6 +963,8 @@ class _ReadOnlyMetricBox extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: GoogleFonts.inter(
             fontSize: 10,
             fontWeight: FontWeight.w900,
@@ -967,12 +982,18 @@ class _ReadOnlyMetricBox extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: color.withValues(alpha: 0.18)),
           ),
-          child: Text(
-            value,
-            style: GoogleFonts.manrope(
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              color: color,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              softWrap: false,
+              style: GoogleFonts.manrope(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: color,
+              ),
             ),
           ),
         ),
@@ -1180,6 +1201,8 @@ class _CashTargetNote extends StatelessWidget {
                   children: [
                     Text(
                       title.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
@@ -1190,6 +1213,8 @@ class _CashTargetNote extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -1199,12 +1224,22 @@ class _CashTargetNote extends StatelessWidget {
                   ],
                 ),
               ),
-              Text(
-                _money(payment.cashTargetAmount),
-                style: GoogleFonts.manrope(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: GoldStockColors.paymentPrimary,
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 128,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    _money(payment.cashTargetAmount),
+                    maxLines: 1,
+                    softWrap: false,
+                    style: GoogleFonts.manrope(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: GoldStockColors.paymentPrimary,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -1254,6 +1289,8 @@ class _TargetLine extends StatelessWidget {
           Expanded(
             child: Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -1261,12 +1298,21 @@ class _TargetLine extends StatelessWidget {
               ),
             ),
           ),
-          Text(
-            value,
-            style: GoogleFonts.manrope(
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-              color: valueColor ?? GoldStockColors.textDark,
+          const SizedBox(width: 12),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(
+                value,
+                maxLines: 1,
+                softWrap: false,
+                style: GoogleFonts.manrope(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  color: valueColor ?? GoldStockColors.textDark,
+                ),
+              ),
             ),
           ),
         ],
@@ -1391,6 +1437,8 @@ class _FinalSettlementCard extends StatelessWidget {
                   children: [
                     Text(
                       title.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
@@ -1401,6 +1449,8 @@ class _FinalSettlementCard extends StatelessWidget {
                     const SizedBox(height: 5),
                     Text(
                       summaryText,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -1411,12 +1461,21 @@ class _FinalSettlementCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
-                snapshot.isSettled ? 'OK' : _money(amount),
-                style: GoogleFonts.manrope(
-                  fontSize: snapshot.isSettled ? 22 : 20,
-                  fontWeight: FontWeight.w900,
-                  color: tone,
+              SizedBox(
+                width: 128,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    snapshot.isSettled ? 'OK' : _money(amount),
+                    maxLines: 1,
+                    softWrap: false,
+                    style: GoogleFonts.manrope(
+                      fontSize: snapshot.isSettled ? 22 : 20,
+                      fontWeight: FontWeight.w900,
+                      color: tone,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -1569,6 +1628,8 @@ class _SectionHeader extends StatelessWidget {
             children: [
               Text(
                 title.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
@@ -1579,6 +1640,8 @@ class _SectionHeader extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -1638,6 +1701,8 @@ class _PaymentModeTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.manrope(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
@@ -1752,6 +1817,8 @@ class _PaymentInput extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: GoogleFonts.inter(
             fontSize: 10,
             fontWeight: FontWeight.w900,
@@ -1848,6 +1915,8 @@ class _MiniMetric extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               fontSize: 10,
               fontWeight: FontWeight.w900,
@@ -1856,18 +1925,26 @@ class _MiniMetric extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 7),
-          Text(
-            value,
-            style: GoogleFonts.manrope(
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
-              color: GoldStockColors.textDark,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              softWrap: false,
+              style: GoogleFonts.manrope(
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+                color: GoldStockColors.textDark,
+              ),
             ),
           ),
           if (caption != null) ...[
             const SizedBox(height: 3),
             Text(
               caption!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -1899,22 +1976,34 @@ class _StatementRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: emphasized ? 13 : 12,
-              fontWeight: emphasized ? FontWeight.w800 : FontWeight.w600,
-              color: GoldStockColors.textBody,
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: emphasized ? 13 : 12,
+                fontWeight: emphasized ? FontWeight.w800 : FontWeight.w600,
+                color: GoldStockColors.textBody,
+              ),
             ),
           ),
-          Text(
-            value,
-            style: GoogleFonts.manrope(
-              fontSize: emphasized ? 18 : 14,
-              fontWeight: FontWeight.w900,
-              color: valueColor ?? GoldStockColors.textDark,
+          const SizedBox(width: 12),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(
+                value,
+                maxLines: 1,
+                softWrap: false,
+                style: GoogleFonts.manrope(
+                  fontSize: emphasized ? 18 : 14,
+                  fontWeight: FontWeight.w900,
+                  color: valueColor ?? GoldStockColors.textDark,
+                ),
+              ),
             ),
           ),
         ],
@@ -1962,6 +2051,8 @@ class _StatusPill extends StatelessWidget {
       ),
       child: Text(
         label.toUpperCase(),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: GoogleFonts.inter(
           fontSize: 9,
           fontWeight: FontWeight.w900,

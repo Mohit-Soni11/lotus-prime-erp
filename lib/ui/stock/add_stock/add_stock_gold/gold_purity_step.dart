@@ -577,6 +577,8 @@ class _HeroBanner extends StatelessWidget {
               children: [
                 Text(
                   'Gold Stock Intake',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.manrope(
                     fontSize: 21,
                     fontWeight: FontWeight.w900,
@@ -586,6 +588,8 @@ class _HeroBanner extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Set the batch grade before entering items, wastage and supplier settlement.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     height: 1.45,
@@ -604,6 +608,8 @@ class _HeroBanner extends StatelessWidget {
             ),
             child: Text(
               selected.isEmpty ? 'GRADE OPEN' : selected,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
@@ -738,6 +744,8 @@ class _StockGroupRow extends StatelessWidget {
               children: [
                 Text(
                   group.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.manrope(
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
@@ -747,6 +755,8 @@ class _StockGroupRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   group.description,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -757,26 +767,37 @@ class _StockGroupRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${group.fineWeight.toStringAsFixed(4)} g',
-                style: GoogleFonts.manrope(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  color: group.color,
+          SizedBox(
+            width: 90,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    '${group.fineWeight.toStringAsFixed(4)} g',
+                    maxLines: 1,
+                    softWrap: false,
+                    style: GoogleFonts.manrope(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      color: group.color,
+                    ),
+                  ),
                 ),
-              ),
-              Text(
-                'Total Fine',
-                style: GoogleFonts.inter(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: GoldStockColors.textMuted,
+                Text(
+                  'Total Fine',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: GoldStockColors.textMuted,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

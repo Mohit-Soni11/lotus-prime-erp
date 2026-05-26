@@ -15,8 +15,7 @@ class AddGoldStockSupplierPanel extends StatefulWidget {
       _AddGoldStockSupplierPanelState();
 }
 
-class _AddGoldStockSupplierPanelState
-    extends State<AddGoldStockSupplierPanel>
+class _AddGoldStockSupplierPanelState extends State<AddGoldStockSupplierPanel>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animCtrl;
   late final Animation<double> _fadeAnim;
@@ -294,6 +293,8 @@ class _AddGoldStockSupplierPanelState
             children: [
               Text(
                 GoldStockStrings.supplierProfileTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: GoldStockStyles.pageTitle.copyWith(
                   fontSize: 18,
                   letterSpacing: 0.8,
@@ -302,6 +303,8 @@ class _AddGoldStockSupplierPanelState
               const SizedBox(height: 2),
               Text(
                 GoldStockStrings.supplierProfileDesc,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: GoldStockStyles.caption.copyWith(
                   fontSize: 12,
                   height: 1.45,
@@ -329,8 +332,7 @@ class _AddGoldStockSupplierPanelState
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color:
-                        GoldStockColors.brandGold.withValues(alpha: 0.35),
+                    color: GoldStockColors.brandGold.withValues(alpha: 0.35),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -527,7 +529,8 @@ class _AddGoldStockSupplierPanelState
               ),
             ),
             const SizedBox(width: 6),
-            Flexible(
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 170),
               child: Text(
                 label,
                 overflow: TextOverflow.ellipsis,
@@ -641,6 +644,8 @@ class _GoldSupplierLookupDropdown extends StatelessWidget {
             ),
             title: Text(
               supplier.businessName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoldStockStyles.sectionTitle.copyWith(
                 color: GoldStockColors.textDark,
               ),
@@ -650,6 +655,8 @@ class _GoldSupplierLookupDropdown extends StatelessWidget {
                 supplier.mobile,
                 supplier.supplierType.label,
               ].where((v) => v.isNotEmpty).join(' | '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoldStockStyles.caption.copyWith(fontSize: 12),
             ),
             onTap: () => onSelected(supplier),
@@ -698,12 +705,16 @@ class _GoldPrimaryActionChip extends StatelessWidget {
           children: [
             Icon(icon, color: Colors.white, size: 16),
             const SizedBox(width: 6),
-            Text(
-              title,
-              style: GoldStockStyles.caption.copyWith(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            Flexible(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoldStockStyles.caption.copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
           ],
@@ -741,12 +752,17 @@ class _GoldStatusBadge extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: GoldStockStyles.caption.copyWith(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: GoldStockColors.goldAccent,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 150),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoldStockStyles.caption.copyWith(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: GoldStockColors.goldAccent,
+              ),
             ),
           ),
         ],

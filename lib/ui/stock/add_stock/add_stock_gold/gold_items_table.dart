@@ -129,33 +129,39 @@ class GoldItemsTable extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'INVOICE ITEMS',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.4,
-                  color: GoldStockColors.textDark,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'INVOICE ITEMS',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.4,
+                    color: GoldStockColors.textDark,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                needsHorizontalScroll
-                    ? 'Scroll to review every column. Capture pieces, lot weight and flat less weight.'
-                    : 'Enter total pieces and combined lot weight. Less Weight is deducted once from the lot.',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: GoldStockColors.textMuted,
+                const SizedBox(height: 4),
+                Text(
+                  needsHorizontalScroll
+                      ? 'Scroll to review every column. Capture pieces, lot weight and flat less weight.'
+                      : 'Enter total pieces and combined lot weight. Less Weight is deducted once from the lot.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: GoldStockColors.textMuted,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const Spacer(),
+          const SizedBox(width: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
@@ -180,6 +186,8 @@ class GoldItemsTable extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   'ITEMS : $count',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
@@ -464,6 +472,7 @@ class GoldItemsTable extends StatelessWidget {
 
   Widget _buildTotalBox(String label, String value, Color color) {
     return Container(
+      constraints: const BoxConstraints(minWidth: 66, maxWidth: 132),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
@@ -475,6 +484,8 @@ class GoldItemsTable extends StatelessWidget {
         children: [
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 10,
@@ -483,12 +494,18 @@ class GoldItemsTable extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 14,
-              color: color,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
+            child: Text(
+              value,
+              maxLines: 1,
+              softWrap: false,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 14,
+                color: color,
+              ),
             ),
           ),
         ],

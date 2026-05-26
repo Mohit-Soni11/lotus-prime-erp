@@ -65,6 +65,8 @@ class GoldBatchOverviewCard extends StatelessWidget {
                         children: [
                           Text(
                             'BATCH OVERVIEW',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w900,
@@ -75,6 +77,8 @@ class GoldBatchOverviewCard extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             '${ui.title} intake • ${ctrl.enteredRowCount} entered row${ctrl.enteredRowCount == 1 ? '' : 's'}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -193,6 +197,8 @@ class GoldBatchOverviewCard extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: GoogleFonts.inter(
           fontSize: 12,
           fontWeight: FontWeight.w800,
@@ -244,6 +250,8 @@ class _GstStatusPill extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               isGst ? 'GST BILL' : 'NORMAL',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
@@ -310,13 +318,19 @@ class _StatTile extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          Text(
-            value,
-            style: GoogleFonts.manrope(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              color: AddStockColors.textDark,
-              height: 1,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              softWrap: false,
+              style: GoogleFonts.manrope(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: AddStockColors.textDark,
+                height: 1,
+              ),
             ),
           ),
         ],

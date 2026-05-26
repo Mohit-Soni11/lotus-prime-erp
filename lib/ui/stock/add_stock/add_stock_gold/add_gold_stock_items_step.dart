@@ -355,6 +355,8 @@ class _ActionColumn extends StatelessWidget {
             ctrl.rowsWithErrorsCount == 0
                 ? 'Ready to save ${ctrl.totalQuantity} pcs in ${ctrl.enteredRowCount} row${ctrl.enteredRowCount == 1 ? '' : 's'}'
                 : '${ctrl.rowsWithErrorsCount} row${ctrl.rowsWithErrorsCount == 1 ? '' : 's'} need attention',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -377,6 +379,8 @@ class _ActionColumn extends StatelessWidget {
             ),
             child: Text(
               ctrl.errorMessage!,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -416,6 +420,8 @@ class _ActionColumn extends StatelessWidget {
                   ),
             label: Text(
               ctrl.isSaving ? AddStockStrings.btnSaving : 'SAVE Gold BATCH',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.manrope(
                 fontSize: 13,
                 fontWeight: FontWeight.w900,
@@ -447,6 +453,8 @@ class _ActionColumn extends StatelessWidget {
       ),
       child: Text(
         AddStockStrings.btnBackPurity,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: accent),
       ),
     );
@@ -462,6 +470,8 @@ class _ActionColumn extends StatelessWidget {
       ),
       child: Text(
         AddStockStrings.btnResetBatch,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: GoogleFonts.inter(
           fontWeight: FontWeight.w700,
           color: AddStockColors.textBody,
@@ -497,6 +507,8 @@ class _ActionMetric extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               fontSize: 10,
               fontWeight: FontWeight.w900,
@@ -505,12 +517,18 @@ class _ActionMetric extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: GoogleFonts.manrope(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: GoldStockColors.textDark,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              softWrap: false,
+              style: GoogleFonts.manrope(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: GoldStockColors.textDark,
+              ),
             ),
           ),
         ],

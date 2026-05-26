@@ -334,14 +334,22 @@ class _GoldItemRowState extends State<GoldItemRow> {
         borderRadius: BorderRadius.circular(_invoiceFieldRadius),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
-      child: Text(
-        value,
-        textAlign: align,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w900,
-          fontSize: isBold ? 16 : 15,
-          fontFeatures: const [FontFeature.tabularFigures()],
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: align == TextAlign.center
+            ? Alignment.center
+            : Alignment.centerRight,
+        child: Text(
+          value,
+          maxLines: 1,
+          softWrap: false,
+          textAlign: align,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w900,
+            fontSize: isBold ? 16 : 15,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
         ),
       ),
     );

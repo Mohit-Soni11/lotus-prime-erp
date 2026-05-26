@@ -99,6 +99,8 @@ class _PanelHeader extends StatelessWidget {
               children: [
                 Text(
                   GoldStockStrings.invoiceSummaryTitle.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
@@ -109,6 +111,8 @@ class _PanelHeader extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   GoldStockStrings.invoiceSummarySubtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -118,11 +122,14 @@ class _PanelHeader extends StatelessWidget {
               ],
             ),
           ),
-          _StatusPill(
-            label: summary.gstEnabled
-                ? GoldStockStrings.gstIncludedLabel
-                : GoldStockStrings.gstExcludedLabel,
-            color: accent,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 170),
+            child: _StatusPill(
+              label: summary.gstEnabled
+                  ? GoldStockStrings.gstIncludedLabel
+                  : GoldStockStrings.gstExcludedLabel,
+              color: accent,
+            ),
           ),
         ],
       ),
@@ -231,6 +238,8 @@ class _SnapshotList extends StatelessWidget {
                   children: [
                     Text(
                       GoldStockStrings.invoiceSnapshotTitle.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
@@ -241,6 +250,8 @@ class _SnapshotList extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       GoldStockStrings.invoiceSnapshotSubtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -313,6 +324,8 @@ class _SnapshotRow extends StatelessWidget {
                       item.itemName.isEmpty
                           ? 'Untitled Gold Line'
                           : item.itemName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.manrope(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
@@ -343,28 +356,39 @@ class _SnapshotRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    GoldStockStrings.lineTotalLabel.toUpperCase(),
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.9,
-                      color: GoldStockColors.textMuted,
+              SizedBox(
+                width: 118,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      GoldStockStrings.lineTotalLabel.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.9,
+                        color: GoldStockColors.textMuted,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _money(item.totalAmount),
-                    style: GoogleFonts.manrope(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w900,
-                      color: GoldStockColors.paymentPrimary,
+                    const SizedBox(height: 4),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        _money(item.totalAmount),
+                        maxLines: 1,
+                        softWrap: false,
+                        style: GoogleFonts.manrope(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          color: GoldStockColors.paymentPrimary,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -480,6 +504,8 @@ class _MetricTile extends StatelessWidget {
         children: [
           Text(
             data.label.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               fontSize: 10,
               fontWeight: FontWeight.w900,
@@ -488,18 +514,26 @@ class _MetricTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            data.value,
-            style: GoogleFonts.manrope(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: GoldStockColors.textDark,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              data.value,
+              maxLines: 1,
+              softWrap: false,
+              style: GoogleFonts.manrope(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: GoldStockColors.textDark,
+              ),
             ),
           ),
           if (data.caption != null) ...[
             const SizedBox(height: 4),
             Text(
               data.caption!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -521,6 +555,7 @@ class _MetaChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 190),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: GoldStockColors.invoiceChipBg,
@@ -529,6 +564,8 @@ class _MetaChip extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: GoogleFonts.inter(
           fontSize: 11,
           fontWeight: FontWeight.w700,
@@ -548,6 +585,7 @@ class _DetailPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 230),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: GoldStockColors.cardBg,
@@ -555,6 +593,8 @@ class _DetailPill extends StatelessWidget {
         border: Border.all(color: GoldStockColors.cardBorder),
       ),
       child: RichText(
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         text: TextSpan(
           children: [
             TextSpan(
@@ -596,22 +636,34 @@ class _SummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: emphasized ? 13 : 12,
-            fontWeight: emphasized ? FontWeight.w800 : FontWeight.w600,
-            color: GoldStockColors.textBody,
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: emphasized ? 13 : 12,
+              fontWeight: emphasized ? FontWeight.w800 : FontWeight.w600,
+              color: GoldStockColors.textBody,
+            ),
           ),
         ),
-        Text(
-          value,
-          style: GoogleFonts.manrope(
-            fontSize: emphasized ? 18 : 14,
-            fontWeight: FontWeight.w900,
-            color: valueColor ?? GoldStockColors.textDark,
+        const SizedBox(width: 12),
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
+            child: Text(
+              value,
+              maxLines: 1,
+              softWrap: false,
+              style: GoogleFonts.manrope(
+                fontSize: emphasized ? 18 : 14,
+                fontWeight: FontWeight.w900,
+                color: valueColor ?? GoldStockColors.textDark,
+              ),
+            ),
           ),
         ),
       ],
@@ -665,6 +717,8 @@ class _StatusPill extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: GoogleFonts.inter(
           fontSize: 10,
           fontWeight: FontWeight.w900,
