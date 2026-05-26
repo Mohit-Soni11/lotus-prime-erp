@@ -156,7 +156,8 @@ class _RateAndInvoiceBoard extends StatelessWidget {
           const _SectionHeader(
             icon: GoldStockIcons.rateChart,
             title: 'Invoice Calculation',
-            subtitle: 'Rate, fine value, making charges and tax summary.',
+            subtitle:
+                '24K market rate, fine value, making charges and tax summary.',
           ),
           const SizedBox(height: 14),
           LayoutBuilder(
@@ -203,11 +204,12 @@ class _RateInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _PaymentInput(
-      label: 'Rate Per Kg',
+      label: '24K Rate / 10g',
       hint: '0.00',
-      suffixText: '/kg',
+      suffixText: '/10g',
+      prefixText: 'Rs ',
       icon: GoldStockIcons.rateChart,
-      controller: payment.todayRatePerKgCtrl,
+      controller: payment.todayRatePer10gCtrl,
     );
   }
 }
@@ -1773,7 +1775,7 @@ class _PaymentInput extends StatelessWidget {
             ),
             decoration: InputDecoration(
               hintText: hint,
-              prefixText: prefixText ?? (suffixText == '/kg' ? 'Rs ' : null),
+              prefixText: prefixText ?? (suffixText == '/10g' ? 'Rs ' : null),
               suffixText: suffixText,
               prefixIcon: Icon(
                 icon,
@@ -1980,4 +1982,4 @@ String _money(double amount) {
   return formatter.format(amount);
 }
 
-String _weight(double value) => '${value.toStringAsFixed(3)} g';
+String _weight(double value) => '${value.toStringAsFixed(4)} g';

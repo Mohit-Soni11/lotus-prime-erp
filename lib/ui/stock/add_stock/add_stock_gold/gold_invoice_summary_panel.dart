@@ -152,7 +152,7 @@ class _MetricGrid extends StatelessWidget {
       ),
       _MetricTileData(
         label: GoldStockStrings.totalFineLabel,
-        value: '${summary.totalFineWeight.toStringAsFixed(3)} g',
+        value: '${summary.totalFineWeight.toStringAsFixed(4)} g',
         tone: GoldStockColors.paymentFine,
       ),
       _MetricTileData(
@@ -383,7 +383,7 @@ class _SnapshotRow extends StatelessWidget {
               ),
               _DetailPill(
                 label: GoldStockStrings.totalFineLabel,
-                value: '${item.fineWeight.toStringAsFixed(3)} g',
+                value: '${item.fineWeight.toStringAsFixed(4)} g',
               ),
               _DetailPill(
                 label: GoldStockStrings.makingTotalLabel,

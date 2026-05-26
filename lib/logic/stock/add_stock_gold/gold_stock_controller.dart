@@ -88,7 +88,7 @@ class GoldStockController extends AddStockController {
       paymentMode: payment.paymentMode,
       settlementPreference: payment.metalDueReturnType,
       discountMode: payment.discountMode,
-      ratePerKg: payment.todayRatePerKg,
+      ratePer10g: payment.todayRatePer10g,
       ratePerGram: payment.todayRatePerGram,
       grossFineWeight: payment.grossFineFromItems,
       payableFineWeight: payment.totalFineFromItems,
@@ -383,7 +383,7 @@ class GoldStockController extends AddStockController {
     if (rowsToSave.isEmpty) {
       return null;
     }
-    if (payment.todayRatePerKg <= 0) {
+    if (payment.todayRatePer10g <= 0) {
       return 'Enter the Gold invoice rate before saving this batch.';
     }
     return null;
@@ -427,7 +427,7 @@ class GoldStockController extends AddStockController {
       cardPaid: snapshot.cardPaid,
       totalPaid: snapshot.totalPaidValue,
       balanceDue: snapshot.dueAmount,
-      ratePerKg: snapshot.ratePerKg,
+      ratePerKg: snapshot.ratePer10g,
       metalPaidGrossWeight: snapshot.metalGrossWeight,
       metalPaidPurity: snapshot.metalPurity,
       metalPaidFine: snapshot.metalFineCalculated,
@@ -652,41 +652,26 @@ class GoldStockController extends AddStockController {
     try {
       final masterProfile =
           await MetalRateRepository().loadProfile(MetalRateMetal.gold);
-      final selectedKey = _normaliseGoldRateKey(_defaultGoldPurityLabel());
-      var masterRate = 0.0;
-      for (final plan in masterProfile.purityPlans) {
-        final planKey = _normaliseGoldRateKey(plan.label);
-        if (planKey == selectedKey) {
-          masterRate = plan.manualDisplayRatePer10g > 0
-              ? plan.manualDisplayRatePer10g
-              : masterProfile.marketBaseRatePer10g * plan.purityFactor;
-          break;
-        }
-      }
-      if (masterRate <= 0 && masterProfile.purityPlans.isNotEmpty) {
-        final first = masterProfile.purityPlans.first;
-        masterRate = first.manualDisplayRatePer10g > 0
-            ? first.manualDisplayRatePer10g
-            : masterProfile.marketBaseRatePer10g * first.purityFactor;
-      }
-
       final latestRate = await (_rateDb.select(_rateDb.dailyRates)
             ..orderBy([(r) => drift.OrderingTerm.desc(r.rateDate)])
             ..limit(1))
           .getSingleOrNull();
+      final masterRate = _gold24kMarketRatePer10g(masterProfile);
+      final latest24kRate =
+          latestRate == null ? 0.0 : _parseGoldRate(latestRate.gold24k);
 
       if (masterRate > 0) {
         _goldRatePer10g = masterRate;
         _goldRateDate = masterProfile.updatedAt;
-      } else if (latestRate != null) {
-        _goldRatePer10g = _dailyRateForPurity(latestRate, selectedKey);
-        _goldRateDate = latestRate.rateDate;
+      } else if (latest24kRate > 0) {
+        _goldRatePer10g = latest24kRate;
+        _goldRateDate = latestRate!.rateDate;
       } else {
         _goldRatePer10g = 0.0;
         _goldRateDate = null;
       }
 
-      payment.setTodayRate(goldRatePerGram * 1000);
+      payment.setTodayRatePer10g(_goldRatePer10g);
 
       for (final row in _goldRows) {
         row.applyPurchaseRate(goldRatePerGram);
@@ -755,21 +740,25 @@ class GoldStockController extends AddStockController {
     return normalized.replaceAll(' ', '');
   }
 
-  double _dailyRateForPurity(DailyRate latestRate, String selectedKey) {
-    return switch (selectedKey) {
-      '24K' => _parseGoldRate(latestRate.gold24k),
-      '18K' => _parseGoldRate(latestRate.gold18k),
-      '14K' => _deriveRateFrom24k(latestRate, 0.585),
-      '9K' => _deriveRateFrom24k(latestRate, 0.375),
-      _ => _parseGoldRate(latestRate.gold22k) > 0
-          ? _parseGoldRate(latestRate.gold22k)
-          : _deriveRateFrom24k(latestRate, 0.916),
-    };
-  }
+  double _gold24kMarketRatePer10g(MetalRateProfile profile) {
+    if (profile.physicalMarketRatePer10g > 0) {
+      return profile.physicalMarketRatePer10g;
+    }
 
-  double _deriveRateFrom24k(DailyRate latestRate, double purityFactor) {
-    final rate24k = _parseGoldRate(latestRate.gold24k);
-    return rate24k > 0 ? rate24k * purityFactor : 0.0;
+    for (final plan in profile.purityPlans) {
+      if (_normaliseGoldRateKey(plan.label) == '24K' &&
+          plan.manualDisplayRatePer10g > 0) {
+        return plan.manualDisplayRatePer10g;
+      }
+    }
+
+    if (profile.marketRatePer10g > 0) {
+      return profile.marketRatePer10g;
+    }
+    if (profile.mcxRatePer10g > 0) {
+      return profile.mcxRatePer10g;
+    }
+    return profile.marketBaseRatePer10g;
   }
 
   StockSubCategory _mapGoldSubCategory(String categoryLabel) {

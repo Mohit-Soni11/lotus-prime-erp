@@ -116,7 +116,7 @@ class GoldPaymentController extends ChangeNotifier {
   static const double cashGstRatePercent = 3.0;
   static const double _epsilon = 0.005;
 
-  final TextEditingController todayRatePerKgCtrl = TextEditingController();
+  final TextEditingController todayRatePer10gCtrl = TextEditingController();
   final TextEditingController metalGstPercentCtrl = TextEditingController(
     text: '5',
   );
@@ -131,7 +131,7 @@ class GoldPaymentController extends ChangeNotifier {
       TextEditingController();
   final TextEditingController discountCtrl = TextEditingController();
 
-  double _todayRatePerKg = 0.0;
+  double _todayRatePer10g = 0.0;
   double _totalFineFromItems = 0.0;
   double _totalMakingFromItems = 0.0;
   double _supplierPreviousDue = 0.0;
@@ -145,7 +145,7 @@ class GoldPaymentController extends ChangeNotifier {
   final List<GoldMetalSettlementLine> _metalLines = [];
 
   GoldPaymentController() {
-    todayRatePerKgCtrl.addListener(_handleRateChanged);
+    todayRatePer10gCtrl.addListener(_handleRateChanged);
     metalGstPercentCtrl.addListener(_handleInputChanged);
     cashGstPercentCtrl.addListener(_handleInputChanged);
     cashCtrl.addListener(_handleInputChanged);
@@ -156,9 +156,9 @@ class GoldPaymentController extends ChangeNotifier {
     discountCtrl.addListener(_handleInputChanged);
   }
 
-  double get todayRatePerKg => _todayRatePerKg;
+  double get todayRatePer10g => _todayRatePer10g;
   double get todayRatePerGram =>
-      _todayRatePerKg > 0 ? _todayRatePerKg / 1000 : 0.0;
+      _todayRatePer10g > 0 ? _todayRatePer10g / 10.0 : 0.0;
 
   double get grossFineFromItems => _totalFineFromItems;
   double get totalFineFromItems => discountedFineFromItems;
@@ -382,14 +382,14 @@ class GoldPaymentController extends ChangeNotifier {
     }
   }
 
-  void setTodayRate(double rate, {bool notify = true}) {
+  void setTodayRatePer10g(double rate, {bool notify = true}) {
     final next = rate < 0 ? 0.0 : rate;
-    if (_near(_todayRatePerKg, next)) {
-      _syncText(todayRatePerKgCtrl, _formatNumber(next, maxFraction: 2));
+    if (_near(_todayRatePer10g, next)) {
+      _syncText(todayRatePer10gCtrl, _formatNumber(next, maxFraction: 2));
       return;
     }
-    _todayRatePerKg = next;
-    _syncText(todayRatePerKgCtrl, _formatNumber(next, maxFraction: 2));
+    _todayRatePer10g = next;
+    _syncText(todayRatePer10gCtrl, _formatNumber(next, maxFraction: 2));
     if (notify) {
       notifyListeners();
     }
@@ -524,7 +524,7 @@ class GoldPaymentController extends ChangeNotifier {
     if (_syncingText) {
       return;
     }
-    _todayRatePerKg = _parseAmount(todayRatePerKgCtrl.text);
+    _todayRatePer10g = _parseAmount(todayRatePer10gCtrl.text);
     notifyListeners();
   }
 
@@ -568,7 +568,7 @@ class GoldPaymentController extends ChangeNotifier {
 
   @override
   void dispose() {
-    todayRatePerKgCtrl.dispose();
+    todayRatePer10gCtrl.dispose();
     for (final line in _metalLines) {
       line.removeListener(_handleInputChanged);
       line.disposeAll();

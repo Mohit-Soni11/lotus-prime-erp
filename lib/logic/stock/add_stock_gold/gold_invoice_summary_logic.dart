@@ -8,7 +8,7 @@ class GoldPaymentSnapshot {
   final PaymentMode paymentMode;
   final DueReturnType settlementPreference;
   final GoldDiscountMode discountMode;
-  final double ratePerKg;
+  final double ratePer10g;
   final double ratePerGram;
   final double grossFineWeight;
   final double payableFineWeight;
@@ -50,7 +50,7 @@ class GoldPaymentSnapshot {
     required this.paymentMode,
     required this.settlementPreference,
     required this.discountMode,
-    required this.ratePerKg,
+    required this.ratePer10g,
     required this.ratePerGram,
     required this.grossFineWeight,
     required this.payableFineWeight,

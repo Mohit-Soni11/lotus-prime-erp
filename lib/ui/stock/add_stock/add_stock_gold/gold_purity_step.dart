@@ -761,7 +761,7 @@ class _StockGroupRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${group.fineWeight.toStringAsFixed(3)} g',
+                '${group.fineWeight.toStringAsFixed(4)} g',
                 style: GoogleFonts.manrope(
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
