@@ -511,6 +511,12 @@ class PosBillingController extends ChangeNotifier {
         .replaceFirst(RegExp(r'\.$'), '');
   }
 
+  double _roundWeight3(double value) {
+    if (value == 0) return 0.0;
+    final rounded = (value * 1000).roundToDouble() / 1000.0;
+    return rounded == -0.0 ? 0.0 : rounded;
+  }
+
   // --- CORE STATES ---
   BillingMode billingMode = BillingMode.retail;
   BillType billType = BillType.normal;
@@ -689,36 +695,36 @@ class PosBillingController extends ChangeNotifier {
   double get _silverBhawPerGram => _silverBhawInput / 1000.0;
   double get _diaBhawPerCarat => _diaBhawInput;
 
-  double get goldSoldFine => saleItems
+  double get goldSoldFine => _roundWeight3(saleItems
       .where((i) => i.metal == MetalType.gold)
-      .fold(0, (sum, i) => sum + i.fineWt);
-  double get silverSoldFine => saleItems
+      .fold(0.0, (sum, i) => sum + i.fineWt));
+  double get silverSoldFine => _roundWeight3(saleItems
       .where((i) => i.metal == MetalType.silver)
-      .fold(0, (sum, i) => sum + i.fineWt);
-  double get platSoldFine => saleItems
+      .fold(0.0, (sum, i) => sum + i.fineWt));
+  double get platSoldFine => _roundWeight3(saleItems
       .where((i) => i.metal == MetalType.platinum)
-      .fold(0, (sum, i) => sum + i.fineWt);
-  double get diaSoldFine => saleItems
+      .fold(0.0, (sum, i) => sum + i.fineWt));
+  double get diaSoldFine => _roundWeight3(saleItems
       .where((i) => i.metal == MetalType.diamond)
-      .fold(0, (sum, i) => sum + i.fineWt);
+      .fold(0.0, (sum, i) => sum + i.fineWt));
 
-  double get goldJamaFine => oldGoldItems
+  double get goldJamaFine => _roundWeight3(oldGoldItems
       .where((i) => i.metal == MetalType.gold)
-      .fold(0, (sum, i) => sum + i.fineWt);
-  double get silverJamaFine => oldGoldItems
+      .fold(0.0, (sum, i) => sum + i.fineWt));
+  double get silverJamaFine => _roundWeight3(oldGoldItems
       .where((i) => i.metal == MetalType.silver)
-      .fold(0, (sum, i) => sum + i.fineWt);
-  double get platJamaFine => oldGoldItems
+      .fold(0.0, (sum, i) => sum + i.fineWt));
+  double get platJamaFine => _roundWeight3(oldGoldItems
       .where((i) => i.metal == MetalType.platinum)
-      .fold(0, (sum, i) => sum + i.fineWt);
-  double get diaJamaFine => oldGoldItems
+      .fold(0.0, (sum, i) => sum + i.fineWt));
+  double get diaJamaFine => _roundWeight3(oldGoldItems
       .where((i) => i.metal == MetalType.diamond)
-      .fold(0, (sum, i) => sum + i.fineWt);
+      .fold(0.0, (sum, i) => sum + i.fineWt));
 
-  double get goldNetFine => goldSoldFine - goldJamaFine;
-  double get silverNetFine => silverSoldFine - silverJamaFine;
-  double get platNetFine => platSoldFine - platJamaFine;
-  double get diaNetFine => diaSoldFine - diaJamaFine;
+  double get goldNetFine => _roundWeight3(goldSoldFine - goldJamaFine);
+  double get silverNetFine => _roundWeight3(silverSoldFine - silverJamaFine);
+  double get platNetFine => _roundWeight3(platSoldFine - platJamaFine);
+  double get diaNetFine => _roundWeight3(diaSoldFine - diaJamaFine);
 
   double get goldBhawAmt => goldNetFine * _goldBhawPerGram;
   double get silverBhawAmt => silverNetFine * _silverBhawPerGram;

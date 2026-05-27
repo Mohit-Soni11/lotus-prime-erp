@@ -434,6 +434,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
     if (sold == 0 && jama == 0) return const SizedBox.shrink();
 
     String unit = isGrams ? "g" : "ct";
+    final rateHint =
+        !isGrams ? "Rate /ct" : (name == "SILVER" ? "Rate /kg" : "Rate /10g");
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -520,7 +522,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                           keyboardType: const TextInputType.numberWithOptions(
                               decimal: true),
                           decoration: InputDecoration(
-                            hintText: isGrams ? "Bhaw /g" : "Bhaw /ct",
+                            hintText: rateHint,
                             hintStyle: TextStyle(
                                 color: color.withValues(alpha: 0.5),
                                 fontSize: 13),
@@ -548,8 +550,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                     flex: 5,
                     child: Text(
                       bhawAmt < 0
-                          ? "- â‚¹ ${bhawAmt.abs().toStringAsFixed(2)}"
-                          : "â‚¹ ${bhawAmt.toStringAsFixed(2)}",
+                          ? "- Rs ${bhawAmt.abs().toStringAsFixed(2)}"
+                          : "Rs ${bhawAmt.toStringAsFixed(2)}",
                       textAlign: TextAlign.right,
                       style: TextStyle(
                           fontSize: 16,

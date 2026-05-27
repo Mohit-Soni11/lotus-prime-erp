@@ -57,6 +57,12 @@ String _formatMasterInput(double value) {
       .replaceFirst(RegExp(r'\.$'), '');
 }
 
+double _roundWeight3(double value) {
+  if (value == 0) return 0.0;
+  final rounded = (value * 1000).roundToDouble() / 1000.0;
+  return rounded == -0.0 ? 0.0 : rounded;
+}
+
 class SaleItemModel extends ChangeNotifier {
   MetalType _metal;
   MakingChargeType _makingChargeType;
@@ -185,7 +191,7 @@ class SaleItemModel extends ChangeNotifier {
   double get rate => _rate;
   // ✅ FIX: Use proper fine% from label — "22KT"=91.67%, "925"=92.5%
   double get tunch => _purityLabelToPercent(_tunchLabel);
-  double get fineWt => netWt * (tunch / 100);
+  double get fineWt => _roundWeight3(netWt * (tunch / 100));
 
   // --- RETAIL LOGIC ---
   double get makingAmt {
@@ -450,7 +456,7 @@ class OldGoldItemModel extends ChangeNotifier {
   }
 
   MetalType get metal => _metal;
-  double get netWt => _grossWt - _lessWt;
+  double get netWt => (_grossWt - _lessWt).clamp(0.0, double.infinity);
   double get rate => _rate;
   double get purityPercent => _purity;
   bool get rateFromMetalRateMaster => _rateFromMetalRateMaster;
@@ -458,9 +464,9 @@ class OldGoldItemModel extends ChangeNotifier {
 
   double get fineWt {
     if (_metal == MetalType.silver && purityCtrl.text.isEmpty) {
-      return netWt;
+      return _roundWeight3(netWt);
     }
-    return netWt * (_purity / 100);
+    return _roundWeight3(netWt * (_purity / 100));
   }
 
   double get totalValue {

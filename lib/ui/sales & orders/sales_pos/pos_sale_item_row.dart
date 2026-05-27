@@ -727,9 +727,9 @@ class _DescriptionWithSuggestions extends StatelessWidget {
       // âœ… FIX 4: Automatically handles the PosStockLookupModel type!
       getSuggestions: () => ctrl.getDescSuggestionsForRow(rowIndex),
       onSelected: (selection) {
-        item.descCtrl.text = selection.displayTitle;
-        item.descCtrl.selection = TextSelection.fromPosition(
-          TextPosition(offset: selection.displayTitle.length),
+        ctrl.applyStockSuggestionToRow(
+          rowIndex: rowIndex,
+          suggestion: selection,
         );
       },
       onClearSuggestions: () {
@@ -762,26 +762,19 @@ class _HuidWithSuggestions extends StatelessWidget {
       textInputAction: TextInputAction.next,
       onSubmitted: onSubmitted,
       onSearch: (query) async {
-        // Update to whatever method you use in controller to search HUID
-        // Example: await ctrl.searchHuid(query, rowIndex);
+        await ctrl.searchHuids(query, rowIndex, item.metal);
       },
-      getSuggestions: () {
-        // Update to whatever method you use for fetching HUID suggestions
-        // Example: return ctrl.getHuidSuggestionsForRow(rowIndex);
-        return [];
-      },
+      getSuggestions: () => ctrl.getHuidSuggestionsForRow(rowIndex),
       onSelected: (selection) async {
-        item.huidCtrl.text = selection.sku;
-        item.huidCtrl.selection = TextSelection.fromPosition(
-          TextPosition(offset: selection.sku.length),
+        ctrl.applyStockSuggestionToRow(
+          rowIndex: rowIndex,
+          suggestion: selection,
         );
-        onSubmitted?.call(selection.sku);
       },
       onClearSuggestions: () {
-        // Clear huid suggestions in controller
-        // Example: ctrl.clearHuidSuggestions();
+        ctrl.clearHuidSuggestions();
       },
-      overlayWidth: 200,
+      overlayWidth: 260,
     );
   }
 }

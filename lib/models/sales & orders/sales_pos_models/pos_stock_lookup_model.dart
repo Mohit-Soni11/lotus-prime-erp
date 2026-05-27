@@ -48,6 +48,6 @@ class PosStockLookupModel {
       if (purity.trim().isNotEmpty) purity.trim(),
       'GW ${grossWeight.toStringAsFixed(3)}',
     ];
-    return parts.join(' • ');
+    return parts.join(' | ');
   }
 }
