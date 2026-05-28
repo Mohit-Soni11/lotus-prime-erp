@@ -44,7 +44,6 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
   // Metal accent color
   Color get _accent => _metalAccent(widget.metal);
   String get _metalDisplay => BillingMetal.displayName(widget.metal);
-  String get _metalEmoji => BillingMetal.emoji(widget.metal);
 
   @override
   void initState() {
@@ -126,13 +125,41 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
     setState(() => _model = updater(_model));
   }
 
+  int get _enabledDisplayCount {
+    final values = [
+      _model.showPieces,
+      _model.showGrossWeight,
+      _model.showLessWeight,
+      _model.showNetWeight,
+      _model.showPurity,
+      _model.showRate,
+      _model.showMakingCharges,
+      _model.showMakingChargeType,
+      _model.showStoneDetails,
+      _model.showStoneValue,
+      _model.showTotalValue,
+      _model.showHuid,
+      _model.showWastage,
+      _model.showOldGoldLine,
+      _model.showDiamondClarity,
+      _model.showCertificationNo,
+      _model.showDiamondCarats,
+      _model.showDiamondPieces,
+      _model.showMetalWeight,
+      _model.showFineWeight,
+      _model.showGstBreakup,
+      _model.showHsnCode,
+    ];
+    return values.where((value) => value).length;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
       return Scaffold(
         backgroundColor: BillingSetupColors.bodyBg,
         appBar: BillingSetupAppBar(
-          screenTitle: '$_metalEmoji $_metalDisplay Sales',
+          screenTitle: '$_metalDisplay Sales',
           screenSubtitle: 'Loading settings...',
           onBack: () => Navigator.maybePop(context),
         ),
@@ -143,8 +170,8 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
     return Scaffold(
       backgroundColor: BillingSetupColors.bodyBg,
       appBar: BillingSetupAppBar(
-        screenTitle: '$_metalEmoji $_metalDisplay Sales',
-        screenSubtitle: 'Invoice display Â· Return policy Â· Terms',
+        screenTitle: '$_metalDisplay Sales',
+        screenSubtitle: 'Invoice display, return rules and footer copy',
         onBack: () => Navigator.maybePop(context),
       ),
       body: SafeArea(
@@ -155,20 +182,30 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
+                  _MetalIntroPanel(
+                    metalName: _metalDisplay,
+                    accent: _accent,
+                    enabledCount: _enabledDisplayCount,
+                    returnMode: _model.returnMode,
+                  ),
+                  const SizedBox(height: 18),
                   // â”€â”€ SECTION 1: Invoice Item Display â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
                     title: 'Invoice Item Display',
-                    subtitle: 'What appears on each line item of the bill',
+                    subtitle: 'Choose the fields printed on every item row',
                     icon: Icons.receipt_long_rounded,
                     accent: _accent,
-                    children: _buildDisplayToggles(),
+                    children: [
+                      _ToggleGrid(children: _buildDisplayToggles()),
+                    ],
                   ),
                   const SizedBox(height: 20),
 
                   // â”€â”€ SECTION 2: Return & Buyback Policy â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
                     title: 'Return & Buyback Policy',
-                    subtitle: 'Rules for this metal\'s return & exchange',
+                    subtitle:
+                        'Control eligibility, deductions and settlement mode',
                     icon: Icons.swap_horiz_rounded,
                     accent: _accent,
                     children: _buildReturnSection(),
@@ -177,10 +214,10 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
 
                   // â”€â”€ SECTION 3: Terms & Template â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
-                    title: 'Terms & Template',
+                    title: 'Terms & Conditions',
                     subtitle:
-                        'Printed at the bottom of every $_metalDisplay bill',
-                    icon: Icons.description_outlined,
+                        'Footer copy printed on every $_metalDisplay bill',
+                    icon: Icons.article_outlined,
                     accent: _accent,
                     children: _buildTermsSection(),
                   ),
@@ -270,7 +307,7 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
       addToggle('Purity / Tunch', 'e.g. 22KT, 925, 950PT', _model.showPurity,
           (v) => _toggle((m) => m.copyWith(showPurity: v)));
 
-      addToggle('Rate (â‚¹/g)', 'Metal rate per gram', _model.showRate,
+      addToggle('Rate (Rs/g)', 'Metal rate per gram', _model.showRate,
           (v) => _toggle((m) => m.copyWith(showRate: v)));
 
       addToggle(
@@ -287,14 +324,14 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
 
       addToggle(
           'Fine Weight',
-          'Calculated: net wt Ã— purity %',
+          'Calculated from net weight and purity',
           _model.showFineWeight,
           (v) => _toggle((m) => m.copyWith(showFineWeight: v)));
     }
 
     // Gold specific
     if (metal == BillingMetal.gold) {
-      addToggle('HUID Number', 'BIS Hallmark HUID â€” govt. mandatory',
+      addToggle('HUID Number', 'BIS Hallmark HUID for compliant gold billing',
           _model.showHuid, (v) => _toggle((m) => m.copyWith(showHuid: v)));
 
       addToggle(
@@ -348,7 +385,7 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
           _model.showMakingCharges,
           (v) => _toggle((m) => m.copyWith(showMakingCharges: v)));
 
-      addToggle('Rate (â‚¹/ct)', 'Diamond rate per carat', _model.showRate,
+      addToggle('Rate (Rs/ct)', 'Diamond rate per carat', _model.showRate,
           (v) => _toggle((m) => m.copyWith(showRate: v)));
     }
 
@@ -458,16 +495,6 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
         accent: _accent,
         maxLines: 2,
       ),
-      const SizedBox(height: 14),
-      _DropdownField(
-        label: 'Print Template',
-        value: _model.selectedTemplate,
-        items: TemplateOptions.all,
-        accent: _accent,
-        helperText: 'More templates can be added in future',
-        onChanged: (v) =>
-            setState(() => _model = _model.copyWith(selectedTemplate: v)),
-      ),
     ];
   }
 }
@@ -494,6 +521,188 @@ Color _metalAccent(String metal) {
 // REUSABLE WIDGETS
 // =============================================================================
 
+class _MetalIntroPanel extends StatelessWidget {
+  final String metalName;
+  final Color accent;
+  final int enabledCount;
+  final String returnMode;
+
+  const _MetalIntroPanel({
+    required this.metalName,
+    required this.accent,
+    required this.enabledCount,
+    required this.returnMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.16)),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.08),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 680;
+          final titleBlock = Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(Icons.tune_rounded, color: accent, size: 26),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$metalName invoice controls',
+                      style: GoogleFonts.manrope(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF111827),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Fine tune print fields, return rules and customer-facing footer copy.',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        height: 1.35,
+                        color: const Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+          final pills = Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: isCompact ? WrapAlignment.start : WrapAlignment.end,
+            children: [
+              _SummaryPill(
+                label: '$enabledCount active fields',
+                icon: Icons.check_circle_rounded,
+                accent: accent,
+              ),
+              _SummaryPill(
+                label: returnMode,
+                icon: Icons.assignment_return_rounded,
+                accent: accent,
+              ),
+            ],
+          );
+
+          if (isCompact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                titleBlock,
+                const SizedBox(height: 14),
+                pills,
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              Expanded(child: titleBlock),
+              const SizedBox(width: 14),
+              pills,
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SummaryPill extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color accent;
+
+  const _SummaryPill({
+    required this.label,
+    required this.icon,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accent.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: accent),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF374151),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ToggleGrid extends StatelessWidget {
+  final List<Widget> children;
+
+  const _ToggleGrid({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 820
+            ? 3
+            : constraints.maxWidth >= 560
+                ? 2
+                : 1;
+        const gap = 12.0;
+        final itemWidth =
+            (constraints.maxWidth - (gap * (columns - 1))) / columns;
+
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: children
+              .map((child) => SizedBox(width: itemWidth, child: child))
+              .toList(),
+        );
+      },
+    );
+  }
+}
+
 class _SectionCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -514,13 +723,13 @@ class _SectionCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -529,11 +738,11 @@ class _SectionCard extends StatelessWidget {
         children: [
           // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
             decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.04),
+              color: accent.withValues(alpha: 0.06),
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(14)),
+                  const BorderRadius.vertical(top: Radius.circular(18)),
               border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
             ),
             child: Row(
@@ -541,8 +750,9 @@ class _SectionCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: accent.withValues(alpha: 0.16)),
                   ),
                   child: Icon(icon, size: 18, color: accent),
                 ),
@@ -554,12 +764,14 @@ class _SectionCard extends StatelessWidget {
                       Text(title,
                           style: GoogleFonts.manrope(
                             fontSize: 16,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
                             color: const Color(0xFF111827),
                           )),
+                      const SizedBox(height: 2),
                       Text(subtitle,
                           style: GoogleFonts.inter(
                             fontSize: 13,
+                            height: 1.3,
                             color: const Color(0xFF6B7280),
                           )),
                     ],
@@ -570,7 +782,7 @@ class _SectionCard extends StatelessWidget {
           ),
           // â”€â”€ Children â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: children,
@@ -599,32 +811,60 @@ class _ToggleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: value ? accent.withValues(alpha: 0.07) : const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color:
+              value ? accent.withValues(alpha: 0.24) : const Color(0xFFE5E7EB),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
+          Row(
+            children: [
+              Expanded(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
                       color: const Color(0xFF111827),
                     )),
-                Text(subtitle,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: const Color(0xFF6B7280),
-                    )),
-              ],
-            ),
+              ),
+              Transform.scale(
+                scale: 0.82,
+                child: Switch(
+                  value: value,
+                  onChanged: onChanged,
+                  activeThumbColor: accent,
+                  inactiveThumbColor: const Color(0xFF9CA3AF),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: accent,
+          const SizedBox(height: 6),
+          Text(subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                height: 1.3,
+                color: const Color(0xFF6B7280),
+              )),
+          const SizedBox(height: 10),
+          Container(
+            height: 3,
+            decoration: BoxDecoration(
+              color: value ? accent : const Color(0xFFE5E7EB),
+              borderRadius: BorderRadius.circular(999),
+            ),
           ),
         ],
       ),
@@ -661,20 +901,20 @@ class _InputField extends StatelessWidget {
         Row(children: [
           Text(label,
               style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
                 color: const Color(0xFF374151),
               )),
           if (subtitle != null) ...[
             const SizedBox(width: 6),
-            Text('Â· $subtitle',
+            Text('- $subtitle',
                 style: GoogleFonts.inter(
-                  fontSize: 11,
+                  fontSize: 12,
                   color: const Color(0xFF9CA3AF),
                 )),
           ],
         ]),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         TextField(
           controller: ctrl,
           keyboardType: keyboardType,
@@ -690,21 +930,21 @@ class _InputField extends StatelessWidget {
             hintStyle:
                 GoogleFonts.inter(fontSize: 14, color: const Color(0xFF9CA3AF)),
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: accent, width: 1.5),
             ),
             filled: true,
-            fillColor: const Color(0xFFFAFAFA),
+            fillColor: const Color(0xFFF9FAFB),
           ),
         ),
       ],
@@ -717,7 +957,6 @@ class _DropdownField extends StatelessWidget {
   final String value;
   final List<String> items;
   final Color accent;
-  final String? helperText;
   final ValueChanged<String?> onChanged;
 
   const _DropdownField({
@@ -726,7 +965,6 @@ class _DropdownField extends StatelessWidget {
     required this.items,
     required this.accent,
     required this.onChanged,
-    this.helperText,
   });
 
   @override
@@ -736,11 +974,11 @@ class _DropdownField extends StatelessWidget {
       children: [
         Text(label,
             style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
               color: const Color(0xFF374151),
             )),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           initialValue: items.contains(value) ? value : items.first,
           dropdownColor: Colors.white, // âœ… Fix: white bg, not black
@@ -763,24 +1001,21 @@ class _DropdownField extends StatelessWidget {
               GoogleFonts.inter(fontSize: 15, color: const Color(0xFF111827)),
           decoration: InputDecoration(
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: accent, width: 1.5),
             ),
             filled: true,
-            fillColor: const Color(0xFFFAFAFA),
-            helperText: helperText,
-            helperStyle:
-                GoogleFonts.inter(fontSize: 11, color: const Color(0xFF9CA3AF)),
+            fillColor: const Color(0xFFF9FAFB),
           ),
         ),
       ],
