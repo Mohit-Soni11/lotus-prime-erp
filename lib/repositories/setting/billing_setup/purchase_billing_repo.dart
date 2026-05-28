@@ -4,6 +4,7 @@
 // =============================================================================
 
 import '../../../database/db/app_database.dart';
+import '../../../core/logging/app_logger.dart';
 import '../../../models/setting/billing_setup/purchase_billing_model.dart';
 import '../../../models/setting/billing_setup/sales_billing_model.dart';
 import 'package:drift/drift.dart';
@@ -12,8 +13,10 @@ class PurchaseBillingRepo {
   final AppDatabase _db = AppDatabase();
 
   Future<PurchaseBillingModel> fetchForMetal(String metal) async {
+    await _db.ensureBillingSetupSchema();
     final row = await (_db.select(_db.purchaseBillingSettings)
-          ..where((t) => t.metal.equals(metal)))
+          ..where((t) => t.metal.equals(metal))
+          ..limit(1))
         .getSingleOrNull();
 
     if (row == null) return PurchaseBillingModel.defaultFor(metal);
@@ -22,6 +25,7 @@ class PurchaseBillingRepo {
 
   Future<bool> saveForMetal(PurchaseBillingModel model) async {
     try {
+      await _db.ensureBillingSetupSchema();
       await _db.into(_db.purchaseBillingSettings).insertOnConflictUpdate(
             PurchaseBillingSettingsCompanion.insert(
               metal: model.metal,
@@ -53,7 +57,12 @@ class PurchaseBillingRepo {
             ),
           );
       return true;
-    } catch (_) {
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'Failed to save purchase billing settings for ${model.metal}.',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }

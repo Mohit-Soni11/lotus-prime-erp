@@ -6,6 +6,7 @@
 // =============================================================================
 
 import '../../../database/db/app_database.dart';
+import '../../../core/logging/app_logger.dart';
 import '../../../models/setting/billing_setup/sales_billing_model.dart';
 import 'package:drift/drift.dart';
 
@@ -14,8 +15,10 @@ class SalesBillingRepo {
 
   // ── Fetch settings for one metal ─────────────────────────────────────────
   Future<SalesBillingModel> fetchForMetal(String metal) async {
+    await _db.ensureBillingSetupSchema();
     final row = await (_db.select(_db.salesBillingSettings)
-          ..where((t) => t.metal.equals(metal)))
+          ..where((t) => t.metal.equals(metal))
+          ..limit(1))
         .getSingleOrNull();
 
     if (row == null) return SalesBillingModel.defaultFor(metal);
@@ -25,6 +28,7 @@ class SalesBillingRepo {
   // ── Save settings for one metal (upsert) ─────────────────────────────────
   Future<bool> saveForMetal(SalesBillingModel model) async {
     try {
+      await _db.ensureBillingSetupSchema();
       await _db.into(_db.salesBillingSettings).insertOnConflictUpdate(
             SalesBillingSettingsCompanion.insert(
               metal: model.metal,
@@ -64,7 +68,12 @@ class SalesBillingRepo {
             ),
           );
       return true;
-    } catch (_) {
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'Failed to save sales billing settings for ${model.metal}.',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }

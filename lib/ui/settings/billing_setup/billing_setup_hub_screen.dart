@@ -1,7 +1,7 @@
 // =============================================================================
 // FILE        : lib/ui/settings/billing_setup/billing_setup_hub_screen.dart
 // MODULE      : Billing Setup
-// DESCRIPTION : Hub screen â€” 4 cards: Sales, Purchase, Girvi, Return
+// DESCRIPTION : Hub screen - Sales, Purchase and Girvi billing cards.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -85,43 +85,17 @@ class BillingSetupHubScreen extends StatelessWidget {
 
               const SizedBox(height: 14),
 
-              // â”€â”€ Row 2: Girvi + Return â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-              Row(children: [
-                Expanded(
-                  child: _ModuleCard(
-                    icon: Icons.lock_outline_rounded,
-                    title: BillingSetupStrings.cardGirviTitle,
-                    subtitle: BillingSetupStrings.cardGirviSub,
-                    accent: BillingSetupColors.girviBrand,
-                    tag: 'Interest Â· Notice Â· Terms',
-                    onTap: () => _navigate(context, const GirviBillingScreen()),
-                  ),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: _ModuleCard(
+                  icon: Icons.lock_outline_rounded,
+                  title: BillingSetupStrings.cardGirviTitle,
+                  subtitle: BillingSetupStrings.cardGirviSub,
+                  accent: BillingSetupColors.girviBrand,
+                  tag: 'Interest - Notice - Terms',
+                  onTap: () => _navigate(context, const GirviBillingScreen()),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: _ModuleCard(
-                    icon: Icons.swap_horiz_rounded,
-                    title: BillingSetupStrings.cardReturnTitle,
-                    subtitle: BillingSetupStrings.cardReturnSub,
-                    accent: BillingSetupColors.returnBrand,
-                    tag: 'Policy Â· Buyback Â· Terms',
-                    onTap: () {
-                      // Return screen â€” agle step mein
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Return & Buyback â€” Coming soon!',
-                              style: GoogleFonts.inter(color: Colors.white)),
-                          backgroundColor: BillingSetupColors.returnBrand,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ]),
+              ),
 
               const SizedBox(height: 24),
 

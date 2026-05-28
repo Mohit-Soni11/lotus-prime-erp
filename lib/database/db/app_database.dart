@@ -301,6 +301,11 @@ class AppDatabase extends _$AppDatabase {
 
             AppLogger.info('v18 sales audit migration applied.');
           }
+
+          if (from < 19) {
+            await _repairBillingSetupTables(m);
+            AppLogger.info('v19 billing setup settings migration applied.');
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -398,13 +403,367 @@ class AppDatabase extends _$AppDatabase {
           for (final s in _purchaseVoucherIndexSql) {
             await customStatement(s);
           }
+          await ensureBillingSetupSchema();
 
           if (EnvConfig.enableVerboseLogs) {
             AppLogger.debug('Database bootstrap safety net complete.');
           }
         },
       );
+
+  Future<void> ensureBillingSetupSchema() async {
+    Future<void> runIfNeeded(String statement) async {
+      try {
+        await customStatement(statement);
+      } catch (_) {
+        // Existing columns raise duplicate-column errors. Ignoring them keeps
+        // the safety net safe for old, partial, and fresh local databases.
+      }
+    }
+
+    for (final statement in _billingSetupSchemaSafetySql) {
+      await runIfNeeded(statement);
+    }
+  }
+
+  Future<void> _repairBillingSetupTables(Migrator m) async {
+    Future<void> runIfNeeded(Future<void> Function() action) async {
+      try {
+        await action();
+      } catch (_) {
+        // Column/table already exists. This migration is intentionally idempotent
+        // because older development databases may have partial billing schemas.
+      }
+    }
+
+    await runIfNeeded(() => m.createTable(salesBillingSettings));
+    await runIfNeeded(() => m.createTable(purchaseBillingSettings));
+    await runIfNeeded(() => m.createTable(girviBillingSettings));
+
+    await runIfNeeded(
+        () => customStatement('DROP TABLE IF EXISTS "billing_settings"'));
+
+    await runIfNeeded(() =>
+        m.addColumn(salesBillingSettings, salesBillingSettings.showPieces));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.showGrossWeight));
+    await runIfNeeded(() =>
+        m.addColumn(salesBillingSettings, salesBillingSettings.showLessWeight));
+    await runIfNeeded(() =>
+        m.addColumn(salesBillingSettings, salesBillingSettings.showNetWeight));
+    await runIfNeeded(() =>
+        m.addColumn(salesBillingSettings, salesBillingSettings.showPurity));
+    await runIfNeeded(
+        () => m.addColumn(salesBillingSettings, salesBillingSettings.showRate));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.showMakingCharges));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.showMakingChargeType));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.showStoneDetails));
+    await runIfNeeded(() =>
+        m.addColumn(salesBillingSettings, salesBillingSettings.showStoneValue));
+    await runIfNeeded(() =>
+        m.addColumn(salesBillingSettings, salesBillingSettings.showTotalValue));
+    await runIfNeeded(
+        () => m.addColumn(salesBillingSettings, salesBillingSettings.showHuid));
+    await runIfNeeded(() =>
+        m.addColumn(salesBillingSettings, salesBillingSettings.showWastage));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.showOldGoldLine));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.showDiamondClarity));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.showCertificationNo));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.showDiamondCarats));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.showDiamondPieces));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.showMetalWeight));
+    await runIfNeeded(() =>
+        m.addColumn(salesBillingSettings, salesBillingSettings.showFineWeight));
+    await runIfNeeded(() =>
+        m.addColumn(salesBillingSettings, salesBillingSettings.showGstBreakup));
+    await runIfNeeded(() =>
+        m.addColumn(salesBillingSettings, salesBillingSettings.showHsnCode));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.returnWindowDays));
+    await runIfNeeded(() =>
+        m.addColumn(salesBillingSettings, salesBillingSettings.returnMode));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.handlingChargePercent));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.buybackRatePercent));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.buybackPurityDeductPercent));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.termsAndConditions));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.returnPolicyText));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.buybackPolicyText));
+    await runIfNeeded(() =>
+        m.addColumn(salesBillingSettings, salesBillingSettings.footerMessage));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.selectedTemplate));
+
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.showGrossWeight));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.showLessWeight));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.showNetWeight));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.showPurity));
+    await runIfNeeded(() =>
+        m.addColumn(purchaseBillingSettings, purchaseBillingSettings.showRate));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.showFineWeight));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.showTotalValue));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.showStoneDetails));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.showStoneValue));
+    await runIfNeeded(() =>
+        m.addColumn(purchaseBillingSettings, purchaseBillingSettings.showHuid));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.showSupplierDetails));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.showPanNumber));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.showDiamondCarats));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.showDiamondClarity));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.showCertificationNo));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.showGstBreakup));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.showHsnCode));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.returnWindowDays));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.returnMode));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.purityDeductPercent));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.termsAndConditions));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.returnPolicyText));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.buybackPolicyText));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.footerMessage));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.selectedTemplate));
+
+    await runIfNeeded(() =>
+        m.addColumn(girviBillingSettings, girviBillingSettings.girviPrefix));
+    await runIfNeeded(() =>
+        m.addColumn(girviBillingSettings, girviBillingSettings.startingNumber));
+    await runIfNeeded(() => m.addColumn(
+        girviBillingSettings, girviBillingSettings.defaultInterestRate));
+    await runIfNeeded(() =>
+        m.addColumn(girviBillingSettings, girviBillingSettings.interestType));
+    await runIfNeeded(() => m.addColumn(
+        girviBillingSettings, girviBillingSettings.gracePeriodDays));
+    await runIfNeeded(() => m.addColumn(
+        girviBillingSettings, girviBillingSettings.defaultDuration));
+    await runIfNeeded(() =>
+        m.addColumn(girviBillingSettings, girviBillingSettings.reminderDays));
+    await runIfNeeded(() =>
+        m.addColumn(girviBillingSettings, girviBillingSettings.noticeDays));
+    await runIfNeeded(() => m.addColumn(
+        girviBillingSettings, girviBillingSettings.termsAndConditions));
+    await runIfNeeded(() =>
+        m.addColumn(girviBillingSettings, girviBillingSettings.footerMessage));
+    await runIfNeeded(() =>
+        m.addColumn(girviBillingSettings, girviBillingSettings.autoPrint));
+    await runIfNeeded(() => m.addColumn(
+        girviBillingSettings, girviBillingSettings.selectedTemplate));
+
+    await runIfNeeded(() => customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS "idx_sales_billing_metal" ON "sales_billing_settings" ("metal")'));
+    await runIfNeeded(() => customStatement(
+        'CREATE UNIQUE INDEX IF NOT EXISTS "idx_purchase_billing_metal" ON "purchase_billing_settings" ("metal")'));
+  }
 }
+
+const List<String> _billingSetupSchemaSafetySql = [
+  '''
+  CREATE TABLE IF NOT EXISTS "sales_billing_settings" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "created_at" INTEGER NOT NULL DEFAULT 0,
+    "updated_at" INTEGER,
+    "metal" TEXT NOT NULL,
+    "show_pieces" INTEGER NOT NULL DEFAULT 1,
+    "show_gross_weight" INTEGER NOT NULL DEFAULT 1,
+    "show_less_weight" INTEGER NOT NULL DEFAULT 1,
+    "show_net_weight" INTEGER NOT NULL DEFAULT 1,
+    "show_purity" INTEGER NOT NULL DEFAULT 1,
+    "show_rate" INTEGER NOT NULL DEFAULT 1,
+    "show_making_charges" INTEGER NOT NULL DEFAULT 1,
+    "show_making_charge_type" INTEGER NOT NULL DEFAULT 1,
+    "show_stone_details" INTEGER NOT NULL DEFAULT 0,
+    "show_stone_value" INTEGER NOT NULL DEFAULT 0,
+    "show_total_value" INTEGER NOT NULL DEFAULT 1,
+    "show_huid" INTEGER NOT NULL DEFAULT 0,
+    "show_wastage" INTEGER NOT NULL DEFAULT 0,
+    "show_old_gold_line" INTEGER NOT NULL DEFAULT 1,
+    "show_diamond_clarity" INTEGER NOT NULL DEFAULT 1,
+    "show_certification_no" INTEGER NOT NULL DEFAULT 0,
+    "show_diamond_carats" INTEGER NOT NULL DEFAULT 1,
+    "show_diamond_pieces" INTEGER NOT NULL DEFAULT 1,
+    "show_metal_weight" INTEGER NOT NULL DEFAULT 1,
+    "show_fine_weight" INTEGER NOT NULL DEFAULT 0,
+    "show_gst_breakup" INTEGER NOT NULL DEFAULT 0,
+    "show_hsn_code" INTEGER NOT NULL DEFAULT 0,
+    "return_window_days" INTEGER NOT NULL DEFAULT 7,
+    "return_mode" TEXT NOT NULL DEFAULT 'Exchange Only',
+    "handling_charge_percent" REAL NOT NULL DEFAULT 0.0,
+    "buyback_rate_percent" REAL NOT NULL DEFAULT 90.0,
+    "buyback_purity_deduct_percent" REAL NOT NULL DEFAULT 2.0,
+    "terms_and_conditions" TEXT NOT NULL DEFAULT '',
+    "return_policy_text" TEXT NOT NULL DEFAULT '',
+    "buyback_policy_text" TEXT NOT NULL DEFAULT '',
+    "footer_message" TEXT NOT NULL DEFAULT '',
+    "selected_template" TEXT NOT NULL DEFAULT 'default'
+  )
+  ''',
+  '''
+  CREATE TABLE IF NOT EXISTS "purchase_billing_settings" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "created_at" INTEGER NOT NULL DEFAULT 0,
+    "updated_at" INTEGER,
+    "metal" TEXT NOT NULL,
+    "show_gross_weight" INTEGER NOT NULL DEFAULT 1,
+    "show_less_weight" INTEGER NOT NULL DEFAULT 1,
+    "show_net_weight" INTEGER NOT NULL DEFAULT 1,
+    "show_purity" INTEGER NOT NULL DEFAULT 1,
+    "show_rate" INTEGER NOT NULL DEFAULT 1,
+    "show_fine_weight" INTEGER NOT NULL DEFAULT 1,
+    "show_total_value" INTEGER NOT NULL DEFAULT 1,
+    "show_stone_details" INTEGER NOT NULL DEFAULT 0,
+    "show_stone_value" INTEGER NOT NULL DEFAULT 0,
+    "show_huid" INTEGER NOT NULL DEFAULT 0,
+    "show_supplier_details" INTEGER NOT NULL DEFAULT 1,
+    "show_pan_number" INTEGER NOT NULL DEFAULT 1,
+    "show_diamond_carats" INTEGER NOT NULL DEFAULT 1,
+    "show_diamond_clarity" INTEGER NOT NULL DEFAULT 1,
+    "show_certification_no" INTEGER NOT NULL DEFAULT 0,
+    "show_gst_breakup" INTEGER NOT NULL DEFAULT 0,
+    "show_hsn_code" INTEGER NOT NULL DEFAULT 0,
+    "return_window_days" INTEGER NOT NULL DEFAULT 3,
+    "return_mode" TEXT NOT NULL DEFAULT 'Credit Note',
+    "purity_deduct_percent" REAL NOT NULL DEFAULT 2.0,
+    "terms_and_conditions" TEXT NOT NULL DEFAULT '',
+    "return_policy_text" TEXT NOT NULL DEFAULT '',
+    "buyback_policy_text" TEXT NOT NULL DEFAULT '',
+    "footer_message" TEXT NOT NULL DEFAULT '',
+    "selected_template" TEXT NOT NULL DEFAULT 'default'
+  )
+  ''',
+  '''
+  CREATE TABLE IF NOT EXISTS "girvi_billing_settings" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "created_at" INTEGER NOT NULL DEFAULT 0,
+    "updated_at" INTEGER,
+    "girvi_prefix" TEXT NOT NULL DEFAULT 'GRV-',
+    "starting_number" INTEGER NOT NULL DEFAULT 1,
+    "default_interest_rate" REAL NOT NULL DEFAULT 1.5,
+    "interest_type" TEXT NOT NULL DEFAULT 'Simple',
+    "grace_period_days" INTEGER NOT NULL DEFAULT 3,
+    "default_duration" TEXT NOT NULL DEFAULT '6 Months',
+    "reminder_days" INTEGER NOT NULL DEFAULT 15,
+    "notice_days" INTEGER NOT NULL DEFAULT 30,
+    "terms_and_conditions" TEXT NOT NULL DEFAULT '',
+    "footer_message" TEXT NOT NULL DEFAULT '',
+    "auto_print" INTEGER NOT NULL DEFAULT 1,
+    "selected_template" TEXT NOT NULL DEFAULT 'default'
+  )
+  ''',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "created_at" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "updated_at" INTEGER',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "metal" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_pieces" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_gross_weight" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_less_weight" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_net_weight" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_purity" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_rate" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_making_charges" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_making_charge_type" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_stone_details" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_stone_value" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_total_value" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_huid" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_wastage" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_old_gold_line" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_diamond_clarity" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_certification_no" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_diamond_carats" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_diamond_pieces" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_metal_weight" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_fine_weight" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_gst_breakup" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "show_hsn_code" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "return_window_days" INTEGER NOT NULL DEFAULT 7',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "return_mode" TEXT NOT NULL DEFAULT "Exchange Only"',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "handling_charge_percent" REAL NOT NULL DEFAULT 0.0',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "buyback_rate_percent" REAL NOT NULL DEFAULT 90.0',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "buyback_purity_deduct_percent" REAL NOT NULL DEFAULT 2.0',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "terms_and_conditions" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "return_policy_text" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "buyback_policy_text" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "footer_message" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "selected_template" TEXT NOT NULL DEFAULT "default"',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "created_at" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "updated_at" INTEGER',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "metal" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_gross_weight" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_less_weight" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_net_weight" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_purity" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_rate" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_fine_weight" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_total_value" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_stone_details" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_stone_value" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_huid" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_supplier_details" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_pan_number" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_diamond_carats" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_diamond_clarity" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_certification_no" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_gst_breakup" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_hsn_code" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "return_window_days" INTEGER NOT NULL DEFAULT 3',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "return_mode" TEXT NOT NULL DEFAULT "Credit Note"',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "purity_deduct_percent" REAL NOT NULL DEFAULT 2.0',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "terms_and_conditions" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "return_policy_text" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "buyback_policy_text" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "footer_message" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "selected_template" TEXT NOT NULL DEFAULT "default"',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "created_at" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "updated_at" INTEGER',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "girvi_prefix" TEXT NOT NULL DEFAULT "GRV-"',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "starting_number" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "default_interest_rate" REAL NOT NULL DEFAULT 1.5',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "interest_type" TEXT NOT NULL DEFAULT "Simple"',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "grace_period_days" INTEGER NOT NULL DEFAULT 3',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "default_duration" TEXT NOT NULL DEFAULT "6 Months"',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "reminder_days" INTEGER NOT NULL DEFAULT 15',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "notice_days" INTEGER NOT NULL DEFAULT 30',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "terms_and_conditions" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "footer_message" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "auto_print" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "selected_template" TEXT NOT NULL DEFAULT "default"',
+  'CREATE UNIQUE INDEX IF NOT EXISTS "idx_sales_billing_metal" ON "sales_billing_settings" ("metal")',
+  'CREATE UNIQUE INDEX IF NOT EXISTS "idx_purchase_billing_metal" ON "purchase_billing_settings" ("metal")',
+];
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {

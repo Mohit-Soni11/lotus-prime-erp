@@ -16,6 +16,7 @@ class GirviBillingRepo {
   // ── Fetch ─────────────────────────────────────────────────────────────────
   Future<GirviBillingModel> fetch() async {
     try {
+      await _db.ensureBillingSetupSchema();
       final row = await (_db.select(_db.girviBillingSettings)..limit(1))
           .getSingleOrNull();
       if (row == null) return GirviBillingModel.defaults;
@@ -29,6 +30,7 @@ class GirviBillingRepo {
   // ── Save ─────────────────────────────────────────────────────────────────
   Future<bool> save(GirviBillingModel model) async {
     try {
+      await _db.ensureBillingSetupSchema();
       final existing = await (_db.select(_db.girviBillingSettings)..limit(1))
           .getSingleOrNull();
 
@@ -64,6 +66,7 @@ class GirviBillingRepo {
 
   // ── Seed default if empty ─────────────────────────────────────────────────
   Future<void> seedDefault() async {
+    await _db.ensureBillingSetupSchema();
     final existing = await (_db.select(_db.girviBillingSettings)..limit(1))
         .getSingleOrNull();
     if (existing == null) await save(GirviBillingModel.defaults);
