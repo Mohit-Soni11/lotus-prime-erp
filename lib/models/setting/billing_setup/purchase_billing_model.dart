@@ -97,6 +97,12 @@ class PurchaseBillingModel {
               'HUID required for all gold purchases above 20g.\n'
               'Defective goods must be reported within 24 hours of delivery.\n'
               'Payment as per agreed terms only.',
+          returnPolicyText:
+              'Gold purchase returns are accepted within 3 days after hallmark and purity verification.\n'
+              'Short weight, damaged items or mismatch in HUID must be reported immediately.',
+          buybackPolicyText:
+              'Gold buyback settlement is based on agreed rate, final purity and fine weight.\n'
+              'Testing, refining or compliance deductions may apply before payment.',
         );
 
       case BillingMetal.silver:
@@ -119,6 +125,12 @@ class PurchaseBillingModel {
               'Silver quality will be verified by purity testing.\n'
               'Short delivery must be reported within 24 hours.\n'
               'Payment as per agreed terms only.',
+          returnPolicyText:
+              'Silver purchase returns are accepted within 3 days after weight and purity verification.\n'
+              'Short delivery, damage or purity mismatch must be reported within 24 hours.',
+          buybackPolicyText:
+              'Silver buyback settlement is based on agreed silver rate, net weight and purity test.\n'
+              'Testing or refining deductions may apply as per purchase terms.',
         );
 
       case BillingMetal.diamond:
@@ -145,6 +157,12 @@ class PurchaseBillingModel {
               'Certificate is mandatory for all diamond purchases.\n'
               'Any discrepancy to be reported within 24 hours.\n'
               'Payment as per agreed terms only.',
+          returnPolicyText:
+              'Diamond purchase returns are accepted only after certificate and quality mismatch verification.\n'
+              'Discrepancies in carat, clarity or certificate must be reported within 24 hours.',
+          buybackPolicyText:
+              'Diamond buyback settlement depends on certificate, carat, clarity, cut, condition and agreed rate.\n'
+              'Final valuation is confirmed only after expert inspection.',
         );
 
       case BillingMetal.platinum:
@@ -167,6 +185,12 @@ class PurchaseBillingModel {
               'Platinum quality will be verified by purity testing.\n'
               'Defective goods must be reported within 24 hours.\n'
               'Payment as per agreed terms only.',
+          returnPolicyText:
+              'Platinum purchase returns are accepted within 3 days after purity and weight verification.\n'
+              'Custom or altered items require manager approval before return.',
+          buybackPolicyText:
+              'Platinum buyback settlement is calculated on agreed rate, purity and verified net weight.\n'
+              'Testing, refining or condition-based deductions may apply.',
         );
 
       default:

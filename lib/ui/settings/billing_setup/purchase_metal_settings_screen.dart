@@ -41,7 +41,7 @@ class _PurchaseMetalSettingsScreenState
 
   Color get _accent => _metalAccent(widget.metal);
   String get _metalDisplay => BillingMetal.displayName(widget.metal);
-  String get _metalEmoji => BillingMetal.emoji(widget.metal);
+  String get _metalLogoAsset => _metalLogoFor(widget.metal);
 
   @override
   void initState() {
@@ -113,13 +113,36 @@ class _PurchaseMetalSettingsScreenState
     setState(() => _model = updater(_model));
   }
 
+  int get _enabledDisplayCount {
+    final values = [
+      _model.showGrossWeight,
+      _model.showLessWeight,
+      _model.showNetWeight,
+      _model.showPurity,
+      _model.showRate,
+      _model.showFineWeight,
+      _model.showTotalValue,
+      _model.showStoneDetails,
+      _model.showStoneValue,
+      _model.showHuid,
+      _model.showSupplierDetails,
+      _model.showPanNumber,
+      _model.showDiamondCarats,
+      _model.showDiamondClarity,
+      _model.showCertificationNo,
+      _model.showGstBreakup,
+      _model.showHsnCode,
+    ];
+    return values.where((value) => value).length;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
       return Scaffold(
         backgroundColor: BillingSetupColors.bodyBg,
         appBar: BillingSetupAppBar(
-          screenTitle: '$_metalEmoji $_metalDisplay Purchase',
+          screenTitle: '$_metalDisplay Purchase',
           screenSubtitle: 'Loading settings...',
           onBack: () => Navigator.maybePop(context),
         ),
@@ -130,8 +153,8 @@ class _PurchaseMetalSettingsScreenState
     return Scaffold(
       backgroundColor: BillingSetupColors.bodyBg,
       appBar: BillingSetupAppBar(
-        screenTitle: '$_metalEmoji $_metalDisplay Purchase',
-        screenSubtitle: 'Voucher display Â· Return policy Â· Terms',
+        screenTitle: '$_metalDisplay Purchase',
+        screenSubtitle: 'Voucher display, supplier returns and footer copy',
         onBack: () => Navigator.maybePop(context),
       ),
       body: SafeArea(
@@ -142,21 +165,31 @@ class _PurchaseMetalSettingsScreenState
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
+                  _MetalIntroPanel(
+                    metalName: _metalDisplay,
+                    logoAsset: _metalLogoAsset,
+                    accent: _accent,
+                    enabledCount: _enabledDisplayCount,
+                    returnMode: _model.returnMode,
+                  ),
+                  const SizedBox(height: 18),
                   // â”€â”€ SECTION 1: Voucher Item Display â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
                     title: 'Purchase Voucher Display',
-                    subtitle:
-                        'What appears on each line item of the purchase voucher',
+                    subtitle: 'Choose the fields printed on each purchase row',
                     icon: Icons.receipt_outlined,
                     accent: _accent,
-                    children: _buildDisplayToggles(),
+                    children: [
+                      _ToggleGrid(children: _buildDisplayToggles()),
+                    ],
                   ),
                   const SizedBox(height: 20),
 
                   // â”€â”€ SECTION 2: Return Policy â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
-                    title: 'Purchase Return Policy',
-                    subtitle: 'Rules for returning purchased items to supplier',
+                    title: 'Return & Buyback Policy',
+                    subtitle:
+                        'Supplier return rules, purity deductions and notes',
                     icon: Icons.assignment_return_outlined,
                     accent: _accent,
                     children: _buildReturnSection(),
@@ -165,10 +198,10 @@ class _PurchaseMetalSettingsScreenState
 
                   // â”€â”€ SECTION 3: Terms & Template â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
-                    title: 'Terms & Template',
+                    title: 'Terms & Conditions',
                     subtitle:
-                        'Printed at the bottom of every $_metalDisplay purchase voucher',
-                    icon: Icons.description_outlined,
+                        'Footer copy printed on every $_metalDisplay purchase voucher',
+                    icon: Icons.article_outlined,
                     accent: _accent,
                     children: _buildTermsSection(),
                   ),
@@ -254,23 +287,20 @@ class _PurchaseMetalSettingsScreenState
       addToggle('Purity / Tunch', 'e.g. 22KT, 925, 950PT', _model.showPurity,
           (v) => _toggle((m) => m.copyWith(showPurity: v)));
 
-      addToggle('Rate (â‚¹/g)', 'Purchase rate per gram', _model.showRate,
+      addToggle('Rate (Rs/g)', 'Purchase rate per gram', _model.showRate,
           (v) => _toggle((m) => m.copyWith(showRate: v)));
 
       addToggle(
           'Fine Weight',
-          'Calculated: net wt Ã— purity %',
+          'Calculated from net weight and purity',
           _model.showFineWeight,
           (v) => _toggle((m) => m.copyWith(showFineWeight: v)));
     }
 
     // Gold specific
     if (metal == BillingMetal.gold) {
-      addToggle(
-          'HUID Number',
-          'BIS Hallmark HUID â€” mandatory for gold purchase',
-          _model.showHuid,
-          (v) => _toggle((m) => m.copyWith(showHuid: v)));
+      addToggle('HUID Number', 'BIS Hallmark HUID for compliant gold purchase',
+          _model.showHuid, (v) => _toggle((m) => m.copyWith(showHuid: v)));
     }
 
     // Diamond specific
@@ -293,7 +323,7 @@ class _PurchaseMetalSettingsScreenState
           _model.showCertificationNo,
           (v) => _toggle((m) => m.copyWith(showCertificationNo: v)));
 
-      addToggle('Rate (â‚¹/ct)', 'Purchase rate per carat', _model.showRate,
+      addToggle('Rate (Rs/ct)', 'Purchase rate per carat', _model.showRate,
           (v) => _toggle((m) => m.copyWith(showRate: v)));
 
       addToggle(
@@ -333,7 +363,7 @@ class _PurchaseMetalSettingsScreenState
 
     addToggle(
         'PAN Number',
-        'Required for transactions above â‚¹2 lakh',
+        'Required for transactions above Rs 2 lakh',
         _model.showPanNumber,
         (v) => _toggle((m) => m.copyWith(showPanNumber: v)));
 
@@ -383,7 +413,56 @@ class _PurchaseMetalSettingsScreenState
         accent: _accent,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
       ),
+      const SizedBox(height: 14),
+      _responsiveFieldPair(
+        first: _InputField(
+          label: 'Return Policy Note',
+          hint:
+              'e.g. Supplier returns accepted within the selected window after quality check.',
+          subtitle: 'Supplier-facing return note',
+          ctrl: _returnPolicyCtrl,
+          accent: _accent,
+          maxLines: 4,
+        ),
+        second: _InputField(
+          label: 'Buyback Policy Note',
+          hint:
+              'e.g. Buyback settlement depends on purity, rate agreement and inspection.',
+          subtitle: 'Purchase buyback terms',
+          ctrl: _buybackPolicyCtrl,
+          accent: _accent,
+          maxLines: 4,
+        ),
+      ),
     ];
+  }
+
+  Widget _responsiveFieldPair({
+    required Widget first,
+    required Widget second,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 640) {
+          return Column(
+            children: [
+              first,
+              const SizedBox(height: 14),
+              second,
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: first),
+            const SizedBox(width: 14),
+            Expanded(child: second),
+          ],
+        );
+      },
+    );
   }
 
   // â”€â”€ TERMS & TEMPLATE SECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -397,41 +476,12 @@ class _PurchaseMetalSettingsScreenState
         maxLines: 5,
       ),
       const SizedBox(height: 14),
-      const SizedBox(height: 16),
-      _InputField(
-        label: 'Return Policy',
-        hint: 'e.g. Returns accepted within 7 days with original bill only...',
-        subtitle: 'Printed on voucher',
-        ctrl: _returnPolicyCtrl,
-        accent: _accent,
-        maxLines: 3,
-      ),
-      const SizedBox(height: 16),
-      _InputField(
-        label: 'Buyback Policy',
-        hint: 'e.g. Buyback at agreed rate after purity test...',
-        subtitle: 'Printed on voucher',
-        ctrl: _buybackPolicyCtrl,
-        accent: _accent,
-        maxLines: 3,
-      ),
-      const SizedBox(height: 16),
       _InputField(
         label: 'Footer Message',
         hint: 'e.g. Thank you for your supply.',
         ctrl: _footerCtrl,
         accent: _accent,
         maxLines: 2,
-      ),
-      const SizedBox(height: 14),
-      _DropdownField(
-        label: 'Print Template',
-        value: _model.selectedTemplate,
-        items: TemplateOptions.all,
-        accent: _accent,
-        helperText: 'More templates can be added in future',
-        onChanged: (v) =>
-            setState(() => _model = _model.copyWith(selectedTemplate: v)),
       ),
     ];
   }
@@ -455,9 +505,228 @@ Color _metalAccent(String metal) {
   }
 }
 
+String _metalLogoFor(String metal) {
+  switch (metal) {
+    case BillingMetal.gold:
+      return 'lib/logo/gold.jpeg';
+    case BillingMetal.silver:
+      return 'lib/logo/silver and platinum .jpeg';
+    case BillingMetal.diamond:
+      return 'lib/logo/diamond .jpeg';
+    case BillingMetal.platinum:
+      return 'lib/logo/silver and platinum .jpeg';
+    default:
+      return 'lib/logo/gold.jpeg';
+  }
+}
+
 // =============================================================================
 // SHARED WIDGETS (same as Sales screen)
 // =============================================================================
+
+class _MetalIntroPanel extends StatelessWidget {
+  final String metalName;
+  final String logoAsset;
+  final Color accent;
+  final int enabledCount;
+  final String returnMode;
+
+  const _MetalIntroPanel({
+    required this.metalName,
+    required this.logoAsset,
+    required this.accent,
+    required this.enabledCount,
+    required this.returnMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.16)),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.08),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 680;
+          final titleBlock = Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accent.withValues(alpha: 0.28),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: Image.asset(
+                    logoAsset,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => ColoredBox(
+                      color: accent.withValues(alpha: 0.10),
+                      child: Icon(
+                        Icons.inventory_2_rounded,
+                        color: accent,
+                        size: 26,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$metalName purchase controls',
+                      style: GoogleFonts.manrope(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF111827),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Fine tune voucher fields, supplier return rules and purchase footer copy.',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        height: 1.35,
+                        color: const Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+          final pills = Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: isCompact ? WrapAlignment.start : WrapAlignment.end,
+            children: [
+              _SummaryPill(
+                label: '$enabledCount active fields',
+                icon: Icons.check_circle_rounded,
+                accent: accent,
+              ),
+              _SummaryPill(
+                label: returnMode,
+                icon: Icons.assignment_return_rounded,
+                accent: accent,
+              ),
+            ],
+          );
+
+          if (isCompact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                titleBlock,
+                const SizedBox(height: 14),
+                pills,
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              Expanded(child: titleBlock),
+              const SizedBox(width: 14),
+              pills,
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SummaryPill extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color accent;
+
+  const _SummaryPill({
+    required this.label,
+    required this.icon,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accent.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: accent),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF374151),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ToggleGrid extends StatelessWidget {
+  final List<Widget> children;
+
+  const _ToggleGrid({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 820
+            ? 3
+            : constraints.maxWidth >= 560
+                ? 2
+                : 1;
+        const gap = 12.0;
+        final itemWidth =
+            (constraints.maxWidth - (gap * (columns - 1))) / columns;
+
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: children
+              .map((child) => SizedBox(width: itemWidth, child: child))
+              .toList(),
+        );
+      },
+    );
+  }
+}
 
 class _SectionCard extends StatelessWidget {
   final String title;
@@ -479,13 +748,13 @@ class _SectionCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -493,11 +762,11 @@ class _SectionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
             decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.04),
+              color: accent.withValues(alpha: 0.06),
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(14)),
+                  const BorderRadius.vertical(top: Radius.circular(18)),
               border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
             ),
             child: Row(
@@ -505,8 +774,9 @@ class _SectionCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: accent.withValues(alpha: 0.16)),
                   ),
                   child: Icon(icon, size: 18, color: accent),
                 ),
@@ -518,12 +788,14 @@ class _SectionCard extends StatelessWidget {
                       Text(title,
                           style: GoogleFonts.manrope(
                             fontSize: 16,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
                             color: const Color(0xFF111827),
                           )),
+                      const SizedBox(height: 2),
                       Text(subtitle,
                           style: GoogleFonts.inter(
                             fontSize: 13,
+                            height: 1.3,
                             color: const Color(0xFF6B7280),
                           ))
                     ],
@@ -533,7 +805,7 @@ class _SectionCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: children,
@@ -562,32 +834,60 @@ class _ToggleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: value ? accent.withValues(alpha: 0.07) : const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color:
+              value ? accent.withValues(alpha: 0.24) : const Color(0xFFE5E7EB),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
+          Row(
+            children: [
+              Expanded(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
                       color: const Color(0xFF111827),
                     )),
-                Text(subtitle,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: const Color(0xFF6B7280),
-                    ))
-              ],
-            ),
+              ),
+              Transform.scale(
+                scale: 0.82,
+                child: Switch(
+                  value: value,
+                  onChanged: onChanged,
+                  activeThumbColor: accent,
+                  inactiveThumbColor: const Color(0xFF9CA3AF),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ],
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: accent,
+          const SizedBox(height: 6),
+          Text(subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                height: 1.3,
+                color: const Color(0xFF6B7280),
+              )),
+          const SizedBox(height: 10),
+          Container(
+            height: 3,
+            decoration: BoxDecoration(
+              color: value ? accent : const Color(0xFFE5E7EB),
+              borderRadius: BorderRadius.circular(999),
+            ),
           ),
         ],
       ),
@@ -621,23 +921,29 @@ class _InputField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(children: [
-          Text(label,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF374151),
-              )),
-          if (subtitle != null) ...[
-            const SizedBox(width: 6),
-            Text('Â· $subtitle',
+        Row(
+          children: [
+            Text(label,
                 style: GoogleFonts.inter(
-                  fontSize: 11,
-                  color: const Color(0xFF9CA3AF),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF374151),
                 )),
+            if (subtitle != null) ...[
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text('- $subtitle',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: const Color(0xFF9CA3AF),
+                    )),
+              ),
+            ],
           ],
-        ]),
-        const SizedBox(height: 6),
+        ),
+        const SizedBox(height: 8),
         TextField(
           controller: ctrl,
           keyboardType: keyboardType,
@@ -653,21 +959,21 @@ class _InputField extends StatelessWidget {
             hintStyle:
                 GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9CA3AF)),
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: accent, width: 1.5),
             ),
             filled: true,
-            fillColor: const Color(0xFFFAFAFA),
+            fillColor: const Color(0xFFF9FAFB),
           ),
         ),
       ],
@@ -680,7 +986,6 @@ class _DropdownField extends StatelessWidget {
   final String value;
   final List<String> items;
   final Color accent;
-  final String? helperText;
   final ValueChanged<String?> onChanged;
 
   const _DropdownField({
@@ -689,7 +994,6 @@ class _DropdownField extends StatelessWidget {
     required this.items,
     required this.accent,
     required this.onChanged,
-    this.helperText,
   });
 
   @override
@@ -724,24 +1028,21 @@ class _DropdownField extends StatelessWidget {
               GoogleFonts.inter(fontSize: 15, color: const Color(0xFF111827)),
           decoration: InputDecoration(
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: accent, width: 1.5),
             ),
             filled: true,
-            fillColor: const Color(0xFFFAFAFA),
-            helperText: helperText,
-            helperStyle:
-                GoogleFonts.inter(fontSize: 11, color: const Color(0xFF9CA3AF)),
+            fillColor: const Color(0xFFF9FAFB),
           ),
         ),
       ],
