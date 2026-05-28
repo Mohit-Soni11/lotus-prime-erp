@@ -41,6 +41,13 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
 
   static const Color _accent = BillingSetupColors.girviBrand;
 
+  String get _ticketPreview {
+    final prefix =
+        _prefixCtrl.text.trim().isEmpty ? 'GRV-' : _prefixCtrl.text.trim();
+    final number = int.tryParse(_startNoCtrl.text.trim()) ?? 1;
+    return '$prefix${number.toString().padLeft(4, '0')}';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -124,7 +131,8 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
         backgroundColor: BillingSetupColors.bodyBg,
         appBar: BillingSetupAppBar(
           screenTitle: BillingSetupStrings.girviTitle,
-          screenSubtitle: BillingSetupStrings.girviSub,
+          screenSubtitle:
+              'Ticket numbering, interest rules and notice controls',
           onBack: () => Navigator.maybePop(context),
         ),
         body: const Center(child: CircularProgressIndicator()),
@@ -135,7 +143,7 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
       backgroundColor: BillingSetupColors.bodyBg,
       appBar: BillingSetupAppBar(
         screenTitle: BillingSetupStrings.girviTitle,
-        screenSubtitle: BillingSetupStrings.girviSub,
+        screenSubtitle: 'Ticket numbering, interest rules and notice controls',
         onBack: () => Navigator.maybePop(context),
       ),
       body: SafeArea(
@@ -146,10 +154,19 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
+                  _GirviIntroPanel(
+                    accent: _accent,
+                    ticketPreview: _ticketPreview,
+                    interestRate: _model.defaultInterestRate,
+                    interestType: _model.interestType,
+                    autoPrint: _model.autoPrint,
+                  ),
+                  const SizedBox(height: 18),
                   // â”€â”€ Section 1: Voucher Numbering â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
-                    title: 'Girvi Voucher Numbering',
-                    subtitle: 'Ticket prefix aur starting number',
+                    title: 'Ticket Numbering',
+                    subtitle:
+                        'Configure the pledge ticket prefix and next number',
                     icon: Icons.confirmation_number_outlined,
                     accent: _accent,
                     children: [
@@ -181,7 +198,7 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
                   // â”€â”€ Section 2: Interest Rules â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
                     title: 'Interest Rules',
-                    subtitle: 'Loan par interest ka calculation',
+                    subtitle: 'Define how pledge interest is calculated',
                     icon: Icons.percent_rounded,
                     accent: BillingSetupColors.grvInterest,
                     children: [
@@ -212,7 +229,7 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
                             child: _InputField(
                           label: 'Grace Period (Days)',
                           hint: 'e.g. 3',
-                          subtitle: 'Due date ke baad extra days',
+                          subtitle: 'Extra days after due date',
                           ctrl: _graceCtrl,
                           accent: BillingSetupColors.grvInterest,
                           keyboardType: TextInputType.number,
@@ -238,7 +255,7 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
                   // â”€â”€ Section 3: Reminder & Notice â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
                     title: 'Reminder & Notice Period',
-                    subtitle: 'Customer ko reminder aur notice kab bhejein',
+                    subtitle: 'Set reminder timing and legal notice window',
                     icon: Icons.notifications_outlined,
                     accent: BillingSetupColors.grvNotice,
                     children: [
@@ -247,7 +264,7 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
                             child: _InputField(
                           label: 'Reminder Days',
                           hint: 'e.g. 15',
-                          subtitle: 'Expiry se pehle',
+                          subtitle: 'Before maturity',
                           ctrl: _reminderCtrl,
                           accent: BillingSetupColors.grvNotice,
                           keyboardType: TextInputType.number,
@@ -260,7 +277,7 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
                             child: _InputField(
                           label: 'Notice Days',
                           hint: 'e.g. 30',
-                          subtitle: 'Expiry ke baad legal notice',
+                          subtitle: 'After maturity',
                           ctrl: _noticeCtrl,
                           accent: BillingSetupColors.grvNotice,
                           keyboardType: TextInputType.number,
@@ -276,13 +293,14 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
                   // â”€â”€ Section 4: Terms & Print â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
                     title: 'Terms & Print',
-                    subtitle: 'Girvi ticket ke neeche print hoga',
-                    icon: Icons.description_outlined,
+                    subtitle:
+                        'Customer-facing text printed on every pledge ticket',
+                    icon: Icons.article_outlined,
                     accent: BillingSetupColors.grvTerms,
                     children: [
                       _InputField(
                         label: 'Terms & Conditions',
-                        hint: 'Girvi ticket par print hone wali terms...',
+                        hint: 'Enter terms printed on pledge tickets...',
                         ctrl: _termsCtrl,
                         accent: BillingSetupColors.grvTerms,
                         maxLines: 4,
@@ -290,7 +308,8 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
                       const SizedBox(height: 14),
                       _InputField(
                         label: 'Footer Message',
-                        hint: 'e.g. Samay par bhagtaan karein.',
+                        hint:
+                            'e.g. Please repay on time and keep this ticket safe.',
                         ctrl: _footerCtrl,
                         accent: BillingSetupColors.grvTerms,
                         maxLines: 2,
@@ -308,7 +327,8 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
                                   fontWeight: FontWeight.w600,
                                   color: BillingSetupColors.textDark,
                                 )),
-                            Text('Girvi ticket automatically print ho',
+                            Text(
+                                'Print the pledge ticket immediately after saving',
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
                                   color: BillingSetupColors.textMuted,
@@ -369,6 +389,167 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
 // SHARED WIDGETS
 // =============================================================================
 
+class _GirviIntroPanel extends StatelessWidget {
+  final Color accent;
+  final String ticketPreview;
+  final double interestRate;
+  final String interestType;
+  final bool autoPrint;
+
+  const _GirviIntroPanel({
+    required this.accent,
+    required this.ticketPreview,
+    required this.interestRate,
+    required this.interestType,
+    required this.autoPrint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.16)),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.08),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 720;
+          final titleBlock = Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: accent.withValues(alpha: 0.16)),
+                ),
+                child: Icon(Icons.security_rounded, color: accent, size: 27),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Girvi billing controls',
+                      style: GoogleFonts.manrope(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF111827),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Manage pledge ticket numbering, interest calculation, reminders and printed terms.',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        height: 1.35,
+                        color: const Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+
+          final pills = Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: isCompact ? WrapAlignment.start : WrapAlignment.end,
+            children: [
+              _SummaryPill(
+                label: ticketPreview,
+                icon: Icons.confirmation_number_rounded,
+                accent: accent,
+              ),
+              _SummaryPill(
+                label: '${interestRate.toStringAsFixed(2)}% $interestType',
+                icon: Icons.percent_rounded,
+                accent: accent,
+              ),
+              _SummaryPill(
+                label: autoPrint ? 'Auto print on' : 'Auto print off',
+                icon: Icons.print_rounded,
+                accent: accent,
+              ),
+            ],
+          );
+
+          if (isCompact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                titleBlock,
+                const SizedBox(height: 14),
+                pills,
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              Expanded(child: titleBlock),
+              const SizedBox(width: 14),
+              pills,
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SummaryPill extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color accent;
+
+  const _SummaryPill({
+    required this.label,
+    required this.icon,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accent.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: accent),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF374151),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SectionCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -389,13 +570,13 @@ class _SectionCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -403,19 +584,20 @@ class _SectionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
             decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.04),
+              color: accent.withValues(alpha: 0.06),
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(14)),
+                  const BorderRadius.vertical(top: Radius.circular(18)),
               border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
             ),
             child: Row(children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: accent.withValues(alpha: 0.16)),
                 ),
                 child: Icon(icon, size: 18, color: accent),
               ),
@@ -426,13 +608,15 @@ class _SectionCard extends StatelessWidget {
                 children: [
                   Text(title,
                       style: GoogleFonts.manrope(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
                         color: const Color(0xFF111827),
                       )),
+                  const SizedBox(height: 2),
                   Text(subtitle,
                       style: GoogleFonts.inter(
-                        fontSize: 11,
+                        fontSize: 13,
+                        height: 1.3,
                         color: const Color(0xFF6B7280),
                       )),
                 ],
@@ -440,7 +624,7 @@ class _SectionCard extends StatelessWidget {
             ]),
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: children,
@@ -481,46 +665,53 @@ class _InputField extends StatelessWidget {
         Row(children: [
           Text(label,
               style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
                 color: const Color(0xFF374151),
               )),
           if (subtitle != null) ...[
             const SizedBox(width: 6),
-            Text('Â· $subtitle',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  color: const Color(0xFF9CA3AF),
-                )),
+            Expanded(
+              child: Text('- $subtitle',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: const Color(0xFF9CA3AF),
+                  )),
+            ),
           ],
         ]),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         TextField(
           controller: ctrl,
           keyboardType: keyboardType,
           inputFormatters: inputFormatters,
           maxLines: maxLines,
-          style: GoogleFonts.inter(fontSize: 13),
+          style: GoogleFonts.inter(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF111827)),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle:
                 GoogleFonts.inter(fontSize: 13, color: const Color(0xFFD1D5DB)),
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: accent, width: 1.5),
             ),
             filled: true,
-            fillColor: const Color(0xFFFAFAFA),
+            fillColor: const Color(0xFFF9FAFB),
           ),
         ),
       ],
@@ -565,21 +756,21 @@ class _DropdownField extends StatelessWidget {
               GoogleFonts.inter(fontSize: 13, color: const Color(0xFF111827)),
           decoration: InputDecoration(
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: accent, width: 1.5),
             ),
             filled: true,
-            fillColor: const Color(0xFFFAFAFA),
+            fillColor: const Color(0xFFF9FAFB),
           ),
         ),
       ],
