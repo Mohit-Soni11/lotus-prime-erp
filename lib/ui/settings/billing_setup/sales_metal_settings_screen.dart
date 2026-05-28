@@ -44,6 +44,7 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
   // Metal accent color
   Color get _accent => _metalAccent(widget.metal);
   String get _metalDisplay => BillingMetal.displayName(widget.metal);
+  String get _metalLogoAsset => _metalLogoFor(widget.metal);
 
   @override
   void initState() {
@@ -184,6 +185,7 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
                 delegate: SliverChildListDelegate([
                   _MetalIntroPanel(
                     metalName: _metalDisplay,
+                    logoAsset: _metalLogoAsset,
                     accent: _accent,
                     enabledCount: _enabledDisplayCount,
                     returnMode: _model.returnMode,
@@ -474,7 +476,56 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
         accent: _accent,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
       ),
+      const SizedBox(height: 14),
+      _responsiveFieldPair(
+        first: _InputField(
+          label: 'Return Policy Note',
+          hint:
+              'e.g. Return accepted within the selected window with original invoice.',
+          subtitle: 'Printed/internal reference for return handling',
+          ctrl: _returnPolicyCtrl,
+          accent: _accent,
+          maxLines: 4,
+        ),
+        second: _InputField(
+          label: 'Buyback Policy Note',
+          hint:
+              'e.g. Buyback value depends on purity test, market rate and deductions.',
+          subtitle: 'Customer-facing buyback terms',
+          ctrl: _buybackPolicyCtrl,
+          accent: _accent,
+          maxLines: 4,
+        ),
+      ),
     ];
+  }
+
+  Widget _responsiveFieldPair({
+    required Widget first,
+    required Widget second,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 640) {
+          return Column(
+            children: [
+              first,
+              const SizedBox(height: 14),
+              second,
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: first),
+            const SizedBox(width: 14),
+            Expanded(child: second),
+          ],
+        );
+      },
+    );
   }
 
   // â”€â”€ TERMS & TEMPLATE SECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -517,18 +568,35 @@ Color _metalAccent(String metal) {
   }
 }
 
+String _metalLogoFor(String metal) {
+  switch (metal) {
+    case BillingMetal.gold:
+      return 'lib/logo/gold.jpeg';
+    case BillingMetal.silver:
+      return 'lib/logo/silver and platinum .jpeg';
+    case BillingMetal.diamond:
+      return 'lib/logo/diamond .jpeg';
+    case BillingMetal.platinum:
+      return 'lib/logo/silver and platinum .jpeg';
+    default:
+      return 'lib/logo/gold.jpeg';
+  }
+}
+
 // =============================================================================
 // REUSABLE WIDGETS
 // =============================================================================
 
 class _MetalIntroPanel extends StatelessWidget {
   final String metalName;
+  final String logoAsset;
   final Color accent;
   final int enabledCount;
   final String returnMode;
 
   const _MetalIntroPanel({
     required this.metalName,
+    required this.logoAsset,
     required this.accent,
     required this.enabledCount,
     required this.returnMode,
@@ -560,10 +628,30 @@ class _MetalIntroPanel extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(14),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accent.withValues(alpha: 0.28),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
                 ),
-                child: Icon(Icons.tune_rounded, color: accent, size: 26),
+                child: ClipOval(
+                  child: Image.asset(
+                    logoAsset,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => ColoredBox(
+                      color: accent.withValues(alpha: 0.10),
+                      child: Icon(
+                        Icons.workspace_premium_rounded,
+                        color: accent,
+                        size: 26,
+                      ),
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(

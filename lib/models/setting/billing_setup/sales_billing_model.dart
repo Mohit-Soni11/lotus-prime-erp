@@ -197,6 +197,12 @@ class SalesBillingModel {
               'Guarantee is provided as per BIS Hallmark standards.\n'
               'HUID is mandatory for all gold items as per Govt. norms.\n'
               'Original bill is mandatory for any service claim.',
+          returnPolicyText:
+              'Gold jewellery is eligible for exchange within 7 days with the original invoice.\n'
+              'Used, damaged, altered or custom-made items are not eligible for return.',
+          buybackPolicyText:
+              'Gold buyback is calculated on the current market rate after purity verification.\n'
+              'HUID/original invoice may be required for compliance and valuation.',
           footerMessage: 'Thank you for shopping with us! Visit us again.',
         );
 
@@ -229,6 +235,12 @@ class SalesBillingModel {
               'Silver items once sold will not be taken back or exchanged.\n'
               'Exchange subject to purity verification.\n'
               'Original bill is mandatory for any service claim.',
+          returnPolicyText:
+              'Silver items can be exchanged within 7 days with the original invoice.\n'
+              'Tarnish, usage marks, damage or customised orders are not covered under return.',
+          buybackPolicyText:
+              'Silver buyback is based on current silver rate, purity test and applicable deductions.\n'
+              'Original invoice is recommended for faster valuation.',
           footerMessage: 'Thank you for shopping with us! Visit us again.',
         );
 
@@ -267,6 +279,12 @@ class SalesBillingModel {
               'Certificate is mandatory for resale or valuation.\n'
               'Diamond quality is as per certificate provided.\n'
               'Original bill is mandatory for any service claim.',
+          returnPolicyText:
+              'Diamond jewellery is generally non-returnable after billing.\n'
+              'Exchange or upgrade requests require original invoice and certificate verification.',
+          buybackPolicyText:
+              'Diamond buyback depends on certificate, cut, clarity, carat, condition and market demand.\n'
+              'Final value is confirmed only after expert inspection.',
           footerMessage: 'Thank you for shopping with us! Visit us again.',
         );
 
@@ -299,6 +317,12 @@ class SalesBillingModel {
               'Platinum items once sold will not be taken back or exchanged.\n'
               'Purity as per Pt marking on item.\n'
               'Original bill is mandatory for any service claim.',
+          returnPolicyText:
+              'Platinum jewellery is eligible for exchange within 7 days with the original invoice.\n'
+              'Customised, damaged or altered items are not eligible for return.',
+          buybackPolicyText:
+              'Platinum buyback is calculated on current platinum rate after purity and weight verification.\n'
+              'Deductions may apply for testing, refining or item condition.',
           footerMessage: 'Thank you for shopping with us! Visit us again.',
         );
 
