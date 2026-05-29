@@ -14,48 +14,30 @@ class PurchaseBillingRepo {
 
   Future<PurchaseBillingModel> fetchForMetal(String metal) async {
     await _db.ensureBillingSetupSchema();
-    final row = await (_db.select(_db.purchaseBillingSettings)
+    final rows = await (_db.select(_db.purchaseBillingSettings)
           ..where((t) => t.metal.equals(metal))
           ..limit(1))
-        .getSingleOrNull();
+        .get();
 
-    if (row == null) return PurchaseBillingModel.defaultFor(metal);
-    return _rowToModel(row);
+    if (rows.isEmpty) return PurchaseBillingModel.defaultFor(metal);
+    return _rowToModel(rows.first);
   }
 
   Future<bool> saveForMetal(PurchaseBillingModel model) async {
     try {
       await _db.ensureBillingSetupSchema();
-      await _db.into(_db.purchaseBillingSettings).insertOnConflictUpdate(
-            PurchaseBillingSettingsCompanion.insert(
-              metal: model.metal,
-              showGrossWeight: Value(model.showGrossWeight),
-              showLessWeight: Value(model.showLessWeight),
-              showNetWeight: Value(model.showNetWeight),
-              showPurity: Value(model.showPurity),
-              showRate: Value(model.showRate),
-              showFineWeight: Value(model.showFineWeight),
-              showTotalValue: Value(model.showTotalValue),
-              showStoneDetails: Value(model.showStoneDetails),
-              showStoneValue: Value(model.showStoneValue),
-              showHuid: Value(model.showHuid),
-              showSupplierDetails: Value(model.showSupplierDetails),
-              showPanNumber: Value(model.showPanNumber),
-              showDiamondCarats: Value(model.showDiamondCarats),
-              showDiamondClarity: Value(model.showDiamondClarity),
-              showCertificationNo: Value(model.showCertificationNo),
-              showGstBreakup: Value(model.showGstBreakup),
-              showHsnCode: Value(model.showHsnCode),
-              returnWindowDays: Value(model.returnWindowDays),
-              returnMode: Value(model.returnMode),
-              purityDeductPercent: Value(model.purityDeductPercent),
-              termsAndConditions: Value(model.termsAndConditions),
-              returnPolicyText: Value(model.returnPolicyText),
-              buybackPolicyText: Value(model.buybackPolicyText),
-              footerMessage: Value(model.footerMessage),
-              selectedTemplate: Value(model.selectedTemplate),
-            ),
-          );
+      final companion = _toCompanion(model);
+      final existingRows = await (_db.select(_db.purchaseBillingSettings)
+            ..where((t) => t.metal.equals(model.metal)))
+          .get();
+
+      if (existingRows.isEmpty) {
+        await _db.into(_db.purchaseBillingSettings).insert(companion);
+      } else {
+        await (_db.update(_db.purchaseBillingSettings)
+              ..where((t) => t.metal.equals(model.metal)))
+            .write(companion);
+      }
       return true;
     } catch (error, stackTrace) {
       AppLogger.error(
@@ -65,6 +47,38 @@ class PurchaseBillingRepo {
       );
       return false;
     }
+  }
+
+  PurchaseBillingSettingsCompanion _toCompanion(PurchaseBillingModel model) {
+    return PurchaseBillingSettingsCompanion(
+      metal: Value(model.metal),
+      updatedAt: Value(DateTime.now()),
+      showGrossWeight: Value(model.showGrossWeight),
+      showLessWeight: Value(model.showLessWeight),
+      showNetWeight: Value(model.showNetWeight),
+      showPurity: Value(model.showPurity),
+      showRate: Value(model.showRate),
+      showFineWeight: Value(model.showFineWeight),
+      showTotalValue: Value(model.showTotalValue),
+      showStoneDetails: Value(model.showStoneDetails),
+      showStoneValue: Value(model.showStoneValue),
+      showHuid: Value(model.showHuid),
+      showSupplierDetails: Value(model.showSupplierDetails),
+      showPanNumber: Value(model.showPanNumber),
+      showDiamondCarats: Value(model.showDiamondCarats),
+      showDiamondClarity: Value(model.showDiamondClarity),
+      showCertificationNo: Value(model.showCertificationNo),
+      showGstBreakup: Value(model.showGstBreakup),
+      showHsnCode: Value(model.showHsnCode),
+      returnWindowDays: Value(model.returnWindowDays),
+      returnMode: Value(model.returnMode),
+      purityDeductPercent: Value(model.purityDeductPercent),
+      termsAndConditions: Value(model.termsAndConditions),
+      returnPolicyText: Value(model.returnPolicyText),
+      buybackPolicyText: Value(model.buybackPolicyText),
+      footerMessage: Value(model.footerMessage),
+      selectedTemplate: Value(model.selectedTemplate),
+    );
   }
 
   Future<void> seedDefaults() async {

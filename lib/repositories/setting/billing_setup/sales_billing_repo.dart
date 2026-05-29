@@ -16,57 +16,31 @@ class SalesBillingRepo {
   // ── Fetch settings for one metal ─────────────────────────────────────────
   Future<SalesBillingModel> fetchForMetal(String metal) async {
     await _db.ensureBillingSetupSchema();
-    final row = await (_db.select(_db.salesBillingSettings)
+    final rows = await (_db.select(_db.salesBillingSettings)
           ..where((t) => t.metal.equals(metal))
           ..limit(1))
-        .getSingleOrNull();
+        .get();
 
-    if (row == null) return SalesBillingModel.defaultFor(metal);
-    return _rowToModel(row);
+    if (rows.isEmpty) return SalesBillingModel.defaultFor(metal);
+    return _rowToModel(rows.first);
   }
 
   // ── Save settings for one metal (upsert) ─────────────────────────────────
   Future<bool> saveForMetal(SalesBillingModel model) async {
     try {
       await _db.ensureBillingSetupSchema();
-      await _db.into(_db.salesBillingSettings).insertOnConflictUpdate(
-            SalesBillingSettingsCompanion.insert(
-              metal: model.metal,
-              showPieces: Value(model.showPieces),
-              showGrossWeight: Value(model.showGrossWeight),
-              showLessWeight: Value(model.showLessWeight),
-              showNetWeight: Value(model.showNetWeight),
-              showPurity: Value(model.showPurity),
-              showRate: Value(model.showRate),
-              showMakingCharges: Value(model.showMakingCharges),
-              showMakingChargeType: Value(model.showMakingChargeType),
-              showStoneDetails: Value(model.showStoneDetails),
-              showStoneValue: Value(model.showStoneValue),
-              showTotalValue: Value(model.showTotalValue),
-              showHuid: Value(model.showHuid),
-              showWastage: Value(model.showWastage),
-              showOldGoldLine: Value(model.showOldGoldLine),
-              showDiamondClarity: Value(model.showDiamondClarity),
-              showCertificationNo: Value(model.showCertificationNo),
-              showDiamondCarats: Value(model.showDiamondCarats),
-              showDiamondPieces: Value(model.showDiamondPieces),
-              showMetalWeight: Value(model.showMetalWeight),
-              showFineWeight: Value(model.showFineWeight),
-              showGstBreakup: Value(model.showGstBreakup),
-              showHsnCode: Value(model.showHsnCode),
-              returnWindowDays: Value(model.returnWindowDays),
-              returnMode: Value(model.returnMode),
-              handlingChargePercent: Value(model.handlingChargePercent),
-              buybackRatePercent: Value(model.buybackRatePercent),
-              buybackPurityDeductPercent:
-                  Value(model.buybackPurityDeductPercent),
-              termsAndConditions: Value(model.termsAndConditions),
-              returnPolicyText: Value(model.returnPolicyText),
-              buybackPolicyText: Value(model.buybackPolicyText),
-              footerMessage: Value(model.footerMessage),
-              selectedTemplate: Value(model.selectedTemplate),
-            ),
-          );
+      final companion = _toCompanion(model);
+      final existingRows = await (_db.select(_db.salesBillingSettings)
+            ..where((t) => t.metal.equals(model.metal)))
+          .get();
+
+      if (existingRows.isEmpty) {
+        await _db.into(_db.salesBillingSettings).insert(companion);
+      } else {
+        await (_db.update(_db.salesBillingSettings)
+              ..where((t) => t.metal.equals(model.metal)))
+            .write(companion);
+      }
       return true;
     } catch (error, stackTrace) {
       AppLogger.error(
@@ -76,6 +50,45 @@ class SalesBillingRepo {
       );
       return false;
     }
+  }
+
+  SalesBillingSettingsCompanion _toCompanion(SalesBillingModel model) {
+    return SalesBillingSettingsCompanion(
+      metal: Value(model.metal),
+      updatedAt: Value(DateTime.now()),
+      showPieces: Value(model.showPieces),
+      showGrossWeight: Value(model.showGrossWeight),
+      showLessWeight: Value(model.showLessWeight),
+      showNetWeight: Value(model.showNetWeight),
+      showPurity: Value(model.showPurity),
+      showRate: Value(model.showRate),
+      showMakingCharges: Value(model.showMakingCharges),
+      showMakingChargeType: Value(model.showMakingChargeType),
+      showStoneDetails: Value(model.showStoneDetails),
+      showStoneValue: Value(model.showStoneValue),
+      showTotalValue: Value(model.showTotalValue),
+      showHuid: Value(model.showHuid),
+      showWastage: Value(model.showWastage),
+      showOldGoldLine: Value(model.showOldGoldLine),
+      showDiamondClarity: Value(model.showDiamondClarity),
+      showCertificationNo: Value(model.showCertificationNo),
+      showDiamondCarats: Value(model.showDiamondCarats),
+      showDiamondPieces: Value(model.showDiamondPieces),
+      showMetalWeight: Value(model.showMetalWeight),
+      showFineWeight: Value(model.showFineWeight),
+      showGstBreakup: Value(model.showGstBreakup),
+      showHsnCode: Value(model.showHsnCode),
+      returnWindowDays: Value(model.returnWindowDays),
+      returnMode: Value(model.returnMode),
+      handlingChargePercent: Value(model.handlingChargePercent),
+      buybackRatePercent: Value(model.buybackRatePercent),
+      buybackPurityDeductPercent: Value(model.buybackPurityDeductPercent),
+      termsAndConditions: Value(model.termsAndConditions),
+      returnPolicyText: Value(model.returnPolicyText),
+      buybackPolicyText: Value(model.buybackPolicyText),
+      footerMessage: Value(model.footerMessage),
+      selectedTemplate: Value(model.selectedTemplate),
+    );
   }
 
   // ── Seed defaults for all 4 metals (called on first app launch) ───────────
