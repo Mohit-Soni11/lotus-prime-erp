@@ -2,7 +2,7 @@
 // FILE: pos_master_header.dart
 // TYPE: Smart UI Component (UPGRADED & MERGED)
 // DESCRIPTION: Dynamic App Bar listening to AuthProfileController.
-//              âœ… Back button merged (Original Color, No Gold Hover).
+//               Back button merged (Original Color, No Gold Hover).
 // ==========================================
 
 import 'package:flutter/material.dart';

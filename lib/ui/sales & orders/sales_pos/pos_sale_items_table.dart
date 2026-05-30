@@ -3,7 +3,7 @@
 // TYPE: Invoice Items Container (UPGRADED)
 // AUTHOR: Senior System Architect
 // DESCRIPTION: Zero-Lag Cart Table connected to Master Theme.
-//              âœ… Strictly mapped Colors, Icons, and TextStyles.
+//               Strictly mapped Colors, Icons, and TextStyles.
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -61,7 +61,7 @@ class PosSaleItemsTable extends StatelessWidget {
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: ctrl.saleItems.length,
                           itemBuilder: (_, i) => PosSaleItemRow(
-                            // âœ… FIX: ObjectKey prevents state mix-up when rows deleted
+                            // ObjectKey prevents state mix-up when rows deleted
                             key: ObjectKey(ctrl.saleItems[i]),
                             index: i,
                             item: ctrl.saleItems[i],
@@ -414,7 +414,7 @@ class PosSaleItemsTable extends StatelessWidget {
                       fontSize: 12,
                       color: color.withValues(alpha: 0.8))),
               const SizedBox(width: 10),
-              Text("â‚¹ ${totalVal.toStringAsFixed(2)}",
+              Text("Rs ${totalVal.toStringAsFixed(2)}",
                   style: TextStyle(
                       fontWeight: FontWeight.w900, fontSize: 14, color: color)),
             ],

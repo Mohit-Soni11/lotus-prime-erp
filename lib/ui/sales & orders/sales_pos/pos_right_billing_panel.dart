@@ -3,8 +3,8 @@
 // TYPE: Smart UI Component (UPGRADED)
 // AUTHOR: Senior System Architect
 // DESCRIPTION: Payment Hub & Invoice Summary connected to Master Theme.
-//              âœ… HOLD System Wired-Up with Smart Badge.
-//              âœ… INVOICE PREVIEW Wired-Up.
+//               HOLD System Wired-Up with Smart Badge.
+//               INVOICE PREVIEW Wired-Up.
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -13,7 +13,7 @@ import '../../../logic/sales & orders/sales pos/pos_billing_controller.dart';
 import '../../../models/sales & orders/sales_pos_enums/sales_pos_enums.dart';
 import 'pos_hold_list_dialog.dart';
 
-// ðŸš€ NAYA IMPORT INVOICE PREVIEW KE LIYE:
+//  Invoice preview dependency
 import 'pos_invoice_preview_screen.dart';
 
 class PosRightBillingPanel extends StatefulWidget {
@@ -28,7 +28,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
   bool _makingExpanded = false;
   bool _gstExpanded = false;
   bool _exchangeExpanded = false;
-  // âœ… promiseDate ab ctrl mein hai (PosBillingController.promiseDate)
+  //  Promise date is owned by PosBillingController.
 
   String? _refundMethod;
   double _lastPayableAmount = 0.0;
@@ -270,7 +270,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                         Row(
                           children: [
                             Text(
-                                "- â‚¹ ${widget.ctrl.oldGoldCashDeduction.toStringAsFixed(2)}",
+                                "- Rs ${widget.ctrl.oldGoldCashDeduction.toStringAsFixed(2)}",
                                 style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w900,
@@ -627,7 +627,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: SalesPosColors.bodyTextMain)),
-          Text(customVal ?? "â‚¹ ${amount.toStringAsFixed(2)}",
+          Text(customVal ?? "Rs ${amount.toStringAsFixed(2)}",
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
@@ -649,8 +649,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                 color: SalesPosColors.bodyTextMain)),
         Text(
             isCredit
-                ? "- â‚¹ ${amount.abs().toStringAsFixed(2)}"
-                : "â‚¹ ${amount.toStringAsFixed(2)}",
+                ? "- Rs ${amount.abs().toStringAsFixed(2)}"
+                : "Rs ${amount.toStringAsFixed(2)}",
             style: TextStyle(
                 fontSize: isMid ? 16 : 17,
                 fontWeight: FontWeight.w900,
@@ -664,7 +664,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
   Widget _buildDiscountRow() {
     final discAmt = widget.ctrl.discountAmount;
     final isPercent = widget.ctrl.discountType == DiscountType.percentage;
-    // âœ… FIX: % mode mein 100 se zyada ho to warning dikhao
+    // Show a warning when percentage mode exceeds 100%.
     final double inputVal = double.tryParse(widget.ctrl.discountCtrl.text) ?? 0;
     final bool isInvalidPct = isPercent && inputVal > 100;
 
@@ -717,7 +717,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   if (discAmt > 0)
                     Padding(
                       padding: const EdgeInsets.only(right: 10),
-                      child: Text("- â‚¹ ${discAmt.toStringAsFixed(2)}",
+                      child: Text("- Rs ${discAmt.toStringAsFixed(2)}",
                           style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w900,
@@ -768,7 +768,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
               ),
             ],
           ),
-          // âœ… Warning: % 100 se zyada ho to
+          //  Warn when percentage exceeds 100%.
           if (isInvalidPct)
             Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -779,7 +779,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                       color: SalesPosColors.danger, size: 13),
                   const SizedBox(width: 4),
                   Text(
-                    "Max 100% â€” Auto-capped at 100%",
+                    "Max 100%  -  Auto-capped at 100%",
                     style: TextStyle(
                         fontSize: 11,
                         color: SalesPosColors.danger.withValues(alpha: 0.85),
@@ -812,7 +812,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                 Row(
                   children: [
                     Text(
-                        "â‚¹ ${widget.ctrl.totalMakingCharge.toStringAsFixed(2)}",
+                        "Rs ${widget.ctrl.totalMakingCharge.toStringAsFixed(2)}",
                         style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w900,
@@ -895,16 +895,16 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
           const SizedBox(height: 8),
           _buildSubtleRow(
               mTaxable > 0
-                  ? "Tax on Metal (3% on â‚¹${mTaxable.toStringAsFixed(2)})"
+                  ? "Tax on Metal (3% on Rs ${mTaxable.toStringAsFixed(2)})"
                   : "Tax on Metal (0.00)",
               0,
-              customVal: "â‚¹ ${mGst.toStringAsFixed(2)}"),
+              customVal: "Rs ${mGst.toStringAsFixed(2)}"),
           _buildSubtleRow(
               lTaxable > 0
-                  ? "Tax on Labour (5% on â‚¹${lTaxable.toStringAsFixed(2)})"
+                  ? "Tax on Labour (5% on Rs ${lTaxable.toStringAsFixed(2)})"
                   : "Tax on Labour (0.00)",
               0,
-              customVal: "â‚¹ ${lGst.toStringAsFixed(2)}"),
+              customVal: "Rs ${lGst.toStringAsFixed(2)}"),
           Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Divider(
@@ -917,7 +917,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                       fontSize: 13,
                       fontWeight: FontWeight.w900,
                       color: SalesPosColors.bodyTextMain)),
-              Text("â‚¹ ${controllerTotalGst.toStringAsFixed(2)}",
+              Text("Rs ${controllerTotalGst.toStringAsFixed(2)}",
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
@@ -951,7 +951,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                         color: SalesPosColors.bodyTextMain)),
                 Row(
                   children: [
-                    Text("â‚¹ ${widget.ctrl.totalGst.toStringAsFixed(2)}",
+                    Text("Rs ${widget.ctrl.totalGst.toStringAsFixed(2)}",
                         style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w900,
@@ -1030,22 +1030,22 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                         widget.ctrl.goldNetFine != 0)
                       _buildSubtleRow("Gold (HSN 7113)", 0,
                           customVal:
-                              "â‚¹ ${widget.ctrl.goldGst.toStringAsFixed(2)}"),
+                              "Rs ${widget.ctrl.goldGst.toStringAsFixed(2)}"),
                     if (widget.ctrl.totalSilverWt > 0 ||
                         widget.ctrl.silverNetFine != 0)
                       _buildSubtleRow("Silver (HSN 7113)", 0,
                           customVal:
-                              "â‚¹ ${widget.ctrl.silverGst.toStringAsFixed(2)}"),
+                              "Rs ${widget.ctrl.silverGst.toStringAsFixed(2)}"),
                     if (widget.ctrl.totalPlatinumWt > 0 ||
                         widget.ctrl.platNetFine != 0)
                       _buildSubtleRow("Platinum (HSN 7113)", 0,
                           customVal:
-                              "â‚¹ ${widget.ctrl.platinumGst.toStringAsFixed(2)}"),
+                              "Rs ${widget.ctrl.platinumGst.toStringAsFixed(2)}"),
                     if (widget.ctrl.totalDiamondWt > 0 ||
                         widget.ctrl.diaNetFine != 0)
                       _buildSubtleRow("Diamond (HSN 7102)", 0,
                           customVal:
-                              "â‚¹ ${widget.ctrl.diamondGst.toStringAsFixed(2)}"),
+                              "Rs ${widget.ctrl.diamondGst.toStringAsFixed(2)}"),
                   ]
                 ],
               ),
@@ -1065,7 +1065,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: const Center(
-        child: Text("NORMAL BILL  Â·  NO GST APPLIED",
+        child: Text("NORMAL BILL    NO GST APPLIED",
             style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
@@ -1160,7 +1160,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                                   color: balanceColor)),
                           const SizedBox(height: 4),
                           Text(
-                              "â‚¹ ${widget.ctrl.balanceDue.abs().toStringAsFixed(2)}",
+                              "Rs ${widget.ctrl.balanceDue.abs().toStringAsFixed(2)}",
                               style: TextStyle(
                                   fontSize: 26,
                                   fontWeight: FontWeight.w900,
@@ -1376,7 +1376,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                             letterSpacing: 1.5)),
                     const SizedBox(height: 6),
                     Text(
-                        "${isCredit ? '- ' : ''}â‚¹ ${payableAmount.abs().toStringAsFixed(2)}",
+                        "${isCredit ? '- ' : ''}Rs ${payableAmount.abs().toStringAsFixed(2)}",
                         style: SalesPosStyles.grandTotalText
                             .copyWith(color: boxColor)),
                   ],
@@ -1463,22 +1463,22 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                 child: SizedBox(
                   height: 54,
                   child: ElevatedButton.icon(
-                    // ðŸš€ YAHAN MAIN CHANGE KIYA HAI (GENERATE INVOICE LINKED)
+                    //  Generate invoice action
                     onPressed: () {
-                      // Safety Check: Agar cart khali hai toh error show karo
+                      // Validate that at least one sale or exchange item exists.
                       if (widget.ctrl.saleItems.isEmpty &&
                           widget.ctrl.oldGoldItems.isEmpty) {
                         ScaffoldMessenger.of(context)
                             .showSnackBar(const SnackBar(
                           content:
-                              Text("Cart is empty! Please add items first."),
+                              Text("The cart is empty. Please add at least one item before generating an invoice."),
                           backgroundColor: SalesPosColors.danger,
                           behavior: SnackBarBehavior.floating,
                         ));
                         return;
                       }
 
-                      // Agar cart mein item hai, toh naya Preview Screen kholo
+                      // Open the invoice preview when the cart contains billable items.
                       PosInvoicePreviewScreen.push(
                         context,
                         billingCtrl: widget.ctrl,

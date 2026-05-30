@@ -2,8 +2,8 @@
 // FILE: pos_sale_item_row.dart
 // TYPE: Smart UI Component (UPGRADED)
 // AUTHOR: Senior System Architect
-// DESCRIPTION: Zero-lag row component for the main cart table.
-//              âœ… Strictly mapped Colors, Icons, and TextStyles.
+// DESCRIPTION: Low-latency row component for the main cart table.
+//               Strictly mapped Colors, Icons, and TextStyles.
 // ==========================================
 
 import 'dart:async';
@@ -15,7 +15,7 @@ import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../models/sales & orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales & orders/sales_pos_models/sales_pos_models.dart';
 import '../../../logic/sales & orders/sales pos/pos_billing_controller.dart';
-import 'pos_stock_lookup_field.dart'; // âœ… FIX 1: Ab ye use ho raha hai
+import 'pos_stock_lookup_field.dart'; //  Stock lookup field is used by this row.
 import 'shared_pos_components.dart';
 // Note: Make sure PosStockLookupModel is exported in sales_pos_models.dart
 // ya usko explicitly import kar lena agar zaroorat ho.
@@ -192,7 +192,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                   Expanded(flex: 3, child: _buildMetalDropdown(metalColor)),
                   const SizedBox(width: 6),
 
-                  // ðŸš€ Description with autocomplete suggestions
+                  //  Description with autocomplete suggestions
                   Expanded(
                     flex: 4,
                     child: _DescriptionWithSuggestions(
@@ -207,7 +207,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                   const SizedBox(width: 6),
 
                   if (!isWholesale) ...[
-                    // âœ… FIX 2: HuidWithSuggestions ab ek clean widget ban gaya hai!
+                    // HUID suggestions are handled by a dedicated widget.
                     Expanded(
                       flex: 2,
                       child: _HuidWithSuggestions(
@@ -289,7 +289,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                       flex: 3,
                       child: _buildAutoCell(
                         value:
-                            "â‚¹${widget.item.wholesaleLabourAmt.toStringAsFixed(2)}",
+                            "Rs ${widget.item.wholesaleLabourAmt.toStringAsFixed(2)}",
                         color: SalesPosColors.bodyTextMain,
                         align: TextAlign.right,
                         isBold: true,
@@ -316,7 +316,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                       flex: 3,
                       child: _buildAutoCell(
                         value:
-                            "â‚¹${widget.item.totalValue.toStringAsFixed(2)}",
+                            "Rs ${widget.item.totalValue.toStringAsFixed(2)}",
                         color: SalesPosColors.bodyTextMain,
                         align: TextAlign.right,
                         isBold: true,
@@ -589,14 +589,22 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
-      child: Text(
-        value,
-        textAlign: align,
-        style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.w900,
-            fontSize: isBold ? 16 : 15,
-            fontFeatures: const [FontFeature.tabularFigures()]),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment:
+            align == TextAlign.center ? Alignment.center : Alignment.centerRight,
+        child: Text(
+          value,
+          maxLines: 1,
+          softWrap: false,
+          overflow: TextOverflow.visible,
+          textAlign: align,
+          style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w900,
+              fontSize: isBold ? 16 : 15,
+              fontFeatures: const [FontFeature.tabularFigures()]),
+        ),
       ),
     );
   }
@@ -634,8 +642,8 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
         const SizedBox(width: 4),
         Tooltip(
           message: isWholesale
-              ? "Toggle: /g âž” /kg âž” /pc"
-              : "Toggle: Rate âž” /pc âž” %",
+              ? "Toggle: per gram > per kg > per piece"
+              : "Toggle: rate > per piece > percentage",
           waitDuration: const Duration(milliseconds: 400),
           child: InkWell(
             onTap: () =>
@@ -694,7 +702,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
 }
 
 // ==========================================
-// âœ… CLEAN WIDGETS USING PosStockLookupField
+//  CLEAN WIDGETS USING PosStockLookupField
 // ==========================================
 
 class _DescriptionWithSuggestions extends StatelessWidget {
@@ -720,11 +728,11 @@ class _DescriptionWithSuggestions extends StatelessWidget {
       textInputAction: TextInputAction.next,
       onSubmitted: onSubmitted,
       onSearch: (query) async {
-        // âœ… FIX 3: Passed item.metal as the missing 3rd argument.
-        // Agar aapke controller me 3rd arg kuch aur hai toh change it here.
+        // Passed item.metal as the missing 3rd argument.
+        // Update this argument if the controller signature changes.
         await ctrl.searchDescriptions(query, rowIndex, item.metal);
       },
-      // âœ… FIX 4: Automatically handles the PosStockLookupModel type!
+      // Automatically handles the PosStockLookupModel type!
       getSuggestions: () => ctrl.getDescSuggestionsForRow(rowIndex),
       onSelected: (selection) {
         ctrl.applyStockSuggestionToRow(

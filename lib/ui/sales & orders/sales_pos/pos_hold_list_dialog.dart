@@ -1,9 +1,7 @@
 // ==========================================
 // FILE: pos_hold_list_dialog.dart
-// TYPE: Smart UI Component (Dialog) â€” PREMIUM UPGRADE
-// DESCRIPTION: Premium Parked Invoice Browser with animated cards.
-//              âœ… THEME INVERSION FIXED (Text is now clearly visible on cards)
-//              âœ… BADGE ALIGNMENT FIXED
+// TYPE: UI Component
+// DESCRIPTION: Displays held POS bills and supports restore or delete actions.
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -216,7 +214,7 @@ class _PosHoldListDialogState extends State<PosHoldListDialog>
                 ),
               ),
               if (widget.ctrl.heldBills.isNotEmpty)
-                // FIX 1: PERFECTLY CENTERED BADGE
+                // PERFECTLY CENTERED BADGE
                 Container(
                   margin: const EdgeInsets.only(right: 8),
                   constraints:
@@ -461,7 +459,7 @@ class _AnimatedHoldCardState extends State<_AnimatedHoldCard>
                               color: isWalkIn
                                   ? SalesPosColors.bodyTextMuted.withValues(
                                       alpha:
-                                          0.12) // FIX 3: Changed to bodyTextMuted
+                                          0.12) // Uses muted body text.
                                   : SalesPosColors.brandGold
                                       .withValues(alpha: 0.15),
                               shape: BoxShape.circle,
@@ -473,7 +471,7 @@ class _AnimatedHoldCardState extends State<_AnimatedHoldCard>
                                   color: isWalkIn
                                       ? SalesPosColors.bodyTextMain
                                       : SalesPosColors
-                                          .brandGold, // FIX 3: Changed to bodyTextMain
+                                          .brandGold, // Uses primary body text.
                                   fontWeight: FontWeight.w900,
                                   fontSize: 16,
                                 ),
@@ -491,7 +489,7 @@ class _AnimatedHoldCardState extends State<_AnimatedHoldCard>
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: SalesPosColors
-                                        .bodyTextMain, // FIX 3: Bright Dark Title Color
+                                        .bodyTextMain, // Uses primary title color.
                                     fontWeight: FontWeight.w900,
                                     fontSize: 16,
                                   ),
@@ -499,7 +497,7 @@ class _AnimatedHoldCardState extends State<_AnimatedHoldCard>
                                 if (hasPhone)
                                   Text(
                                     hold.customerMobile,
-                                    // FIX 3: Made phone number strictly dark/black
+                                    // Made phone number strictly dark/black
                                     style: const TextStyle(
                                         color: Colors.black87,
                                         fontSize: 13,
@@ -513,7 +511,7 @@ class _AnimatedHoldCardState extends State<_AnimatedHoldCard>
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          // FIX 4: Item count pill colors explicitly set to dark body text
+                          // Item count pill colors explicitly set to dark body text
                           _buildStatPill(
                             icon: Icons.shopping_bag_outlined,
                             label:
@@ -576,7 +574,7 @@ class _AnimatedHoldCardState extends State<_AnimatedHoldCard>
                 height: 1.3),
           ),
           const SizedBox(height: 3),
-          // FIX 2: Date is now bold and dark
+          // Date is now bold and dark
           Text(date,
               style: const TextStyle(
                   color: SalesPosColors.bodyTextMain,

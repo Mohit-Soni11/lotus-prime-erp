@@ -111,7 +111,7 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
     );
   }
 
-  // â”€â”€ AVATAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  AVATAR 
   Widget _buildAvatar() {
     return SizedBox(
       width: 36,
@@ -179,7 +179,7 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
     );
   }
 
-  // â”€â”€ USER INFO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  USER INFO 
   Widget _buildUserInfo() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -193,7 +193,7 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
           ),
         ),
         const SizedBox(height: 4),
-        // Role pill â€” gradient with refined style
+        // Role pill  -  gradient with refined style
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
@@ -225,7 +225,7 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
     );
   }
 
-  // â”€â”€ VERTICAL DIVIDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  VERTICAL DIVIDER 
   Widget _buildVerticalDivider() {
     return Container(
       width: 1,
@@ -244,7 +244,7 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
     );
   }
 
-  // â”€â”€ LOGOUT ICON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  LOGOUT ICON 
   Widget _buildLogoutIcon() {
     return const Icon(
       SalesPosIcons.logout,

@@ -1,25 +1,11 @@
 // ==========================================
 // FILE: pos_billing_controller.dart
 // TYPE: Master Business Logic Controller
-// AUTHOR: Senior System Architect
-// DESCRIPTION: Zero-lag State Manager.
-//              ✅ MEMORY CRASH FIXED FOR HOLD SYSTEM.
-//              ✅ DELETE HELD BILL FUNCTION ADDED.
-//              ✅ FUZZY SEARCH ADDED (Google-style typo tolerance).
-//
-// BUG FIX LOG:
-//   ❌ BUG  — dispose() mein _db.close() tha.
-//             AppDatabase ek singleton hai, isliye isko close karne se
-//             poori app ka database band ho jaata tha. Jab bhi user POS
-//             screen se bahar jaata, app crash ho jaati thi with:
-//             "Can't re-open a database after closing it."
-//   ✅ FIX  — _db.close() line remove kar di. Singleton database app ke
-//             poore lifecycle mein live rehti hai, process exit pe
-//             automatically close hoti hai.
+// DESCRIPTION: Coordinates POS state, customer search, billing totals, held bills, and invoice readiness.
 // ==========================================
 
 import 'package:flutter/material.dart';
-import 'dart:async'; // ✅ FIX: Timer for debounce
+import 'dart:async'; //  Timer support for debounced input
 
 import '../../../models/sales & orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales & orders/sales_pos_models/sales_pos_models.dart';
@@ -29,7 +15,7 @@ import '../../../database/db/app_database.dart';
 import '../../../models/customer/customer_list/customer_list_ui_model.dart';
 import '../../../models/customer/customer_enums/customer_list_enums.dart';
 
-// ✅ NAYA IMPORT — Fuzzy Search Engine
+//  Fuzzy search support
 import '../../../helpers/search/fuzzy_search_helper.dart';
 import '../../../repositories/sales & orders/pos/pos_hold_repository.dart';
 import '../../../repositories/sales & orders/pos/pos_stock_lookup_repository.dart';
@@ -38,16 +24,16 @@ import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
 import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
 import '../../../models/setting/metal_rate/metal_rate_model.dart';
 
-// ✅ NAYA IMPORT — Customer History in POS
+//  Customer history support
 import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../models/customer/customer_profile/customer_profile_model.dart';
 
 class PosBillingController extends ChangeNotifier {
   // --- GLOBAL CONFIG ---
-  // ✅ FIX: Shop name dynamically loaded from DB on init
-  String shopName = "Lotus Jewellers"; // default, overridden in initShopData()
+  //  Shop name is loaded from the active shop setup.
+  String shopName = "Lotus Jewellers";
 
-  // ✅ FIX: Financial year — current year se dynamically nikalo
+  //  Current financial year label used for invoice numbering.
   String get currentFinancialYear => DateTime.now().year.toString();
   int nextSequence = 1;
   String? _committedInvoiceNumber;
@@ -70,26 +56,26 @@ class PosBillingController extends ChangeNotifier {
           final display = basicInfo['display_name']?.toString() ?? '';
           final name = brand.isNotEmpty ? brand : display;
           if (name.isNotEmpty) {
-            shopName = name.trim(); // ✅ Extra spaces hata do
+            shopName = name.trim();
             notifyListeners();
           }
         }
       }
     } catch (_) {
-      // fallback: default name rehega
+      // Keep the default name when shop setup cannot be loaded.
     }
   }
 
   // ==========================================
   // CUSTOMER SEARCH FEATURE
-  // ✅ UPGRADED: Google-style Fuzzy Search
+  //  UPGRADED: Typo-tolerant fuzzy search
   // ==========================================
   List<CustomerListItemModel> customerSuggestions = [];
   bool isSearchingCustomer = false;
-  bool customerNotFound = false; // ✅ NEW: "Not Found" state
+  bool customerNotFound = false;
   CustomerListItemModel? selectedCustomer;
 
-  // ✅ NAYA: Customer POS History — select hone ke baad dikhega
+  //  Customer POS history displayed after customer selection.
   CustomerProfileModel? customerHistory;
   bool isLoadingHistory = false;
   final CustomerProfileRepository _profileRepo = CustomerProfileRepository();
@@ -97,7 +83,7 @@ class PosBillingController extends ChangeNotifier {
   Future<void> searchCustomersByName(String query) async {
     final term = query.toLowerCase().trim();
 
-    // ✅ FIX: 1 character se hi search shuru ho
+    //  Search begins as soon as the field contains a value.
     if (term.isEmpty) {
       customerSuggestions = [];
       customerNotFound = false;
@@ -105,26 +91,26 @@ class PosBillingController extends ChangeNotifier {
       return;
     }
 
-    // Agar customer already select ho chuka hai to search mat karo
+    // Skip lookup when a customer is already selected.
     if (selectedCustomer != null) return;
 
     try {
-      // Pehle DB se saare customers load karo
+      // Load customers from the local database.
       final rows = await _db.select(_db.customers).get();
 
-      // Mobile field se search: exact prefix match pehle try karo
-      // Name field se search: fuzzy match
+      // Mobile input uses substring matching.
+      // Name input uses fuzzy matching.
       final bool isNumeric = RegExp(r'^\d+$').hasMatch(term);
 
       List matched;
 
       if (isNumeric) {
-        // ✅ Mobile number search: jo bhi number se start kare ya contain kare
+        //  Match customer mobile numbers by substring.
         matched = rows
             .where((row) => row.mobile.toLowerCase().contains(term))
             .toList();
       } else {
-        // ✅ Name search: fuzzy search
+        //  Match customer names using fuzzy search.
         matched = FuzzySearchHelper.searchObjects(
           items: rows,
           query: term,
@@ -148,7 +134,7 @@ class PosBillingController extends ChangeNotifier {
         );
       }).toList();
 
-      // ✅ NEW: Agar koi result nahi mila to notFound = true
+      //  Show the not-found state when no customers match.
       customerNotFound = customerSuggestions.isEmpty;
     } catch (e) {
       customerSuggestions = [];
@@ -163,15 +149,15 @@ class PosBillingController extends ChangeNotifier {
     mobileCtrl.text = customer.mobile;
     cityCtrl.text = customer.city;
     customerSuggestions = [];
-    customerNotFound = false; // ✅ Reset
-    customerHistory = null; // ✅ Pehle purani history clear karo
+    customerNotFound = false;
+    customerHistory = null;
     notifyListeners();
 
-    // ✅ NAYA: Background mein history fetch karo
+    //  Fetch customer history in the background.
     _fetchCustomerHistory(customer.id);
   }
 
-  // ✅ NAYA FUNCTION: Customer ka bill history, due, last visit fetch karo
+  //  Fetch bill history, outstanding balance, and last visit details.
   Future<void> _fetchCustomerHistory(int customerId) async {
     isLoadingHistory = true;
     notifyListeners();
@@ -187,7 +173,7 @@ class PosBillingController extends ChangeNotifier {
 
   void clearCustomerSuggestions() {
     customerSuggestions = [];
-    customerNotFound = false; // ✅ Reset
+    customerNotFound = false;
     notifyListeners();
   }
 
@@ -564,7 +550,7 @@ class PosBillingController extends ChangeNotifier {
   double _diaBhawInput = 0.0;
 
   PosBillingController() {
-    // ✅ FIX: Real shop name DB se load karo
+    //  Load the active shop name from the database.
     unawaited(_initShopName());
     unawaited(_restoreHeldBills());
     discountCtrl.addListener(() {
@@ -785,11 +771,11 @@ class PosBillingController extends ChangeNotifier {
 
   double get discountAmount {
     if (discountType == DiscountType.percentage) {
-      // ✅ FIX: % 100 se zyada nahi ho sakta
+      //  Percentage discount cannot exceed 100%.
       final clampedPct = _discountInput.clamp(0.0, 100.0);
       return grossAmount * clampedPct / 100;
     } else {
-      // ✅ FIX: Flat discount grossAmount se zyada nahi ho sakta
+      //  Flat discount cannot exceed the gross amount.
       return _discountInput.clamp(0.0, grossAmount);
     }
   }
@@ -960,7 +946,7 @@ class PosBillingController extends ChangeNotifier {
   // --- HOLD INVOICE SYSTEM LOGIC ---
   final List<PosHoldBillModel> heldBills = [];
 
-  // ✅ Promise Date — billing panel se invoice tak carry hoga
+  //  Promise date is carried from the billing panel to the invoice.
   DateTime? promiseDate;
 
   void setPromiseDate(DateTime? date) {
@@ -1105,7 +1091,7 @@ class PosBillingController extends ChangeNotifier {
 
     final targetBill = heldBills[targetBillIndex];
 
-    // ✅ FIX: Re-attach listeners — held items lose their listener on hold
+    // Reattach listeners because held items lose listeners during parking.
     heldBills.removeAt(targetBillIndex);
     clearEntirePOS(isHolding: false);
     _restoreHoldSnapshot(targetBill);
@@ -1123,11 +1109,11 @@ class PosBillingController extends ChangeNotifier {
     _committedInvoiceNumber = null;
     selectedCustomer = null;
     customerSuggestions = [];
-    customerNotFound = false; // ✅ Reset
-    customerHistory = null; // ✅ NAYA: History bhi clear karo
+    customerNotFound = false;
+    customerHistory = null;
     isLoadingHistory = false;
     clearAllStockSuggestions();
-    promiseDate = null; // ✅ Reset promise date
+    promiseDate = null; //  Reset the promise date.
     nameCtrl.clear();
     mobileCtrl.clear();
     cityCtrl.clear();
@@ -1163,10 +1149,10 @@ class PosBillingController extends ChangeNotifier {
 
   @override
   void dispose() {
-    _descSearchTimer?.cancel(); // ✅ FIX: Cancel any pending debounce
+    _descSearchTimer?.cancel(); //  Cancel any pending debounce timer.
     _huidSearchTimer?.cancel();
     clearEntirePOS(isHolding: false);
-    // ✅ BUG FIX: _db.close() intentionally removed.
+    //  The shared database instance must remain open for the app lifecycle.
     // AppDatabase is a Dart singleton. Calling close() here was shutting
     // down the ENTIRE app's database whenever the POS screen was exited.
     // Singleton databases must never be manually closed mid-session.

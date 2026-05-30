@@ -2,8 +2,8 @@
 // FILE: pos_old_gold_row.dart
 // TYPE: Smart UI Component (Single Row) (UPGRADED)
 // AUTHOR: Senior System Architect
-// DESCRIPTION: Zero-lag row for the Old Gold / Exchange table.
-//              âœ… Strictly mapped Colors, Icons, and TextStyles.
+// DESCRIPTION: Low-latency row for the old gold and exchange table.
+//               Strictly mapped Colors, Icons, and TextStyles.
 // ==========================================
 
 import 'dart:async';
@@ -175,7 +175,7 @@ class _PosOldGoldRowState extends State<PosOldGoldRow> {
                   Expanded(
                     flex: 3,
                     child: _buildAutoCell(
-                      value: "â‚¹ ${widget.item.totalValue.toStringAsFixed(2)}",
+                      value: "Rs ${widget.item.totalValue.toStringAsFixed(2)}",
                       color: SalesPosColors.bodyTextMain,
                       align: TextAlign.right,
                       isBold: true,

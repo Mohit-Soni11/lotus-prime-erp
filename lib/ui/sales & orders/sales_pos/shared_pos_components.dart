@@ -2,8 +2,8 @@
 // FILE: shared_pos_components.dart
 // TYPE: Reusable UI Components (UPGRADED)
 // AUTHOR: Senior System Architect
-// DESCRIPTION: Highly optimized, zero-lag UI widgets.
-//              ✅ 100% Theme Mapped & Pixel-Perfect.
+// DESCRIPTION: Optimized POS UI widgets.
+//               100% Theme Mapped & Pixel-Perfect.
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -49,7 +49,7 @@ class PosAtomicTextField extends StatelessWidget {
   final FocusNode? focusNode;
   final Function(String)? onSubmitted;
   final Color focusBorderColor;
-  // ✅ FIX: Explicit textInputAction — caller decides next/done
+  // Explicit textInputAction  caller decides next/done
   final TextInputAction? textInputAction;
 
   const PosAtomicTextField({

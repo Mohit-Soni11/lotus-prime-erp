@@ -3,8 +3,8 @@
 // TYPE: Smart UI Component (Bottom Sheet)
 // DESCRIPTION: Premium print format selector with live size thumbnails,
 //              copy count selector, and duplicate stamp toggle.
-//              âœ… FIXED: Live PDF Preview update
-//              âœ… FIXED: Invisible Copy Count Text & Premium UI Polish
+// Live PDF Preview update
+// Invisible Copy Count Text & Premium UI Polish
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -426,7 +426,7 @@ class _FormatOptionCard extends StatelessWidget {
                 : SalesPosColors.bodyBorder,
             width: isSelected ? 1.5 : 1.0,
           ),
-          // ðŸš€ FIX: Premium Selection Shadow added
+          // Premium Selection Shadow added
           boxShadow: isSelected
               ? [
                   BoxShadow(
@@ -542,7 +542,7 @@ class _PaperSizeThumbnail extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          format.subtitle.split('â€”').first.trim(),
+          format.subtitle.split(' - ').first.trim(),
           style: const TextStyle(
               color: SalesPosColors.shellTextMuted, fontSize: 10),
         ),
@@ -571,7 +571,7 @@ class _CopyStepper extends StatelessWidget {
           child: Text(
             value.toString(),
             textAlign: TextAlign.center,
-            // ðŸš€ FIX: Text is now beautifully visible with Brand Gold color and larger font
+            // Selection text uses brand gold and a larger font.
             style: const TextStyle(
                 color: SalesPosColors.brandGold,
                 fontSize: 18,

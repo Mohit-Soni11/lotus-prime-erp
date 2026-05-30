@@ -3,8 +3,8 @@
 // TYPE: Master Logic (Separated from UI)
 // AUTHOR: Senior System Architect
 // DESCRIPTION: Handles logged-in user state, dynamic shop info, and role logic.
-//              ✅ Strictly English comments.
-//              ✅ Ready for API/Database injection.
+//               Strictly English comments.
+//               Ready for API/Database injection.
 // ==========================================
 
 import 'package:flutter/material.dart';

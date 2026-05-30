@@ -3,9 +3,9 @@
 // TYPE: Smart UI Component
 // AUTHOR: Senior System Architect
 // DESCRIPTION: Top navigation, Radar Status and System Badge.
-//              âœ… Premium Layout with Gold Gradient Icon.
-//              âœ… Removed System Admin Login Badge.
-//              âœ… Perfectly positioned Shop Name & New Sales Title.
+//               Premium layout with branded icon treatment.
+//               Removed System Admin Login Badge.
+//               Perfectly positioned Shop Name & New Sales Title.
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -61,7 +61,7 @@ class _PosAppBarState extends State<PosAppBar> {
 
   @override
   Widget build(BuildContext context) {
-    // ðŸš€ SMART FILTER: Overriding the old hardcoded parent title
+    //  Use the contextual title for this POS screen.
     String displayContext = widget.title.toUpperCase();
     if (displayContext.contains("POS TERMINAL") ||
         displayContext.contains("LOTUS")) {
@@ -93,15 +93,15 @@ class _PosAppBarState extends State<PosAppBar> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // â”€â”€ 1. Animated Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            //  1. Animated back button 
             _HoverBackButton(onTap: widget.onBack),
             const SizedBox(width: 18),
 
-            // â”€â”€ 2. Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            //  2. Vertical Divider 
             _buildVerticalDivider(),
             const SizedBox(width: 18),
 
-            // â”€â”€ 3. Premium Gradient Module Icon (For New Sales) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            //  3. Module icon for New Sales 
             Container(
               width: 34,
               height: 34,
@@ -132,7 +132,7 @@ class _PosAppBarState extends State<PosAppBar> {
             ),
             const SizedBox(width: 14),
 
-            // â”€â”€ 4. Perfectly Aligned Main Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            //  4. Main title 
             if (_shopDisplayName.isNotEmpty) ...[
               Text(
                 _shopDisplayName.toUpperCase(),
@@ -146,7 +146,7 @@ class _PosAppBarState extends State<PosAppBar> {
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 10.0),
                 child: Text(
-                  "â€¢",
+                  " - ",
                   style:
                       TextStyle(color: SalesPosColors.brandGold, fontSize: 18),
                 ),
@@ -161,7 +161,7 @@ class _PosAppBarState extends State<PosAppBar> {
             // Spacer pushes the radar widget to the far right side
             const Spacer(),
 
-            // â”€â”€ 5. System Online Radar Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            //  5. System online status badge 
             const RadarStatusWidget(),
           ],
         ),
@@ -188,9 +188,9 @@ class _PosAppBarState extends State<PosAppBar> {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// 
 // HOVER BACK BUTTON
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// 
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
   const _HoverBackButton({required this.onTap});
@@ -253,9 +253,9 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// 
 // RADAR STATUS (Updated to Match the Premium Pill Shape exactly)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// 
 class RadarStatusWidget extends StatefulWidget {
   const RadarStatusWidget({super.key});
   @override

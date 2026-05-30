@@ -2,10 +2,10 @@
 // FILE: pos_master_sale_screen.dart
 // TYPE: Main Screen Assembly (Motherboard)
 // AUTHOR: Senior System Architect
-// DESCRIPTION: The main shell connecting all zero-lag POS components.
-//              ✅ Parent NEVER rebuilds (True Zero-Lag).
-//              ✅ Global tap-to-unfocus added for premium UX.
-//              ✅ FIXED: Removed deprecated login badge parameters.
+// DESCRIPTION: Main shell connecting the POS workspace components.
+//               Parent NEVER rebuilds (True Zero-Lag).
+//               Global tap-to-unfocus added for premium UX.
+// Removed deprecated login badge parameters.
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -29,7 +29,7 @@ class PosMasterSaleScreen extends StatefulWidget {
 }
 
 class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
-  // 🚀 The Single Master Engine driving the entire screen
+  //  The master controller driving the entire screen
   late final PosBillingController _ctrl;
 
   @override
@@ -46,13 +46,13 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 🚀 Global Unfocus: Tapping anywhere outside a text field hides the keyboard
+    //  Global Unfocus: Tapping anywhere outside a text field hides the keyboard
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: SalesPosColors.bodyBg,
 
-        // ── TOP APP BAR (FIXED) ──
+        //  Top app bar 
         appBar: PosAppBar(
           title: "${_ctrl.shopName} - POS TERMINAL",
           // Removed userName, userRole, and userInitials from here
@@ -76,7 +76,7 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // ── HEADER COMPONENT ROW ──
+                        //  HEADER COMPONENT ROW 
                         LayoutBuilder(
                           builder: (context, constraints) {
                             final bool sideBySide = constraints.maxWidth > 720;
@@ -109,15 +109,15 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
                         ),
                         const SizedBox(height: 14),
 
-                        // ── CUSTOMER INFO ──
+                        //  CUSTOMER INFO 
                         PosCustomerDetailsPanel(ctrl: _ctrl),
                         const SizedBox(height: 16),
 
-                        // ── MAIN CART TABLE ──
+                        //  MAIN CART TABLE 
                         PosSaleItemsTable(ctrl: _ctrl),
                         const SizedBox(height: 16),
 
-                        // ── OLD GOLD / EXCHANGE TABLE ──
+                        //  OLD GOLD / EXCHANGE TABLE 
                         PosOldGoldTable(ctrl: _ctrl),
 
                         // Extra bottom padding for scroll comfort
@@ -130,7 +130,7 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
                 const SizedBox(width: 18),
 
                 // ==========================================
-                // RIGHT COLUMN (30%) - FIXED BILLING HUB
+                // Right billing column
                 // ==========================================
                 Expanded(
                   flex: 30,

@@ -2,8 +2,8 @@
 // FILE: pos_invoice_preview_screen.dart
 // TYPE: Full Screen Master UI (The Hub)
 // DESCRIPTION: 2-Panel Invoice Generation Hub.
-//              âœ… UPGRADED: Tab-based Configuration
-//              âœ… UPGRADED: Inline Animated Save Button (No SnackBar)
+//               UPGRADED: Tab-based Configuration
+//               UPGRADED: Inline Animated Save Button (No SnackBar)
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -50,7 +50,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
   BillingMode _configMode = BillingMode.retail;
   BillType _configType = BillType.normal;
 
-  // ðŸš€ NAYA: Animation States for Save Button
+  //  Animation state for the save button.
   bool _isSavingPdf = false;
   bool _isPdfSaved = false;
 
@@ -108,7 +108,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                           const SizedBox(height: 24),
                           _buildCategorizedCustomization(),
                           const SizedBox(height: 24),
-                          // âœ… NEW: Due Date section (balance due hone par)
+                          //  Due date section shown when a balance remains outstanding.
                           _buildDueDateSection(),
                           _buildPrintOptions(),
                         ],
@@ -341,10 +341,10 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                   () => _invCtrl.toggleCustomization(
                       'making', _configMode, _configType)),
               const Divider(color: SalesPosColors.shellBorder, height: 1),
-              // âœ… NEW: Exchange Breakdown toggle
+              //  NEW: Exchange Breakdown toggle
               _buildToggleRow(
                 "Exchange Breakdown",
-                "ON: Gold/Silver alag  â€¢  OFF: Combined total",
+                "On: Show metal-wise exchange deduction. Off: Show a consolidated deduction.",
                 activeSettings.showExchangeBreakdown,
                 () => _invCtrl.toggleCustomization(
                     'exchange', _configMode, _configType),
@@ -421,7 +421,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
     );
   }
 
-  // âœ… NEW: Due Date picker â€” balance due hone par show karo
+  //  Due date picker shown when a balance remains outstanding.
   Widget _buildDueDateSection() {
     final hasDue = (_invCtrl.invoice?.balanceDue ?? 0) > 0.5;
     if (!hasDue) return const SizedBox();
@@ -651,7 +651,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
               ),
               const SizedBox(width: 8),
 
-              // ðŸš€ NAYA WORKFLOW: Smart Animated Save Button
+              //  Animated save button workflow
               Expanded(
                 child: OutlinedButton(
                   onPressed: (isReady && !_isSavingPdf && !_isPdfSaved)
@@ -666,7 +666,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                               _isPdfSaved = true;
                             });
 
-                            // 3 Second baad wapas normal state
+                            // Return the save button to its default state after three seconds.
                             Future.delayed(const Duration(seconds: 3), () {
                               if (mounted) setState(() => _isPdfSaved = false);
                             });
@@ -703,7 +703,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                                   Icon(Icons.check_circle_rounded,
                                       size: 16, color: SalesPosColors.success),
                                   SizedBox(width: 6),
-                                  Text("Saved!",
+                                  Text("Saved",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13,
@@ -749,7 +749,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
             ),
           ),
 
-          // âœ… DONE BUTTON â€” Sale confirm, POS saaf karo
+          //  Completion button finalizes the sale and clears the POS.
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
@@ -759,13 +759,13 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                       await _invCtrl.finalizeInvoiceIfNeeded();
                       if (!mounted) return;
                       widget.billingCtrl.clearEntirePOS();
-                      // Preview screen band karo
+                      // Close the preview screen.
                       Navigator.of(context).pop();
                       // Success message
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            "âœ… Sale complete! POS ready for next customer.",
+                            " Sale completed successfully. The POS is ready for the next customer.",
                           ),
                           backgroundColor: SalesPosColors.success,
                           behavior: SnackBarBehavior.floating,
@@ -776,7 +776,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                   : null,
               icon: const Icon(Icons.check_circle_outline_rounded, size: 20),
               label: const Text(
-                "DONE â€” NEW SALE",
+                "DONE  -  NEW SALE",
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 15,

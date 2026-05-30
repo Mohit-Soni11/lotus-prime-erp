@@ -3,8 +3,8 @@
 // TYPE: Smart UI Component (UPGRADED)
 // AUTHOR: Senior System Architect
 // DESCRIPTION: Compact toggle with perfect badge alignment.
-//              âœ… Strictly mapped Colors, Icons, and TextStyles.
-//              âœ… Wrap-content layout via IntrinsicWidth.
+//               Strictly mapped Colors, Icons, and TextStyles.
+//               Wrap-content layout via IntrinsicWidth.
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -53,9 +53,9 @@ class PosTopControlBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+                  // 
                   // HEADING ROW
-                  // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+                  // 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -96,7 +96,7 @@ class PosTopControlBar extends StatelessWidget {
                                       : SalesPosColors.bodyTextMuted,
                                 ),
                                 child: Text(
-                                  "${isRetail ? 'Retail Trade' : 'Wholesale Trade'}  Â·  ${isGstOn ? 'Tax Invoice' : 'Normal Bill'}",
+                                  "${isRetail ? 'Retail Trade' : 'Wholesale Trade'}    ${isGstOn ? 'Tax Invoice' : 'Normal Bill'}",
                                 ),
                               ),
                             ],
@@ -155,7 +155,7 @@ class PosTopControlBar extends StatelessWidget {
                     ],
                   ),
 
-                  // â”€â”€ Divider â”€â”€
+                  //  Divider 
                   Container(
                     height: 1,
                     width: double.infinity,
@@ -163,9 +163,9 @@ class PosTopControlBar extends StatelessWidget {
                     color: SalesPosColors.bodyBorder,
                   ),
 
-                  // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+                  // 
                   // CONTROLS ROW
-                  // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+                  // 
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [

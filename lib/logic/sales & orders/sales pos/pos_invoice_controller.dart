@@ -1,10 +1,7 @@
 // ==========================================
 // FILE: pos_invoice_controller.dart
 // TYPE: Business Logic Controller
-// DESCRIPTION: PDF generation, Customization, and Share engine.
-//              ✅ UPGRADED: Smart CRM Folder Management
-//              ✅ CLEANED: Removed Unused Imports (share_plus, path_provider)
-//              ✅ FIXED: count() error + unused netPayable variable
+// DESCRIPTION: Generates invoice snapshots, PDF output, printing, sharing, and persistence workflows.
 // ==========================================
 
 import 'dart:typed_data';
@@ -15,11 +12,11 @@ import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 
-// 🚀 SMART FOLDER LOGIC IMPORTS
+//  Smart folder configuration dependencies
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
 
-// ✅ DB SAVE IMPORTS
+//  Database persistence dependencies
 import '../../../database/db/app_database.dart';
 
 import '../../../logic/sales & orders/sales pos/pos_billing_controller.dart';
@@ -61,7 +58,7 @@ class PosInvoiceController extends ChangeNotifier {
   Uint8List? pdfBytes;
   String? errorMessage;
 
-  // ✅ DB SAVE STATE
+  //  Database save state
   bool isSavedToDb = false;
   int? savedBillDbId;
   final AppDatabase _db = AppDatabase();
@@ -181,15 +178,15 @@ class PosInvoiceController extends ChangeNotifier {
         }
 
         debugPrint(
-            "✅ [INVOICE] Shop data loaded: $_realShopName | $_realShopPhone | $_realShopAddress");
+            " [INVOICE] Shop data loaded: $_realShopName | $_realShopPhone | $_realShopAddress");
       } else {
-        debugPrint("⚠️ [INVOICE] No shop profile found in DB. Using defaults.");
+        debugPrint(" [INVOICE] No shop profile found in DB. Using defaults.");
         _realShopName = "Shop Name Not Set";
         _realShopAddress = "Please complete Shop Setup";
         _realShopPhone = "Phone not set";
       }
     } catch (e) {
-      debugPrint("❌ [INVOICE] Error fetching shop data: $e");
+      debugPrint(" [INVOICE] Error fetching shop data: $e");
       _realShopName =
           billing.shopName.isNotEmpty ? billing.shopName : "Lotus Jewellers";
     }
@@ -232,8 +229,8 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   // ==========================================
-  // ✅ STEP 1: DB se next sequence number lo
-  // ✅ FIX: .count() nahi hota table pe —
+  //  STEP 1: Reserve the next sequence number from the database.
+  // Drift tables do not expose count() directly here. 
   //         select().get() se list lo, .length lo
   // ==========================================
   Future<void> _syncNextInvoicePreview() async {
@@ -249,12 +246,12 @@ class PosInvoiceController extends ChangeNotifier {
       );
       billing.updateInvoiceSequencePreview(nextSequence);
     } catch (_) {
-      // fallback: jo preview memory mein hai wahi chalega
+      // Fall back to the invoice already held in preview memory.
     }
   }
 
   // ==========================================
-  // ✅ STEP 2: Bill + Items ko DB mein save karo
+  //  STEP 2: Persist the bill and line items to the database.
   // ==========================================
   PosInvoiceModel _copyInvoiceWithNumber(
     PosInvoiceModel source,
@@ -307,7 +304,7 @@ class PosInvoiceController extends ChangeNotifier {
       return;
     }
 
-    // --- BILLS TABLE mein master record insert karo ---
+    // --- Insert the bill header record. ---
     final result = await _checkoutRepo.finalizeSale(
       invoice: inv,
       customerId: billing.selectedCustomer?.id,
@@ -315,7 +312,7 @@ class PosInvoiceController extends ChangeNotifier {
 
     savedBillDbId = result.billId;
 
-    // --- BILL_ITEMS TABLE mein har sale item insert karo ---
+    // --- Insert each sale line item. ---
     /*
     for (final item in billing.saleItems) {
       final grossWt = double.tryParse(item.grossCtrl.text) ?? 0.0;
@@ -330,7 +327,7 @@ class PosInvoiceController extends ChangeNotifier {
               huid: Value(
                   item.huidCtrl.text.isNotEmpty ? item.huidCtrl.text : null),
               purity: Value(
-                  item.purityCtrl.text.isNotEmpty ? item.purityCtrl.text : '—'),
+                  item.purityCtrl.text.isNotEmpty ? item.purityCtrl.text : ''),
               grossWeight: Value(grossWt),
               netWeight: Value(item.netWt),
               rate: Value(item.rate),
@@ -672,7 +669,7 @@ class PosInvoiceController extends ChangeNotifier {
 
   pw.Widget _pdfTotalsBlock(PosInvoiceModel inv) {
     final activeConfig = getActiveConfig(inv.billingMode, inv.billType);
-    // ✅ FIX: Local variable hataya — directly inv.netPayable use karo
+    // Use the invoice net payable value directly.
     return pw.Row(mainAxisAlignment: pw.MainAxisAlignment.end, children: [
       pw.SizedBox(
         width: 240,
@@ -723,7 +720,7 @@ class PosInvoiceController extends ChangeNotifier {
             }(),
           ],
           pw.Divider(color: PdfColors.amber800),
-          // ✅ FIX: Seedha inv.netPayable use karo
+          // Use the invoice net payable value directly.
           _totalRow("GRAND TOTAL", inv.netPayable, isBold: true, isGrand: true),
         ]),
       ),
@@ -793,7 +790,7 @@ class PosInvoiceController extends ChangeNotifier {
                     color: PdfColors.green100,
                     borderRadius: pw.BorderRadius.all(pw.Radius.circular(4)),
                   ),
-                  child: pw.Text("✓ FULLY PAID",
+                  child: pw.Text(" FULLY PAID",
                       style: pw.TextStyle(
                           fontSize: 7,
                           fontWeight: pw.FontWeight.bold,
@@ -916,7 +913,7 @@ class PosInvoiceController extends ChangeNotifier {
       pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
         pw.Text("Thank you for shopping with us!",
             style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
-        pw.Text("${inv.shopName} — E&OE",
+        pw.Text("${inv.shopName}  E&OE",
             style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey500)),
       ]),
     ]);
@@ -973,7 +970,7 @@ class PosInvoiceController extends ChangeNotifier {
     }
   }
 
-  // 🚀 NAYA MASTER LOGIC: Smart CRM Folder Directory Management
+  //  Smart CRM folder directory management
   Future<String?> downloadPdf() async {
     await finalizeInvoiceIfNeeded();
     if (pdfBytes == null || invoice == null) return null;

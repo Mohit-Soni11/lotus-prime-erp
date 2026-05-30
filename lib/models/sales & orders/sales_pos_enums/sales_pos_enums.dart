@@ -88,7 +88,7 @@ extension DiscountTypeExtension on DiscountType {
   String get symbol {
     switch (this) {
       case DiscountType.flatAmount:
-        return '₹';
+        return '';
       case DiscountType.percentage:
         return '%';
     }
@@ -108,7 +108,7 @@ extension UserRoleExtension on UserRole {
 }
 
 // ==========================================
-// 🚀 NEW ADDITIONS (Extracted from UI Hardcoded Strings)
+//  NEW ADDITIONS (Extracted from UI Hardcoded Strings)
 // ==========================================
 
 /// Tracks the lifecycle state of the current POS invoice.

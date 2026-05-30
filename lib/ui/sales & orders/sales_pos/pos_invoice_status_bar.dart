@@ -2,9 +2,9 @@
 // FILE: pos_invoice_status_bar.dart
 // TYPE: Smart UI Component (UPGRADED)
 // AUTHOR: Senior System Architect
-// DESCRIPTION: Invoice status box â€” redesigned to match PosTopControlBar.
-//              âœ… Strictly mapped Colors, Icons, and TextStyles.
-//              âœ… Compact wrap-content layout (zero dead space).
+// DESCRIPTION: Invoice status box  -  redesigned to match PosTopControlBar.
+//               Strictly mapped Colors, Icons, and TextStyles.
+//               Compact wrap-content layout (zero dead space).
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -82,7 +82,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
     );
   }
 
-  // â”€â”€ MAIN CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  MAIN CARD 
   Widget _buildCard() {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
@@ -106,9 +106,9 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+            // 
             // HEADING ROW
-            // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+            // 
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -207,7 +207,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
               ],
             ),
 
-            // â”€â”€ Divider â”€â”€
+            //  Divider 
             Container(
               height: 1,
               width: double.infinity,
@@ -215,21 +215,21 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
               color: SalesPosColors.bodyBorder,
             ),
 
-            // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+            // 
             // CONTENT ROW
-            // â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+            // 
             SizedBox(
               height: 52,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // â”€â”€ Invoice icon box â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  //  Invoice icon box 
                   _buildInvoiceIconBox(),
 
                   const SizedBox(width: 16),
 
-                  // â”€â”€ Invoice number block â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  //  Invoice number block 
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,7 +261,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
 
                   const SizedBox(width: 24),
 
-                  // â”€â”€ Vertical rule â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  //  Vertical rule 
                   Container(
                     width: 1,
                     height: 34,
@@ -280,7 +280,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
 
                   const SizedBox(width: 20),
 
-                  // â”€â”€ Date + Time chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  //  Date + Time chips 
                   StreamBuilder<DateCardModel>(
                     stream: _dateLogic.timeStream,
                     initialData: _dateLogic.initialData,

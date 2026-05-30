@@ -9,15 +9,15 @@
 import 'package:flutter/material.dart';
 import '../sales_pos_enums/sales_pos_enums.dart';
 
-// 🚀 ARCHITECTURE FIX: Optimized Parser
+//  Optimized parser
 double _parseSafeNumber(String text) {
   if (text.isEmpty) return 0.0;
   String cleanText = text.replaceAll(RegExp(r'[^0-9.]'), '');
   return double.tryParse(cleanText) ?? 0.0;
 }
 
-// ✅ BUG FIX: Purity label → actual fine percentage
-// "22KT" → 91.67%, "925" → 92.5%, "75.5" → 75.5% (custom input)
+//  Converts purity labels to their effective fine percentages.
+// "22KT"  91.67%, "925"  92.5%, "75.5"  75.5% (custom input)
 double _purityLabelToPercent(String label) {
   const map = <String, double>{
     '24KT': 99.9,
@@ -80,7 +80,7 @@ class SaleItemModel extends ChangeNotifier {
   final TextEditingController makingCtrl = TextEditingController();
 
   final FocusNode firstFieldFocus = FocusNode(); // description
-  // ✅ FIX: FocusNode for every field — proper Tab/Enter navigation
+  //  Focus nodes support predictable Tab and Enter navigation.
   final FocusNode pcsFocus = FocusNode();
   final FocusNode huidFocus = FocusNode();
   final FocusNode purityFocus = FocusNode();
@@ -101,7 +101,7 @@ class SaleItemModel extends ChangeNotifier {
   bool _makingFromMetalRateMaster = false;
   String? _rateSourceLabel;
   String? _makingSourceLabel;
-  // ✅ FIX: Track purity as label string ("22KT","925") not stripped number
+  //  Store purity as the display label, such as "22KT" or "925".
   String _tunchLabel = '';
 
   SaleItemModel({
@@ -111,9 +111,9 @@ class SaleItemModel extends ChangeNotifier {
   })  : _metal = metal,
         _makingChargeType = makingChargeType,
         _isLessPerPiece = isLessPerPiece {
-    // 🚀 STRICT VALUE-EQUALITY LISTENERS
+    //  Value equality listeners
     pcsCtrl.addListener(() {
-      // ✅ FIX: pcs min=1, integers only — 0 or negative makes no sense
+      //  Quantity is constrained to positive whole numbers.
       final val = (int.tryParse(pcsCtrl.text) ?? 1).clamp(1, 9999);
       if (_pcs != val) {
         _pcs = val;
@@ -161,7 +161,7 @@ class SaleItemModel extends ChangeNotifier {
       }
     });
 
-    // ✅ FIX: Track label string ("22KT","925") not stripped number
+    // Track label string ("22KT","925") not stripped number
     purityCtrl.addListener(() {
       final label = purityCtrl.text;
       if (_tunchLabel != label) {
@@ -186,10 +186,10 @@ class SaleItemModel extends ChangeNotifier {
   // --- CORE WEIGHT LOGIC ---
   int get pcs => _pcs;
   double get totalLessWt => _isLessPerPiece ? (_lessWt * _pcs) : _lessWt;
-  // ✅ FIX: netWt cannot go below zero (less > gross scenario)
+  //  Net weight is clamped at zero when deductions exceed gross weight.
   double get netWt => (_grossWt - totalLessWt).clamp(0.0, double.infinity);
   double get rate => _rate;
-  // ✅ FIX: Use proper fine% from label — "22KT"=91.67%, "925"=92.5%
+  //  Fine weight uses the percentage mapped from the purity label.
   double get tunch => _purityLabelToPercent(_tunchLabel);
   double get fineWt => _roundWeight3(netWt * (tunch / 100));
 
@@ -380,7 +380,7 @@ class SaleItemModel extends ChangeNotifier {
     rateCtrl.dispose();
     makingCtrl.dispose();
     firstFieldFocus.dispose();
-    // ✅ FIX: Dispose all field FocusNodes
+    //  Dispose field focus nodes.
     pcsFocus.dispose();
     huidFocus.dispose();
     purityFocus.dispose();
@@ -417,7 +417,7 @@ class OldGoldItemModel extends ChangeNotifier {
   }) : _metal = metal {
     purityCtrl.text = "100";
 
-    // 🚀 STRICT VALUE-EQUALITY LISTENERS
+    //  Value equality listeners
     grossCtrl.addListener(() {
       final val = _parseSafeNumber(grossCtrl.text);
       if (_grossWt != val) {

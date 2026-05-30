@@ -3,7 +3,7 @@
 // TYPE: Smart Exchange/Scrap Container (UPGRADED)
 // AUTHOR: Senior System Architect
 // DESCRIPTION: Zero-Lag Old Gold Table connected to Master Theme.
-//              âœ… Hardcoded colors, icons, and typography removed.
+//               Hardcoded colors, icons, and typography removed.
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -355,7 +355,7 @@ class PosOldGoldTable extends StatelessWidget {
                       color: color.withValues(alpha: 0.9))),
               if (!isWholesale) ...[
                 const SizedBox(width: 12),
-                Text("â‚¹ ${totalVal.toStringAsFixed(2)}",
+                Text("Rs ${totalVal.toStringAsFixed(2)}",
                     style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 16,

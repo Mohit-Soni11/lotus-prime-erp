@@ -1,19 +1,7 @@
 // ==========================================
 // FILE: pos_customer_details_panel.dart
-// TYPE: Smart UI Component (UPGRADED v3)
-// DESCRIPTION: Premium customer entry form.
-//              âœ… Customer name suggestions from DB
-//              âœ… Fuzzy search â€” name field + mobile field dono pe
-//              âœ… Overlay sahi field ke neeche dikhta hai
-//              âœ… "New Customer" redirects to add customer screen
-//              âœ… Zero hardcoded colors, icons, or styles.
-//
-// BUG FIX v3:
-//   âŒ BUG â€” CompositedTransformTarget sirf Mobile field pe tha.
-//            Name field mein type karne pe overlay galat jagah
-//            ya bilkul nahi dikhta tha.
-//   âœ… FIX â€” Alag-alag LayerLink banaya Name aur Mobile ke liye.
-//            Jo field active ho, overlay usi ke neeche dikhe.
+// TYPE: UI Component
+// DESCRIPTION: Customer entry, customer lookup, suggestion overlay, and customer history panel for POS billing.
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -41,13 +29,13 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
 
-  // âœ… FIX: Dono fields ke liye alag-alag LayerLink
+  // Dono fields ke liye alag-alag LayerLink
   final LayerLink _mobileSuggestionLink = LayerLink();
   final LayerLink _nameSuggestionLink = LayerLink();
 
   OverlayEntry? _suggestionOverlay;
 
-  // Kaunsa field active hai â€” mobile ya name?
+  // Tracks whether the mobile or name field is active.
   bool _isMobileActive = false;
 
   @override
@@ -84,27 +72,27 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
 
   void _onNameChanged() {
     _isMobileActive = false;
-    // âœ… FIX: selectedCustomer ho aur name match kare to search mat karo
+    // Skip name lookup when the selected customer already matches.
     if (widget.ctrl.selectedCustomer != null) {
       if (widget.ctrl.nameCtrl.text == widget.ctrl.selectedCustomer!.name) {
         return;
       }
-      widget.ctrl.selectedCustomer = null; // Customer deselect hua
+      widget.ctrl.selectedCustomer = null; // Customer selection has been cleared.
     }
     widget.ctrl.searchCustomersByName(widget.ctrl.nameCtrl.text);
   }
 
   void _onMobileChanged() {
     _isMobileActive = true;
-    // âœ… FIX: selectedCustomer ho aur mobile match kare to search mat karo
+    // Skip mobile lookup when the selected customer already matches.
     if (widget.ctrl.selectedCustomer != null) {
       if (widget.ctrl.mobileCtrl.text == widget.ctrl.selectedCustomer!.mobile) {
         return;
       }
-      widget.ctrl.selectedCustomer = null; // Customer deselect hua
+      widget.ctrl.selectedCustomer = null; // Customer selection has been cleared.
     }
     final mobile = widget.ctrl.mobileCtrl.text.trim();
-    // âœ… FIX: 1 character se hi search
+    // 1 character se hi search
     if (mobile.isNotEmpty) {
       widget.ctrl.searchCustomersByName(mobile);
     } else {
@@ -115,10 +103,10 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
   void _onControllerChanged() {
     if (!mounted) return;
 
-    // âœ… FIX: setState zaroori hai â€” jab selectedCustomer change ho
+    // setState is required when selectedCustomer changes.
     //         (select ya deselect), widget rebuild ho aur history card
-    //         dikhe ya chhuppe. Bina setState ke build() mein
-    //         selectedCustomer != null check kaam nahi karta.
+    //         so the history card visibility updates during build.
+    //         The selectedCustomer null check alone is insufficient.
     setState(() {});
 
     final suggestions = widget.ctrl.customerSuggestions;
@@ -140,7 +128,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
     if (!mounted) return;
     _removeSuggestionOverlay();
 
-    // âœ… FIX: Jo field active hai, usi ka LayerLink use karo
+    // Use the layer link belonging to the active field.
     final activeLink =
         _isMobileActive ? _mobileSuggestionLink : _nameSuggestionLink;
 
@@ -258,7 +246,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
 
                       const Spacer(),
 
-                      // â”€â”€ "NEW CUSTOMER" BANNER IF NOT FOUND â”€â”€
+                      //  "NEW CUSTOMER" BANNER IF NOT FOUND 
                       ListenableBuilder(
                         listenable: widget.ctrl,
                         builder: (context, _) {
@@ -376,7 +364,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      // â”€â”€ MOBILE FIELD â€” apna LayerLink â”€â”€
+                      //  MOBILE FIELD  -  apna LayerLink 
                       Expanded(
                         flex: 2,
                         child: CompositedTransformTarget(
@@ -392,7 +380,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                       ),
                       const SizedBox(width: 12),
 
-                      // â”€â”€ NAME FIELD â€” apna LayerLink âœ… â”€â”€
+                      //  NAME FIELD  -  apna LayerLink  
                       Expanded(
                         flex: 3,
                         child: CompositedTransformTarget(
@@ -442,7 +430,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                       ),
                       const SizedBox(width: 16),
 
-                      // â”€â”€ BUTTONS â”€â”€
+                      //  BUTTONS 
                       Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -479,7 +467,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
               ),
             ),
 
-            // âœ… NAYA: Customer History Card â€” customer select hone ke baad
+            //  Customer history card displayed after customer selection.
             if (widget.ctrl.selectedCustomer != null) ...[
               const SizedBox(height: 10),
               _PosCustomerHistoryCard(ctrl: widget.ctrl),
@@ -592,7 +580,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
         final suggestions = ctrl.customerSuggestions;
         final notFound = ctrl.customerNotFound;
 
-        // Kuch nahi dikhana
+        // No content is shown for this state.
         if (suggestions.isEmpty && !notFound) return const SizedBox.shrink();
 
         return Material(
@@ -610,7 +598,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: notFound && suggestions.isEmpty
-                // â”€â”€â”€ CUSTOMER NOT FOUND STATE â”€â”€â”€
+                //  CUSTOMER NOT FOUND STATE 
                 ? Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 14),
@@ -647,7 +635,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                               ),
                               SizedBox(height: 2),
                               Text(
-                                "Not Registered â€” Click 'New Customer' to add",
+                                "Not Registered  -  Click 'New Customer' to add",
                                 style: TextStyle(
                                   color: SalesPosColors.bodyTextMuted,
                                   fontSize: 11,
@@ -659,7 +647,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                       ],
                     ),
                   )
-                // â”€â”€â”€ SUGGESTIONS LIST â”€â”€â”€
+                //  SUGGESTIONS LIST 
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     shrinkWrap: true,
@@ -862,36 +850,36 @@ class _HoverAnimatedButtonState extends State<_HoverAnimatedButton> {
 }
 
 // ==========================================
-// âœ… NAYA WIDGET: POS Customer History Card
-// Customer select hone ke baad dikhega:
-//   â€¢ Total bills count
-//   â€¢ Outstanding due amount + bill numbers
-//   â€¢ Last visit date + kitne months pehle
-//   â€¢ Customer type badge
+//  POS customer history card
+// Displayed after customer selection:
+//    -  Total bills count
+//    -  Outstanding due amount + bill numbers
+//    -  Last visit date and elapsed time.
+//    -  Customer type badge
 // ==========================================
 // ==========================================
-// âœ… UPGRADED v4: POS Customer History Card
+//  UPGRADED v4: POS Customer History Card
 //
 // CHANGES:
-//   â€¢ Due section zyada prominent â€” bada amount + "X bills mein"
-//   â€¢ Saari due bills ki list (scrollable agar zyada ho)
-//   â€¢ 2 Action Buttons: "Clear Due" aur "New Bill"
-//   â€¢ _ClearDueDialog â€” har bill ke against payment collect karne ke liye
+//    -  Prominent due section with amount and bill count.
+//    -  Scrollable list of outstanding bills.
+//    -  Actions for clearing dues and starting a new bill.
+//    -  Dialog for collecting payments against outstanding bills.
 // ==========================================
 class _PosCustomerHistoryCard extends StatelessWidget {
   final PosBillingController ctrl;
   const _PosCustomerHistoryCard({required this.ctrl});
 
-  // â”€â”€ FORMATTER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  FORMATTER 
   String _fmt(double v) {
-    if (v >= 100000) return 'â‚¹${(v / 100000).toStringAsFixed(2)}L';
-    if (v >= 1000) return 'â‚¹${(v / 1000).toStringAsFixed(1)}K';
-    return 'â‚¹${v.toStringAsFixed(0)}';
+    if (v >= 100000) return 'Rs ${(v / 100000).toStringAsFixed(2)}L';
+    if (v >= 1000) return 'Rs ${(v / 1000).toStringAsFixed(1)}K';
+    return 'Rs ${v.toStringAsFixed(0)}';
   }
 
   @override
   Widget build(BuildContext context) {
-    // â”€â”€ LOADING STATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  LOADING STATE 
     if (ctrl.isLoadingHistory) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -911,7 +899,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
             ),
             SizedBox(width: 10),
             Text(
-              'Customer history load ho rahi hai...',
+              'Loading customer history...',
               style:
                   TextStyle(color: SalesPosColors.bodyTextMuted, fontSize: 12),
             ),
@@ -922,7 +910,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
 
     final history = ctrl.customerHistory;
 
-    // â”€â”€ NEW CUSTOMER â€” NO HISTORY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  NEW CUSTOMER  -  NO HISTORY 
     if (history == null) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -937,7 +925,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                 size: 16, color: SalesPosColors.bodyTextMuted),
             SizedBox(width: 8),
             Text(
-              'Naya customer â€” koi purana record nahi mila',
+              'New customer - no previous records found',
               style:
                   TextStyle(color: SalesPosColors.bodyTextMuted, fontSize: 12),
             ),
@@ -946,7 +934,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
       );
     }
 
-    // â”€â”€ DATA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  DATA 
     final totalBills = history.bills.length;
     final outstanding = history.outstanding;
     final hasDue = outstanding > 0;
@@ -954,22 +942,22 @@ class _PosCustomerHistoryCard extends StatelessWidget {
     final dueBillCount = dueBills.length;
 
     // Last visit text
-    String lastVisitText = 'Pehli baar aa rahe hain';
+    String lastVisitText = 'First visit';
     if (history.bills.isNotEmpty) {
       final days =
           DateTime.now().difference(history.bills.first.billDate).inDays;
       if (days == 0) {
-        lastVisitText = 'Aaj aaye hain';
+        lastVisitText = 'Visited today';
       } else if (days == 1) {
-        lastVisitText = 'Kal aaye the';
+        lastVisitText = 'Visited yesterday';
       } else if (days < 30) {
-        lastVisitText = '$days din pehle';
+        lastVisitText = '$days days ago';
       } else if (days < 365) {
-        lastVisitText = '${(days / 30).floor()} mahine pehle';
+        lastVisitText = '${(days / 30).floor()} months ago';
       } else {
         final y = (days / 365).floor();
         final m = ((days % 365) / 30).floor();
-        lastVisitText = m > 0 ? '$y saal $m mahine pehle' : '$y saal pehle';
+        lastVisitText = m > 0 ? '$y years $m months ago' : '$y years ago';
       }
     }
 
@@ -991,7 +979,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          //  HEADER 
           Row(
             children: [
               const Icon(Icons.history_rounded,
@@ -1028,7 +1016,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
 
-          // â”€â”€ STATS: Total Bills + Last Visit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          //  STATS: Total Bills + Last Visit 
           Row(
             children: [
               _HistoryStat(
@@ -1047,11 +1035,11 @@ class _PosCustomerHistoryCard extends StatelessWidget {
             ],
           ),
 
-          // â”€â”€ DUE SECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          //  DUE SECTION 
           if (hasDue) ...[
             const SizedBox(height: 12),
 
-            // â”€â”€ BIG DUE BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            //  BIG DUE BANNER 
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -1084,7 +1072,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'TOTAL BAKAYA (DUE)',
+                        'TOTAL OUTSTANDING',
                         style: TextStyle(
                           color: SalesPosColors.danger.withValues(alpha: 0.85),
                           fontSize: 10,
@@ -1095,8 +1083,8 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         dueBillCount == 1
-                            ? '1 bill mein pending hai'
-                            : '$dueBillCount bills mein pending hai',
+                            ? 'Pending against 1 bill'
+                            : 'Pending against $dueBillCount bills',
                         style: const TextStyle(
                           color: SalesPosColors.bodyTextMuted,
                           fontSize: 11,
@@ -1121,7 +1109,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
               ),
             ),
 
-            // â”€â”€ DUE BILLS BREAKDOWN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            //  DUE BILLS BREAKDOWN 
             if (dueBills.isNotEmpty)
               Container(
                 decoration: BoxDecoration(
@@ -1180,7 +1168,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                 ),
               ),
 
-            // â”€â”€ ACTION BUTTONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            //  ACTION BUTTONS 
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -1193,7 +1181,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  // â”€â”€ CLEAR DUE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  //  CLEAR DUE 
                   Expanded(
                     child: SizedBox(
                       height: 42,
@@ -1226,13 +1214,13 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
 
-                  // â”€â”€ NEW BILL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  //  NEW BILL 
                   Expanded(
                     child: SizedBox(
                       height: 42,
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          // History card collapse karo aur billing continue karo
+                          // Continue billing from the active customer history state.
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Row(
@@ -1241,7 +1229,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                                       color: Colors.white, size: 16),
                                   SizedBox(width: 8),
                                   Text(
-                                      'Naya bill â€” items add karein (due baad mein le sakte hain)'),
+                                      'New invoice ready. Add items and collect outstanding dues when required.'),
                                 ],
                               ),
                               backgroundColor: SalesPosColors.success,
@@ -1273,7 +1261,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
             ),
           ],
 
-          // â”€â”€ ALL CLEAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          //  ALL CLEAR 
           if (!hasDue && totalBills > 0) ...[
             const SizedBox(height: 8),
             const Row(
@@ -1282,7 +1270,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                     size: 14, color: SalesPosColors.success),
                 SizedBox(width: 6),
                 Text(
-                  'Koi bakaya nahi â€” account bilkul saaf hai',
+                  'No outstanding balance. Account is fully settled.',
                   style: TextStyle(color: SalesPosColors.success, fontSize: 11),
                 ),
               ],
@@ -1295,7 +1283,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
 }
 
 // ==========================================
-// âœ… NAYA: Clear Due Dialog
+// Clear Due Dialog
 // Customer ke unpaid bills ki list + total
 // collect karne ka option
 // ==========================================
@@ -1326,9 +1314,9 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
   }
 
   String _fmt(double v) {
-    if (v >= 100000) return 'â‚¹${(v / 100000).toStringAsFixed(2)}L';
-    if (v >= 1000) return 'â‚¹${(v / 1000).toStringAsFixed(1)}K';
-    return 'â‚¹${v.toStringAsFixed(0)}';
+    if (v >= 100000) return 'Rs ${(v / 100000).toStringAsFixed(2)}L';
+    if (v >= 1000) return 'Rs ${(v / 1000).toStringAsFixed(1)}K';
+    return 'Rs ${v.toStringAsFixed(0)}';
   }
 
   @override
@@ -1343,7 +1331,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // â”€â”€ HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            //  HEADER 
             Row(
               children: [
                 Container(
@@ -1391,7 +1379,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
             const Divider(color: SalesPosColors.bodyBorder),
             const SizedBox(height: 12),
 
-            // â”€â”€ TOTAL DUE BOX â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            //  TOTAL DUE BOX 
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -1405,7 +1393,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Total Bakaya (${widget.dueBills.length} bills)',
+                    'Total Outstanding (${widget.dueBills.length} bills)',
                     style: const TextStyle(
                         color: SalesPosColors.danger,
                         fontSize: 12,
@@ -1425,7 +1413,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
 
             const SizedBox(height: 14),
 
-            // â”€â”€ BILL BREAKDOWN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            //  BILL BREAKDOWN 
             const Text(
               'BILL-WISE BREAKDOWN',
               style: TextStyle(
@@ -1487,7 +1475,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
 
             const SizedBox(height: 16),
 
-            // â”€â”€ PAYMENT MODE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            //  PAYMENT MODE 
             const Text(
               'PAYMENT MODE',
               style: TextStyle(
@@ -1539,7 +1527,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
 
             const SizedBox(height: 14),
 
-            // â”€â”€ AMOUNT INPUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            //  AMOUNT INPUT 
             Row(
               children: [
                 Expanded(
@@ -1569,7 +1557,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                           ),
                           decoration: InputDecoration(
                             hintText: '0.00',
-                            prefixText: 'â‚¹  ',
+                            prefixText: 'Rs  ',
                             hintStyle: const TextStyle(
                                 color: SalesPosColors.bodyTextMuted,
                                 fontSize: 14),
@@ -1595,7 +1583,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                 ),
                 const SizedBox(width: 12),
 
-                // Full Pay toggle
+                // Pay Full toggle
                 GestureDetector(
                   onTap: () {
                     setState(() {
@@ -1625,7 +1613,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                       ),
                     ),
                     child: Text(
-                      'Full Pay',
+                      'Pay Full',
                       style: TextStyle(
                         color: _payFull
                             ? SalesPosColors.success
@@ -1641,7 +1629,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
 
             const SizedBox(height: 20),
 
-            // â”€â”€ CONFIRM BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            //  CONFIRM BUTTON 
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -1652,7 +1640,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                   if (amount <= 0) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Amount enter karein'),
+                        content: Text('Please enter an amount.'),
                         backgroundColor: SalesPosColors.danger,
                         behavior: SnackBarBehavior.floating,
                       ),
@@ -1663,7 +1651,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                          'â‚¹${amount.toStringAsFixed(0)} collected via $_selectedMode â€” bill update pending'),
+                          'Rs ${amount.toStringAsFixed(0)} collected via $_selectedMode. Bill update is pending.'),
                       backgroundColor: SalesPosColors.success,
                       behavior: SnackBarBehavior.floating,
                     ),
