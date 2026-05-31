@@ -856,6 +856,108 @@ class PosBillingController extends ChangeNotifier {
   double get totalPaid => _cashInput + _upiInput + _cardInput + _advInput;
   double get balanceDue => finalPayableAmount - totalPaid;
 
+  static const double _invoiceWeightTolerance = 0.0005;
+  static const double _invoiceAmountTolerance = 0.005;
+
+  bool _isBillableSaleItem(SaleItemModel item) {
+    if (item.netWt <= _invoiceWeightTolerance) {
+      return false;
+    }
+    if (billingMode == BillingMode.wholesale) {
+      return true;
+    }
+    return item.rate > 0 && item.totalValue > _invoiceAmountTolerance;
+  }
+
+  bool _isBillableOldMetalItem(OldGoldItemModel item) {
+    return item.netWt > _invoiceWeightTolerance &&
+        item.rate > 0 &&
+        item.totalValue > _invoiceAmountTolerance;
+  }
+
+  bool get hasBillableInvoiceItems =>
+      saleItems.any(_isBillableSaleItem) ||
+      oldGoldItems.any(_isBillableOldMetalItem);
+
+  String? validateInvoiceReadiness() {
+    if (saleItems.isEmpty && oldGoldItems.isEmpty) {
+      return "The cart is empty. Please add at least one item before generating an invoice.";
+    }
+
+    for (int index = 0; index < saleItems.length; index++) {
+      final item = saleItems[index];
+      final rowNumber = index + 1;
+      if (item.netWt <= _invoiceWeightTolerance) {
+        return "Enter gross weight for item row $rowNumber before generating an invoice.";
+      }
+      if (billingMode == BillingMode.retail && item.rate <= 0) {
+        return "Enter a valid rate for item row $rowNumber before generating an invoice.";
+      }
+      if (billingMode == BillingMode.retail &&
+          item.totalValue <= _invoiceAmountTolerance) {
+        return "Complete item row $rowNumber before generating an invoice.";
+      }
+    }
+
+    for (int index = 0; index < oldGoldItems.length; index++) {
+      final item = oldGoldItems[index];
+      final rowNumber = index + 1;
+      if (item.netWt <= _invoiceWeightTolerance) {
+        return "Enter gross weight for exchange row $rowNumber before generating an invoice.";
+      }
+      if (item.rate <= 0) {
+        return "Enter a valid rate for exchange row $rowNumber before generating an invoice.";
+      }
+      if (item.totalValue <= _invoiceAmountTolerance) {
+        return "Complete exchange row $rowNumber before generating an invoice.";
+      }
+    }
+
+    if (!hasBillableInvoiceItems) {
+      return "Complete at least one billable item before generating an invoice.";
+    }
+
+    return null;
+  }
+
+  void focusFirstInvoiceIssue() {
+    for (int index = 0; index < saleItems.length; index++) {
+      final item = saleItems[index];
+      FocusNode focusNode = item.grossFocus;
+      if (item.netWt <= _invoiceWeightTolerance) {
+        focusNode = item.grossFocus;
+      } else if (billingMode == BillingMode.retail && item.rate <= 0) {
+        focusNode = item.rateFocus;
+      } else if (billingMode == BillingMode.retail &&
+          item.totalValue <= _invoiceAmountTolerance) {
+        focusNode = item.grossFocus;
+      } else {
+        continue;
+      }
+
+      activeRowIndex = index;
+      notifyListeners();
+      Future.delayed(const Duration(milliseconds: 80), () {
+        if (saleItems.contains(item)) {
+          focusNode.requestFocus();
+        }
+      });
+      return;
+    }
+
+    for (final item in oldGoldItems) {
+      if (_isBillableOldMetalItem(item)) {
+        continue;
+      }
+      Future.delayed(const Duration(milliseconds: 80), () {
+        if (oldGoldItems.contains(item)) {
+          item.firstFieldFocus.requestFocus();
+        }
+      });
+      return;
+    }
+  }
+
   // ==========================================
   // UI ACTIONS & MEMORY SAFE LISTENERS
   // ==========================================

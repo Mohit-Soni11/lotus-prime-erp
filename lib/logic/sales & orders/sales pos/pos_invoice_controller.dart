@@ -46,7 +46,7 @@ class BillSettings {
   String buybackPolicyText;
 
   BillSettings({
-    this.showHuid = false,
+    this.showHuid = true,
     this.showPcs = true,
     this.showGrossWt = true,
     this.showLessWt = true,
@@ -55,12 +55,31 @@ class BillSettings {
     this.showRate = true,
     this.showMaking = true,
     this.showAmount = true,
-    this.showExchangeBreakdown = false,
+    this.showExchangeBreakdown = true,
     this.footerMessage = 'Thank you for shopping with us! Visit us again.',
     this.termsAndConditions = '',
     this.returnPolicyText = '',
     this.buybackPolicyText = '',
   });
+
+  factory BillSettings.fromSalesBilling(SalesBillingModel model) {
+    return BillSettings(
+      showHuid: model.showHuid,
+      showPcs: model.showPieces,
+      showGrossWt: model.showGrossWeight,
+      showLessWt: model.showLessWeight,
+      showNetWt: model.showNetWeight,
+      showPurity: model.showPurity,
+      showRate: model.showRate,
+      showMaking: model.showMakingCharges,
+      showAmount: model.showTotalValue,
+      showExchangeBreakdown: model.showOldGoldLine,
+      footerMessage: model.footerMessage,
+      termsAndConditions: model.termsAndConditions,
+      returnPolicyText: model.returnPolicyText,
+      buybackPolicyText: model.buybackPolicyText,
+    );
+  }
 }
 
 class InvoicePrintConfig {
@@ -96,6 +115,7 @@ class PosInvoiceController extends ChangeNotifier {
   PrintFormat selectedFormat = PrintFormat.a4;
   int printCopies = 1;
   bool includeDuplicateStamp = false;
+  MetalType? activePrintMetal;
 
   DateTime? dueDate;
 
@@ -133,9 +153,29 @@ class PosInvoiceController extends ChangeNotifier {
     return ordered.where(present.contains).toList();
   }
 
+  MetalType? get effectiveActiveMetal {
+    final metals = presentMetals;
+    if (metals.isEmpty) return null;
+    if (activePrintMetal != null && metals.contains(activePrintMetal)) {
+      return activePrintMetal;
+    }
+    return metals.first;
+  }
+
+  bool get hasMultipleMetalInvoices => presentMetals.length > 1;
+
+  Future<void> setActivePrintMetal(MetalType metal) async {
+    if (activePrintMetal == metal) return;
+    activePrintMetal = metal;
+    notifyListeners();
+    await _refreshActivePreviewPdf();
+  }
+
   BillSettings getMetalConfig(MetalType metal) {
-    return metalPrintSettings[metal] ??
-        getActiveConfig(billing.billingMode, billing.billType);
+    return metalPrintSettings.putIfAbsent(
+      metal,
+      () => _defaultSettingsForMetal(metal),
+    );
   }
 
   Future<void> toggleMetalCustomization(MetalType metal, String key) async {
@@ -176,22 +216,32 @@ class PosInvoiceController extends ChangeNotifier {
     }
 
     if (invoice != null) {
-      pdfBytes = await _buildPdf(invoice!, selectedFormat);
+      await _refreshActivePreviewPdf();
     }
     notifyListeners();
   }
 
   Future<void> _loadMetalBillingSettings(PosInvoiceModel inv) async {
     final settings = <MetalType, BillSettings>{};
+    final metals = _collectMetals(inv);
 
-    for (final metal in _collectMetals(inv)) {
-      final setup = await _salesBillingRepo.fetchForMetal(metal.name);
-      settings[metal] = _settingsFromBillingSetup(setup);
+    for (final metal in metals) {
+      try {
+        final setup = await _salesBillingRepo.fetchForMetal(metal.name);
+        settings[metal] = _settingsFromBillingSetup(setup);
+      } catch (_) {
+        settings[metal] = _defaultSettingsForMetal(metal);
+      }
     }
 
     metalPrintSettings
       ..clear()
       ..addAll(settings);
+    if (metals.isEmpty) {
+      activePrintMetal = null;
+    } else if (activePrintMetal == null || !metals.contains(activePrintMetal)) {
+      activePrintMetal = metals.first;
+    }
   }
 
   List<MetalType> _collectMetals(PosInvoiceModel inv) {
@@ -209,21 +259,12 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   BillSettings _settingsFromBillingSetup(SalesBillingModel model) {
-    return BillSettings(
-      showHuid: model.showHuid,
-      showPcs: model.showPieces,
-      showGrossWt: model.showGrossWeight,
-      showLessWt: model.showLessWeight,
-      showNetWt: model.showNetWeight,
-      showPurity: model.showPurity,
-      showRate: model.showRate,
-      showMaking: model.showMakingCharges,
-      showAmount: model.showTotalValue,
-      showExchangeBreakdown: model.showOldGoldLine,
-      footerMessage: model.footerMessage,
-      termsAndConditions: model.termsAndConditions,
-      returnPolicyText: model.returnPolicyText,
-      buybackPolicyText: model.buybackPolicyText,
+    return BillSettings.fromSalesBilling(model);
+  }
+
+  BillSettings _defaultSettingsForMetal(MetalType metal) {
+    return BillSettings.fromSalesBilling(
+      SalesBillingModel.defaultFor(metal.name),
     );
   }
 
@@ -232,7 +273,7 @@ class PosInvoiceController extends ChangeNotifier {
     printCopies = copies;
     includeDuplicateStamp = duplicate;
     if (invoice != null) {
-      pdfBytes = await _buildPdf(invoice!, selectedFormat);
+      await _refreshActivePreviewPdf();
       notifyListeners();
     }
   }
@@ -265,7 +306,7 @@ class PosInvoiceController extends ChangeNotifier {
     if (invoice != null &&
         invoice!.billingMode == mode &&
         invoice!.billType == type) {
-      pdfBytes = await _buildPdf(invoice!, selectedFormat);
+      await _refreshActivePreviewPdf();
     }
     notifyListeners();
   }
@@ -432,6 +473,114 @@ class PosInvoiceController extends ChangeNotifier {
     );
   }
 
+  List<PosInvoiceModel> _scopedInvoicesForAllMetals(PosInvoiceModel source) {
+    final metals = _collectMetals(source);
+    if (metals.isEmpty) return [source];
+    return metals
+        .map((metal) => _scopedInvoiceForMetal(source, metal))
+        .toList(growable: false);
+  }
+
+  PosInvoiceModel _scopedInvoiceForMetal(
+    PosInvoiceModel source,
+    MetalType? metal,
+  ) {
+    if (metal == null) return source;
+
+    final scopedSaleItems = source.saleItems
+        .where((item) => item.metal == metal)
+        .toList(growable: false);
+    final scopedOldItems = source.oldGoldItems
+        .where((item) => item.metal == metal)
+        .toList(growable: false);
+
+    if (scopedSaleItems.isEmpty && scopedOldItems.isEmpty) {
+      return source;
+    }
+
+    final scopedGrossAmount =
+        scopedSaleItems.fold(0.0, (sum, item) => sum + item.totalValue);
+    final grossRatio = source.grossAmount.abs() <= 0.005
+        ? 0.0
+        : scopedGrossAmount / source.grossAmount;
+    final scopedDiscount = source.discountAmount * grossRatio;
+    final scopedTaxable = scopedGrossAmount - scopedDiscount;
+    final safeTaxable = scopedTaxable < 0 ? 0.0 : scopedTaxable;
+    final taxRatio = source.taxableAmount.abs() <= 0.005
+        ? grossRatio
+        : safeTaxable / source.taxableAmount;
+    final scopedGst = source.totalGst * taxRatio;
+    final scopedGrandTotal = safeTaxable + scopedGst;
+    final scopedExchangeDeduction =
+        source.oldGoldMode == OldGoldAdjustMode.cashAdjust
+            ? scopedOldItems.fold(0.0, (sum, item) => sum + item.totalValue)
+            : 0.0;
+    final scopedNetPayable = source.billingMode == BillingMode.wholesale
+        ? scopedGrandTotal
+        : scopedGrandTotal - scopedExchangeDeduction;
+    final paymentRatio = source.netPayable.abs() <= 0.005
+        ? grossRatio
+        : scopedNetPayable / source.netPayable;
+    final cashPaid = _splitPayment(source.cashPaid, paymentRatio);
+    final upiPaid = _splitPayment(source.upiPaid, paymentRatio);
+    final cardPaid = _splitPayment(source.cardPaid, paymentRatio);
+    final advancePaid = _splitPayment(source.advancePaid, paymentRatio);
+    final scopedPaid = cashPaid + upiPaid + cardPaid + advancePaid;
+    final scopedMakingCharge = scopedSaleItems.fold(
+      0.0,
+      (sum, item) =>
+          sum +
+          (source.billingMode == BillingMode.wholesale
+              ? item.wholesaleLabourAmt
+              : item.makingAmt),
+    );
+
+    return PosInvoiceModel(
+      invoiceNumber: _metalInvoiceNumber(source, metal),
+      invoiceDate: source.invoiceDate,
+      billType: source.billType,
+      billingMode: source.billingMode,
+      shopName: source.shopName,
+      shopAddress: source.shopAddress,
+      shopPhone: source.shopPhone,
+      shopGstin: source.shopGstin,
+      customerName: source.customerName,
+      customerMobile: source.customerMobile,
+      customerCity: source.customerCity,
+      customerPan: source.customerPan,
+      customerGstin: source.customerGstin,
+      oldGoldMode: source.oldGoldMode,
+      saleItems: scopedSaleItems,
+      oldGoldItems: scopedOldItems,
+      grossAmount: scopedGrossAmount,
+      discountAmount: scopedDiscount,
+      taxableAmount: safeTaxable,
+      cgst: scopedGst / 2,
+      sgst: scopedGst / 2,
+      totalGst: scopedGst,
+      totalOldGoldDeduction: scopedExchangeDeduction,
+      grandTotal: scopedGrandTotal,
+      cashPaid: cashPaid,
+      upiPaid: upiPaid,
+      cardPaid: cardPaid,
+      advancePaid: advancePaid,
+      balanceDue: scopedNetPayable - scopedPaid,
+      totalMakingCharge: scopedMakingCharge,
+      promiseDate: source.promiseDate,
+    );
+  }
+
+  double _splitPayment(double amount, double ratio) {
+    if (amount <= 0 || ratio <= 0) return 0.0;
+    final value = amount * ratio;
+    return value > amount ? amount : value;
+  }
+
+  String _metalInvoiceNumber(PosInvoiceModel source, MetalType metal) {
+    if (_collectMetals(source).length <= 1) return source.invoiceNumber;
+    return '${source.invoiceNumber}-${metal.displayName.toUpperCase()}';
+  }
+
   Future<void> _saveBillToDatabase(PosInvoiceModel inv) async {
     if (isSavedToDb) return;
 
@@ -483,7 +632,7 @@ class PosInvoiceController extends ChangeNotifier {
 
     if (result.invoiceNumber != inv.invoiceNumber) {
       invoice = _copyInvoiceWithNumber(inv, result.invoiceNumber);
-      pdfBytes = await _buildPdf(invoice!, selectedFormat);
+      await _refreshActivePreviewPdf();
     }
 
     isSavedToDb = true;
@@ -522,7 +671,7 @@ class PosInvoiceController extends ChangeNotifier {
       invoice = _buildInvoiceSnapshot();
       await _loadMetalBillingSettings(invoice!);
 
-      pdfBytes = await _buildPdf(invoice!, selectedFormat);
+      await _refreshActivePreviewPdf();
       genState = InvoiceGenState.ready;
     } catch (e) {
       errorMessage = e.toString();
@@ -531,58 +680,86 @@ class PosInvoiceController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<Uint8List> _buildPdf(PosInvoiceModel inv, PrintFormat fmt) async {
+  Future<void> _refreshActivePreviewPdf() async {
+    if (invoice == null) return;
+    pdfBytes = await _buildPdf(
+      invoice!,
+      selectedFormat,
+      activeMetal: effectiveActiveMetal,
+    );
+  }
+
+  Future<Uint8List> _buildPdf(
+    PosInvoiceModel inv,
+    PrintFormat fmt, {
+    MetalType? activeMetal,
+    bool includeAllMetals = false,
+  }) async {
     final doc = pw.Document();
-    PdfPageFormat pageFormat;
-    switch (fmt) {
-      case PrintFormat.a4:
-        pageFormat = PdfPageFormat.a4;
-        break;
-      case PrintFormat.thermal3inch:
-        pageFormat = const PdfPageFormat(
-            80 * PdfPageFormat.mm, 250 * PdfPageFormat.mm,
-            marginAll: 4 * PdfPageFormat.mm);
-        break;
-      case PrintFormat.thermal2inch:
-        pageFormat = const PdfPageFormat(
-            57 * PdfPageFormat.mm, 250 * PdfPageFormat.mm,
-            marginAll: 3 * PdfPageFormat.mm);
-        break;
-    }
+    final pageFormat = _pageFormatFor(fmt);
+    final scopedInvoices = includeAllMetals
+        ? _scopedInvoicesForAllMetals(inv)
+        : [_scopedInvoiceForMetal(inv, activeMetal)];
 
     for (int i = 0; i < printCopies; i++) {
-      doc.addPage(
-        pw.Page(
-          pageFormat: pageFormat,
-          margin: fmt == PrintFormat.a4
-              ? const pw.EdgeInsets.all(24)
-              : const pw.EdgeInsets.all(6),
-          build: (pw.Context context) {
-            final layout = fmt == PrintFormat.a4
-                ? _buildA4Layout(inv)
-                : _buildThermalLayout(inv, fmt);
-            if (includeDuplicateStamp) {
-              return pw.Stack(
-                alignment: pw.Alignment.center,
-                children: [
-                  pw.Center(
-                      child: pw.Transform.rotate(
-                          angle: 0.785,
-                          child: pw.Text("DUPLICATE",
-                              style: pw.TextStyle(
-                                  color: PdfColors.grey300,
-                                  fontSize: fmt == PrintFormat.a4 ? 60 : 25,
-                                  fontWeight: pw.FontWeight.bold)))),
-                  layout,
-                ],
-              );
-            }
-            return layout;
-          },
-        ),
-      );
+      for (final scopedInvoice in scopedInvoices) {
+        _addInvoicePage(doc, scopedInvoice, fmt, pageFormat);
+      }
     }
     return doc.save();
+  }
+
+  PdfPageFormat _pageFormatFor(PrintFormat fmt) {
+    switch (fmt) {
+      case PrintFormat.a4:
+        return PdfPageFormat.a4;
+      case PrintFormat.thermal3inch:
+        return const PdfPageFormat(
+            80 * PdfPageFormat.mm, 250 * PdfPageFormat.mm,
+            marginAll: 4 * PdfPageFormat.mm);
+      case PrintFormat.thermal2inch:
+        return const PdfPageFormat(
+            57 * PdfPageFormat.mm, 250 * PdfPageFormat.mm,
+            marginAll: 3 * PdfPageFormat.mm);
+    }
+  }
+
+  void _addInvoicePage(
+    pw.Document doc,
+    PosInvoiceModel inv,
+    PrintFormat fmt,
+    PdfPageFormat pageFormat,
+  ) {
+    doc.addPage(
+      pw.Page(
+        pageFormat: pageFormat,
+        margin: fmt == PrintFormat.a4
+            ? const pw.EdgeInsets.all(24)
+            : const pw.EdgeInsets.all(6),
+        build: (pw.Context context) {
+          final layout = fmt == PrintFormat.a4
+              ? _buildA4Layout(inv)
+              : _buildThermalLayout(inv, fmt);
+          if (includeDuplicateStamp) {
+            return pw.Stack(
+              alignment: pw.Alignment.center,
+              children: [
+                pw.Center(
+                    child: pw.Transform.rotate(
+                        angle: 0.785,
+                        child: pw.Text("DUPLICATE",
+                            style: pw.TextStyle(
+                                color: PdfColors.grey300,
+                                fontSize: fmt == PrintFormat.a4 ? 60 : 25,
+                                fontWeight: pw.FontWeight.bold)))),
+                layout,
+              ],
+            );
+          }
+          return layout;
+        },
+      ),
+    );
   }
 
   pw.Widget _buildA4Layout(PosInvoiceModel inv) {
@@ -605,6 +782,7 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   pw.Widget _pdfA4Header(PosInvoiceModel inv) {
+    final title = _invoiceTitle(inv);
     return pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       children: [
@@ -621,8 +799,8 @@ class PosInvoiceController extends ChangeNotifier {
                 style: const pw.TextStyle(fontSize: 9)),
         ]),
         pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
-          if (inv.billType == BillType.gst)
-            pw.Text("TAX INVOICE",
+          if (title.isNotEmpty)
+            pw.Text(title,
                 style: pw.TextStyle(
                     fontSize: 14,
                     fontWeight: pw.FontWeight.bold,
@@ -636,6 +814,15 @@ class PosInvoiceController extends ChangeNotifier {
         ]),
       ],
     );
+  }
+
+  String _invoiceTitle(PosInvoiceModel inv) {
+    final metals = _collectMetals(inv);
+    final typeLabel = inv.billType == BillType.gst ? "TAX INVOICE" : "INVOICE";
+    if (metals.length == 1) {
+      return "${metals.first.displayName.toUpperCase()} $typeLabel";
+    }
+    return inv.billType == BillType.gst ? typeLabel : "";
   }
 
   pw.Widget _pdfCustomerBlock(PosInvoiceModel inv) {
@@ -696,7 +883,7 @@ class PosInvoiceController extends ChangeNotifier {
                   child: pw.Row(
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
-                      pw.Text("${metal.displayName} INVOICE SECTION",
+                      pw.Text("${metal.displayName} ITEM DETAILS",
                           style: pw.TextStyle(
                               fontSize: 8,
                               fontWeight: pw.FontWeight.bold,
@@ -1134,13 +1321,18 @@ class PosInvoiceController extends ChangeNotifier {
 
   Future<void> printInvoice(PrintFormat format) async {
     await finalizeInvoiceIfNeeded();
-    if (pdfBytes == null) return;
+    if (invoice == null) return;
     if (format != selectedFormat) {
       selectedFormat = format;
-      pdfBytes = await _buildPdf(invoice!, format);
+      await _refreshActivePreviewPdf();
       notifyListeners();
     }
-    await Printing.layoutPdf(onLayout: (_) async => pdfBytes!);
+    final printBytes = await _buildPdf(
+      invoice!,
+      format,
+      includeAllMetals: true,
+    );
+    await Printing.layoutPdf(onLayout: (_) async => printBytes);
   }
 
   Future<void> openDirectWhatsAppChat() async {
@@ -1206,7 +1398,12 @@ class PosInvoiceController extends ChangeNotifier {
       final fileName = "${cleanName}_$cleanInv.pdf";
       final file = File('${customerDir.path}/$fileName');
 
-      await file.writeAsBytes(pdfBytes!);
+      final saveBytes = await _buildPdf(
+        invoice!,
+        selectedFormat,
+        includeAllMetals: true,
+      );
+      await file.writeAsBytes(saveBytes);
       debugPrint("File successfully saved at: ${file.path}");
 
       return file.path;
@@ -1220,7 +1417,7 @@ class PosInvoiceController extends ChangeNotifier {
     selectedFormat = fmt;
     notifyListeners();
     if (invoice != null) {
-      pdfBytes = await _buildPdf(invoice!, fmt);
+      await _refreshActivePreviewPdf();
       notifyListeners();
     }
   }
@@ -1261,7 +1458,7 @@ class PosInvoiceController extends ChangeNotifier {
         totalMakingCharge: invoice!.totalMakingCharge,
         promiseDate: dueDate,
       );
-      pdfBytes = await _buildPdf(invoice!, selectedFormat);
+      await _refreshActivePreviewPdf();
     }
     notifyListeners();
   }

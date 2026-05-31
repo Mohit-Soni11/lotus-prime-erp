@@ -1078,13 +1078,17 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
   Widget _buildPaymentHub() {
     final isEmptyCart =
         widget.ctrl.saleItems.isEmpty && widget.ctrl.oldGoldItems.isEmpty;
+    final hasIncompleteDraft =
+        !isEmptyCart && widget.ctrl.validateInvoiceReadiness() != null;
     final isDue = widget.ctrl.balanceDue > 0.005;
     final isReturn = widget.ctrl.balanceDue < -0.005;
-    final isPaid = !isDue && !isReturn && !isEmptyCart;
+    final isPaid = !isDue && !isReturn && !isEmptyCart && !hasIncompleteDraft;
 
-    final balanceColor = (isReturn && _refundMethod != null) || isPaid
-        ? SalesPosColors.success
-        : (isReturn ? SalesPosColors.warning : SalesPosColors.danger);
+    final balanceColor = hasIncompleteDraft
+        ? SalesPosColors.warning
+        : (isReturn && _refundMethod != null) || isPaid
+            ? SalesPosColors.success
+            : (isReturn ? SalesPosColors.warning : SalesPosColors.danger);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
@@ -1146,7 +1150,9 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                              isReturn && _refundMethod != null
+                              hasIncompleteDraft
+                                  ? "INVOICE INCOMPLETE"
+                                  : isReturn && _refundMethod != null
                                   ? "CHANGE RETURNED VIA ${_refundMethod!}"
                                   : isReturn
                                       ? "CHANGE DUE TO CUSTOMER"
@@ -1168,7 +1174,9 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                         ],
                       ),
                       Icon(
-                          (isReturn && _refundMethod != null) || isPaid
+                          hasIncompleteDraft
+                              ? SalesPosIcons.dueWarning
+                              : (isReturn && _refundMethod != null) || isPaid
                               ? SalesPosIcons.settledVerified
                               : isReturn
                                   ? SalesPosIcons.returnChange
@@ -1465,13 +1473,12 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   child: ElevatedButton.icon(
                     //  Generate invoice action
                     onPressed: () {
-                      // Validate that at least one sale or exchange item exists.
-                      if (widget.ctrl.saleItems.isEmpty &&
-                          widget.ctrl.oldGoldItems.isEmpty) {
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(const SnackBar(
-                          content:
-                              Text("The cart is empty. Please add at least one item before generating an invoice."),
+                      final validationMessage =
+                          widget.ctrl.validateInvoiceReadiness();
+                      if (validationMessage != null) {
+                        widget.ctrl.focusFirstInvoiceIssue();
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(validationMessage),
                           backgroundColor: SalesPosColors.danger,
                           behavior: SnackBarBehavior.floating,
                         ));

@@ -343,7 +343,12 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
             ),
           )
         else
-          ...metals.map(_buildMetalBillingSetupCard),
+          ...[
+            _buildMetalInvoiceSelector(metals),
+            const SizedBox(height: 12),
+            if (_invCtrl.effectiveActiveMetal != null)
+              _buildMetalBillingSetupCard(_invCtrl.effectiveActiveMetal!),
+          ],
       ],
     );
   }
@@ -370,6 +375,59 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMetalInvoiceSelector(List<MetalType> metals) {
+    if (metals.length <= 1) return const SizedBox.shrink();
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: metals.map(_buildMetalInvoiceButton).toList(),
+    );
+  }
+
+  Widget _buildMetalInvoiceButton(MetalType metal) {
+    final isSelected = _invCtrl.effectiveActiveMetal == metal;
+    final color = _metalColor(metal);
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () => _invCtrl.setActivePrintMetal(metal),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? color.withValues(alpha: 0.16)
+              : SalesPosColors.shellPanelBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? color : SalesPosColors.shellBorder,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.receipt_long_rounded,
+              size: 15,
+              color: isSelected ? color : SalesPosColors.shellTextMuted,
+            ),
+            const SizedBox(width: 7),
+            Text(
+              "${metal.displayName} Invoice",
+              style: TextStyle(
+                color: isSelected ? color : SalesPosColors.shellTextTitle,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
