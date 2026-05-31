@@ -46,10 +46,6 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
   late PosInvoiceController _invCtrl;
   String _selectedTemplate = 'Standard Modern';
 
-  // Customization Tabs State
-  BillingMode _configMode = BillingMode.retail;
-  BillType _configType = BillType.normal;
-
   //  Animation state for the save button.
   bool _isSavingPdf = false;
   bool _isPdfSaved = false;
@@ -58,9 +54,6 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
   void initState() {
     super.initState();
     _invCtrl = PosInvoiceController(billing: widget.billingCtrl);
-
-    _configMode = widget.billingCtrl.billingMode;
-    _configType = widget.billingCtrl.billType;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _invCtrl.generateInvoice();
@@ -272,12 +265,19 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
   Widget _buildCategorizedCustomization() {
     if (_invCtrl.selectedFormat != PrintFormat.a4) return const SizedBox();
 
-    final activeSettings = _invCtrl.getActiveConfig(_configMode, _configType);
+    final metals = _invCtrl.presentMetals;
+    final billingModeLabel =
+        widget.billingCtrl.billingMode == BillingMode.wholesale
+            ? "Wholesale"
+            : "Retail";
+    final billTypeLabel = widget.billingCtrl.billType == BillType.gst
+        ? "GST Invoice"
+        : "Normal Bill";
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("BILL DETAIL SETTINGS",
+        const Text("INVOICE PROFILE",
             style: TextStyle(
                 color: SalesPosColors.shellTextMuted,
                 fontSize: 11,
@@ -285,140 +285,225 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                 letterSpacing: 1.2)),
         const SizedBox(height: 10),
         Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
               color: SalesPosColors.shellPanelBg,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: SalesPosColors.shellBorder)),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  _buildTab("RETAIL", _configMode == BillingMode.retail,
-                      () => setState(() => _configMode = BillingMode.retail),
-                      isLeft: true),
-                  _buildTab("WHOLESALE", _configMode == BillingMode.wholesale,
-                      () => setState(() => _configMode = BillingMode.wholesale),
-                      isLeft: false),
+                  _buildProfileChip(Icons.storefront_rounded, billingModeLabel),
+                  _buildProfileChip(
+                      Icons.receipt_long_rounded, billTypeLabel),
+                  _buildProfileChip(
+                    Icons.category_rounded,
+                    metals.isEmpty
+                        ? "No Metal Items"
+                        : metals.map((metal) => metal.displayName).join(" + "),
+                  ),
                 ],
               ),
-              const Divider(color: SalesPosColors.shellBorder, height: 1),
-              Row(
-                children: [
-                  _buildTab("Normal Bill", _configType == BillType.normal,
-                      () => setState(() => _configType = BillType.normal),
-                      isLeft: true, isSub: true),
-                  _buildTab("GST Invoice", _configType == BillType.gst,
-                      () => setState(() => _configType = BillType.gst),
-                      isLeft: false, isSub: true),
-                ],
-              ),
-              const Divider(color: SalesPosColors.shellBorder, height: 1),
-              _buildToggleRow(
-                  "Show HUID",
-                  "Display HUID below items",
-                  activeSettings.showHuid,
-                  () => _invCtrl.toggleCustomization(
-                      'huid', _configMode, _configType)),
-              const Divider(color: SalesPosColors.shellBorder, height: 1),
-              _buildToggleRow(
-                  "Gross Weight",
-                  "Show gross weight column",
-                  activeSettings.showGrossWt,
-                  () => _invCtrl.toggleCustomization(
-                      'gw', _configMode, _configType)),
-              const Divider(color: SalesPosColors.shellBorder, height: 1),
-              _buildToggleRow(
-                  "Less Weight",
-                  "Show less weight column",
-                  activeSettings.showLessWt,
-                  () => _invCtrl.toggleCustomization(
-                      'lw', _configMode, _configType)),
-              const Divider(color: SalesPosColors.shellBorder, height: 1),
-              _buildToggleRow(
-                  "Making Charge",
-                  "Display making/labour cost",
-                  activeSettings.showMaking,
-                  () => _invCtrl.toggleCustomization(
-                      'making', _configMode, _configType)),
-              const Divider(color: SalesPosColors.shellBorder, height: 1),
-              //  NEW: Exchange Breakdown toggle
-              _buildToggleRow(
-                "Exchange Breakdown",
-                "On: Show metal-wise exchange deduction. Off: Show a consolidated deduction.",
-                activeSettings.showExchangeBreakdown,
-                () => _invCtrl.toggleCustomization(
-                    'exchange', _configMode, _configType),
+              const SizedBox(height: 10),
+              Text(
+                "This profile is detected automatically from the active POS bill.",
+                style: TextStyle(
+                    color: SalesPosColors.shellTextMuted.withValues(alpha: 0.9),
+                    fontSize: 10,
+                    height: 1.3),
               ),
             ],
           ),
         ),
+        const SizedBox(height: 18),
+        const Text("METAL BILLING SETUP",
+            style: TextStyle(
+                color: SalesPosColors.shellTextMuted,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2)),
+        const SizedBox(height: 10),
+        if (metals.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+                color: SalesPosColors.shellPanelBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: SalesPosColors.shellBorder)),
+            child: const Text(
+              "Add invoice items to load metal-specific billing controls.",
+              style:
+                  TextStyle(color: SalesPosColors.shellTextMuted, fontSize: 12),
+            ),
+          )
+        else
+          ...metals.map(_buildMetalBillingSetupCard),
       ],
     );
   }
 
-  Widget _buildTab(String label, bool isActive, VoidCallback onTap,
-      {required bool isLeft, bool isSub = false}) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-              color: isActive
-                  ? (isSub
-                      ? SalesPosColors.shellBg
-                      : SalesPosColors.brandGold.withValues(alpha: 0.1))
-                  : Colors.transparent,
-              borderRadius: BorderRadius.only(
-                topLeft:
-                    isLeft && !isSub ? const Radius.circular(12) : Radius.zero,
-                topRight:
-                    !isLeft && !isSub ? const Radius.circular(12) : Radius.zero,
-              ),
-              border: Border(
-                bottom: BorderSide(
-                    color: isActive && !isSub
-                        ? SalesPosColors.brandGold
-                        : Colors.transparent,
-                    width: 2),
-                right: BorderSide(
-                    color: isLeft
-                        ? SalesPosColors.shellBorder
-                        : Colors.transparent),
-              )),
-          child: Center(
-            child: Text(label,
-                style: TextStyle(
-                    color: isActive
-                        ? (isSub ? Colors.white : SalesPosColors.brandGold)
-                        : SalesPosColors.shellTextMuted,
-                    fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
-                    fontSize: isSub ? 12 : 13)),
+  Widget _buildProfileChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: SalesPosColors.shellBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: SalesPosColors.shellBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: SalesPosColors.brandGold),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: SalesPosColors.shellTextTitle,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildToggleRow(
-      String title, String subtitle, bool value, VoidCallback onTap) {
-    return ListTile(
-      title: Text(title,
-          style: const TextStyle(
-              color: SalesPosColors.shellTextTitle,
-              fontSize: 13,
-              fontWeight: FontWeight.bold)),
-      subtitle: Text(subtitle,
-          style: const TextStyle(
-              color: SalesPosColors.shellTextMuted, fontSize: 10)),
-      trailing: Switch(
-        value: value,
-        onChanged: (_) => onTap(),
-        activeThumbColor: SalesPosColors.brandGold,
-        inactiveTrackColor: SalesPosColors.shellBg,
+  Widget _buildMetalBillingSetupCard(MetalType metal) {
+    final settings = _invCtrl.getMetalConfig(metal);
+    final color = _metalColor(metal);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: SalesPosColors.shellPanelBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.45)),
       ),
-      onTap: onTap,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.tune_rounded, size: 17, color: color),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "${metal.displayName} Billing Setup",
+                        style: const TextStyle(
+                          color: SalesPosColors.shellTextTitle,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        "Loaded from Billing Setup and applied to this metal section.",
+                        style: TextStyle(
+                          color: SalesPosColors.shellTextMuted,
+                          fontSize: 10,
+                          height: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(color: SalesPosColors.shellBorder, height: 1),
+          _buildMetalToggleRow(metal, "HUID", "Display item HUID details",
+              settings.showHuid, 'huid'),
+          _buildMetalToggleRow(metal, "Gross Weight", "Show gross weight column",
+              settings.showGrossWt, 'gw'),
+          _buildMetalToggleRow(metal, "Less Weight", "Show less weight column",
+              settings.showLessWt, 'lw'),
+          _buildMetalToggleRow(metal, "Net / Fine Weight",
+              "Show net or fine weight column", settings.showNetWt, 'net'),
+          _buildMetalToggleRow(metal, "Purity", "Show purity column",
+              settings.showPurity, 'purity'),
+          _buildMetalToggleRow(metal, "Rate", "Show item rate column",
+              settings.showRate, 'rate'),
+          _buildMetalToggleRow(metal, "Making Charge",
+              "Display making or labour cost", settings.showMaking, 'making'),
+          _buildMetalToggleRow(metal, "Amount", "Show line amount column",
+              settings.showAmount, 'amount'),
+          _buildMetalToggleRow(
+              metal,
+              "Exchange Breakdown",
+              "Show exchange deduction separately for this metal",
+              settings.showExchangeBreakdown,
+              'exchange',
+              isLast: true),
+        ],
+      ),
     );
+  }
+
+  Widget _buildMetalToggleRow(
+    MetalType metal,
+    String title,
+    String subtitle,
+    bool value,
+    String key, {
+    bool isLast = false,
+  }) {
+    return Column(
+      children: [
+        ListTile(
+          dense: true,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+          title: Text(title,
+              style: const TextStyle(
+                  color: SalesPosColors.shellTextTitle,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold)),
+          subtitle: Text(subtitle,
+              style: const TextStyle(
+                  color: SalesPosColors.shellTextMuted, fontSize: 9.5)),
+          trailing: Switch(
+            value: value,
+            onChanged: (_) => _invCtrl.toggleMetalCustomization(metal, key),
+            activeThumbColor: _metalColor(metal),
+            inactiveTrackColor: SalesPosColors.shellBg,
+          ),
+          onTap: () => _invCtrl.toggleMetalCustomization(metal, key),
+        ),
+        if (!isLast)
+          const Divider(color: SalesPosColors.shellBorder, height: 1),
+      ],
+    );
+  }
+
+  Color _metalColor(MetalType metal) {
+    switch (metal) {
+      case MetalType.gold:
+        return SalesPosColors.brandGold;
+      case MetalType.silver:
+        return SalesPosColors.brandSilver;
+      case MetalType.platinum:
+        return SalesPosColors.brandPlatinum;
+      case MetalType.diamond:
+        return SalesPosColors.brandDiamond;
+    }
   }
 
   //  Due date picker shown when a balance remains outstanding.
@@ -765,7 +850,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            " Sale completed successfully. The POS is ready for the next customer.",
+                            "Sale completed successfully. The POS is ready for the next customer.",
                           ),
                           backgroundColor: SalesPosColors.success,
                           behavior: SnackBarBehavior.floating,
@@ -776,7 +861,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                   : null,
               icon: const Icon(Icons.check_circle_outline_rounded, size: 20),
               label: const Text(
-                "DONE  -  NEW SALE",
+                "COMPLETE SALE",
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 15,

@@ -24,16 +24,43 @@ import '../../../models/sales & orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../models/sales & orders/sales_pos_models/sales_pos_models.dart';
 import '../../../models/sales & orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../repositories/sales & orders/pos/pos_checkout_repository.dart';
+import '../../../models/setting/billing_setup/sales_billing_model.dart';
+import '../../../repositories/setting/billing_setup/sales_billing_repo.dart';
 import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
 import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
 
 class BillSettings {
-  bool showHuid = false;
-  bool showPcs = true;
-  bool showGrossWt = true;
-  bool showLessWt = true;
-  bool showMaking = true;
-  bool showExchangeBreakdown = false;
+  bool showHuid;
+  bool showPcs;
+  bool showGrossWt;
+  bool showLessWt;
+  bool showNetWt;
+  bool showPurity;
+  bool showRate;
+  bool showMaking;
+  bool showAmount;
+  bool showExchangeBreakdown;
+  String footerMessage;
+  String termsAndConditions;
+  String returnPolicyText;
+  String buybackPolicyText;
+
+  BillSettings({
+    this.showHuid = false,
+    this.showPcs = true,
+    this.showGrossWt = true,
+    this.showLessWt = true,
+    this.showNetWt = true,
+    this.showPurity = true,
+    this.showRate = true,
+    this.showMaking = true,
+    this.showAmount = true,
+    this.showExchangeBreakdown = false,
+    this.footerMessage = 'Thank you for shopping with us! Visit us again.',
+    this.termsAndConditions = '',
+    this.returnPolicyText = '',
+    this.buybackPolicyText = '',
+  });
 }
 
 class InvoicePrintConfig {
@@ -48,8 +75,10 @@ enum InvoiceGenState { idle, generating, ready, error }
 class PosInvoiceController extends ChangeNotifier {
   final PosBillingController billing;
   final ShopSetupRepository _shopRepo = ShopSetupRepository();
+  final SalesBillingRepo _salesBillingRepo = SalesBillingRepo();
 
   final InvoicePrintConfig printConfig = InvoicePrintConfig();
+  final Map<MetalType, BillSettings> metalPrintSettings = {};
 
   PosInvoiceController({required this.billing});
 
@@ -85,6 +114,117 @@ class PosInvoiceController extends ChangeNotifier {
           ? printConfig.wholesaleNormal
           : printConfig.wholesaleGst;
     }
+  }
+
+  List<MetalType> get presentMetals {
+    final saleItems = invoice?.saleItems ?? billing.saleItems;
+    final oldGoldItems = invoice?.oldGoldItems ?? billing.oldGoldItems;
+    final present = <MetalType>{
+      ...saleItems.map((item) => item.metal),
+      ...oldGoldItems.map((item) => item.metal),
+    };
+
+    const ordered = [
+      MetalType.gold,
+      MetalType.silver,
+      MetalType.platinum,
+      MetalType.diamond,
+    ];
+    return ordered.where(present.contains).toList();
+  }
+
+  BillSettings getMetalConfig(MetalType metal) {
+    return metalPrintSettings[metal] ??
+        getActiveConfig(billing.billingMode, billing.billType);
+  }
+
+  Future<void> toggleMetalCustomization(MetalType metal, String key) async {
+    final config = getMetalConfig(metal);
+    metalPrintSettings[metal] = config;
+
+    switch (key) {
+      case 'huid':
+        config.showHuid = !config.showHuid;
+        break;
+      case 'pcs':
+        config.showPcs = !config.showPcs;
+        break;
+      case 'gw':
+        config.showGrossWt = !config.showGrossWt;
+        break;
+      case 'lw':
+        config.showLessWt = !config.showLessWt;
+        break;
+      case 'net':
+        config.showNetWt = !config.showNetWt;
+        break;
+      case 'purity':
+        config.showPurity = !config.showPurity;
+        break;
+      case 'rate':
+        config.showRate = !config.showRate;
+        break;
+      case 'making':
+        config.showMaking = !config.showMaking;
+        break;
+      case 'amount':
+        config.showAmount = !config.showAmount;
+        break;
+      case 'exchange':
+        config.showExchangeBreakdown = !config.showExchangeBreakdown;
+        break;
+    }
+
+    if (invoice != null) {
+      pdfBytes = await _buildPdf(invoice!, selectedFormat);
+    }
+    notifyListeners();
+  }
+
+  Future<void> _loadMetalBillingSettings(PosInvoiceModel inv) async {
+    final settings = <MetalType, BillSettings>{};
+
+    for (final metal in _collectMetals(inv)) {
+      final setup = await _salesBillingRepo.fetchForMetal(metal.name);
+      settings[metal] = _settingsFromBillingSetup(setup);
+    }
+
+    metalPrintSettings
+      ..clear()
+      ..addAll(settings);
+  }
+
+  List<MetalType> _collectMetals(PosInvoiceModel inv) {
+    final present = <MetalType>{
+      ...inv.saleItems.map((item) => item.metal),
+      ...inv.oldGoldItems.map((item) => item.metal),
+    };
+    const ordered = [
+      MetalType.gold,
+      MetalType.silver,
+      MetalType.platinum,
+      MetalType.diamond,
+    ];
+    return ordered.where(present.contains).toList();
+  }
+
+  BillSettings _settingsFromBillingSetup(SalesBillingModel model) {
+    return BillSettings(
+      showHuid: model.showHuid,
+      showPcs: model.showPieces,
+      showGrossWt: model.showGrossWeight,
+      showLessWt: model.showLessWeight,
+      showNetWt: model.showNetWeight,
+      showPurity: model.showPurity,
+      showRate: model.showRate,
+      showMaking: model.showMakingCharges,
+      showAmount: model.showTotalValue,
+      showExchangeBreakdown: model.showOldGoldLine,
+      footerMessage: model.footerMessage,
+      termsAndConditions: model.termsAndConditions,
+      returnPolicyText: model.returnPolicyText,
+      buybackPolicyText: model.buybackPolicyText,
+    );
   }
 
   Future<void> updatePrintOptions(
@@ -380,6 +520,7 @@ class PosInvoiceController extends ChangeNotifier {
 
       dueDate = billing.promiseDate;
       invoice = _buildInvoiceSnapshot();
+      await _loadMetalBillingSettings(invoice!);
 
       pdfBytes = await _buildPdf(invoice!, selectedFormat);
       genState = InvoiceGenState.ready;
@@ -528,66 +669,108 @@ class PosInvoiceController extends ChangeNotifier {
 
   pw.Widget _pdfItemsTable(PosInvoiceModel inv) {
     final isWholesale = inv.billingMode == BillingMode.wholesale;
-    final activeConfig = getActiveConfig(inv.billingMode, inv.billType);
+    final itemsByMetal = <MetalType, List<SaleItemModel>>{};
+    for (final item in inv.saleItems) {
+      itemsByMetal.putIfAbsent(item.metal, () => []).add(item);
+    }
 
     return pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          if (inv.saleItems.isNotEmpty) ...[
-            pw.Table(
-              border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+          ..._collectMetals(inv)
+              .where((metal) => (itemsByMetal[metal] ?? []).isNotEmpty)
+              .map((metal) {
+            final items = itemsByMetal[metal]!;
+            final activeConfig = getMetalConfig(metal);
+            final sectionTotal =
+                items.fold(0.0, (sum, item) => sum + item.totalValue);
+
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.TableRow(
-                  decoration: const pw.BoxDecoration(color: PdfColors.amber50),
+                pw.Container(
+                  width: double.infinity,
+                  padding: const pw.EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 5),
+                  decoration: const pw.BoxDecoration(color: PdfColors.grey100),
+                  child: pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text("${metal.displayName} INVOICE SECTION",
+                          style: pw.TextStyle(
+                              fontSize: 8,
+                              fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.grey800)),
+                      pw.Text("Section Total: Rs ${sectionTotal.toStringAsFixed(2)}",
+                          style: pw.TextStyle(
+                              fontSize: 8, fontWeight: pw.FontWeight.bold)),
+                    ],
+                  ),
+                ),
+                pw.Table(
+                  border:
+                      pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
                   children: [
-                    _th("#"),
-                    _th("Item Description"),
-                    _th("Purity"),
-                    if (activeConfig.showGrossWt) _th("Gross(g)"),
-                    if (activeConfig.showLessWt) _th("Less(g)"),
-                    _th(isWholesale ? "Fine(g)" : "Net(g)"),
-                    _th("Rate"),
-                    if (activeConfig.showMaking)
-                      _th(isWholesale ? "Labour" : "Making"),
-                    _th("Amount"),
+                    pw.TableRow(
+                      decoration:
+                          const pw.BoxDecoration(color: PdfColors.amber50),
+                      children: [
+                        _th("#"),
+                        _th("Item Description"),
+                        if (activeConfig.showPurity) _th("Purity"),
+                        if (activeConfig.showGrossWt) _th("Gross(g)"),
+                        if (activeConfig.showLessWt) _th("Less(g)"),
+                        if (activeConfig.showNetWt)
+                          _th(isWholesale ? "Fine(g)" : "Net(g)"),
+                        if (activeConfig.showRate) _th("Rate"),
+                        if (activeConfig.showMaking)
+                          _th(isWholesale ? "Labour" : "Making"),
+                        if (activeConfig.showAmount) _th("Amount"),
+                      ],
+                    ),
+                    ...items.asMap().entries.map((e) {
+                      final i = e.value;
+                      String desc = i.descCtrl.text.isNotEmpty
+                          ? i.descCtrl.text
+                          : "${i.metal.name.toUpperCase()} ITEM";
+                      if (activeConfig.showHuid &&
+                          i.huidCtrl.text.isNotEmpty) {
+                        desc += "\n[HUID: ${i.huidCtrl.text}]";
+                      }
+                      if (activeConfig.showPcs && i.pcs > 1) {
+                        desc += " (${i.pcs} pcs)";
+                      }
+
+                      return pw.TableRow(children: [
+                        _cell("${e.key + 1}"),
+                        _cell(desc),
+                        if (activeConfig.showPurity) _cell(_formatPurity(i)),
+                        if (activeConfig.showGrossWt)
+                          _cell(i.grossCtrl.text.isNotEmpty
+                              ? i.grossCtrl.text
+                              : "0.000"),
+                        if (activeConfig.showLessWt)
+                          _cell(i.totalLessWt.toStringAsFixed(3)),
+                        if (activeConfig.showNetWt)
+                          _cell(isWholesale
+                              ? i.fineWt.toStringAsFixed(3)
+                              : i.netWt.toStringAsFixed(3)),
+                        if (activeConfig.showRate)
+                          _cell(i.rate.toStringAsFixed(0)),
+                        if (activeConfig.showMaking)
+                          _cell(isWholesale
+                              ? i.wholesaleLabourAmt.toStringAsFixed(0)
+                              : i.makingAmt.toStringAsFixed(0)),
+                        if (activeConfig.showAmount)
+                          _cell(i.totalValue.toStringAsFixed(2)),
+                      ]);
+                    }),
                   ],
                 ),
-                ...inv.saleItems.asMap().entries.map((e) {
-                  final i = e.value;
-                  String desc = i.descCtrl.text.isNotEmpty
-                      ? i.descCtrl.text
-                      : "${i.metal.name.toUpperCase()} ITEM";
-                  if (activeConfig.showHuid && i.huidCtrl.text.isNotEmpty) {
-                    desc += "\n[HUID: ${i.huidCtrl.text}]";
-                  }
-                  if (activeConfig.showPcs && i.pcs > 1) {
-                    desc += " (${i.pcs} pcs)";
-                  }
-
-                  return pw.TableRow(children: [
-                    _cell("${e.key + 1}"),
-                    _cell(desc),
-                    _cell(_formatPurity(i)),
-                    if (activeConfig.showGrossWt)
-                      _cell(i.grossCtrl.text.isNotEmpty
-                          ? i.grossCtrl.text
-                          : "0.000"),
-                    if (activeConfig.showLessWt)
-                      _cell(i.totalLessWt.toStringAsFixed(3)),
-                    _cell(isWholesale
-                        ? i.fineWt.toStringAsFixed(3)
-                        : i.netWt.toStringAsFixed(3)),
-                    _cell(i.rate.toStringAsFixed(0)),
-                    if (activeConfig.showMaking)
-                      _cell(isWholesale
-                          ? i.wholesaleLabourAmt.toStringAsFixed(0)
-                          : i.makingAmt.toStringAsFixed(0)),
-                    _cell(i.totalValue.toStringAsFixed(2)),
-                  ]);
-                }),
+                pw.SizedBox(height: 10),
               ],
-            ),
-          ],
+            );
+          }),
         ]);
   }
 
@@ -668,7 +851,8 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   pw.Widget _pdfTotalsBlock(PosInvoiceModel inv) {
-    final activeConfig = getActiveConfig(inv.billingMode, inv.billType);
+    final showExchangeBreakdown = inv.oldGoldItems
+        .any((item) => getMetalConfig(item.metal).showExchangeBreakdown);
     // Use the invoice net payable value directly.
     return pw.Row(mainAxisAlignment: pw.MainAxisAlignment.end, children: [
       pw.SizedBox(
@@ -693,7 +877,7 @@ class PosInvoiceController extends ChangeNotifier {
                   .where((i) => i.metal == MetalType.platinum)
                   .fold(0.0, (sum, i) => sum + i.totalValue);
 
-              if (!activeConfig.showExchangeBreakdown) {
+              if (!showExchangeBreakdown) {
                 return _totalRow(
                   "Less: Old Metal Exchange",
                   -inv.totalOldGoldDeduction,
@@ -907,12 +1091,23 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   pw.Widget _pdfFooter(PosInvoiceModel inv) {
+    final footerMessages = _collectMetals(inv)
+        .map((metal) => getMetalConfig(metal).footerMessage.trim())
+        .where((message) => message.isNotEmpty)
+        .toSet()
+        .toList();
+    final footerMessage = footerMessages.isEmpty
+        ? "Thank you for shopping with us!"
+        : footerMessages.join(" | ");
+
     return pw.Column(children: [
       pw.Divider(color: PdfColors.grey300),
       pw.SizedBox(height: 6),
       pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
-        pw.Text("Thank you for shopping with us!",
+        pw.Expanded(
+            child: pw.Text(footerMessage,
             style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+        ),
         pw.Text("${inv.shopName}  E&OE",
             style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey500)),
       ]),
