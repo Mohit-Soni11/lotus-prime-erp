@@ -297,12 +297,25 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   Future<void> restoreMetalSavedSetup(MetalType metal) async {
+    final current = getMetalConfig(metal);
+    final printTerms = current.printTermsAndConditions;
+    final printReturn = current.printReturnPolicy;
+    final printBuyback = current.printBuybackPolicy;
+    final printFooter = current.printFooterMessage;
+
+    late BillSettings restored;
     try {
       final setup = await _salesBillingRepo.fetchForMetal(metal.name);
-      metalPrintSettings[metal] = _settingsFromBillingSetup(setup);
+      restored = _settingsFromBillingSetup(setup);
     } catch (_) {
-      metalPrintSettings[metal] = _defaultSettingsForMetal(metal);
+      restored = _defaultSettingsForMetal(metal);
     }
+
+    restored.printTermsAndConditions = printTerms;
+    restored.printReturnPolicy = printReturn;
+    restored.printBuybackPolicy = printBuyback;
+    restored.printFooterMessage = printFooter;
+    metalPrintSettings[metal] = restored;
 
     if (invoice != null) {
       await _refreshActivePreviewPdf();
@@ -1476,7 +1489,7 @@ class PosInvoiceController extends ChangeNotifier {
     required bool enabled,
   }) {
     final text = body.trim();
-    if (!enabled || text.isEmpty) return;
+    if (!enabled || !_hasPrintableCopy(text)) return;
 
     if (entries.isNotEmpty) {
       entries.add(pw.SizedBox(height: 7));
@@ -1511,6 +1524,7 @@ class PosInvoiceController extends ChangeNotifier {
           return config.printFooterMessage ? config.footerMessage.trim() : '';
         })
         .where((message) => message.isNotEmpty)
+        .where(_hasPrintableCopy)
         .toSet()
         .toList();
     final footerMessage = footerMessages.join(" | ");
@@ -1528,6 +1542,11 @@ class PosInvoiceController extends ChangeNotifier {
             style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey500)),
       ]),
     ]);
+  }
+
+  bool _hasPrintableCopy(String value) {
+    final text = value.trim();
+    return text.isNotEmpty && text != '0' && text != '-';
   }
 
   pw.Widget _buildThermalLayout(PosInvoiceModel inv, PrintFormat fmt) {

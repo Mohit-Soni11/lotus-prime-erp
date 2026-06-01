@@ -618,8 +618,6 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildWorkflowStatus(isReady: isReady, isFinalized: isFinalized),
-          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -783,72 +781,6 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWorkflowStatus({
-    required bool isReady,
-    required bool isFinalized,
-  }) {
-    final Color color = !isReady
-        ? SalesPosColors.shellTextMuted
-        : isFinalized
-            ? SalesPosColors.success
-            : SalesPosColors.brandGold;
-    final IconData icon = !isReady
-        ? Icons.hourglass_top_rounded
-        : isFinalized
-            ? Icons.verified_rounded
-            : Icons.edit_note_rounded;
-    final String title = !isReady
-        ? "Preparing Invoice"
-        : isFinalized
-            ? "Finalized Invoice"
-            : "Draft Invoice";
-    final String status = !isReady
-        ? "Generating preview"
-        : isFinalized
-            ? "Record saved"
-            : "Review pending";
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(width: 10),
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              child: Text(
-                title,
-                key: ValueKey(title),
-                style: const TextStyle(
-                  color: SalesPosColors.shellTextTitle,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          ),
-          Text(
-            status,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
             ),
           ),
         ],

@@ -18,6 +18,7 @@ import '../../../models/customer/customer_enums/customer_list_enums.dart';
 //  Fuzzy search support
 import '../../../helpers/search/fuzzy_search_helper.dart';
 import '../../../repositories/sales & orders/pos/pos_hold_repository.dart';
+import '../../../repositories/sales & orders/pos/pos_checkout_repository.dart';
 import '../../../repositories/sales & orders/pos/pos_stock_lookup_repository.dart';
 import '../../../repositories/setting/metal_rate/metal_rate_quote_service.dart';
 import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
@@ -41,6 +42,7 @@ class PosBillingController extends ChangeNotifier {
   // --- DATABASE ---
   final AppDatabase _db = AppDatabase();
   final PosHoldRepository _holdRepo = PosHoldRepository();
+  final PosCheckoutRepository _checkoutRepo = PosCheckoutRepository();
   final ShopSetupRepository _shopRepo = ShopSetupRepository();
   final PosStockLookupRepository _stockLookupRepo = PosStockLookupRepository();
   final MetalRateQuoteService _rateQuoteService = MetalRateQuoteService();
@@ -550,8 +552,7 @@ class PosBillingController extends ChangeNotifier {
   double _diaBhawInput = 0.0;
 
   PosBillingController() {
-    //  Load the active shop name from the database.
-    unawaited(_initShopName());
+    unawaited(_initializeInvoiceNumberPreview());
     unawaited(_restoreHeldBills());
     discountCtrl.addListener(() {
       _discountInput = _parseSafeNumber(discountCtrl.text);
@@ -593,6 +594,11 @@ class PosBillingController extends ChangeNotifier {
     unawaited(_prefillWholesaleBhawFromMaster());
   }
 
+  Future<void> _initializeInvoiceNumberPreview() async {
+    await _initShopName();
+    await refreshInvoiceSequencePreview();
+  }
+
   double _parseSafeNumber(String text) {
     if (text.isEmpty) return 0.0;
     String cleanText = text.replaceAll(RegExp(r'[^0-9.]'), '');
@@ -611,6 +617,21 @@ class PosBillingController extends ChangeNotifier {
       _committedInvoiceNumber ??
       "$invoicePrefix-$shopInitials-$currentFinancialYear-${nextSequence.toString().padLeft(4, '0')}";
   bool get isCurrentSaleCommitted => _committedInvoiceNumber != null;
+
+  Future<void> refreshInvoiceSequencePreview() async {
+    if (isCurrentSaleCommitted) return;
+
+    try {
+      final sequence = await _checkoutRepo.fetchNextInvoiceSequence(
+        invoicePrefix: invoicePrefix,
+        shopInitials: shopInitials,
+        financialYear: currentFinancialYear,
+      );
+      updateInvoiceSequencePreview(sequence);
+    } catch (_) {
+      // Keep the current preview when invoice sequence lookup is unavailable.
+    }
+  }
 
   void updateInvoiceSequencePreview(int sequence) {
     final sanitizedSequence = sequence < 1 ? 1 : sequence;
@@ -1038,6 +1059,7 @@ class PosBillingController extends ChangeNotifier {
   void toggleBillType(BillType type) {
     billType = type;
     notifyListeners();
+    unawaited(refreshInvoiceSequencePreview());
   }
 
   void toggleDiscountType(DiscountType type) {
@@ -1207,7 +1229,10 @@ class PosBillingController extends ChangeNotifier {
     unawaited(_persistHeldBills());
   }
 
-  void clearEntirePOS({bool isHolding = false}) {
+  void clearEntirePOS({
+    bool isHolding = false,
+    bool refreshInvoicePreview = true,
+  }) {
     _committedInvoiceNumber = null;
     selectedCustomer = null;
     customerSuggestions = [];
@@ -1247,13 +1272,17 @@ class PosBillingController extends ChangeNotifier {
     saleItems.clear();
     oldGoldItems.clear();
     activeRowIndex = -1;
+    if (refreshInvoicePreview) {
+      unawaited(refreshInvoiceSequencePreview());
+    }
+    notifyListeners();
   }
 
   @override
   void dispose() {
     _descSearchTimer?.cancel(); //  Cancel any pending debounce timer.
     _huidSearchTimer?.cancel();
-    clearEntirePOS(isHolding: false);
+    clearEntirePOS(isHolding: false, refreshInvoicePreview: false);
     //  The shared database instance must remain open for the app lifecycle.
     // AppDatabase is a Dart singleton. Calling close() here was shutting
     // down the ENTIRE app's database whenever the POS screen was exited.
