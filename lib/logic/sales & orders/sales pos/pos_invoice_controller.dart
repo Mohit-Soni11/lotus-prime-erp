@@ -87,10 +87,10 @@ class BillSettings {
       termsAndConditions: model.termsAndConditions,
       returnPolicyText: model.returnPolicyText,
       buybackPolicyText: model.buybackPolicyText,
-      printTermsAndConditions: model.printTermsAndConditions,
-      printReturnPolicy: model.printReturnPolicy,
-      printBuybackPolicy: model.printBuybackPolicy,
-      printFooterMessage: model.printFooterMessage,
+      printTermsAndConditions: false,
+      printReturnPolicy: false,
+      printBuybackPolicy: false,
+      printFooterMessage: false,
     );
   }
 }
@@ -191,57 +191,131 @@ class PosInvoiceController extends ChangeNotifier {
     );
   }
 
-  Future<void> toggleMetalCustomization(MetalType metal, String key) async {
+  bool getMetalCustomizationValue(MetalType metal, String key) {
+    final config = getMetalConfig(metal);
+    switch (key) {
+      case 'huid':
+        return config.showHuid;
+      case 'pcs':
+        return config.showPcs;
+      case 'gw':
+        return config.showGrossWt;
+      case 'lw':
+        return config.showLessWt;
+      case 'net':
+        return config.showNetWt;
+      case 'purity':
+        return config.showPurity;
+      case 'rate':
+        return config.showRate;
+      case 'making':
+        return config.showMaking;
+      case 'makingType':
+        return config.showMakingType;
+      case 'amount':
+        return config.showAmount;
+      case 'exchange':
+        return config.showExchangeBreakdown;
+      case 'printTerms':
+        return config.printTermsAndConditions;
+      case 'printReturnPolicy':
+        return config.printReturnPolicy;
+      case 'printBuybackPolicy':
+        return config.printBuybackPolicy;
+      case 'printFooter':
+        return config.printFooterMessage;
+      default:
+        return false;
+    }
+  }
+
+  Future<void> setMetalCustomization(
+    MetalType metal,
+    String key,
+    bool value,
+  ) async {
     final config = getMetalConfig(metal);
     metalPrintSettings[metal] = config;
 
     switch (key) {
       case 'huid':
-        config.showHuid = !config.showHuid;
+        config.showHuid = value;
         break;
       case 'pcs':
-        config.showPcs = !config.showPcs;
+        config.showPcs = value;
         break;
       case 'gw':
-        config.showGrossWt = !config.showGrossWt;
+        config.showGrossWt = value;
         break;
       case 'lw':
-        config.showLessWt = !config.showLessWt;
+        config.showLessWt = value;
         break;
       case 'net':
-        config.showNetWt = !config.showNetWt;
+        config.showNetWt = value;
         break;
       case 'purity':
-        config.showPurity = !config.showPurity;
+        config.showPurity = value;
         break;
       case 'rate':
-        config.showRate = !config.showRate;
+        config.showRate = value;
         break;
       case 'making':
-        config.showMaking = !config.showMaking;
+        config.showMaking = value;
         break;
       case 'makingType':
-        config.showMakingType = !config.showMakingType;
+        config.showMakingType = value;
         break;
       case 'amount':
-        config.showAmount = !config.showAmount;
+        config.showAmount = value;
         break;
       case 'exchange':
-        config.showExchangeBreakdown = !config.showExchangeBreakdown;
+        config.showExchangeBreakdown = value;
         break;
       case 'printTerms':
-        config.printTermsAndConditions = !config.printTermsAndConditions;
+        config.printTermsAndConditions = value;
         break;
       case 'printReturnPolicy':
-        config.printReturnPolicy = !config.printReturnPolicy;
+        config.printReturnPolicy = value;
         break;
       case 'printBuybackPolicy':
-        config.printBuybackPolicy = !config.printBuybackPolicy;
+        config.printBuybackPolicy = value;
         break;
       case 'printFooter':
-        config.printFooterMessage = !config.printFooterMessage;
+        config.printFooterMessage = value;
         break;
     }
+
+    if (invoice != null) {
+      await _refreshActivePreviewPdf();
+    }
+    notifyListeners();
+  }
+
+  Future<void> toggleMetalCustomization(MetalType metal, String key) async {
+    final value = !getMetalCustomizationValue(metal, key);
+    await setMetalCustomization(metal, key, value);
+  }
+
+  Future<void> restoreMetalSavedSetup(MetalType metal) async {
+    try {
+      final setup = await _salesBillingRepo.fetchForMetal(metal.name);
+      metalPrintSettings[metal] = _settingsFromBillingSetup(setup);
+    } catch (_) {
+      metalPrintSettings[metal] = _defaultSettingsForMetal(metal);
+    }
+
+    if (invoice != null) {
+      await _refreshActivePreviewPdf();
+    }
+    notifyListeners();
+  }
+
+  Future<void> setMetalCopySuiteEnabled(MetalType metal, bool enabled) async {
+    final config = getMetalConfig(metal);
+    config.printTermsAndConditions = enabled;
+    config.printReturnPolicy = enabled;
+    config.printBuybackPolicy = enabled;
+    config.printFooterMessage = enabled;
 
     if (invoice != null) {
       await _refreshActivePreviewPdf();

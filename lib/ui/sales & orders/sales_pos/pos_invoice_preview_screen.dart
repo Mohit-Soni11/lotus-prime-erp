@@ -13,6 +13,7 @@ import '../../../logic/sales & orders/sales pos/pos_billing_controller.dart';
 import '../../../models/sales & orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../models/sales & orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../logic/sales & orders/sales pos/pos_invoice_controller.dart';
+import 'pos_invoice_metal_setup_card.dart';
 
 class PosInvoicePreviewScreen extends StatefulWidget {
   final PosBillingController billingCtrl;
@@ -383,151 +384,10 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
   }
 
   Widget _buildMetalBillingSetupCard(MetalType metal) {
-    final settings = _invCtrl.getMetalConfig(metal);
-    final color = _metalColor(metal);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: SalesPosColors.shellPanelBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.45)),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-            child: Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.tune_rounded, size: 17, color: color),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "${metal.displayName} Billing Setup",
-                        style: const TextStyle(
-                          color: SalesPosColors.shellTextTitle,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        "Loaded from Billing Setup and applied to this metal section.",
-                        style: TextStyle(
-                          color: SalesPosColors.shellTextMuted,
-                          fontSize: 10,
-                          height: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(color: SalesPosColors.shellBorder, height: 1),
-          _buildMetalToggleRow(metal, "HUID", "Display item HUID details",
-              settings.showHuid, 'huid'),
-          _buildMetalToggleRow(metal, "Gross Weight", "Show gross weight column",
-              settings.showGrossWt, 'gw'),
-          _buildMetalToggleRow(metal, "Less Weight", "Show less weight column",
-              settings.showLessWt, 'lw'),
-          _buildMetalToggleRow(metal, "Net / Fine Weight",
-              "Show net or fine weight column", settings.showNetWt, 'net'),
-          _buildMetalToggleRow(metal, "Purity", "Show purity column",
-              settings.showPurity, 'purity'),
-          _buildMetalToggleRow(metal, "Rate", "Show item rate column",
-              settings.showRate, 'rate'),
-          _buildMetalToggleRow(metal, "Making Amount",
-              "Show calculated making amount", settings.showMaking, 'making'),
-          _buildMetalToggleRow(
-              metal,
-              "Making Rate / Type",
-              "Show making entry such as 12% or 400/g",
-              settings.showMakingType,
-              'makingType'),
-          _buildMetalToggleRow(metal, "Amount", "Show line amount column",
-              settings.showAmount, 'amount'),
-          _buildMetalToggleRow(
-              metal,
-              "Exchange Breakdown",
-              "Show exchange deduction separately for this metal",
-              settings.showExchangeBreakdown,
-              'exchange'),
-          _buildMetalToggleRow(
-              metal,
-              "Terms & Conditions",
-              "Print saved terms for this metal",
-              settings.printTermsAndConditions,
-              'printTerms'),
-          _buildMetalToggleRow(
-              metal,
-              "Return Policy",
-              "Print saved return policy for this metal",
-              settings.printReturnPolicy,
-              'printReturnPolicy'),
-          _buildMetalToggleRow(
-              metal,
-              "Buyback Policy",
-              "Print saved buyback policy for this metal",
-              settings.printBuybackPolicy,
-              'printBuybackPolicy'),
-          _buildMetalToggleRow(
-              metal,
-              "Footer Message",
-              "Print saved footer message for this metal",
-              settings.printFooterMessage,
-              'printFooter',
-              isLast: true),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetalToggleRow(
-    MetalType metal,
-    String title,
-    String subtitle,
-    bool value,
-    String key, {
-    bool isLast = false,
-  }) {
-    return Column(
-      children: [
-        ListTile(
-          dense: true,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
-          title: Text(title,
-              style: const TextStyle(
-                  color: SalesPosColors.shellTextTitle,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold)),
-          subtitle: Text(subtitle,
-              style: const TextStyle(
-                  color: SalesPosColors.shellTextMuted, fontSize: 9.5)),
-          trailing: Switch(
-            value: value,
-            onChanged: (_) => _invCtrl.toggleMetalCustomization(metal, key),
-            activeThumbColor: _metalColor(metal),
-            inactiveTrackColor: SalesPosColors.shellBg,
-          ),
-          onTap: () => _invCtrl.toggleMetalCustomization(metal, key),
-        ),
-        if (!isLast)
-          const Divider(color: SalesPosColors.shellBorder, height: 1),
-      ],
+    return PosInvoiceMetalSetupCard(
+      metal: metal,
+      controller: _invCtrl,
+      accentColor: _metalColor(metal),
     );
   }
 
