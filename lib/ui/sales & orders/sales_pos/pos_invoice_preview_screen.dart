@@ -1,9 +1,7 @@
 // ==========================================
 // FILE: pos_invoice_preview_screen.dart
 // TYPE: Full Screen Master UI (The Hub)
-// DESCRIPTION: 2-Panel Invoice Generation Hub.
-//               UPGRADED: Tab-based Configuration
-//               UPGRADED: Inline Animated Save Button (No SnackBar)
+// DESCRIPTION: Review, export, and finalization workspace for POS invoices.
 // ==========================================
 
 import 'package:flutter/material.dart';
@@ -44,9 +42,7 @@ class PosInvoicePreviewScreen extends StatefulWidget {
 class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
     with TickerProviderStateMixin {
   late PosInvoiceController _invCtrl;
-  String _selectedTemplate = 'Standard Modern';
 
-  //  Animation state for the save button.
   bool _isSavingPdf = false;
   bool _isPdfSaved = false;
 
@@ -95,8 +91,6 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildTemplateSelector(),
-                          const SizedBox(height: 24),
                           _buildFormatGrid(),
                           const SizedBox(height: 24),
                           _buildCategorizedCustomization(),
@@ -149,7 +143,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 1.5)),
-                Text("Design, Settings & Print",
+                Text("Review, Export & Finalize",
                     style: TextStyle(
                         color: SalesPosColors.shellTextMuted, fontSize: 12)),
               ],
@@ -157,50 +151,6 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildTemplateSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("INVOICE TEMPLATE",
-            style: TextStyle(
-                color: SalesPosColors.shellTextMuted,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.2)),
-        const SizedBox(height: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          decoration: BoxDecoration(
-              color: SalesPosColors.shellPanelBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: SalesPosColors.shellBorder)),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _selectedTemplate,
-              isExpanded: true,
-              dropdownColor: SalesPosColors.shellPanelBg,
-              icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                  color: SalesPosColors.brandGold),
-              items: ['Standard Modern', 'Classic Bill', 'Minimalist']
-                  .map((String value) {
-                return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value,
-                        style: const TextStyle(
-                            color: SalesPosColors.shellTextTitle,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14)));
-              }).toList(),
-              onChanged: (val) {
-                if (val != null) setState(() => _selectedTemplate = val);
-              },
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -704,14 +654,16 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("PRINT OPTIONS",
+        const Text("OUTPUT OPTIONS",
             style: TextStyle(
                 color: SalesPosColors.shellTextMuted,
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.2)),
         const SizedBox(height: 10),
-        Container(
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
               color: SalesPosColors.shellPanelBg,
@@ -722,7 +674,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text("Number of Copies",
+                  const Text("Copies",
                       style: TextStyle(
                           color: SalesPosColors.shellTextTitle,
                           fontSize: 13,
@@ -765,12 +717,12 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                   const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Mark as Duplicate",
+                      Text("Duplicate Stamp",
                           style: TextStyle(
                               color: SalesPosColors.shellTextTitle,
                               fontSize: 13,
                               fontWeight: FontWeight.bold)),
-                      Text("Adds a watermark",
+                      Text("Applies a duplicate watermark",
                           style: TextStyle(
                               color: SalesPosColors.shellTextMuted,
                               fontSize: 10)),
@@ -795,6 +747,8 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
   Widget _buildActionFooter() {
     final isReady = _invCtrl.genState == InvoiceGenState.ready;
     final bool hasPhone = _invCtrl.invoice?.customerMobile.isNotEmpty ?? false;
+    final bool isFinalized =
+        _invCtrl.isSavedToDb || widget.billingCtrl.isCurrentSaleCommitted;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -802,7 +756,10 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
           color: SalesPosColors.shellPanelBg,
           border: Border(top: BorderSide(color: SalesPosColors.shellBorder))),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          _buildWorkflowStatus(isReady: isReady, isFinalized: isFinalized),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -811,7 +768,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                       ? _invCtrl.openDirectWhatsAppChat
                       : null,
                   icon: const Icon(Icons.chat_bubble_rounded, size: 16),
-                  label: const Text("WHATSAPP",
+                  label: const Text("Send WhatsApp",
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   style: ElevatedButton.styleFrom(
@@ -824,10 +781,9 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
               ),
               const SizedBox(width: 8),
 
-              //  Animated save button workflow
               Expanded(
                 child: OutlinedButton(
-                  onPressed: (isReady && !_isSavingPdf && !_isPdfSaved)
+                  onPressed: (isReady && !_isSavingPdf)
                       ? () async {
                           setState(() => _isSavingPdf = true);
 
@@ -839,7 +795,6 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                               _isPdfSaved = true;
                             });
 
-                            // Return the save button to its default state after three seconds.
                             Future.delayed(const Duration(seconds: 3), () {
                               if (mounted) setState(() => _isPdfSaved = false);
                             });
@@ -876,7 +831,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                                   Icon(Icons.check_circle_rounded,
                                       size: 16, color: SalesPosColors.success),
                                   SizedBox(width: 6),
-                                  Text("Saved",
+                                  Text("Exported",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13,
@@ -889,7 +844,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                                 children: [
                                   Icon(Icons.download_rounded, size: 16),
                                   SizedBox(width: 6),
-                                  Text("Save PDF",
+                                  Text("Export PDF",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13)),
@@ -903,26 +858,29 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: isReady
-                  ? () => _invCtrl.printInvoice(_invCtrl.selectedFormat)
-                  : null,
-              icon: const Icon(Icons.print_rounded, size: 20),
-              label: const Text("PRINT NOW",
-                  style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 15,
-                      letterSpacing: 1.5)),
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: SalesPosColors.brandGold,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10))),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              child: ElevatedButton.icon(
+                onPressed: isReady
+                    ? () => _invCtrl.printInvoice(_invCtrl.selectedFormat)
+                    : null,
+                icon: const Icon(Icons.print_rounded, size: 20),
+                label: Text(isFinalized ? "PRINT INVOICE" : "FINALIZE & PRINT",
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                        letterSpacing: 1.1)),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: SalesPosColors.brandGold,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10))),
+              ),
             ),
           ),
 
-          //  Completion button finalizes the sale and clears the POS.
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
@@ -932,13 +890,11 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                       await _invCtrl.finalizeInvoiceIfNeeded();
                       if (!mounted) return;
                       widget.billingCtrl.clearEntirePOS();
-                      // Close the preview screen.
                       Navigator.of(context).pop();
-                      // Success message
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            "Sale completed successfully. The POS is ready for the next customer.",
+                            "Invoice finalized successfully. The POS is ready for the next customer.",
                           ),
                           backgroundColor: SalesPosColors.success,
                           behavior: SnackBarBehavior.floating,
@@ -947,9 +903,9 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                       );
                     }
                   : null,
-              icon: const Icon(Icons.check_circle_outline_rounded, size: 20),
+              icon: const Icon(Icons.done_all_rounded, size: 20),
               label: const Text(
-                "COMPLETE SALE",
+                "FINISH & NEW SALE",
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 15,
@@ -974,6 +930,72 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
     );
   }
 
+  Widget _buildWorkflowStatus({
+    required bool isReady,
+    required bool isFinalized,
+  }) {
+    final Color color = !isReady
+        ? SalesPosColors.shellTextMuted
+        : isFinalized
+            ? SalesPosColors.success
+            : SalesPosColors.brandGold;
+    final IconData icon = !isReady
+        ? Icons.hourglass_top_rounded
+        : isFinalized
+            ? Icons.verified_rounded
+            : Icons.edit_note_rounded;
+    final String title = !isReady
+        ? "Preparing Invoice"
+        : isFinalized
+            ? "Finalized Invoice"
+            : "Draft Invoice";
+    final String status = !isReady
+        ? "Generating preview"
+        : isFinalized
+            ? "Record saved"
+            : "Review pending";
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: Text(
+                title,
+                key: ValueKey(title),
+                style: const TextStyle(
+                  color: SalesPosColors.shellTextTitle,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
+          Text(
+            status,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildRightPreviewPanel() {
     if (_invCtrl.genState == InvoiceGenState.generating ||
         _invCtrl.genState == InvoiceGenState.idle) {
@@ -986,16 +1008,26 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
               style: const TextStyle(color: SalesPosColors.danger)));
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(32),
-      child: PdfPreview(
-        build: (_) async => _invCtrl.pdfBytes!,
-        allowPrinting: false,
-        allowSharing: false,
-        canChangeOrientation: false,
-        canChangePageFormat: false,
-        canDebug: false,
-        initialPageFormat: _getPageFormat(),
+    final previewKey = ValueKey(
+      '${_invCtrl.selectedFormat.name}-${_invCtrl.effectiveActiveMetal?.name ?? 'all'}-${_invCtrl.pdfBytes?.length ?? 0}',
+    );
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 240),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      child: Padding(
+        key: previewKey,
+        padding: const EdgeInsets.all(32),
+        child: PdfPreview(
+          build: (_) async => _invCtrl.pdfBytes!,
+          allowPrinting: false,
+          allowSharing: false,
+          canChangeOrientation: false,
+          canChangePageFormat: false,
+          canDebug: false,
+          initialPageFormat: _getPageFormat(),
+        ),
       ),
     );
   }

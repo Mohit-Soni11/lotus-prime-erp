@@ -12,8 +12,6 @@ import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 
-//  Smart folder configuration dependencies
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
 
 //  Database persistence dependencies
@@ -1514,36 +1512,11 @@ class PosInvoiceController extends ChangeNotifier {
     }
   }
 
-  //  Smart CRM folder directory management
   Future<String?> downloadPdf() async {
     await finalizeInvoiceIfNeeded();
     if (pdfBytes == null || invoice == null) return null;
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      String? baseDirPath = prefs.getString('invoice_base_folder');
-
-      if (baseDirPath == null || !await Directory(baseDirPath).exists()) {
-        baseDirPath = await FilePicker.platform.getDirectoryPath(
-          dialogTitle: "Select Folder to Save All Bills",
-        );
-
-        if (baseDirPath == null) {
-          debugPrint("Folder selection cancelled by user");
-          return null;
-        }
-        await prefs.setString('invoice_base_folder', baseDirPath);
-      }
-
-      String mobileFolder =
-          invoice!.customerMobile.replaceAll(RegExp(r'\D'), '');
-      if (mobileFolder.isEmpty) mobileFolder = "Walk-in_Customers";
-
-      final customerDir = Directory('$baseDirPath/$mobileFolder');
-      if (!await customerDir.exists()) {
-        await customerDir.create(recursive: true);
-      }
-
       String custName =
           invoice!.customerName.isNotEmpty ? invoice!.customerName : "Customer";
       String cleanName = custName
@@ -1553,7 +1526,27 @@ class PosInvoiceController extends ChangeNotifier {
           invoice!.invoiceNumber.replaceAll(RegExp(r'[^a-zA-Z0-9\-]'), '_');
 
       final fileName = "${cleanName}_$cleanInv.pdf";
-      final file = File('${customerDir.path}/$fileName');
+      final selectedPath = await FilePicker.platform.saveFile(
+        dialogTitle: "Export Invoice PDF",
+        fileName: fileName,
+        type: FileType.custom,
+        allowedExtensions: const ['pdf'],
+        lockParentWindow: true,
+      );
+
+      if (selectedPath == null) {
+        debugPrint("PDF export cancelled by user");
+        return null;
+      }
+
+      final exportPath = selectedPath.toLowerCase().endsWith('.pdf')
+          ? selectedPath
+          : '$selectedPath.pdf';
+      final file = File(exportPath);
+      final parentDir = file.parent;
+      if (!await parentDir.exists()) {
+        await parentDir.create(recursive: true);
+      }
 
       final saveBytes = await _buildPdf(
         invoice!,
