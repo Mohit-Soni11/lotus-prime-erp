@@ -313,14 +313,14 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
           (v) => _toggle((m) => m.copyWith(showRate: v)));
 
       addToggle(
-          'Making Charges',
-          'Labour/making charge amount',
+          'Making Amount',
+          'Show calculated making charge amount',
           _model.showMakingCharges,
           (v) => _toggle((m) => m.copyWith(showMakingCharges: v)));
 
       addToggle(
-          'Making Charge Type',
-          'Show /g or % or /pc label',
+          'Making Rate / Type',
+          'Show making entry such as 12% or 400/g',
           _model.showMakingChargeType,
           (v) => _toggle((m) => m.copyWith(showMakingChargeType: v)));
 
@@ -382,10 +382,16 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
           (v) => _toggle((m) => m.copyWith(showCertificationNo: v)));
 
       addToggle(
-          'Making Charges',
-          'Labour/making charge amount',
+          'Making Amount',
+          'Show calculated making charge amount',
           _model.showMakingCharges,
           (v) => _toggle((m) => m.copyWith(showMakingCharges: v)));
+
+      addToggle(
+          'Making Rate / Type',
+          'Show making entry such as 12% or 400/g',
+          _model.showMakingChargeType,
+          (v) => _toggle((m) => m.copyWith(showMakingChargeType: v)));
 
       addToggle('Rate (Rs/ct)', 'Diamond rate per carat', _model.showRate,
           (v) => _toggle((m) => m.copyWith(showRate: v)));
@@ -477,6 +483,25 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
       ),
       const SizedBox(height: 14),
+      _ToggleGrid(children: [
+        _ToggleRow(
+          label: 'Print Return Policy',
+          subtitle: 'Include this return policy on the invoice',
+          value: _model.printReturnPolicy,
+          accent: _accent,
+          onChanged: (v) =>
+              _toggle((m) => m.copyWith(printReturnPolicy: v)),
+        ),
+        _ToggleRow(
+          label: 'Print Buyback Policy',
+          subtitle: 'Include this buyback policy on the invoice',
+          value: _model.printBuybackPolicy,
+          accent: _accent,
+          onChanged: (v) =>
+              _toggle((m) => m.copyWith(printBuybackPolicy: v)),
+        ),
+      ]),
+      const SizedBox(height: 14),
       _responsiveFieldPair(
         first: _InputField(
           label: 'Return Policy Note',
@@ -531,6 +556,25 @@ class _SalesMetalSettingsScreenState extends State<SalesMetalSettingsScreen> {
   // â”€â”€ TERMS & TEMPLATE SECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   List<Widget> _buildTermsSection() {
     return [
+      _ToggleGrid(children: [
+        _ToggleRow(
+          label: 'Print Terms & Conditions',
+          subtitle: 'Include saved terms on the invoice',
+          value: _model.printTermsAndConditions,
+          accent: _accent,
+          onChanged: (v) =>
+              _toggle((m) => m.copyWith(printTermsAndConditions: v)),
+        ),
+        _ToggleRow(
+          label: 'Print Footer Message',
+          subtitle: 'Include footer copy on the invoice',
+          value: _model.printFooterMessage,
+          accent: _accent,
+          onChanged: (v) =>
+              _toggle((m) => m.copyWith(printFooterMessage: v)),
+        ),
+      ]),
+      const SizedBox(height: 14),
       _InputField(
         label: 'Terms & Conditions',
         hint: 'Enter terms printed on $_metalDisplay bills...',

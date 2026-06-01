@@ -87,7 +87,7 @@ class SalesBillingRepo {
       returnPolicyText: Value(model.returnPolicyText),
       buybackPolicyText: Value(model.buybackPolicyText),
       footerMessage: Value(model.footerMessage),
-      selectedTemplate: Value(model.selectedTemplate),
+      selectedTemplate: Value(SalesBillingTemplateOptions.encode(model)),
     );
   }
 
@@ -105,6 +105,7 @@ class SalesBillingRepo {
 
   // ── Map DB row → model ────────────────────────────────────────────────────
   SalesBillingModel _rowToModel(SalesBillingSetting row) {
+    final storedTemplate = row.selectedTemplate;
     return SalesBillingModel(
       metal: row.metal,
       showPieces: row.showPieces,
@@ -138,7 +139,27 @@ class SalesBillingRepo {
       returnPolicyText: row.returnPolicyText,
       buybackPolicyText: row.buybackPolicyText,
       footerMessage: row.footerMessage,
-      selectedTemplate: row.selectedTemplate,
+      selectedTemplate: SalesBillingTemplateOptions.baseTemplate(storedTemplate),
+      printTermsAndConditions: SalesBillingTemplateOptions.readFlag(
+        storedTemplate,
+        'terms',
+        defaultValue: false,
+      ),
+      printReturnPolicy: SalesBillingTemplateOptions.readFlag(
+        storedTemplate,
+        'return',
+        defaultValue: false,
+      ),
+      printBuybackPolicy: SalesBillingTemplateOptions.readFlag(
+        storedTemplate,
+        'buyback',
+        defaultValue: false,
+      ),
+      printFooterMessage: SalesBillingTemplateOptions.readFlag(
+        storedTemplate,
+        'footer',
+        defaultValue: true,
+      ),
     );
   }
 }

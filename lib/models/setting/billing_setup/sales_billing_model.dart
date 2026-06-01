@@ -68,6 +68,51 @@ class TemplateOptions {
   // Future: 'thermal_58mm', 'thermal_80mm', 'a4_gst', 'a5_minimal'
 }
 
+class SalesBillingTemplateOptions {
+  static const String _marker = '|print:';
+
+  static String baseTemplate(String storedTemplate) {
+    final markerIndex = storedTemplate.indexOf(_marker);
+    if (markerIndex == -1) return storedTemplate;
+    return storedTemplate.substring(0, markerIndex);
+  }
+
+  static bool readFlag(
+    String storedTemplate,
+    String key, {
+    required bool defaultValue,
+  }) {
+    final markerIndex = storedTemplate.indexOf(_marker);
+    if (markerIndex == -1) return defaultValue;
+
+    final payload = storedTemplate.substring(markerIndex + _marker.length);
+    for (final part in payload.split(',')) {
+      final pieces = part.split('=');
+      if (pieces.length != 2) continue;
+      if (pieces.first.trim() == key) {
+        return pieces.last.trim() == '1';
+      }
+    }
+    return defaultValue;
+  }
+
+  static String encode(SalesBillingModel model) {
+    final baseTemplate = SalesBillingTemplateOptions.baseTemplate(
+      model.selectedTemplate,
+    ).trim();
+    final resolvedTemplate = baseTemplate.isEmpty
+        ? TemplateOptions.defaultTemplate
+        : baseTemplate;
+    final flags = [
+      'terms=${model.printTermsAndConditions ? 1 : 0}',
+      'return=${model.printReturnPolicy ? 1 : 0}',
+      'buyback=${model.printBuybackPolicy ? 1 : 0}',
+      'footer=${model.printFooterMessage ? 1 : 0}',
+    ].join(',');
+    return '$resolvedTemplate$_marker$flags';
+  }
+}
+
 // =============================================================================
 // SALES BILLING MODEL
 // =============================================================================
@@ -117,6 +162,10 @@ class SalesBillingModel {
 
   // Section 4 — Template
   final String selectedTemplate;
+  final bool printTermsAndConditions;
+  final bool printReturnPolicy;
+  final bool printBuybackPolicy;
+  final bool printFooterMessage;
 
   const SalesBillingModel({
     required this.metal,
@@ -162,6 +211,10 @@ class SalesBillingModel {
     this.footerMessage = 'Thank you for shopping with us! Visit us again.',
     // Template
     this.selectedTemplate = 'default',
+    this.printTermsAndConditions = false,
+    this.printReturnPolicy = false,
+    this.printBuybackPolicy = false,
+    this.printFooterMessage = true,
   });
 
   // Default settings per metal (smart defaults based on industry practice)
@@ -364,6 +417,10 @@ class SalesBillingModel {
     String? buybackPolicyText,
     String? footerMessage,
     String? selectedTemplate,
+    bool? printTermsAndConditions,
+    bool? printReturnPolicy,
+    bool? printBuybackPolicy,
+    bool? printFooterMessage,
   }) {
     return SalesBillingModel(
       metal: metal,
@@ -401,6 +458,11 @@ class SalesBillingModel {
       buybackPolicyText: buybackPolicyText ?? this.buybackPolicyText,
       footerMessage: footerMessage ?? this.footerMessage,
       selectedTemplate: selectedTemplate ?? this.selectedTemplate,
+      printTermsAndConditions:
+          printTermsAndConditions ?? this.printTermsAndConditions,
+      printReturnPolicy: printReturnPolicy ?? this.printReturnPolicy,
+      printBuybackPolicy: printBuybackPolicy ?? this.printBuybackPolicy,
+      printFooterMessage: printFooterMessage ?? this.printFooterMessage,
     );
   }
 }

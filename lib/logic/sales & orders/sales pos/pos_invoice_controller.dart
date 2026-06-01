@@ -38,12 +38,17 @@ class BillSettings {
   bool showPurity;
   bool showRate;
   bool showMaking;
+  bool showMakingType;
   bool showAmount;
   bool showExchangeBreakdown;
   String footerMessage;
   String termsAndConditions;
   String returnPolicyText;
   String buybackPolicyText;
+  bool printTermsAndConditions;
+  bool printReturnPolicy;
+  bool printBuybackPolicy;
+  bool printFooterMessage;
 
   BillSettings({
     this.showHuid = true,
@@ -54,12 +59,17 @@ class BillSettings {
     this.showPurity = true,
     this.showRate = true,
     this.showMaking = true,
+    this.showMakingType = true,
     this.showAmount = true,
     this.showExchangeBreakdown = true,
     this.footerMessage = 'Thank you for shopping with us! Visit us again.',
     this.termsAndConditions = '',
     this.returnPolicyText = '',
     this.buybackPolicyText = '',
+    this.printTermsAndConditions = false,
+    this.printReturnPolicy = false,
+    this.printBuybackPolicy = false,
+    this.printFooterMessage = true,
   });
 
   factory BillSettings.fromSalesBilling(SalesBillingModel model) {
@@ -72,12 +82,17 @@ class BillSettings {
       showPurity: model.showPurity,
       showRate: model.showRate,
       showMaking: model.showMakingCharges,
+      showMakingType: model.showMakingChargeType,
       showAmount: model.showTotalValue,
       showExchangeBreakdown: model.showOldGoldLine,
       footerMessage: model.footerMessage,
       termsAndConditions: model.termsAndConditions,
       returnPolicyText: model.returnPolicyText,
       buybackPolicyText: model.buybackPolicyText,
+      printTermsAndConditions: model.printTermsAndConditions,
+      printReturnPolicy: model.printReturnPolicy,
+      printBuybackPolicy: model.printBuybackPolicy,
+      printFooterMessage: model.printFooterMessage,
     );
   }
 }
@@ -207,11 +222,26 @@ class PosInvoiceController extends ChangeNotifier {
       case 'making':
         config.showMaking = !config.showMaking;
         break;
+      case 'makingType':
+        config.showMakingType = !config.showMakingType;
+        break;
       case 'amount':
         config.showAmount = !config.showAmount;
         break;
       case 'exchange':
         config.showExchangeBreakdown = !config.showExchangeBreakdown;
+        break;
+      case 'printTerms':
+        config.printTermsAndConditions = !config.printTermsAndConditions;
+        break;
+      case 'printReturnPolicy':
+        config.printReturnPolicy = !config.printReturnPolicy;
+        break;
+      case 'printBuybackPolicy':
+        config.printBuybackPolicy = !config.printBuybackPolicy;
+        break;
+      case 'printFooter':
+        config.printFooterMessage = !config.printFooterMessage;
         break;
     }
 
@@ -298,8 +328,23 @@ class PosInvoiceController extends ChangeNotifier {
       case 'making':
         config.showMaking = !config.showMaking;
         break;
+      case 'makingType':
+        config.showMakingType = !config.showMakingType;
+        break;
       case 'exchange':
         config.showExchangeBreakdown = !config.showExchangeBreakdown;
+        break;
+      case 'printTerms':
+        config.printTermsAndConditions = !config.printTermsAndConditions;
+        break;
+      case 'printReturnPolicy':
+        config.printReturnPolicy = !config.printReturnPolicy;
+        break;
+      case 'printBuybackPolicy':
+        config.printBuybackPolicy = !config.printBuybackPolicy;
+        break;
+      case 'printFooter':
+        config.printFooterMessage = !config.printFooterMessage;
         break;
     }
 
@@ -775,6 +820,7 @@ class PosInvoiceController extends ChangeNotifier {
         _pdfTotalsBlock(inv),
         pw.SizedBox(height: 14),
         _pdfPaymentBlock(inv),
+        _pdfPolicyBlock(inv),
         pw.Spacer(),
         _pdfFooter(inv),
       ],
@@ -910,7 +956,8 @@ class PosInvoiceController extends ChangeNotifier {
                         if (activeConfig.showNetWt)
                           _th(isWholesale ? "Fine(g)" : "Net(g)"),
                         if (activeConfig.showRate) _th("Rate"),
-                        if (activeConfig.showMaking)
+                        if (activeConfig.showMaking ||
+                            activeConfig.showMakingType)
                           _th(isWholesale ? "Labour" : "Making"),
                         if (activeConfig.showAmount) _th("Amount"),
                       ],
@@ -944,10 +991,10 @@ class PosInvoiceController extends ChangeNotifier {
                               : i.netWt.toStringAsFixed(3)),
                         if (activeConfig.showRate)
                           _cell(i.rate.toStringAsFixed(0)),
-                        if (activeConfig.showMaking)
-                          _cell(isWholesale
-                              ? i.wholesaleLabourAmt.toStringAsFixed(0)
-                              : i.makingAmt.toStringAsFixed(0)),
+                        if (activeConfig.showMaking ||
+                            activeConfig.showMakingType)
+                          _cell(_formatMakingCharge(i, activeConfig,
+                              isWholesale: isWholesale)),
                         if (activeConfig.showAmount)
                           _cell(i.totalValue.toStringAsFixed(2)),
                       ]);
@@ -969,6 +1016,37 @@ class PosInvoiceController extends ChangeNotifier {
   pw.Widget _cell(String text) => pw.Padding(
       padding: const pw.EdgeInsets.all(5),
       child: pw.Text(text, style: const pw.TextStyle(fontSize: 8)));
+
+  String _formatMakingCharge(
+    SaleItemModel item,
+    BillSettings config, {
+    required bool isWholesale,
+  }) {
+    final input = double.tryParse(
+          item.makingCtrl.text.replaceAll(RegExp(r'[^0-9.]'), ''),
+        ) ??
+        0.0;
+    final inputLabel =
+        input <= 0 ? '-' : '${_formatCompactNumber(input)}${item.makingChargeType.symbol}';
+    final amount = isWholesale ? item.wholesaleLabourAmt : item.makingAmt;
+    final amountLabel = 'Rs ${amount.toStringAsFixed(0)}';
+
+    if (config.showMakingType) {
+      return inputLabel;
+    }
+    return amountLabel;
+  }
+
+  String _formatCompactNumber(double value) {
+    final rounded = value.roundToDouble();
+    if ((value - rounded).abs() < 0.0001) {
+      return rounded.toStringAsFixed(0);
+    }
+    return value
+        .toStringAsFixed(2)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
+  }
 
   String _formatPurity(SaleItemModel item) {
     final text = item.purityCtrl.text.trim();
@@ -1277,15 +1355,93 @@ class PosInvoiceController extends ChangeNotifier {
     );
   }
 
+  pw.Widget _pdfPolicyBlock(PosInvoiceModel inv) {
+    final entries = <pw.Widget>[];
+
+    for (final metal in _collectMetals(inv)) {
+      final config = getMetalConfig(metal);
+      _addPolicyEntry(
+        entries,
+        title: '${metal.displayName} TERMS & CONDITIONS',
+        body: config.termsAndConditions,
+        enabled: config.printTermsAndConditions,
+      );
+      _addPolicyEntry(
+        entries,
+        title: '${metal.displayName} RETURN POLICY',
+        body: config.returnPolicyText,
+        enabled: config.printReturnPolicy,
+      );
+      _addPolicyEntry(
+        entries,
+        title: '${metal.displayName} BUYBACK POLICY',
+        body: config.buybackPolicyText,
+        enabled: config.printBuybackPolicy,
+      );
+    }
+
+    if (entries.isEmpty) return pw.SizedBox.shrink();
+
+    return pw.Container(
+      width: double.infinity,
+      margin: const pw.EdgeInsets.only(top: 12),
+      padding: const pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.grey300, width: 0.6),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: entries,
+      ),
+    );
+  }
+
+  void _addPolicyEntry(
+    List<pw.Widget> entries, {
+    required String title,
+    required String body,
+    required bool enabled,
+  }) {
+    final text = body.trim();
+    if (!enabled || text.isEmpty) return;
+
+    if (entries.isNotEmpty) {
+      entries.add(pw.SizedBox(height: 7));
+    }
+    entries.add(
+      pw.Text(
+        title,
+        style: pw.TextStyle(
+          fontSize: 7.5,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColors.grey700,
+        ),
+      ),
+    );
+    entries.add(pw.SizedBox(height: 2));
+    entries.add(
+      pw.Text(
+        text,
+        style: const pw.TextStyle(
+          fontSize: 7.2,
+          color: PdfColors.grey700,
+          lineSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+
   pw.Widget _pdfFooter(PosInvoiceModel inv) {
     final footerMessages = _collectMetals(inv)
-        .map((metal) => getMetalConfig(metal).footerMessage.trim())
+        .map((metal) {
+          final config = getMetalConfig(metal);
+          return config.printFooterMessage ? config.footerMessage.trim() : '';
+        })
         .where((message) => message.isNotEmpty)
         .toSet()
         .toList();
-    final footerMessage = footerMessages.isEmpty
-        ? "Thank you for shopping with us!"
-        : footerMessages.join(" | ");
+    final footerMessage = footerMessages.join(" | ");
 
     return pw.Column(children: [
       pw.Divider(color: PdfColors.grey300),
@@ -1293,7 +1449,8 @@ class PosInvoiceController extends ChangeNotifier {
       pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
         pw.Expanded(
             child: pw.Text(footerMessage,
-            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+                style:
+                    const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
         ),
         pw.Text("${inv.shopName}  E&OE",
             style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey500)),
