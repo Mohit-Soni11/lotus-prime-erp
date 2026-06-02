@@ -24,6 +24,7 @@ import '../../../repositories/setting/metal_rate/metal_rate_quote_service.dart';
 import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
 import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
 import '../../../models/setting/metal_rate/metal_rate_model.dart';
+import '../../../models/setting/tax_gst/gst_slab_model.dart';
 
 //  Customer history support
 import '../../../repositories/customer/customer_profile_repository.dart';
@@ -47,6 +48,17 @@ class PosBillingController extends ChangeNotifier {
   final PosStockLookupRepository _stockLookupRepo = PosStockLookupRepository();
   final MetalRateQuoteService _rateQuoteService = MetalRateQuoteService();
 
+  static const double _defaultJewelleryGstRate = 0.03;
+  static const double _defaultMakingGstRate = 0.05;
+  final Map<MetalType, double> _metalGstRates = {
+    MetalType.gold: _defaultJewelleryGstRate,
+    MetalType.silver: _defaultJewelleryGstRate,
+    MetalType.platinum: _defaultJewelleryGstRate,
+    MetalType.diamond: _defaultJewelleryGstRate,
+  };
+  double _makingGstRate = _defaultMakingGstRate;
+  bool _roundOffGstAmount = true;
+
   Future<void> _initShopName() async {
     try {
       final tenantId = await ShopSessionManager.getPermanentTenantId();
@@ -66,6 +78,67 @@ class PosBillingController extends ChangeNotifier {
     } catch (_) {
       // Keep the default name when shop setup cannot be loaded.
     }
+  }
+
+  Future<void> _loadTaxGstConfig() async {
+    try {
+      final config = await _db.taxGstDao.fetchConfig();
+      final slabs = gstSlabListFromJson(config?.gstSlabsJson);
+      _metalGstRates[MetalType.gold] =
+          _rateForCategory(slabs, const ['gold'], _defaultJewelleryGstRate);
+      _metalGstRates[MetalType.silver] =
+          _rateForCategory(slabs, const ['silver'], _defaultJewelleryGstRate);
+      _metalGstRates[MetalType.platinum] =
+          _rateForCategory(slabs, const ['platinum'], _defaultJewelleryGstRate);
+      _metalGstRates[MetalType.diamond] = _rateForCategory(
+        slabs,
+        const ['diamond', 'gemstone'],
+        _defaultJewelleryGstRate,
+      );
+      _makingGstRate =
+          _rateForCategory(slabs, const ['making'], _defaultMakingGstRate);
+      _roundOffGstAmount = config?.roundOffGstAmount ?? true;
+      notifyListeners();
+    } catch (_) {
+      // Keep default GST rates when the settings table is unavailable.
+    }
+  }
+
+  double _rateForCategory(
+    List<GstSlabModel> slabs,
+    List<String> keywords,
+    double fallback,
+  ) {
+    for (final slab in slabs) {
+      final category = slab.category.toLowerCase();
+      if (keywords.any((keyword) => category.contains(keyword))) {
+        return _parseGstRate(slab.rate, fallback);
+      }
+    }
+    return fallback;
+  }
+
+  double _parseGstRate(String label, double fallback) {
+    final normalized = label.replaceAll('%', '').trim();
+    final parsed = double.tryParse(normalized);
+    if (parsed == null || parsed < 0) {
+      return fallback;
+    }
+    return parsed / 100;
+  }
+
+  double _metalGstRate(MetalType metal) =>
+      _metalGstRates[metal] ?? _defaultJewelleryGstRate;
+
+  double _taxAmount(double taxable, double rate) {
+    if (taxable <= 0 || rate <= 0) {
+      return 0.0;
+    }
+    final amount = taxable * rate;
+    if (!_roundOffGstAmount) {
+      return amount;
+    }
+    return (amount * 100).roundToDouble() / 100;
   }
 
   // ==========================================
@@ -104,7 +177,7 @@ class PosBillingController extends ChangeNotifier {
       // Name input uses fuzzy matching.
       final bool isNumeric = RegExp(r'^\d+$').hasMatch(term);
 
-      List matched;
+      List<Customer> matched;
 
       if (isNumeric) {
         //  Match customer mobile numbers by substring.
@@ -122,19 +195,8 @@ class PosBillingController extends ChangeNotifier {
         );
       }
 
-      customerSuggestions = matched.map((row) {
-        final name = row.name;
-        return CustomerListItemModel(
-          id: row.id,
-          name: name,
-          mobile: row.mobile,
-          city: row.city ?? '',
-          type: CustomerType.fromString(row.type),
-          billCount: 0,
-          createdAt: row.createdAt,
-          initials: CustomerListItemModel.buildInitials(name),
-        );
-      }).toList();
+      customerSuggestions =
+          matched.map(_customerListItemFromRow).toList(growable: false);
 
       //  Show the not-found state when no customers match.
       customerNotFound = customerSuggestions.isEmpty;
@@ -157,6 +219,62 @@ class PosBillingController extends ChangeNotifier {
 
     //  Fetch customer history in the background.
     _fetchCustomerHistory(customer.id);
+  }
+
+  Future<void> selectCustomerByMobile(String mobile) async {
+    final digitsOnly = mobile.replaceAll(RegExp(r'[^0-9]'), '');
+    final cleanMobile = digitsOnly.length > 10
+        ? digitsOnly.substring(digitsOnly.length - 10)
+        : digitsOnly;
+    if (cleanMobile.isEmpty) {
+      return;
+    }
+
+    try {
+      final row = await (_db.select(_db.customers)
+            ..where((tbl) => tbl.mobile.equals(cleanMobile)))
+          .getSingleOrNull();
+      if (row == null) {
+        await searchCustomersByName(cleanMobile);
+        return;
+      }
+      selectCustomer(_customerListItemFromRow(row));
+    } catch (_) {
+      await searchCustomersByName(cleanMobile);
+    }
+  }
+
+  CustomerListItemModel _customerListItemFromRow(Customer row) {
+    final name = row.name;
+    return CustomerListItemModel(
+      id: row.id,
+      name: name,
+      mobile: row.mobile,
+      city: _customerAddressSummary(row),
+      type: CustomerType.fromString(row.type),
+      billCount: 0,
+      createdAt: row.createdAt,
+      initials: CustomerListItemModel.buildInitials(name),
+    );
+  }
+
+  String _customerAddressSummary(Customer row) {
+    final parts = <String>[
+      row.addressLine1 ?? '',
+      row.addressLine2 ?? '',
+      row.city ?? '',
+      row.state ?? '',
+      row.pincode ?? '',
+      row.country.trim().toLowerCase() == 'india' ? '' : row.country,
+    ];
+    final uniqueParts = <String>[];
+    for (final part in parts) {
+      final clean = part.trim();
+      if (clean.isNotEmpty && !uniqueParts.contains(clean)) {
+        uniqueParts.add(clean);
+      }
+    }
+    return uniqueParts.join(', ');
   }
 
   //  Fetch bill history, outstanding balance, and last visit details.
@@ -554,6 +672,7 @@ class PosBillingController extends ChangeNotifier {
   PosBillingController() {
     unawaited(_initializeInvoiceNumberPreview());
     unawaited(_restoreHeldBills());
+    unawaited(_loadTaxGstConfig());
     discountCtrl.addListener(() {
       _discountInput = _parseSafeNumber(discountCtrl.text);
       notifyListeners();
@@ -813,12 +932,12 @@ class PosBillingController extends ChangeNotifier {
           (discountAmount * _proportionalRatio(_wholesaleTotalMetalAmount));
       double labourTaxable = goldMakingCharge -
           (discountAmount * _proportionalRatio(totalMakingCharge));
-      return (metalTaxable > 0 ? metalTaxable * 0.03 : 0) +
-          (labourTaxable > 0 ? labourTaxable * 0.05 : 0);
+      return _taxAmount(metalTaxable, _metalGstRate(MetalType.gold)) +
+          _taxAmount(labourTaxable, _makingGstRate);
     }
     double retailTaxable = totalGoldAmount -
         (discountAmount * _proportionalRatio(totalGoldAmount));
-    return retailTaxable > 0 ? retailTaxable * 0.03 : 0.0;
+    return _taxAmount(retailTaxable, _metalGstRate(MetalType.gold));
   }
 
   double get silverGst {
@@ -828,12 +947,12 @@ class PosBillingController extends ChangeNotifier {
           (discountAmount * _proportionalRatio(_wholesaleTotalMetalAmount));
       double labourTaxable = silverMakingCharge -
           (discountAmount * _proportionalRatio(totalMakingCharge));
-      return (metalTaxable > 0 ? metalTaxable * 0.03 : 0) +
-          (labourTaxable > 0 ? labourTaxable * 0.05 : 0);
+      return _taxAmount(metalTaxable, _metalGstRate(MetalType.silver)) +
+          _taxAmount(labourTaxable, _makingGstRate);
     }
     double retailTaxable = totalSilverAmount -
         (discountAmount * _proportionalRatio(totalSilverAmount));
-    return retailTaxable > 0 ? retailTaxable * 0.03 : 0.0;
+    return _taxAmount(retailTaxable, _metalGstRate(MetalType.silver));
   }
 
   double get platinumGst {
@@ -843,12 +962,12 @@ class PosBillingController extends ChangeNotifier {
           (discountAmount * _proportionalRatio(_wholesaleTotalMetalAmount));
       double labourTaxable = platinumMakingCharge -
           (discountAmount * _proportionalRatio(totalMakingCharge));
-      return (metalTaxable > 0 ? metalTaxable * 0.03 : 0) +
-          (labourTaxable > 0 ? labourTaxable * 0.05 : 0);
+      return _taxAmount(metalTaxable, _metalGstRate(MetalType.platinum)) +
+          _taxAmount(labourTaxable, _makingGstRate);
     }
     double retailTaxable = totalPlatinumAmount -
         (discountAmount * _proportionalRatio(totalPlatinumAmount));
-    return retailTaxable > 0 ? retailTaxable * 0.03 : 0.0;
+    return _taxAmount(retailTaxable, _metalGstRate(MetalType.platinum));
   }
 
   double get diamondGst {
@@ -858,12 +977,12 @@ class PosBillingController extends ChangeNotifier {
           (discountAmount * _proportionalRatio(_wholesaleTotalMetalAmount));
       double labourTaxable = diamondMakingCharge -
           (discountAmount * _proportionalRatio(totalMakingCharge));
-      return (metalTaxable > 0 ? metalTaxable * 0.03 : 0) +
-          (labourTaxable > 0 ? labourTaxable * 0.05 : 0);
+      return _taxAmount(metalTaxable, _metalGstRate(MetalType.diamond)) +
+          _taxAmount(labourTaxable, _makingGstRate);
     }
     double retailTaxable = totalDiamondAmount -
         (discountAmount * _proportionalRatio(totalDiamondAmount));
-    return retailTaxable > 0 ? retailTaxable * 0.03 : 0.0;
+    return _taxAmount(retailTaxable, _metalGstRate(MetalType.diamond));
   }
 
   double get totalGst => goldGst + silverGst + platinumGst + diamondGst;
@@ -936,6 +1055,27 @@ class PosBillingController extends ChangeNotifier {
 
     if (!hasBillableInvoiceItems) {
       return "Complete at least one billable item before generating an invoice.";
+    }
+
+    if (finalPayableAmount < -_invoiceAmountTolerance) {
+      return "This bill creates a refund/exchange balance. Please use the separate refund or exchange flow.";
+    }
+
+    if (totalPaid - finalPayableAmount > _invoiceAmountTolerance) {
+      return "Payment received is higher than the final payable amount. Reduce payment or use the separate refund flow.";
+    }
+
+    if (balanceDue > _invoiceAmountTolerance) {
+      if (selectedCustomer == null) {
+        return "Select or create a customer before saving a due bill.";
+      }
+      if (promiseDate == null) {
+        return "Select a promise date before saving a due bill.";
+      }
+    }
+
+    if (_advInput > _invoiceAmountTolerance && selectedCustomer == null) {
+      return "Select or create a customer before using advance payment.";
     }
 
     return null;
@@ -1108,16 +1248,10 @@ class PosBillingController extends ChangeNotifier {
         return;
       }
 
-      selectedCustomer = CustomerListItemModel(
-        id: row.id,
-        name: row.name,
-        mobile: row.mobile,
-        city: row.city ?? '',
-        type: CustomerType.fromString(row.type),
-        billCount: 0,
-        createdAt: row.createdAt,
-        initials: CustomerListItemModel.buildInitials(row.name),
-      );
+      selectedCustomer = _customerListItemFromRow(row);
+      nameCtrl.text = selectedCustomer!.name;
+      mobileCtrl.text = selectedCustomer!.mobile;
+      cityCtrl.text = selectedCustomer!.city;
       notifyListeners();
       unawaited(_fetchCustomerHistory(row.id));
     } catch (_) {

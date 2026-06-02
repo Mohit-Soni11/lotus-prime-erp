@@ -30,7 +30,18 @@ import 'add_customer_app_bar.dart'; // âœ… Added external AppBar (Adjust pat
 class AddCustomerScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final VoidCallback? onSaved;
-  const AddCustomerScreen({super.key, this.onBack, this.onSaved});
+  final String? initialName;
+  final String? initialMobile;
+  final String? initialAddress;
+
+  const AddCustomerScreen({
+    super.key,
+    this.onBack,
+    this.onSaved,
+    this.initialName,
+    this.initialMobile,
+    this.initialAddress,
+  });
 
   @override
   State<AddCustomerScreen> createState() => _AddCustomerScreenState();
@@ -124,6 +135,39 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
 
     _attachFocusListeners();
     _memberIdCtrl.text = _logic.generateMembershipId();
+    _applyInitialValues();
+  }
+
+  void _applyInitialValues() {
+    final initialName = widget.initialName?.trim();
+    if (initialName != null && initialName.isNotEmpty) {
+      final parts = initialName.split(RegExp(r'\s+'));
+      final firstName = parts.first;
+      final lastName = parts.length > 1 ? parts.skip(1).join(' ') : '';
+      _firstNameCtrl.text = firstName;
+      _logic.onFirstNameChanged(firstName);
+      if (lastName.isNotEmpty) {
+        _lastNameCtrl.text = lastName;
+        _logic.onLastNameChanged(lastName);
+      }
+    }
+
+    final digitsOnly = widget.initialMobile?.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digitsOnly != null && digitsOnly.isNotEmpty) {
+      final mobile = digitsOnly.length > 10
+          ? digitsOnly.substring(digitsOnly.length - 10)
+          : digitsOnly;
+      _mobileCtrl.text = mobile;
+      _whatsappCtrl.text = mobile;
+      _logic.onMobileChanged(mobile);
+      _logic.setSameAsWhatsApp(true);
+    }
+
+    final initialAddress = widget.initialAddress?.trim();
+    if (initialAddress != null && initialAddress.isNotEmpty) {
+      _addr1Ctrl.text = initialAddress;
+      _logic.onAddressLine1Changed(initialAddress);
+    }
   }
 
   void _rebuild() {
@@ -261,8 +305,12 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       _showSnack(AddCustomerStrings.successMsg, isSuccess: true);
       await Future.delayed(const Duration(milliseconds: 800));
       if (!mounted) return;
-      widget.onSaved?.call();
-      widget.onBack?.call();
+      final onSaved = widget.onSaved;
+      if (onSaved != null) {
+        onSaved();
+      } else {
+        widget.onBack?.call();
+      }
     } else if (_logic.saveState == SaveState.duplicate) {
       _showSnack(AddCustomerStrings.duplicateMsg, isSuccess: false);
     } else {

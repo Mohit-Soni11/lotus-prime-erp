@@ -4,6 +4,8 @@
 // DESCRIPTION: Customer entry, customer lookup, suggestion overlay, and customer history panel for POS billing.
 // ==========================================
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
@@ -77,7 +79,8 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
       if (widget.ctrl.nameCtrl.text == widget.ctrl.selectedCustomer!.name) {
         return;
       }
-      widget.ctrl.selectedCustomer = null; // Customer selection has been cleared.
+      widget.ctrl.selectedCustomer =
+          null; // Customer selection has been cleared.
     }
     widget.ctrl.searchCustomersByName(widget.ctrl.nameCtrl.text);
   }
@@ -89,7 +92,8 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
       if (widget.ctrl.mobileCtrl.text == widget.ctrl.selectedCustomer!.mobile) {
         return;
       }
-      widget.ctrl.selectedCustomer = null; // Customer selection has been cleared.
+      widget.ctrl.selectedCustomer =
+          null; // Customer selection has been cleared.
     }
     final mobile = widget.ctrl.mobileCtrl.text.trim();
     // 1 character se hi search
@@ -153,10 +157,42 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
     overlay.insert(_suggestionOverlay!);
   }
 
+  bool get _hasLookupText =>
+      widget.ctrl.nameCtrl.text.trim().length >= 2 ||
+      widget.ctrl.mobileCtrl.text.trim().length >= 3;
+
   bool get _noCustomerFound =>
-      widget.ctrl.nameCtrl.text.length >= 2 &&
+      _hasLookupText &&
+      widget.ctrl.customerNotFound &&
       widget.ctrl.customerSuggestions.isEmpty &&
       widget.ctrl.selectedCustomer == null;
+
+  Future<void> _openQuickAddCustomer() async {
+    _removeSuggestionOverlay();
+    final initialMobile = widget.ctrl.mobileCtrl.text.trim();
+    final initialName = widget.ctrl.nameCtrl.text.trim();
+    final initialAddress = widget.ctrl.cityCtrl.text.trim();
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddCustomerScreen(
+          initialName: initialName,
+          initialMobile: initialMobile,
+          initialAddress: initialAddress,
+          onSaved: () {
+            if (!mounted) return;
+            Navigator.pop(context);
+            if (initialMobile.isNotEmpty) {
+              unawaited(widget.ctrl.selectCustomerByMobile(initialMobile));
+            } else if (initialName.isNotEmpty) {
+              unawaited(widget.ctrl.searchCustomersByName(initialName));
+            }
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -246,7 +282,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
 
                       const Spacer(),
 
-                      //  "NEW CUSTOMER" BANNER IF NOT FOUND 
+                      //  "NEW CUSTOMER" BANNER IF NOT FOUND
                       ListenableBuilder(
                         listenable: widget.ctrl,
                         builder: (context, _) {
@@ -289,15 +325,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                             );
                           }
                           return GestureDetector(
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => AddCustomerScreen(
-                                  onBack: () => Navigator.pop(context),
-                                  onSaved: () => Navigator.pop(context),
-                                ),
-                              ),
-                            ),
+                            onTap: _openQuickAddCustomer,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 14, vertical: 8),
@@ -364,7 +392,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      //  MOBILE FIELD  -  apna LayerLink 
+                      //  MOBILE FIELD  -  apna LayerLink
                       Expanded(
                         flex: 2,
                         child: CompositedTransformTarget(
@@ -380,7 +408,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                       ),
                       const SizedBox(width: 12),
 
-                      //  NAME FIELD  -  apna LayerLink  
+                      //  NAME FIELD  -  apna LayerLink
                       Expanded(
                         flex: 3,
                         child: CompositedTransformTarget(
@@ -396,41 +424,17 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                       const SizedBox(width: 12),
 
                       Expanded(
-                        flex: 2,
+                        flex: 4,
                         child: _buildInput(
-                          label: "CITY / AREA",
-                          hint: "Enter city",
+                          label: "ADDRESS",
+                          hint: "Customer address",
                           controller: widget.ctrl.cityCtrl,
                           icon: SalesPosIcons.cityLocation,
                         ),
                       ),
-                      const SizedBox(width: 12),
-
-                      Expanded(
-                        flex: 2,
-                        child: _buildInput(
-                          label: "PAN / AADHAR",
-                          hint: "Document ID",
-                          controller: widget.ctrl.panCtrl,
-                          isCaps: true,
-                          icon: SalesPosIcons.panCard,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-
-                      Expanded(
-                        flex: 2,
-                        child: _buildInput(
-                          label: "GST NUMBER",
-                          hint: "15-digit GSTIN",
-                          controller: widget.ctrl.gstCtrl,
-                          isCaps: true,
-                          icon: SalesPosIcons.gstNumber,
-                        ),
-                      ),
                       const SizedBox(width: 16),
 
-                      //  BUTTONS 
+                      //  BUTTONS
                       Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -449,15 +453,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                             title: "New Customer",
                             icon: SalesPosIcons.newCustomerAdd,
                             isPrimary: true,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => AddCustomerScreen(
-                                  onBack: () => Navigator.pop(context),
-                                  onSaved: () => Navigator.pop(context),
-                                ),
-                              ),
-                            ),
+                            onTap: _openQuickAddCustomer,
                           ),
                         ],
                       ),
@@ -598,7 +594,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: notFound && suggestions.isEmpty
-                //  CUSTOMER NOT FOUND STATE 
+                //  CUSTOMER NOT FOUND STATE
                 ? Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 14),
@@ -647,7 +643,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                       ],
                     ),
                   )
-                //  SUGGESTIONS LIST 
+                //  SUGGESTIONS LIST
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     shrinkWrap: true,
@@ -870,7 +866,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
   final PosBillingController ctrl;
   const _PosCustomerHistoryCard({required this.ctrl});
 
-  //  FORMATTER 
+  //  FORMATTER
   String _fmt(double v) {
     if (v >= 100000) return 'Rs ${(v / 100000).toStringAsFixed(2)}L';
     if (v >= 1000) return 'Rs ${(v / 1000).toStringAsFixed(1)}K';
@@ -879,7 +875,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    //  LOADING STATE 
+    //  LOADING STATE
     if (ctrl.isLoadingHistory) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -910,7 +906,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
 
     final history = ctrl.customerHistory;
 
-    //  NEW CUSTOMER  -  NO HISTORY 
+    //  NEW CUSTOMER  -  NO HISTORY
     if (history == null) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -934,7 +930,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
       );
     }
 
-    //  DATA 
+    //  DATA
     final totalBills = history.bills.length;
     final outstanding = history.outstanding;
     final hasDue = outstanding > 0;
@@ -979,7 +975,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          //  HEADER 
+          //  HEADER
           Row(
             children: [
               const Icon(Icons.history_rounded,
@@ -1016,7 +1012,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
 
-          //  STATS: Total Bills + Last Visit 
+          //  STATS: Total Bills + Last Visit
           Row(
             children: [
               _HistoryStat(
@@ -1035,11 +1031,11 @@ class _PosCustomerHistoryCard extends StatelessWidget {
             ],
           ),
 
-          //  DUE SECTION 
+          //  DUE SECTION
           if (hasDue) ...[
             const SizedBox(height: 12),
 
-            //  BIG DUE BANNER 
+            //  BIG DUE BANNER
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -1109,7 +1105,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
               ),
             ),
 
-            //  DUE BILLS BREAKDOWN 
+            //  DUE BILLS BREAKDOWN
             if (dueBills.isNotEmpty)
               Container(
                 decoration: BoxDecoration(
@@ -1168,7 +1164,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                 ),
               ),
 
-            //  ACTION BUTTONS 
+            //  ACTION BUTTONS
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -1181,7 +1177,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  //  CLEAR DUE 
+                  //  CLEAR DUE
                   Expanded(
                     child: SizedBox(
                       height: 42,
@@ -1214,7 +1210,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
 
-                  //  NEW BILL 
+                  //  NEW BILL
                   Expanded(
                     child: SizedBox(
                       height: 42,
@@ -1261,7 +1257,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
             ),
           ],
 
-          //  ALL CLEAR 
+          //  ALL CLEAR
           if (!hasDue && totalBills > 0) ...[
             const SizedBox(height: 8),
             const Row(
@@ -1331,7 +1327,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            //  HEADER 
+            //  HEADER
             Row(
               children: [
                 Container(
@@ -1379,7 +1375,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
             const Divider(color: SalesPosColors.bodyBorder),
             const SizedBox(height: 12),
 
-            //  TOTAL DUE BOX 
+            //  TOTAL DUE BOX
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -1413,7 +1409,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
 
             const SizedBox(height: 14),
 
-            //  BILL BREAKDOWN 
+            //  BILL BREAKDOWN
             const Text(
               'BILL-WISE BREAKDOWN',
               style: TextStyle(
@@ -1475,7 +1471,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
 
             const SizedBox(height: 16),
 
-            //  PAYMENT MODE 
+            //  PAYMENT MODE
             const Text(
               'PAYMENT MODE',
               style: TextStyle(
@@ -1527,7 +1523,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
 
             const SizedBox(height: 14),
 
-            //  AMOUNT INPUT 
+            //  AMOUNT INPUT
             Row(
               children: [
                 Expanded(
@@ -1629,7 +1625,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
 
             const SizedBox(height: 20),
 
-            //  CONFIRM BUTTON 
+            //  CONFIRM BUTTON
             SizedBox(
               width: double.infinity,
               height: 48,
