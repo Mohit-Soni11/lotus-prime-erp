@@ -143,7 +143,7 @@ class QuickActionsLogic extends ChangeNotifier {
       subtitle: 'Receive pending due payments from customers',
       icon: Icons.receipt_long_rounded,
       accentColor: Color(0xFF10B981),
-      routeId: AppRoutes.defaulterListRoute,
+      routeId: AppRoutes.dueCollectionRoute,
     ),
     QuickActionPopupOption(
       id: 'girvi_interest',

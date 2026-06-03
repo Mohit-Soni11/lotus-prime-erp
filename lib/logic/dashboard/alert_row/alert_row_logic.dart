@@ -334,7 +334,7 @@ class AlertRowLogic extends ChangeNotifier {
       mainValue: mainValue,
       subText: subText,
       status: status,
-      routeId: AppRoutes.defaulterListRoute,
+      routeId: AppRoutes.dueReportRoute,
     );
   }
 
@@ -431,7 +431,7 @@ class AlertRowLogic extends ChangeNotifier {
       orders: AlertCardModel.loading(
           'orders', 'Orders', AppRoutes.pendingJobsRoute),
       collections: AlertCardModel.loading(
-          'collections', 'Collections', AppRoutes.defaulterListRoute),
+          'collections', 'Collections', AppRoutes.dueReportRoute),
       deliveries: AlertCardModel.loading(
           'deliveries', 'Deliveries', AppRoutes.deliveryManagementRoute),
     );

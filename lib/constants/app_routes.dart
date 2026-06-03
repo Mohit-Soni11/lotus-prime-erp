@@ -104,6 +104,9 @@ class AppRoutes {
   static const String bankBookRoute = '/finance/bankbook';
   static const String expenseEntryRoute = '/finance/expense'; // ✅ LIVE
   static const String journalEntryRoute = '/finance/journal';
+  static const String dueReportRoute = '/finance/due/report';
+  static const String dueCollectionRoute = '/finance/due/collection';
+  static const String dueReceiptHistoryRoute = '/finance/due/receipts';
 
   // ============================================================
   // REPORTS & ANALYTICS MODULE
@@ -185,6 +188,9 @@ class AppRoutes {
     bankBookRoute: 'Bank Book',
     expenseEntryRoute: 'Expense Entry',
     journalEntryRoute: 'Journal Entry',
+    dueReportRoute: 'Due Report',
+    dueCollectionRoute: 'Due Collection Entry',
+    dueReceiptHistoryRoute: 'Due Receipt History',
 
     // Reports & Analytics
     dayBookRoute: 'Day Book',

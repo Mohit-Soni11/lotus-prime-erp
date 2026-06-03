@@ -103,6 +103,17 @@ class SidebarMenu {
       ],
     ),
 
+    // Due & Collection
+    SidebarItem(
+      title: 'Due & Collection',
+      icon: Icons.receipt_long_outlined,
+      subItems: [
+        MenuItemData(AppRoutes.dueReportRoute),
+        MenuItemData(AppRoutes.dueCollectionRoute),
+        MenuItemData(AppRoutes.dueReceiptHistoryRoute),
+      ],
+    ),
+
     // ── Finance & Ledgers ───────────────────────────────────────
     // Renamed from "Accounts & GST"
     // GST has been moved to Reports & Analytics > Taxation group
