@@ -61,6 +61,7 @@ import '../purchase & orders/purchase_entry/purchase_entry_screen.dart';
 // FINANCE & LEDGERS
 import '../finance/cash_book/cash_book_screen.dart';
 import '../finance/bank_book/bank_book_screen.dart';
+import '../finance/due_report/due_report_screen.dart';
 import '../finance/expense/expense_screen.dart'; // âœ… v8: Expense Entry
 
 // KARIGAR MODULE
@@ -261,6 +262,11 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
     } else if (routeId == AppRoutes.bankBookRoute) {
       Navigator.push(
           context, MaterialPageRoute(builder: (_) => const BankBookScreen()));
+    } else if (routeId == AppRoutes.dueReportRoute) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const DueReportScreen()),
+      );
     } else if (routeId == AppRoutes.expenseEntryRoute) {
       // âœ… v8
       Navigator.push(
