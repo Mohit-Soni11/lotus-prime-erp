@@ -28,6 +28,7 @@ class DueCollectionBillModel {
   final DateTime billDate;
   final DateTime? promiseDate;
   final double finalAmount;
+  final double discountAmount;
   final double paidAmount;
   final double dueAmount;
   final String paymentStatus;
@@ -45,6 +46,7 @@ class DueCollectionBillModel {
     required this.billDate,
     required this.promiseDate,
     required this.finalAmount,
+    required this.discountAmount,
     required this.paidAmount,
     required this.dueAmount,
     required this.paymentStatus,
@@ -75,6 +77,94 @@ class DueCollectionBillModel {
     if (paidAmount <= 0.5) return 'UNPAID';
     if (dueAmount > 0.5) return 'PARTIAL';
     return paymentStatus.trim().isEmpty ? 'DUE' : paymentStatus;
+  }
+}
+
+class DueCollectionCustomerModel {
+  final String key;
+  final int? customerId;
+  final String name;
+  final String mobile;
+  final String city;
+  final String address;
+  final List<DueCollectionBillModel> bills;
+
+  const DueCollectionCustomerModel({
+    required this.key,
+    required this.customerId,
+    required this.name,
+    required this.mobile,
+    required this.city,
+    required this.address,
+    required this.bills,
+  });
+
+  int get billCount => bills.length;
+  double get totalBillAmount =>
+      bills.fold(0.0, (sum, bill) => sum + bill.finalAmount);
+  double get totalPaid => bills.fold(0.0, (sum, bill) => sum + bill.paidAmount);
+  double get totalDue => bills.fold(0.0, (sum, bill) => sum + bill.dueAmount);
+  int get overdueCount => bills.where((bill) => bill.isOverdue).length;
+  bool get hasOverdue => overdueCount > 0;
+
+  DateTime? get nextPromiseDate {
+    DateTime? earliest;
+    for (final bill in bills) {
+      final date = bill.promiseDate;
+      if (date == null) continue;
+      if (earliest == null || date.isBefore(earliest)) earliest = date;
+    }
+    return earliest;
+  }
+
+  DueCollectionBillModel get firstBill => bills.first;
+
+  static String keyForBill(DueCollectionBillModel bill) {
+    final id = bill.customerId;
+    if (id != null) return 'ID:$id';
+    return 'WALK:${bill.customerName}|${bill.mobile}'.toLowerCase();
+  }
+
+  static List<DueCollectionCustomerModel> groupBills(
+      List<DueCollectionBillModel> bills) {
+    final buckets = <String, List<DueCollectionBillModel>>{};
+    for (final bill in bills) {
+      final key = keyForBill(bill);
+      buckets.putIfAbsent(key, () => <DueCollectionBillModel>[]).add(bill);
+    }
+
+    final customers = <DueCollectionCustomerModel>[];
+    for (final entry in buckets.entries) {
+      final customerBills = List<DueCollectionBillModel>.from(entry.value)
+        ..sort((a, b) {
+          final promise = _promiseSortValue(a).compareTo(_promiseSortValue(b));
+          if (promise != 0) return promise;
+          return b.dueAmount.compareTo(a.dueAmount);
+        });
+      final first = customerBills.first;
+      customers.add(
+        DueCollectionCustomerModel(
+          key: entry.key,
+          customerId: first.customerId,
+          name: first.customerName,
+          mobile: first.mobile,
+          city: first.city,
+          address: first.address,
+          bills: customerBills,
+        ),
+      );
+    }
+
+    customers.sort((a, b) {
+      if (a.hasOverdue != b.hasOverdue) return a.hasOverdue ? -1 : 1;
+      return b.totalDue.compareTo(a.totalDue);
+    });
+    return customers;
+  }
+
+  static int _promiseSortValue(DueCollectionBillModel bill) {
+    if (bill.promiseDate == null) return 9999999999999;
+    return bill.promiseDate!.millisecondsSinceEpoch;
   }
 }
 
@@ -131,8 +221,7 @@ class DueCollectionStatsModel {
     for (final bill in bills) {
       totalDue += bill.dueAmount;
       if (bill.isOverdue) overdueDue += bill.dueAmount;
-      customers.add(bill.customerId?.toString() ??
-          '${bill.customerName}|${bill.mobile}'.toLowerCase());
+      customers.add(DueCollectionCustomerModel.keyForBill(bill));
     }
 
     return DueCollectionStatsModel(

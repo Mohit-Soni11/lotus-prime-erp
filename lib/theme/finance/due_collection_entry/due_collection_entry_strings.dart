@@ -9,7 +9,12 @@ class DueCollectionEntryStrings {
   static const String searchHint = 'Search customer, mobile, bill no';
   static const String pendingBills = 'Pending Due Bills';
   static const String collectionForm = 'Collection Entry';
+  static const String selectedBill = 'Selected Bill';
+  static const String receiptReady = 'Receipt Ready';
+  static const String savedInHistory = 'Saved in Receipt History';
+  static const String viewHistory = 'History';
   static const String saveCollection = 'Save Collection';
+  static const String saveAndPrint = 'Save & Print';
   static const String saving = 'Saving...';
   static const String fullDue = 'Full Due';
   static const String halfDue = 'Half';

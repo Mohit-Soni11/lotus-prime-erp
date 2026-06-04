@@ -10,6 +10,11 @@ class DueCollectionEntryIcons {
   static const IconData search = Icons.search_rounded;
   static const IconData clear = Icons.close_rounded;
   static const IconData receipt = Icons.receipt_long_rounded;
+  static const IconData history = Icons.history_rounded;
+  static const IconData verified = Icons.verified_rounded;
+  static const IconData printReceipt = Icons.print_rounded;
+  static const IconData discount = Icons.local_offer_rounded;
+  static const IconData calendar = Icons.event_available_rounded;
   static const IconData customer = Icons.person_rounded;
   static const IconData phone = Icons.phone_rounded;
   static const IconData location = Icons.location_on_rounded;

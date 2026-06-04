@@ -11,6 +11,7 @@ class DueCollectionEntryController extends ChangeNotifier {
       : _repository = repository ?? DueCollectionEntryRepository() {
     searchCtrl.addListener(_onSearchChanged);
     amountCtrl.addListener(_onAmountChanged);
+    discountCtrl.addListener(_onDiscountChanged);
     notesCtrl.addListener(_notifyListeners);
     _loadBankAccounts();
     _startWatch();
@@ -19,6 +20,7 @@ class DueCollectionEntryController extends ChangeNotifier {
   final DueCollectionEntryRepository _repository;
   final TextEditingController searchCtrl = TextEditingController();
   final TextEditingController amountCtrl = TextEditingController();
+  final TextEditingController discountCtrl = TextEditingController();
   final TextEditingController notesCtrl = TextEditingController();
 
   StreamSubscription<List<DueCollectionBillModel>>? _watchSub;
@@ -26,21 +28,35 @@ class DueCollectionEntryController extends ChangeNotifier {
   bool _disposed = false;
   List<DueCollectionBillModel> _allBills = [];
   List<DueCollectionBillModel> _bills = [];
+  List<DueCollectionCustomerModel> _customers = [];
   List<DueCollectionBankAccountModel> _bankAccounts = [];
+  DueCollectionCustomerModel? _selectedCustomer;
   DueCollectionBillModel? _selectedBill;
   DueCollectionStatsModel _stats = DueCollectionStatsModel.empty();
   DueCollectionPaymentMode _paymentMode = DueCollectionPaymentMode.cash;
   int? _selectedBankAccountId;
+  String? _selectedCustomerKey;
   String _searchQuery = '';
   bool _isLoading = true;
   bool _isSaving = false;
   String? _errorMessage;
   String? _successMessage;
   String? _lastReceiptNo;
+  String? _lastPaymentModeLabel;
+  DateTime? _promiseDate;
+  DateTime? _lastPromiseDate;
+  double _lastCollectedAmount = 0;
+  double _lastDiscountAmount = 0;
+  double _lastBalanceDue = 0;
   double _amount = 0;
+  double _discountAmount = 0;
 
   List<DueCollectionBillModel> get bills => _bills;
+  List<DueCollectionCustomerModel> get customers => _customers;
+  List<DueCollectionBillModel> get selectedCustomerBills =>
+      _selectedCustomer?.bills ?? const [];
   List<DueCollectionBankAccountModel> get bankAccounts => _bankAccounts;
+  DueCollectionCustomerModel? get selectedCustomer => _selectedCustomer;
   DueCollectionBillModel? get selectedBill => _selectedBill;
   DueCollectionStatsModel get stats => _stats;
   DueCollectionPaymentMode get paymentMode => _paymentMode;
@@ -51,18 +67,35 @@ class DueCollectionEntryController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   String? get successMessage => _successMessage;
   String? get lastReceiptNo => _lastReceiptNo;
+  String? get lastPaymentModeLabel => _lastPaymentModeLabel;
+  DateTime? get promiseDate => _promiseDate;
+  DateTime? get lastPromiseDate => _lastPromiseDate;
+  double get lastCollectedAmount => _lastCollectedAmount;
+  double get lastDiscountAmount => _lastDiscountAmount;
+  double get lastBalanceDue => _lastBalanceDue;
   int get allBillCount => _allBills.length;
   double get amount => _amount;
+  double get discountAmount => _discountAmount;
+  double get settlementAmount => _amount + _discountAmount;
+  double get balanceAfterSave {
+    final bill = _selectedBill;
+    if (bill == null) return 0;
+    return (bill.dueAmount - settlementAmount).clamp(0.0, double.infinity);
+  }
 
   bool get requiresBankAccount => _paymentMode.usesBankLedger;
   bool get hasBankAccount =>
       !requiresBankAccount || _selectedBankAccountId != null;
+  bool get needsPromiseDate => _selectedBill != null && balanceAfterSave > 0.5;
   bool get canSave {
     final bill = _selectedBill;
     return !_isSaving &&
         bill != null &&
         _amount > 0 &&
-        _amount <= bill.dueAmount + 0.01 &&
+        _discountAmount >= 0 &&
+        settlementAmount > 0 &&
+        settlementAmount <= bill.dueAmount + 0.01 &&
+        (!needsPromiseDate || _promiseDate != null) &&
         hasBankAccount;
   }
 
@@ -130,12 +163,17 @@ class DueCollectionEntryController extends ChangeNotifier {
     _applyViewState();
   }
 
+  void selectCustomer(DueCollectionCustomerModel customer) {
+    _selectedCustomerKey = customer.key;
+    _selectedCustomer = customer;
+    _selectBillInternal(customer.firstBill, resetInputs: true, notify: false);
+    _stats = DueCollectionStatsModel.fromBills(_bills, _selectedBill);
+    _notifyListeners();
+  }
+
   void selectBill(DueCollectionBillModel bill) {
-    _selectedBill = bill;
-    setFullDueAmount();
-    _successMessage = null;
-    _errorMessage = null;
-    _applyViewState();
+    _selectedCustomerKey = DueCollectionCustomerModel.keyForBill(bill);
+    _selectBillInternal(bill, resetInputs: true, notify: true);
   }
 
   void setPaymentMode(DueCollectionPaymentMode value) {
@@ -146,6 +184,7 @@ class DueCollectionEntryController extends ChangeNotifier {
         _bankAccounts.isNotEmpty) {
       _selectedBankAccountId = _bankAccounts.first.id;
     }
+    _clearReceiptState();
     _notifyListeners();
   }
 
@@ -156,7 +195,8 @@ class DueCollectionEntryController extends ChangeNotifier {
 
   void setFullDueAmount() {
     final due = _selectedBill?.dueAmount ?? 0;
-    amountCtrl.text = due <= 0 ? '' : due.toStringAsFixed(2);
+    final value = (due - _discountAmount).clamp(0.0, double.infinity);
+    amountCtrl.text = value <= 0 ? '' : value.toStringAsFixed(2);
   }
 
   void setHalfDueAmount() {
@@ -164,17 +204,35 @@ class DueCollectionEntryController extends ChangeNotifier {
     amountCtrl.text = due <= 0 ? '' : (due / 2).toStringAsFixed(2);
   }
 
+  void clearDiscount() {
+    discountCtrl.clear();
+  }
+
+  void setPromiseDate(DateTime? value) {
+    _promiseDate = value == null ? null : DueCollectionDate.only(value);
+    _clearReceiptState();
+    _notifyListeners();
+  }
+
+  void setQuickPromiseDays(int days) {
+    setPromiseDate(DateTime.now().add(Duration(days: days)));
+  }
+
   void clearSearch() {
     searchCtrl.clear();
   }
 
   void resetEntry() {
-    _selectedBill = _bills.isEmpty ? null : _bills.first;
+    _selectedCustomerKey = null;
+    _selectedCustomer = _customers.isEmpty ? null : _customers.first;
+    _selectedBill = _selectedCustomer?.firstBill;
     _paymentMode = DueCollectionPaymentMode.cash;
     _successMessage = null;
     _errorMessage = null;
-    _lastReceiptNo = null;
+    _clearReceiptState();
     notesCtrl.clear();
+    discountCtrl.clear();
+    _promiseDate = _selectedBill?.promiseDate;
     setFullDueAmount();
     _applyViewState();
   }
@@ -193,10 +251,23 @@ class DueCollectionEntryController extends ChangeNotifier {
         message: 'Enter collection amount.',
       );
     }
-    if (_amount > bill.dueAmount + 0.01) {
+    if (_discountAmount < 0) {
+      return const DueCollectionSaveResult(
+        success: false,
+        message: 'Discount cannot be negative.',
+      );
+    }
+    if (settlementAmount > bill.dueAmount + 0.01) {
       return DueCollectionSaveResult(
         success: false,
-        message: 'Amount cannot exceed due ${formatAmount(bill.dueAmount)}.',
+        message:
+            'Amount + discount cannot exceed due ${formatAmount(bill.dueAmount)}.',
+      );
+    }
+    if (needsPromiseDate && _promiseDate == null) {
+      return const DueCollectionSaveResult(
+        success: false,
+        message: 'Select next promise date for remaining due.',
       );
     }
     if (requiresBankAccount && _selectedBankAccountId == null) {
@@ -206,6 +277,12 @@ class DueCollectionEntryController extends ChangeNotifier {
       );
     }
 
+    final receivedBeforeSave = _amount;
+    final discountBeforeSave = _discountAmount;
+    final balanceBeforeSave = balanceAfterSave;
+    final modeLabelBeforeSave = _paymentMode.label;
+    final promiseBeforeSave = _promiseDate;
+
     _isSaving = true;
     _errorMessage = null;
     _successMessage = null;
@@ -213,9 +290,11 @@ class DueCollectionEntryController extends ChangeNotifier {
 
     final result = await _repository.saveCollection(
       billId: bill.id,
-      amount: _amount,
+      amount: receivedBeforeSave,
+      discountAmount: discountBeforeSave,
       mode: _paymentMode,
       bankAccountId: _selectedBankAccountId,
+      nextPromiseDate: promiseBeforeSave,
       notes: notesCtrl.text,
     );
 
@@ -223,9 +302,16 @@ class DueCollectionEntryController extends ChangeNotifier {
     _isSaving = false;
     if (result.success) {
       _successMessage = result.message;
-      _lastReceiptNo = result.receiptNo;
       notesCtrl.clear();
       amountCtrl.clear();
+      discountCtrl.clear();
+      _promiseDate = null;
+      _lastReceiptNo = result.receiptNo;
+      _lastCollectedAmount = receivedBeforeSave;
+      _lastDiscountAmount = discountBeforeSave;
+      _lastBalanceDue = balanceBeforeSave;
+      _lastPaymentModeLabel = modeLabelBeforeSave;
+      _lastPromiseDate = promiseBeforeSave;
     } else {
       _errorMessage = result.message;
     }
@@ -242,6 +328,15 @@ class DueCollectionEntryController extends ChangeNotifier {
   void _onAmountChanged() {
     if (_disposed) return;
     _amount = double.tryParse(amountCtrl.text.trim().replaceAll(',', '')) ?? 0;
+    _clearReceiptState();
+    _notifyListeners();
+  }
+
+  void _onDiscountChanged() {
+    if (_disposed) return;
+    _discountAmount =
+        double.tryParse(discountCtrl.text.trim().replaceAll(',', '')) ?? 0;
+    _clearReceiptState();
     _notifyListeners();
   }
 
@@ -261,27 +356,117 @@ class DueCollectionEntryController extends ChangeNotifier {
     }
 
     _bills = visible;
-    _syncSelection();
+    _customers = DueCollectionCustomerModel.groupBills(visible);
+    _syncCustomerAndBill();
     _stats = DueCollectionStatsModel.fromBills(_bills, _selectedBill);
     _notifyListeners();
   }
 
-  void _syncSelection() {
-    final previousId = _selectedBill?.id;
-    if (_bills.isEmpty) {
+  void _syncCustomerAndBill() {
+    final previousBillId = _selectedBill?.id;
+    if (_customers.isEmpty) {
+      _selectedCustomer = null;
       _selectedBill = null;
+      _selectedCustomerKey = null;
       return;
     }
-    if (previousId != null) {
-      for (final bill in _bills) {
-        if (bill.id == previousId) {
-          _selectedBill = bill;
-          return;
+
+    final exactBill = _findExactInvoiceMatch();
+    if (exactBill != null) {
+      _selectedCustomerKey = DueCollectionCustomerModel.keyForBill(exactBill);
+      _selectedCustomer = _findCustomerByKey(_selectedCustomerKey!);
+      _selectedBill = exactBill;
+      if (previousBillId != exactBill.id || amountCtrl.text.trim().isEmpty) {
+        _prepareBillInputs(exactBill);
+      }
+      return;
+    }
+
+    DueCollectionCustomerModel? customer;
+    if (_selectedCustomerKey != null) {
+      customer = _findCustomerByKey(_selectedCustomerKey!);
+    }
+    if (customer == null && previousBillId != null) {
+      customer = _findCustomerContainingBill(previousBillId);
+    }
+    customer ??= _customers.first;
+
+    _selectedCustomer = customer;
+    _selectedCustomerKey = customer.key;
+
+    DueCollectionBillModel? bill;
+    if (previousBillId != null) {
+      for (final item in customer.bills) {
+        if (item.id == previousBillId) {
+          bill = item;
+          break;
         }
       }
     }
-    _selectedBill = _bills.first;
-    if (amountCtrl.text.trim().isEmpty) setFullDueAmount();
+    bill ??= customer.firstBill;
+    _selectedBill = bill;
+
+    if (previousBillId != bill.id || amountCtrl.text.trim().isEmpty) {
+      _prepareBillInputs(bill);
+    }
+  }
+
+  DueCollectionBillModel? _findExactInvoiceMatch() {
+    if (_searchQuery.isEmpty) return null;
+    final q = _searchQuery.toLowerCase();
+    for (final bill in _bills) {
+      if (bill.billNo.toLowerCase() == q) return bill;
+    }
+    return null;
+  }
+
+  DueCollectionCustomerModel? _findCustomerByKey(String key) {
+    for (final customer in _customers) {
+      if (customer.key == key) return customer;
+    }
+    return null;
+  }
+
+  DueCollectionCustomerModel? _findCustomerContainingBill(int billId) {
+    for (final customer in _customers) {
+      for (final bill in customer.bills) {
+        if (bill.id == billId) return customer;
+      }
+    }
+    return null;
+  }
+
+  void _selectBillInternal(
+    DueCollectionBillModel bill, {
+    required bool resetInputs,
+    required bool notify,
+  }) {
+    _selectedBill = bill;
+    _selectedCustomerKey = DueCollectionCustomerModel.keyForBill(bill);
+    _selectedCustomer = _findCustomerByKey(_selectedCustomerKey!) ??
+        _selectedCustomer ??
+        (_customers.isEmpty ? null : _customers.first);
+    _successMessage = null;
+    _errorMessage = null;
+    _clearReceiptState();
+    if (resetInputs) _prepareBillInputs(bill);
+    _stats = DueCollectionStatsModel.fromBills(_bills, _selectedBill);
+    if (notify) _notifyListeners();
+  }
+
+  void _prepareBillInputs(DueCollectionBillModel bill) {
+    _promiseDate = bill.promiseDate;
+    discountCtrl.clear();
+    setFullDueAmount();
+  }
+
+  void _clearReceiptState() {
+    _lastReceiptNo = null;
+    _lastCollectedAmount = 0;
+    _lastDiscountAmount = 0;
+    _lastBalanceDue = 0;
+    _lastPaymentModeLabel = null;
+    _lastPromiseDate = null;
   }
 
   @override
@@ -290,9 +475,11 @@ class DueCollectionEntryController extends ChangeNotifier {
     _watchSub?.cancel();
     searchCtrl.removeListener(_onSearchChanged);
     amountCtrl.removeListener(_onAmountChanged);
+    discountCtrl.removeListener(_onDiscountChanged);
     notesCtrl.removeListener(_notifyListeners);
     searchCtrl.dispose();
     amountCtrl.dispose();
+    discountCtrl.dispose();
     notesCtrl.dispose();
     super.dispose();
   }

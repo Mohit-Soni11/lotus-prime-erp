@@ -53,14 +53,22 @@ class DueCollectionEntryRepository {
   Future<DueCollectionSaveResult> saveCollection({
     required int billId,
     required double amount,
+    required double discountAmount,
     required DueCollectionPaymentMode mode,
     required int? bankAccountId,
+    required DateTime? nextPromiseDate,
     required String notes,
   }) async {
     if (amount <= 0) {
       return const DueCollectionSaveResult(
         success: false,
         message: 'Enter collection amount.',
+      );
+    }
+    if (discountAmount < 0) {
+      return const DueCollectionSaveResult(
+        success: false,
+        message: 'Discount cannot be negative.',
       );
     }
 
@@ -77,17 +85,19 @@ class DueCollectionEntryRepository {
         }
 
         final currentDue = _currentDue(bill);
+        final discount = discountAmount.clamp(0.0, currentDue).toDouble();
+        final settlement = amount + discount;
         if (currentDue <= 0.5) {
           return const DueCollectionSaveResult(
             success: false,
             message: 'This bill is already clear.',
           );
         }
-        if (amount > currentDue + 0.01) {
+        if (settlement > currentDue + 0.01) {
           return DueCollectionSaveResult(
             success: false,
             message:
-                'Amount cannot be more than due Rs ${currentDue.toStringAsFixed(2)}.',
+                'Amount + discount cannot be more than due Rs ${currentDue.toStringAsFixed(2)}.',
           );
         }
 
@@ -102,18 +112,30 @@ class DueCollectionEntryRepository {
           }
         }
 
-        final newDue = (currentDue - amount).clamp(0.0, double.infinity);
+        final newDue =
+            (currentDue - settlement).clamp(0.0, double.infinity).toDouble();
         final newPaid = bill.paidAmount + amount;
+        final newDiscount = bill.discount + discount;
+        final newFinal =
+            (newPaid + newDue).clamp(0.0, double.infinity).toDouble();
         final newStatus = newDue <= 0.5 ? 'PAID' : 'PARTIAL';
         final now = DateTime.now();
         final partyName = _firstText([bill.customerName, 'Walk-in Customer']);
-        final narration = _buildNarration(bill.billNo, notes);
+        final narration = _buildNarration(
+          bill.billNo,
+          notes,
+          discount,
+          newDue <= 0.5 ? null : nextPromiseDate,
+        );
 
         await (_db.update(_db.bills)..where((b) => b.id.equals(bill.id))).write(
           BillsCompanion(
+            discount: Value(newDiscount),
+            finalAmount: Value(newFinal),
             paidAmount: Value(newPaid),
             dueAmount: Value(newDue),
             paymentStatus: Value(newStatus),
+            promiseDate: Value(newDue <= 0.5 ? null : nextPromiseDate),
           ),
         );
 
@@ -136,12 +158,15 @@ class DueCollectionEntryRepository {
                 narration: narration,
               );
 
+        final discountText = discount > 0.5
+            ? ' Discount Rs ${discount.toStringAsFixed(2)} applied.'
+            : '';
         return DueCollectionSaveResult(
           success: true,
           receiptNo: receiptNo,
           message: newDue <= 0.5
-              ? 'Due cleared for ${bill.billNo}. Receipt $receiptNo saved.'
-              : 'Partial due collected for ${bill.billNo}. Balance Rs ${newDue.toStringAsFixed(2)}.',
+              ? 'Due cleared for ${bill.billNo}. Receipt $receiptNo saved.$discountText'
+              : 'Partial due collected for ${bill.billNo}. Balance Rs ${newDue.toStringAsFixed(2)}.$discountText',
         );
       });
     } catch (e) {
@@ -190,6 +215,7 @@ class DueCollectionEntryRepository {
           billDate: bill.billDate,
           promiseDate: bill.promiseDate,
           finalAmount: bill.finalAmount,
+          discountAmount: bill.discount,
           paidAmount: bill.paidAmount,
           dueAmount: due,
           paymentStatus: bill.paymentStatus,
@@ -300,11 +326,26 @@ class DueCollectionEntryRepository {
   String _buildReferenceId(String billNo, String paymentMode) =>
       '$billNo#DUE#$paymentMode';
 
-  String _buildNarration(String billNo, String notes) {
+  String _buildNarration(
+    String billNo,
+    String notes,
+    double discountAmount,
+    DateTime? nextPromiseDate,
+  ) {
+    final parts = <String>['Due collection against $billNo'];
+    if (discountAmount > 0.5) {
+      parts.add('Discount Rs ${discountAmount.toStringAsFixed(2)}');
+    }
+    if (nextPromiseDate != null) {
+      parts.add('Next promise ${_formatDate(nextPromiseDate)}');
+    }
     final cleanNotes = notes.trim();
-    final base = 'Due collection against $billNo';
-    return cleanNotes.isEmpty ? base : '$base - $cleanNotes';
+    if (cleanNotes.isNotEmpty) parts.add(cleanNotes);
+    return parts.join(' - ');
   }
+
+  String _formatDate(DateTime date) =>
+      '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
 
   String _bankPaymentMode(DueCollectionPaymentMode mode) {
     switch (mode) {
