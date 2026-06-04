@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -7,6 +9,8 @@ import '../due_receipt_history/due_receipt_history_screen.dart';
 import '../../../logic/finance/due_collection_entry/due_collection_entry_controller.dart';
 import '../../../models/finance/due_collection_entry/due_collection_entry_model.dart';
 import '../../../theme/finance/due_collection_entry/due_collection_entry_theme.dart';
+
+enum _PremiumNoticeType { success, warning, error }
 
 class DueCollectionEntryScreen extends StatefulWidget {
   const DueCollectionEntryScreen({super.key});
@@ -18,6 +22,8 @@ class DueCollectionEntryScreen extends StatefulWidget {
 
 class _DueCollectionEntryScreenState extends State<DueCollectionEntryScreen> {
   late final DueCollectionEntryController _ctrl;
+  OverlayEntry? _noticeEntry;
+  Timer? _noticeTimer;
 
   @override
   void initState() {
@@ -27,6 +33,8 @@ class _DueCollectionEntryScreenState extends State<DueCollectionEntryScreen> {
 
   @override
   void dispose() {
+    _noticeTimer?.cancel();
+    _noticeEntry?.remove();
     _ctrl.dispose();
     super.dispose();
   }
@@ -40,23 +48,42 @@ class _DueCollectionEntryScreenState extends State<DueCollectionEntryScreen> {
     final receiptBill = _ctrl.selectedBill;
     final result = await _ctrl.saveCollection();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(result.message,
-            style: const TextStyle(fontWeight: FontWeight.w700)),
-        backgroundColor: result.success
-            ? DueCollectionEntryColors.success
-            : DueCollectionEntryColors.danger,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 3),
-      ),
+    _showPremiumNotice(
+      result.message,
+      type: result.success
+          ? _PremiumNoticeType.success
+          : _PremiumNoticeType.error,
     );
 
     if (result.success && printReceipt && receiptBill != null) {
       await _printDueReceipt(receiptBill);
     }
+  }
+
+  void _showPremiumNotice(String message, {required _PremiumNoticeType type}) {
+    final overlay = Overlay.maybeOf(context);
+    if (overlay == null) return;
+    _dismissPremiumNotice();
+    final entry = OverlayEntry(
+      builder: (_) => _PremiumNoticeToast(
+        message: message,
+        type: type,
+        onClose: _dismissPremiumNotice,
+      ),
+    );
+    _noticeEntry = entry;
+    overlay.insert(entry);
+    _noticeTimer = Timer(
+      const Duration(milliseconds: 3400),
+      _dismissPremiumNotice,
+    );
+  }
+
+  void _dismissPremiumNotice() {
+    _noticeTimer?.cancel();
+    _noticeTimer = null;
+    _noticeEntry?.remove();
+    _noticeEntry = null;
   }
 
   Future<void> _printDueReceipt(DueCollectionBillModel bill) async {
@@ -143,17 +170,9 @@ class _DueCollectionEntryScreenState extends State<DueCollectionEntryScreen> {
       await Printing.layoutPdf(onLayout: (_) async => pdf.save());
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-              'Receipt saved, but print preview could not open.',
-              style: TextStyle(fontWeight: FontWeight.w700)),
-          backgroundColor: DueCollectionEntryColors.warning,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          margin: const EdgeInsets.all(16),
-        ),
+      _showPremiumNotice(
+        'Receipt saved, but print preview could not open.',
+        type: _PremiumNoticeType.warning,
       );
     }
   }
@@ -222,6 +241,186 @@ class _DueCollectionEntryScreenState extends State<DueCollectionEntryScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _PremiumNoticeToast extends StatelessWidget {
+  final String message;
+  final _PremiumNoticeType type;
+  final VoidCallback onClose;
+
+  const _PremiumNoticeToast({
+    required this.message,
+    required this.type,
+    required this.onClose,
+  });
+
+  Color get _accent {
+    return switch (type) {
+      _PremiumNoticeType.success => DueCollectionEntryColors.brandGold,
+      _PremiumNoticeType.warning => DueCollectionEntryColors.warning,
+      _PremiumNoticeType.error => DueCollectionEntryColors.danger,
+    };
+  }
+
+  Color get _surface {
+    return switch (type) {
+      _PremiumNoticeType.success => const Color(0xFFFFFCF2),
+      _PremiumNoticeType.warning => DueCollectionEntryColors.warningBg,
+      _PremiumNoticeType.error => DueCollectionEntryColors.dangerBg,
+    };
+  }
+
+  IconData get _icon {
+    return switch (type) {
+      _PremiumNoticeType.success => DueCollectionEntryIcons.verified,
+      _PremiumNoticeType.warning => DueCollectionEntryIcons.warning,
+      _PremiumNoticeType.error => DueCollectionEntryIcons.warning,
+    };
+  }
+
+  String get _title {
+    return switch (type) {
+      _PremiumNoticeType.success => 'Receipt Saved',
+      _PremiumNoticeType.warning => 'Print Notice',
+      _PremiumNoticeType.error => 'Action Needed',
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = _accent;
+    return Positioned(
+      top: 86,
+      right: 24,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: 1),
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          return Opacity(
+            opacity: value,
+            child: Transform.translate(
+              offset: Offset(28 * (1 - value), -8 * (1 - value)),
+              child: child,
+            ),
+          );
+        },
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            width: 410,
+            constraints: const BoxConstraints(maxWidth: 410),
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: _surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: accent.withValues(alpha: 0.28)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.14),
+                  blurRadius: 24,
+                  offset: const Offset(0, 12),
+                ),
+                BoxShadow(
+                  color: accent.withValues(alpha: 0.12),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 10, 14),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: DueCollectionEntryColors.bodyPanel,
+                          borderRadius: BorderRadius.circular(10),
+                          border:
+                              Border.all(color: accent.withValues(alpha: 0.22)),
+                        ),
+                        child: Icon(_icon, color: accent, size: 19),
+                      ),
+                      const SizedBox(width: 11),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _title,
+                              style: DueCollectionEntryStyles.rowTitle.copyWith(
+                                color: DueCollectionEntryColors.textPrimary,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              message,
+                              style: DueCollectionEntryStyles.rowSub.copyWith(
+                                color: DueCollectionEntryColors.textSecondary,
+                                fontWeight: FontWeight.w700,
+                                height: 1.25,
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      InkWell(
+                        onTap: onClose,
+                        borderRadius: BorderRadius.circular(18),
+                        child: const Padding(
+                          padding: EdgeInsets.all(5),
+                          child: Icon(
+                            DueCollectionEntryIcons.clear,
+                            size: 16,
+                            color: DueCollectionEntryColors.textMuted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: SizedBox(
+                    height: 3,
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 1, end: 0),
+                      duration: const Duration(milliseconds: 3300),
+                      curve: Curves.linear,
+                      builder: (context, value, _) {
+                        return Align(
+                          alignment: Alignment.centerLeft,
+                          child: FractionallySizedBox(
+                            widthFactor: value.clamp(0, 1),
+                            child: Container(
+                              color: accent.withValues(alpha: 0.86),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -638,15 +837,15 @@ class _MessageBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = isError
         ? DueCollectionEntryColors.danger
-        : DueCollectionEntryColors.success;
+        : DueCollectionEntryColors.brandGold;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: isError
             ? DueCollectionEntryColors.dangerBg
-            : DueCollectionEntryColors.successBg,
+            : DueCollectionEntryColors.brandGoldLight,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
       ),
       child: Text(message,
           style: DueCollectionEntryStyles.label.copyWith(color: color)),
@@ -712,39 +911,17 @@ class _BillList extends StatelessWidget {
               child: _SearchBox(ctrl: ctrl),
             ),
             Expanded(
-              child: ctrl.customers.isEmpty
-                  ? const _EmptyBills()
-                  : LayoutBuilder(
-                      builder: (context, constraints) {
-                        final split = constraints.maxWidth >= 760;
-                        if (split) {
-                          return Row(
-                            children: [
-                              SizedBox(
-                                width: 310,
-                                child: _CustomerResultsList(ctrl: ctrl),
-                              ),
-                              Container(
-                                  width: 1,
-                                  color: DueCollectionEntryColors.bodyBorder),
-                              Expanded(child: _CustomerDueDetail(ctrl: ctrl)),
-                            ],
-                          );
-                        }
-                        return Column(
-                          children: [
-                            SizedBox(
-                              height: 188,
-                              child: _CustomerResultsList(ctrl: ctrl),
-                            ),
-                            Container(
-                                height: 1,
-                                color: DueCollectionEntryColors.bodyBorder),
-                            Expanded(child: _CustomerDueDetail(ctrl: ctrl)),
-                          ],
-                        );
-                      },
-                    ),
+              child: ctrl.selectedCustomer != null
+                  ? _CustomerDueDetail(ctrl: ctrl)
+                  : !ctrl.hasSearchQuery
+                      ? _SearchStartState(
+                          totalCustomers: ctrl.stats.customerCount,
+                          totalDue: ctrl.stats.totalDue,
+                          overdueDue: ctrl.stats.overdueDue,
+                        )
+                      : ctrl.customers.isEmpty
+                          ? const _EmptyBills()
+                          : _CustomerResultsList(ctrl: ctrl),
             ),
           ],
         ),
@@ -761,6 +938,7 @@ class _CountBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final label = count > 0 ? '$count found' : '$total customers';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -769,7 +947,7 @@ class _CountBadge extends StatelessWidget {
         border: Border.all(
             color: DueCollectionEntryColors.brandGold.withValues(alpha: 0.3)),
       ),
-      child: Text('$count customers',
+      child: Text(label,
           style: DueCollectionEntryStyles.label
               .copyWith(color: DueCollectionEntryColors.brandGold)),
     );
@@ -866,7 +1044,16 @@ class _CustomerResultCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      _MiniTag('${customer.billCount} bills'),
+                      _MiniTag(customer.billCount == 1
+                          ? '1 bill'
+                          : '${customer.billCount} bills'),
+                      if (customer.hasOverdue) ...[
+                        const SizedBox(width: 6),
+                        _MiniTag(
+                          '${DueCollectionEntryController.formatCompact(customer.overdueDue)} overdue',
+                          color: DueCollectionEntryColors.danger,
+                        ),
+                      ],
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -893,22 +1080,21 @@ class _CustomerResultCard extends StatelessWidget {
 
 class _MiniTag extends StatelessWidget {
   final String text;
+  final Color color;
 
-  const _MiniTag(this.text);
+  const _MiniTag(this.text, {this.color = DueCollectionEntryColors.brandGold});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
-        color: DueCollectionEntryColors.brandGoldLight,
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(
-            color: DueCollectionEntryColors.brandGold.withValues(alpha: 0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
       ),
       child: Text(text,
-          style: DueCollectionEntryStyles.rowSub
-              .copyWith(color: DueCollectionEntryColors.brandGold)),
+          style: DueCollectionEntryStyles.rowSub.copyWith(color: color)),
     );
   }
 }
@@ -924,7 +1110,8 @@ class _CustomerDueDetail extends StatelessWidget {
     if (customer == null) return const _NoCustomerSelected();
     return Column(
       children: [
-        _CustomerProfileBanner(customer: customer),
+        _CustomerProfileBanner(
+            customer: customer, onBack: ctrl.clearCustomerSelection),
         const _CustomerDueBillHeader(),
         Expanded(
           child: ListView.builder(
@@ -947,8 +1134,9 @@ class _CustomerDueDetail extends StatelessWidget {
 
 class _CustomerProfileBanner extends StatelessWidget {
   final DueCollectionCustomerModel customer;
+  final VoidCallback onBack;
 
-  const _CustomerProfileBanner({required this.customer});
+  const _CustomerProfileBanner({required this.customer, required this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -965,6 +1153,24 @@ class _CustomerProfileBanner extends StatelessWidget {
         children: [
           Row(
             children: [
+              InkWell(
+                onTap: onBack,
+                borderRadius: BorderRadius.circular(9),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: DueCollectionEntryColors.panelSoft,
+                    borderRadius: BorderRadius.circular(9),
+                    border:
+                        Border.all(color: DueCollectionEntryColors.bodyBorder),
+                  ),
+                  child: const Icon(DueCollectionEntryIcons.back,
+                      size: 17, color: DueCollectionEntryColors.textPrimary),
+                ),
+              ),
+              const SizedBox(width: 10),
               Container(
                 width: 44,
                 height: 44,
@@ -1035,6 +1241,15 @@ class _CustomerProfileBanner extends StatelessWidget {
                   label: 'Due Bills',
                   value: customer.billCount.toString(),
                   color: DueCollectionEntryColors.info,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _CustomerMetricPill(
+                  label: 'Overdue Due',
+                  value: DueCollectionEntryController.formatCompact(
+                      customer.overdueDue),
+                  color: DueCollectionEntryColors.danger,
                 ),
               ),
               const SizedBox(width: 8),
@@ -1321,6 +1536,81 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
+class _SearchStartState extends StatelessWidget {
+  final int totalCustomers;
+  final double totalDue;
+  final double overdueDue;
+
+  const _SearchStartState({
+    required this.totalCustomers,
+    required this.totalDue,
+    required this.overdueDue,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 58,
+              height: 58,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: DueCollectionEntryColors.brandGoldLight,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                    color: DueCollectionEntryColors.brandGold
+                        .withValues(alpha: 0.24)),
+              ),
+              child: const Icon(DueCollectionEntryIcons.search,
+                  size: 28, color: DueCollectionEntryColors.brandGold),
+            ),
+            const SizedBox(height: 14),
+            const Text('Search customer',
+                style: DueCollectionEntryStyles.sectionTitle),
+            const SizedBox(height: 5),
+            const Text('Name, mobile, ya bill number enter karein.',
+                style: DueCollectionEntryStyles.muted),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: _CustomerMetricPill(
+                    label: 'Customers',
+                    value: totalCustomers.toString(),
+                    color: DueCollectionEntryColors.info,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _CustomerMetricPill(
+                    label: 'Total Due',
+                    value: DueCollectionEntryController.formatCompact(totalDue),
+                    color: DueCollectionEntryColors.warning,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _CustomerMetricPill(
+                    label: 'Overdue',
+                    value:
+                        DueCollectionEntryController.formatCompact(overdueDue),
+                    color: DueCollectionEntryColors.danger,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _NoCustomerSelected extends StatelessWidget {
   const _NoCustomerSelected();
 
@@ -1468,30 +1758,41 @@ class _CollectionForm extends StatelessWidget {
       children: [
         _BillSummaryBox(bill: bill),
         const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(
-              child: _AmountInput(
-                label: 'Collection Amount',
-                controller: ctrl.amountCtrl,
-                icon: DueCollectionEntryIcons.amount,
-                autofocusColor: DueCollectionEntryColors.brandGold,
-                textStyle:
-                    DueCollectionEntryStyles.amount.copyWith(fontSize: 22),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _AmountInput(
-                label: 'Discount / Waiver',
-                controller: ctrl.discountCtrl,
-                icon: DueCollectionEntryIcons.discount,
-                autofocusColor: DueCollectionEntryColors.warning,
-                textStyle: DueCollectionEntryStyles.amount.copyWith(
-                    fontSize: 18, color: DueCollectionEntryColors.warning),
-              ),
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final stackFields = constraints.maxWidth < 520;
+            final amountInput = _AmountInput(
+              label: 'Collection Amount',
+              controller: ctrl.amountCtrl,
+              icon: DueCollectionEntryIcons.amount,
+              autofocusColor: DueCollectionEntryColors.brandGold,
+              textStyle: DueCollectionEntryStyles.amount.copyWith(fontSize: 20),
+            );
+            final discountInput = _AmountInput(
+              label: 'Discount / Waiver',
+              controller: ctrl.discountCtrl,
+              icon: DueCollectionEntryIcons.discount,
+              autofocusColor: DueCollectionEntryColors.warning,
+              textStyle: DueCollectionEntryStyles.amount.copyWith(
+                  fontSize: 18, color: DueCollectionEntryColors.warning),
+            );
+            if (stackFields) {
+              return Column(
+                children: [
+                  amountInput,
+                  const SizedBox(height: 10),
+                  discountInput,
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(flex: 6, child: amountInput),
+                const SizedBox(width: 10),
+                Expanded(flex: 5, child: discountInput),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 10),
         Row(
@@ -1607,8 +1908,12 @@ class _AmountInput extends StatelessWidget {
         TextField(
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          textAlign: TextAlign.right,
           style: textStyle,
           decoration: InputDecoration(
+            isDense: false,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 17),
             prefixIcon: Icon(icon, color: autofocusColor),
             hintText: '0.00',
             filled: true,

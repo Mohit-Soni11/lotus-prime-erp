@@ -62,15 +62,21 @@ class DueCollectionBillModel {
   }
 
   bool get isOverdue {
-    if (promiseDate == null) return false;
+    if (dueAmount <= 0.5) return false;
     final today = DueCollectionDate.only(DateTime.now());
-    return DueCollectionDate.only(promiseDate!).isBefore(today);
+    final dueDate = promiseDate == null
+        ? DueCollectionDate.only(billDate)
+        : DueCollectionDate.only(promiseDate!);
+    return dueDate.isBefore(today);
   }
 
   bool get isDueToday {
-    if (promiseDate == null) return false;
+    if (dueAmount <= 0.5) return false;
     final today = DueCollectionDate.only(DateTime.now());
-    return DueCollectionDate.only(promiseDate!).isAtSameMomentAs(today);
+    final dueDate = promiseDate == null
+        ? DueCollectionDate.only(billDate)
+        : DueCollectionDate.only(promiseDate!);
+    return dueDate.isAtSameMomentAs(today);
   }
 
   String get statusLabel {
@@ -104,6 +110,9 @@ class DueCollectionCustomerModel {
       bills.fold(0.0, (sum, bill) => sum + bill.finalAmount);
   double get totalPaid => bills.fold(0.0, (sum, bill) => sum + bill.paidAmount);
   double get totalDue => bills.fold(0.0, (sum, bill) => sum + bill.dueAmount);
+  double get overdueDue => bills
+      .where((bill) => bill.isOverdue)
+      .fold(0.0, (sum, bill) => sum + bill.dueAmount);
   int get overdueCount => bills.where((bill) => bill.isOverdue).length;
   bool get hasOverdue => overdueCount > 0;
 

@@ -62,6 +62,7 @@ class DueCollectionEntryController extends ChangeNotifier {
   DueCollectionPaymentMode get paymentMode => _paymentMode;
   int? get selectedBankAccountId => _selectedBankAccountId;
   String get searchQuery => _searchQuery;
+  bool get hasSearchQuery => _searchQuery.isNotEmpty;
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
   String? get errorMessage => _errorMessage;
@@ -168,7 +169,19 @@ class DueCollectionEntryController extends ChangeNotifier {
     _selectedCustomerKey = customer.key;
     _selectedCustomer = customer;
     _selectBillInternal(customer.firstBill, resetInputs: true, notify: false);
-    _stats = DueCollectionStatsModel.fromBills(_bills, _selectedBill);
+    _stats = DueCollectionStatsModel.fromBills(_allBills, _selectedBill);
+    _notifyListeners();
+  }
+
+  void clearCustomerSelection() {
+    _selectedCustomerKey = null;
+    _selectedCustomer = null;
+    _selectedBill = null;
+    _promiseDate = null;
+    amountCtrl.clear();
+    discountCtrl.clear();
+    _clearReceiptState();
+    _stats = DueCollectionStatsModel.fromBills(_allBills, null);
     _notifyListeners();
   }
 
@@ -224,17 +237,18 @@ class DueCollectionEntryController extends ChangeNotifier {
   }
 
   void resetEntry() {
+    searchCtrl.clear();
     _selectedCustomerKey = null;
-    _selectedCustomer = _customers.isEmpty ? null : _customers.first;
-    _selectedBill = _selectedCustomer?.firstBill;
+    _selectedCustomer = null;
+    _selectedBill = null;
     _paymentMode = DueCollectionPaymentMode.cash;
     _successMessage = null;
     _errorMessage = null;
     _clearReceiptState();
     notesCtrl.clear();
+    amountCtrl.clear();
     discountCtrl.clear();
-    _promiseDate = _selectedBill?.promiseDate;
-    setFullDueAmount();
+    _promiseDate = null;
     _applyViewState();
   }
 
@@ -322,7 +336,16 @@ class DueCollectionEntryController extends ChangeNotifier {
 
   void _onSearchChanged() {
     if (_disposed) return;
-    _searchQuery = searchCtrl.text.trim();
+    final nextQuery = searchCtrl.text.trim();
+    if (_searchQuery == nextQuery) return;
+    _searchQuery = nextQuery;
+    _selectedCustomerKey = null;
+    _selectedCustomer = null;
+    _selectedBill = null;
+    _promiseDate = null;
+    amountCtrl.clear();
+    discountCtrl.clear();
+    _clearReceiptState();
     _applyViewState();
   }
 
@@ -343,11 +366,11 @@ class DueCollectionEntryController extends ChangeNotifier {
 
   void _applyViewState() {
     if (_disposed) return;
-    var visible = List<DueCollectionBillModel>.from(_allBills);
+    var visible = <DueCollectionBillModel>[];
 
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
-      visible = visible.where((bill) {
+      visible = _allBills.where((bill) {
         return bill.customerName.toLowerCase().contains(q) ||
             bill.mobile.toLowerCase().contains(q) ||
             bill.billNo.toLowerCase().contains(q) ||
@@ -359,7 +382,7 @@ class DueCollectionEntryController extends ChangeNotifier {
     _bills = visible;
     _customers = DueCollectionCustomerModel.groupBills(visible);
     _syncCustomerAndBill();
-    _stats = DueCollectionStatsModel.fromBills(_bills, _selectedBill);
+    _stats = DueCollectionStatsModel.fromBills(_allBills, _selectedBill);
     _notifyListeners();
   }
 
@@ -372,14 +395,9 @@ class DueCollectionEntryController extends ChangeNotifier {
       return;
     }
 
-    final exactBill = _findExactInvoiceMatch();
-    if (exactBill != null) {
-      _selectedCustomerKey = DueCollectionCustomerModel.keyForBill(exactBill);
-      _selectedCustomer = _findCustomerByKey(_selectedCustomerKey!);
-      _selectedBill = exactBill;
-      if (previousBillId != exactBill.id || amountCtrl.text.trim().isEmpty) {
-        _prepareBillInputs(exactBill);
-      }
+    if (_selectedCustomerKey == null && previousBillId == null) {
+      _selectedCustomer = null;
+      _selectedBill = null;
       return;
     }
 
@@ -390,7 +408,12 @@ class DueCollectionEntryController extends ChangeNotifier {
     if (customer == null && previousBillId != null) {
       customer = _findCustomerContainingBill(previousBillId);
     }
-    customer ??= _customers.first;
+    if (customer == null) {
+      _selectedCustomerKey = null;
+      _selectedCustomer = null;
+      _selectedBill = null;
+      return;
+    }
 
     _selectedCustomer = customer;
     _selectedCustomerKey = customer.key;
@@ -410,15 +433,6 @@ class DueCollectionEntryController extends ChangeNotifier {
     if (previousBillId != bill.id || amountCtrl.text.trim().isEmpty) {
       _prepareBillInputs(bill);
     }
-  }
-
-  DueCollectionBillModel? _findExactInvoiceMatch() {
-    if (_searchQuery.isEmpty) return null;
-    final q = _searchQuery.toLowerCase();
-    for (final bill in _bills) {
-      if (bill.billNo.toLowerCase() == q) return bill;
-    }
-    return null;
   }
 
   DueCollectionCustomerModel? _findCustomerByKey(String key) {
@@ -445,13 +459,13 @@ class DueCollectionEntryController extends ChangeNotifier {
     _selectedBill = bill;
     _selectedCustomerKey = DueCollectionCustomerModel.keyForBill(bill);
     _selectedCustomer = _findCustomerByKey(_selectedCustomerKey!) ??
-        _selectedCustomer ??
-        (_customers.isEmpty ? null : _customers.first);
+        _findCustomerContainingBill(bill.id) ??
+        _selectedCustomer;
     _successMessage = null;
     _errorMessage = null;
     _clearReceiptState();
     if (resetInputs) _prepareBillInputs(bill);
-    _stats = DueCollectionStatsModel.fromBills(_bills, _selectedBill);
+    _stats = DueCollectionStatsModel.fromBills(_allBills, _selectedBill);
     if (notify) _notifyListeners();
   }
 
