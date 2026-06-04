@@ -477,8 +477,6 @@ class _LeftPanel extends StatelessWidget {
             color: DueCollectionEntryColors.danger,
             bg: DueCollectionEntryColors.dangerBg,
           ),
-          const SizedBox(height: 12),
-          _SelectedCustomerCard(customer: ctrl.selectedCustomer),
           if (ctrl.errorMessage != null) ...[
             const SizedBox(height: 12),
             _MessageBox(message: ctrl.errorMessage!, isError: true),
@@ -591,7 +589,7 @@ class _MiniSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(11),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: DueCollectionEntryStyles.flatPanel(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -604,72 +602,6 @@ class _MiniSummary extends StatelessWidget {
           Text(label, style: DueCollectionEntryStyles.rowSub),
         ],
       ),
-    );
-  }
-}
-
-class _SelectedCustomerCard extends StatelessWidget {
-  final DueCollectionCustomerModel? customer;
-
-  const _SelectedCustomerCard({required this.customer});
-
-  @override
-  Widget build(BuildContext context) {
-    final item = customer;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: DueCollectionEntryStyles.panel(
-          color: DueCollectionEntryColors.panelSoft),
-      child: item == null
-          ? const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Selected Customer',
-                    style: DueCollectionEntryStyles.label),
-                SizedBox(height: 8),
-                Text('Search customer, mobile, or invoice to start collection.',
-                    style: DueCollectionEntryStyles.muted),
-              ],
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Selected Customer',
-                    style: DueCollectionEntryStyles.label),
-                const SizedBox(height: 10),
-                Text(item.name,
-                    style: DueCollectionEntryStyles.sectionTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 6),
-                _TinyLine(
-                    icon: DueCollectionEntryIcons.phone, text: item.mobile),
-                if (item.address.isNotEmpty) ...[
-                  const SizedBox(height: 5),
-                  _TinyLine(
-                      icon: DueCollectionEntryIcons.location,
-                      text: item.address),
-                ],
-                const SizedBox(height: 12),
-                _MoneyLine(
-                    label: 'Total Due',
-                    value: item.totalDue,
-                    color: DueCollectionEntryColors.warning),
-                const SizedBox(height: 7),
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text('Due Bills',
-                          style: DueCollectionEntryStyles.label),
-                    ),
-                    Text('${item.billCount}',
-                        style: DueCollectionEntryStyles.rowTitle.copyWith(
-                            color: DueCollectionEntryColors.info,
-                            fontSize: 14)),
-                  ],
-                ),
-              ],
-            ),
     );
   }
 }
@@ -708,7 +640,7 @@ class _MessageBox extends StatelessWidget {
         ? DueCollectionEntryColors.danger
         : DueCollectionEntryColors.success;
     return Container(
-      padding: const EdgeInsets.all(11),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: isError
             ? DueCollectionEntryColors.dangerBg
@@ -764,7 +696,7 @@ class _BillList extends StatelessWidget {
               child: Row(
                 children: [
                   const Icon(DueCollectionEntryIcons.customer,
-                      color: DueCollectionEntryColors.brandGold, size: 19),
+                      color: DueCollectionEntryColors.brandGold, size: 17),
                   const SizedBox(width: 8),
                   const Expanded(
                       child: Text('Customer Due Desk',
@@ -854,7 +786,7 @@ class _CustomerResultsList extends StatelessWidget {
     return Container(
       color: DueCollectionEntryColors.panelSoft,
       child: ListView.builder(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
         itemCount: ctrl.customers.length,
         itemBuilder: (context, index) {
           final customer = ctrl.customers[index];
@@ -893,7 +825,7 @@ class _CustomerResultCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(9),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 140),
-        padding: const EdgeInsets.all(11),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: selected
               ? DueCollectionEntryColors.rowSelected
@@ -904,8 +836,8 @@ class _CustomerResultCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 38,
-              height: 38,
+              width: 34,
+              height: 34,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: DueCollectionEntryColors.infoBg,
@@ -915,7 +847,7 @@ class _CustomerResultCard extends StatelessWidget {
                         DueCollectionEntryColors.info.withValues(alpha: 0.18)),
               ),
               child: const Icon(DueCollectionEntryIcons.customer,
-                  color: DueCollectionEntryColors.info, size: 19),
+                  color: DueCollectionEntryColors.info, size: 17),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -931,7 +863,7 @@ class _CustomerResultCard extends StatelessWidget {
                       style: DueCollectionEntryStyles.rowSub,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
                       _MiniTag('${customer.billCount} bills'),
@@ -1088,19 +1020,21 @@ class _CustomerProfileBanner extends StatelessWidget {
           Row(
             children: [
               Expanded(
+                flex: 2,
                 child: _CustomerMetricPill(
-                  label: 'Due Bills',
-                  value: customer.billCount.toString(),
-                  color: DueCollectionEntryColors.info,
+                  label: 'Total Due',
+                  value: DueCollectionEntryController.formatAmount(
+                      customer.totalDue),
+                  color: DueCollectionEntryColors.warning,
+                  strong: true,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _CustomerMetricPill(
-                  label: 'Total Due',
-                  value: DueCollectionEntryController.formatCompact(
-                      customer.totalDue),
-                  color: DueCollectionEntryColors.warning,
+                  label: 'Due Bills',
+                  value: customer.billCount.toString(),
+                  color: DueCollectionEntryColors.info,
                 ),
               ),
               const SizedBox(width: 8),
@@ -1124,17 +1058,19 @@ class _CustomerMetricPill extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+  final bool strong;
 
   const _CustomerMetricPill({
     required this.label,
     required this.value,
     required this.color,
+    this.strong = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 58,
+      height: strong ? 64 : 58,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
@@ -1149,7 +1085,8 @@ class _CustomerMetricPill extends StatelessWidget {
               style: DueCollectionEntryStyles.rowSub.copyWith(color: color)),
           const SizedBox(height: 4),
           Text(value,
-              style: DueCollectionEntryStyles.rowTitle.copyWith(color: color),
+              style: DueCollectionEntryStyles.rowTitle
+                  .copyWith(color: color, fontSize: strong ? 16 : 13),
               maxLines: 1,
               overflow: TextOverflow.ellipsis),
         ],
@@ -1466,17 +1403,26 @@ class _CollectionPanel extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: bill == null
-                  ? const _NoSelectedBill()
-                  : _CollectionForm(
-                      ctrl: ctrl,
-                      bill: bill,
-                      onSave: onSave,
-                      onSaveAndPrint: onSaveAndPrint,
-                    ),
-            ),
+            child: bill == null
+                ? const SingleChildScrollView(
+                    padding: EdgeInsets.all(16),
+                    child: _NoSelectedBill(),
+                  )
+                : Column(
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: _CollectionForm(ctrl: ctrl, bill: bill),
+                        ),
+                      ),
+                      _StickySaveFooter(
+                        ctrl: ctrl,
+                        onSave: onSave,
+                        onSaveAndPrint: onSaveAndPrint,
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -1513,15 +1459,7 @@ class _NoSelectedBill extends StatelessWidget {
 class _CollectionForm extends StatelessWidget {
   final DueCollectionEntryController ctrl;
   final DueCollectionBillModel bill;
-  final VoidCallback onSave;
-  final VoidCallback onSaveAndPrint;
-
-  const _CollectionForm({
-    required this.ctrl,
-    required this.bill,
-    required this.onSave,
-    required this.onSaveAndPrint,
-  });
+  const _CollectionForm({required this.ctrl, required this.bill});
 
   @override
   Widget build(BuildContext context) {
@@ -1577,8 +1515,8 @@ class _CollectionForm extends StatelessWidget {
         const Text('Payment Mode', style: DueCollectionEntryStyles.label),
         const SizedBox(height: 8),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: 7,
+          runSpacing: 7,
           children: DueCollectionPaymentMode.values
               .map((mode) => _ModeChip(
                   mode: mode,
@@ -1638,12 +1576,7 @@ class _CollectionForm extends StatelessWidget {
             mode: ctrl.lastPaymentModeLabel ?? ctrl.paymentMode.label,
           ),
         ],
-        const SizedBox(height: 16),
-        _SaveActions(
-          ctrl: ctrl,
-          onSave: onSave,
-          onSaveAndPrint: onSaveAndPrint,
-        ),
+        const SizedBox(height: 12),
       ],
     );
   }
@@ -1709,74 +1642,86 @@ class _PromiseDateField extends StatelessWidget {
     final color = required && selected == null
         ? DueCollectionEntryColors.warning
         : DueCollectionEntryColors.brandGold;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text('Next Promise Date',
-                style: DueCollectionEntryStyles.label.copyWith(color: color)),
-            const Spacer(),
-            _TinyPromiseButton(
-                label: '7D', onTap: () => ctrl.setQuickPromiseDays(7)),
-            const SizedBox(width: 6),
-            _TinyPromiseButton(
-                label: '15D', onTap: () => ctrl.setQuickPromiseDays(15)),
-            const SizedBox(width: 6),
-            _TinyPromiseButton(
-                label: '30D', onTap: () => ctrl.setQuickPromiseDays(30)),
-          ],
-        ),
-        const SizedBox(height: 7),
-        InkWell(
-          onTap: () async {
-            final now = DateTime.now();
-            final picked = await showDatePicker(
-              context: context,
-              initialDate: selected ?? now.add(const Duration(days: 7)),
-              firstDate: DateTime(now.year - 1),
-              lastDate: DateTime(now.year + 5),
-            );
-            if (picked != null) ctrl.setPromiseDate(picked);
-          },
-          borderRadius: BorderRadius.circular(10),
-          child: Container(
-            height: 46,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: DueCollectionEntryStyles.flatPanel(
-                color: DueCollectionEntryColors.panelSoft),
-            child: Row(
-              children: [
-                Icon(DueCollectionEntryIcons.calendar, size: 18, color: color),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: Text(
-                    selected == null
-                        ? 'Tap to set follow-up date'
-                        : DueCollectionEntryController.formatDate(selected),
-                    style: DueCollectionEntryStyles.rowTitle.copyWith(
-                        color: selected == null
-                            ? DueCollectionEntryColors.textMuted
-                            : DueCollectionEntryColors.textPrimary),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (selected != null)
-                  IconButton(
-                    tooltip: 'Clear',
-                    onPressed: () => ctrl.setPromiseDate(null),
-                    icon: const Icon(DueCollectionEntryIcons.clear, size: 17),
-                    color: DueCollectionEntryColors.textMuted,
-                  )
-                else
-                  const Icon(Icons.keyboard_arrow_down_rounded,
-                      color: DueCollectionEntryColors.textMuted),
+    final bg = required
+        ? DueCollectionEntryColors.warningBg
+        : DueCollectionEntryColors.panelSoft;
+    final label = required ? 'Next Promise Date Required' : 'Next Promise Date';
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 140),
+      opacity: required || selected != null ? 1 : 0.72,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(label,
+                  style: DueCollectionEntryStyles.label.copyWith(color: color)),
+              const Spacer(),
+              if (required || selected != null) ...[
+                _TinyPromiseButton(
+                    label: '7D', onTap: () => ctrl.setQuickPromiseDays(7)),
+                const SizedBox(width: 6),
+                _TinyPromiseButton(
+                    label: '15D', onTap: () => ctrl.setQuickPromiseDays(15)),
+                const SizedBox(width: 6),
+                _TinyPromiseButton(
+                    label: '30D', onTap: () => ctrl.setQuickPromiseDays(30)),
               ],
+            ],
+          ),
+          const SizedBox(height: 7),
+          InkWell(
+            onTap: () async {
+              final now = DateTime.now();
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: selected ?? now.add(const Duration(days: 7)),
+                firstDate: DateTime(now.year - 1),
+                lastDate: DateTime(now.year + 5),
+              );
+              if (picked != null) ctrl.setPromiseDate(picked);
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: DueCollectionEntryStyles.flatPanel(color: bg),
+              child: Row(
+                children: [
+                  Icon(DueCollectionEntryIcons.calendar,
+                      size: 18, color: color),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      selected == null
+                          ? (required
+                              ? 'Set follow-up for remaining balance'
+                              : 'Optional for partial follow-up')
+                          : DueCollectionEntryController.formatDate(selected),
+                      style: DueCollectionEntryStyles.rowTitle.copyWith(
+                          color: selected == null
+                              ? DueCollectionEntryColors.textMuted
+                              : DueCollectionEntryColors.textPrimary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (selected != null)
+                    IconButton(
+                      tooltip: 'Clear',
+                      onPressed: () => ctrl.setPromiseDate(null),
+                      icon: const Icon(DueCollectionEntryIcons.clear, size: 17),
+                      color: DueCollectionEntryColors.textMuted,
+                    )
+                  else
+                    const Icon(Icons.keyboard_arrow_down_rounded,
+                        color: DueCollectionEntryColors.textMuted),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -2038,7 +1983,7 @@ class _ReceiptReadyBox extends StatelessWidget {
                           .withValues(alpha: 0.2)),
                 ),
                 child: const Icon(DueCollectionEntryIcons.verified,
-                    color: DueCollectionEntryColors.success, size: 19),
+                    color: DueCollectionEntryColors.success, size: 17),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -2266,7 +2211,7 @@ class _ModeChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(30),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
         decoration: BoxDecoration(
           color: selected
               ? DueCollectionEntryColors.brandGoldLight
@@ -2421,6 +2366,36 @@ class _SettlementPreview extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StickySaveFooter extends StatelessWidget {
+  final DueCollectionEntryController ctrl;
+  final VoidCallback onSave;
+  final VoidCallback onSaveAndPrint;
+
+  const _StickySaveFooter({
+    required this.ctrl,
+    required this.onSave,
+    required this.onSaveAndPrint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+      decoration: const BoxDecoration(
+        color: DueCollectionEntryColors.bodyPanel,
+        border: Border(
+          top: BorderSide(color: DueCollectionEntryColors.bodyBorder),
+        ),
+      ),
+      child: _SaveActions(
+        ctrl: ctrl,
+        onSave: onSave,
+        onSaveAndPrint: onSaveAndPrint,
       ),
     );
   }

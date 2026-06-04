@@ -108,6 +108,7 @@ class DueCollectionEntryController extends ChangeNotifier {
       'Rs ${_amountFmt.format(amount)}';
   static String formatCompact(double amount) =>
       'Rs ${_compactFmt.format(amount)}';
+  static String formatInputAmount(double amount) => _amountFmt.format(amount);
   static String formatDate(DateTime? date) =>
       date == null ? '-' : _dateFmt.format(date);
   static String formatShortDate(DateTime? date) =>
@@ -196,12 +197,12 @@ class DueCollectionEntryController extends ChangeNotifier {
   void setFullDueAmount() {
     final due = _selectedBill?.dueAmount ?? 0;
     final value = (due - _discountAmount).clamp(0.0, double.infinity);
-    amountCtrl.text = value <= 0 ? '' : value.toStringAsFixed(2);
+    amountCtrl.text = value <= 0 ? '' : formatInputAmount(value);
   }
 
   void setHalfDueAmount() {
     final due = _selectedBill?.dueAmount ?? 0;
-    amountCtrl.text = due <= 0 ? '' : (due / 2).toStringAsFixed(2);
+    amountCtrl.text = due <= 0 ? '' : formatInputAmount(due / 2);
   }
 
   void clearDiscount() {
