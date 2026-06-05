@@ -366,11 +366,11 @@ class DueCollectionEntryController extends ChangeNotifier {
 
   void _applyViewState() {
     if (_disposed) return;
-    var visible = <DueCollectionBillModel>[];
+    var visible = List<DueCollectionBillModel>.from(_allBills);
 
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
-      visible = _allBills.where((bill) {
+      visible = visible.where((bill) {
         return bill.customerName.toLowerCase().contains(q) ||
             bill.mobile.toLowerCase().contains(q) ||
             bill.billNo.toLowerCase().contains(q) ||

@@ -204,7 +204,11 @@ class DueReceiptHistoryController extends ChangeNotifier {
   void _sortReceipts(List<DueReceiptModel> receipts) {
     switch (_sort) {
       case DueReceiptSort.latest:
-        receipts.sort((a, b) => b.receiptDate.compareTo(a.receiptDate));
+        receipts.sort((a, b) {
+          final dateCompare = b.receiptDate.compareTo(a.receiptDate);
+          if (dateCompare != 0) return dateCompare;
+          return b.ledgerId.compareTo(a.ledgerId);
+        });
         break;
       case DueReceiptSort.highestAmount:
         receipts.sort((a, b) => b.amount.compareTo(a.amount));

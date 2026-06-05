@@ -6,8 +6,15 @@ import '../../../theme/finance/due_receipt_history/due_receipt_history_theme.dar
 
 class DueReceiptHistoryFilterBar extends StatelessWidget {
   final DueReceiptHistoryController ctrl;
+  final VoidCallback onPrint;
+  final VoidCallback onExport;
 
-  const DueReceiptHistoryFilterBar({super.key, required this.ctrl});
+  const DueReceiptHistoryFilterBar({
+    super.key,
+    required this.ctrl,
+    required this.onPrint,
+    required this.onExport,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +40,26 @@ class DueReceiptHistoryFilterBar extends StatelessWidget {
                     Expanded(child: _SortDropdown(ctrl: ctrl)),
                   ],
                 ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ActionButton(
+                        icon: DueReceiptHistoryIcons.print,
+                        label: 'Print',
+                        onTap: onPrint,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _ActionButton(
+                        icon: DueReceiptHistoryIcons.export,
+                        label: 'Export CSV',
+                        onTap: onExport,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             );
           }
@@ -46,6 +73,18 @@ class DueReceiptHistoryFilterBar extends StatelessWidget {
               SizedBox(width: 160, child: _ModeDropdown(ctrl: ctrl)),
               const SizedBox(width: 10),
               SizedBox(width: 170, child: _SortDropdown(ctrl: ctrl)),
+              const SizedBox(width: 10),
+              _ActionButton(
+                icon: DueReceiptHistoryIcons.print,
+                label: 'Print',
+                onTap: onPrint,
+              ),
+              const SizedBox(width: 8),
+              _ActionButton(
+                icon: DueReceiptHistoryIcons.export,
+                label: 'Export',
+                onTap: onExport,
+              ),
             ],
           );
         },
@@ -220,6 +259,73 @@ class _DropdownShell extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  State<_ActionButton> createState() => _ActionButtonState();
+}
+
+class _ActionButtonState extends State<_ActionButton> {
+  bool _hovered = false;
+
+  void _setHovered(bool value) {
+    if (!mounted || _hovered == value) return;
+    setState(() => _hovered = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => _setHovered(true),
+      onExit: (_) => _setHovered(false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          height: 42,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: _hovered
+                ? DueReceiptHistoryColors.goldSoft
+                : DueReceiptHistoryColors.panelBg,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: _hovered
+                  ? DueReceiptHistoryColors.gold
+                  : DueReceiptHistoryColors.border,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(widget.icon, size: 17, color: DueReceiptHistoryColors.gold),
+              const SizedBox(width: 7),
+              Text(
+                widget.label,
+                style: DueReceiptHistoryStyles.label.copyWith(
+                  color: DueReceiptHistoryColors.textPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

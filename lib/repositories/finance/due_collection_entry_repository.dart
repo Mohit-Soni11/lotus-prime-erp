@@ -187,8 +187,8 @@ class DueCollectionEntryRepository {
     ])
       ..where(_db.bills.status.equals('ACTIVE'))
       ..orderBy([
-        OrderingTerm.asc(_db.bills.promiseDate),
-        OrderingTerm.desc(_db.bills.billDate)
+        OrderingTerm.desc(_db.bills.billDate),
+        OrderingTerm.desc(_db.bills.id),
       ]);
     return query;
   }
@@ -226,10 +226,9 @@ class DueCollectionEntryRepository {
     }
 
     bills.sort((a, b) {
-      final promiseCompare =
-          _promiseSortValue(a).compareTo(_promiseSortValue(b));
-      if (promiseCompare != 0) return promiseCompare;
-      return b.dueAmount.compareTo(a.dueAmount);
+      final dateCompare = b.billDate.compareTo(a.billDate);
+      if (dateCompare != 0) return dateCompare;
+      return b.id.compareTo(a.id);
     });
     return bills;
   }
@@ -360,11 +359,6 @@ class DueCollectionEntryRepository {
       case DueCollectionPaymentMode.cash:
         return 'CASH_DEPOSIT';
     }
-  }
-
-  int _promiseSortValue(DueCollectionBillModel bill) {
-    if (bill.promiseDate == null) return 9999999999999;
-    return bill.promiseDate!.millisecondsSinceEpoch;
   }
 
   double _currentDue(Bill bill) {

@@ -24,12 +24,15 @@ class DueReportController extends ChangeNotifier {
   DueCustomerGroupModel? _selectedGroup;
   DueReportStatsModel _stats = DueReportStatsModel.empty();
   DueReportFilter _filter = DueReportFilter.all;
-  DueReportSort _sort = DueReportSort.highestDue;
+  DueReportSort _sort = DueReportSort.latestBill;
   String _searchQuery = '';
   bool _isLoading = true;
   String? _errorMessage;
 
   List<DueCustomerGroupModel> get groups => _groups;
+  List<DueCustomerGroupModel> get visibleGroups => _groups;
+  List<DueBillModel> get visibleBills =>
+      _groups.expand((group) => group.bills).toList(growable: false);
   DueCustomerGroupModel? get selectedGroup => _selectedGroup;
   DueReportStatsModel get stats => _stats;
   DueReportFilter get filter => _filter;
@@ -177,6 +180,9 @@ class DueReportController extends ChangeNotifier {
 
   void _sortGroups() {
     switch (_sort) {
+      case DueReportSort.latestBill:
+        _groups.sort((a, b) => b.latestBillDate.compareTo(a.latestBillDate));
+        break;
       case DueReportSort.highestDue:
         _groups.sort((a, b) => b.totalDue.compareTo(a.totalDue));
         break;

@@ -93,23 +93,89 @@ class _DueCollectionEntryScreenState extends State<DueCollectionEntryScreen> {
     final balance = _ctrl.lastBalanceDue;
     final mode = _ctrl.lastPaymentModeLabel ?? _ctrl.paymentMode.label;
     final promiseDate = _ctrl.lastPromiseDate;
+    final receiptDate = DateTime.now();
+    final status = balance <= 0.5 ? 'PAID' : 'PARTIAL';
     final pdf = pw.Document();
 
-    pw.Widget line(String label, String value, {bool bold = false}) {
-      final style = pw.TextStyle(
-        fontSize: 10,
-        fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+    String amount(double value) =>
+        DueCollectionEntryController.formatAmount(value);
+    String date(DateTime value) =>
+        DueCollectionEntryController.formatDate(value);
+
+    pw.Widget receiptMeta(String label, String value, {bool bold = false}) {
+      return pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(
+            label,
+            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+          ),
+          pw.SizedBox(width: 12),
+          pw.Expanded(
+            child: pw.Text(
+              value,
+              textAlign: pw.TextAlign.right,
+              style: pw.TextStyle(
+                fontSize: 10,
+                fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+              ),
+            ),
+          ),
+        ],
       );
-      return pw.Padding(
-        padding: const pw.EdgeInsets.symmetric(vertical: 3),
+    }
+
+    pw.Widget summaryLine(String label, String value,
+        {bool total = false, PdfColor? color}) {
+      return pw.Container(
+        padding: const pw.EdgeInsets.symmetric(vertical: 6),
+        decoration: const pw.BoxDecoration(
+          border: pw.Border(
+            bottom: pw.BorderSide(color: PdfColors.grey300, width: 0.5),
+          ),
+        ),
         child: pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            pw.Text(label, style: style),
-            pw.SizedBox(width: 12),
-            pw.Expanded(
-              child:
-                  pw.Text(value, style: style, textAlign: pw.TextAlign.right),
+            pw.Text(
+              label,
+              style: pw.TextStyle(
+                fontSize: total ? 11 : 9,
+                color: PdfColors.grey700,
+                fontWeight: total ? pw.FontWeight.bold : pw.FontWeight.normal,
+              ),
+            ),
+            pw.Text(
+              value,
+              style: pw.TextStyle(
+                fontSize: total ? 14 : 10,
+                color: color ?? PdfColors.black,
+                fontWeight: total ? pw.FontWeight.bold : pw.FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    pw.Widget infoCell(String label, String value) {
+      return pw.Container(
+        padding: const pw.EdgeInsets.all(10),
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(color: PdfColors.grey300, width: 0.6),
+          borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              label.toUpperCase(),
+              style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey600),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(
+              value,
+              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
             ),
           ],
         ),
@@ -118,50 +184,310 @@ class _DueCollectionEntryScreenState extends State<DueCollectionEntryScreen> {
 
     pdf.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.a5,
+        pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(24),
-        build: (_) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-          children: [
-            pw.Text('LOTUS ERP',
-                textAlign: pw.TextAlign.center,
-                style:
-                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-            pw.SizedBox(height: 4),
-            pw.Text('DUE COLLECTION RECEIPT',
-                textAlign: pw.TextAlign.center,
-                style: const pw.TextStyle(fontSize: 11)),
-            pw.Divider(height: 22, thickness: 1),
-            line('Receipt No', receiptNo, bold: true),
-            line('Invoice No', bill.billNo, bold: true),
-            line('Customer', bill.customerName),
-            line('Mobile', bill.mobile),
-            line('Receipt Date',
-                DueCollectionEntryController.formatDate(DateTime.now())),
-            pw.Divider(height: 18),
-            line('Bill Amount',
-                DueCollectionEntryController.formatAmount(bill.finalAmount)),
-            line('Previous Due',
-                DueCollectionEntryController.formatAmount(bill.dueAmount)),
-            line(
-                'Received', DueCollectionEntryController.formatAmount(received),
-                bold: true),
-            if (discount > 0.5)
-              line('Discount',
-                  DueCollectionEntryController.formatAmount(discount)),
-            line('Balance Due',
-                DueCollectionEntryController.formatAmount(balance),
-                bold: true),
-            line('Payment Mode', mode.toUpperCase()),
-            if (promiseDate != null && balance > 0.5)
-              line('Next Promise',
-                  DueCollectionEntryController.formatDate(promiseDate)),
-            pw.Spacer(),
-            pw.Divider(height: 16),
-            pw.Text('This is a computer generated receipt.',
-                textAlign: pw.TextAlign.center,
-                style: const pw.TextStyle(fontSize: 9)),
-          ],
+        build: (_) => pw.Container(
+          decoration: pw.BoxDecoration(
+            border: pw.Border.all(color: PdfColors.grey500, width: 0.8),
+          ),
+          padding: const pw.EdgeInsets.all(18),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+            children: [
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Expanded(
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          'LOTUS ERP',
+                          style: pw.TextStyle(
+                            fontSize: 22,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 4),
+                        pw.Text(
+                          'Jewellery Billing & Accounts',
+                          style: const pw.TextStyle(
+                            fontSize: 9,
+                            color: PdfColors.grey700,
+                          ),
+                        ),
+                        pw.SizedBox(height: 8),
+                        pw.Text(
+                          'Due payment receipt against customer invoice.',
+                          style: const pw.TextStyle(fontSize: 9),
+                        ),
+                      ],
+                    ),
+                  ),
+                  pw.Container(
+                    width: 190,
+                    padding: const pw.EdgeInsets.all(12),
+                    decoration: const pw.BoxDecoration(
+                      color: PdfColors.grey900,
+                      borderRadius: pw.BorderRadius.all(pw.Radius.circular(6)),
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+                      children: [
+                        pw.Text(
+                          'DUE RECEIPT',
+                          textAlign: pw.TextAlign.right,
+                          style: pw.TextStyle(
+                            color: PdfColors.white,
+                            fontSize: 16,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 8),
+                        pw.Text(
+                          receiptNo,
+                          textAlign: pw.TextAlign.right,
+                          style: const pw.TextStyle(
+                            color: PdfColors.amber200,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 18),
+              pw.Row(
+                children: [
+                  pw.Expanded(
+                    flex: 3,
+                    child: pw.Container(
+                      padding: const pw.EdgeInsets.all(12),
+                      decoration: const pw.BoxDecoration(
+                        color: PdfColors.grey100,
+                        borderRadius:
+                            pw.BorderRadius.all(pw.Radius.circular(6)),
+                      ),
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text(
+                            'RECEIVED FROM',
+                            style: const pw.TextStyle(
+                              fontSize: 8,
+                              color: PdfColors.grey600,
+                            ),
+                          ),
+                          pw.SizedBox(height: 5),
+                          pw.Text(
+                            bill.customerName.trim().isEmpty
+                                ? 'Walk-in Customer'
+                                : bill.customerName,
+                            style: pw.TextStyle(
+                              fontSize: 13,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                          if (bill.mobile.trim().isNotEmpty)
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.only(top: 3),
+                              child: pw.Text(
+                                'Mobile: ${bill.mobile}',
+                                style: const pw.TextStyle(fontSize: 9),
+                              ),
+                            ),
+                          if (bill.city.trim().isNotEmpty ||
+                              bill.address.trim().isNotEmpty)
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.only(top: 3),
+                              child: pw.Text(
+                                [
+                                  bill.address.trim(),
+                                  bill.city.trim(),
+                                ].where((part) => part.isNotEmpty).join(', '),
+                                style: const pw.TextStyle(
+                                  fontSize: 9,
+                                  color: PdfColors.grey700,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  pw.SizedBox(width: 14),
+                  pw.Expanded(
+                    flex: 2,
+                    child: pw.Column(
+                      children: [
+                        receiptMeta('Receipt Date', date(receiptDate),
+                            bold: true),
+                        pw.SizedBox(height: 7),
+                        receiptMeta('Invoice No', bill.billNo, bold: true),
+                        pw.SizedBox(height: 7),
+                        receiptMeta('Bill Date', date(bill.billDate)),
+                        pw.SizedBox(height: 7),
+                        receiptMeta('Status', status, bold: true),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 18),
+              pw.Table(
+                border:
+                    pw.TableBorder.all(color: PdfColors.grey300, width: 0.6),
+                columnWidths: const {
+                  0: pw.FlexColumnWidth(2.1),
+                  1: pw.FlexColumnWidth(1.2),
+                  2: pw.FlexColumnWidth(1.4),
+                  3: pw.FlexColumnWidth(1.4),
+                  4: pw.FlexColumnWidth(1.4),
+                  5: pw.FlexColumnWidth(1.4),
+                },
+                children: [
+                  pw.TableRow(
+                    decoration:
+                        const pw.BoxDecoration(color: PdfColors.grey900),
+                    children: [
+                      'Invoice',
+                      'Bill Date',
+                      'Bill Amount',
+                      'Previous Due',
+                      'Received',
+                      'Balance',
+                    ]
+                        .map(
+                          (text) => pw.Padding(
+                            padding: const pw.EdgeInsets.all(7),
+                            child: pw.Text(
+                              text,
+                              style: pw.TextStyle(
+                                fontSize: 8,
+                                color: PdfColors.white,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  pw.TableRow(
+                    children: [
+                      bill.billNo,
+                      date(bill.billDate),
+                      amount(bill.finalAmount),
+                      amount(bill.dueAmount),
+                      amount(received),
+                      amount(balance),
+                    ]
+                        .map(
+                          (text) => pw.Padding(
+                            padding: const pw.EdgeInsets.all(7),
+                            child: pw.Text(text,
+                                style: const pw.TextStyle(fontSize: 8.5)),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 18),
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Expanded(
+                    child: pw.Column(
+                      children: [
+                        infoCell('Payment Mode', mode.toUpperCase()),
+                        pw.SizedBox(height: 8),
+                        infoCell(
+                          'Next Promise',
+                          promiseDate != null && balance > 0.5
+                              ? date(promiseDate)
+                              : '-',
+                        ),
+                        pw.SizedBox(height: 8),
+                        pw.Container(
+                          width: double.infinity,
+                          padding: const pw.EdgeInsets.all(10),
+                          decoration: const pw.BoxDecoration(
+                            color: PdfColors.grey100,
+                            borderRadius: pw.BorderRadius.all(
+                              pw.Radius.circular(5),
+                            ),
+                          ),
+                          child: pw.Text(
+                            'Narration: Received ${amount(received)} against invoice ${bill.billNo}.',
+                            style: const pw.TextStyle(fontSize: 9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  pw.SizedBox(width: 18),
+                  pw.Container(
+                    width: 220,
+                    padding: const pw.EdgeInsets.all(12),
+                    decoration: pw.BoxDecoration(
+                      border:
+                          pw.Border.all(color: PdfColors.grey300, width: 0.7),
+                      borderRadius:
+                          const pw.BorderRadius.all(pw.Radius.circular(6)),
+                    ),
+                    child: pw.Column(
+                      children: [
+                        summaryLine('Bill Amount', amount(bill.finalAmount)),
+                        summaryLine('Previous Due', amount(bill.dueAmount)),
+                        summaryLine('Received', amount(received),
+                            color: PdfColors.green800),
+                        if (discount > 0.5)
+                          summaryLine('Discount / Waiver', amount(discount),
+                              color: PdfColors.amber800),
+                        summaryLine('Balance Due', amount(balance),
+                            total: true,
+                            color: balance <= 0.5
+                                ? PdfColors.green800
+                                : PdfColors.amber800),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              pw.Spacer(),
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.end,
+                children: [
+                  pw.Expanded(
+                    child: pw.Text(
+                      'This receipt is generated from Lotus ERP against the above invoice payment.',
+                      style: const pw.TextStyle(
+                        fontSize: 8,
+                        color: PdfColors.grey700,
+                      ),
+                    ),
+                  ),
+                  pw.SizedBox(width: 40),
+                  pw.Column(
+                    children: [
+                      pw.Container(
+                        width: 150,
+                        height: 1,
+                        color: PdfColors.grey500,
+                      ),
+                      pw.SizedBox(height: 5),
+                      pw.Text(
+                        'Authorized Signature',
+                        style: const pw.TextStyle(fontSize: 8),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -913,15 +1239,9 @@ class _BillList extends StatelessWidget {
             Expanded(
               child: ctrl.selectedCustomer != null
                   ? _CustomerDueDetail(ctrl: ctrl)
-                  : !ctrl.hasSearchQuery
-                      ? _SearchStartState(
-                          totalCustomers: ctrl.stats.customerCount,
-                          totalDue: ctrl.stats.totalDue,
-                          overdueDue: ctrl.stats.overdueDue,
-                        )
-                      : ctrl.customers.isEmpty
-                          ? const _EmptyBills()
-                          : _CustomerResultsList(ctrl: ctrl),
+                  : ctrl.customers.isEmpty
+                      ? const _EmptyBills()
+                      : _CustomerResultsList(ctrl: ctrl),
             ),
           ],
         ),
@@ -938,7 +1258,7 @@ class _CountBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = count > 0 ? '$count found' : '$total customers';
+    final label = count == total ? '$total customers' : '$count found';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -1531,81 +1851,6 @@ class _StatusBadge extends StatelessWidget {
             DueCollectionEntryStyles.label.copyWith(color: color, fontSize: 11),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
-}
-
-class _SearchStartState extends StatelessWidget {
-  final int totalCustomers;
-  final double totalDue;
-  final double overdueDue;
-
-  const _SearchStartState({
-    required this.totalCustomers,
-    required this.totalDue,
-    required this.overdueDue,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 58,
-              height: 58,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: DueCollectionEntryColors.brandGoldLight,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                    color: DueCollectionEntryColors.brandGold
-                        .withValues(alpha: 0.24)),
-              ),
-              child: const Icon(DueCollectionEntryIcons.search,
-                  size: 28, color: DueCollectionEntryColors.brandGold),
-            ),
-            const SizedBox(height: 14),
-            const Text('Search customer',
-                style: DueCollectionEntryStyles.sectionTitle),
-            const SizedBox(height: 5),
-            const Text('Name, mobile, ya bill number enter karein.',
-                style: DueCollectionEntryStyles.muted),
-            const SizedBox(height: 18),
-            Row(
-              children: [
-                Expanded(
-                  child: _CustomerMetricPill(
-                    label: 'Customers',
-                    value: totalCustomers.toString(),
-                    color: DueCollectionEntryColors.info,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _CustomerMetricPill(
-                    label: 'Total Due',
-                    value: DueCollectionEntryController.formatCompact(totalDue),
-                    color: DueCollectionEntryColors.warning,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _CustomerMetricPill(
-                    label: 'Overdue',
-                    value:
-                        DueCollectionEntryController.formatCompact(overdueDue),
-                    color: DueCollectionEntryColors.danger,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }

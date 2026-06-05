@@ -25,6 +25,7 @@ extension DueReportFilterX on DueReportFilter {
 }
 
 enum DueReportSort {
+  latestBill,
   highestDue,
   oldestBill,
   customerName,
@@ -35,6 +36,8 @@ enum DueReportSort {
 extension DueReportSortX on DueReportSort {
   String get label {
     switch (this) {
+      case DueReportSort.latestBill:
+        return 'Latest Bill';
       case DueReportSort.highestDue:
         return 'Highest Due';
       case DueReportSort.oldestBill:
@@ -102,21 +105,30 @@ class DueBillModel {
   bool get isPartial => paidAmount > 0.5 && dueAmount > 0.5;
 
   bool get isDueToday {
-    if (promiseDate == null) return false;
+    if (dueAmount <= 0.5) return false;
     final today = DueReportDate.only(DateTime.now());
-    return DueReportDate.only(promiseDate!).isAtSameMomentAs(today);
+    final dueDate = promiseDate == null
+        ? DueReportDate.only(billDate)
+        : DueReportDate.only(promiseDate!);
+    return dueDate.isAtSameMomentAs(today);
   }
 
   bool get isOverdue {
-    if (promiseDate == null) return false;
+    if (dueAmount <= 0.5) return false;
     final today = DueReportDate.only(DateTime.now());
-    return DueReportDate.only(promiseDate!).isBefore(today);
+    final dueDate = promiseDate == null
+        ? DueReportDate.only(billDate)
+        : DueReportDate.only(promiseDate!);
+    return dueDate.isBefore(today);
   }
 
   int get promiseOverdueDays {
-    if (!isOverdue || promiseDate == null) return 0;
+    if (!isOverdue) return 0;
     final today = DueReportDate.only(DateTime.now());
-    return today.difference(DueReportDate.only(promiseDate!)).inDays;
+    final dueDate = promiseDate == null
+        ? DueReportDate.only(billDate)
+        : DueReportDate.only(promiseDate!);
+    return today.difference(dueDate).inDays;
   }
 
   DueBillBucket get bucket {
@@ -150,6 +162,7 @@ class DueCustomerGroupModel {
   final int dueTodayBillCount;
   final int noPromiseBillCount;
   final DateTime oldestBillDate;
+  final DateTime latestBillDate;
   final DateTime? nearestPromiseDate;
 
   const DueCustomerGroupModel({
@@ -168,13 +181,21 @@ class DueCustomerGroupModel {
     required this.dueTodayBillCount,
     required this.noPromiseBillCount,
     required this.oldestBillDate,
+    required this.latestBillDate,
     required this.nearestPromiseDate,
   });
 
   factory DueCustomerGroupModel.fromBills(List<DueBillModel> source) {
     final bills = List<DueBillModel>.from(source)
-      ..sort((a, b) => a.billDate.compareTo(b.billDate));
+      ..sort((a, b) {
+        final dateCompare = b.billDate.compareTo(a.billDate);
+        if (dateCompare != 0) return dateCompare;
+        return b.id.compareTo(a.id);
+      });
     final first = bills.first;
+    final oldest = bills
+        .map((bill) => bill.billDate)
+        .reduce((a, b) => a.isBefore(b) ? a : b);
     final promises = bills
         .where((b) => b.promiseDate != null)
         .map((b) => b.promiseDate!)
@@ -198,7 +219,8 @@ class DueCustomerGroupModel {
       overdueBillCount: bills.where((b) => b.isOverdue).length,
       dueTodayBillCount: bills.where((b) => b.isDueToday).length,
       noPromiseBillCount: bills.where((b) => b.promiseDate == null).length,
-      oldestBillDate: bills.first.billDate,
+      oldestBillDate: oldest,
+      latestBillDate: bills.first.billDate,
       nearestPromiseDate: promises.isEmpty ? null : promises.first,
     );
   }

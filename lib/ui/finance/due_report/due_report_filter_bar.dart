@@ -6,8 +6,15 @@ import '../../../theme/finance/due_report/due_report_theme.dart';
 
 class DueReportFilterBar extends StatelessWidget {
   final DueReportController ctrl;
+  final VoidCallback onPrint;
+  final VoidCallback onExport;
 
-  const DueReportFilterBar({super.key, required this.ctrl});
+  const DueReportFilterBar({
+    super.key,
+    required this.ctrl,
+    required this.onPrint,
+    required this.onExport,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +32,23 @@ class DueReportFilterBar extends StatelessWidget {
                     const SizedBox(height: 10),
                     _FilterChips(ctrl: ctrl),
                     const SizedBox(height: 10),
-                    _SortMenu(ctrl: ctrl),
+                    Row(
+                      children: [
+                        Expanded(child: _SortMenu(ctrl: ctrl)),
+                        const SizedBox(width: 10),
+                        _ActionButton(
+                          icon: DueReportIcons.print,
+                          label: 'Print',
+                          onTap: onPrint,
+                        ),
+                        const SizedBox(width: 8),
+                        _ActionButton(
+                          icon: DueReportIcons.export,
+                          label: 'Export',
+                          onTap: onExport,
+                        ),
+                      ],
+                    ),
                   ],
                 )
               : Row(
@@ -35,6 +58,18 @@ class DueReportFilterBar extends StatelessWidget {
                     Expanded(child: _FilterChips(ctrl: ctrl)),
                     const SizedBox(width: 12),
                     SizedBox(width: 190, child: _SortMenu(ctrl: ctrl)),
+                    const SizedBox(width: 10),
+                    _ActionButton(
+                      icon: DueReportIcons.print,
+                      label: 'Print',
+                      onTap: onPrint,
+                    ),
+                    const SizedBox(width: 8),
+                    _ActionButton(
+                      icon: DueReportIcons.export,
+                      label: 'Export',
+                      onTap: onExport,
+                    ),
                   ],
                 );
         },
@@ -190,6 +225,69 @@ class _SortMenu extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  State<_ActionButton> createState() => _ActionButtonState();
+}
+
+class _ActionButtonState extends State<_ActionButton> {
+  bool _hovered = false;
+
+  void _setHovered(bool value) {
+    if (!mounted || _hovered == value) return;
+    setState(() => _hovered = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => _setHovered(true),
+      onExit: (_) => _setHovered(false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          height: 42,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color:
+                _hovered ? DueReportColors.goldSoft : DueReportColors.panelSoft,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: _hovered ? DueReportColors.gold : DueReportColors.border,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(widget.icon, size: 17, color: DueReportColors.gold),
+              const SizedBox(width: 7),
+              Text(
+                widget.label,
+                style: DueReportStyles.label.copyWith(
+                  color: DueReportColors.textPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

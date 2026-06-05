@@ -117,13 +117,11 @@ class DueReceiptModel {
   bool get hasCurrentDue => currentDue > 0.5;
   bool get isClearedNow => !hasCurrentDue;
 
-  String get receiptKind => isDueMarked ? 'Due Receipt' : 'Bill Receipt';
+  String get receiptKind => 'Due Receipt';
 
   String get statusLabel {
-    if (isDueMarked && isClearedNow) return 'Due Cleared';
-    if (isDueMarked) return 'Due Received';
-    if (isClearedNow) return 'Bill Paid';
-    return billPaymentStatus.trim().isEmpty ? 'Received' : billPaymentStatus;
+    if (isClearedNow) return 'Due Cleared';
+    return 'Due Received';
   }
 
   String get modeKey => paymentMode.trim().toUpperCase();

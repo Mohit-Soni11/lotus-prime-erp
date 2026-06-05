@@ -33,7 +33,10 @@ class DueReportRepository {
       ),
     ])
       ..where(_db.bills.status.equals('ACTIVE'))
-      ..orderBy([OrderingTerm.desc(_db.bills.billDate)]);
+      ..orderBy([
+        OrderingTerm.desc(_db.bills.billDate),
+        OrderingTerm.desc(_db.bills.id),
+      ]);
     return query;
   }
 
@@ -78,19 +81,12 @@ class DueReportRepository {
     }
 
     bills.sort((a, b) {
-      final promiseCompare = _promiseSortValue(
-        a,
-      ).compareTo(_promiseSortValue(b));
-      if (promiseCompare != 0) return promiseCompare;
-      return b.dueAmount.compareTo(a.dueAmount);
+      final dateCompare = b.billDate.compareTo(a.billDate);
+      if (dateCompare != 0) return dateCompare;
+      return b.id.compareTo(a.id);
     });
 
     return bills;
-  }
-
-  int _promiseSortValue(DueBillModel bill) {
-    if (bill.promiseDate == null) return 999999999;
-    return bill.promiseDate!.millisecondsSinceEpoch;
   }
 
   double _positive(double amount) => amount < 0 ? 0 : amount;

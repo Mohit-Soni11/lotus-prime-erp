@@ -15,6 +15,8 @@ class DueReceiptHistoryIcons {
   static const IconData ledgerSplit = Icons.compare_arrows_rounded;
   static const IconData filter = Icons.tune_rounded;
   static const IconData sort = Icons.sort_rounded;
+  static const IconData print = Icons.print_rounded;
+  static const IconData export = Icons.file_download_outlined;
   static const IconData cash = Icons.payments_outlined;
   static const IconData bank = Icons.account_balance_rounded;
   static const IconData card = Icons.credit_card_rounded;

@@ -17,14 +17,20 @@ class DueReceiptHistoryRepository {
                   t.isVoided.equals(false) &
                   t.referenceType.equals('BILL') &
                   t.type.equals('INCOME'))
-              ..orderBy([(t) => OrderingTerm.desc(t.txnDate)]))
+              ..orderBy([
+                (t) => OrderingTerm.desc(t.txnDate),
+                (t) => OrderingTerm.desc(t.id),
+              ]))
             .get(),
         (_db.select(_db.bankTransactions)
               ..where((t) =>
                   t.isVoided.equals(false) &
                   t.referenceType.equals('BILL') &
                   t.type.equals('CREDIT'))
-              ..orderBy([(t) => OrderingTerm.desc(t.txnDate)]))
+              ..orderBy([
+                (t) => OrderingTerm.desc(t.txnDate),
+                (t) => OrderingTerm.desc(t.id),
+              ]))
             .get(),
         _db.select(_db.bills).get(),
         _db.select(_db.customers).get(),
@@ -47,7 +53,7 @@ class DueReceiptHistoryRepository {
 
       for (final txn in cashRows) {
         if (txn.amount <= 0.5 ||
-            !_looksLikeBillReceipt(txn.category, txn.description)) {
+            !_hasDueMarker(txn.category, txn.description, txn.referenceId)) {
           continue;
         }
         final billNo = _billNoFromReference(txn.referenceId);
@@ -66,7 +72,7 @@ class DueReceiptHistoryRepository {
 
       for (final txn in bankRows) {
         if (txn.amount <= 0.5 ||
-            !_looksLikeBillReceipt(txn.category, txn.description)) {
+            !_hasDueMarker(txn.category, txn.description, txn.referenceId)) {
           continue;
         }
         final billNo = _billNoFromReference(txn.referenceId);
@@ -193,17 +199,6 @@ class DueReceiptHistoryRepository {
       isDueMarked:
           _hasDueMarker(txn.category, txn.description, txn.referenceId),
     );
-  }
-
-  bool _looksLikeBillReceipt(String category, String? description) {
-    final value = category.trim().toUpperCase();
-    final desc = (description ?? '').toLowerCase();
-    return value == 'SALE' ||
-        value == 'SALE_PAYMENT' ||
-        value == 'DUE_COLLECTION' ||
-        value == 'DUE_RECEIPT' ||
-        desc.contains('receipt') ||
-        desc.contains('due');
   }
 
   bool _hasDueMarker(

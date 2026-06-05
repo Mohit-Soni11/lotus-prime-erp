@@ -115,6 +115,7 @@ class DueCollectionCustomerModel {
       .fold(0.0, (sum, bill) => sum + bill.dueAmount);
   int get overdueCount => bills.where((bill) => bill.isOverdue).length;
   bool get hasOverdue => overdueCount > 0;
+  DateTime get latestBillDate => bills.first.billDate;
 
   DateTime? get nextPromiseDate {
     DateTime? earliest;
@@ -146,9 +147,9 @@ class DueCollectionCustomerModel {
     for (final entry in buckets.entries) {
       final customerBills = List<DueCollectionBillModel>.from(entry.value)
         ..sort((a, b) {
-          final promise = _promiseSortValue(a).compareTo(_promiseSortValue(b));
-          if (promise != 0) return promise;
-          return b.dueAmount.compareTo(a.dueAmount);
+          final dateCompare = b.billDate.compareTo(a.billDate);
+          if (dateCompare != 0) return dateCompare;
+          return b.id.compareTo(a.id);
         });
       final first = customerBills.first;
       customers.add(
@@ -165,15 +166,11 @@ class DueCollectionCustomerModel {
     }
 
     customers.sort((a, b) {
-      if (a.hasOverdue != b.hasOverdue) return a.hasOverdue ? -1 : 1;
+      final dateCompare = b.latestBillDate.compareTo(a.latestBillDate);
+      if (dateCompare != 0) return dateCompare;
       return b.totalDue.compareTo(a.totalDue);
     });
     return customers;
-  }
-
-  static int _promiseSortValue(DueCollectionBillModel bill) {
-    if (bill.promiseDate == null) return 9999999999999;
-    return bill.promiseDate!.millisecondsSinceEpoch;
   }
 }
 
