@@ -1,11 +1,17 @@
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
+import 'package:sqflite/sqflite.dart' as sqflite;
 
+import '../../database/local_database/shop_database_helper.dart';
 import '../../database/db/app_database.dart';
 import '../../models/finance/due_collection_entry/due_collection_entry_model.dart';
+import '../setting/shop_setup/shop_session_manager.dart';
 
 class DueCollectionEntryRepository {
   final AppDatabase _db;
+  final ShopDatabaseHelper _shopDbHelper = ShopDatabaseHelper();
+  static const String _legacyAutoCollectionAccountNumber =
+      'LOTUS-DUE-COLLECTION-LEDGER';
 
   DueCollectionEntryRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
 
@@ -27,6 +33,7 @@ class DueCollectionEntryRepository {
 
   Future<List<DueCollectionBankAccountModel>> fetchBankAccounts() async {
     try {
+      await _syncShopProfileBankingToFinanceAccounts();
       final rows = await (_db.select(_db.bankAccounts)
             ..where((tbl) => tbl.isActive.equals(true))
             ..orderBy([
@@ -35,11 +42,14 @@ class DueCollectionEntryRepository {
             ]))
           .get();
       return rows
+          .where(_isRealPaymentAccount)
           .map(
             (row) => DueCollectionBankAccountModel(
               id: row.id,
               accountName: row.accountName,
               bankName: row.bankName,
+              accountNumber: row.accountNumber,
+              upiId: row.upiId,
               isPrimary: row.isPrimary,
             ),
           )
@@ -47,6 +57,115 @@ class DueCollectionEntryRepository {
     } catch (e) {
       debugPrint('DueCollectionEntryRepository.fetchBankAccounts error: $e');
       return [];
+    }
+  }
+
+  Future<int?> createPaymentAccount({
+    required String accountName,
+    required String bankName,
+    required String accountNumber,
+    String? holderName,
+    String? ifscCode,
+    String? branchName,
+    String? upiId,
+    bool isPrimary = false,
+  }) async {
+    final cleanAccountNumber = accountNumber.trim();
+    if (cleanAccountNumber.isEmpty) return null;
+
+    try {
+      late final int accountId;
+      await _db.transaction(() async {
+        if (isPrimary) {
+          await (_db.update(_db.bankAccounts))
+              .write(const BankAccountsCompanion(isPrimary: Value(false)));
+        }
+
+        final existing = await (_db.select(_db.bankAccounts)
+              ..where((tbl) => tbl.accountNumber.equals(cleanAccountNumber))
+              ..limit(1))
+            .getSingleOrNull();
+
+        final companion = BankAccountsCompanion(
+          accountName: Value(accountName.trim().isEmpty
+              ? 'Collection Account'
+              : accountName.trim()),
+          bankName: Value(bankName.trim().isEmpty ? 'Bank' : bankName.trim()),
+          holderName: Value(_nullable(holderName)),
+          accountNumber: Value(cleanAccountNumber),
+          ifscCode: Value(_nullable(ifscCode)?.toUpperCase()),
+          branchName: Value(_nullable(branchName)),
+          upiId: Value(_nullable(upiId)),
+          accountType: const Value('CURRENT'),
+          openingBalance: const Value(0),
+          isActive: const Value(true),
+          isPrimary: Value(isPrimary || existing?.isPrimary == true),
+          colorHex: const Value('#D4AF37'),
+          activeSince: Value(DateTime.now()),
+        );
+
+        if (existing != null) {
+          await (_db.update(_db.bankAccounts)
+                ..where((tbl) => tbl.id.equals(existing.id)))
+              .write(companion);
+          accountId = existing.id;
+        } else {
+          accountId = await _db.into(_db.bankAccounts).insert(companion);
+        }
+      });
+
+      await _syncPaymentAccountToShopProfile(
+        financeAccountId: accountId,
+        accountName: accountName,
+        bankName: bankName,
+        accountNumber: cleanAccountNumber,
+        holderName: holderName,
+        ifscCode: ifscCode,
+        branchName: branchName,
+        upiId: upiId,
+        isPrimary: isPrimary,
+      );
+      return accountId;
+    } catch (e) {
+      debugPrint('DueCollectionEntryRepository.createPaymentAccount error: $e');
+      return null;
+    }
+  }
+
+  Future<bool> updatePaymentAccountUpi({
+    required int accountId,
+    required String upiId,
+  }) async {
+    final cleanUpi = upiId.trim();
+    if (cleanUpi.isEmpty) return false;
+
+    try {
+      final account = await (_db.select(_db.bankAccounts)
+            ..where((tbl) => tbl.id.equals(accountId))
+            ..limit(1))
+          .getSingleOrNull();
+      if (account == null) return false;
+
+      await (_db.update(_db.bankAccounts)
+            ..where((tbl) => tbl.id.equals(accountId)))
+          .write(BankAccountsCompanion(upiId: Value(cleanUpi)));
+
+      await _syncPaymentAccountToShopProfile(
+        financeAccountId: account.id,
+        accountName: account.accountName,
+        bankName: account.bankName,
+        accountNumber: account.accountNumber,
+        holderName: account.holderName,
+        ifscCode: account.ifscCode,
+        branchName: account.branchName,
+        upiId: cleanUpi,
+        isPrimary: account.isPrimary,
+      );
+      return true;
+    } catch (e) {
+      debugPrint(
+          'DueCollectionEntryRepository.updatePaymentAccountUpi error: $e');
+      return false;
     }
   }
 
@@ -107,7 +226,7 @@ class DueCollectionEntryRepository {
           if (resolvedBankAccountId == null) {
             return const DueCollectionSaveResult(
               success: false,
-              message: 'No active bank account found for this payment mode.',
+              message: 'Please set your bank/UPI details first.',
             );
           }
         }
@@ -136,6 +255,7 @@ class DueCollectionEntryRepository {
             dueAmount: Value(newDue),
             paymentStatus: Value(newStatus),
             promiseDate: Value(newDue <= 0.5 ? null : nextPromiseDate),
+            updatedAt: Value(now),
           ),
         );
 
@@ -292,15 +412,17 @@ class DueCollectionEntryRepository {
   }
 
   Future<int?> _findPreferredBankAccountId() async {
-    final account = await (_db.select(_db.bankAccounts)
+    final accounts = await (_db.select(_db.bankAccounts)
           ..where((tbl) => tbl.isActive.equals(true))
           ..orderBy([
             (tbl) => OrderingTerm.desc(tbl.isPrimary),
             (tbl) => OrderingTerm.asc(tbl.id),
-          ])
-          ..limit(1))
-        .getSingleOrNull();
-    return account?.id;
+          ]))
+        .get();
+    for (final account in accounts) {
+      if (_isRealPaymentAccount(account)) return account.id;
+    }
+    return null;
   }
 
   Future<String> _generateCashTxnId() async {
@@ -324,6 +446,177 @@ class DueCollectionEntryRepository {
 
   String _buildReferenceId(String billNo, String paymentMode) =>
       '$billNo#DUE#$paymentMode';
+
+  Future<void> _syncPaymentAccountToShopProfile({
+    required int financeAccountId,
+    required String accountName,
+    required String bankName,
+    required String accountNumber,
+    required String? holderName,
+    required String? ifscCode,
+    required String? branchName,
+    required String? upiId,
+    required bool isPrimary,
+  }) async {
+    try {
+      final tenantId = await ShopSessionManager.getPermanentTenantId();
+      final db = await _shopDbHelper.database;
+      final existingRows = await db.query(
+        'shop_bank_accounts',
+        where: 'tenant_id = ? AND acc = ?',
+        whereArgs: [tenantId, accountNumber],
+        limit: 1,
+      );
+      final existing = existingRows.isEmpty ? null : existingRows.first;
+      final rowId = isPrimary
+          ? 'primary_1'
+          : existing?['id']?.toString() ?? 'finance_$financeAccountId';
+      final title = isPrimary
+          ? 'Primary Operating Account'
+          : (accountName.trim().isEmpty
+              ? 'Additional Account'
+              : accountName.trim());
+
+      await db.insert(
+        'shop_bank_accounts',
+        {
+          'id': rowId,
+          'tenant_id': tenantId,
+          'title': title,
+          'holder': _nullable(holderName) ?? '',
+          'bank': bankName.trim(),
+          'type': 'Current',
+          'acc': accountNumber,
+          'ifsc': _nullable(ifscCode) ?? '',
+          'branch': _nullable(branchName) ?? '',
+          'upi': _nullable(upiId) ?? '',
+          'qr_image_path': existing?['qr_image_path'],
+          'is_active': 1,
+        },
+        conflictAlgorithm: sqflite.ConflictAlgorithm.replace,
+      );
+
+      if (isPrimary) {
+        final existingProfile =
+            await (_db.select(_db.shopProfiles)..limit(1)).getSingleOrNull();
+        final companion = ShopProfilesCompanion(
+          bankHolderName: Value(_nullable(holderName)),
+          bankName: Value(bankName.trim()),
+          bankAccNo: Value(accountNumber),
+          bankIfsc: Value(_nullable(ifscCode)),
+          upiId: Value(_nullable(upiId)),
+        );
+        if (existingProfile != null) {
+          await (_db.update(_db.shopProfiles)
+                ..where((tbl) => tbl.id.equals(existingProfile.id)))
+              .write(companion);
+        }
+      }
+    } catch (e) {
+      debugPrint(
+          'DueCollectionEntryRepository._syncPaymentAccountToShopProfile error: $e');
+    }
+  }
+
+  Future<void> _syncShopProfileBankingToFinanceAccounts() async {
+    try {
+      final tenantId = await ShopSessionManager.getPermanentTenantId();
+      final shopDb = await _shopDbHelper.database;
+      final rows = await shopDb.query(
+        'shop_bank_accounts',
+        where: 'tenant_id = ? AND is_active = 1',
+        whereArgs: [tenantId],
+      );
+      if (rows.isEmpty) return;
+      final sortedRows = _sortShopBankRows(rows);
+
+      await (_db.update(_db.bankAccounts))
+          .write(const BankAccountsCompanion(isPrimary: Value(false)));
+
+      for (var index = 0; index < sortedRows.length; index++) {
+        final row = sortedRows[index];
+        final accountNumber = _shopAccountNumber(row);
+        if (accountNumber.isEmpty ||
+            accountNumber == _legacyAutoCollectionAccountNumber) {
+          continue;
+        }
+
+        final existing = await (_db.select(_db.bankAccounts)
+              ..where((tbl) => tbl.accountNumber.equals(accountNumber))
+              ..limit(1))
+            .getSingleOrNull();
+
+        final title = _rowText(row, 'title');
+        final bankName = _rowText(row, 'bank');
+        final companion = BankAccountsCompanion(
+          accountName: Value(title.isEmpty
+              ? (index == 0
+                  ? 'Primary Operating Account'
+                  : 'Additional Account ${index + 1}')
+              : title),
+          bankName: Value(bankName.isEmpty ? 'Bank' : bankName),
+          holderName: Value(_nullable(_rowText(row, 'holder'))),
+          accountNumber: Value(accountNumber),
+          ifscCode: Value(_nullable(_rowText(row, 'ifsc'))?.toUpperCase()),
+          branchName: Value(_nullable(_rowText(row, 'branch'))),
+          upiId: Value(_nullable(_rowText(row, 'upi'))),
+          accountType: Value(_financeAccountType(_rowText(row, 'type'))),
+          openingBalance: const Value(0),
+          isActive: const Value(true),
+          isPrimary: Value(index == 0),
+          colorHex: const Value('#D4AF37'),
+          activeSince: Value(DateTime.now()),
+        );
+
+        if (existing != null) {
+          await (_db.update(_db.bankAccounts)
+                ..where((tbl) => tbl.id.equals(existing.id)))
+              .write(companion);
+        } else {
+          await _db.into(_db.bankAccounts).insert(companion);
+        }
+      }
+    } catch (e) {
+      debugPrint(
+          'DueCollectionEntryRepository._syncShopProfileBankingToFinanceAccounts error: $e');
+    }
+  }
+
+  bool _isRealPaymentAccount(BankAccount account) {
+    return account.accountNumber != _legacyAutoCollectionAccountNumber &&
+        account.accountName.trim().toLowerCase() != 'counter collection';
+  }
+
+  String _shopAccountNumber(Map<String, Object?> row) {
+    final acc = _rowText(row, 'acc');
+    if (acc.isNotEmpty) return acc;
+    final upi = _rowText(row, 'upi');
+    if (upi.isNotEmpty) return 'UPI:$upi';
+    return '';
+  }
+
+  List<Map<String, Object?>> _sortShopBankRows(
+      List<Map<String, Object?>> rows) {
+    final sorted = List<Map<String, Object?>>.from(rows);
+    sorted.sort((a, b) {
+      final aPrimary = _rowText(a, 'id') == 'primary_1';
+      final bPrimary = _rowText(b, 'id') == 'primary_1';
+      if (aPrimary != bPrimary) return aPrimary ? -1 : 1;
+      return _rowText(a, 'title').compareTo(_rowText(b, 'title'));
+    });
+    return sorted;
+  }
+
+  String _rowText(Map<String, Object?> row, String key) {
+    return row[key]?.toString().trim() ?? '';
+  }
+
+  String _financeAccountType(String value) {
+    final normalized = value.trim().toLowerCase();
+    if (normalized.contains('saving')) return 'SAVINGS';
+    if (normalized.contains('od') || normalized.contains('cc')) return 'OD';
+    return 'CURRENT';
+  }
 
   String _buildNarration(
     String billNo,
@@ -387,5 +680,10 @@ class DueCollectionEntryRepository {
       if (value != null && value.trim().isNotEmpty) return value.trim();
     }
     return '-';
+  }
+
+  String? _nullable(String? value) {
+    final text = value?.trim() ?? '';
+    return text.isEmpty ? null : text;
   }
 }

@@ -34,7 +34,7 @@ class DayBookStrings {
   static const String retailSales = 'Direct Retail Sales';
   static const String retailSalesSub = 'Counter sales — Cash / UPI / Card';
   static const String dueReceipts = 'Due Receipts';
-  static const String dueReceiptsSub = 'Pending udhaar recovered';
+  static const String dueReceiptsSub = 'Recovered pending bill payments';
   static const String bookingAdv = 'Booking Advances';
   static const String bookingAdvSub = 'Custom order advance deposits';
   static const String vendorRefund = 'Vendor Refunds';

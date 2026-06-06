@@ -120,7 +120,7 @@ class CashBookSummaryModel {
 
   static final _currencyFmt = NumberFormat.currency(
     locale: 'en_IN',
-    symbol: '₹ ',
+    symbol: 'Rs ',
     decimalDigits: 2,
   );
 

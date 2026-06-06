@@ -4,6 +4,12 @@ import '../../../logic/finance/due_receipt_history/due_receipt_history_controlle
 import '../../../models/finance/due_receipt_history/due_receipt_history_model.dart';
 import '../../../theme/finance/due_receipt_history/due_receipt_history_theme.dart';
 
+Color _receiptStatusColor(DueReceiptModel receipt) {
+  return receipt.hasCurrentDue
+      ? DueReceiptHistoryColors.warning
+      : DueReceiptHistoryColors.success;
+}
+
 class DueReceiptHistoryDetailPanel extends StatelessWidget {
   final DueReceiptModel? receipt;
 
@@ -402,11 +408,7 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = receipt.isDueMarked
-        ? DueReceiptHistoryColors.gold
-        : receipt.hasCurrentDue
-            ? DueReceiptHistoryColors.warning
-            : DueReceiptHistoryColors.success;
+    final color = _receiptStatusColor(receipt);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       decoration: BoxDecoration(

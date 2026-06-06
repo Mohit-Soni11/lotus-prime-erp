@@ -4,6 +4,18 @@ import '../../../logic/finance/due_receipt_history/due_receipt_history_controlle
 import '../../../models/finance/due_receipt_history/due_receipt_history_model.dart';
 import '../../../theme/finance/due_receipt_history/due_receipt_history_theme.dart';
 
+Color _receiptStatusColor(DueReceiptModel receipt) {
+  return receipt.hasCurrentDue
+      ? DueReceiptHistoryColors.warning
+      : DueReceiptHistoryColors.success;
+}
+
+Color _receiptStatusSoftColor(DueReceiptModel receipt) {
+  return receipt.hasCurrentDue
+      ? DueReceiptHistoryColors.warningSoft
+      : DueReceiptHistoryColors.successSoft;
+}
+
 class DueReceiptHistoryList extends StatelessWidget {
   final DueReceiptHistoryController ctrl;
 
@@ -238,6 +250,8 @@ class _CustomerCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = _receiptStatusColor(receipt);
+    final softColor = _receiptStatusSoftColor(receipt);
     return Row(
       children: [
         Container(
@@ -245,25 +259,13 @@ class _CustomerCell extends StatelessWidget {
           height: 36,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: receipt.isDueMarked
-                ? DueReceiptHistoryColors.goldSoft
-                : DueReceiptHistoryColors.infoSoft,
+            color: softColor,
             borderRadius: BorderRadius.circular(9),
             border: Border.all(
-              color: receipt.isDueMarked
-                  ? DueReceiptHistoryColors.gold.withValues(alpha: 0.35)
-                  : DueReceiptHistoryColors.info.withValues(alpha: 0.2),
+              color: color.withValues(alpha: 0.24),
             ),
           ),
-          child: Icon(
-            receipt.isDueMarked
-                ? DueReceiptHistoryIcons.totalCollected
-                : DueReceiptHistoryIcons.customers,
-            size: 18,
-            color: receipt.isDueMarked
-                ? DueReceiptHistoryColors.gold
-                : DueReceiptHistoryColors.info,
-          ),
+          child: Icon(DueReceiptHistoryIcons.receipts, size: 18, color: color),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -363,11 +365,7 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = receipt.isDueMarked
-        ? DueReceiptHistoryColors.gold
-        : receipt.hasCurrentDue
-            ? DueReceiptHistoryColors.warning
-            : DueReceiptHistoryColors.success;
+    final color = _receiptStatusColor(receipt);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(

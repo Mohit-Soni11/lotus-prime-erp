@@ -48,6 +48,13 @@ class _DueCollectionEntryScreenState extends State<DueCollectionEntryScreen> {
     final receiptBill = _ctrl.selectedBill;
     final result = await _ctrl.saveCollection();
     if (!mounted) return;
+    if (!result.success && _ctrl.needsPaymentSetup) {
+      final configured = await _showPaymentSetupDialog();
+      if (configured && mounted) {
+        await _handleSave(printReceipt: printReceipt);
+      }
+      return;
+    }
     _showPremiumNotice(
       result.message,
       type: result.success
@@ -58,6 +65,15 @@ class _DueCollectionEntryScreenState extends State<DueCollectionEntryScreen> {
     if (result.success && printReceipt && receiptBill != null) {
       await _printDueReceipt(receiptBill);
     }
+  }
+
+  Future<bool> _showPaymentSetupDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _PaymentSetupDialog(ctrl: _ctrl),
+    );
+    return result == true;
   }
 
   void _showPremiumNotice(String message, {required _PremiumNoticeType type}) {
@@ -2075,6 +2091,14 @@ class _CollectionForm extends StatelessWidget {
           const Text('Bank Account', style: DueCollectionEntryStyles.label),
           const SizedBox(height: 7),
           _BankAccountDropdown(ctrl: ctrl),
+          if (ctrl.needsUpiSetup) ...[
+            const SizedBox(height: 8),
+            const _MessageBox(
+              message:
+                  'Selected account has no UPI ID. Click Save to set UPI details first.',
+              isError: true,
+            ),
+          ],
         ],
         const SizedBox(height: 14),
         _PromiseDateField(ctrl: ctrl),
@@ -2817,25 +2841,707 @@ class _BankAccountDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     if (ctrl.bankAccounts.isEmpty) {
       return const _MessageBox(
-          message: 'No active bank account found.', isError: true);
+          message:
+              'No active bank account found. Click Save to set bank/UPI details first.',
+          isError: true);
     }
+    final accounts = ctrl.bankAccounts;
+    final selected = ctrl.selectedBankAccount ?? accounts.first;
+    final selectedIndex = accounts.indexWhere((a) => a.id == selected.id);
+    return PopupMenuButton<int>(
+      tooltip: 'Select payment account',
+      color: DueCollectionEntryColors.bodyPanel,
+      elevation: 10,
+      offset: const Offset(0, 8),
+      constraints: const BoxConstraints(minWidth: 320, maxWidth: 430),
+      onSelected: ctrl.setBankAccount,
+      itemBuilder: (context) => List.generate(accounts.length, (index) {
+        final account = accounts[index];
+        return PopupMenuItem<int>(
+          value: account.id,
+          padding: EdgeInsets.zero,
+          child: _PaymentAccountOption(
+            account: account,
+            role: _accountRole(account, index),
+            selected: account.id == selected.id,
+          ),
+        );
+      }),
+      child: _SelectedPaymentAccountCard(
+        account: selected,
+        role: _accountRole(selected, selectedIndex < 0 ? 0 : selectedIndex),
+      ),
+    );
+  }
+
+  String _accountRole(DueCollectionBankAccountModel account, int index) {
+    if (account.isPrimary || index == 0) return 'Primary Bank';
+    if (index == 1) return 'Secondary Bank';
+    return 'Additional Bank ${index + 1}';
+  }
+}
+
+class _SelectedPaymentAccountCard extends StatelessWidget {
+  final DueCollectionBankAccountModel account;
+  final String role;
+
+  const _SelectedPaymentAccountCard({
+    required this.account,
+    required this.role,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      height: 46,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: DueCollectionEntryStyles.flatPanel(
-          color: DueCollectionEntryColors.panelSoft),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          value: ctrl.selectedBankAccountId,
-          isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded),
-          items: ctrl.bankAccounts
-              .map((account) => DropdownMenuItem<int>(
-                  value: account.id,
-                  child: Text(account.label,
-                      maxLines: 1, overflow: TextOverflow.ellipsis)))
-              .toList(),
-          onChanged: ctrl.setBankAccount,
+        color: DueCollectionEntryColors.panelSoft,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: DueCollectionEntryColors.brandGoldLight,
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: const Icon(DueCollectionEntryIcons.bank,
+                size: 18, color: DueCollectionEntryColors.brandGold),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(role,
+                          style: DueCollectionEntryStyles.label.copyWith(
+                              color: DueCollectionEntryColors.brandGold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                    if (account.hasUpi) ...[
+                      const SizedBox(width: 6),
+                      const _MiniAccountBadge(label: 'UPI'),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  _accountTitle(account),
+                  style: DueCollectionEntryStyles.rowTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _accountMeta(account),
+                  style: DueCollectionEntryStyles.rowSub,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.keyboard_arrow_down_rounded,
+              size: 20, color: DueCollectionEntryColors.textMuted),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaymentAccountOption extends StatelessWidget {
+  final DueCollectionBankAccountModel account;
+  final String role;
+  final bool selected;
+
+  const _PaymentAccountOption({
+    required this.account,
+    required this.role,
+    required this.selected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: selected
+          ? DueCollectionEntryColors.brandGoldLight
+          : DueCollectionEntryColors.bodyPanel,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          Icon(
+            selected ? Icons.radio_button_checked : Icons.radio_button_off,
+            size: 18,
+            color: selected
+                ? DueCollectionEntryColors.brandGold
+                : DueCollectionEntryColors.textMuted,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(role,
+                    style: DueCollectionEntryStyles.label.copyWith(
+                        color: selected
+                            ? DueCollectionEntryColors.brandGold
+                            : DueCollectionEntryColors.textSecondary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 3),
+                Text(
+                  _accountTitle(account),
+                  style: DueCollectionEntryStyles.rowTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _accountMeta(account),
+                  style: DueCollectionEntryStyles.rowSub,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          if (account.hasUpi) const _MiniAccountBadge(label: 'UPI'),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniAccountBadge extends StatelessWidget {
+  final String label;
+
+  const _MiniAccountBadge({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: DueCollectionEntryColors.successBg,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: DueCollectionEntryColors.success.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Text(
+        label,
+        style: DueCollectionEntryStyles.rowSub.copyWith(
+          color: DueCollectionEntryColors.success,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+String _accountTitle(DueCollectionBankAccountModel account) {
+  if (account.bankName.trim().isEmpty) return account.accountName;
+  return '${account.accountName} - ${account.bankName}';
+}
+
+String _accountMeta(DueCollectionBankAccountModel account) {
+  final parts = <String>[];
+  final number = _maskAccountNumber(account.accountNumber);
+  if (number.isNotEmpty) parts.add(number);
+  final upi = account.upiId?.trim() ?? '';
+  if (upi.isNotEmpty) parts.add(upi);
+  return parts.isEmpty ? 'Account detail saved' : parts.join('  |  ');
+}
+
+String _maskAccountNumber(String value) {
+  final text = value.trim();
+  if (text.isEmpty) return '';
+  if (text.startsWith('UPI:')) return text.substring(4);
+  if (text.length <= 4) return text;
+  return 'xxxx ${text.substring(text.length - 4)}';
+}
+
+class _PaymentSetupDialog extends StatefulWidget {
+  final DueCollectionEntryController ctrl;
+
+  const _PaymentSetupDialog({required this.ctrl});
+
+  @override
+  State<_PaymentSetupDialog> createState() => _PaymentSetupDialogState();
+}
+
+class _PaymentSetupDialogState extends State<_PaymentSetupDialog> {
+  late final TextEditingController _accountNameCtrl;
+  late final TextEditingController _bankNameCtrl;
+  late final TextEditingController _accountNumberCtrl;
+  late final TextEditingController _holderCtrl;
+  late final TextEditingController _ifscCtrl;
+  late final TextEditingController _branchCtrl;
+  late final TextEditingController _upiCtrl;
+
+  String? _error;
+  bool _isSaving = false;
+  late bool _isPrimary;
+
+  bool get _upiOnly =>
+      widget.ctrl.needsUpiSetup && widget.ctrl.selectedBankAccount != null;
+  bool get _upiRequired =>
+      widget.ctrl.paymentMode == DueCollectionPaymentMode.upi;
+
+  @override
+  void initState() {
+    super.initState();
+    final selected = widget.ctrl.selectedBankAccount;
+    _accountNameCtrl = TextEditingController(text: selected?.accountName ?? '');
+    _bankNameCtrl = TextEditingController(text: selected?.bankName ?? '');
+    _accountNumberCtrl =
+        TextEditingController(text: selected?.accountNumber ?? '');
+    _holderCtrl = TextEditingController();
+    _ifscCtrl = TextEditingController();
+    _branchCtrl = TextEditingController();
+    _upiCtrl = TextEditingController(text: selected?.upiId ?? '');
+    _isPrimary = widget.ctrl.bankAccounts.isEmpty;
+  }
+
+  @override
+  void dispose() {
+    _accountNameCtrl.dispose();
+    _bankNameCtrl.dispose();
+    _accountNumberCtrl.dispose();
+    _holderCtrl.dispose();
+    _ifscCtrl.dispose();
+    _branchCtrl.dispose();
+    _upiCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    setState(() => _error = null);
+    if (_upiOnly) {
+      if (_upiCtrl.text.trim().isEmpty) {
+        setState(() => _error = 'Enter UPI ID for selected account.');
+        return;
+      }
+      setState(() => _isSaving = true);
+      final success =
+          await widget.ctrl.updateSelectedAccountUpi(_upiCtrl.text.trim());
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      if (success) {
+        Navigator.pop(context, true);
+      } else {
+        setState(() => _error = 'Could not save UPI ID.');
+      }
+      return;
+    }
+
+    if (_accountNameCtrl.text.trim().isEmpty ||
+        _bankNameCtrl.text.trim().isEmpty ||
+        _accountNumberCtrl.text.trim().isEmpty) {
+      setState(() =>
+          _error = 'Account name, bank name and account number are required.');
+      return;
+    }
+    if (_upiRequired && _upiCtrl.text.trim().isEmpty) {
+      setState(() => _error = 'UPI ID is required for UPI payment.');
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    final id = await widget.ctrl.createPaymentAccount(
+      accountName: _accountNameCtrl.text.trim(),
+      bankName: _bankNameCtrl.text.trim(),
+      accountNumber: _accountNumberCtrl.text.trim(),
+      holderName: _holderCtrl.text.trim(),
+      ifscCode: _ifscCtrl.text.trim(),
+      branchName: _branchCtrl.text.trim(),
+      upiId: _upiCtrl.text.trim(),
+      isPrimary: _isPrimary,
+    );
+    if (!mounted) return;
+    setState(() => _isSaving = false);
+    if (id != null) {
+      Navigator.pop(context, true);
+    } else {
+      setState(() => _error = 'Could not save bank account.');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final modeLabel = widget.ctrl.paymentMode.label;
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 560),
+        decoration: BoxDecoration(
+          color: DueCollectionEntryColors.bodyPanel,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 32,
+              offset: const Offset(0, 14),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 16, 14, 15),
+              decoration: const BoxDecoration(
+                color: DueCollectionEntryColors.shellPanel,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: DueCollectionEntryColors.brandGoldLight,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(DueCollectionEntryIcons.bank,
+                        size: 20, color: DueCollectionEntryColors.brandGold),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Set $modeLabel Details',
+                            style: DueCollectionEntryStyles.appBarTitle),
+                        const SizedBox(height: 3),
+                        Text(
+                          _upiOnly
+                              ? 'Add UPI ID to the selected account before saving.'
+                              : 'Create/select a real account so payment records stay traceable.',
+                          style: DueCollectionEntryStyles.appBarSub,
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _isSaving ? null : () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded,
+                        color: DueCollectionEntryColors.shellMuted),
+                  ),
+                ],
+              ),
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_upiOnly) ...[
+                      _SetupField(
+                        label: 'Selected Account',
+                        controller: _accountNameCtrl,
+                        icon: DueCollectionEntryIcons.bank,
+                        readOnly: true,
+                      ),
+                      const SizedBox(height: 12),
+                      _SetupField(
+                        label: 'UPI ID',
+                        controller: _upiCtrl,
+                        icon: DueCollectionEntryIcons.upi,
+                        hint: 'example@upi',
+                      ),
+                    ] else ...[
+                      _SetupTargetSelector(
+                        isPrimary: _isPrimary,
+                        onChanged: (value) =>
+                            setState(() => _isPrimary = value),
+                      ),
+                      const SizedBox(height: 14),
+                      _SetupField(
+                        label: 'Account Name',
+                        controller: _accountNameCtrl,
+                        icon: DueCollectionEntryIcons.bank,
+                        hint: 'HDFC Current / PhonePe UPI',
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _SetupField(
+                              label: 'Bank Name',
+                              controller: _bankNameCtrl,
+                              icon: DueCollectionEntryIcons.bank,
+                              hint: 'HDFC Bank',
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _SetupField(
+                              label: 'Account Number',
+                              controller: _accountNumberCtrl,
+                              icon: DueCollectionEntryIcons.bill,
+                              hint: 'Account no',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _SetupField(
+                              label: 'Holder Name',
+                              controller: _holderCtrl,
+                              icon: DueCollectionEntryIcons.customer,
+                              hint: 'Optional',
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _SetupField(
+                              label: 'IFSC',
+                              controller: _ifscCtrl,
+                              icon: DueCollectionEntryIcons.receipt,
+                              hint: 'Optional',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _SetupField(
+                              label: 'Branch',
+                              controller: _branchCtrl,
+                              icon: DueCollectionEntryIcons.location,
+                              hint: 'Optional',
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _SetupField(
+                              label: _upiRequired ? 'UPI ID' : 'UPI ID',
+                              controller: _upiCtrl,
+                              icon: DueCollectionEntryIcons.upi,
+                              hint: _upiRequired ? 'Required' : 'Optional',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (_error != null) ...[
+                      const SizedBox(height: 10),
+                      _MessageBox(message: _error!, isError: true),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: const BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: DueCollectionEntryColors.bodyBorder),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed:
+                          _isSaving ? null : () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _isSaving ? null : _save,
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(DueCollectionEntryIcons.save, size: 17),
+                      label: Text(_isSaving ? 'Saving...' : 'Save Details'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: DueCollectionEntryColors.brandGold,
+                        foregroundColor: const Color(0xFF111827),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SetupField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final IconData icon;
+  final String? hint;
+  final bool readOnly;
+
+  const _SetupField({
+    required this.label,
+    required this.controller,
+    required this.icon,
+    this.hint,
+    this.readOnly = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      readOnly: readOnly,
+      style: DueCollectionEntryStyles.rowTitle,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(icon, color: DueCollectionEntryColors.brandGold),
+        filled: true,
+        fillColor: DueCollectionEntryColors.panelSoft,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide:
+              const BorderSide(color: DueCollectionEntryColors.bodyBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+              color: DueCollectionEntryColors.brandGold, width: 1.4),
+        ),
+      ),
+    );
+  }
+}
+
+class _SetupTargetSelector extends StatelessWidget {
+  final bool isPrimary;
+  final ValueChanged<bool> onChanged;
+
+  const _SetupTargetSelector({
+    required this.isPrimary,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _SetupTargetCard(
+            selected: isPrimary,
+            icon: DueCollectionEntryIcons.verified,
+            title: 'Primary Account',
+            subtitle: 'Update Shop Profile primary bank',
+            onTap: () => onChanged(true),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _SetupTargetCard(
+            selected: !isPrimary,
+            icon: DueCollectionEntryIcons.bank,
+            title: 'Additional Account',
+            subtitle: 'Create another banking account',
+            onTap: () => onChanged(false),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SetupTargetCard extends StatelessWidget {
+  final bool selected;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _SetupTargetCard({
+    required this.selected,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected
+        ? DueCollectionEntryColors.brandGold
+        : DueCollectionEntryColors.textMuted;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: selected
+              ? DueCollectionEntryColors.brandGoldLight
+              : DueCollectionEntryColors.panelSoft,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected
+                ? DueCollectionEntryColors.brandGold
+                : DueCollectionEntryColors.bodyBorder,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: DueCollectionEntryStyles.rowTitle
+                        .copyWith(color: DueCollectionEntryColors.textPrimary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: DueCollectionEntryStyles.rowSub,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              selected ? Icons.radio_button_checked : Icons.radio_button_off,
+              size: 18,
+              color: color,
+            ),
+          ],
         ),
       ),
     );
@@ -3009,7 +3715,7 @@ class _SaveActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = ctrl.canSave;
+    final enabled = ctrl.canAttemptSave;
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: AnimatedContainer(

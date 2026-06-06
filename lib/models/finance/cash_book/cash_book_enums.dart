@@ -27,6 +27,7 @@ enum CashTransactionType {
 
 enum IncomeCategory {
   sale('SALE', 'Sale (POS)'),
+  dueCollection('DUE_COLLECTION', 'Due Collection'),
   advanceBooking('ADVANCE', 'Advance Booking'),
   orderDelivery('ORDER_DELIVERY', 'Order Delivery'),
   girviReturn('GIRVI_RETURN', 'Girvi Released'), // ✅ v2

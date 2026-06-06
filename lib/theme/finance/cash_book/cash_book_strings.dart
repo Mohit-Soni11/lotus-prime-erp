@@ -9,7 +9,7 @@ class CashBookStrings {
 
   // ── AppBar ────────────────────────────────────────────────────────────────
   static const String moduleTitle = 'Cash Book';
-  static const String moduleSubtitle = 'Daily Financial Ledger';
+  static const String moduleSubtitle = 'Cash ledger and counter movement';
 
   // ── View Mode Labels ──────────────────────────────────────────────────────
   static const String viewDaily = 'Daily';
@@ -29,14 +29,15 @@ class CashBookStrings {
   // ── Transaction List ──────────────────────────────────────────────────────
   static const String noTransactions = 'No transactions found';
   static const String noTransactionsHint =
-      'Add your first entry using the + button above.';
-  static const String searchHint = 'Search by category, party or TXN ID…';
+      'Add an entry or sync today\'s billing receipts.';
+  static const String searchHint =
+      'Search category, party, invoice, reference, or transaction ID';
 
   // ── Entry Dialog ──────────────────────────────────────────────────────────
   static const String addEntry = 'Add Entry';
   static const String addIncome = 'Add Income';
   static const String addExpense = 'Add Expense';
-  static const String amount = 'Amount (₹)';
+  static const String amount = 'Amount';
   static const String amountHint = 'Enter amount';
   static const String category = 'Category';
   static const String paymentMode = 'Payment Mode';
@@ -46,14 +47,14 @@ class CashBookStrings {
   static const String partyHint = 'Customer / Supplier name';
   static const String date = 'Date';
   static const String saveEntry = 'Save Entry';
-  static const String saving = 'Saving…';
+  static const String saving = 'Saving...';
   static const String cancel = 'Cancel';
 
   // ── Badges ────────────────────────────────────────────────────────────────
   static const String autoLabel = 'AUTO';
 
   // ── Sync ──────────────────────────────────────────────────────────────────
-  static const String syncBills = 'Sync Today\'s Bills';
+  static const String syncBills = 'Sync Billing Receipts';
   static const String syncSuccess = 'Bills synced successfully';
   static const String syncError = 'Sync failed. Please try again.';
 

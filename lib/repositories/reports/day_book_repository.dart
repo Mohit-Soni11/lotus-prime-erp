@@ -69,6 +69,7 @@ class DayBookRepository {
         _fetchOpeningCash(), // 8: double
         _fetch7DayExpenseAvg(date), // 9: double
         _fetchPaymentBreakup(start, end), // 10: PaymentBreakup
+        _fetchDueCollectionReceipts(start, end), // 11: double
       ]);
 
       final gstSales = results[0] as GstBillSummary;
@@ -82,11 +83,13 @@ class DayBookRepository {
       final openingCash = results[8] as double;
       final avgExpense = results[9] as double;
       final payBreakup = results[10] as PaymentBreakup;
+      final dueCollection = results[11] as double;
 
       // ── Build CashInflow ───────────────────────────────────────────────────
       final cashIn = CashInflow(
         gstSales: gstSales,
         nonGstSales: nonGstSales,
+        dueCollection: dueCollection,
         advance: incomeMap['ADVANCE'] ?? 0,
         orderDelivery: incomeMap['ORDER_DELIVERY'] ?? 0,
         girviReturn: incomeMap['GIRVI_RETURN'] ?? 0,
@@ -570,6 +573,36 @@ class DayBookRepository {
     } catch (e) {
       debugPrint('❌ _fetchPaymentBreakup: $e');
       return const PaymentBreakup();
+    }
+  }
+
+  Future<double> _fetchDueCollectionReceipts(
+      DateTime start, DateTime end) async {
+    try {
+      final cashRows = await (_db.select(_db.cashTransactions)
+            ..where((t) =>
+                t.type.equals('INCOME') &
+                t.category.equals('DUE_COLLECTION') &
+                t.isVoided.equals(false) &
+                t.txnDate.isBiggerOrEqualValue(start) &
+                t.txnDate.isSmallerOrEqualValue(end)))
+          .get();
+
+      final bankRows = await (_db.select(_db.bankTransactions)
+            ..where((t) =>
+                t.type.equals('CREDIT') &
+                t.category.equals('DUE_COLLECTION') &
+                t.isVoided.equals(false) &
+                t.txnDate.isBiggerOrEqualValue(start) &
+                t.txnDate.isSmallerOrEqualValue(end)))
+          .get();
+
+      final cashTotal = cashRows.fold<double>(0, (sum, r) => sum + r.amount);
+      final bankTotal = bankRows.fold<double>(0, (sum, r) => sum + r.amount);
+      return cashTotal + bankTotal;
+    } catch (e) {
+      debugPrint('_fetchDueCollectionReceipts: $e');
+      return 0;
     }
   }
 

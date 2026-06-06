@@ -69,7 +69,11 @@ class PaymentStatusLogic extends ChangeNotifier {
     // Recent bills watch — latest pehle, limit se zyada mat lao
     final query = _db.select(_db.bills)
       ..where((t) => t.status.equals('ACTIVE'))
-      ..orderBy([(t) => OrderingTerm.desc(t.billDate)])
+      ..orderBy([
+        (t) => OrderingTerm.desc(t.updatedAt),
+        (t) => OrderingTerm.desc(t.billDate),
+        (t) => OrderingTerm.desc(t.id),
+      ])
       ..limit(_kFetchLimit);
 
     _billsSub = query.watch().listen(
@@ -104,9 +108,9 @@ class PaymentStatusLogic extends ChangeNotifier {
 
         // Amounts compute karo
         final double total = bill.finalAmount;
-        final double paid = bill.paidAmount; // v5 se naya column
-        final double due = (total - paid).clamp(0.0, double.infinity);
-        final PaymentStatus status = PaymentBillItem.computeStatus(paid, total);
+        final double paid = bill.paidAmount;
+        final double due = _currentDue(bill);
+        final PaymentStatus status = _statusFromDue(paid: paid, due: due);
 
         items.add(PaymentBillItem(
           billId: bill.id,
@@ -172,6 +176,21 @@ class PaymentStatusLogic extends ChangeNotifier {
       partialCount: partialCnt,
       unpaidCount: unpaidCnt,
     );
+  }
+
+  double _currentDue(Bill bill) {
+    final computed = bill.finalAmount - bill.paidAmount;
+    final due = bill.dueAmount > 0.5 ? bill.dueAmount : computed;
+    return due.clamp(0.0, double.infinity).toDouble();
+  }
+
+  PaymentStatus _statusFromDue({
+    required double paid,
+    required double due,
+  }) {
+    if (due <= 0.5) return PaymentStatus.paid;
+    if (paid > 0.5) return PaymentStatus.partial;
+    return PaymentStatus.unpaid;
   }
 
   // ==========================================

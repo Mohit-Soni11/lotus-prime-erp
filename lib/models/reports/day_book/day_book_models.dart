@@ -92,6 +92,7 @@ class CashInflow {
   final NonGstBillSummary nonGstSales;
 
   // CashTransactions WHERE type='INCOME' — by category
+  final double dueCollection; // category = 'DUE_COLLECTION'
   final double advance; // category = 'ADVANCE'
   final double orderDelivery; // category = 'ORDER_DELIVERY'
   final double girviReturn; // category = 'GIRVI_RETURN'
@@ -103,6 +104,7 @@ class CashInflow {
   const CashInflow({
     this.gstSales = const GstBillSummary(),
     this.nonGstSales = const NonGstBillSummary(),
+    this.dueCollection = 0,
     this.advance = 0,
     this.orderDelivery = 0,
     this.girviReturn = 0,
@@ -115,6 +117,7 @@ class CashInflow {
   double get retailSalesTotal => gstSales.finalAmount + nonGstSales.totalAmount;
 
   double get manualIncomeTotal =>
+      dueCollection +
       advance +
       orderDelivery +
       girviReturn +

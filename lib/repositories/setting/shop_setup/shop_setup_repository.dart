@@ -71,6 +71,7 @@ class ShopSetupRepository {
           taxGst: taxGst,
           banking: bankingList,
         );
+        await _syncBankingToFinanceAccounts(bankingList);
       }
 
       return isSaved;
@@ -79,6 +80,81 @@ class ShopSetupRepository {
       debugPrint(stacktrace.toString());
       return false;
     }
+  }
+
+  Future<void> _syncBankingToFinanceAccounts(
+      List<BankAccountModel> banking) async {
+    try {
+      final validAccounts = banking.where((bank) {
+        return bank.acc.trim().isNotEmpty || bank.upi.trim().isNotEmpty;
+      }).toList();
+      if (validAccounts.isEmpty) return;
+
+      await (_driftDb.update(_driftDb.bankAccounts))
+          .write(const BankAccountsCompanion(isPrimary: Value(false)));
+
+      for (var index = 0; index < validAccounts.length; index++) {
+        final bank = validAccounts[index];
+        final accountNumber = _financeAccountNumberFor(bank);
+        if (accountNumber.isEmpty) continue;
+
+        final isPrimary = index == 0;
+        final existing = await (_driftDb.select(_driftDb.bankAccounts)
+              ..where((tbl) => tbl.accountNumber.equals(accountNumber))
+              ..limit(1))
+            .getSingleOrNull();
+
+        final companion = BankAccountsCompanion(
+          accountName: Value(bank.title.trim().isEmpty
+              ? (isPrimary
+                  ? 'Primary Operating Account'
+                  : 'Additional Account ${index + 1}')
+              : bank.title.trim()),
+          holderName: Value(_nullable(bank.holder)),
+          bankName: Value(bank.bank.trim().isEmpty ? 'Bank' : bank.bank.trim()),
+          accountNumber: Value(accountNumber),
+          ifscCode: Value(_nullable(bank.ifsc)?.toUpperCase()),
+          branchName: Value(_nullable(bank.branch)),
+          accountType: Value(_financeAccountType(bank.type)),
+          upiId: Value(_nullable(bank.upi)),
+          openingBalance: const Value(0),
+          isActive: const Value(true),
+          isPrimary: Value(isPrimary),
+          colorHex: const Value('#D4AF37'),
+          activeSince: Value(DateTime.now()),
+        );
+
+        if (existing != null) {
+          await (_driftDb.update(_driftDb.bankAccounts)
+                ..where((tbl) => tbl.id.equals(existing.id)))
+              .write(companion);
+        } else {
+          await _driftDb.into(_driftDb.bankAccounts).insert(companion);
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ [BANKING SYNC] Failed (non-critical): $e');
+    }
+  }
+
+  String _financeAccountNumberFor(BankAccountModel bank) {
+    final acc = bank.acc.trim();
+    if (acc.isNotEmpty) return acc;
+    final upi = bank.upi.trim();
+    if (upi.isNotEmpty) return 'UPI:$upi';
+    return '';
+  }
+
+  String _financeAccountType(dynamic type) {
+    final value = type.toString().toLowerCase();
+    if (value.contains('saving')) return 'SAVINGS';
+    if (value.contains('od') || value.contains('cc')) return 'OD';
+    return 'CURRENT';
+  }
+
+  String? _nullable(String? value) {
+    final text = value?.trim() ?? '';
+    return text.isEmpty ? null : text;
   }
 
   // ==========================================

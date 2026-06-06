@@ -33,6 +33,7 @@ enum BankTransactionType {
 
 enum BankCreditCategory {
   salePayment('SALE_PAYMENT', 'Sale Payment'),
+  dueCollection('DUE_COLLECTION', 'Due Collection'),
   advanceReceived('ADVANCE_RECEIVED', 'Advance Received'),
   orderDelivery('ORDER_DELIVERY', 'Order Delivery Payment'),
   chequeDeposit('CHEQUE_DEPOSIT', 'Cheque Deposit'),

@@ -61,6 +61,15 @@ class DueCollectionEntryController extends ChangeNotifier {
   DueCollectionStatsModel get stats => _stats;
   DueCollectionPaymentMode get paymentMode => _paymentMode;
   int? get selectedBankAccountId => _selectedBankAccountId;
+  DueCollectionBankAccountModel? get selectedBankAccount {
+    final id = _selectedBankAccountId;
+    if (id == null) return null;
+    for (final account in _bankAccounts) {
+      if (account.id == id) return account;
+    }
+    return null;
+  }
+
   String get searchQuery => _searchQuery;
   bool get hasSearchQuery => _searchQuery.isNotEmpty;
   bool get isLoading => _isLoading;
@@ -87,8 +96,13 @@ class DueCollectionEntryController extends ChangeNotifier {
   bool get requiresBankAccount => _paymentMode.usesBankLedger;
   bool get hasBankAccount =>
       !requiresBankAccount || _selectedBankAccountId != null;
+  bool get needsUpiSetup =>
+      _paymentMode == DueCollectionPaymentMode.upi &&
+      (selectedBankAccount == null || !selectedBankAccount!.hasUpi);
+  bool get needsPaymentSetup =>
+      requiresBankAccount && (!hasBankAccount || needsUpiSetup);
   bool get needsPromiseDate => _selectedBill != null && balanceAfterSave > 0.5;
-  bool get canSave {
+  bool get canAttemptSave {
     final bill = _selectedBill;
     return !_isSaving &&
         bill != null &&
@@ -96,9 +110,10 @@ class DueCollectionEntryController extends ChangeNotifier {
         _discountAmount >= 0 &&
         settlementAmount > 0 &&
         settlementAmount <= bill.dueAmount + 0.01 &&
-        (!needsPromiseDate || _promiseDate != null) &&
-        hasBankAccount;
+        (!needsPromiseDate || _promiseDate != null);
   }
+
+  bool get canSave => canAttemptSave && !needsPaymentSetup;
 
   static final NumberFormat _amountFmt = NumberFormat('#,##,##0.00', 'en_IN');
   static final NumberFormat _compactFmt = NumberFormat('#,##,##0', 'en_IN');
@@ -142,7 +157,7 @@ class DueCollectionEntryController extends ChangeNotifier {
     final accounts = await _repository.fetchBankAccounts();
     if (_disposed) return;
     _bankAccounts = accounts;
-    _selectedBankAccountId = accounts.isEmpty ? null : accounts.first.id;
+    _syncSelectedBankAccount();
     _notifyListeners();
   }
 
@@ -159,8 +174,7 @@ class DueCollectionEntryController extends ChangeNotifier {
     if (_disposed) return;
     _allBills = results[0] as List<DueCollectionBillModel>;
     _bankAccounts = results[1] as List<DueCollectionBankAccountModel>;
-    _selectedBankAccountId ??=
-        _bankAccounts.isEmpty ? null : _bankAccounts.first.id;
+    _syncSelectedBankAccount();
     _isLoading = false;
     _applyViewState();
   }
@@ -205,6 +219,19 @@ class DueCollectionEntryController extends ChangeNotifier {
   void setBankAccount(int? value) {
     _selectedBankAccountId = value;
     _notifyListeners();
+  }
+
+  void _syncSelectedBankAccount() {
+    if (_bankAccounts.isEmpty) {
+      _selectedBankAccountId = null;
+      return;
+    }
+    final selectedStillExists = _bankAccounts.any(
+      (account) => account.id == _selectedBankAccountId,
+    );
+    if (!selectedStillExists) {
+      _selectedBankAccountId = _bankAccounts.first.id;
+    }
   }
 
   void setFullDueAmount() {
@@ -288,10 +315,15 @@ class DueCollectionEntryController extends ChangeNotifier {
     if (requiresBankAccount && _selectedBankAccountId == null) {
       return const DueCollectionSaveResult(
         success: false,
-        message: 'Select bank account for this payment mode.',
+        message: 'Please set your bank account before saving this payment.',
       );
     }
-
+    if (needsUpiSetup) {
+      return const DueCollectionSaveResult(
+        success: false,
+        message: 'Please set UPI ID for the selected account.',
+      );
+    }
     final receivedBeforeSave = _amount;
     final discountBeforeSave = _discountAmount;
     final balanceBeforeSave = balanceAfterSave;
@@ -332,6 +364,49 @@ class DueCollectionEntryController extends ChangeNotifier {
     }
     _notifyListeners();
     return result;
+  }
+
+  Future<int?> createPaymentAccount({
+    required String accountName,
+    required String bankName,
+    required String accountNumber,
+    String? holderName,
+    String? ifscCode,
+    String? branchName,
+    String? upiId,
+    bool isPrimary = false,
+  }) async {
+    final id = await _repository.createPaymentAccount(
+      accountName: accountName,
+      bankName: bankName,
+      accountNumber: accountNumber,
+      holderName: holderName,
+      ifscCode: ifscCode,
+      branchName: branchName,
+      upiId: upiId,
+      isPrimary: isPrimary,
+    );
+    if (_disposed || id == null) return id;
+    await _loadBankAccounts();
+    _selectedBankAccountId = id;
+    _clearReceiptState();
+    _notifyListeners();
+    return id;
+  }
+
+  Future<bool> updateSelectedAccountUpi(String upiId) async {
+    final account = selectedBankAccount;
+    if (account == null) return false;
+    final success = await _repository.updatePaymentAccountUpi(
+      accountId: account.id,
+      upiId: upiId,
+    );
+    if (_disposed || !success) return success;
+    await _loadBankAccounts();
+    _selectedBankAccountId = account.id;
+    _clearReceiptState();
+    _notifyListeners();
+    return true;
   }
 
   void _onSearchChanged() {

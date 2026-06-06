@@ -100,8 +100,13 @@ class _TopBar extends StatelessWidget {
               final isActive = ctrl.filter == f;
               final label = switch (f) {
                 CashBookFilter.all => 'All',
-                CashBookFilter.incomeOnly => 'â†“ Income',
-                CashBookFilter.expenseOnly => 'â†‘ Expense',
+                CashBookFilter.incomeOnly => 'Income',
+                CashBookFilter.expenseOnly => 'Expense',
+              };
+              final icon = switch (f) {
+                CashBookFilter.all => CashBookIcons.filter,
+                CashBookFilter.incomeOnly => CashBookIcons.income,
+                CashBookFilter.expenseOnly => CashBookIcons.expense,
               };
               final activeColor = switch (f) {
                 CashBookFilter.incomeOnly => CashBookColors.incomeAccent,
@@ -116,27 +121,40 @@ class _TopBar extends StatelessWidget {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                     decoration: BoxDecoration(
                       color: isActive
                           ? activeColor.withValues(alpha: 0.12)
                           : CashBookColors.summaryChipBg,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(18),
                       border: Border.all(
                         color: isActive
                             ? activeColor.withValues(alpha: 0.4)
                             : CashBookColors.bodyBorder,
                       ),
                     ),
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isActive
-                            ? activeColor
-                            : CashBookColors.textSecondary,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          icon,
+                          size: 14,
+                          color: isActive
+                              ? activeColor
+                              : CashBookColors.textSecondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: isActive
+                                ? activeColor
+                                : CashBookColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -178,6 +196,8 @@ class _DateGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final netSign = group.groupNet >= 0 ? '+' : '-';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -198,7 +218,7 @@ class _DateGroup extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${group.groupNet >= 0 ? '+' : ''}â‚¹ ${_compact(group.groupNet.abs())}',
+                  'Net $netSign Rs ${_compact(group.groupNet.abs())}',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -530,7 +550,7 @@ class _TxnDetailSheet extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          _DetailRow('TXN ID', txn.txnId),
+          _DetailRow('Transaction ID', txn.txnId),
           _DetailRow(
               'Date & Time', '${txn.dateFormatted}  ${txn.timeFormatted}'),
           _DetailRow('Payment Mode', txn.paymentMode.displayLabel),

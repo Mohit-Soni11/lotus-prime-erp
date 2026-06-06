@@ -178,14 +178,20 @@ class DueCollectionBankAccountModel {
   final int id;
   final String accountName;
   final String bankName;
+  final String accountNumber;
+  final String? upiId;
   final bool isPrimary;
 
   const DueCollectionBankAccountModel({
     required this.id,
     required this.accountName,
     required this.bankName,
+    required this.accountNumber,
+    required this.upiId,
     required this.isPrimary,
   });
+
+  bool get hasUpi => upiId != null && upiId!.trim().isNotEmpty;
 
   String get label =>
       bankName.trim().isEmpty ? accountName : '$accountName - $bankName';

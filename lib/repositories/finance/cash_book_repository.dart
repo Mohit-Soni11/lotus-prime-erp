@@ -23,7 +23,7 @@ class CashBookRepository {
   // ── Formatter ─────────────────────────────────────────────────────────────
   static final _currencyFmt = NumberFormat.currency(
     locale: 'en_IN',
-    symbol: '₹ ',
+    symbol: 'Rs ',
     decimalDigits: 2,
   );
   static String _fmt(double v) => _currencyFmt.format(v);

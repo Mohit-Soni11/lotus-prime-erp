@@ -328,7 +328,7 @@ class _OpeningBalanceCard extends StatelessWidget {
           style: CashBookStyles.inputText,
           decoration: InputDecoration(
             hintText: CashBookStrings.openingBalanceHint,
-            prefixText: 'â‚¹ ',
+            prefixText: 'Rs ',
             filled: true,
             fillColor: CashBookColors.summaryChipBg,
             border: OutlineInputBorder(
@@ -382,7 +382,8 @@ class _IncomeExpenseRow extends StatelessWidget {
       children: [
         Expanded(
             child: _StatBlock(
-          label: 'â†“  Income',
+          icon: CashBookIcons.income,
+          label: 'Income',
           value: s.totalIncomeStr,
           count: s.incomeCount,
           color: CashBookColors.incomeAccent,
@@ -393,7 +394,8 @@ class _IncomeExpenseRow extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
             child: _StatBlock(
-          label: 'â†‘  Expense',
+          icon: CashBookIcons.expense,
+          label: 'Expense',
           value: s.totalExpenseStr,
           count: s.expenseCount,
           color: CashBookColors.expenseAccent,
@@ -407,6 +409,7 @@ class _IncomeExpenseRow extends StatelessWidget {
 }
 
 class _StatBlock extends StatelessWidget {
+  final IconData icon;
   final String label;
   final String value;
   final int count;
@@ -416,6 +419,7 @@ class _StatBlock extends StatelessWidget {
   final bool loading;
 
   const _StatBlock({
+    required this.icon,
     required this.label,
     required this.value,
     required this.count,
@@ -437,13 +441,20 @@ class _StatBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: color,
-                letterSpacing: 0.5,
-              )),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 6),
+              Text(label.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                    letterSpacing: 0.5,
+                  )),
+            ],
+          ),
           const SizedBox(height: 6),
           loading
               ? _shimmerText(80)

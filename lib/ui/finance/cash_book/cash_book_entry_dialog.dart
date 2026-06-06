@@ -152,7 +152,7 @@ class _CashBookEntryDialogState extends State<CashBookEntryDialog>
             controller: ctrl.amountCtrl,
             hint: CashBookStrings.amountHint,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            prefix: Text('â‚¹  ', style: CashBookStyles.amountMedium),
+            prefix: Text('Rs ', style: CashBookStyles.amountMedium),
             autofocus: true,
           ),
 
@@ -268,7 +268,7 @@ class _OtherLabelField extends StatelessWidget {
             controller: ctrl.customLabelCtrl,
             style: CashBookStyles.inputText,
             decoration: InputDecoration(
-              hintText: 'e.g. Temple Donation, Tool Purchase, Medicalâ€¦',
+              hintText: 'e.g. Temple Donation, Tool Purchase, Medical',
               hintStyle: CashBookStyles.labelMuted,
               filled: true,
               fillColor: CashBookColors.brandGoldLight,

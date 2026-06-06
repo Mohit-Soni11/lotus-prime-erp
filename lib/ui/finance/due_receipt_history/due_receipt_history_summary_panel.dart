@@ -29,7 +29,7 @@ class DueReceiptHistorySummaryPanel extends StatelessWidget {
         icon: DueReceiptHistoryIcons.receipts,
         label: DueReceiptHistoryStrings.receipts,
         value: stats.receiptCount.toString(),
-        sub: '${stats.dueMarkedCount} due marked',
+        sub: 'Due receipt entries',
         color: DueReceiptHistoryColors.gold,
         bg: DueReceiptHistoryColors.goldSoft,
       ),

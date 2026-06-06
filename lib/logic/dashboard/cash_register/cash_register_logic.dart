@@ -38,7 +38,7 @@ class CashRegisterLogic {
   final _controller = StreamController<CashRegisterModel>.broadcast();
   Stream<CashRegisterModel> get dataStream => _controller.stream;
 
-  StreamSubscription? _billsSub;
+  StreamSubscription? _incomeSub;
   StreamSubscription? _expenseSub;
 
   // ── Today's range (set once at init, stable for the day) ──────────────────
@@ -63,18 +63,20 @@ class CashRegisterLogic {
 
   void _startLiveWatch() {
     // ── Watch 1: Bills → totalReceived ──────────────────────────────────────
-    _billsSub = (_db.select(_db.bills)
-          ..where((t) => t.billDate.isBiggerOrEqualValue(_todayStart))
-          ..where((t) => t.billDate.isSmallerOrEqualValue(_todayEnd))
-          ..where((t) => t.status.equals('ACTIVE')))
+    _incomeSub = (_db.select(_db.cashTransactions)
+          ..where((t) => t.isVoided.equals(false))
+          ..where((t) => t.type.equals(CashTransactionType.income.dbValue))
+          ..where((t) => t.paymentMode.equals(PaymentMode.cash.dbValue))
+          ..where((t) => t.txnDate.isBiggerOrEqualValue(_todayStart))
+          ..where((t) => t.txnDate.isSmallerOrEqualValue(_todayEnd)))
         .watch()
         .listen(
-      (bills) {
-        _cachedReceived = bills.fold(0.0, (sum, b) => sum + b.paidAmount);
+      (txns) {
+        _cachedReceived = txns.fold(0.0, (sum, t) => sum + t.amount);
         _emitComputed();
       },
       onError: (e) {
-        debugPrint('❌ CashRegister Bills watch error: $e');
+        debugPrint('CashRegister income watch error: $e');
         _emitFallback();
       },
     );
@@ -83,6 +85,7 @@ class CashRegisterLogic {
     _expenseSub = (_db.select(_db.cashTransactions)
           ..where((t) => t.isVoided.equals(false))
           ..where((t) => t.type.equals(CashTransactionType.expense.dbValue))
+          ..where((t) => t.paymentMode.equals(PaymentMode.cash.dbValue))
           ..where((t) => t.txnDate.isBiggerOrEqualValue(_todayStart))
           ..where((t) => t.txnDate.isSmallerOrEqualValue(_todayEnd)))
         .watch()
@@ -160,7 +163,7 @@ class CashRegisterLogic {
   // ==========================================
 
   void dispose() {
-    _billsSub?.cancel();
+    _incomeSub?.cancel();
     _expenseSub?.cancel();
     _controller.close();
   }

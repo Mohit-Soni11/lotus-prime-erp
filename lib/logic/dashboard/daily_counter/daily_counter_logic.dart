@@ -217,8 +217,8 @@ class DailyCounterLogic {
     double dueTotal = 0;
 
     for (final bill in todayBills) {
-      final paid = bill.paidAmount;
-      final due = bill.finalAmount - paid;
+      final computedDue = bill.finalAmount - bill.paidAmount;
+      final due = bill.dueAmount > 0.5 ? bill.dueAmount : computedDue;
       if (due > 0) {
         dueCustCount++;
         dueTotal += due;

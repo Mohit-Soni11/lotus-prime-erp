@@ -17,7 +17,7 @@ extension DueReceiptDateFilterX on DueReceiptDateFilter {
       case DueReceiptDateFilter.last30Days:
         return '30 Days';
       case DueReceiptDateFilter.dueMarked:
-        return 'Due Marked';
+        return 'Due Receipts';
     }
   }
 }
