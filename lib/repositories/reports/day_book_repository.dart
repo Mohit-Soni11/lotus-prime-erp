@@ -621,7 +621,8 @@ class DayBookRepository {
       final pct = ((todayExpense - avgExpense) / avgExpense * 100);
       alerts.add(AnomalyAlert(
         message:
-            'Expenses are ${pct.toStringAsFixed(0)}% above 7-day average (avg: ₹${avgExpense.toStringAsFixed(0)})',
+            'Expenses are ${pct.toStringAsFixed(0)}% above the 7-day average '
+            '(average: INR ${avgExpense.toStringAsFixed(0)}).',
         category: 'expense',
         todayValue: todayExpense,
         avgValue: avgExpense,

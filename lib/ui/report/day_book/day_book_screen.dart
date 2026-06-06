@@ -1,48 +1,15 @@
-// =============================================================================
-// FILE        : day_book_screen.dart
-// MODULE      : Reports & Analytics â†’ Day Book
-// LAYER       : UI â€” Master Screen Assembly
-// DESCRIPTION : Top-level shell connecting all Day Book components.
-//               Follows exact same pattern as CashBookScreen.
-//
-//               LAYOUT:
-//               â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-//               â”‚  DARK APP BAR (module title, date nav, export buttons)   â”‚
-//               â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
-//               â”‚  SCROLLABLE BODY (Cream bg)                              â”‚
-//               â”‚  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ â”‚
-//               â”‚  Opening Balance Card (dark)                             â”‚
-//               â”‚  Anomaly Alert Banner (if any)                           â”‚
-//               â”‚  Cash Inward Section  (expandable)                       â”‚
-//               â”‚    â””â”€ GST Bills Sub-section   (teal)                     â”‚
-//               â”‚    â””â”€ Non-GST Bills Sub-section (blue)                   â”‚
-//               â”‚    â””â”€ Other inflows...                                   â”‚
-//               â”‚  Cash Outward Section (expandable, red)                  â”‚
-//               â”‚  Payment Mode Breakup (expandable)                       â”‚
-//               â”‚  Metal Inward  Section (expandable, amber)               â”‚
-//               â”‚  Metal Outward Section (expandable, purple)              â”‚
-//               â”‚  Net Flow + Closing Balance Card                         â”‚
-//               â”‚  Predicted Closing Card (today only)                     â”‚
-//               â”‚  EOD Settlement Button (today only)                      â”‚
-//               â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-//
-//               âœ… Dark AppBar + Cream body
-//               âœ… ListenableBuilder â€” zero setState in UI layer
-//               âœ… GST and Non-GST bills shown separately
-//               âœ… Anomaly detection alerts
-//               âœ… EOD denomination dialog + day lock
-//               âœ… Export PDF / Excel / WhatsApp
-// =============================================================================
-
 import 'package:flutter/material.dart';
-import '../../../theme/reports/day_book/day_book_theme.dart';
+
 import '../../../logic/report/day_book/day_book_controller.dart';
+import '../../../models/reports/day_book/day_book_models.dart';
+import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_app_bar.dart';
-import 'day_book_sections.dart';
 import 'day_book_eod_dialog.dart';
+import 'day_book_sections.dart';
 
 class DayBookScreen extends StatefulWidget {
   final VoidCallback? onBack;
+
   const DayBookScreen({super.key, this.onBack});
 
   @override
@@ -51,7 +18,8 @@ class DayBookScreen extends StatefulWidget {
 
 class _DayBookScreenState extends State<DayBookScreen> {
   late final DayBookController _ctrl;
-  final ScrollController _scrollCtrl = ScrollController();
+  final ScrollController _mainScrollController = ScrollController();
+  final ScrollController _railScrollController = ScrollController();
 
   @override
   void initState() {
@@ -62,333 +30,450 @@ class _DayBookScreenState extends State<DayBookScreen> {
   @override
   void dispose() {
     _ctrl.dispose();
-    _scrollCtrl.dispose();
+    _mainScrollController.dispose();
+    _railScrollController.dispose();
     super.dispose();
   }
 
-  // â”€â”€ EOD Dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  void _showEodDialog() {
-    showDialog(
+  void _showReconciliation() {
+    showDialog<void>(
       context: context,
-      barrierDismissible: true,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
-      builder: (_) => DayBookEodDialog(ctrl: _ctrl),
+      barrierColor: DayBookColors.overlay,
+      builder: (context) => DayBookEodDialog(ctrl: _ctrl),
     );
   }
 
-  // â”€â”€ Build â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
+    return Theme(
+      data: DayBookStyles.theme,
       child: Scaffold(
         backgroundColor: DayBookColors.bodyBg,
-
-        // â”€â”€ Dark App Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         appBar: DayBookAppBar(
           onBack: widget.onBack ?? () => Navigator.of(context).pop(),
+          onRefresh: _ctrl.loadData,
           ctrl: _ctrl,
         ),
-
-        // â”€â”€ Body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         body: ListenableBuilder(
           listenable: _ctrl,
-          builder: (_, __) {
-            // Loading state
-            if (_ctrl.isLoading) {
-              return const Center(
-                child: CircularProgressIndicator(
-                  color: DayBookColors.brandGold,
-                  strokeWidth: 2.5,
-                ),
-              );
+          builder: (context, child) {
+            if (_ctrl.isLoading && _ctrl.summary == null) {
+              return const _LoadingState();
             }
 
-            // Error state
-            if (_ctrl.errorMessage != null) {
+            if (_ctrl.errorMessage != null && _ctrl.summary == null) {
               return _ErrorState(
                 message: _ctrl.errorMessage!,
                 onRetry: _ctrl.loadData,
               );
             }
 
-            // Empty state (no data)
-            if (_ctrl.summary == null) {
+            final summary = _ctrl.summary;
+            if (summary == null) {
               return const _EmptyState();
             }
 
-            final summary = _ctrl.summary!;
-
-            return SafeArea(
-              child: SingleChildScrollView(
-                controller: _scrollCtrl,
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // â”€â”€ 1. Opening Balance Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                    DayBookOpeningCard(summary: summary),
-                    const SizedBox(height: 12),
-
-                    // â”€â”€ 2. Anomaly Alerts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                    if (summary.anomalies.isNotEmpty) ...[
-                      ...summary.anomalies.asMap().entries.map(
-                            (e) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: AnomalyBanner(
-                                alert: e.value,
-                                onDismiss: () => _ctrl.dismissAnomaly(e.key),
-                              ),
-                            ),
-                          ),
-                      const SizedBox(height: 4),
-                    ],
-
-                    // â”€â”€ 3. Cash Inward (GST + Non-GST + others) â”€â”€â”€â”€â”€
-                    CashInwardSection(ctrl: _ctrl),
-                    const SizedBox(height: 10),
-
-                    // â”€â”€ 4. Cash Outward â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                    CashOutwardSection(ctrl: _ctrl),
-                    const SizedBox(height: 10),
-
-                    // â”€â”€ 5. Payment Mode Breakup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                    PaymentModeSection(ctrl: _ctrl),
-                    const SizedBox(height: 10),
-
-                    // â”€â”€ 6. Metal Inward â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                    MetalInwardSection(ctrl: _ctrl),
-                    const SizedBox(height: 10),
-
-                    // â”€â”€ 7. Metal Outward â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                    MetalOutwardSection(ctrl: _ctrl),
-                    const SizedBox(height: 10),
-
-                    // â”€â”€ 8. Net Flow + Closing Balances â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                    NetFlowCard(summary: summary),
-                    const SizedBox(height: 10),
-
-                    // â”€â”€ 9. Predictive Closing (today only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                    if (_ctrl.isToday && summary.prediction != null) ...[
-                      PredictedClosingCard(prediction: summary.prediction!),
-                      const SizedBox(height: 10),
-                    ],
-
-                    // â”€â”€ 10. GST Summary Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                    if (summary.totalGstCollected > 0) ...[
-                      _GstSummaryCard(summary: summary),
-                      const SizedBox(height: 10),
-                    ],
-
-                    // â”€â”€ 11. EOD Button (today only, not locked) â”€â”€â”€â”€â”€â”€
-                    if (_ctrl.isToday && !summary.isDayLocked) ...[
-                      _EodButton(onTap: _showEodDialog),
-                      const SizedBox(height: 16),
-                    ],
-
-                    // â”€â”€ 12. Day Locked Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                    if (summary.isDayLocked) ...[
-                      _DayLockedBanner(),
-                      const SizedBox(height: 16),
-                    ],
-                  ],
-                ),
-              ),
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth >= 1080) {
+                  return _buildDesktop(summary);
+                }
+                return _buildCompact(summary);
+              },
             );
           },
         ),
       ),
     );
   }
-}
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// GST Summary Card (quick glance at day's GST)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-class _GstSummaryCard extends StatelessWidget {
-  final summary;
-  const _GstSummaryCard({required this.summary});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: DayBookColors.gstBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: DayBookColors.gstBorder),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(children: [
-        const Icon(DayBookIcons.gstCollected,
-            color: DayBookColors.gstAccent, size: 18),
-        const SizedBox(width: 10),
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(DayBookStrings.gstCollectedLbl,
-              style: DayBookStyles.labelBold
-                  .copyWith(color: DayBookColors.gstText)),
-          Text('Today\'s total GST liability',
-              style: DayBookStyles.labelMuted.copyWith(
-                  color: DayBookColors.gstText.withValues(alpha: 0.6))),
-        ]),
-        const Spacer(),
-        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text('â‚¹${summary.totalGstCollected.toStringAsFixed(2)}',
-              style: DayBookStyles.amountMedium
-                  .copyWith(color: DayBookColors.gstAccent)),
-          Text('CGST + SGST', style: DayBookStyles.labelMuted),
-        ]),
-      ]),
-    );
-  }
-}
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// EOD Button
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-class _EodButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const _EodButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF1F2937), Color(0xFF111827)],
+  Widget _buildDesktop(DayBookSummary summary) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          width: 320,
+          decoration: const BoxDecoration(
+            color: DayBookColors.bodySubtle,
+            border: Border(
+              right: BorderSide(color: DayBookColors.bodyBorder),
+            ),
           ),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: DayBookColors.brandGold.withValues(alpha: 0.2),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: DayBookColors.brandGoldLight,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                    color: DayBookColors.brandGold.withValues(alpha: 0.4)),
+          child: Scrollbar(
+            controller: _railScrollController,
+            thumbVisibility: true,
+            child: SingleChildScrollView(
+              controller: _railScrollController,
+              padding: const EdgeInsets.all(16),
+              child: DayBookSummaryRail(
+                ctrl: _ctrl,
+                onReconcile: _showReconciliation,
               ),
-              child: const Icon(DayBookIcons.eodSettle,
-                  color: DayBookColors.brandGold, size: 16),
             ),
-            const SizedBox(width: 12),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(DayBookStrings.eodTitle,
-                  style: DayBookStyles.appBarTitle.copyWith(fontSize: 14)),
-              Text('Count cash & close today\'s ledger',
-                  style: DayBookStyles.appBarSub),
-            ]),
-            const SizedBox(width: 16),
-            const Icon(Icons.arrow_forward_ios_rounded,
-                color: DayBookColors.brandGold, size: 14),
+          ),
+        ),
+        Expanded(
+          child: Scrollbar(
+            controller: _mainScrollController,
+            thumbVisibility: true,
+            child: SingleChildScrollView(
+              controller: _mainScrollController,
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1240),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _Reveal(
+                        delay: 0,
+                        child: DayBookOverview(summary: summary),
+                      ),
+                      const SizedBox(height: 16),
+                      if (summary.anomalies.isNotEmpty) ...[
+                        _Reveal(
+                          delay: 70,
+                          child: DayBookAlerts(ctrl: _ctrl),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      ..._workspaceSections(summary),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompact(DayBookSummary summary) {
+    return Scrollbar(
+      controller: _mainScrollController,
+      thumbVisibility: true,
+      child: SingleChildScrollView(
+        controller: _mainScrollController,
+        padding: const EdgeInsets.fromLTRB(14, 16, 14, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DayBookSummaryRail(
+              ctrl: _ctrl,
+              onReconcile: _showReconciliation,
+              compact: true,
+            ),
+            const SizedBox(height: 16),
+            if (summary.anomalies.isNotEmpty) ...[
+              DayBookAlerts(ctrl: _ctrl),
+              const SizedBox(height: 12),
+            ],
+            ..._workspaceSections(summary),
           ],
         ),
       ),
     );
   }
+
+  List<Widget> _workspaceSections(DayBookSummary summary) {
+    return [
+      _Reveal(
+        delay: 100,
+        child: CashMovementPanel(summary: summary),
+      ),
+      const SizedBox(height: 12),
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final stack = constraints.maxWidth < 860;
+          final sales = SalesTaxPanel(summary: summary);
+          final payments = PaymentMixPanel(summary: summary);
+
+          if (stack) {
+            return Column(
+              children: [
+                sales,
+                const SizedBox(height: 12),
+                payments,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 6, child: sales),
+              const SizedBox(width: 12),
+              Expanded(flex: 5, child: payments),
+            ],
+          );
+        },
+      ),
+      const SizedBox(height: 12),
+      _Reveal(
+        delay: 180,
+        child: MetalMovementPanel(summary: summary),
+      ),
+      if (_ctrl.isToday && summary.prediction != null) ...[
+        const SizedBox(height: 12),
+        _Reveal(
+          delay: 230,
+          child: ForecastPanel(prediction: summary.prediction!),
+        ),
+      ],
+      const SizedBox(height: 12),
+      _Reveal(
+        delay: 280,
+        child: DayBookClosePanel(
+          summary: summary,
+          isToday: _ctrl.isToday,
+          onReconcile: _showReconciliation,
+        ),
+      ),
+    ];
+  }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Day Locked Banner
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-class _DayLockedBanner extends StatelessWidget {
+class _Reveal extends StatelessWidget {
+  final int delay;
+  final Widget child;
+
+  const _Reveal({required this.delay, required this.child});
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: DayBookColors.cashInBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: DayBookColors.cashInBorder),
-      ),
-      child: Row(children: [
-        const Icon(DayBookIcons.lockDay,
-            color: DayBookColors.cashInAccent, size: 18),
-        const SizedBox(width: 10),
-        Text(DayBookStrings.dayLocked,
-            style: DayBookStyles.labelBold
-                .copyWith(color: DayBookColors.cashInText)),
-        const Spacer(),
-        const Icon(Icons.verified_rounded,
-            color: DayBookColors.cashInAccent, size: 16),
-      ]),
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: 320 + delay),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 10 * (1 - value)),
+          child: Opacity(opacity: value, child: child),
+        );
+      },
+      child: child,
     );
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Error State
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+class _LoadingState extends StatelessWidget {
+  const _LoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final desktop = constraints.maxWidth >= 1080;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (desktop)
+              Container(
+                width: 320,
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: DayBookColors.bodySubtle,
+                  border: Border(
+                    right: BorderSide(color: DayBookColors.bodyBorder),
+                  ),
+                ),
+                child: const _SkeletonColumn(compact: true),
+              ),
+            const Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: _SkeletonColumn(),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SkeletonColumn extends StatefulWidget {
+  final bool compact;
+
+  const _SkeletonColumn({this.compact = false});
+
+  @override
+  State<_SkeletonColumn> createState() => _SkeletonColumnState();
+}
+
+class _SkeletonColumnState extends State<_SkeletonColumn>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final color = Color.lerp(
+          DayBookColors.bodyBorder,
+          DayBookColors.bodySubtle,
+          _controller.value,
+        )!;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _SkeletonBlock(height: 44, width: 180, color: color),
+            const SizedBox(height: 14),
+            _SkeletonBlock(
+              height: widget.compact ? 150 : 108,
+              color: color,
+            ),
+            const SizedBox(height: 12),
+            _SkeletonBlock(height: 180, color: color),
+            const SizedBox(height: 12),
+            if (!widget.compact) _SkeletonBlock(height: 260, color: color),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SkeletonBlock extends StatelessWidget {
+  final double height;
+  final double? width;
+  final Color color;
+
+  const _SkeletonBlock({
+    required this.height,
+    required this.color,
+    this.width,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        width: width ?? double.infinity,
+        height: height,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
+  }
+}
+
 class _ErrorState extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
+
   const _ErrorState({required this.message, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.error_outline_rounded,
-              color: DayBookColors.cashOutAccent, size: 48),
-          const SizedBox(height: 16),
-          Text('Something went wrong', style: DayBookStyles.sectionTitle),
-          const SizedBox(height: 8),
-          Text(message,
-              style: DayBookStyles.labelSecondary, textAlign: TextAlign.center),
-          const SizedBox(height: 20),
-          ElevatedButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded, size: 16),
-            label: const Text('Retry'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: DayBookColors.brandGold,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: DayBookColors.negativeSoft,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: DayBookColors.negativeBorder),
+                ),
+                child: const Icon(
+                  DayBookIcons.error,
+                  color: DayBookColors.negative,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                DayBookStrings.errorTitle,
+                style: DayBookStyles.sectionTitle,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                message,
+                style: DayBookStyles.sectionSubtitle,
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 18),
+              FilledButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(DayBookIcons.refresh, size: 17),
+                label: const Text(DayBookStrings.retry),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Empty State
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(DayBookIcons.moduleIcon,
-              color: DayBookColors.textMuted, size: 56),
-          const SizedBox(height: 16),
-          Text('No transactions recorded',
-              style: DayBookStyles.sectionTitle
-                  .copyWith(color: DayBookColors.textSecondary)),
-          const SizedBox(height: 8),
-          Text('Start making sales to see Day Book data',
-              style: DayBookStyles.labelSecondary),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                color: DayBookColors.bodySubtle,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: DayBookColors.bodyBorder),
+              ),
+              child: const Icon(
+                DayBookIcons.module,
+                color: DayBookColors.textMuted,
+                size: 26,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              DayBookStrings.noDataTitle,
+              style: DayBookStyles.sectionTitle,
+            ),
+            const SizedBox(height: 5),
+            Text(
+              DayBookStrings.noDataSubtitle,
+              style: DayBookStyles.sectionSubtitle,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
