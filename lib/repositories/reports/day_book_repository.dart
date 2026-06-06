@@ -298,7 +298,7 @@ class DayBookRepository {
 
       if (receipts.isEmpty) return const MetalWeight();
 
-      double gold22 = 0, gold18 = 0, silver = 0;
+      final totals = <String, double>{};
 
       for (final receipt in receipts) {
         final issue = await (_db.select(_db.karigarIssues)
@@ -307,21 +307,15 @@ class DayBookRepository {
 
         if (issue == null) continue;
 
-        final wt = receipt.netWeightReceived;
-        if (issue.metalType == 'Gold' || issue.metalType == 'gold') {
-          if (issue.purity == '22K' || issue.purity == '916') {
-            gold22 += wt;
-          } else if (issue.purity == '18K' || issue.purity == '750') {
-            gold18 += wt;
-          } else {
-            gold22 += wt; // Default gold to 22K
-          }
-        } else if (issue.metalType == 'Silver' || issue.metalType == 'silver') {
-          silver += wt;
-        }
+        _addMetal(
+          totals,
+          metalType: issue.metalType,
+          purity: issue.purity,
+          weight: receipt.netWeightReceived,
+        );
       }
 
-      return MetalWeight(gold22k: gold22, gold18k: gold18, silver: silver);
+      return MetalWeight.fromEntries(totals);
     } catch (e) {
       debugPrint('❌ _fetchKarigarFinishedGoods: $e');
       return const MetalWeight();
@@ -344,23 +338,17 @@ class DayBookRepository {
 
       if (loans.isEmpty) return const MetalWeight();
 
-      double gold22 = 0, gold18 = 0, silver = 0;
+      final totals = <String, double>{};
       for (final loan in loans) {
-        final wt = loan.netWeight;
-        if (loan.metalType == 'Gold' || loan.metalType == 'gold') {
-          if (loan.metalPurity == '22K' || loan.metalPurity == '916') {
-            gold22 += wt;
-          } else if (loan.metalPurity == '18K' || loan.metalPurity == '750') {
-            gold18 += wt;
-          } else {
-            gold22 += wt;
-          }
-        } else if (loan.metalType == 'Silver' || loan.metalType == 'silver') {
-          silver += wt;
-        }
+        _addMetal(
+          totals,
+          metalType: loan.metalType,
+          purity: loan.metalPurity,
+          weight: loan.netWeight,
+        );
       }
 
-      return MetalWeight(gold22k: gold22, gold18k: gold18, silver: silver);
+      return MetalWeight.fromEntries(totals);
     } catch (e) {
       debugPrint('❌ _fetchGirviSecurityDeposit: $e');
       return const MetalWeight();
@@ -383,7 +371,7 @@ class DayBookRepository {
 
       if (bills.isEmpty) return const MetalWeight();
 
-      double gold22 = 0, gold18 = 0, silver = 0;
+      final totals = <String, double>{};
 
       for (final bill in bills) {
         final items = await (_db.select(_db.billItems)
@@ -391,29 +379,16 @@ class DayBookRepository {
             .get();
 
         for (final item in items) {
-          final wt = item.netWeight;
-          switch (item.purity.toUpperCase()) {
-            case '22K':
-            case '916':
-              gold22 += wt;
-              break;
-            case '18K':
-            case '750':
-              gold18 += wt;
-              break;
-            case 'SLV':
-            case 'SILVER':
-            case '925':
-            case '999':
-              silver += wt;
-              break;
-            default:
-              gold22 += wt;
-          }
+          _addMetal(
+            totals,
+            metalType: item.metalType,
+            purity: item.purity,
+            weight: item.netWeight,
+          );
         }
       }
 
-      return MetalWeight(gold22k: gold22, gold18k: gold18, silver: silver);
+      return MetalWeight.fromEntries(totals);
     } catch (e) {
       debugPrint('❌ _fetchRetailMetalDispatch: $e');
       return const MetalWeight();
@@ -435,23 +410,17 @@ class DayBookRepository {
 
       if (issues.isEmpty) return const MetalWeight();
 
-      double gold22 = 0, gold18 = 0, silver = 0;
+      final totals = <String, double>{};
       for (final issue in issues) {
-        final wt = issue.netWeightIssued;
-        if (issue.metalType == 'Gold' || issue.metalType == 'gold') {
-          if (issue.purity == '22K' || issue.purity == '916') {
-            gold22 += wt;
-          } else if (issue.purity == '18K' || issue.purity == '750') {
-            gold18 += wt;
-          } else {
-            gold22 += wt;
-          }
-        } else if (issue.metalType == 'Silver' || issue.metalType == 'silver') {
-          silver += wt;
-        }
+        _addMetal(
+          totals,
+          metalType: issue.metalType,
+          purity: issue.purity,
+          weight: issue.netWeightIssued,
+        );
       }
 
-      return MetalWeight(gold22k: gold22, gold18k: gold18, silver: silver);
+      return MetalWeight.fromEntries(totals);
     } catch (e) {
       debugPrint('❌ _fetchKarigarIssues: $e');
       return const MetalWeight();
@@ -711,5 +680,45 @@ class DayBookRepository {
         )
         .watch()
         .asyncMap((_) async {});
+  }
+
+  void _addMetal(
+    Map<String, double> totals, {
+    required String metalType,
+    required String? purity,
+    required double weight,
+  }) {
+    if (weight == 0) return;
+    final metal = _normalizeMetal(metalType);
+    final grade = _normalizePurity(metal, purity);
+    final key = MetalWeight.entryKey(metal, grade);
+    totals[key] = (totals[key] ?? 0) + weight;
+  }
+
+  String _normalizeMetal(String rawValue) {
+    final value = rawValue.trim().toLowerCase();
+    if (value.contains('gold')) return 'Gold';
+    if (value.contains('silver')) return 'Silver';
+    if (value.contains('platinum')) return 'Platinum';
+    if (value.contains('diamond')) return 'Diamond';
+    if (value.isEmpty) return 'Other';
+    return '${value[0].toUpperCase()}${value.substring(1)}';
+  }
+
+  String _normalizePurity(String metal, String? rawValue) {
+    final value = (rawValue ?? '').trim().toUpperCase();
+    if (metal == 'Gold') {
+      const aliases = {
+        '999': '24K',
+        '995': '24K',
+        '916': '22K',
+        '875': '21K',
+        '833': '20K',
+        '750': '18K',
+        '585': '14K',
+      };
+      return aliases[value] ?? (value.isEmpty ? 'Unspecified' : value);
+    }
+    return value.isEmpty ? 'Standard' : value;
   }
 }

@@ -205,7 +205,14 @@ class _SortMenu extends StatelessWidget {
                 value: ctrl.sort,
                 isExpanded: true,
                 iconSize: 18,
-                style: DueReportStyles.label,
+                iconEnabledColor: DueReportColors.textMuted,
+                dropdownColor: DueReportColors.panelBg,
+                borderRadius: BorderRadius.circular(10),
+                menuMaxHeight: 280,
+                style: DueReportStyles.label.copyWith(
+                  color: DueReportColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
                 onChanged: (value) {
                   if (value != null) ctrl.setSort(value);
                 },

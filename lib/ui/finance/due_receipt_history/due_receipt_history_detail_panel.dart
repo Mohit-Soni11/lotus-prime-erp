@@ -91,7 +91,7 @@ class _DetailBody extends StatelessWidget {
               ),
               const SizedBox(height: 5),
               Text(
-                '${receipt.receiptKind} via ${receipt.paymentMode.toUpperCase()}',
+                '${receipt.receiptKind} via ${receipt.paymentModeLabel}',
                 style: DueReceiptHistoryStyles.muted,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -216,8 +216,7 @@ class _InfoGrid extends StatelessWidget {
           receipt.isCashLedger
               ? DueReceiptHistoryIcons.cash
               : DueReceiptHistoryIcons.bank),
-      _InfoData('Mode', receipt.paymentMode.toUpperCase(),
-          _modeIcon(receipt.modeKey)),
+      _InfoData('Mode', receipt.paymentModeLabel, _modeIcon(receipt.modeKey)),
       _InfoData('Account', receipt.bankAccountName ?? '-',
           DueReceiptHistoryIcons.bank),
     ];

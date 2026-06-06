@@ -148,7 +148,7 @@ class AppRoutes {
     addCustomerRoute: 'Add New Customer',
     customerProfileRoute: 'Customer Profile',
     creditLimitRoute: 'Set Credit Limits',
-    defaulterListRoute: 'Defaulter List',
+    defaulterListRoute: 'Loan Defaulters',
 
     // Supplier
     supplierListRoute: 'Supplier List',

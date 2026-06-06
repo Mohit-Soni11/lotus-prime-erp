@@ -3,7 +3,7 @@ class DayBookStrings {
 
   static const String moduleTitle = 'Day Book';
   static const String moduleSubtitle = 'Daily operating statement';
-  static const String liveStatus = 'Live data';
+  static const String liveStatus = 'System Online';
   static const String refresh = 'Refresh day book';
   static const String chooseDate = 'Choose date';
   static const String returnToToday = 'Return to today';
@@ -12,10 +12,23 @@ class DayBookStrings {
   static const String overviewSubtitle =
       'Cash, sales, tax, and metal movement for the selected date.';
   static const String openingBalance = 'Opening Balance';
+  static const String openingPosition = 'Opening Position';
+  static const String openingPositionSubtitle =
+      'Cash and primary metal balances carried into the selected date.';
+  static const String openingCash = 'Opening Cash';
+  static const String openingGold = 'Opening Gold';
+  static const String openingSilver = 'Opening Silver';
   static const String cashReceived = 'Cash In';
   static const String cashPaid = 'Cash Out';
   static const String netMovement = 'Net Movement';
   static const String closingBalance = 'Closing Balance';
+  static const String closingPosition = 'Closing Position';
+  static const String closingPositionSubtitle =
+      'Calculated cash and metal balances after today\'s movement.';
+  static const String closingCash = 'Closing Cash';
+  static const String closingGold = 'Closing Gold';
+  static const String closingSilver = 'Closing Silver';
+  static const String netCashFlow = 'Net Cash Flow';
 
   static const String cashMovement = 'Cash Movement';
   static const String cashMovementSubtitle =
@@ -61,10 +74,15 @@ class DayBookStrings {
 
   static const String metalMovement = 'Metal Movement';
   static const String metalMovementSubtitle =
-      'Gold and silver received into or issued from inventory.';
+      'Select a metal to review purity-wise received, issued, and net movement.';
   static const String metalReceived = 'Metal In';
   static const String metalIssued = 'Metal Out';
   static const String closingStock = 'Closing Position';
+  static const String totalMovement = 'Total Movement';
+  static const String netWeight = 'Net Weight';
+  static const String purityBreakdown = 'Purity-wise Movement';
+  static const String movementSources = 'Movement Sources';
+  static const String noMetalMovement = 'No metal movement recorded';
   static const String karigarReceipts = 'Karigar Receipts';
   static const String girviSecurity = 'Girvi Security';
   static const String oldGoldPurchase = 'Old Gold Purchase';
@@ -74,6 +92,8 @@ class DayBookStrings {
   static const String gold22k = 'Gold 22K';
   static const String gold18k = 'Gold 18K';
   static const String silver = 'Silver';
+  static const String platinum = 'Platinum';
+  static const String diamond = 'Diamond';
 
   static const String attentionRequired = 'Attention Required';
   static const String dismiss = 'Dismiss';
@@ -110,6 +130,12 @@ class DayBookStrings {
       'Transactions for the selected date will appear here automatically.';
   static const String errorTitle = 'Unable to load the day book';
   static const String retry = 'Try Again';
+  static const String exportPdf = 'Preview PDF';
+  static const String exportCsv = 'Export table as CSV';
+  static const String sharePdf = 'Share PDF';
+  static const String csvExported = 'Day book table exported.';
+  static const String shareOpened = 'Day book PDF is ready to share.';
+  static const String exportFailed = 'Unable to export the day book.';
 
   static const String currencyCode = 'INR';
   static const String grams = 'g';

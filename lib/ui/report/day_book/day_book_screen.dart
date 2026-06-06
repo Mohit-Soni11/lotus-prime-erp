@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../logic/report/day_book/day_book_controller.dart';
+import '../../../logic/report/day_book/day_book_export_service.dart';
 import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_app_bar.dart';
@@ -20,6 +21,7 @@ class _DayBookScreenState extends State<DayBookScreen> {
   late final DayBookController _ctrl;
   final ScrollController _mainScrollController = ScrollController();
   final ScrollController _railScrollController = ScrollController();
+  bool _exporting = false;
 
   @override
   void initState() {
@@ -43,6 +45,50 @@ class _DayBookScreenState extends State<DayBookScreen> {
     );
   }
 
+  Future<void> _previewPdf() async {
+    final summary = _ctrl.summary;
+    if (summary == null) return;
+    await _runExport(() => DayBookExportService.previewPdf(summary));
+  }
+
+  Future<void> _exportCsv() async {
+    final summary = _ctrl.summary;
+    if (summary == null) return;
+    await _runExport(() async {
+      final path = await DayBookExportService.exportCsv(summary);
+      if (path != null) _showNotice(DayBookStrings.csvExported);
+    });
+  }
+
+  Future<void> _sharePdf() async {
+    final summary = _ctrl.summary;
+    if (summary == null) return;
+    await _runExport(() async {
+      final shared = await DayBookExportService.sharePdf(summary);
+      if (shared) _showNotice(DayBookStrings.shareOpened);
+    });
+  }
+
+  Future<void> _runExport(Future<void> Function() action) async {
+    if (_exporting) return;
+    setState(() => _exporting = true);
+    try {
+      await action();
+    } catch (error, stackTrace) {
+      debugPrint('Day Book export failed: $error\n$stackTrace');
+      _showNotice(DayBookStrings.exportFailed);
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
+  void _showNotice(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -52,6 +98,9 @@ class _DayBookScreenState extends State<DayBookScreen> {
         appBar: DayBookAppBar(
           onBack: widget.onBack ?? () => Navigator.of(context).pop(),
           onRefresh: _ctrl.loadData,
+          onExportPdf: _exporting ? null : _previewPdf,
+          onExportCsv: _exporting ? null : _exportCsv,
+          onSharePdf: _exporting ? null : _sharePdf,
           ctrl: _ctrl,
         ),
         body: ListenableBuilder(
@@ -113,40 +162,49 @@ class _DayBookScreenState extends State<DayBookScreen> {
           ),
         ),
         Expanded(
-          child: Scrollbar(
-            controller: _mainScrollController,
-            thumbVisibility: true,
-            child: SingleChildScrollView(
-              controller: _mainScrollController,
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1240),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _Reveal(
-                        delay: 0,
-                        child: DayBookOverview(summary: summary),
-                      ),
-                      const SizedBox(height: 16),
-                      if (summary.anomalies.isNotEmpty) ...[
-                        _Reveal(
-                          delay: 70,
-                          child: DayBookAlerts(ctrl: _ctrl),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      ..._workspaceSections(summary),
-                    ],
-                  ),
+          child: _buildWorkspace(summary),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWorkspace(DayBookSummary summary) {
+    return Scrollbar(
+      controller: _mainScrollController,
+      thumbVisibility: true,
+      child: SingleChildScrollView(
+        controller: _mainScrollController,
+        padding: const EdgeInsets.fromLTRB(22, 22, 22, 36),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1320),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _Reveal(
+                  delay: 0,
+                  child: DayBookOpeningPosition(summary: summary),
                 ),
-              ),
+                const SizedBox(height: 16),
+                _Reveal(
+                  delay: 40,
+                  child: DayBookOverview(summary: summary),
+                ),
+                const SizedBox(height: 16),
+                if (summary.anomalies.isNotEmpty) ...[
+                  _Reveal(
+                    delay: 70,
+                    child: DayBookAlerts(ctrl: _ctrl),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                ..._workspaceSections(summary),
+              ],
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -160,6 +218,8 @@ class _DayBookScreenState extends State<DayBookScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            DayBookOpeningPosition(summary: summary),
+            const SizedBox(height: 12),
             DayBookSummaryRail(
               ctrl: _ctrl,
               onReconcile: _showReconciliation,
@@ -215,6 +275,11 @@ class _DayBookScreenState extends State<DayBookScreen> {
         delay: 180,
         child: MetalMovementPanel(summary: summary),
       ),
+      const SizedBox(height: 12),
+      _Reveal(
+        delay: 210,
+        child: DayBookClosingPosition(summary: summary),
+      ),
       if (_ctrl.isToday && summary.prediction != null) ...[
         const SizedBox(height: 12),
         _Reveal(
@@ -265,11 +330,10 @@ class _LoadingState extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final desktop = constraints.maxWidth >= 1080;
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (desktop)
+        if (constraints.maxWidth >= 1080) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               Container(
                 width: 320,
                 padding: const EdgeInsets.all(16),
@@ -279,25 +343,93 @@ class _LoadingState extends StatelessWidget {
                     right: BorderSide(color: DayBookColors.bodyBorder),
                   ),
                 ),
-                child: const _SkeletonColumn(compact: true),
+                child: const _RailSkeleton(),
               ),
-            const Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: _SkeletonColumn(),
+              const Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(22),
+                  child: _SkeletonColumn(),
+                ),
               ),
+            ],
+          );
+        }
+
+        return Align(
+          alignment: Alignment.topCenter,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(22),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1320),
+              child: const _SkeletonColumn(),
             ),
-          ],
+          ),
         );
       },
     );
   }
 }
 
-class _SkeletonColumn extends StatefulWidget {
-  final bool compact;
+class _RailSkeleton extends StatelessWidget {
+  const _RailSkeleton();
 
-  const _SkeletonColumn({this.compact = false});
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          width: 180,
+          height: 40,
+          decoration: BoxDecoration(
+            color: DayBookColors.bodyBorder,
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          height: 150,
+          decoration: BoxDecoration(
+            color: DayBookColors.bodyPanel,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: DayBookColors.bodyBorder),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(child: _railBlock()),
+            const SizedBox(width: 8),
+            Expanded(child: _railBlock()),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          height: 128,
+          decoration: BoxDecoration(
+            color: DayBookColors.bodyPanel,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: DayBookColors.bodyBorder),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _railBlock() {
+    return Container(
+      height: 100,
+      decoration: BoxDecoration(
+        color: DayBookColors.bodyPanel,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: DayBookColors.bodyBorder),
+      ),
+    );
+  }
+}
+
+class _SkeletonColumn extends StatefulWidget {
+  const _SkeletonColumn();
 
   @override
   State<_SkeletonColumn> createState() => _SkeletonColumnState();
@@ -338,13 +470,13 @@ class _SkeletonColumnState extends State<_SkeletonColumn>
             _SkeletonBlock(height: 44, width: 180, color: color),
             const SizedBox(height: 14),
             _SkeletonBlock(
-              height: widget.compact ? 150 : 108,
+              height: 108,
               color: color,
             ),
             const SizedBox(height: 12),
             _SkeletonBlock(height: 180, color: color),
             const SizedBox(height: 12),
-            if (!widget.compact) _SkeletonBlock(height: 260, color: color),
+            _SkeletonBlock(height: 260, color: color),
           ],
         );
       },

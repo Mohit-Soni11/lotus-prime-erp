@@ -19,7 +19,7 @@ class DayBookStyles {
     );
 
     final outlineShape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(10),
     );
 
     return ThemeData(
@@ -38,18 +38,18 @@ class DayBookStyles {
           vertical: 11,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: DayBookColors.bodyBorder),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(
             color: DayBookColors.brandGold,
             width: 1.4,
           ),
         ),
         disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: DayBookColors.bodyBorder),
         ),
       ),
@@ -128,14 +128,14 @@ class DayBookStyles {
       );
 
   static TextStyle get pageTitle => GoogleFonts.inter(
-        fontSize: 22,
-        fontWeight: FontWeight.w700,
+        fontSize: 24,
+        fontWeight: FontWeight.w800,
         color: DayBookColors.textPrimary,
       );
 
   static TextStyle get sectionTitle => GoogleFonts.inter(
-        fontSize: 15,
-        fontWeight: FontWeight.w700,
+        fontSize: 16,
+        fontWeight: FontWeight.w800,
         color: DayBookColors.textPrimary,
       );
 
@@ -164,14 +164,14 @@ class DayBookStyles {
       );
 
   static TextStyle get valueLarge => GoogleFonts.inter(
-        fontSize: 22,
-        fontWeight: FontWeight.w700,
+        fontSize: 21,
+        fontWeight: FontWeight.w800,
         color: DayBookColors.textPrimary,
       );
 
   static TextStyle get valueHero => GoogleFonts.inter(
         fontSize: 28,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         color: DayBookColors.textPrimary,
       );
 
@@ -183,13 +183,13 @@ class DayBookStyles {
   static BoxDecoration panel({Color? color, Color? borderColor}) {
     return BoxDecoration(
       color: color ?? DayBookColors.bodyPanel,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(12),
       border: Border.all(color: borderColor ?? DayBookColors.bodyBorder),
       boxShadow: const [
         BoxShadow(
           color: DayBookColors.shadow,
-          blurRadius: 10,
-          offset: Offset(0, 3),
+          blurRadius: 14,
+          offset: Offset(0, 4),
         ),
       ],
     );
@@ -201,7 +201,7 @@ class DayBookStyles {
   }) {
     return BoxDecoration(
       color: color,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(10),
       border: Border.all(color: borderColor),
     );
   }

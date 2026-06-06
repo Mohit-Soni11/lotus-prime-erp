@@ -9,8 +9,9 @@ class DefaulterStrings {
 
   // --- SYSTEM SHELL ---
   static const String systemOnline = 'SYSTEM ONLINE';
-  static const String moduleTitle = 'DEFAULTER LIST';
-  static const String moduleSubtitle = 'Overdue Loans & Pending Dues';
+  static const String moduleTitle = 'LOAN DEFAULTERS';
+  static const String moduleSubtitle =
+      'Active Girvi loans with accrued interest';
 
   // --- STATS PANEL ---
   static const String statTotal = 'Total Defaulters';
@@ -64,7 +65,7 @@ class DefaulterStrings {
   // --- EMPTY STATE ---
   static const String emptyTitle = 'No Defaulters Found';
   static const String emptySubtitle =
-      'All customers are up to date.\nNo overdue loans or pending dues.';
+      'All Girvi loan accounts are up to date.\nNo active loan dues found.';
   static const String emptySearch = 'No results match your search.';
   static const String emptyFilter = 'No defaulters in this category.';
 

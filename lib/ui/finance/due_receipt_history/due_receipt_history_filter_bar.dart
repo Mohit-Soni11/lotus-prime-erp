@@ -195,6 +195,14 @@ class _ModeDropdown extends StatelessWidget {
           value: ctrl.modeFilter,
           isExpanded: true,
           icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+          iconEnabledColor: DueReceiptHistoryColors.textMuted,
+          dropdownColor: DueReceiptHistoryColors.panelBg,
+          borderRadius: BorderRadius.circular(10),
+          menuMaxHeight: 280,
+          style: DueReceiptHistoryStyles.label.copyWith(
+            color: DueReceiptHistoryColors.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
           items: DueReceiptModeFilter.values
               .map((value) =>
                   DropdownMenuItem(value: value, child: Text(value.label)))
@@ -222,6 +230,14 @@ class _SortDropdown extends StatelessWidget {
           value: ctrl.sort,
           isExpanded: true,
           icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+          iconEnabledColor: DueReceiptHistoryColors.textMuted,
+          dropdownColor: DueReceiptHistoryColors.panelBg,
+          borderRadius: BorderRadius.circular(10),
+          menuMaxHeight: 280,
+          style: DueReceiptHistoryStyles.label.copyWith(
+            color: DueReceiptHistoryColors.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
           items: DueReceiptSort.values
               .map((value) =>
                   DropdownMenuItem(value: value, child: Text(value.label)))

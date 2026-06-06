@@ -3,25 +3,26 @@ import 'package:flutter/material.dart';
 class DayBookColors {
   DayBookColors._();
 
-  static const Color brandGold = Color(0xFFC9A227);
-  static const Color brandGoldSoft = Color(0xFFF8F2DD);
-  static const Color brandGoldBorder = Color(0xFFE9DCA8);
+  static const Color brandGold = Color(0xFFD4AF37);
+  static const Color goldGradientStart = Color(0xFFFFD700);
+  static const Color brandGoldSoft = Color(0xFFFAF6EC);
+  static const Color brandGoldBorder = Color(0xFFE4D096);
 
-  static const Color shellBg = Color(0xFF17191D);
-  static const Color shellPanel = Color(0xFF202329);
-  static const Color shellBorder = Color(0xFF353941);
-  static const Color shellTitle = Color(0xFFF7F8FA);
-  static const Color shellMuted = Color(0xFFA7ADB7);
+  static const Color shellBg = Color(0xFF111827);
+  static const Color shellPanel = Color(0xFF1F2937);
+  static const Color shellBorder = Color(0xFF374151);
+  static const Color shellTitle = Color(0xFFF9FAFB);
+  static const Color shellMuted = Color(0xFF9CA3AF);
 
-  static const Color bodyBg = Color(0xFFF4F5F7);
+  static const Color bodyBg = Color(0xFFF9F6F0);
   static const Color bodyPanel = Color(0xFFFFFFFF);
-  static const Color bodySubtle = Color(0xFFF8F9FA);
-  static const Color bodyBorder = Color(0xFFE1E4E8);
-  static const Color cardHover = Color(0xFFF9FAFB);
+  static const Color bodySubtle = Color(0xFFFCFAF6);
+  static const Color bodyBorder = Color(0xFFE8E3DA);
+  static const Color cardHover = Color(0xFFF6F3EC);
 
-  static const Color textPrimary = Color(0xFF20242A);
-  static const Color textSecondary = Color(0xFF5F6772);
-  static const Color textMuted = Color(0xFF8B929C);
+  static const Color textPrimary = Color(0xFF1E293B);
+  static const Color textSecondary = Color(0xFF64748B);
+  static const Color textMuted = Color(0xFF94A3B8);
   static const Color textOnAccent = Color(0xFFFFFFFF);
 
   static const Color positive = Color(0xFF147A55);
@@ -48,6 +49,10 @@ class DayBookColors {
   static const Color goldMetalSoft = Color(0xFFFFF7E8);
   static const Color silverMetal = Color(0xFF667085);
   static const Color silverMetalSoft = Color(0xFFF0F2F5);
+  static const Color platinumMetal = Color(0xFF475569);
+  static const Color platinumMetalSoft = Color(0xFFF1F5F9);
+  static const Color diamondMetal = Color(0xFF0284C7);
+  static const Color diamondMetalSoft = Color(0xFFEFF8FF);
 
   static const Color cashMode = positive;
   static const Color upiMode = Color(0xFF11879B);
@@ -55,6 +60,6 @@ class DayBookColors {
   static const Color bankMode = information;
   static const Color chequeMode = Color(0xFF8A5A44);
 
-  static const Color shadow = Color(0x12000000);
+  static const Color shadow = Color(0x0F000000);
   static const Color overlay = Color(0x99000000);
 }

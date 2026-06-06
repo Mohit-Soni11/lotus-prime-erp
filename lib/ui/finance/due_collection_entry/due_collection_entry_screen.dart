@@ -13,7 +13,18 @@ import '../../../theme/finance/due_collection_entry/due_collection_entry_theme.d
 enum _PremiumNoticeType { success, warning, error }
 
 class DueCollectionEntryScreen extends StatefulWidget {
-  const DueCollectionEntryScreen({super.key});
+  final int? initialCustomerId;
+  final String? initialCustomerName;
+  final String? initialMobile;
+  final String? initialBillNo;
+
+  const DueCollectionEntryScreen({
+    super.key,
+    this.initialCustomerId,
+    this.initialCustomerName,
+    this.initialMobile,
+    this.initialBillNo,
+  });
 
   @override
   State<DueCollectionEntryScreen> createState() =>
@@ -29,6 +40,12 @@ class _DueCollectionEntryScreenState extends State<DueCollectionEntryScreen> {
   void initState() {
     super.initState();
     _ctrl = DueCollectionEntryController();
+    _ctrl.openDueProfile(
+      customerId: widget.initialCustomerId,
+      customerName: widget.initialCustomerName,
+      mobile: widget.initialMobile,
+      billNo: widget.initialBillNo,
+    );
   }
 
   @override
@@ -110,7 +127,7 @@ class _DueCollectionEntryScreenState extends State<DueCollectionEntryScreen> {
     final mode = _ctrl.lastPaymentModeLabel ?? _ctrl.paymentMode.label;
     final promiseDate = _ctrl.lastPromiseDate;
     final receiptDate = DateTime.now();
-    final status = balance <= 0.5 ? 'PAID' : 'PARTIAL';
+    final status = balance <= 0.5 ? 'Due Cleared' : 'Partial Due';
     final pdf = pw.Document();
 
     String amount(double value) =>
@@ -235,7 +252,7 @@ class _DueCollectionEntryScreenState extends State<DueCollectionEntryScreen> {
                         ),
                         pw.SizedBox(height: 8),
                         pw.Text(
-                          'Due payment receipt against customer invoice.',
+                          'Customer payment receipt against an outstanding invoice.',
                           style: const pw.TextStyle(fontSize: 9),
                         ),
                       ],
@@ -252,7 +269,7 @@ class _DueCollectionEntryScreenState extends State<DueCollectionEntryScreen> {
                       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
                       children: [
                         pw.Text(
-                          'DUE RECEIPT',
+                          'PAYMENT RECEIPT',
                           textAlign: pw.TextAlign.right,
                           style: pw.TextStyle(
                             color: PdfColors.white,
@@ -262,7 +279,7 @@ class _DueCollectionEntryScreenState extends State<DueCollectionEntryScreen> {
                         ),
                         pw.SizedBox(height: 8),
                         pw.Text(
-                          receiptNo,
+                          'Due Collection | $receiptNo',
                           textAlign: pw.TextAlign.right,
                           style: const pw.TextStyle(
                             color: PdfColors.amber200,
@@ -436,7 +453,7 @@ class _DueCollectionEntryScreenState extends State<DueCollectionEntryScreen> {
                             ),
                           ),
                           child: pw.Text(
-                            'Narration: Received ${amount(received)} against invoice ${bill.billNo}.',
+                            'Narration: Received ${amount(received)} against invoice ${bill.billNo}${discount > 0.5 ? ' with ${amount(discount)} discount / waiver' : ''}.',
                             style: const pw.TextStyle(fontSize: 9),
                           ),
                         ),
@@ -2014,6 +2031,7 @@ class _CollectionForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settlementValidation = ctrl.settlementValidationMessage;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -2073,6 +2091,10 @@ class _CollectionForm extends StatelessWidget {
                     label: 'Clear Disc.', onTap: ctrl.clearDiscount)),
           ],
         ),
+        if (settlementValidation != null) ...[
+          const SizedBox(height: 10),
+          _MessageBox(message: settlementValidation, isError: true),
+        ],
         const SizedBox(height: 16),
         const Text('Payment Mode', style: DueCollectionEntryStyles.label),
         const SizedBox(height: 8),

@@ -7,17 +7,23 @@ import '../../../theme/reports/day_book/day_book_theme.dart';
 class DayBookAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
   final VoidCallback onRefresh;
+  final VoidCallback? onExportPdf;
+  final VoidCallback? onExportCsv;
+  final VoidCallback? onSharePdf;
   final DayBookController ctrl;
 
   const DayBookAppBar({
     super.key,
     required this.onBack,
     required this.onRefresh,
+    required this.onExportPdf,
+    required this.onExportCsv,
+    required this.onSharePdf,
     required this.ctrl,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(72);
+  Size get preferredSize => const Size.fromHeight(76);
 
   @override
   State<DayBookAppBar> createState() => _DayBookAppBarState();
@@ -44,20 +50,29 @@ class _DayBookAppBarState extends State<DayBookAppBar>
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: DayBookColors.shellPanel,
-      child: Container(
-        decoration: const BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: DayBookColors.shellBorder),
-          ),
+    return Container(
+      height: 76,
+      decoration: const BoxDecoration(
+        color: DayBookColors.shellPanel,
+        border: Border(
+          bottom: BorderSide(color: DayBookColors.shellBorder),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x26000000),
+            blurRadius: 16,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
         child: SafeArea(
           bottom: false,
           child: LayoutBuilder(
             builder: (context, constraints) {
               final compact = constraints.maxWidth < 760;
-              final showStatus = constraints.maxWidth >= 980;
+              final showUtilities = constraints.maxWidth >= 1120;
 
               return Padding(
                 padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 20),
@@ -68,26 +83,54 @@ class _DayBookAppBarState extends State<DayBookAppBar>
                       tooltip: 'Back',
                       onPressed: widget.onBack,
                     ),
-                    SizedBox(width: compact ? 8 : 14),
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color:
-                            DayBookColors.brandGoldSoft.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color:
-                              DayBookColors.brandGold.withValues(alpha: 0.38),
+                    SizedBox(width: compact ? 10 : 18),
+                    if (!compact) ...[
+                      Container(
+                        width: 1.5,
+                        height: 32,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              DayBookColors.shellBorder,
+                              Colors.transparent,
+                            ],
+                          ),
                         ),
+                      ),
+                      const SizedBox(width: 18),
+                    ],
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            DayBookColors.goldGradientStart,
+                            DayBookColors.brandGold,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                DayBookColors.brandGold.withValues(alpha: 0.45),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
                       child: const Icon(
                         DayBookIcons.module,
-                        color: DayBookColors.brandGold,
+                        color: Colors.white,
                         size: 18,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 14),
                     if (!compact)
                       Expanded(
                         child: Column(
@@ -98,22 +141,13 @@ class _DayBookAppBarState extends State<DayBookAppBar>
                               DayBookStrings.moduleTitle,
                               style: DayBookStyles.appBarTitle,
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              DayBookStrings.moduleSubtitle,
-                              style: DayBookStyles.appBarSubtitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                            const SizedBox(height: 3),
+                            _LiveStatus(animation: _pulseController),
                           ],
                         ),
                       )
                     else
                       const Spacer(),
-                    if (showStatus) ...[
-                      _LiveStatus(animation: _pulseController),
-                      const SizedBox(width: 14),
-                    ],
                     ListenableBuilder(
                       listenable: widget.ctrl,
                       builder: (context, child) {
@@ -124,6 +158,32 @@ class _DayBookAppBarState extends State<DayBookAppBar>
                       },
                     ),
                     const SizedBox(width: 8),
+                    if (showUtilities) ...[
+                      Container(
+                        width: 1,
+                        height: 28,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        color: DayBookColors.shellBorder,
+                      ),
+                      _HeaderIconButton(
+                        icon: DayBookIcons.pdf,
+                        tooltip: DayBookStrings.exportPdf,
+                        onPressed: widget.onExportPdf,
+                      ),
+                      const SizedBox(width: 6),
+                      _HeaderIconButton(
+                        icon: DayBookIcons.table,
+                        tooltip: DayBookStrings.exportCsv,
+                        onPressed: widget.onExportCsv,
+                      ),
+                      const SizedBox(width: 6),
+                      _HeaderIconButton(
+                        icon: DayBookIcons.share,
+                        tooltip: DayBookStrings.sharePdf,
+                        onPressed: widget.onSharePdf,
+                      ),
+                      const SizedBox(width: 6),
+                    ],
                     ListenableBuilder(
                       listenable: widget.ctrl,
                       builder: (context, child) {
@@ -301,13 +361,13 @@ class _HeaderIconButton extends StatelessWidget {
       child: IconButton(
         onPressed: onPressed,
         style: IconButton.styleFrom(
-          fixedSize: const Size(38, 38),
-          backgroundColor: Colors.transparent,
-          foregroundColor: DayBookColors.shellMuted,
+          fixedSize: const Size(42, 42),
+          backgroundColor: DayBookColors.shellBorder.withValues(alpha: 0.3),
+          foregroundColor: DayBookColors.shellTitle,
           disabledForegroundColor:
               DayBookColors.shellMuted.withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             side: const BorderSide(color: DayBookColors.shellBorder),
           ),
         ),
@@ -333,39 +393,29 @@ class _LiveStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 30,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: DayBookColors.positive.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: DayBookColors.positive.withValues(alpha: 0.28),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FadeTransition(
+          opacity: animation,
+          child: Container(
+            width: 7,
+            height: 7,
+            decoration: const BoxDecoration(
+              color: DayBookColors.positive,
+              shape: BoxShape.circle,
+            ),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          FadeTransition(
-            opacity: animation,
-            child: Container(
-              width: 7,
-              height: 7,
-              decoration: const BoxDecoration(
-                color: DayBookColors.positive,
-                shape: BoxShape.circle,
-              ),
-            ),
+        const SizedBox(width: 6),
+        Text(
+          DayBookStrings.liveStatus,
+          style: DayBookStyles.appBarSubtitle.copyWith(
+            color: DayBookColors.positiveBorder,
+            fontWeight: FontWeight.w700,
           ),
-          const SizedBox(width: 7),
-          Text(
-            DayBookStrings.liveStatus,
-            style: DayBookStyles.appBarSubtitle.copyWith(
-              color: DayBookColors.positiveBorder,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

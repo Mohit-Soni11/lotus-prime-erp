@@ -6,8 +6,13 @@ import '../../../theme/finance/due_report/due_report_theme.dart';
 
 class DueReportBillPanel extends StatelessWidget {
   final DueCustomerGroupModel? group;
+  final ValueChanged<DueCustomerGroupModel>? onCollectDue;
 
-  const DueReportBillPanel({super.key, required this.group});
+  const DueReportBillPanel({
+    super.key,
+    required this.group,
+    this.onCollectDue,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +23,10 @@ class DueReportBillPanel extends StatelessWidget {
           ? const _NoSelection()
           : Column(
               children: [
-                _CustomerHeader(group: selected),
+                _CustomerHeader(
+                  group: selected,
+                  onCollectDue: onCollectDue,
+                ),
                 const Divider(height: 1, color: DueReportColors.divider),
                 Expanded(child: _BillList(group: selected)),
               ],
@@ -29,7 +37,12 @@ class DueReportBillPanel extends StatelessWidget {
 
 class _CustomerHeader extends StatelessWidget {
   final DueCustomerGroupModel group;
-  const _CustomerHeader({required this.group});
+  final ValueChanged<DueCustomerGroupModel>? onCollectDue;
+
+  const _CustomerHeader({
+    required this.group,
+    required this.onCollectDue,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -107,6 +120,11 @@ class _CustomerHeader extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          _CollectDueButton(
+            enabled: onCollectDue != null,
+            onTap: () => onCollectDue?.call(group),
+          ),
           if (group.address.trim().isNotEmpty) ...[
             const SizedBox(height: 12),
             Row(
@@ -137,6 +155,74 @@ class _CustomerHeader extends StatelessWidget {
   String _contactLine(DueCustomerGroupModel group) {
     final city = group.city.trim().isEmpty ? 'No city' : group.city;
     return '${group.mobile} | $city';
+  }
+}
+
+class _CollectDueButton extends StatefulWidget {
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _CollectDueButton({
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  State<_CollectDueButton> createState() => _CollectDueButtonState();
+}
+
+class _CollectDueButtonState extends State<_CollectDueButton> {
+  bool _hovered = false;
+
+  void _setHovered(bool value) {
+    if (!mounted || _hovered == value) return;
+    setState(() => _hovered = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final active = widget.enabled;
+    final bg = _hovered && active
+        ? DueReportColors.appBarBg
+        : DueReportColors.goldSoft;
+    final fg =
+        _hovered && active ? DueReportColors.textLight : DueReportColors.gold;
+
+    return MouseRegion(
+      cursor: active ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      onEnter: (_) => _setHovered(true),
+      onExit: (_) => _setHovered(false),
+      child: GestureDetector(
+        onTap: active ? widget.onTap : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          width: double.infinity,
+          height: 42,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: active ? DueReportColors.gold : DueReportColors.border,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(DueReportIcons.collect, size: 18, color: fg),
+              const SizedBox(width: 8),
+              Text(
+                'Collect Due',
+                style: DueReportStyles.label.copyWith(
+                  color: fg,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

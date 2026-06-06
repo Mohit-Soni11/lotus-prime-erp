@@ -121,10 +121,32 @@ class DueReceiptModel {
 
   String get statusLabel {
     if (isClearedNow) return 'Due Cleared';
-    return 'Due Received';
+    return 'Partial Due';
   }
 
   String get modeKey => paymentMode.trim().toUpperCase();
+
+  String get paymentModeLabel {
+    switch (modeKey) {
+      case 'CASH':
+        return 'Cash';
+      case 'UPI':
+        return 'UPI';
+      case 'CARD':
+        return 'Card';
+      case 'CHEQUE':
+        return 'Cheque';
+      case 'NEFT':
+      case 'RTGS':
+      case 'IMPS':
+      case 'BANK':
+        return 'Bank';
+      case 'CASH_DEPOSIT':
+        return 'Cash Deposit';
+      default:
+        return paymentMode.trim().isEmpty ? '-' : paymentMode.trim();
+    }
+  }
 }
 
 class DueReceiptStatsModel {

@@ -36,6 +36,11 @@ class DueCollectionEntryController extends ChangeNotifier {
   DueCollectionPaymentMode _paymentMode = DueCollectionPaymentMode.cash;
   int? _selectedBankAccountId;
   String? _selectedCustomerKey;
+  int? _pendingCustomerId;
+  String? _pendingCustomerName;
+  String? _pendingMobile;
+  String? _pendingBillNo;
+  bool _pendingSelectionApplied = false;
   String _searchQuery = '';
   bool _isLoading = true;
   bool _isSaving = false;
@@ -87,6 +92,26 @@ class DueCollectionEntryController extends ChangeNotifier {
   double get amount => _amount;
   double get discountAmount => _discountAmount;
   double get settlementAmount => _amount + _discountAmount;
+  double get settlementOverAmount {
+    final bill = _selectedBill;
+    if (bill == null) return 0;
+    final extra = settlementAmount - bill.dueAmount;
+    return extra > 0.01 ? extra : 0;
+  }
+
+  String? get settlementValidationMessage {
+    final bill = _selectedBill;
+    if (bill == null) return null;
+    if (_discountAmount < 0) {
+      return 'Discount / waiver cannot be negative.';
+    }
+    final extra = settlementOverAmount;
+    if (extra <= 0) return null;
+    final maxDiscount = bill.dueAmount - _amount;
+    return 'Amount + discount exceeds bill due by ${formatAmount(extra)}. '
+        'Maximum discount for this collection is ${formatAmount(maxDiscount > 0 ? maxDiscount : 0)}.';
+  }
+
   double get balanceAfterSave {
     final bill = _selectedBill;
     if (bill == null) return 0;
@@ -176,6 +201,28 @@ class DueCollectionEntryController extends ChangeNotifier {
     _bankAccounts = results[1] as List<DueCollectionBankAccountModel>;
     _syncSelectedBankAccount();
     _isLoading = false;
+    _applyViewState();
+  }
+
+  void openDueProfile({
+    int? customerId,
+    String? customerName,
+    String? mobile,
+    String? billNo,
+  }) {
+    if (customerId == null &&
+        _clean(customerName).isEmpty &&
+        _clean(mobile).isEmpty &&
+        _clean(billNo).isEmpty) {
+      return;
+    }
+    _pendingCustomerId = customerId;
+    _pendingCustomerName = _clean(customerName);
+    _pendingMobile = _clean(mobile);
+    _pendingBillNo = _clean(billNo);
+    _pendingSelectionApplied = false;
+    _successMessage = null;
+    _errorMessage = null;
     _applyViewState();
   }
 
@@ -413,6 +460,7 @@ class DueCollectionEntryController extends ChangeNotifier {
     if (_disposed) return;
     final nextQuery = searchCtrl.text.trim();
     if (_searchQuery == nextQuery) return;
+    _clearPendingOpenTarget();
     _searchQuery = nextQuery;
     _selectedCustomerKey = null;
     _selectedCustomer = null;
@@ -456,9 +504,67 @@ class DueCollectionEntryController extends ChangeNotifier {
 
     _bills = visible;
     _customers = DueCollectionCustomerModel.groupBills(visible);
-    _syncCustomerAndBill();
+    if (!_applyPendingOpenTarget()) {
+      _syncCustomerAndBill();
+    }
     _stats = DueCollectionStatsModel.fromBills(_allBills, _selectedBill);
     _notifyListeners();
+  }
+
+  bool _applyPendingOpenTarget() {
+    if (_pendingSelectionApplied ||
+        (_pendingCustomerId == null &&
+            _clean(_pendingCustomerName).isEmpty &&
+            _clean(_pendingMobile).isEmpty &&
+            _clean(_pendingBillNo).isEmpty)) {
+      return false;
+    }
+
+    final target = _findPendingBill();
+    if (target == null) return false;
+
+    _pendingSelectionApplied = true;
+    _selectedCustomerKey = DueCollectionCustomerModel.keyForBill(target);
+    _selectedCustomer = _findCustomerByKey(_selectedCustomerKey!) ??
+        _findCustomerContainingBill(target.id);
+    _selectedBill = target;
+    _successMessage = null;
+    _errorMessage = null;
+    _clearReceiptState();
+    _prepareBillInputs(target);
+    return true;
+  }
+
+  DueCollectionBillModel? _findPendingBill() {
+    final billNo = _clean(_pendingBillNo).toLowerCase();
+    if (billNo.isNotEmpty) {
+      for (final bill in _bills) {
+        if (bill.billNo.trim().toLowerCase() == billNo) return bill;
+      }
+    }
+
+    final customerId = _pendingCustomerId;
+    if (customerId != null) {
+      for (final bill in _bills) {
+        if (bill.customerId == customerId) return bill;
+      }
+    }
+
+    final mobile = _clean(_pendingMobile);
+    if (mobile.isNotEmpty) {
+      for (final bill in _bills) {
+        if (bill.mobile.trim() == mobile) return bill;
+      }
+    }
+
+    final name = _clean(_pendingCustomerName).toLowerCase();
+    if (name.isNotEmpty) {
+      for (final bill in _bills) {
+        if (bill.customerName.trim().toLowerCase() == name) return bill;
+      }
+    }
+
+    return null;
   }
 
   void _syncCustomerAndBill() {
@@ -558,6 +664,16 @@ class DueCollectionEntryController extends ChangeNotifier {
     _lastPaymentModeLabel = null;
     _lastPromiseDate = null;
   }
+
+  void _clearPendingOpenTarget() {
+    _pendingCustomerId = null;
+    _pendingCustomerName = null;
+    _pendingMobile = null;
+    _pendingBillNo = null;
+    _pendingSelectionApplied = false;
+  }
+
+  String _clean(String? value) => value?.trim() ?? '';
 
   @override
   void dispose() {

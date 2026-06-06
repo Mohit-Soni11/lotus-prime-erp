@@ -10,6 +10,9 @@ class DayBookIcons {
   static const IconData previous = Icons.chevron_left_rounded;
   static const IconData next = Icons.chevron_right_rounded;
   static const IconData today = Icons.today_rounded;
+  static const IconData pdf = Icons.picture_as_pdf_rounded;
+  static const IconData table = Icons.table_view_rounded;
+  static const IconData share = Icons.share_rounded;
   static const IconData close = Icons.close_rounded;
   static const IconData expand = Icons.expand_more_rounded;
   static const IconData collapse = Icons.expand_less_rounded;
@@ -34,6 +37,8 @@ class DayBookIcons {
   static const IconData metalOut = Icons.remove_circle_outline_rounded;
   static const IconData gold = Icons.circle_rounded;
   static const IconData silver = Icons.circle_outlined;
+  static const IconData platinum = Icons.hexagon_outlined;
+  static const IconData diamond = Icons.diamond_outlined;
   static const IconData vault = Icons.inventory_2_rounded;
 
   static const IconData alert = Icons.warning_amber_rounded;

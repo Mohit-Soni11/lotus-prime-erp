@@ -194,27 +194,82 @@ class MetalWeight {
   final double gold22k; // purity = '22K' (916)
   final double gold18k; // purity = '18K'
   final double silver; // metalType = 'Silver'
+  final Map<String, double> additionalEntries;
 
   const MetalWeight({
     this.gold22k = 0,
     this.gold18k = 0,
     this.silver = 0,
+    this.additionalEntries = const {},
   });
 
-  double get totalGold => gold22k + gold18k;
-  double get totalSilver => silver;
+  factory MetalWeight.fromEntries(Map<String, double> entries) {
+    return MetalWeight(additionalEntries: Map.unmodifiable(entries));
+  }
 
-  MetalWeight operator +(MetalWeight o) => MetalWeight(
-        gold22k: gold22k + o.gold22k,
-        gold18k: gold18k + o.gold18k,
-        silver: silver + o.silver,
-      );
+  static String entryKey(String metal, String purity) => '$metal::$purity';
 
-  MetalWeight operator -(MetalWeight o) => MetalWeight(
-        gold22k: (gold22k - o.gold22k).clamp(0, double.infinity),
-        gold18k: (gold18k - o.gold18k).clamp(0, double.infinity),
-        silver: (silver - o.silver).clamp(0, double.infinity),
-      );
+  Map<String, double> get entries {
+    final values = <String, double>{...additionalEntries};
+    _addEntry(values, entryKey('Gold', '22K'), gold22k);
+    _addEntry(values, entryKey('Gold', '18K'), gold18k);
+    _addEntry(values, entryKey('Silver', 'Standard'), silver);
+    values.removeWhere((_, value) => value.abs() < 0.000001);
+    return values;
+  }
+
+  Set<String> get metals => entries.keys
+      .map((key) => key.split('::').first)
+      .where((metal) => metal.isNotEmpty)
+      .toSet();
+
+  Map<String, double> puritiesFor(String metal) {
+    final values = <String, double>{};
+    for (final entry in entries.entries) {
+      final parts = entry.key.split('::');
+      if (parts.length != 2 || parts.first != metal) continue;
+      values[parts.last] = (values[parts.last] ?? 0) + entry.value;
+    }
+    return values;
+  }
+
+  double totalForMetal(String metal) =>
+      puritiesFor(metal).values.fold(0.0, (sum, value) => sum + value);
+
+  double get totalGold => totalForMetal('Gold');
+  double get totalSilver => totalForMetal('Silver');
+  double get totalPlatinum => totalForMetal('Platinum');
+  double get totalDiamond => totalForMetal('Diamond');
+  double get totalWeight =>
+      entries.values.fold(0.0, (sum, value) => sum + value);
+  bool get isEmpty => entries.isEmpty;
+
+  MetalWeight operator +(MetalWeight other) =>
+      MetalWeight.fromEntries(_mergeEntries(entries, other.entries, 1));
+
+  MetalWeight operator -(MetalWeight other) =>
+      MetalWeight.fromEntries(_mergeEntries(entries, other.entries, -1));
+
+  static void _addEntry(
+    Map<String, double> target,
+    String key,
+    double value,
+  ) {
+    if (value == 0) return;
+    target[key] = (target[key] ?? 0) + value;
+  }
+
+  static Map<String, double> _mergeEntries(
+    Map<String, double> left,
+    Map<String, double> right,
+    double multiplier,
+  ) {
+    final result = <String, double>{...left};
+    for (final entry in right.entries) {
+      _addEntry(result, entry.key, entry.value * multiplier);
+    }
+    return result;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

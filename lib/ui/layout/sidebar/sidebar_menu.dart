@@ -30,7 +30,6 @@ class SidebarMenu {
       subItems: [
         MenuItemData(AppRoutes.customerListRoute),
         MenuItemData(AppRoutes.addCustomerRoute),
-        MenuItemData(AppRoutes.defaulterListRoute),
       ],
     ),
 
@@ -98,6 +97,7 @@ class SidebarMenu {
       subItems: [
         MenuItemData(AppRoutes.newGirviRoute),
         MenuItemData(AppRoutes.girviReleaseRoute),
+        MenuItemData(AppRoutes.defaulterListRoute),
         MenuItemData(AppRoutes.interestCalcRoute),
         MenuItemData(AppRoutes.noticeAuctionRoute),
       ],

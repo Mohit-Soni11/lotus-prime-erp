@@ -301,28 +301,34 @@ class _NewGirviScreenState extends State<NewGirviScreen>
                   ),
 
                 // â”€â”€ Sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      _animated(0, _buildSection0Customer()),
-                      const SizedBox(height: 16),
-                      _animated(1, _buildSection1ItemDetails()),
-                      const SizedBox(height: 16),
-                      _animated(2, _buildSection2Weight()),
-                      const SizedBox(height: 16),
-                      _animated(3, _buildSection3Valuation()),
-                      const SizedBox(height: 16),
-                      _animated(4, _buildSection4LoanTerms()),
-                      const SizedBox(height: 16),
-                      _animated(5, _buildSection5Disbursement()),
-                      const SizedBox(height: 16),
-                      _animated(6, _buildSection6Dates()),
-                      const SizedBox(height: 16),
-                      _animated(7, _buildSection7KYC()),
-                      const SizedBox(height: 16),
-                      _animated(8, _buildSection8Notes()),
-                    ]),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final wide = constraints.maxWidth >= 1120;
+                        if (!wide) {
+                          return Column(
+                            children: [
+                              _buildMainEntryColumn(),
+                              const SizedBox(height: 16),
+                              _buildTicketSummaryPanel(),
+                            ],
+                          );
+                        }
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(flex: 70, child: _buildMainEntryColumn()),
+                            const SizedBox(width: 18),
+                            Expanded(
+                              flex: 30,
+                              child: _buildTicketSummaryPanel(),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
               ],
@@ -332,11 +338,323 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       ),
 
       // â”€â”€ Bottom Action Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      bottomNavigationBar: _buildBottomBar(),
     );
   }
 
   // â”€â”€ TICKET BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  Widget _buildMainEntryColumn() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildDeskStatusStrip(),
+        const SizedBox(height: 16),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final twoColumn = constraints.maxWidth >= 760;
+            if (!twoColumn) {
+              return Column(
+                children: [
+                  _animated(0, _buildSection0Customer()),
+                  const SizedBox(height: 16),
+                  _animated(1, _buildSection1ItemDetails()),
+                  const SizedBox(height: 16),
+                  _animated(2, _buildSection2Weight()),
+                  const SizedBox(height: 16),
+                  _animated(3, _buildSection3Valuation()),
+                ],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      _animated(0, _buildSection0Customer()),
+                      const SizedBox(height: 16),
+                      _animated(1, _buildSection1ItemDetails()),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    children: [
+                      _animated(2, _buildSection2Weight()),
+                      const SizedBox(height: 16),
+                      _animated(3, _buildSection3Valuation()),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        _animated(4, _buildSection4LoanTerms()),
+        const SizedBox(height: 16),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final twoColumn = constraints.maxWidth >= 760;
+            if (!twoColumn) {
+              return Column(
+                children: [
+                  _animated(5, _buildSection5Disbursement()),
+                  const SizedBox(height: 16),
+                  _animated(6, _buildSection6Dates()),
+                  const SizedBox(height: 16),
+                  _animated(7, _buildSection7KYC()),
+                  const SizedBox(height: 16),
+                  _animated(8, _buildSection8Notes()),
+                ],
+              );
+            }
+            return Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _animated(5, _buildSection5Disbursement())),
+                    const SizedBox(width: 16),
+                    Expanded(child: _animated(6, _buildSection6Dates())),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _animated(7, _buildSection7KYC())),
+                    const SizedBox(width: 16),
+                    Expanded(child: _animated(8, _buildSection8Notes())),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDeskStatusStrip() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: GirviColors.cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: GirviColors.cardBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: GirviColors.shadowLight,
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 760;
+          final children = [
+            _DeskMetric(
+              icon: GirviIcons.customer,
+              label: 'Customer',
+              value: _ctrl.hasCustomer
+                  ? _ctrl.selectedCustomer!.name
+                  : 'Not selected',
+              color: GirviColors.accentCustomer,
+            ),
+            _DeskMetric(
+              icon: GirviIcons.weight,
+              label: 'Net Weight',
+              value: '${_ctrl.netWeight.toStringAsFixed(3)} g',
+              color: GirviColors.accentWeight,
+            ),
+            _DeskMetric(
+              icon: GirviIcons.valuation,
+              label: 'Item Value',
+              value: 'Rs ${_fmt.format(_ctrl.totalValue)}',
+              color: GirviColors.accentValuation,
+            ),
+            _DeskMetric(
+              icon: GirviIcons.loanTerms,
+              label: 'Loan Amount',
+              value: 'Rs ${_fmt.format(_ctrl.loanAmount)}',
+              color: GirviColors.accentLoan,
+            ),
+          ];
+          if (compact) {
+            return Column(
+              children: [
+                for (int i = 0; i < children.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 10),
+                  children[i],
+                ],
+              ],
+            );
+          }
+          return Row(
+            children: [
+              for (int i = 0; i < children.length; i++) ...[
+                if (i > 0) const SizedBox(width: 10),
+                Expanded(child: children[i]),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTicketSummaryPanel() {
+    final customer = _ctrl.selectedCustomer;
+    return Container(
+      decoration: BoxDecoration(
+        color: GirviColors.cardBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: GirviColors.cardBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: GirviColors.shadowLight,
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 15, 16, 14),
+            decoration: const BoxDecoration(
+              color: GirviColors.shellBg,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: GirviColors.brandGold.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: const Icon(GirviIcons.ticket,
+                      color: GirviColors.brandGold, size: 18),
+                ),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Ticket Summary',
+                          style: GoogleFonts.manrope(
+                              color: GirviColors.shellTextTitle,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900)),
+                      const SizedBox(height: 2),
+                      Text(
+                        _ctrl.ticketNo.isEmpty
+                            ? 'Generating ticket number'
+                            : _ctrl.ticketNo,
+                        style: GirviStyles.ticketNumber.copyWith(fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                _StatusPill(
+                  label: _ctrl.isFormReady ? 'READY' : 'DRAFT',
+                  color: _ctrl.isFormReady
+                      ? GirviColors.success
+                      : GirviColors.warning,
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _SummaryLine(
+                  label: 'Customer',
+                  value: customer?.name ?? 'Select customer',
+                  highlight: _ctrl.hasCustomer,
+                ),
+                _SummaryLine(
+                  label: 'Mobile',
+                  value: customer?.mobile ?? '-',
+                ),
+                const Divider(height: 24, color: GirviColors.divider),
+                _AmountSummaryTile(
+                  label: 'Loan Disbursement',
+                  value: 'Rs ${_fmt.format(_ctrl.loanAmount)}',
+                  color: GirviColors.brandGold,
+                ),
+                const SizedBox(height: 10),
+                _SummaryLine(
+                  label: 'Item Value',
+                  value: 'Rs ${_fmt.format(_ctrl.totalValue)}',
+                ),
+                _SummaryLine(
+                  label: 'LTV Ratio',
+                  value: '${_ctrl.computedLtv.toStringAsFixed(1)}%',
+                ),
+                _SummaryLine(
+                  label: 'Monthly Interest',
+                  value: 'Rs ${_fmt.format(_ctrl.monthlyInterest)}',
+                ),
+                _SummaryLine(
+                  label: 'Maturity Due',
+                  value: 'Rs ${_fmt.format(_ctrl.totalDueAtMaturity)}',
+                  highlight: _ctrl.loanAmount > 0,
+                ),
+                const Divider(height: 24, color: GirviColors.divider),
+                _SummaryLine(
+                  label: 'Metal',
+                  value:
+                      '${_ctrl.metalType.displayName} / ${_ctrl.metalPurity.displayName}',
+                ),
+                _SummaryLine(
+                  label: 'Net Weight',
+                  value: '${_ctrl.netWeight.toStringAsFixed(3)} g',
+                ),
+                _SummaryLine(
+                  label: 'Duration',
+                  value: '${_ctrl.durationMonths} months',
+                ),
+                _SummaryLine(
+                  label: 'Maturity Date',
+                  value: _dateFmt.format(_ctrl.maturityDate),
+                ),
+                _SummaryLine(
+                  label: 'Disbursement',
+                  value: _ctrl.disbursementMode.displayName,
+                ),
+                const SizedBox(height: 16),
+                _TicketActionButton(
+                  label: 'Create Girvi Ticket',
+                  icon: GirviIcons.save,
+                  filled: true,
+                  busy: _ctrl.isSaving,
+                  onTap: _ctrl.isSaving ? null : _onSave,
+                ),
+                const SizedBox(height: 10),
+                _TicketActionButton(
+                  label: 'Reset Entry',
+                  icon: GirviIcons.refresh,
+                  filled: false,
+                  onTap: _ctrl.isSaving ? null : _resetAll,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildTicketBanner() {
     return Container(
@@ -830,97 +1148,279 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   }
 
   // â”€â”€ BOTTOM ACTION BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-  Widget _buildBottomBar() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      decoration: BoxDecoration(
-        color: GirviColors.cardBg,
-        border: const Border(top: BorderSide(color: GirviColors.cardBorder)),
-        boxShadow: [
-          BoxShadow(
-            color: GirviColors.shellBg.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, -4),
-          )
-        ],
-      ),
-      child: ListenableBuilder(
-        listenable: _ctrl,
-        builder: (_, __) => Row(children: [
-          // Reset
-          GestureDetector(
-            onTap: _resetAll,
-            child: Container(
-              width: 52,
-              height: 52,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: GirviColors.bodyBg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: GirviColors.cardBorder),
-              ),
-              child: const Icon(GirviIcons.refresh,
-                  color: GirviColors.textMuted, size: 20),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Save
-          Expanded(
-            child: AnimatedOpacity(
-              opacity: _ctrl.isSaving ? 0.7 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              child: GestureDetector(
-                onTap: _ctrl.isSaving ? null : _onSave,
-                child: Container(
-                  height: 52,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        GirviColors.brandGold,
-                        GirviColors.brandGold.withValues(alpha: 0.85)
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: GirviColors.brandGold.withValues(alpha: 0.35),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      )
-                    ],
-                  ),
-                  child: _ctrl.isSaving
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                              color: GirviColors.shellBg, strokeWidth: 2.5))
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                              const Icon(GirviIcons.save,
-                                  color: GirviColors.shellBg, size: 18),
-                              const SizedBox(width: 8),
-                              Text('Create Girvi Ticket',
-                                  style: GirviStyles.saveButtonText),
-                            ]),
-                ),
-              ),
-            ),
-          ),
-        ]),
-      ),
-    );
-  }
 }
 
 // =============================================================================
 // HELPER WIDGETS (private to this file)
 // =============================================================================
+
+class _DeskMetric extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _DeskMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 66,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: GirviStyles.caption.copyWith(fontSize: 10)),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.manrope(
+                    color: GirviColors.textDark,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _StatusPill({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.6,
+        ),
+      ),
+    );
+  }
+}
+
+class _SummaryLine extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool highlight;
+
+  const _SummaryLine({
+    required this.label,
+    required this.value,
+    this.highlight = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: GirviStyles.caption.copyWith(fontSize: 11),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            flex: 2,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.manrope(
+                color: highlight ? GirviColors.brandGold : GirviColors.textDark,
+                fontSize: 12,
+                fontWeight: highlight ? FontWeight.w900 : FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AmountSummaryTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _AmountSummaryTile({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: GirviStyles.caption.copyWith(fontSize: 11)),
+          const SizedBox(height: 5),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.manrope(
+              color: color,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TicketActionButton extends StatefulWidget {
+  final String label;
+  final IconData icon;
+  final bool filled;
+  final bool busy;
+  final VoidCallback? onTap;
+
+  const _TicketActionButton({
+    required this.label,
+    required this.icon,
+    required this.filled,
+    this.busy = false,
+    this.onTap,
+  });
+
+  @override
+  State<_TicketActionButton> createState() => _TicketActionButtonState();
+}
+
+class _TicketActionButtonState extends State<_TicketActionButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = widget.onTap != null;
+    final bg = widget.filled
+        ? GirviColors.brandGold
+        : (_hovered && enabled ? GirviColors.brandGoldLight : Colors.white);
+    final fg = widget.filled ? GirviColors.shellBg : GirviColors.brandDeep;
+
+    return MouseRegion(
+      cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          height: 48,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: enabled ? bg : GirviColors.inputBgLocked,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: widget.filled
+                  ? GirviColors.brandGold
+                  : GirviColors.brandGold.withValues(alpha: 0.55),
+            ),
+            boxShadow: widget.filled && enabled
+                ? [
+                    BoxShadow(
+                      color: GirviColors.brandGold.withValues(alpha: 0.28),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
+          ),
+          child: widget.busy
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    color: GirviColors.shellBg,
+                  ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(widget.icon, color: fg, size: 18),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        widget.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.manrope(
+                          color: fg,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+}
 
 class _SelectedCustomerCard extends StatelessWidget {
   final Customer customer;

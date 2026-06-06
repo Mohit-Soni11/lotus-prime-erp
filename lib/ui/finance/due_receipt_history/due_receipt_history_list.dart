@@ -332,7 +332,7 @@ class _ModeChip extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.24)),
       ),
       child: Text(
-        receipt.paymentMode.toUpperCase(),
+        receipt.paymentModeLabel,
         textAlign: TextAlign.center,
         style:
             DueReceiptHistoryStyles.label.copyWith(color: color, fontSize: 11),

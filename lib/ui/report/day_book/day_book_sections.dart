@@ -191,11 +191,13 @@ class DayBookOverview extends StatelessWidget {
         const SizedBox(height: 16),
         LayoutBuilder(
           builder: (context, constraints) {
-            final columns = constraints.maxWidth >= 900
-                ? 4
-                : constraints.maxWidth >= 520
-                    ? 2
-                    : 1;
+            final columns = constraints.maxWidth >= 1100
+                ? 5
+                : constraints.maxWidth >= 760
+                    ? 3
+                    : constraints.maxWidth >= 520
+                        ? 2
+                        : 1;
             const spacing = 10.0;
             final itemWidth =
                 (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
@@ -240,6 +242,14 @@ class DayBookOverview extends StatelessWidget {
                     ? DayBookColors.positiveBorder
                     : DayBookColors.negativeBorder,
               ),
+              _KpiData(
+                label: DayBookStrings.closingBalance,
+                value: _money(summary.closingCash),
+                icon: DayBookIcons.closingBalance,
+                color: DayBookColors.goldMetal,
+                background: DayBookColors.brandGoldSoft,
+                border: DayBookColors.brandGoldBorder,
+              ),
             ];
 
             return Wrap(
@@ -256,6 +266,235 @@ class DayBookOverview extends StatelessWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+class DayBookOpeningPosition extends StatelessWidget {
+  final DayBookSummary summary;
+
+  const DayBookOpeningPosition({super.key, required this.summary});
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = [
+      _PositionMetricData(
+        label: DayBookStrings.openingCash,
+        value: _money(summary.openingCash),
+        icon: DayBookIcons.openingBalance,
+        color: DayBookColors.brandGold,
+      ),
+      _PositionMetricData(
+        label: DayBookStrings.openingGold,
+        value: _weight(summary.openingGoldGrams),
+        icon: DayBookIcons.gold,
+        color: DayBookColors.goldMetal,
+      ),
+      _PositionMetricData(
+        label: DayBookStrings.openingSilver,
+        value: _weight(summary.openingSilverGrams),
+        icon: DayBookIcons.silver,
+        color: DayBookColors.shellMuted,
+      ),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: DayBookColors.shellPanel,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: DayBookColors.shellBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x22000000),
+            blurRadius: 14,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = constraints.maxWidth >= 720
+              ? 3
+              : constraints.maxWidth >= 460
+                  ? 2
+                  : 1;
+          const spacing = 12.0;
+          final width =
+              (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    DayBookIcons.openingBalance,
+                    color: DayBookColors.brandGold,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      DayBookStrings.openingPosition,
+                      style: DayBookStyles.labelStrong.copyWith(
+                        color: DayBookColors.shellTitle,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    DateFormat('d MMM yyyy').format(summary.date),
+                    style: DayBookStyles.appBarSubtitle,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                DayBookStrings.openingPositionSubtitle,
+                style: DayBookStyles.appBarSubtitle,
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [
+                  for (final metric in metrics)
+                    SizedBox(
+                      width: width,
+                      child: _OpeningPositionMetric(data: metric),
+                    ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class DayBookClosingPosition extends StatelessWidget {
+  final DayBookSummary summary;
+
+  const DayBookClosingPosition({super.key, required this.summary});
+
+  @override
+  Widget build(BuildContext context) {
+    final netPositive = summary.netCash >= 0;
+    final metrics = [
+      _PositionMetricData(
+        label: DayBookStrings.closingCash,
+        value: _money(summary.closingCash),
+        icon: DayBookIcons.closingBalance,
+        color: DayBookColors.positive,
+      ),
+      _PositionMetricData(
+        label: DayBookStrings.closingGold,
+        value: _weight(summary.closingGold),
+        icon: DayBookIcons.gold,
+        color: DayBookColors.goldMetal,
+      ),
+      _PositionMetricData(
+        label: DayBookStrings.closingSilver,
+        value: _weight(summary.closingSilver),
+        icon: DayBookIcons.silver,
+        color: DayBookColors.silverMetal,
+      ),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: DayBookStyles.softPanel(
+        color: DayBookColors.positiveSoft,
+        borderColor: DayBookColors.positiveBorder,
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 620;
+          final headline = Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: DayBookColors.positive.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: const Icon(
+                  DayBookIcons.netMovement,
+                  color: DayBookColors.positive,
+                  size: 19,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      DayBookStrings.closingPosition,
+                      style: DayBookStyles.labelStrong,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      DayBookStrings.closingPositionSubtitle,
+                      style: DayBookStyles.label,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+          final netValue = Column(
+            crossAxisAlignment:
+                compact ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+            children: [
+              Text(DayBookStrings.netCashFlow, style: DayBookStyles.label),
+              const SizedBox(height: 2),
+              Text(
+                '${netPositive ? '+' : '-'}${_money(summary.netCash.abs())}',
+                style: DayBookStyles.valueLarge.copyWith(
+                  color: netPositive
+                      ? DayBookColors.positive
+                      : DayBookColors.negative,
+                ),
+              ),
+            ],
+          );
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (compact) ...[
+                headline,
+                const SizedBox(height: 14),
+                netValue,
+              ] else
+                Row(
+                  children: [
+                    Expanded(child: headline),
+                    const SizedBox(width: 16),
+                    netValue,
+                  ],
+                ),
+              const Divider(height: 28, color: DayBookColors.positiveBorder),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final metric in metrics)
+                    SizedBox(
+                      width: compact
+                          ? constraints.maxWidth
+                          : (constraints.maxWidth - 20) / 3,
+                      child: _ClosingPositionMetric(data: metric),
+                    ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
@@ -588,13 +827,21 @@ class PaymentMixPanel extends StatelessWidget {
   }
 }
 
-class MetalMovementPanel extends StatelessWidget {
+class MetalMovementPanel extends StatefulWidget {
   final DayBookSummary summary;
 
   const MetalMovementPanel({super.key, required this.summary});
 
   @override
+  State<MetalMovementPanel> createState() => _MetalMovementPanelState();
+}
+
+class _MetalMovementPanelState extends State<MetalMovementPanel> {
+  String? _selectedMetal;
+
+  @override
   Widget build(BuildContext context) {
+    final summary = widget.summary;
     final incoming = <_MetalLedgerData>[
       _MetalLedgerData(
         DayBookStrings.karigarReceipts,
@@ -625,70 +872,91 @@ class MetalMovementPanel extends StatelessWidget {
       ),
     ].where((item) => _hasWeight(item.weight)).toList();
 
+    final metals = <String>{
+      ...summary.metalIn.total.metals,
+      ...summary.metalOut.total.metals,
+    }.toList()
+      ..sort(_compareMetals);
+
+    if (metals.isNotEmpty && !metals.contains(_selectedMetal)) {
+      _selectedMetal = metals.first;
+    }
+
     return _WorkspacePanel(
       title: DayBookStrings.metalMovement,
       subtitle: DayBookStrings.metalMovementSubtitle,
       icon: DayBookIcons.vault,
-      child: Column(
-        children: [
-          _MetalColumnHeader(),
-          const Divider(height: 18, color: DayBookColors.bodyBorder),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final stack = constraints.maxWidth < 760;
-              final inPanel = _MetalLedgerGroup(
-                title: DayBookStrings.metalReceived,
-                icon: DayBookIcons.metalIn,
-                total: summary.metalIn.total,
-                rows: incoming,
-                color: DayBookColors.positive,
-              );
-              final outPanel = _MetalLedgerGroup(
-                title: DayBookStrings.metalIssued,
-                icon: DayBookIcons.metalOut,
-                total: summary.metalOut.total,
-                rows: outgoing,
-                color: DayBookColors.negative,
-              );
-
-              if (stack) {
-                return Column(
-                  children: [
-                    inPanel,
-                    const SizedBox(height: 16),
-                    outPanel,
-                  ],
-                );
-              }
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: inPanel),
-                  const SizedBox(width: 16),
-                  Expanded(child: outPanel),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: DayBookStyles.softPanel(
-              color: DayBookColors.bodySubtle,
-              borderColor: DayBookColors.bodyBorder,
+      child: metals.isEmpty
+          ? const _PanelEmptyState(
+              icon: DayBookIcons.vault,
+              message: DayBookStrings.noMetalMovement,
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final columns = constraints.maxWidth >= 980
+                        ? 4
+                        : constraints.maxWidth >= 620
+                            ? 2
+                            : 1;
+                    const spacing = 12.0;
+                    final width =
+                        (constraints.maxWidth - (spacing * (columns - 1))) /
+                            columns;
+                    return Wrap(
+                      spacing: spacing,
+                      runSpacing: spacing,
+                      children: [
+                        for (final metal in metals)
+                          SizedBox(
+                            width: width,
+                            child: _MetalSummaryCard(
+                              metal: metal,
+                              received:
+                                  summary.metalIn.total.totalForMetal(metal),
+                              issued:
+                                  summary.metalOut.total.totalForMetal(metal),
+                              purityCount: _puritiesFor(
+                                metal,
+                                summary.metalIn.total,
+                                summary.metalOut.total,
+                              ).length,
+                              selected: metal == _selectedMetal,
+                              onTap: () =>
+                                  setState(() => _selectedMetal = metal),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  child: _MetalDetailPanel(
+                    key: ValueKey(_selectedMetal),
+                    metal: _selectedMetal!,
+                    incoming: incoming,
+                    outgoing: outgoing,
+                    totalIn: summary.metalIn.total,
+                    totalOut: summary.metalOut.total,
+                  ),
+                ),
+              ],
             ),
-            child: _MetalDataRow(
-              label: DayBookStrings.closingStock,
-              weight: MetalWeight(
-                gold22k: summary.closingGold,
-                silver: summary.closingSilver,
-              ),
-              emphasize: true,
-            ),
-          ),
-        ],
-      ),
     );
+  }
+
+  int _compareMetals(String left, String right) {
+    const order = ['Gold', 'Silver', 'Diamond', 'Platinum'];
+    final leftIndex = order.indexOf(left);
+    final rightIndex = order.indexOf(right);
+    if (leftIndex == -1 && rightIndex == -1) return left.compareTo(right);
+    if (leftIndex == -1) return 1;
+    if (rightIndex == -1) return -1;
+    return leftIndex.compareTo(rightIndex);
   }
 }
 
@@ -1166,6 +1434,113 @@ class _KpiCard extends StatelessWidget {
   }
 }
 
+class _PositionMetricData {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _PositionMetricData({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+}
+
+class _OpeningPositionMetric extends StatelessWidget {
+  final _PositionMetricData data;
+
+  const _OpeningPositionMetric({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 72),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      decoration: BoxDecoration(
+        color: DayBookColors.shellBg.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: DayBookColors.shellBorder),
+      ),
+      child: Row(
+        children: [
+          Icon(data.icon, color: data.color, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(data.label, style: DayBookStyles.appBarSubtitle),
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    data.value,
+                    style: DayBookStyles.value.copyWith(
+                      color: DayBookColors.shellTitle,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ClosingPositionMetric extends StatelessWidget {
+  final _PositionMetricData data;
+
+  const _ClosingPositionMetric({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 68),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: DayBookColors.bodyPanel.withValues(alpha: 0.82),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: DayBookColors.positiveBorder),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: data.color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(data.icon, color: data.color, size: 16),
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(data.label, style: DayBookStyles.label),
+                const SizedBox(height: 3),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(data.value, style: DayBookStyles.value),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _WorkspacePanel extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -1578,199 +1953,563 @@ class _MetalLedgerData {
 }
 
 bool _hasWeight(MetalWeight weight) {
-  return weight.gold22k != 0 || weight.gold18k != 0 || weight.silver != 0;
+  return !weight.isEmpty;
 }
 
-class _MetalColumnHeader extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cellWidth = _metalCellWidth(constraints.maxWidth);
-        return Row(
-          children: [
-            const Expanded(child: SizedBox()),
-            _MetalHeaderCell(DayBookStrings.gold22k, width: cellWidth),
-            _MetalHeaderCell(DayBookStrings.gold18k, width: cellWidth),
-            _MetalHeaderCell(DayBookStrings.silver, width: cellWidth),
-          ],
-        );
-      },
-    );
-  }
+List<String> _puritiesFor(
+  String metal,
+  MetalWeight incoming,
+  MetalWeight outgoing,
+) {
+  final purities = <String>{
+    ...incoming.puritiesFor(metal).keys,
+    ...outgoing.puritiesFor(metal).keys,
+  }.toList();
+  purities.sort((left, right) {
+    final leftNumber = int.tryParse(left.replaceAll(RegExp(r'[^0-9]'), ''));
+    final rightNumber = int.tryParse(right.replaceAll(RegExp(r'[^0-9]'), ''));
+    if (leftNumber != null && rightNumber != null) {
+      return rightNumber.compareTo(leftNumber);
+    }
+    return left.compareTo(right);
+  });
+  return purities;
 }
 
-class _MetalHeaderCell extends StatelessWidget {
-  final String label;
-  final double width;
+class _MetalSummaryCard extends StatelessWidget {
+  final String metal;
+  final double received;
+  final double issued;
+  final int purityCount;
+  final bool selected;
+  final VoidCallback onTap;
 
-  const _MetalHeaderCell(this.label, {required this.width});
+  const _MetalSummaryCard({
+    required this.metal,
+    required this.received,
+    required this.issued,
+    required this.purityCount,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: Text(
-        label,
-        style: DayBookStyles.label,
-        textAlign: TextAlign.right,
+    final color = _metalColor(metal);
+    final net = received - issued;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '$metal metal movement',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            constraints: const BoxConstraints(minHeight: 156),
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color:
+                  selected ? _metalSoftColor(metal) : DayBookColors.bodyPanel,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: selected ? color : DayBookColors.bodyBorder,
+                width: selected ? 1.5 : 1,
+              ),
+              boxShadow: selected
+                  ? [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.12),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(_metalIcon(metal), color: color, size: 19),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(metal, style: DayBookStyles.sectionTitle),
+                          const SizedBox(height: 2),
+                          Text(
+                            '$purityCount ${purityCount == 1 ? 'purity' : 'purities'}',
+                            style: DayBookStyles.label,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      selected
+                          ? Icons.keyboard_arrow_down_rounded
+                          : Icons.chevron_right_rounded,
+                      color: selected ? color : DayBookColors.textMuted,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _MetalMiniMetric(
+                        label: DayBookStrings.metalReceived,
+                        value: received,
+                        color: DayBookColors.positive,
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 34,
+                      color: DayBookColors.bodyBorder,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _MetalMiniMetric(
+                        label: DayBookStrings.metalIssued,
+                        value: issued,
+                        color: DayBookColors.negative,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        DayBookStrings.netWeight,
+                        style: DayBookStyles.label,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          '${net >= 0 ? '+' : '-'}${_weight(net.abs())}',
+                          style: DayBookStyles.value.copyWith(
+                            color: net >= 0
+                                ? DayBookColors.positive
+                                : DayBookColors.negative,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 }
 
-class _MetalLedgerGroup extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final MetalWeight total;
-  final List<_MetalLedgerData> rows;
+class _MetalMiniMetric extends StatelessWidget {
+  final String label;
+  final double value;
   final Color color;
 
-  const _MetalLedgerGroup({
-    required this.title,
-    required this.icon,
-    required this.total,
-    required this.rows,
+  const _MetalMiniMetric({
+    required this.label,
+    required this.value,
     required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: DayBookStyles.softPanel(
-            color: color == DayBookColors.positive
-                ? DayBookColors.positiveSoft
-                : DayBookColors.negativeSoft,
-            borderColor: color == DayBookColors.positive
-                ? DayBookColors.positiveBorder
-                : DayBookColors.negativeBorder,
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 17, color: color),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: DayBookStyles.labelStrong.copyWith(color: color),
-                ),
-              ),
-            ],
+        Text(label, style: DayBookStyles.label),
+        const SizedBox(height: 3),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            _weight(value),
+            style: DayBookStyles.value.copyWith(color: color),
           ),
         ),
-        const SizedBox(height: 8),
-        if (rows.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            child:
-                Text('No metal movement recorded', style: DayBookStyles.label),
-          )
-        else
-          for (var index = 0; index < rows.length; index++) ...[
-            _MetalDataRow(
-              label: rows[index].label,
-              weight: rows[index].weight,
-            ),
-            if (index != rows.length - 1)
-              const Divider(height: 1, color: DayBookColors.bodyBorder),
-          ],
-        if (rows.isNotEmpty) ...[
-          const Divider(height: 18, color: DayBookColors.bodyBorder),
-          _MetalDataRow(label: 'Total', weight: total, emphasize: true),
-        ],
       ],
     );
   }
 }
 
-class _MetalDataRow extends StatelessWidget {
-  final String label;
-  final MetalWeight weight;
-  final bool emphasize;
+class _MetalDetailPanel extends StatelessWidget {
+  final String metal;
+  final List<_MetalLedgerData> incoming;
+  final List<_MetalLedgerData> outgoing;
+  final MetalWeight totalIn;
+  final MetalWeight totalOut;
 
-  const _MetalDataRow({
-    required this.label,
-    required this.weight,
-    this.emphasize = false,
+  const _MetalDetailPanel({
+    super.key,
+    required this.metal,
+    required this.incoming,
+    required this.outgoing,
+    required this.totalIn,
+    required this.totalOut,
   });
 
   @override
   Widget build(BuildContext context) {
-    final style = emphasize ? DayBookStyles.labelStrong : DayBookStyles.label;
-    final valueStyle =
-        emphasize ? DayBookStyles.value : DayBookStyles.labelStrong;
+    final color = _metalColor(metal);
+    final purities = _puritiesFor(metal, totalIn, totalOut);
+    final sources = <_MetalSourceData>[
+      for (final row in incoming)
+        if (row.weight.totalForMetal(metal) != 0)
+          _MetalSourceData(
+            row.label,
+            row.weight.totalForMetal(metal),
+            true,
+          ),
+      for (final row in outgoing)
+        if (row.weight.totalForMetal(metal) != 0)
+          _MetalSourceData(
+            row.label,
+            row.weight.totalForMetal(metal),
+            false,
+          ),
+    ];
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cellWidth = _metalCellWidth(constraints.maxWidth);
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 9),
-          child: Row(
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: DayBookColors.bodySubtle,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: DayBookColors.bodyBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             children: [
-              Expanded(
-                child: Text(
-                  label,
-                  style: style,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
+                child: Icon(_metalIcon(metal), color: color, size: 20),
               ),
-              _MetalValueCell(
-                _weight(weight.gold22k),
-                valueStyle,
-                width: cellWidth,
-              ),
-              _MetalValueCell(
-                _weight(weight.gold18k),
-                valueStyle,
-                width: cellWidth,
-              ),
-              _MetalValueCell(
-                _weight(weight.silver),
-                valueStyle,
-                width: cellWidth,
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$metal ${DayBookStrings.purityBreakdown}',
+                      style: DayBookStyles.sectionTitle,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Only purities with movement on this date are shown.',
+                      style: DayBookStyles.sectionSubtitle,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 14),
+          for (var index = 0; index < purities.length; index++) ...[
+            _PurityMovementRow(
+              purity: purities[index],
+              received: totalIn.puritiesFor(metal)[purities[index]] ?? 0,
+              issued: totalOut.puritiesFor(metal)[purities[index]] ?? 0,
+              color: color,
+            ),
+            if (index != purities.length - 1) const SizedBox(height: 8),
+          ],
+          if (sources.isNotEmpty) ...[
+            const Divider(height: 28, color: DayBookColors.bodyBorder),
+            Text(
+              DayBookStrings.movementSources,
+              style: DayBookStyles.labelStrong,
+            ),
+            const SizedBox(height: 10),
+            for (var index = 0; index < sources.length; index++) ...[
+              _MetalSourceChip(source: sources[index]),
+              if (index != sources.length - 1) const SizedBox(height: 8),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PurityMovementRow extends StatelessWidget {
+  final String purity;
+  final double received;
+  final double issued;
+  final Color color;
+
+  const _PurityMovementRow({
+    required this.purity,
+    required this.received,
+    required this.issued,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final net = received - issued;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 560;
+        final metrics = [
+          _PurityMetric(
+            label: DayBookStrings.metalReceived,
+            value: received,
+            color: DayBookColors.positive,
+          ),
+          _PurityMetric(
+            label: DayBookStrings.metalIssued,
+            value: issued,
+            color: DayBookColors.negative,
+          ),
+          _PurityMetric(
+            label: DayBookStrings.netWeight,
+            value: net,
+            color: net >= 0 ? DayBookColors.positive : DayBookColors.negative,
+            signed: true,
+          ),
+        ];
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: DayBookColors.bodyPanel,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: DayBookColors.bodyBorder),
+          ),
+          child: compact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _PurityBadge(purity: purity, color: color),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        for (var index = 0;
+                            index < metrics.length;
+                            index++) ...[
+                          Expanded(child: metrics[index]),
+                          if (index != metrics.length - 1)
+                            const SizedBox(width: 8),
+                        ],
+                      ],
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    SizedBox(
+                      width: 130,
+                      child: _PurityBadge(purity: purity, color: color),
+                    ),
+                    for (final metric in metrics) Expanded(child: metric),
+                  ],
+                ),
         );
       },
     );
   }
 }
 
-double _metalCellWidth(double availableWidth) {
-  if (availableWidth >= 360) return 86;
-  return (availableWidth * 0.23).clamp(54, 72).toDouble();
+class _PurityBadge extends StatelessWidget {
+  final String purity;
+  final Color color;
+
+  const _PurityBadge({required this.purity, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            purity,
+            style: DayBookStyles.labelStrong.copyWith(color: color),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
-class _MetalValueCell extends StatelessWidget {
-  final String value;
-  final TextStyle style;
-  final double width;
+class _PurityMetric extends StatelessWidget {
+  final String label;
+  final double value;
+  final Color color;
+  final bool signed;
 
-  const _MetalValueCell(
-    this.value,
-    this.style, {
-    required this.width,
+  const _PurityMetric({
+    required this.label,
+    required this.value,
+    required this.color,
+    this.signed = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.centerRight,
-        child: Text(
-          value,
-          style: style,
-          textAlign: TextAlign.right,
+    final prefix = signed ? (value >= 0 ? '+' : '-') : '';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          label,
+          style: DayBookStyles.label,
           maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 3),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerRight,
+          child: Text(
+            '$prefix${_weight(value.abs())}',
+            style: DayBookStyles.value.copyWith(color: color),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MetalSourceData {
+  final String label;
+  final double amount;
+  final bool incoming;
+
+  const _MetalSourceData(this.label, this.amount, this.incoming);
+}
+
+class _MetalSourceChip extends StatelessWidget {
+  final _MetalSourceData source;
+
+  const _MetalSourceChip({required this.source});
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        source.incoming ? DayBookColors.positive : DayBookColors.negative;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: source.incoming
+            ? DayBookColors.positiveSoft
+            : DayBookColors.negativeSoft,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: source.incoming
+              ? DayBookColors.positiveBorder
+              : DayBookColors.negativeBorder,
         ),
       ),
+      child: Row(
+        children: [
+          Icon(
+            source.incoming ? DayBookIcons.metalIn : DayBookIcons.metalOut,
+            size: 14,
+            color: color,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              source.label,
+              style: DayBookStyles.labelStrong,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(
+                _weight(source.amount),
+                style: DayBookStyles.labelStrong.copyWith(color: color),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
+  }
+}
+
+Color _metalColor(String metal) {
+  switch (metal) {
+    case 'Gold':
+      return DayBookColors.goldMetal;
+    case 'Silver':
+      return DayBookColors.silverMetal;
+    case 'Platinum':
+      return DayBookColors.platinumMetal;
+    case 'Diamond':
+      return DayBookColors.diamondMetal;
+    default:
+      return DayBookColors.purple;
+  }
+}
+
+Color _metalSoftColor(String metal) {
+  switch (metal) {
+    case 'Gold':
+      return DayBookColors.goldMetalSoft;
+    case 'Silver':
+      return DayBookColors.silverMetalSoft;
+    case 'Platinum':
+      return DayBookColors.platinumMetalSoft;
+    case 'Diamond':
+      return DayBookColors.diamondMetalSoft;
+    default:
+      return DayBookColors.purpleSoft;
+  }
+}
+
+IconData _metalIcon(String metal) {
+  switch (metal) {
+    case 'Gold':
+      return DayBookIcons.gold;
+    case 'Silver':
+      return DayBookIcons.silver;
+    case 'Platinum':
+      return DayBookIcons.platinum;
+    case 'Diamond':
+      return DayBookIcons.diamond;
+    default:
+      return DayBookIcons.vault;
   }
 }

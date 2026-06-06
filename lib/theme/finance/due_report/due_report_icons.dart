@@ -17,6 +17,7 @@ class DueReportIcons {
   static const IconData filter = Icons.tune_rounded;
   static const IconData print = Icons.print_rounded;
   static const IconData export = Icons.file_download_outlined;
+  static const IconData collect = Icons.payments_rounded;
   static const IconData bill = Icons.description_rounded;
   static const IconData phone = Icons.phone_rounded;
   static const IconData location = Icons.location_on_rounded;

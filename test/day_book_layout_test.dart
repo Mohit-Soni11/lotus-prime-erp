@@ -15,6 +15,8 @@ void main() {
     await tester.pumpWidget(const _DayBookLayoutHarness());
     await tester.pump(const Duration(seconds: 1));
 
+    expect(find.text('Opening Gold'), findsOneWidget);
+    expect(find.text('Closing Silver'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -28,6 +30,43 @@ void main() {
     await tester.pumpWidget(const _DayBookLayoutHarness());
     await tester.pump(const Duration(seconds: 1));
 
+    expect(find.text('Opening Cash'), findsOneWidget);
+    expect(find.text('Net Cash Flow'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('metal cards open the selected purity-wise movement',
+      (tester) async {
+    tester.view.physicalSize = const Size(1100, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: DayBookStyles.theme,
+        home: Scaffold(
+          backgroundColor: DayBookColors.bodyBg,
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: MetalMovementPanel(summary: _summary),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Gold'), findsOneWidget);
+    expect(find.text('Silver'), findsOneWidget);
+    expect(find.text('Diamond'), findsOneWidget);
+    expect(find.text('Platinum'), findsOneWidget);
+    expect(find.text('20K'), findsOneWidget);
+
+    await tester.tap(find.text('Platinum'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Platinum Purity-wise Movement'), findsOneWidget);
+    expect(find.text('950'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
@@ -68,6 +107,8 @@ class _DayBookLayoutHarness extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  DayBookOpeningPosition(summary: _summary),
+                  const SizedBox(height: 12),
                   DayBookOverview(summary: _summary),
                   const SizedBox(height: 12),
                   CashMovementPanel(summary: _summary),
@@ -75,6 +116,8 @@ class _DayBookLayoutHarness extends StatelessWidget {
                   splitPanels,
                   const SizedBox(height: 12),
                   MetalMovementPanel(summary: _summary),
+                  const SizedBox(height: 12),
+                  DayBookClosingPosition(summary: _summary),
                   const SizedBox(height: 12),
                   ForecastPanel(prediction: _summary.prediction!),
                   const SizedBox(height: 12),
@@ -138,6 +181,11 @@ final _summary = DayBookSummary(
       gold22k: 248.765,
       gold18k: 74.450,
       silver: 860.250,
+      additionalEntries: {
+        'Gold::20K': 18.750,
+        'Platinum::950': 12.400,
+        'Diamond::VS': 3.250,
+      },
     ),
     girviSecurityDeposit: MetalWeight(
       gold22k: 42.800,
@@ -151,6 +199,11 @@ final _summary = DayBookSummary(
       gold22k: 186.875,
       gold18k: 53.225,
       silver: 710.425,
+      additionalEntries: {
+        'Gold::20K': 7.500,
+        'Platinum::950': 4.100,
+        'Diamond::VS': 1.200,
+      },
     ),
     karigarIssue: MetalWeight(
       gold22k: 92.450,
