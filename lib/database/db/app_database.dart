@@ -306,6 +306,20 @@ class AppDatabase extends _$AppDatabase {
             await _repairBillingSetupTables(m);
             AppLogger.info('v19 billing setup settings migration applied.');
           }
+
+          if (from < 20) {
+            try {
+              await m.addColumn(girviLoans, girviLoans.huidNumber);
+            } catch (_) {}
+            try {
+              await m.addColumn(girviLoans, girviLoans.itemPhotoPath);
+            } catch (_) {}
+            try {
+              await m.addColumn(girviLoans, girviLoans.invoiceGenerated);
+            } catch (_) {}
+            AppLogger.info(
+                'v20 girvi invoice item metadata migration applied.');
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

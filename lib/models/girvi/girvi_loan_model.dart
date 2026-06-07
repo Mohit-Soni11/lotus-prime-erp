@@ -39,6 +39,8 @@ class GirviLoanModel {
   final int customerId;
   final String itemDescription;
   final int itemCount;
+  final String? huidNumber;
+  final String? itemPhotoPath;
   final String metalType;
   final String metalPurity;
   final double grossWeight;
@@ -51,6 +53,7 @@ class GirviLoanModel {
   final double interestRate;
   final int durationMonths;
   final String disbursementMode;
+  final bool invoiceGenerated;
   final DateTime startDate;
   final DateTime? maturityDate;
   final DateTime? releaseDate;
@@ -79,6 +82,8 @@ class GirviLoanModel {
     required this.customerId,
     required this.itemDescription,
     required this.itemCount,
+    this.huidNumber,
+    this.itemPhotoPath,
     required this.metalType,
     required this.metalPurity,
     required this.grossWeight,
@@ -91,6 +96,7 @@ class GirviLoanModel {
     required this.interestRate,
     required this.durationMonths,
     required this.disbursementMode,
+    this.invoiceGenerated = false,
     required this.startDate,
     required this.createdAt,
     this.maturityDate,
@@ -196,7 +202,7 @@ class GirviLoanModel {
 
   /// Short description for list card subtitle
   String get itemSummary =>
-      '$itemCount item${itemCount > 1 ? 's' : ''} Â· ${metalTypeEnum.displayName} $metalPurity Â· ${netWeight.toStringAsFixed(2)}g';
+      '$itemCount item${itemCount > 1 ? 's' : ''} - ${metalTypeEnum.displayName} $metalPurity - ${netWeight.toStringAsFixed(2)}g';
 }
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•

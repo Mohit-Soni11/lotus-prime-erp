@@ -33,6 +33,12 @@ class GirviLoans extends Table with BaseTable {
   /// Count of items in this girvi
   IntColumn get itemCount => integer().withDefault(const Constant(1))();
 
+  /// HUID / hallmark certificate number when available
+  TextColumn get huidNumber => text().nullable()();
+
+  /// Local path of pledged item photo captured at ticket time
+  TextColumn get itemPhotoPath => text().nullable()();
+
   /// Gold | Silver | Diamond | Platinum | Mixed | Other
   TextColumn get metalType => text().withDefault(const Constant('Gold'))();
 
@@ -72,6 +78,10 @@ class GirviLoans extends Table with BaseTable {
   /// Cash | UPI | NEFT | Bank Transfer | Cheque
   TextColumn get disbursementMode =>
       text().withDefault(const Constant('Cash'))();
+
+  /// Whether a customer-facing loan invoice was generated at creation
+  BoolColumn get invoiceGenerated =>
+      boolean().withDefault(const Constant(false))();
 
   // ── DATES ─────────────────────────────────────────────────────────────────
   /// Date loan was created/started

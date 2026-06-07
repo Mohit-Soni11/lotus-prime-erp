@@ -16852,6 +16852,18 @@ class $GirviLoansTable extends GirviLoans
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(1));
+  static const VerificationMeta _huidNumberMeta =
+      const VerificationMeta('huidNumber');
+  @override
+  late final GeneratedColumn<String> huidNumber = GeneratedColumn<String>(
+      'huid_number', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _itemPhotoPathMeta =
+      const VerificationMeta('itemPhotoPath');
+  @override
+  late final GeneratedColumn<String> itemPhotoPath = GeneratedColumn<String>(
+      'item_photo_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _metalTypeMeta =
       const VerificationMeta('metalType');
   @override
@@ -16948,6 +16960,16 @@ class $GirviLoansTable extends GirviLoans
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant('Cash'));
+  static const VerificationMeta _invoiceGeneratedMeta =
+      const VerificationMeta('invoiceGenerated');
+  @override
+  late final GeneratedColumn<bool> invoiceGenerated = GeneratedColumn<bool>(
+      'invoice_generated', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("invoice_generated" IN (0, 1))'),
+      defaultValue: const Constant(false));
   static const VerificationMeta _startDateMeta =
       const VerificationMeta('startDate');
   @override
@@ -17055,6 +17077,8 @@ class $GirviLoansTable extends GirviLoans
         customerId,
         itemDescription,
         itemCount,
+        huidNumber,
+        itemPhotoPath,
         metalType,
         metalPurity,
         grossWeight,
@@ -17067,6 +17091,7 @@ class $GirviLoansTable extends GirviLoans
         interestRate,
         durationMonths,
         disbursementMode,
+        invoiceGenerated,
         startDate,
         maturityDate,
         releaseDate,
@@ -17130,6 +17155,18 @@ class $GirviLoansTable extends GirviLoans
     if (data.containsKey('item_count')) {
       context.handle(_itemCountMeta,
           itemCount.isAcceptableOrUnknown(data['item_count']!, _itemCountMeta));
+    }
+    if (data.containsKey('huid_number')) {
+      context.handle(
+          _huidNumberMeta,
+          huidNumber.isAcceptableOrUnknown(
+              data['huid_number']!, _huidNumberMeta));
+    }
+    if (data.containsKey('item_photo_path')) {
+      context.handle(
+          _itemPhotoPathMeta,
+          itemPhotoPath.isAcceptableOrUnknown(
+              data['item_photo_path']!, _itemPhotoPathMeta));
     }
     if (data.containsKey('metal_type')) {
       context.handle(_metalTypeMeta,
@@ -17198,6 +17235,12 @@ class $GirviLoansTable extends GirviLoans
           _disbursementModeMeta,
           disbursementMode.isAcceptableOrUnknown(
               data['disbursement_mode']!, _disbursementModeMeta));
+    }
+    if (data.containsKey('invoice_generated')) {
+      context.handle(
+          _invoiceGeneratedMeta,
+          invoiceGenerated.isAcceptableOrUnknown(
+              data['invoice_generated']!, _invoiceGeneratedMeta));
     }
     if (data.containsKey('start_date')) {
       context.handle(_startDateMeta,
@@ -17312,6 +17355,10 @@ class $GirviLoansTable extends GirviLoans
           DriftSqlType.string, data['${effectivePrefix}item_description'])!,
       itemCount: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}item_count'])!,
+      huidNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}huid_number']),
+      itemPhotoPath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}item_photo_path']),
       metalType: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}metal_type'])!,
       metalPurity: attachedDatabase.typeMapping
@@ -17336,6 +17383,8 @@ class $GirviLoansTable extends GirviLoans
           .read(DriftSqlType.int, data['${effectivePrefix}duration_months'])!,
       disbursementMode: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}disbursement_mode'])!,
+      invoiceGenerated: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}invoice_generated'])!,
       startDate: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}start_date'])!,
       maturityDate: attachedDatabase.typeMapping
@@ -17393,6 +17442,12 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
   /// Count of items in this girvi
   final int itemCount;
 
+  /// HUID / hallmark certificate number when available
+  final String? huidNumber;
+
+  /// Local path of pledged item photo captured at ticket time
+  final String? itemPhotoPath;
+
   /// Gold | Silver | Diamond | Platinum | Mixed | Other
   final String metalType;
 
@@ -17429,6 +17484,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
   /// How the customer received the loan money
   /// Cash | UPI | NEFT | Bank Transfer | Cheque
   final String disbursementMode;
+
+  /// Whether a customer-facing loan invoice was generated at creation
+  final bool invoiceGenerated;
 
   /// Date loan was created/started
   final DateTime startDate;
@@ -17481,6 +17539,8 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       required this.customerId,
       required this.itemDescription,
       required this.itemCount,
+      this.huidNumber,
+      this.itemPhotoPath,
       required this.metalType,
       required this.metalPurity,
       required this.grossWeight,
@@ -17493,6 +17553,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       required this.interestRate,
       required this.durationMonths,
       required this.disbursementMode,
+      required this.invoiceGenerated,
       required this.startDate,
       this.maturityDate,
       this.releaseDate,
@@ -17521,6 +17582,12 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
     map['customer_id'] = Variable<int>(customerId);
     map['item_description'] = Variable<String>(itemDescription);
     map['item_count'] = Variable<int>(itemCount);
+    if (!nullToAbsent || huidNumber != null) {
+      map['huid_number'] = Variable<String>(huidNumber);
+    }
+    if (!nullToAbsent || itemPhotoPath != null) {
+      map['item_photo_path'] = Variable<String>(itemPhotoPath);
+    }
     map['metal_type'] = Variable<String>(metalType);
     map['metal_purity'] = Variable<String>(metalPurity);
     map['gross_weight'] = Variable<double>(grossWeight);
@@ -17533,6 +17600,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
     map['interest_rate'] = Variable<double>(interestRate);
     map['duration_months'] = Variable<int>(durationMonths);
     map['disbursement_mode'] = Variable<String>(disbursementMode);
+    map['invoice_generated'] = Variable<bool>(invoiceGenerated);
     map['start_date'] = Variable<DateTime>(startDate);
     if (!nullToAbsent || maturityDate != null) {
       map['maturity_date'] = Variable<DateTime>(maturityDate);
@@ -17591,6 +17659,12 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       customerId: Value(customerId),
       itemDescription: Value(itemDescription),
       itemCount: Value(itemCount),
+      huidNumber: huidNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(huidNumber),
+      itemPhotoPath: itemPhotoPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(itemPhotoPath),
       metalType: Value(metalType),
       metalPurity: Value(metalPurity),
       grossWeight: Value(grossWeight),
@@ -17603,6 +17677,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       interestRate: Value(interestRate),
       durationMonths: Value(durationMonths),
       disbursementMode: Value(disbursementMode),
+      invoiceGenerated: Value(invoiceGenerated),
       startDate: Value(startDate),
       maturityDate: maturityDate == null && nullToAbsent
           ? const Value.absent()
@@ -17660,6 +17735,8 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       customerId: serializer.fromJson<int>(json['customerId']),
       itemDescription: serializer.fromJson<String>(json['itemDescription']),
       itemCount: serializer.fromJson<int>(json['itemCount']),
+      huidNumber: serializer.fromJson<String?>(json['huidNumber']),
+      itemPhotoPath: serializer.fromJson<String?>(json['itemPhotoPath']),
       metalType: serializer.fromJson<String>(json['metalType']),
       metalPurity: serializer.fromJson<String>(json['metalPurity']),
       grossWeight: serializer.fromJson<double>(json['grossWeight']),
@@ -17672,6 +17749,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       interestRate: serializer.fromJson<double>(json['interestRate']),
       durationMonths: serializer.fromJson<int>(json['durationMonths']),
       disbursementMode: serializer.fromJson<String>(json['disbursementMode']),
+      invoiceGenerated: serializer.fromJson<bool>(json['invoiceGenerated']),
       startDate: serializer.fromJson<DateTime>(json['startDate']),
       maturityDate: serializer.fromJson<DateTime?>(json['maturityDate']),
       releaseDate: serializer.fromJson<DateTime?>(json['releaseDate']),
@@ -17704,6 +17782,8 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       'customerId': serializer.toJson<int>(customerId),
       'itemDescription': serializer.toJson<String>(itemDescription),
       'itemCount': serializer.toJson<int>(itemCount),
+      'huidNumber': serializer.toJson<String?>(huidNumber),
+      'itemPhotoPath': serializer.toJson<String?>(itemPhotoPath),
       'metalType': serializer.toJson<String>(metalType),
       'metalPurity': serializer.toJson<String>(metalPurity),
       'grossWeight': serializer.toJson<double>(grossWeight),
@@ -17716,6 +17796,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       'interestRate': serializer.toJson<double>(interestRate),
       'durationMonths': serializer.toJson<int>(durationMonths),
       'disbursementMode': serializer.toJson<String>(disbursementMode),
+      'invoiceGenerated': serializer.toJson<bool>(invoiceGenerated),
       'startDate': serializer.toJson<DateTime>(startDate),
       'maturityDate': serializer.toJson<DateTime?>(maturityDate),
       'releaseDate': serializer.toJson<DateTime?>(releaseDate),
@@ -17744,6 +17825,8 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           int? customerId,
           String? itemDescription,
           int? itemCount,
+          Value<String?> huidNumber = const Value.absent(),
+          Value<String?> itemPhotoPath = const Value.absent(),
           String? metalType,
           String? metalPurity,
           double? grossWeight,
@@ -17756,6 +17839,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           double? interestRate,
           int? durationMonths,
           String? disbursementMode,
+          bool? invoiceGenerated,
           DateTime? startDate,
           Value<DateTime?> maturityDate = const Value.absent(),
           Value<DateTime?> releaseDate = const Value.absent(),
@@ -17780,6 +17864,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
         customerId: customerId ?? this.customerId,
         itemDescription: itemDescription ?? this.itemDescription,
         itemCount: itemCount ?? this.itemCount,
+        huidNumber: huidNumber.present ? huidNumber.value : this.huidNumber,
+        itemPhotoPath:
+            itemPhotoPath.present ? itemPhotoPath.value : this.itemPhotoPath,
         metalType: metalType ?? this.metalType,
         metalPurity: metalPurity ?? this.metalPurity,
         grossWeight: grossWeight ?? this.grossWeight,
@@ -17792,6 +17879,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
         interestRate: interestRate ?? this.interestRate,
         durationMonths: durationMonths ?? this.durationMonths,
         disbursementMode: disbursementMode ?? this.disbursementMode,
+        invoiceGenerated: invoiceGenerated ?? this.invoiceGenerated,
         startDate: startDate ?? this.startDate,
         maturityDate:
             maturityDate.present ? maturityDate.value : this.maturityDate,
@@ -17837,6 +17925,11 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           ? data.itemDescription.value
           : this.itemDescription,
       itemCount: data.itemCount.present ? data.itemCount.value : this.itemCount,
+      huidNumber:
+          data.huidNumber.present ? data.huidNumber.value : this.huidNumber,
+      itemPhotoPath: data.itemPhotoPath.present
+          ? data.itemPhotoPath.value
+          : this.itemPhotoPath,
       metalType: data.metalType.present ? data.metalType.value : this.metalType,
       metalPurity:
           data.metalPurity.present ? data.metalPurity.value : this.metalPurity,
@@ -17862,6 +17955,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       disbursementMode: data.disbursementMode.present
           ? data.disbursementMode.value
           : this.disbursementMode,
+      invoiceGenerated: data.invoiceGenerated.present
+          ? data.invoiceGenerated.value
+          : this.invoiceGenerated,
       startDate: data.startDate.present ? data.startDate.value : this.startDate,
       maturityDate: data.maturityDate.present
           ? data.maturityDate.value
@@ -17914,6 +18010,8 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           ..write('customerId: $customerId, ')
           ..write('itemDescription: $itemDescription, ')
           ..write('itemCount: $itemCount, ')
+          ..write('huidNumber: $huidNumber, ')
+          ..write('itemPhotoPath: $itemPhotoPath, ')
           ..write('metalType: $metalType, ')
           ..write('metalPurity: $metalPurity, ')
           ..write('grossWeight: $grossWeight, ')
@@ -17926,6 +18024,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           ..write('interestRate: $interestRate, ')
           ..write('durationMonths: $durationMonths, ')
           ..write('disbursementMode: $disbursementMode, ')
+          ..write('invoiceGenerated: $invoiceGenerated, ')
           ..write('startDate: $startDate, ')
           ..write('maturityDate: $maturityDate, ')
           ..write('releaseDate: $releaseDate, ')
@@ -17955,6 +18054,8 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
         customerId,
         itemDescription,
         itemCount,
+        huidNumber,
+        itemPhotoPath,
         metalType,
         metalPurity,
         grossWeight,
@@ -17967,6 +18068,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
         interestRate,
         durationMonths,
         disbursementMode,
+        invoiceGenerated,
         startDate,
         maturityDate,
         releaseDate,
@@ -17995,6 +18097,8 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           other.customerId == this.customerId &&
           other.itemDescription == this.itemDescription &&
           other.itemCount == this.itemCount &&
+          other.huidNumber == this.huidNumber &&
+          other.itemPhotoPath == this.itemPhotoPath &&
           other.metalType == this.metalType &&
           other.metalPurity == this.metalPurity &&
           other.grossWeight == this.grossWeight &&
@@ -18007,6 +18111,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           other.interestRate == this.interestRate &&
           other.durationMonths == this.durationMonths &&
           other.disbursementMode == this.disbursementMode &&
+          other.invoiceGenerated == this.invoiceGenerated &&
           other.startDate == this.startDate &&
           other.maturityDate == this.maturityDate &&
           other.releaseDate == this.releaseDate &&
@@ -18033,6 +18138,8 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
   final Value<int> customerId;
   final Value<String> itemDescription;
   final Value<int> itemCount;
+  final Value<String?> huidNumber;
+  final Value<String?> itemPhotoPath;
   final Value<String> metalType;
   final Value<String> metalPurity;
   final Value<double> grossWeight;
@@ -18045,6 +18152,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
   final Value<double> interestRate;
   final Value<int> durationMonths;
   final Value<String> disbursementMode;
+  final Value<bool> invoiceGenerated;
   final Value<DateTime> startDate;
   final Value<DateTime?> maturityDate;
   final Value<DateTime?> releaseDate;
@@ -18069,6 +18177,8 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     this.customerId = const Value.absent(),
     this.itemDescription = const Value.absent(),
     this.itemCount = const Value.absent(),
+    this.huidNumber = const Value.absent(),
+    this.itemPhotoPath = const Value.absent(),
     this.metalType = const Value.absent(),
     this.metalPurity = const Value.absent(),
     this.grossWeight = const Value.absent(),
@@ -18081,6 +18191,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     this.interestRate = const Value.absent(),
     this.durationMonths = const Value.absent(),
     this.disbursementMode = const Value.absent(),
+    this.invoiceGenerated = const Value.absent(),
     this.startDate = const Value.absent(),
     this.maturityDate = const Value.absent(),
     this.releaseDate = const Value.absent(),
@@ -18106,6 +18217,8 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     required int customerId,
     required String itemDescription,
     this.itemCount = const Value.absent(),
+    this.huidNumber = const Value.absent(),
+    this.itemPhotoPath = const Value.absent(),
     this.metalType = const Value.absent(),
     this.metalPurity = const Value.absent(),
     this.grossWeight = const Value.absent(),
@@ -18118,6 +18231,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     this.interestRate = const Value.absent(),
     this.durationMonths = const Value.absent(),
     this.disbursementMode = const Value.absent(),
+    this.invoiceGenerated = const Value.absent(),
     this.startDate = const Value.absent(),
     this.maturityDate = const Value.absent(),
     this.releaseDate = const Value.absent(),
@@ -18145,6 +18259,8 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     Expression<int>? customerId,
     Expression<String>? itemDescription,
     Expression<int>? itemCount,
+    Expression<String>? huidNumber,
+    Expression<String>? itemPhotoPath,
     Expression<String>? metalType,
     Expression<String>? metalPurity,
     Expression<double>? grossWeight,
@@ -18157,6 +18273,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     Expression<double>? interestRate,
     Expression<int>? durationMonths,
     Expression<String>? disbursementMode,
+    Expression<bool>? invoiceGenerated,
     Expression<DateTime>? startDate,
     Expression<DateTime>? maturityDate,
     Expression<DateTime>? releaseDate,
@@ -18182,6 +18299,8 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       if (customerId != null) 'customer_id': customerId,
       if (itemDescription != null) 'item_description': itemDescription,
       if (itemCount != null) 'item_count': itemCount,
+      if (huidNumber != null) 'huid_number': huidNumber,
+      if (itemPhotoPath != null) 'item_photo_path': itemPhotoPath,
       if (metalType != null) 'metal_type': metalType,
       if (metalPurity != null) 'metal_purity': metalPurity,
       if (grossWeight != null) 'gross_weight': grossWeight,
@@ -18194,6 +18313,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       if (interestRate != null) 'interest_rate': interestRate,
       if (durationMonths != null) 'duration_months': durationMonths,
       if (disbursementMode != null) 'disbursement_mode': disbursementMode,
+      if (invoiceGenerated != null) 'invoice_generated': invoiceGenerated,
       if (startDate != null) 'start_date': startDate,
       if (maturityDate != null) 'maturity_date': maturityDate,
       if (releaseDate != null) 'release_date': releaseDate,
@@ -18224,6 +18344,8 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       Value<int>? customerId,
       Value<String>? itemDescription,
       Value<int>? itemCount,
+      Value<String?>? huidNumber,
+      Value<String?>? itemPhotoPath,
       Value<String>? metalType,
       Value<String>? metalPurity,
       Value<double>? grossWeight,
@@ -18236,6 +18358,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       Value<double>? interestRate,
       Value<int>? durationMonths,
       Value<String>? disbursementMode,
+      Value<bool>? invoiceGenerated,
       Value<DateTime>? startDate,
       Value<DateTime?>? maturityDate,
       Value<DateTime?>? releaseDate,
@@ -18260,6 +18383,8 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       customerId: customerId ?? this.customerId,
       itemDescription: itemDescription ?? this.itemDescription,
       itemCount: itemCount ?? this.itemCount,
+      huidNumber: huidNumber ?? this.huidNumber,
+      itemPhotoPath: itemPhotoPath ?? this.itemPhotoPath,
       metalType: metalType ?? this.metalType,
       metalPurity: metalPurity ?? this.metalPurity,
       grossWeight: grossWeight ?? this.grossWeight,
@@ -18272,6 +18397,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       interestRate: interestRate ?? this.interestRate,
       durationMonths: durationMonths ?? this.durationMonths,
       disbursementMode: disbursementMode ?? this.disbursementMode,
+      invoiceGenerated: invoiceGenerated ?? this.invoiceGenerated,
       startDate: startDate ?? this.startDate,
       maturityDate: maturityDate ?? this.maturityDate,
       releaseDate: releaseDate ?? this.releaseDate,
@@ -18315,6 +18441,12 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     if (itemCount.present) {
       map['item_count'] = Variable<int>(itemCount.value);
     }
+    if (huidNumber.present) {
+      map['huid_number'] = Variable<String>(huidNumber.value);
+    }
+    if (itemPhotoPath.present) {
+      map['item_photo_path'] = Variable<String>(itemPhotoPath.value);
+    }
     if (metalType.present) {
       map['metal_type'] = Variable<String>(metalType.value);
     }
@@ -18350,6 +18482,9 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     }
     if (disbursementMode.present) {
       map['disbursement_mode'] = Variable<String>(disbursementMode.value);
+    }
+    if (invoiceGenerated.present) {
+      map['invoice_generated'] = Variable<bool>(invoiceGenerated.value);
     }
     if (startDate.present) {
       map['start_date'] = Variable<DateTime>(startDate.value);
@@ -18413,6 +18548,8 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
           ..write('customerId: $customerId, ')
           ..write('itemDescription: $itemDescription, ')
           ..write('itemCount: $itemCount, ')
+          ..write('huidNumber: $huidNumber, ')
+          ..write('itemPhotoPath: $itemPhotoPath, ')
           ..write('metalType: $metalType, ')
           ..write('metalPurity: $metalPurity, ')
           ..write('grossWeight: $grossWeight, ')
@@ -18425,6 +18562,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
           ..write('interestRate: $interestRate, ')
           ..write('durationMonths: $durationMonths, ')
           ..write('disbursementMode: $disbursementMode, ')
+          ..write('invoiceGenerated: $invoiceGenerated, ')
           ..write('startDate: $startDate, ')
           ..write('maturityDate: $maturityDate, ')
           ..write('releaseDate: $releaseDate, ')
@@ -36154,6 +36292,8 @@ typedef $$GirviLoansTableCreateCompanionBuilder = GirviLoansCompanion Function({
   required int customerId,
   required String itemDescription,
   Value<int> itemCount,
+  Value<String?> huidNumber,
+  Value<String?> itemPhotoPath,
   Value<String> metalType,
   Value<String> metalPurity,
   Value<double> grossWeight,
@@ -36166,6 +36306,7 @@ typedef $$GirviLoansTableCreateCompanionBuilder = GirviLoansCompanion Function({
   Value<double> interestRate,
   Value<int> durationMonths,
   Value<String> disbursementMode,
+  Value<bool> invoiceGenerated,
   Value<DateTime> startDate,
   Value<DateTime?> maturityDate,
   Value<DateTime?> releaseDate,
@@ -36191,6 +36332,8 @@ typedef $$GirviLoansTableUpdateCompanionBuilder = GirviLoansCompanion Function({
   Value<int> customerId,
   Value<String> itemDescription,
   Value<int> itemCount,
+  Value<String?> huidNumber,
+  Value<String?> itemPhotoPath,
   Value<String> metalType,
   Value<String> metalPurity,
   Value<double> grossWeight,
@@ -36203,6 +36346,7 @@ typedef $$GirviLoansTableUpdateCompanionBuilder = GirviLoansCompanion Function({
   Value<double> interestRate,
   Value<int> durationMonths,
   Value<String> disbursementMode,
+  Value<bool> invoiceGenerated,
   Value<DateTime> startDate,
   Value<DateTime?> maturityDate,
   Value<DateTime?> releaseDate,
@@ -36283,6 +36427,12 @@ class $$GirviLoansTableFilterComposer
   ColumnFilters<int> get itemCount => $composableBuilder(
       column: $table.itemCount, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get huidNumber => $composableBuilder(
+      column: $table.huidNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get itemPhotoPath => $composableBuilder(
+      column: $table.itemPhotoPath, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<String> get metalType => $composableBuilder(
       column: $table.metalType, builder: (column) => ColumnFilters(column));
 
@@ -36319,6 +36469,10 @@ class $$GirviLoansTableFilterComposer
 
   ColumnFilters<String> get disbursementMode => $composableBuilder(
       column: $table.disbursementMode,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get invoiceGenerated => $composableBuilder(
+      column: $table.invoiceGenerated,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get startDate => $composableBuilder(
@@ -36446,6 +36600,13 @@ class $$GirviLoansTableOrderingComposer
   ColumnOrderings<int> get itemCount => $composableBuilder(
       column: $table.itemCount, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get huidNumber => $composableBuilder(
+      column: $table.huidNumber, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get itemPhotoPath => $composableBuilder(
+      column: $table.itemPhotoPath,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get metalType => $composableBuilder(
       column: $table.metalType, builder: (column) => ColumnOrderings(column));
 
@@ -36483,6 +36644,10 @@ class $$GirviLoansTableOrderingComposer
 
   ColumnOrderings<String> get disbursementMode => $composableBuilder(
       column: $table.disbursementMode,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get invoiceGenerated => $composableBuilder(
+      column: $table.invoiceGenerated,
       builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get startDate => $composableBuilder(
@@ -36591,6 +36756,12 @@ class $$GirviLoansTableAnnotationComposer
   GeneratedColumn<int> get itemCount =>
       $composableBuilder(column: $table.itemCount, builder: (column) => column);
 
+  GeneratedColumn<String> get huidNumber => $composableBuilder(
+      column: $table.huidNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get itemPhotoPath => $composableBuilder(
+      column: $table.itemPhotoPath, builder: (column) => column);
+
   GeneratedColumn<String> get metalType =>
       $composableBuilder(column: $table.metalType, builder: (column) => column);
 
@@ -36626,6 +36797,9 @@ class $$GirviLoansTableAnnotationComposer
 
   GeneratedColumn<String> get disbursementMode => $composableBuilder(
       column: $table.disbursementMode, builder: (column) => column);
+
+  GeneratedColumn<bool> get invoiceGenerated => $composableBuilder(
+      column: $table.invoiceGenerated, builder: (column) => column);
 
   GeneratedColumn<DateTime> get startDate =>
       $composableBuilder(column: $table.startDate, builder: (column) => column);
@@ -36747,6 +36921,8 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             Value<int> customerId = const Value.absent(),
             Value<String> itemDescription = const Value.absent(),
             Value<int> itemCount = const Value.absent(),
+            Value<String?> huidNumber = const Value.absent(),
+            Value<String?> itemPhotoPath = const Value.absent(),
             Value<String> metalType = const Value.absent(),
             Value<String> metalPurity = const Value.absent(),
             Value<double> grossWeight = const Value.absent(),
@@ -36759,6 +36935,7 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             Value<double> interestRate = const Value.absent(),
             Value<int> durationMonths = const Value.absent(),
             Value<String> disbursementMode = const Value.absent(),
+            Value<bool> invoiceGenerated = const Value.absent(),
             Value<DateTime> startDate = const Value.absent(),
             Value<DateTime?> maturityDate = const Value.absent(),
             Value<DateTime?> releaseDate = const Value.absent(),
@@ -36784,6 +36961,8 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             customerId: customerId,
             itemDescription: itemDescription,
             itemCount: itemCount,
+            huidNumber: huidNumber,
+            itemPhotoPath: itemPhotoPath,
             metalType: metalType,
             metalPurity: metalPurity,
             grossWeight: grossWeight,
@@ -36796,6 +36975,7 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             interestRate: interestRate,
             durationMonths: durationMonths,
             disbursementMode: disbursementMode,
+            invoiceGenerated: invoiceGenerated,
             startDate: startDate,
             maturityDate: maturityDate,
             releaseDate: releaseDate,
@@ -36821,6 +37001,8 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             required int customerId,
             required String itemDescription,
             Value<int> itemCount = const Value.absent(),
+            Value<String?> huidNumber = const Value.absent(),
+            Value<String?> itemPhotoPath = const Value.absent(),
             Value<String> metalType = const Value.absent(),
             Value<String> metalPurity = const Value.absent(),
             Value<double> grossWeight = const Value.absent(),
@@ -36833,6 +37015,7 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             Value<double> interestRate = const Value.absent(),
             Value<int> durationMonths = const Value.absent(),
             Value<String> disbursementMode = const Value.absent(),
+            Value<bool> invoiceGenerated = const Value.absent(),
             Value<DateTime> startDate = const Value.absent(),
             Value<DateTime?> maturityDate = const Value.absent(),
             Value<DateTime?> releaseDate = const Value.absent(),
@@ -36858,6 +37041,8 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             customerId: customerId,
             itemDescription: itemDescription,
             itemCount: itemCount,
+            huidNumber: huidNumber,
+            itemPhotoPath: itemPhotoPath,
             metalType: metalType,
             metalPurity: metalPurity,
             grossWeight: grossWeight,
@@ -36870,6 +37055,7 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             interestRate: interestRate,
             durationMonths: durationMonths,
             disbursementMode: disbursementMode,
+            invoiceGenerated: invoiceGenerated,
             startDate: startDate,
             maturityDate: maturityDate,
             releaseDate: releaseDate,

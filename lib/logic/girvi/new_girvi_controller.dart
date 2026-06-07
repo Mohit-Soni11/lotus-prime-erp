@@ -263,7 +263,7 @@ class NewGirviController extends ChangeNotifier {
     final d = double.tryParse(v);
     if (d == null || d <= 0) return 'Amount must be > 0';
     if (totalValue > 0 && d > totalValue) {
-      return 'Loan cannot exceed item value (₹${totalValue.toStringAsFixed(0)})';
+      return 'Loan cannot exceed item value (Rs ${totalValue.toStringAsFixed(0)})';
     }
     return null;
   }
@@ -271,7 +271,7 @@ class NewGirviController extends ChangeNotifier {
   String? validateInterestRate(String? v) {
     if (v == null || v.isEmpty) return 'Enter interest rate';
     final d = double.tryParse(v);
-    if (d == null || d < 0) return 'Rate must be ≥ 0';
+    if (d == null || d < 0) return 'Rate must be at least 0';
     if (d > 30) return 'Rate seems too high (max 30%)';
     return null;
   }
@@ -279,7 +279,7 @@ class NewGirviController extends ChangeNotifier {
   String? validateDuration(String? v) {
     if (v == null || v.isEmpty) return 'Enter duration';
     final i = int.tryParse(v);
-    if (i == null || i < 1) return 'Duration must be ≥ 1 month';
+    if (i == null || i < 1) return 'Duration must be at least 1 month';
     if (i > 120) return 'Max 120 months (10 years)';
     return null;
   }
@@ -288,6 +288,9 @@ class NewGirviController extends ChangeNotifier {
 
   Future<bool> saveLoan({
     required String itemDescription,
+    required String? huidNumber,
+    required String? itemPhotoPath,
+    required bool invoiceGenerated,
     required String? idProofNumber,
     required String? notes,
   }) async {
@@ -317,6 +320,11 @@ class NewGirviController extends ChangeNotifier {
         customerId: _selectedCustomer!.id,
         itemDescription: itemDescription.trim(),
         itemCount: drift.Value(_itemCount),
+        huidNumber: drift.Value(
+            huidNumber?.trim().isEmpty == true ? null : huidNumber?.trim()),
+        itemPhotoPath: drift.Value(itemPhotoPath?.trim().isEmpty == true
+            ? null
+            : itemPhotoPath?.trim()),
         metalType: drift.Value(_metalType.dbValue),
         metalPurity: drift.Value(_metalPurity.dbValue),
         grossWeight: drift.Value(_grossWeight),
@@ -329,6 +337,7 @@ class NewGirviController extends ChangeNotifier {
         interestRate: drift.Value(_interestRate),
         durationMonths: drift.Value(_durationMonths),
         disbursementMode: drift.Value(_disbursementMode.dbValue),
+        invoiceGenerated: drift.Value(invoiceGenerated),
         startDate: drift.Value(_startDate),
         maturityDate: drift.Value(maturityDate),
         idProofType: drift.Value(_idProofType?.dbValue),
