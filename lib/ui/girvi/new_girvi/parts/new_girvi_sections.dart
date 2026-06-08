@@ -5,6 +5,7 @@ extension NewGirviSections on _NewGirviScreenState {
 
   // â”€â”€ SECTION 1: ITEM DETAILS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+  // ignore: unused_element
   Widget _buildSection1ItemDetails() {
     return GirviSectionCard(
       icon: GirviIcons.itemDetails,
@@ -87,6 +88,7 @@ extension NewGirviSections on _NewGirviScreenState {
 
   // â”€â”€ SECTION 2: WEIGHT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+  // ignore: unused_element
   Widget _buildSection2Weight() {
     final netWt = _ctrl.netWeight;
     return GirviSectionCard(
@@ -162,6 +164,7 @@ extension NewGirviSections on _NewGirviScreenState {
 
   // â”€â”€ SECTION 3: VALUATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+  // ignore: unused_element
   Widget _buildSection3Valuation() {
     return GirviSectionCard(
       icon: GirviIcons.valuation,

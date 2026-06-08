@@ -5,6 +5,7 @@ extension NewGirviActions on _NewGirviScreenState {
 
   Future<void> _onSave({bool generateInvoice = false}) async {
     FocusScope.of(context).unfocus();
+    _syncPledgedItemsToController();
     if (!(_formKey.currentState?.validate() ?? false)) {
       _showError('Please fix the errors above before saving.');
       return;
@@ -60,6 +61,7 @@ extension NewGirviActions on _NewGirviScreenState {
     _interestCtrl.text = '2.0';
     _durationCtrl.text = '12';
     await _ctrl.resetForm();
+    _resetPledgedItems();
   }
 
   void _showSuccess(String msg) {
@@ -129,6 +131,49 @@ extension NewGirviActions on _NewGirviScreenState {
     );
   }
 
+  Future<void> _pickPledgedItemPhoto(_PledgedItemDraft item) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      dialogTitle: 'Select Pledged Item Photo',
+    );
+    final path = result?.files.single.path;
+    if (path == null || !mounted) return;
+
+    try {
+      final source = File(path);
+      final appDir = await getApplicationDocumentsDirectory();
+      final photoDir =
+          Directory(p.join(appDir.path, 'lotus_erp', 'girvi_item_photos'));
+      if (!photoDir.existsSync()) {
+        photoDir.createSync(recursive: true);
+      }
+
+      final extension = p.extension(path).isEmpty ? '.jpg' : p.extension(path);
+      final safeTicket = _ctrl.ticketNo
+          .replaceAll(RegExp(r'[^A-Za-z0-9_-]+'), '_')
+          .replaceAll(RegExp(r'_+'), '_');
+      final fileName =
+          '${safeTicket}_item_${item.serialNo}_${DateTime.now().millisecondsSinceEpoch}$extension';
+      final savedPath = p.join(photoDir.path, fileName);
+      await source.copy(savedPath);
+
+      if (!mounted) return;
+      _setPledgedItemPhotoPath(item, savedPath);
+    } catch (e) {
+      debugPrint('NewGirviScreen._pickPledgedItemPhoto error: $e');
+      if (mounted) {
+        _showError('Item photo could not be attached. Please try again.');
+      }
+    }
+  }
+
+  void _removePledgedItemPhoto(_PledgedItemDraft item) {
+    if (!mounted) return;
+    _setPledgedItemPhotoPath(item, null);
+  }
+
+  // ignore: unused_element
   Future<void> _pickItemPhoto() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
@@ -166,21 +211,23 @@ extension NewGirviActions on _NewGirviScreenState {
     }
   }
 
+  // ignore: unused_element
   void _removeItemPhoto() {
     if (!mounted) return;
     _setItemPhotoPath(null);
   }
 
   Future<void> _printGirviInvoice() async {
+    _syncPledgedItemsToController();
     final customer = _ctrl.selectedCustomer;
     if (customer == null) return;
     final pdf = pw.Document();
     final createdAt = DateTime.now();
-    final huid = _huidCtrl.text.trim();
-    final hasPhoto =
-        _itemPhotoPath != null && File(_itemPhotoPath!).existsSync();
-    final photoBytes =
-        hasPhoto ? File(_itemPhotoPath!).readAsBytesSync() : null;
+    final itemPhotos = _pledgedItems
+        .where((item) =>
+            item.photoPath != null && File(item.photoPath!).existsSync())
+        .map((item) => MapEntry(item.serialNo, File(item.photoPath!)))
+        .toList();
 
     String amount(double value) => 'Rs ${_fmt.format(value)}';
     String date(DateTime value) => _dateFmt.format(value);
@@ -334,22 +381,24 @@ extension NewGirviActions on _NewGirviScreenState {
               'Less',
               'Net',
               'HUID',
-              'Loan',
+              'Value',
             ],
-            data: [
-              [
-                '1',
-                _ctrl.metalType.displayName,
-                _itemDescCtrl.text.trim(),
-                _ctrl.metalPurity.displayName,
-                _ctrl.itemCount.toString(),
-                '${_ctrl.grossWeight.toStringAsFixed(3)} g',
-                '${_ctrl.stoneWeight.toStringAsFixed(3)} g',
-                '${_ctrl.netWeight.toStringAsFixed(3)} g',
+            data: _pledgedItems.map((item) {
+              final description = item.descriptionCtrl.text.trim();
+              final huid = item.huidCtrl.text.trim();
+              return [
+                item.serialNo.toString(),
+                item.metalType.displayName,
+                description.isEmpty ? '-' : description,
+                item.purityLabel,
+                item.itemCount.toString(),
+                '${item.grossWeight.toStringAsFixed(3)} g',
+                '${item.lessWeight.toStringAsFixed(3)} g',
+                '${item.netWeight.toStringAsFixed(3)} g',
                 huid.isEmpty ? '-' : huid,
-                amount(_ctrl.loanAmount),
-              ],
-            ],
+                amount(item.itemValue),
+              ];
+            }).toList(),
             headerStyle:
                 pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold),
             cellStyle: const pw.TextStyle(fontSize: 7.2),
@@ -357,16 +406,42 @@ extension NewGirviActions on _NewGirviScreenState {
                 const pw.BoxDecoration(color: PdfColor.fromInt(0xFFF1EDE4)),
             cellAlignment: pw.Alignment.centerLeft,
           ),
-          if (photoBytes != null) ...[
+          if (itemPhotos.isNotEmpty) ...[
             pw.SizedBox(height: 14),
-            sectionTitle('Item Photo'),
-            pw.Container(
-              width: 140,
-              height: 110,
-              decoration: pw.BoxDecoration(
-                border: pw.Border.all(color: PdfColors.grey300),
-              ),
-              child: pw.Image(pw.MemoryImage(photoBytes), fit: pw.BoxFit.cover),
+            sectionTitle('Pledged Item Photos'),
+            pw.Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: itemPhotos.map((entry) {
+                final bytes = entry.value.readAsBytesSync();
+                return pw.Container(
+                  width: 126,
+                  height: 108,
+                  padding: const pw.EdgeInsets.all(4),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.grey300),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'Item #${entry.key}',
+                        style: pw.TextStyle(
+                          fontSize: 7,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.SizedBox(height: 3),
+                      pw.Expanded(
+                        child: pw.Image(
+                          pw.MemoryImage(bytes),
+                          fit: pw.BoxFit.cover,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
             ),
           ],
           pw.SizedBox(height: 18),

@@ -13,42 +13,11 @@ extension NewGirviLayout on _NewGirviScreenState {
         const SizedBox(height: 16),
         LayoutBuilder(
           builder: (context, constraints) {
-            final twoColumn = constraints.maxWidth >= 760;
-            if (!twoColumn) {
-              return Column(
-                children: [
-                  _animated(1, _buildSection1ItemDetails()),
-                  const SizedBox(height: 16),
-                  _animated(2, _buildSection2Weight()),
-                  const SizedBox(height: 16),
-                  _animated(3, _buildSection3Valuation()),
-                ],
-              );
-            }
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    children: [
-                      _animated(1, _buildSection1ItemDetails()),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    children: [
-                      _animated(2, _buildSection2Weight()),
-                      const SizedBox(height: 16),
-                      _animated(3, _buildSection3Valuation()),
-                    ],
-                  ),
-                ),
-              ],
-            );
+            return _animated(1, _buildPledgedItemsSection());
           },
         ),
+        const SizedBox(height: 16),
+        _animated(2, _buildPledgedValuationSection()),
         const SizedBox(height: 16),
         _animated(4, _buildSection4LoanTerms()),
         const SizedBox(height: 16),

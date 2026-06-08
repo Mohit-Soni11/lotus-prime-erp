@@ -35,6 +35,7 @@ import '../shared/select_customer_dialog.dart';
 
 part 'parts/new_girvi_actions.dart';
 part 'parts/new_girvi_layout.dart';
+part 'parts/new_girvi_pledged_items.dart';
 part 'parts/new_girvi_sections.dart';
 part 'parts/new_girvi_widgets.dart';
 
@@ -65,6 +66,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   final _idProofNoCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
   String? _itemPhotoPath;
+  late final List<_PledgedItemDraft> _pledgedItems;
 
   // â”€â”€ Focus Nodes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   final _itemDescFocus = FocusNode();
@@ -92,6 +94,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     _ctrl = NewGirviController(_db);
     _dateLogic = DateCardLogic();
     _dateLogic.init();
+    _pledgedItems = [_createPledgedItemDraft(1)];
 
     _sectionAnim = List.generate(
         _sectionCount,
@@ -131,6 +134,136 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     _ctrl.initialize();
   }
 
+  _PledgedItemDraft _createPledgedItemDraft(int serialNo) {
+    return _PledgedItemDraft(
+      serialNo: serialNo,
+      onChanged: _onPledgedItemChanged,
+    );
+  }
+
+  void _onPledgedItemChanged() {
+    _syncPledgedItemsToController();
+    if (mounted) setState(() {});
+  }
+
+  void _addPledgedItem() {
+    if (!mounted) return;
+    setState(() {
+      _pledgedItems.add(_createPledgedItemDraft(_pledgedItems.length + 1));
+    });
+    _syncPledgedItemsToController();
+  }
+
+  void _removePledgedItem(_PledgedItemDraft item) {
+    if (_pledgedItems.length <= 1 || !mounted) return;
+    setState(() {
+      _pledgedItems.remove(item);
+      for (var i = 0; i < _pledgedItems.length; i++) {
+        _pledgedItems[i].serialNo = i + 1;
+      }
+    });
+    item.dispose();
+    _syncPledgedItemsToController();
+  }
+
+  void _setPledgedItemPhotoPath(_PledgedItemDraft item, String? path) {
+    if (!mounted) return;
+    setState(() => item.photoPath = path);
+    _syncPledgedItemsToController();
+  }
+
+  void _resetPledgedItems() {
+    for (final item in _pledgedItems) {
+      item.dispose();
+    }
+    _pledgedItems
+      ..clear()
+      ..add(_createPledgedItemDraft(1));
+    _syncPledgedItemsToController();
+    if (mounted) setState(() {});
+  }
+
+  void _syncPledgedItemsToController() {
+    if (_pledgedItems.isEmpty) return;
+
+    final totalGross =
+        _pledgedItems.fold<double>(0, (sum, item) => sum + item.grossWeight);
+    final totalLess =
+        _pledgedItems.fold<double>(0, (sum, item) => sum + item.lessWeight);
+    final totalNet =
+        _pledgedItems.fold<double>(0, (sum, item) => sum + item.netWeight);
+    final totalValue =
+        _pledgedItems.fold<double>(0, (sum, item) => sum + item.itemValue);
+    final totalPieces =
+        _pledgedItems.fold<int>(0, (sum, item) => sum + item.itemCount);
+    final weightedRate = totalNet > 0 ? totalValue / totalNet : 0.0;
+    final first = _pledgedItems.first;
+
+    _setControllerTextIfChanged(
+      _grossWtCtrl,
+      totalGross > 0 ? totalGross.toStringAsFixed(3) : '',
+    );
+    _setControllerTextIfChanged(
+      _stoneWtCtrl,
+      totalLess > 0 ? totalLess.toStringAsFixed(3) : '',
+    );
+    _setControllerTextIfChanged(
+      _rateCtrl,
+      weightedRate > 0 ? weightedRate.toStringAsFixed(2) : '',
+    );
+    _setControllerTextIfChanged(_itemDescCtrl, _combinedItemDescription());
+    _setControllerTextIfChanged(_huidCtrl, _combinedHuidNumbers());
+    _itemPhotoPath = _firstAttachedItemPhoto();
+
+    if (_ctrl.itemCount != totalPieces.clamp(1, 99)) {
+      _ctrl.setItemCount(totalPieces);
+    }
+    if (_ctrl.metalType != first.metalType) {
+      _ctrl.setMetalType(first.metalType);
+    }
+    if (_ctrl.metalPurity != first.purity) {
+      _ctrl.setMetalPurity(first.purity);
+    }
+  }
+
+  void _setControllerTextIfChanged(
+    TextEditingController controller,
+    String value,
+  ) {
+    if (controller.text == value) return;
+    controller.text = value;
+  }
+
+  String _combinedItemDescription() {
+    final lines = <String>[];
+    for (final item in _pledgedItems) {
+      final description = item.descriptionCtrl.text.trim();
+      final title = description.isEmpty ? 'Pledged item' : description;
+      lines.add(
+        '#${item.serialNo} $title | ${item.metalType.displayName} | '
+        '${item.purityLabel} | ${item.itemCount} pcs | '
+        'Net ${item.netWeight.toStringAsFixed(3)} g | '
+        'Value Rs ${_fmt.format(item.itemValue)}',
+      );
+    }
+    return lines.join('\n');
+  }
+
+  String _combinedHuidNumbers() {
+    return _pledgedItems
+        .map((item) => item.huidCtrl.text.trim())
+        .where((value) => value.isNotEmpty)
+        .join(', ');
+  }
+
+  String? _firstAttachedItemPhoto() {
+    for (final item in _pledgedItems) {
+      final path = item.photoPath;
+      if (path != null && path.isNotEmpty) return path;
+    }
+    return null;
+  }
+
   void _onControllerUpdate() {
     // Sync loanAmt field when controller recomputes via LTV slider
     final ctrlVal = _ctrl.loanAmount.toStringAsFixed(2);
@@ -149,6 +282,9 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     _ctrl.removeListener(_onControllerUpdate);
     _ctrl.dispose();
     _dateLogic.dispose();
+    for (final item in _pledgedItems) {
+      item.dispose();
+    }
     for (final c in [
       _itemDescCtrl,
       _huidCtrl,
