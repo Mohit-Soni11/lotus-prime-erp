@@ -259,7 +259,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
         '#${item.serialNo} $title | ${item.metalType.displayName} | '
         '${item.purityLabel} | ${item.itemCount} pcs | '
         'Net ${item.netWeight.toStringAsFixed(3)} g | '
-        'Fine ${item.fineWeight.toStringAsFixed(3)} g | '
+        'Valuation ${item.valuationPurityLabel} | '
         'Value Rs ${_fmt.format(item.itemValue)}',
       );
     }

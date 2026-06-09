@@ -5,13 +5,15 @@ class _PledgedItemDraft {
     required this.serialNo,
     required this.onChanged,
   }) {
-    customPurityCtrl.text = purity.displayName;
+    customPurityCtrl.text = purity.dbValue;
+    valuationPurityCtrl.text = _formatPurityPercent(purity.fineness * 100);
     for (final controller in [
       descriptionCtrl,
       piecesCtrl,
       huidCtrl,
       grossCtrl,
       lessCtrl,
+      valuationPurityCtrl,
       rateCtrl,
       customPurityCtrl,
     ]) {
@@ -27,6 +29,7 @@ class _PledgedItemDraft {
   final huidCtrl = TextEditingController();
   final grossCtrl = TextEditingController();
   final lessCtrl = TextEditingController();
+  final valuationPurityCtrl = TextEditingController();
   final rateCtrl = TextEditingController();
   final customPurityCtrl = TextEditingController();
 
@@ -35,6 +38,7 @@ class _PledgedItemDraft {
   final huidFocus = FocusNode();
   final grossFocus = FocusNode();
   final lessFocus = FocusNode();
+  final valuationPurityFocus = FocusNode();
   final rateFocus = FocusNode();
   final customPurityFocus = FocusNode();
 
@@ -47,8 +51,15 @@ class _PledgedItemDraft {
   double get lessWeight => double.tryParse(lessCtrl.text) ?? 0.0;
   double get netWeight =>
       (grossWeight - lessWeight).clamp(0.0, double.infinity);
-  double get purityFactor => _purityFactorFor(this);
-  double get fineWeight => netWeight * purityFactor;
+  double get entryPurityFactor => _entryPurityFactorFor(this);
+  double get valuationPurityPercent {
+    final parsed = double.tryParse(valuationPurityCtrl.text.trim());
+    if (parsed == null || parsed <= 0) return entryPurityFactor * 100;
+    return parsed.clamp(0.0, 100.0).toDouble();
+  }
+
+  double get valuationPurityFactor => valuationPurityPercent / 100;
+  double get fineWeight => netWeight * valuationPurityFactor;
   double get ratePerGram => double.tryParse(rateCtrl.text) ?? 0.0;
   double get itemValue => fineWeight * ratePerGram;
   bool get hasPhoto =>
@@ -59,8 +70,11 @@ class _PledgedItemDraft {
   String get purityLabel {
     final custom = customPurityCtrl.text.trim();
     if (purity == MetalPurity.other && custom.isNotEmpty) return custom;
-    return purity.displayName;
+    return purity.dbValue;
   }
+
+  String get valuationPurityLabel =>
+      '${_formatPurityPercent(valuationPurityPercent)}%';
 
   void setMetalType(MetalType value) {
     metalType = value;
@@ -96,12 +110,16 @@ class _PledgedItemDraft {
       if (_isKnownPurityText(customPurityCtrl.text)) {
         customPurityCtrl.clear();
       }
+      if (valuationPurityCtrl.text.trim().isEmpty) {
+        valuationPurityCtrl.text = '100';
+      }
       return;
     }
-    customPurityCtrl.text = purity.displayName;
+    customPurityCtrl.text = purity.dbValue;
     customPurityCtrl.selection = TextSelection.collapsed(
       offset: customPurityCtrl.text.length,
     );
+    valuationPurityCtrl.text = _formatPurityPercent(purity.fineness * 100);
   }
 
   void dispose() {
@@ -111,6 +129,7 @@ class _PledgedItemDraft {
       huidCtrl,
       grossCtrl,
       lessCtrl,
+      valuationPurityCtrl,
       rateCtrl,
       customPurityCtrl,
     ]) {
@@ -123,6 +142,7 @@ class _PledgedItemDraft {
       huidFocus,
       grossFocus,
       lessFocus,
+      valuationPurityFocus,
       rateFocus,
       customPurityFocus,
     ]) {
@@ -211,7 +231,18 @@ Color _pledgedMetalAccent(MetalType metalType) {
   }
 }
 
-double _purityFactorFor(_PledgedItemDraft item) {
+String _formatPurityPercent(double value) {
+  final normalized = value.clamp(0.0, 100.0).toDouble();
+  if ((normalized - normalized.roundToDouble()).abs() < 0.001) {
+    return normalized.round().toString();
+  }
+  return normalized
+      .toStringAsFixed(2)
+      .replaceFirst(RegExp(r'0+$'), '')
+      .replaceFirst(RegExp(r'\.$'), '');
+}
+
+double _entryPurityFactorFor(_PledgedItemDraft item) {
   if (item.purity != MetalPurity.other) return item.purity.fineness;
 
   final text = item.customPurityCtrl.text.trim().toUpperCase();
@@ -221,14 +252,14 @@ double _purityFactorFor(_PledgedItemDraft item) {
   final parsed = double.tryParse(numberMatch?.group(1) ?? '');
   if (parsed == null || parsed <= 0) return 1.0;
 
-  if (text.contains('K')) return (parsed / 24).clamp(0.0, 1.0);
-  if (text.contains('%')) return (parsed / 100).clamp(0.0, 1.0);
+  if (text.contains('K')) return (parsed / 24).clamp(0.0, 1.0).toDouble();
+  if (text.contains('%')) return (parsed / 100).clamp(0.0, 1.0).toDouble();
   if (parsed > 1 && parsed <= 24 && item.metalType == MetalType.gold) {
-    return (parsed / 24).clamp(0.0, 1.0);
+    return (parsed / 24).clamp(0.0, 1.0).toDouble();
   }
-  if (parsed > 100) return (parsed / 1000).clamp(0.0, 1.0);
-  if (parsed > 1) return (parsed / 100).clamp(0.0, 1.0);
-  return parsed.clamp(0.0, 1.0);
+  if (parsed > 100) return (parsed / 1000).clamp(0.0, 1.0).toDouble();
+  if (parsed > 1) return (parsed / 100).clamp(0.0, 1.0).toDouble();
+  return parsed.clamp(0.0, 1.0).toDouble();
 }
 
 extension NewGirviPledgedItemsSection on _NewGirviScreenState {
@@ -319,9 +350,9 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final tableWidth =
-                constraints.maxWidth < 1156 ? 1156.0 : constraints.maxWidth;
+                constraints.maxWidth < 1082 ? 1082.0 : constraints.maxWidth;
             final columnScale =
-                ((tableWidth - 82) / 1074).clamp(1.0, 1.25).toDouble();
+                ((tableWidth - 76) / 1006).clamp(1.0, 1.22).toDouble();
             return SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: SizedBox(
@@ -334,14 +365,13 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
                       columns: const [
                         _LedgerColumn('S/N', 40),
                         _LedgerColumn('Metal', 92),
-                        _LedgerColumn('Item Description', 190),
+                        _LedgerColumn('Item Description', 210),
                         _LedgerColumn('Pcs', 56),
                         _LedgerColumn('HUID', 110),
-                        _LedgerColumn('Purity', 150),
-                        _LedgerColumn('Gross', 84),
-                        _LedgerColumn('Less', 84),
-                        _LedgerColumn('Net', 86),
-                        _LedgerColumn('Fine', 86),
+                        _LedgerColumn('Purity', 102),
+                        _LedgerColumn('Gross', 94),
+                        _LedgerColumn('Less', 94),
+                        _LedgerColumn('Net', 96),
                         _LedgerColumn('Photo', 54),
                         _LedgerColumn('Act', 42),
                       ],
@@ -392,7 +422,7 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
           ),
           const SizedBox(width: 6),
           _LedgerTextCell(
-            width: w(190),
+            width: w(210),
             controller: item.descriptionCtrl,
             focusNode: item.descriptionFocus,
             hint: 'Item name',
@@ -422,12 +452,12 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
           ),
           const SizedBox(width: 6),
           _LedgerPurityCell(
-            width: w(150),
+            width: w(102),
             item: item,
           ),
           const SizedBox(width: 6),
           _LedgerTextCell(
-            width: w(84),
+            width: w(94),
             controller: item.grossCtrl,
             focusNode: item.grossFocus,
             hint: '0.000',
@@ -440,7 +470,7 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
           ),
           const SizedBox(width: 6),
           _LedgerTextCell(
-            width: w(84),
+            width: w(94),
             controller: item.lessCtrl,
             focusNode: item.lessFocus,
             hint: '0.000',
@@ -453,15 +483,9 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
           ),
           const SizedBox(width: 6),
           _LedgerReadOnlyCell(
-            width: w(86),
+            width: w(96),
             value: item.netWeight.toStringAsFixed(3),
             color: GirviColors.brandGold,
-          ),
-          const SizedBox(width: 6),
-          _LedgerReadOnlyCell(
-            width: w(86),
-            value: item.fineWeight.toStringAsFixed(3),
-            color: GirviColors.success,
           ),
           const SizedBox(width: 6),
           _LedgerPhotoCell(
@@ -554,7 +578,7 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
                         _LedgerColumn('S/N', 40),
                         _LedgerColumn('Item', 260),
                         _LedgerColumn('Net', 96),
-                        _LedgerColumn('Purity', 106),
+                        _LedgerColumn('Valuation %', 106),
                         _LedgerColumn('Fine', 96),
                         _LedgerColumn('Rate / g', 126),
                         _LedgerColumn('Value', 126),
@@ -605,9 +629,18 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
             color: GirviColors.brandGold,
           ),
           const SizedBox(width: 6),
-          _LedgerPurityReadOnlyCell(
+          _LedgerTextCell(
             width: w(106),
-            value: item.purityLabel,
+            controller: item.valuationPurityCtrl,
+            focusNode: item.valuationPurityFocus,
+            hint: '75',
+            suffixText: '%',
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
+            ],
+            textAlign: TextAlign.right,
+            validator: _validateValuationPurity,
           ),
           const SizedBox(width: 6),
           _LedgerReadOnlyCell(
@@ -660,13 +693,13 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
 
   Widget _buildPledgedItemsTotals() {
     final summaries = _buildMetalWeightSummaries();
-    return Column(
-      children: [
-        for (var i = 0; i < summaries.length; i++) ...[
-          if (i > 0) const SizedBox(height: 10),
-          _MetalWeightSummaryPanel(summary: summaries[i]),
-        ],
-      ],
+    final totalPieces =
+        _pledgedItems.fold<int>(0, (sum, item) => sum + item.itemCount);
+    return _PledgedLedgerBottomBar(
+      totalItems: _pledgedItems.length,
+      totalPieces: totalPieces,
+      summaries: summaries,
+      onAdd: _addPledgedItem,
     );
   }
 
@@ -676,13 +709,19 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
           final items =
               _pledgedItems.where((item) => item.metalType == metal).toList();
           if (items.isEmpty) return null;
+          final gross =
+              items.fold<double>(0, (sum, item) => sum + item.grossWeight);
+          final less =
+              items.fold<double>(0, (sum, item) => sum + item.lessWeight);
+          final net =
+              items.fold<double>(0, (sum, item) => sum + item.netWeight);
+          if (gross <= 0 && less <= 0 && net <= 0) return null;
           return _MetalWeightSummary(
             metal: metal,
             pieces: items.fold<int>(0, (sum, item) => sum + item.itemCount),
-            gross: items.fold<double>(0, (sum, item) => sum + item.grossWeight),
-            less: items.fold<double>(0, (sum, item) => sum + item.lessWeight),
-            net: items.fold<double>(0, (sum, item) => sum + item.netWeight),
-            fine: items.fold<double>(0, (sum, item) => sum + item.fineWeight),
+            gross: gross,
+            less: less,
+            net: net,
           );
         })
         .whereType<_MetalWeightSummary>()
@@ -733,6 +772,13 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
     final parsed = double.tryParse(value);
     if (parsed == null || parsed < 0) return 'Invalid';
     if (parsed > item.grossWeight) return 'Too high';
+    return null;
+  }
+
+  String? _validateValuationPurity(String? value) {
+    final parsed = double.tryParse(value?.trim() ?? '');
+    if (parsed == null || parsed <= 0) return 'Required';
+    if (parsed > 100) return 'Max 100';
     return null;
   }
 }
@@ -961,6 +1007,7 @@ class _LedgerTextCell extends StatelessWidget {
     this.validator,
     this.textAlign = TextAlign.left,
     this.prefixText,
+    this.suffixText,
   });
 
   final double width;
@@ -972,6 +1019,7 @@ class _LedgerTextCell extends StatelessWidget {
   final String? Function(String?)? validator;
   final TextAlign textAlign;
   final String? prefixText;
+  final String? suffixText;
 
   @override
   Widget build(BuildContext context) {
@@ -994,6 +1042,7 @@ class _LedgerTextCell extends StatelessWidget {
         decoration: InputDecoration(
           hintText: hint,
           prefixText: prefixText,
+          suffixText: suffixText,
           hintStyle: GirviStyles.fieldHint.copyWith(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -1168,26 +1217,28 @@ class _LedgerPurityCell extends StatelessWidget {
                     });
                   }
                 },
-                itemBuilder: (context) => options
-                    .map(
-                      (purity) => PopupMenuItem<MetalPurity>(
-                        value: purity,
-                        height: 36,
-                        child: Text(
-                          purity.displayName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
-                            color: purity == MetalPurity.other
-                                ? GirviColors.textBody
-                                : GirviColors.brandDeep,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w900,
-                          ),
+                itemBuilder: (context) => options.map(
+                  (purity) {
+                    final label =
+                        purity == MetalPurity.other ? 'Custom' : purity.dbValue;
+                    return PopupMenuItem<MetalPurity>(
+                      value: purity,
+                      height: 36,
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          color: purity == MetalPurity.other
+                              ? GirviColors.textBody
+                              : GirviColors.brandDeep,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
-                    )
-                    .toList(),
+                    );
+                  },
+                ).toList(),
               ),
             ),
           ],
@@ -1236,46 +1287,6 @@ class _LedgerReadOnlyCell extends StatelessWidget {
   }
 }
 
-class _LedgerPurityReadOnlyCell extends StatelessWidget {
-  const _LedgerPurityReadOnlyCell({
-    required this.width,
-    required this.value,
-  });
-
-  final double width;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: Container(
-        height: 38,
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: GirviColors.brandGoldLight,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: GirviColors.brandGold.withValues(alpha: 0.20),
-          ),
-        ),
-        child: Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.inter(
-            color: GirviColors.brandDeep,
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _LedgerItemNameCell extends StatelessWidget {
   const _LedgerItemNameCell({
     required this.width,
@@ -1292,8 +1303,8 @@ class _LedgerItemNameCell extends StatelessWidget {
     return SizedBox(
       width: width,
       child: Container(
-        height: 42,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
@@ -1311,8 +1322,10 @@ class _LedgerItemNameCell extends StatelessWidget {
                 color: GirviColors.textDark,
                 fontSize: 13,
                 fontWeight: FontWeight.w900,
+                height: 1.0,
               ),
             ),
+            const SizedBox(height: 3),
             Text(
               subtitle,
               maxLines: 1,
@@ -1320,6 +1333,7 @@ class _LedgerItemNameCell extends StatelessWidget {
               style: GirviStyles.caption.copyWith(
                 fontSize: 10.5,
                 fontWeight: FontWeight.w700,
+                height: 1.0,
               ),
             ),
           ],
@@ -1465,7 +1479,6 @@ class _MetalWeightSummary {
     required this.gross,
     required this.less,
     required this.net,
-    required this.fine,
   });
 
   final MetalType metal;
@@ -1473,106 +1486,81 @@ class _MetalWeightSummary {
   final double gross;
   final double less;
   final double net;
-  final double fine;
 }
 
-class _MetalWeightSummaryPanel extends StatelessWidget {
-  const _MetalWeightSummaryPanel({required this.summary});
+class _PledgedLedgerBottomBar extends StatelessWidget {
+  const _PledgedLedgerBottomBar({
+    required this.totalItems,
+    required this.totalPieces,
+    required this.summaries,
+    required this.onAdd,
+  });
 
-  final _MetalWeightSummary summary;
+  final int totalItems;
+  final int totalPieces;
+  final List<_MetalWeightSummary> summaries;
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
-    final accent = _pledgedMetalAccent(summary.metal);
-    final tiles = [
-      _PledgedTotalTile(
-        label: 'Pieces',
-        value: '${summary.pieces}',
-        color: GirviColors.accentCustomer,
-      ),
-      _PledgedTotalTile(
-        label: 'Gross Weight',
-        value: '${summary.gross.toStringAsFixed(3)} g',
-        color: GirviColors.accentWeight,
-      ),
-      _PledgedTotalTile(
-        label: 'Less Weight',
-        value: '${summary.less.toStringAsFixed(3)} g',
-        color: GirviColors.warning,
-      ),
-      _PledgedTotalTile(
-        label: 'Net Weight',
-        value: '${summary.net.toStringAsFixed(3)} g',
-        color: GirviColors.brandGold,
-      ),
-      _PledgedTotalTile(
-        label: 'Fine Weight',
-        value: '${summary.fine.toStringAsFixed(3)} g',
-        color: GirviColors.success,
-      ),
-    ];
-
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.045),
+        color: GirviColors.inputBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accent.withValues(alpha: 0.18)),
+        border: Border.all(color: GirviColors.cardBorder),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final compact = constraints.maxWidth < 820;
-          final header = Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: accent.withValues(alpha: 0.30)),
-                ),
-                child: Icon(
-                  Icons.auto_awesome_rounded,
-                  color: accent,
-                  size: 17,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                '${summary.metal.displayName} Weight Summary',
-                style: GoogleFonts.inter(
-                  color: GirviColors.textDark,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
+          final compact = constraints.maxWidth < 860;
+          final addButton = _LedgerAddButton(onTap: onAdd);
+          final totals = _PledgedLedgerMetric(
+            label: 'ITEMS / PCS',
+            value: '$totalItems / $totalPieces',
+            color: GirviColors.success,
           );
+          final summaryChips = summaries
+              .map((summary) => _MetalWeightSummaryChip(summary: summary))
+              .toList();
 
           if (compact) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                header,
-                const SizedBox(height: 10),
-                for (var i = 0; i < tiles.length; i++) ...[
-                  if (i > 0) const SizedBox(height: 8),
-                  tiles[i],
+                Row(
+                  children: [
+                    addButton,
+                    const SizedBox(width: 10),
+                    Expanded(child: totals),
+                  ],
+                ),
+                if (summaryChips.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: summaryChips,
+                  ),
                 ],
               ],
             );
           }
 
           return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(width: 210, child: header),
+              addButton,
               const SizedBox(width: 10),
-              for (var i = 0; i < tiles.length; i++) ...[
-                if (i > 0) const SizedBox(width: 8),
-                Expanded(child: tiles[i]),
-              ],
+              SizedBox(width: 136, child: totals),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: summaryChips,
+                ),
+              ),
             ],
           );
         },
@@ -1581,8 +1569,8 @@ class _MetalWeightSummaryPanel extends StatelessWidget {
   }
 }
 
-class _PledgedTotalTile extends StatelessWidget {
-  const _PledgedTotalTile({
+class _PledgedLedgerMetric extends StatelessWidget {
+  const _PledgedLedgerMetric({
     required this.label,
     required this.value,
     required this.color,
@@ -1595,11 +1583,11 @@ class _PledgedTotalTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      height: 56,
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Column(
@@ -1611,23 +1599,156 @@ class _PledgedTotalTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GirviStyles.caption.copyWith(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              height: 1.0,
             ),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.manrope(
               color: color,
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: FontWeight.w900,
+              height: 1.0,
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MetalWeightSummaryChip extends StatelessWidget {
+  const _MetalWeightSummaryChip({required this.summary});
+
+  final _MetalWeightSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = _pledgedMetalAccent(summary.metal);
+    return Container(
+      width: 208,
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: accent.withValues(alpha: 0.20)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 22,
+                height: 22,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  GirviIcons.itemDetails,
+                  color: accent,
+                  size: 13,
+                ),
+              ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  '${summary.metal.displayName.toUpperCase()} TOTAL',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: GirviColors.textDark,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Text(
+                '${summary.pieces} pcs',
+                style: GoogleFonts.manrope(
+                  color: accent,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 7),
+          Row(
+            children: [
+              Expanded(
+                child: _WeightMiniText(
+                  label: 'Gross',
+                  value: '${summary.gross.toStringAsFixed(3)} g',
+                ),
+              ),
+              Expanded(
+                child: _WeightMiniText(
+                  label: 'Less',
+                  value: '${summary.less.toStringAsFixed(3)} g',
+                ),
+              ),
+              Expanded(
+                child: _WeightMiniText(
+                  label: 'Net',
+                  value: '${summary.net.toStringAsFixed(3)} g',
+                  color: GirviColors.brandGold,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeightMiniText extends StatelessWidget {
+  const _WeightMiniText({
+    required this.label,
+    required this.value,
+    this.color,
+  });
+
+  final String label;
+  final String value;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GirviStyles.caption.copyWith(
+            fontSize: 9.5,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 1),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.manrope(
+            color: color ?? GirviColors.textDark,
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
     );
   }
 }
