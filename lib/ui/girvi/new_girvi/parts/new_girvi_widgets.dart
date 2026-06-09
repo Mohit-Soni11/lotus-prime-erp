@@ -557,6 +557,84 @@ class _StepBtn extends StatelessWidget {
       );
 }
 
+class _LoanTermsGroupHeader extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String? trailing;
+
+  const _LoanTermsGroupHeader({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: GirviColors.brandGold.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(
+              color: GirviColors.brandGold.withValues(alpha: 0.22),
+            ),
+          ),
+          child: Icon(icon, color: GirviColors.brandGold, size: 17),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.manrope(
+                  color: GirviColors.textDark,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GirviStyles.caption.copyWith(fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+        if (trailing != null) ...[
+          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: GirviColors.bodyBg,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: GirviColors.cardBorder),
+            ),
+            child: Text(
+              trailing!,
+              style: GoogleFonts.inter(
+                color: GirviColors.textBody,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 class _LtvSuggestionRow extends StatelessWidget {
   final double totalValue;
   final void Function(double ltv) onSuggestionTap;
@@ -620,9 +698,14 @@ class _LtvSuggestionRow extends StatelessWidget {
 
 class _LtvIndicator extends StatelessWidget {
   final double ltv;
+  final bool enabled;
   final void Function(double) onChanged;
 
-  const _LtvIndicator({required this.ltv, required this.onChanged});
+  const _LtvIndicator({
+    required this.ltv,
+    required this.enabled,
+    required this.onChanged,
+  });
 
   Color get _color {
     if (ltv <= 60) return GirviColors.success;
@@ -632,27 +715,60 @@ class _LtvIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = enabled ? _color : GirviColors.brandGold;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _color.withValues(alpha: 0.06),
+        color: color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _color.withValues(alpha: 0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.20)),
       ),
       child: Column(children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('LTV Ratio', style: GirviStyles.fieldLabel),
-          Text('${ltv.toStringAsFixed(1)}%',
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Loan-to-Value (LTV)', style: GirviStyles.fieldLabel),
+                const SizedBox(height: 3),
+                Text(
+                  enabled
+                      ? 'Loan amount as a percentage of item valuation.'
+                      : 'Default 50%. Enter valuation to activate the slider.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GirviStyles.caption.copyWith(fontSize: 10),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: color.withValues(alpha: 0.22)),
+            ),
+            child: Text(
+              '${ltv.toStringAsFixed(1)}%',
               style: GoogleFonts.manrope(
-                  fontSize: 16, fontWeight: FontWeight.w900, color: _color)),
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+                color: color,
+              ),
+            ),
+          ),
         ]),
         const SizedBox(height: 8),
         SliderTheme(
           data: SliderThemeData(
-            activeTrackColor: _color,
-            thumbColor: _color,
+            activeTrackColor: color,
+            thumbColor: color,
             inactiveTrackColor: GirviColors.divider,
-            overlayColor: _color.withValues(alpha: 0.2),
+            disabledActiveTrackColor: color.withValues(alpha: 0.45),
+            disabledThumbColor: color.withValues(alpha: 0.70),
+            overlayColor: color.withValues(alpha: 0.2),
             trackHeight: 4,
           ),
           child: Slider(
@@ -660,7 +776,7 @@ class _LtvIndicator extends StatelessWidget {
             min: 0,
             max: 100,
             divisions: 20,
-            onChanged: onChanged,
+            onChanged: enabled ? onChanged : null,
           ),
         ),
         Row(
@@ -681,6 +797,7 @@ class _InterestPreviewCard extends StatelessWidget {
   final double total;
   final double totalDue;
   final double annualRate;
+  final int durationMonths;
 
   const _InterestPreviewCard({
     required this.principal,
@@ -688,6 +805,7 @@ class _InterestPreviewCard extends StatelessWidget {
     required this.total,
     required this.totalDue,
     required this.annualRate,
+    required this.durationMonths,
   });
 
   @override
@@ -696,52 +814,111 @@ class _InterestPreviewCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            GirviColors.shellBg,
-            GirviColors.shellPanelBg,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: GirviColors.inputBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: GirviColors.brandGold.withValues(alpha: 0.2)),
+        border:
+            Border.all(color: GirviColors.brandGold.withValues(alpha: 0.22)),
       ),
       child: Column(children: [
         Row(children: [
-          const Icon(GirviIcons.interestRate,
-              color: GirviColors.brandGold, size: 16),
-          const SizedBox(width: 8),
-          Text('Interest Preview',
-              style: GoogleFonts.inter(
-                  color: GirviColors.shellTextTitle,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700)),
-          const Spacer(),
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: GirviColors.brandGold.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(9),
+              border: Border.all(
+                color: GirviColors.brandGold.withValues(alpha: 0.22),
+              ),
+            ),
+            child: const Icon(
+              GirviIcons.interestRate,
+              color: GirviColors.brandGold,
+              size: 17,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Repayment Preview',
+                  style: GoogleFonts.manrope(
+                    color: GirviColors.textDark,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Simple interest estimate for $durationMonths months.',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GirviStyles.caption.copyWith(fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: GirviColors.warningBg,
-              borderRadius: BorderRadius.circular(6),
+              color: GirviColors.cardBg,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: GirviColors.cardBorder),
             ),
             child: Text('${annualRate.toStringAsFixed(0)}% p.a.',
                 style: GoogleFonts.inter(
-                    color: GirviColors.warning,
+                    color: GirviColors.textBody,
                     fontSize: 10,
-                    fontWeight: FontWeight.w700)),
+                    fontWeight: FontWeight.w800)),
           ),
         ]),
         const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _PreviewStat('Monthly Interest', 'Rs ${fmt.format(monthly)}',
-                GirviColors.warning),
-            _PreviewStat('Total Interest', 'Rs ${fmt.format(total)}',
-                GirviColors.danger),
-            _PreviewStat('Total Due', 'Rs ${fmt.format(totalDue)}',
-                GirviColors.brandGold),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 680;
+            final tiles = [
+              _PreviewStat(
+                label: 'Monthly Interest',
+                value: 'Rs ${fmt.format(monthly)}',
+                color: GirviColors.info,
+                icon: Icons.calendar_month_outlined,
+              ),
+              _PreviewStat(
+                label: 'Total Interest',
+                value: 'Rs ${fmt.format(total)}',
+                color: GirviColors.warning,
+                icon: Icons.trending_up_rounded,
+              ),
+              _PreviewStat(
+                label: 'Total Amount Due',
+                value: 'Rs ${fmt.format(totalDue)}',
+                color: GirviColors.brandGold,
+                icon: Icons.account_balance_wallet_outlined,
+              ),
+            ];
+            if (compact) {
+              return Column(
+                children: [
+                  for (int i = 0; i < tiles.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 10),
+                    tiles[i],
+                  ],
+                ],
+              );
+            }
+            return Row(
+              children: [
+                for (int i = 0; i < tiles.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 10),
+                  Expanded(child: tiles[i]),
+                ],
+              ],
+            );
+          },
         ),
       ]),
     );
@@ -752,19 +929,69 @@ class _PreviewStat extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+  final IconData icon;
 
-  const _PreviewStat(this.label, this.value, this.color);
+  const _PreviewStat({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+  });
 
   @override
-  Widget build(BuildContext context) => Column(children: [
-        Text(label,
-            style: GoogleFonts.inter(
-                color: GirviColors.shellTextMuted, fontSize: 10)),
-        const SizedBox(height: 4),
-        Text(value,
-            style: GoogleFonts.manrope(
-                color: color, fontSize: 12, fontWeight: FontWeight.w800)),
-      ]);
+  Widget build(BuildContext context) => Container(
+        constraints: const BoxConstraints(minHeight: 74),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: GirviColors.cardBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.20)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 16),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      color: GirviColors.textMuted,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.manrope(
+                      color: color,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
 }
 
 class _PaymentModeSelector extends StatelessWidget {

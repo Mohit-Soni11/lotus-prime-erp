@@ -213,38 +213,75 @@ extension NewGirviSections on _NewGirviScreenState {
     return GirviSectionCard(
       icon: GirviIcons.loanTerms,
       title: GirviStrings.secLoanTerms,
-      subtitle: GirviStrings.descLoanTerms,
-      accent: GirviColors.accentLoan,
+      subtitle: 'Principal, repayment terms, dates and disbursement',
+      accent: GirviColors.brandGold,
+      showAccentBorder: false,
       child: Column(children: [
-        GirviInputField(
-          label: 'Loan Amount (Rs) *',
-          hint: '0.00',
+        _LoanTermsGroupHeader(
           icon: GirviIcons.loanTerms,
-          controller: _loanAmtCtrl,
-          focusNode: _loanAmtFocus,
-          nextFocus: _interestFocus,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
-          ],
-          prefixText: 'Rs ',
-          validator: _ctrl.validateLoanAmount,
+          title: 'Loan Value',
+          subtitle: 'Loan-to-value control based on the pledged item value.',
+          trailing: _ctrl.totalValue > 0
+              ? 'Item value Rs ${_fmt.format(_ctrl.totalValue)}'
+              : null,
         ),
-        const SizedBox(height: 8),
-        // LTV indicator
-        if (_ctrl.totalValue > 0)
-          _LtvIndicator(
-            ltv: _ctrl.computedLtv,
-            onChanged: (ltv) {
-              _ctrl.onLtvChanged(ltv);
-              _loanAmtCtrl.text = _ctrl.loanAmount.toStringAsFixed(2);
-            },
-          ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final wide = constraints.maxWidth >= 760;
+            final amountField = GirviInputField(
+              label: 'Loan Amount (Rs) *',
+              hint: '0.00',
+              icon: GirviIcons.loanTerms,
+              controller: _loanAmtCtrl,
+              focusNode: _loanAmtFocus,
+              nextFocus: _interestFocus,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
+              ],
+              prefixText: 'Rs ',
+              validator: _ctrl.validateLoanAmount,
+            );
+            final ltvControl = _LtvIndicator(
+              ltv: _ctrl.totalValue > 0 ? _ctrl.computedLtv : _ctrl.ltvPercent,
+              enabled: _ctrl.totalValue > 0,
+              onChanged: (ltv) {
+                _ctrl.onLtvChanged(ltv);
+                _loanAmtCtrl.text = _ctrl.loanAmount.toStringAsFixed(2);
+              },
+            );
+            if (!wide) {
+              return Column(
+                children: [
+                  amountField,
+                  const SizedBox(height: 12),
+                  ltvControl,
+                ],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: amountField),
+                const SizedBox(width: 12),
+                Expanded(child: ltvControl),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 18),
+        const _LoanTermsGroupHeader(
+          icon: GirviIcons.interestRate,
+          title: 'Repayment Terms',
+          subtitle: 'Monthly interest and loan duration for this ticket.',
+        ),
+        const SizedBox(height: 12),
         GirviRowTwo(
           left: GirviInputField(
             label: 'Interest Rate (% / month) *',
-            hint: '2.0',
+            hint: '5.0',
             icon: GirviIcons.interestRate,
             controller: _interestCtrl,
             focusNode: _interestFocus,
@@ -269,14 +306,48 @@ extension NewGirviSections on _NewGirviScreenState {
             validator: _ctrl.validateDuration,
           ),
         ),
+        const SizedBox(height: 18),
+        const _LoanTermsGroupHeader(
+          icon: GirviIcons.dates,
+          title: 'Loan Dates',
+          subtitle: 'Start date and system-calculated maturity date.',
+        ),
         const SizedBox(height: 14),
-        // Computed interest preview
+        GirviRowTwo(
+          left: _DatePickerField(
+            label: 'Start Date *',
+            date: _ctrl.startDate,
+            onTap: _pickStartDate,
+          ),
+          right: GirviReadOnlyField(
+            label: 'Maturity Date',
+            value: _dateFmt.format(_ctrl.maturityDate),
+            valueColor: GirviColors.textDark,
+            highlighted: false,
+          ),
+        ),
+        const SizedBox(height: 18),
+        const _LoanTermsGroupHeader(
+          icon: GirviIcons.cash,
+          title: 'Disbursement Mode',
+          subtitle: 'How the loan amount will be paid to the customer.',
+        ),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: _PaymentModeSelector(
+            selected: _ctrl.disbursementMode,
+            onChanged: _ctrl.setDisbursementMode,
+          ),
+        ),
+        const SizedBox(height: 18),
         _InterestPreviewCard(
           principal: _ctrl.loanAmount,
           monthly: _ctrl.monthlyInterest,
           total: _ctrl.totalInterestAtMaturity,
           totalDue: _ctrl.totalDueAtMaturity,
           annualRate: _ctrl.interestRate * 12,
+          durationMonths: _ctrl.durationMonths,
         ),
       ]),
     );
@@ -284,6 +355,7 @@ extension NewGirviSections on _NewGirviScreenState {
 
   // â”€â”€ SECTION 5: DISBURSEMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+  // ignore: unused_element
   Widget _buildSection5Disbursement() {
     return GirviSectionCard(
       icon: GirviIcons.cash,
@@ -304,6 +376,7 @@ extension NewGirviSections on _NewGirviScreenState {
 
   // â”€â”€ SECTION 6: DATES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+  // ignore: unused_element
   Widget _buildSection6Dates() {
     return GirviSectionCard(
       icon: GirviIcons.dates,

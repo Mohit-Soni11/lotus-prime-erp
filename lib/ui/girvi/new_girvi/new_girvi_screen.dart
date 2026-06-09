@@ -61,7 +61,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   final _stoneWtCtrl = TextEditingController();
   final _rateCtrl = TextEditingController();
   final _loanAmtCtrl = TextEditingController();
-  final _interestCtrl = TextEditingController(text: '2.0');
+  final _interestCtrl = TextEditingController(text: '5.0');
   final _durationCtrl = TextEditingController(text: '12');
   final _idProofNoCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
@@ -419,14 +419,22 @@ class _NewGirviScreenState extends State<NewGirviScreen>
                                     children: [
                                       _buildHeaderDeck(),
                                       const SizedBox(height: 16),
-                                      _buildMainEntryColumn(),
+                                      _buildMainEntryColumn(includeKyc: false),
                                     ],
                                   ),
                                 ),
                                 const SizedBox(width: 18),
                                 Expanded(
                                   flex: 30,
-                                  child: _buildTicketSummaryPanel(),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      _animated(7, _buildSection7KYC()),
+                                      const SizedBox(height: 16),
+                                      _buildTicketSummaryPanel(),
+                                    ],
+                                  ),
                                 ),
                               ],
                             );

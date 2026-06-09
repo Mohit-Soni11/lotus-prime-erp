@@ -62,7 +62,7 @@ extension NewGirviActions on _NewGirviScreenState {
       c.clear();
     }
     _itemPhotoPath = null;
-    _interestCtrl.text = '2.0';
+    _interestCtrl.text = '5.0';
     _durationCtrl.text = '12';
     await _ctrl.resetForm();
     _resetPledgedItems();

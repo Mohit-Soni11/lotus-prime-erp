@@ -5,7 +5,7 @@ extension NewGirviLayout on _NewGirviScreenState {
 
   // â”€â”€ TICKET BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  Widget _buildMainEntryColumn() {
+  Widget _buildMainEntryColumn({bool includeKyc = true}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -21,45 +21,11 @@ extension NewGirviLayout on _NewGirviScreenState {
         const SizedBox(height: 16),
         _animated(4, _buildSection4LoanTerms()),
         const SizedBox(height: 16),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final twoColumn = constraints.maxWidth >= 760;
-            if (!twoColumn) {
-              return Column(
-                children: [
-                  _animated(5, _buildSection5Disbursement()),
-                  const SizedBox(height: 16),
-                  _animated(6, _buildSection6Dates()),
-                  const SizedBox(height: 16),
-                  _animated(7, _buildSection7KYC()),
-                  const SizedBox(height: 16),
-                  _animated(8, _buildSection8Notes()),
-                ],
-              );
-            }
-            return Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _animated(5, _buildSection5Disbursement())),
-                    const SizedBox(width: 16),
-                    Expanded(child: _animated(6, _buildSection6Dates())),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _animated(7, _buildSection7KYC())),
-                    const SizedBox(width: 16),
-                    Expanded(child: _animated(8, _buildSection8Notes())),
-                  ],
-                ),
-              ],
-            );
-          },
-        ),
+        if (includeKyc) ...[
+          _animated(7, _buildSection7KYC()),
+          const SizedBox(height: 16),
+        ],
+        _animated(8, _buildSection8Notes()),
       ],
     );
   }

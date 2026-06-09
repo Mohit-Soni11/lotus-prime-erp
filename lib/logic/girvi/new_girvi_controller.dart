@@ -112,7 +112,7 @@ class NewGirviController extends ChangeNotifier {
 
   // ── LOAN AMOUNT ───────────────────────────────────────────────────────────
   double _loanAmount = 0.0;
-  double _ltvPercent = 70.0; // default 70% LTV
+  double _ltvPercent = 50.0;
   double get loanAmount => _loanAmount;
   double get ltvPercent => _ltvPercent;
 
@@ -137,14 +137,14 @@ class NewGirviController extends ChangeNotifier {
   double suggestedLoanAt(double ltv) => totalValue * (ltv / 100);
 
   // ── INTEREST RATE ─────────────────────────────────────────────────────────
-  double _interestRate = 2.0; // 2% per month default
+  double _interestRate = 5.0;
   int _durationMonths = 12;
 
   double get interestRate => _interestRate;
   int get durationMonths => _durationMonths;
 
   void onInterestRateChanged(String v) {
-    _interestRate = double.tryParse(v) ?? 2.0;
+    _interestRate = double.tryParse(v) ?? 5.0;
     notifyListeners();
   }
 
@@ -373,9 +373,9 @@ class NewGirviController extends ChangeNotifier {
     _grossWeight = 0.0;
     _stoneWeight = 0.0;
     _ratePerGram = 0.0;
-    _ltvPercent = 70.0;
+    _ltvPercent = 50.0;
     _loanAmount = 0.0;
-    _interestRate = 2.0;
+    _interestRate = 5.0;
     _durationMonths = 12;
     _disbursementMode = GirviPaymentMode.cash;
     _startDate = DateTime.now();

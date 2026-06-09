@@ -316,6 +316,7 @@ class GirviSectionCard extends StatelessWidget {
   final String subtitle;
   final Color accent;
   final Widget child;
+  final bool showAccentBorder;
 
   const GirviSectionCard({
     super.key,
@@ -324,12 +325,15 @@ class GirviSectionCard extends StatelessWidget {
     required this.subtitle,
     required this.accent,
     required this.child,
+    this.showAccentBorder = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: GirviStyles.cardWithAccent(accent),
+      decoration: showAccentBorder
+          ? GirviStyles.cardWithAccent(accent)
+          : GirviStyles.card,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -126,6 +126,18 @@ class GirviStyles {
         ],
       );
 
+  static BoxDecoration get card => BoxDecoration(
+        color: GirviColors.cardBg,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: GirviColors.cardBorder),
+        boxShadow: const [
+          BoxShadow(
+              color: GirviColors.shadowLight,
+              blurRadius: 8,
+              offset: Offset(0, 2)),
+        ],
+      );
+
   static BoxDecoration get inputNormal => BoxDecoration(
         color: GirviColors.inputBg,
         borderRadius: BorderRadius.circular(10),
