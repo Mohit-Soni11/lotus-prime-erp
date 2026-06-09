@@ -6,6 +6,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../../models/girvi/girvi_invoice_draft.dart';
+import '../../models/setting/billing_setup/girvi_billing_model.dart';
 
 enum GirviInvoiceFormat {
   a4,
@@ -27,6 +28,7 @@ class GirviInvoicePdfService {
   Future<Uint8List> build({
     required GirviInvoiceDraft draft,
     required GirviInvoiceFormat format,
+    GirviBillingModel settings = const GirviBillingModel(),
     int copies = 1,
     bool duplicateStamp = false,
   }) async {
@@ -61,7 +63,7 @@ class GirviInvoicePdfService {
                     ),
                   )
               : null,
-          build: (_) => _buildDocument(draft, format),
+          build: (_) => _buildDocument(draft, format, settings),
         ),
       );
     }
@@ -72,6 +74,7 @@ class GirviInvoicePdfService {
   List<pw.Widget> _buildDocument(
     GirviInvoiceDraft draft,
     GirviInvoiceFormat format,
+    GirviBillingModel settings,
   ) {
     final compact = format == GirviInvoiceFormat.compactA5;
     final sectionGap = compact ? 10.0 : 16.0;
@@ -82,39 +85,46 @@ class GirviInvoicePdfService {
       _buildCustomerAndLoanSummary(draft, compact),
       pw.SizedBox(height: sectionGap),
       _sectionTitle('Pledged Item Ledger', compact),
-      _buildItemsTable(draft, compact),
-      if (draft.payments.isNotEmpty) ...[
+      _buildItemsTable(draft, compact, settings),
+      if (settings.showDisbursementDetails && draft.payments.isNotEmpty) ...[
         pw.SizedBox(height: sectionGap),
         _buildPaymentBlock(draft, compact),
       ],
-      if (draft.photoCount > 0) ...[
+      if (settings.showItemPhotos && draft.photoCount > 0) ...[
         pw.SizedBox(height: sectionGap),
         _sectionTitle('Pledged Item Photos', compact),
         _buildPhotoGrid(draft, compact),
       ],
-      if ((draft.idProofType ?? '').isNotEmpty ||
+      if ((settings.showKycDetails && (draft.idProofType ?? '').isNotEmpty) ||
           (draft.notes ?? '').isNotEmpty) ...[
         pw.SizedBox(height: sectionGap),
-        _buildKycAndNotes(draft, compact),
+        _buildKycAndNotes(draft, compact, settings),
       ],
-      pw.SizedBox(height: sectionGap),
-      pw.Container(
-        width: double.infinity,
-        padding: const pw.EdgeInsets.all(9),
-        decoration: pw.BoxDecoration(
-          color: const PdfColor.fromInt(0xFFF9FAFB),
-          border: pw.Border.all(color: PdfColors.grey300),
-        ),
-        child: pw.Text(
-          'This receipt records the loan disbursement against the pledged '
-          'items listed above. Final settlement depends on the actual release '
-          'date, applicable interest and approved charges.',
-          style: pw.TextStyle(
-            fontSize: compact ? 6.5 : 8,
-            color: PdfColors.grey700,
+      if (settings.printTermsAndConditions &&
+          settings.termsAndConditions.trim().isNotEmpty) ...[
+        pw.SizedBox(height: sectionGap),
+        pw.Container(
+          width: double.infinity,
+          padding: const pw.EdgeInsets.all(9),
+          decoration: pw.BoxDecoration(
+            color: const PdfColor.fromInt(0xFFF9FAFB),
+            border: pw.Border.all(color: PdfColors.grey300),
+          ),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              _sectionTitle('Terms & Conditions', compact),
+              pw.Text(
+                settings.termsAndConditions,
+                style: pw.TextStyle(
+                  fontSize: compact ? 6.5 : 8,
+                  color: PdfColors.grey700,
+                ),
+              ),
+            ],
           ),
         ),
-      ),
+      ],
       pw.SizedBox(height: compact ? 22 : 32),
       pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -123,6 +133,21 @@ class GirviInvoicePdfService {
           _signatureLine('Authorized Signature', compact),
         ],
       ),
+      if (settings.printFooterMessage &&
+          settings.footerMessage.trim().isNotEmpty) ...[
+        pw.SizedBox(height: compact ? 10 : 14),
+        pw.Divider(color: PdfColors.grey300),
+        pw.Center(
+          child: pw.Text(
+            settings.footerMessage,
+            textAlign: pw.TextAlign.center,
+            style: pw.TextStyle(
+              fontSize: compact ? 6.5 : 8,
+              color: PdfColors.grey600,
+            ),
+          ),
+        ),
+      ],
     ];
   }
 
@@ -302,46 +327,49 @@ class GirviInvoicePdfService {
     );
   }
 
-  pw.Widget _buildItemsTable(GirviInvoiceDraft draft, bool compact) {
-    final headers = compact
-        ? const ['#', 'Item', 'Pcs', 'Net', 'Purity', 'Value']
-        : const [
-            '#',
-            'Metal',
-            'Description',
-            'Pcs',
-            'Gross',
-            'Less',
-            'Net',
-            'Purity',
-            'Fine',
-            'HUID',
-            'Value',
-          ];
+  pw.Widget _buildItemsTable(
+    GirviInvoiceDraft draft,
+    bool compact,
+    GirviBillingModel settings,
+  ) {
+    final headers = <String>['#', 'Item'];
+    if (settings.showMetal) headers.add('Metal');
+    if (settings.showPieces) headers.add('Pcs');
+    if (settings.showGrossWeight) headers.add('Gross');
+    if (settings.showLessWeight) headers.add('Less');
+    if (settings.showNetWeight) headers.add('Net');
+    if (settings.showPurity) headers.add('Purity');
+    if (settings.showValuationPurity) headers.add('Val. Purity');
+    if (settings.showFineWeight) headers.add('Fine');
+    if (settings.showRate) headers.add('Rate / g');
+    if (settings.showHuid) headers.add('HUID');
+    if (settings.showTotalValue) headers.add('Value');
+
     final data = draft.items.map((item) {
-      if (compact) {
-        return [
-          item.serialNo.toString(),
-          item.description,
-          item.pieces.toString(),
-          '${item.netWeight.toStringAsFixed(3)} g',
-          item.valuationPurity,
-          _amount(item.value),
-        ];
-      }
-      return [
+      final row = <String>[
         item.serialNo.toString(),
-        item.metal,
         item.description,
-        item.pieces.toString(),
-        '${item.grossWeight.toStringAsFixed(3)} g',
-        '${item.lessWeight.toStringAsFixed(3)} g',
-        '${item.netWeight.toStringAsFixed(3)} g',
-        item.valuationPurity,
-        '${item.fineWeight.toStringAsFixed(3)} g',
-        item.huid.isEmpty ? '-' : item.huid,
-        _amount(item.value),
       ];
+      if (settings.showMetal) row.add(item.metal);
+      if (settings.showPieces) row.add(item.pieces.toString());
+      if (settings.showGrossWeight) {
+        row.add('${item.grossWeight.toStringAsFixed(3)} g');
+      }
+      if (settings.showLessWeight) {
+        row.add('${item.lessWeight.toStringAsFixed(3)} g');
+      }
+      if (settings.showNetWeight) {
+        row.add('${item.netWeight.toStringAsFixed(3)} g');
+      }
+      if (settings.showPurity) row.add(item.purity);
+      if (settings.showValuationPurity) row.add(item.valuationPurity);
+      if (settings.showFineWeight) {
+        row.add('${item.fineWeight.toStringAsFixed(3)} g');
+      }
+      if (settings.showRate) row.add(_amount(item.ratePerGram));
+      if (settings.showHuid) row.add(item.huid.isEmpty ? '-' : item.huid);
+      if (settings.showTotalValue) row.add(_amount(item.value));
+      return row;
     }).toList();
 
     return pw.TableHelper.fromTextArray(
@@ -448,7 +476,11 @@ class GirviInvoicePdfService {
     );
   }
 
-  pw.Widget _buildKycAndNotes(GirviInvoiceDraft draft, bool compact) {
+  pw.Widget _buildKycAndNotes(
+    GirviInvoiceDraft draft,
+    bool compact,
+    GirviBillingModel settings,
+  ) {
     return pw.Container(
       width: double.infinity,
       padding: pw.EdgeInsets.all(compact ? 9 : 11),
@@ -460,7 +492,7 @@ class GirviInvoicePdfService {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           _sectionTitle('KYC & Remarks', compact),
-          if ((draft.idProofType ?? '').isNotEmpty)
+          if (settings.showKycDetails && (draft.idProofType ?? '').isNotEmpty)
             pw.Text(
               '${draft.idProofType}: ${draft.idProofNumber?.isNotEmpty == true ? draft.idProofNumber : 'Number not provided'}',
               style: pw.TextStyle(fontSize: compact ? 6.5 : 8),

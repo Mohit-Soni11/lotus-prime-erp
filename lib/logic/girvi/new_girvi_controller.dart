@@ -15,12 +15,19 @@ import 'package:flutter/material.dart';
 
 import '../../database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
+import '../../models/setting/billing_setup/girvi_billing_model.dart';
 import '../../repositories/girvi/girvi_repository.dart';
+import '../../repositories/setting/billing_setup/girvi_billing_repo.dart';
 
 class NewGirviController extends ChangeNotifier {
   final GirviRepository _repo;
+  final GirviBillingRepo _billingRepo;
 
-  NewGirviController(AppDatabase db) : _repo = GirviRepository(db);
+  NewGirviController(
+    AppDatabase db, {
+    GirviBillingRepo? billingRepo,
+  })  : _repo = GirviRepository(db),
+        _billingRepo = billingRepo ?? GirviBillingRepo(db: db);
 
   // ── TICKET ────────────────────────────────────────────────────────────────
   String _ticketNo = '';
@@ -208,6 +215,8 @@ class NewGirviController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   String? get successMessage => _successMessage;
   bool get isFormReady => hasCustomer && _loanAmount > 0 && netWeight > 0;
+  GirviBillingModel _billingSettings = GirviBillingModel.defaults;
+  GirviBillingModel get billingSettings => _billingSettings;
 
   // ── INIT ──────────────────────────────────────────────────────────────────
 
@@ -215,12 +224,29 @@ class NewGirviController extends ChangeNotifier {
     if (_initialized) return;
     _initialized = true;
     try {
-      _ticketNo = await _repo.generateNextTicketNo();
+      _billingSettings = await _billingRepo.fetch();
+      _interestRate = _billingSettings.defaultInterestRate;
+      _durationMonths = _durationMonthsFromLabel(
+        _billingSettings.defaultDuration,
+      );
+      _ticketNo = await _repo.generateNextTicketNo(
+        prefix: _billingSettings.girviPrefix,
+        startingNumber: _billingSettings.startingNumber,
+      );
     } catch (e) {
-      _ticketNo = 'GRV/${DateTime.now().year}/-----';
+      _billingSettings = GirviBillingModel.defaults;
+      _interestRate = _billingSettings.defaultInterestRate;
+      _durationMonths =
+          _durationMonthsFromLabel(_billingSettings.defaultDuration);
+      _ticketNo = 'GRV-----';
       debugPrint('NewGirviController.initialize error: $e');
     }
     notifyListeners();
+  }
+
+  int _durationMonthsFromLabel(String value) {
+    final match = RegExp(r'\d+').firstMatch(value);
+    return (int.tryParse(match?.group(0) ?? '') ?? 6).clamp(1, 120);
   }
 
   // ── RECALCULATE ───────────────────────────────────────────────────────────
@@ -384,8 +410,9 @@ class NewGirviController extends ChangeNotifier {
     _ratePerGram = 0.0;
     _ltvPercent = 50.0;
     _loanAmount = 0.0;
-    _interestRate = 5.0;
-    _durationMonths = 12;
+    _interestRate = _billingSettings.defaultInterestRate;
+    _durationMonths =
+        _durationMonthsFromLabel(_billingSettings.defaultDuration);
     _disbursementMode = GirviPaymentMode.cash;
     _startDate = DateTime.now();
     _idProofType = null;

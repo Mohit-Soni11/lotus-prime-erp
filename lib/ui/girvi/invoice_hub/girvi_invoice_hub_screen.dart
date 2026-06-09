@@ -11,6 +11,7 @@ import '../../../theme/girvi/girvi_theme.dart';
 part 'parts/girvi_invoice_hub_actions.dart';
 part 'parts/girvi_invoice_hub_controls.dart';
 part 'parts/girvi_invoice_hub_header.dart';
+part 'parts/girvi_invoice_setup_card.dart';
 part 'parts/girvi_invoice_hub_preview.dart';
 
 class GirviInvoiceHubScreen extends StatefulWidget {
@@ -149,6 +150,8 @@ class _GirviInvoiceHubScreenState extends State<GirviInvoiceHubScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildDetectedProfile(),
+                  const SizedBox(height: 20),
+                  _buildInvoiceSetupCard(),
                   const SizedBox(height: 20),
                   _buildFormatSelector(),
                   const SizedBox(height: 20),

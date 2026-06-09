@@ -24,21 +24,26 @@ class GirviRepository {
   // TICKET NUMBER GENERATION
   // ════════════════════════════════════════════════════════════════════════════
 
-  /// Generates next ticket: GRV/YYYY/00001
-  Future<String> generateNextTicketNo() async {
-    final year = DateTime.now().year;
-    final prefix = 'GRV/$year/';
+  Future<String> generateNextTicketNo({
+    String prefix = 'GRV-',
+    int startingNumber = 1,
+  }) async {
+    final resolvedPrefix =
+        prefix.replaceAll('{YYYY}', DateTime.now().year.toString());
+    final rows = await (_db.select(_db.girviLoans)
+          ..where((loan) => loan.ticketNo.like('$resolvedPrefix%')))
+        .get();
 
-    // Count existing tickets for this year
-    final query = _db.selectOnly(_db.girviLoans)
-      ..addColumns([_db.girviLoans.id.count()])
-      ..where(_db.girviLoans.ticketNo.like('$prefix%'));
+    var highest = startingNumber - 1;
+    final trailingNumber = RegExp(r'(\d+)$');
+    for (final row in rows) {
+      final match = trailingNumber.firstMatch(row.ticketNo);
+      final value = int.tryParse(match?.group(1) ?? '');
+      if (value != null && value > highest) highest = value;
+    }
 
-    final result = await query.getSingle();
-    final count = result.read(_db.girviLoans.id.count()) ?? 0;
-    final seq = (count + 1).toString().padLeft(5, '0');
-
-    return '$prefix$seq';
+    final next = highest + 1;
+    return '$resolvedPrefix${next.toString().padLeft(4, '0')}';
   }
 
   // ════════════════════════════════════════════════════════════════════════════

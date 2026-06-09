@@ -2,12 +2,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/logic/girvi/girvi_invoice_hub_controller.dart';
 import 'package:lotus_erp/logic/girvi/girvi_invoice_pdf_service.dart';
 import 'package:lotus_erp/models/girvi/girvi_invoice_draft.dart';
+import 'package:lotus_erp/models/setting/billing_setup/girvi_billing_model.dart';
 
 void main() {
   test('Girvi invoice hub generates preview and finalizes only once', () async {
     var finalizeCalls = 0;
     final controller = GirviInvoiceHubController(
       draft: _draft,
+      settingsLoader: () async => GirviBillingModel.defaults.copyWith(
+        showHuid: false,
+        showItemPhotos: false,
+        footerMessage: 'Keep this Girvi ticket safe.',
+      ),
       onFinalize: () async {
         finalizeCalls++;
         return true;
@@ -19,6 +25,11 @@ void main() {
 
     expect(controller.state, GirviInvoiceHubState.ready);
     expect(controller.pdfBytes, isNotEmpty);
+    expect(controller.invoiceSettings.showHuid, isFalse);
+    expect(controller.getCustomizationValue('photos'), isFalse);
+
+    await controller.setCustomization('huid', true);
+    expect(controller.getCustomizationValue('huid'), isTrue);
 
     await controller.switchFormat(GirviInvoiceFormat.compactA5);
     await controller.updatePrintOptions(copies: 2, duplicate: true);
@@ -51,6 +62,7 @@ final _draft = GirviInvoiceDraft(
       netWeight: 8,
       valuationPurity: '91.6%',
       fineWeight: 7.328,
+      ratePerGram: 6823,
       huid: 'HUID123',
       value: 50000,
     ),

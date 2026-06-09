@@ -117,6 +117,7 @@ extension NewGirviActions on _NewGirviScreenState {
           netWeight: item.netWeight,
           valuationPurity: item.valuationPurityLabel,
           fineWeight: item.fineWeight,
+          ratePerGram: item.ratePerGram,
           huid: item.huidCtrl.text.trim(),
           value: item.itemValue,
           photoPaths: List.unmodifiable(item.validPhotoPaths),
@@ -160,9 +161,9 @@ extension NewGirviActions on _NewGirviScreenState {
     }
     _itemPhotoPath = null;
     _idProofImagePath = null;
-    _interestCtrl.text = '5.0';
-    _durationCtrl.text = '12';
     await _ctrl.resetForm();
+    _interestCtrl.text = _ctrl.interestRate.toStringAsFixed(2);
+    _durationCtrl.text = _ctrl.durationMonths.toString();
     _resetPledgedItems();
   }
 

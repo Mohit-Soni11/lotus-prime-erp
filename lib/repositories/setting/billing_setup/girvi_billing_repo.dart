@@ -11,7 +11,9 @@ import '../../../database/db/app_database.dart';
 import '../../../models/setting/billing_setup/girvi_billing_model.dart';
 
 class GirviBillingRepo {
-  final AppDatabase _db = AppDatabase();
+  final AppDatabase _db;
+
+  GirviBillingRepo({AppDatabase? db}) : _db = db ?? AppDatabase();
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   Future<GirviBillingModel> fetch() async {
@@ -46,7 +48,7 @@ class GirviBillingRepo {
         termsAndConditions: Value(model.termsAndConditions),
         footerMessage: Value(model.footerMessage),
         autoPrint: Value(model.autoPrint),
-        selectedTemplate: Value(model.selectedTemplate),
+        selectedTemplate: Value(GirviBillingTemplateOptions.encode(model)),
       );
 
       if (existing != null) {
@@ -74,7 +76,7 @@ class GirviBillingRepo {
 
   // ── Row → Model ───────────────────────────────────────────────────────────
   GirviBillingModel _rowToModel(GirviBillingSetting row) {
-    return GirviBillingModel(
+    final base = GirviBillingModel(
       girviPrefix: row.girviPrefix,
       startingNumber: row.startingNumber,
       defaultInterestRate: row.defaultInterestRate,
@@ -88,5 +90,6 @@ class GirviBillingRepo {
       autoPrint: row.autoPrint,
       selectedTemplate: row.selectedTemplate,
     );
+    return GirviBillingTemplateOptions.apply(base, row.selectedTemplate);
   }
 }

@@ -24,6 +24,7 @@ class GirviInvoiceItemDraft {
     required this.netWeight,
     required this.valuationPurity,
     required this.fineWeight,
+    required this.ratePerGram,
     required this.huid,
     required this.value,
     this.photoPaths = const [],
@@ -39,6 +40,7 @@ class GirviInvoiceItemDraft {
   final double netWeight;
   final String valuationPurity;
   final double fineWeight;
+  final double ratePerGram;
   final String huid;
   final double value;
   final List<String> photoPaths;

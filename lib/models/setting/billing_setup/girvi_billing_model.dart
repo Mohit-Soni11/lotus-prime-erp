@@ -1,28 +1,35 @@
-// =============================================================================
-// FILE        : lib/models/setting/billing/girvi_billing_model.dart
-// MODULE      : Billing Setup → Girvi
-// =============================================================================
+import 'dart:convert';
 
 class GirviBillingModel {
-  // Section 1 — Voucher
   final String girviPrefix;
   final int startingNumber;
-
-  // Section 2 — Interest
   final double defaultInterestRate;
   final String interestType;
   final int gracePeriodDays;
   final String defaultDuration;
-
-  // Section 3 — Notice
   final int reminderDays;
   final int noticeDays;
-
-  // Section 4 — Terms & Print
   final String termsAndConditions;
   final String footerMessage;
   final bool autoPrint;
   final String selectedTemplate;
+
+  final bool showMetal;
+  final bool showPieces;
+  final bool showGrossWeight;
+  final bool showLessWeight;
+  final bool showNetWeight;
+  final bool showPurity;
+  final bool showValuationPurity;
+  final bool showFineWeight;
+  final bool showRate;
+  final bool showHuid;
+  final bool showTotalValue;
+  final bool showItemPhotos;
+  final bool showKycDetails;
+  final bool showDisbursementDetails;
+  final bool printTermsAndConditions;
+  final bool printFooterMessage;
 
   const GirviBillingModel({
     this.girviPrefix = 'GRV-',
@@ -40,9 +47,42 @@ class GirviBillingModel {
     this.footerMessage = '',
     this.autoPrint = true,
     this.selectedTemplate = 'default',
+    this.showMetal = true,
+    this.showPieces = true,
+    this.showGrossWeight = true,
+    this.showLessWeight = true,
+    this.showNetWeight = true,
+    this.showPurity = true,
+    this.showValuationPurity = true,
+    this.showFineWeight = true,
+    this.showRate = true,
+    this.showHuid = true,
+    this.showTotalValue = true,
+    this.showItemPhotos = true,
+    this.showKycDetails = true,
+    this.showDisbursementDetails = true,
+    this.printTermsAndConditions = true,
+    this.printFooterMessage = true,
   });
 
   static GirviBillingModel get defaults => const GirviBillingModel();
+
+  int get visibleInvoiceFieldCount => [
+        showMetal,
+        showPieces,
+        showGrossWeight,
+        showLessWeight,
+        showNetWeight,
+        showPurity,
+        showValuationPurity,
+        showFineWeight,
+        showRate,
+        showHuid,
+        showTotalValue,
+        showItemPhotos,
+        showKycDetails,
+        showDisbursementDetails,
+      ].where((enabled) => enabled).length;
 
   GirviBillingModel copyWith({
     String? girviPrefix,
@@ -57,6 +97,22 @@ class GirviBillingModel {
     String? footerMessage,
     bool? autoPrint,
     String? selectedTemplate,
+    bool? showMetal,
+    bool? showPieces,
+    bool? showGrossWeight,
+    bool? showLessWeight,
+    bool? showNetWeight,
+    bool? showPurity,
+    bool? showValuationPurity,
+    bool? showFineWeight,
+    bool? showRate,
+    bool? showHuid,
+    bool? showTotalValue,
+    bool? showItemPhotos,
+    bool? showKycDetails,
+    bool? showDisbursementDetails,
+    bool? printTermsAndConditions,
+    bool? printFooterMessage,
   }) {
     return GirviBillingModel(
       girviPrefix: girviPrefix ?? this.girviPrefix,
@@ -71,6 +127,99 @@ class GirviBillingModel {
       footerMessage: footerMessage ?? this.footerMessage,
       autoPrint: autoPrint ?? this.autoPrint,
       selectedTemplate: selectedTemplate ?? this.selectedTemplate,
+      showMetal: showMetal ?? this.showMetal,
+      showPieces: showPieces ?? this.showPieces,
+      showGrossWeight: showGrossWeight ?? this.showGrossWeight,
+      showLessWeight: showLessWeight ?? this.showLessWeight,
+      showNetWeight: showNetWeight ?? this.showNetWeight,
+      showPurity: showPurity ?? this.showPurity,
+      showValuationPurity: showValuationPurity ?? this.showValuationPurity,
+      showFineWeight: showFineWeight ?? this.showFineWeight,
+      showRate: showRate ?? this.showRate,
+      showHuid: showHuid ?? this.showHuid,
+      showTotalValue: showTotalValue ?? this.showTotalValue,
+      showItemPhotos: showItemPhotos ?? this.showItemPhotos,
+      showKycDetails: showKycDetails ?? this.showKycDetails,
+      showDisbursementDetails:
+          showDisbursementDetails ?? this.showDisbursementDetails,
+      printTermsAndConditions:
+          printTermsAndConditions ?? this.printTermsAndConditions,
+      printFooterMessage: printFooterMessage ?? this.printFooterMessage,
     );
+  }
+}
+
+class GirviBillingTemplateOptions {
+  GirviBillingTemplateOptions._();
+
+  static String encode(GirviBillingModel model) {
+    return jsonEncode({
+      'version': 1,
+      'template': model.selectedTemplate,
+      'invoice': {
+        'metal': model.showMetal,
+        'pieces': model.showPieces,
+        'grossWeight': model.showGrossWeight,
+        'lessWeight': model.showLessWeight,
+        'netWeight': model.showNetWeight,
+        'purity': model.showPurity,
+        'valuationPurity': model.showValuationPurity,
+        'fineWeight': model.showFineWeight,
+        'rate': model.showRate,
+        'huid': model.showHuid,
+        'totalValue': model.showTotalValue,
+        'itemPhotos': model.showItemPhotos,
+        'kycDetails': model.showKycDetails,
+        'disbursementDetails': model.showDisbursementDetails,
+        'printTerms': model.printTermsAndConditions,
+        'printFooter': model.printFooterMessage,
+      },
+    });
+  }
+
+  static GirviBillingModel apply(
+    GirviBillingModel base,
+    String storedValue,
+  ) {
+    if (!storedValue.trimLeft().startsWith('{')) {
+      return base.copyWith(selectedTemplate: storedValue);
+    }
+
+    try {
+      final decoded = jsonDecode(storedValue);
+      if (decoded is! Map<String, dynamic>) return base;
+      final invoice = decoded['invoice'];
+      if (invoice is! Map<String, dynamic>) return base;
+
+      bool read(String key, bool fallback) {
+        final value = invoice[key];
+        return value is bool ? value : fallback;
+      }
+
+      return base.copyWith(
+        selectedTemplate:
+            decoded['template']?.toString() ?? base.selectedTemplate,
+        showMetal: read('metal', base.showMetal),
+        showPieces: read('pieces', base.showPieces),
+        showGrossWeight: read('grossWeight', base.showGrossWeight),
+        showLessWeight: read('lessWeight', base.showLessWeight),
+        showNetWeight: read('netWeight', base.showNetWeight),
+        showPurity: read('purity', base.showPurity),
+        showValuationPurity: read('valuationPurity', base.showValuationPurity),
+        showFineWeight: read('fineWeight', base.showFineWeight),
+        showRate: read('rate', base.showRate),
+        showHuid: read('huid', base.showHuid),
+        showTotalValue: read('totalValue', base.showTotalValue),
+        showItemPhotos: read('itemPhotos', base.showItemPhotos),
+        showKycDetails: read('kycDetails', base.showKycDetails),
+        showDisbursementDetails:
+            read('disbursementDetails', base.showDisbursementDetails),
+        printTermsAndConditions:
+            read('printTerms', base.printTermsAndConditions),
+        printFooterMessage: read('printFooter', base.printFooterMessage),
+      );
+    } catch (_) {
+      return base;
+    }
   }
 }

@@ -160,6 +160,7 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
                     interestRate: _model.defaultInterestRate,
                     interestType: _model.interestType,
                     autoPrint: _model.autoPrint,
+                    invoiceFieldCount: _model.visibleInvoiceFieldCount,
                   ),
                   const SizedBox(height: 18),
                   // â”€â”€ Section 1: Voucher Numbering â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -292,6 +293,21 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
 
                   // â”€â”€ Section 4: Terms & Print â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionCard(
+                    title: 'Invoice Item Display',
+                    subtitle:
+                        'Choose which Girvi details appear on customer invoices',
+                    icon: Icons.view_column_outlined,
+                    accent: BillingSetupColors.girviBrand,
+                    children: [
+                      _GirviInvoiceDisplayEditor(
+                        model: _model,
+                        onChanged: (updated) =>
+                            setState(() => _model = updated),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  _SectionCard(
                     title: 'Terms & Print',
                     subtitle:
                         'Customer-facing text printed on every pledge ticket',
@@ -315,6 +331,25 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
                         maxLines: 2,
                       ),
                       const SizedBox(height: 14),
+                      _PrintContentToggle(
+                        title: 'Print Terms & Conditions',
+                        subtitle:
+                            'Include saved Girvi terms on customer invoices',
+                        value: _model.printTermsAndConditions,
+                        accent: BillingSetupColors.grvTerms,
+                        onChanged: (value) => setState(() => _model =
+                            _model.copyWith(printTermsAndConditions: value)),
+                      ),
+                      const SizedBox(height: 10),
+                      _PrintContentToggle(
+                        title: 'Print Footer Message',
+                        subtitle: 'Include footer text below the signatures',
+                        value: _model.printFooterMessage,
+                        accent: BillingSetupColors.grvTerms,
+                        onChanged: (value) => setState(() => _model =
+                            _model.copyWith(printFooterMessage: value)),
+                      ),
+                      const SizedBox(height: 10),
                       // Auto Print toggle
                       Row(children: [
                         Expanded(
@@ -395,6 +430,7 @@ class _GirviIntroPanel extends StatelessWidget {
   final double interestRate;
   final String interestType;
   final bool autoPrint;
+  final int invoiceFieldCount;
 
   const _GirviIntroPanel({
     required this.accent,
@@ -402,6 +438,7 @@ class _GirviIntroPanel extends StatelessWidget {
     required this.interestRate,
     required this.interestType,
     required this.autoPrint,
+    required this.invoiceFieldCount,
   });
 
   @override
@@ -480,6 +517,11 @@ class _GirviIntroPanel extends StatelessWidget {
                 accent: accent,
               ),
               _SummaryPill(
+                label: '$invoiceFieldCount invoice fields',
+                icon: Icons.view_column_outlined,
+                accent: accent,
+              ),
+              _SummaryPill(
                 label: autoPrint ? 'Auto print on' : 'Auto print off',
                 icon: Icons.print_rounded,
                 accent: accent,
@@ -506,6 +548,263 @@ class _GirviIntroPanel extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _GirviInvoiceDisplayEditor extends StatelessWidget {
+  const _GirviInvoiceDisplayEditor({
+    required this.model,
+    required this.onChanged,
+  });
+
+  final GirviBillingModel model;
+  final ValueChanged<GirviBillingModel> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final options = <_GirviDisplayOption>[
+      _option('Metal', 'Gold, silver or other metal', Icons.category_outlined,
+          model.showMetal, (v) => model.copyWith(showMetal: v)),
+      _option('Pieces', 'Pledged item quantity', Icons.numbers_rounded,
+          model.showPieces, (v) => model.copyWith(showPieces: v)),
+      _option('Gross Weight', 'Total item weight', Icons.scale_outlined,
+          model.showGrossWeight, (v) => model.copyWith(showGrossWeight: v)),
+      _option(
+          'Less Weight',
+          'Stone and non-metal deduction',
+          Icons.remove_circle_outline_rounded,
+          model.showLessWeight,
+          (v) => model.copyWith(showLessWeight: v)),
+      _option('Net Weight', 'Weight after deductions', Icons.balance_outlined,
+          model.showNetWeight, (v) => model.copyWith(showNetWeight: v)),
+      _option(
+          'Entered Purity',
+          'Purity recorded at entry',
+          Icons.diamond_outlined,
+          model.showPurity,
+          (v) => model.copyWith(showPurity: v)),
+      _option(
+          'Valuation Purity',
+          'Purity used for valuation',
+          Icons.verified_outlined,
+          model.showValuationPurity,
+          (v) => model.copyWith(showValuationPurity: v)),
+      _option(
+          'Fine Weight',
+          'Purity-adjusted weight',
+          Icons.monitor_weight_outlined,
+          model.showFineWeight,
+          (v) => model.copyWith(showFineWeight: v)),
+      _option('Rate / Gram', 'Valuation rate used', Icons.trending_up_rounded,
+          model.showRate, (v) => model.copyWith(showRate: v)),
+      _option(
+          'HUID',
+          'Hallmark identification number',
+          Icons.fingerprint_rounded,
+          model.showHuid,
+          (v) => model.copyWith(showHuid: v)),
+      _option('Item Value', 'Calculated pledged value', Icons.payments_outlined,
+          model.showTotalValue, (v) => model.copyWith(showTotalValue: v)),
+      _option(
+          'Item Photos',
+          'Attached pledged item photos',
+          Icons.photo_camera_outlined,
+          model.showItemPhotos,
+          (v) => model.copyWith(showItemPhotos: v)),
+      _option('KYC Details', 'Proof type and card number', Icons.badge_outlined,
+          model.showKycDetails, (v) => model.copyWith(showKycDetails: v)),
+      _option(
+          'Disbursement Split',
+          'Cash, UPI, Bank and Cheque',
+          Icons.account_balance_wallet_outlined,
+          model.showDisbursementDetails,
+          (v) => model.copyWith(showDisbursementDetails: v)),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 960
+            ? 3
+            : constraints.maxWidth >= 620
+                ? 2
+                : 1;
+        const gap = 10.0;
+        final width = (constraints.maxWidth - (columns - 1) * gap) / columns;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: options
+              .map(
+                (option) => SizedBox(
+                  width: width,
+                  child: _GirviDisplayTile(
+                    option: option,
+                    accent: BillingSetupColors.girviBrand,
+                  ),
+                ),
+              )
+              .toList(),
+        );
+      },
+    );
+  }
+
+  _GirviDisplayOption _option(
+    String title,
+    String subtitle,
+    IconData icon,
+    bool value,
+    GirviBillingModel Function(bool value) update,
+  ) {
+    return _GirviDisplayOption(
+      title: title,
+      subtitle: subtitle,
+      icon: icon,
+      value: value,
+      onChanged: (enabled) => onChanged(update(enabled)),
+    );
+  }
+}
+
+class _GirviDisplayTile extends StatelessWidget {
+  const _GirviDisplayTile({
+    required this.option,
+    required this.accent,
+  });
+
+  final _GirviDisplayOption option;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: option.value
+            ? accent.withValues(alpha: 0.06)
+            : const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(
+          color: option.value
+              ? accent.withValues(alpha: 0.2)
+              : const Color(0xFFE5E7EB),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            option.icon,
+            color: option.value ? accent : const Color(0xFF9CA3AF),
+            size: 18,
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  option.title,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF374151),
+                  ),
+                ),
+                Text(
+                  option.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 9.5,
+                    color: const Color(0xFF9CA3AF),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: option.value,
+            onChanged: option.onChanged,
+            activeThumbColor: accent,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GirviDisplayOption {
+  const _GirviDisplayOption({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+}
+
+class _PrintContentToggle extends StatelessWidget {
+  const _PrintContentToggle({
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.accent,
+    required this.onChanged,
+  });
+
+  final String title;
+  final String subtitle;
+  final bool value;
+  final Color accent;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF374151),
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    color: const Color(0xFF9CA3AF),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: accent,
+          ),
+        ],
       ),
     );
   }

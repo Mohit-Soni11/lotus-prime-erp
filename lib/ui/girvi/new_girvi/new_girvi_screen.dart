@@ -144,7 +144,20 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     });
 
     _ctrl.addListener(_onControllerUpdate);
-    _ctrl.initialize();
+    _initializeController();
+  }
+
+  Future<void> _initializeController() async {
+    await _ctrl.initialize();
+    if (!mounted) return;
+    _setControllerTextIfChanged(
+      _interestCtrl,
+      _ctrl.interestRate.toStringAsFixed(2),
+    );
+    _setControllerTextIfChanged(
+      _durationCtrl,
+      _ctrl.durationMonths.toString(),
+    );
   }
 
   _PledgedItemDraft _createPledgedItemDraft(int serialNo) {
