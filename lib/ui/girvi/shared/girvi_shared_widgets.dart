@@ -351,18 +351,29 @@ class GirviSectionCard extends StatelessWidget {
                 child: Icon(icon, color: accent, size: 17),
               ),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: GirviStyles.sectionTitle),
-                  const SizedBox(height: 2),
-                  Text(subtitle,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GirviStyles.sectionTitle,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: GirviStyles.caption.copyWith(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: GirviColors.textBody,
-                      )),
-                ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ]),
           ),

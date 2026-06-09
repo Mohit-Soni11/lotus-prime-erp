@@ -5,63 +5,139 @@ extension NewGirviActions on _NewGirviScreenState {
 
   Future<void> _onSave({bool generateInvoice = false}) async {
     FocusScope.of(context).unfocus();
+    if (!_validateGirviEntry()) return;
+
+    if (generateInvoice) {
+      await _openGirviInvoiceHub();
+      return;
+    }
+
+    final ok = await _saveCurrentGirvi(invoiceGenerated: false);
+    if (!ok || !mounted) return;
+
+    _showSuccess(_ctrl.successMessage ?? GirviStrings.successGirviSaved);
+    await Future.delayed(const Duration(milliseconds: 400));
+    if (!mounted) return;
+    await _resetAll();
+  }
+
+  bool _validateGirviEntry() {
     _syncPledgedItemsToController();
     if (_pledgedItems.isEmpty) {
       _showError('Please add at least one pledged item before saving.');
-      return;
+      return false;
     }
     if (!(_formKey.currentState?.validate() ?? false)) {
       _showError('Please fix the errors above before saving.');
-      return;
+      return false;
     }
     if (!_ctrl.hasCustomer) {
       _showError('Please select a customer first.');
-      return;
+      return false;
     }
     if (_ctrl.loanAmount > 0) {
       final totalDisbursed = _totalDisbursementAmount;
       if (totalDisbursed <= 0) {
         _showError(
             'Enter the disbursement amount for Cash, UPI, Bank or Cheque.');
-        return;
+        return false;
       }
       if ((totalDisbursed - _ctrl.loanAmount).abs() > 0.50) {
         _showError(
           'Disbursement total must match the loan amount. Remaining Rs ${_fmt.format(_ctrl.loanAmount - totalDisbursed)}.',
         );
-        return;
+        return false;
       }
     }
     _syncPrimaryDisbursementMode();
+    return true;
+  }
 
-    final ok = await _ctrl.saveLoan(
+  Future<bool> _saveCurrentGirvi({required bool invoiceGenerated}) {
+    return _ctrl.saveLoan(
       itemDescription: _itemDescCtrl.text,
       huidNumber: _huidCtrl.text,
       itemPhotoPath: _itemPhotoPath,
-      invoiceGenerated: generateInvoice,
+      invoiceGenerated: invoiceGenerated,
       disbursementDetails: _disbursementSummaryLabel,
       idProofNumber: _ctrl.idProofType == null ? null : _idProofNoCtrl.text,
       idProofImagePath: _ctrl.idProofType == null ? null : _idProofImagePath,
       notes: _notesCtrl.text,
     );
+  }
 
-    if (ok && mounted) {
-      if (generateInvoice) {
-        try {
-          await _printGirviInvoice();
-        } catch (e) {
-          debugPrint('NewGirviScreen._printGirviInvoice error: $e');
-          if (mounted) {
-            _showError('Loan saved, but invoice could not be generated.');
-          }
-        }
-      }
-      if (!mounted) return;
+  Future<void> _openGirviInvoiceHub() async {
+    final draft = _buildGirviInvoiceDraft();
+    final finalized = await GirviInvoiceHubScreen.push(
+      context,
+      draft: draft,
+      onFinalize: () => _saveCurrentGirvi(invoiceGenerated: true),
+    );
+    if (finalized == true && mounted) {
       _showSuccess(_ctrl.successMessage ?? GirviStrings.successGirviSaved);
       await Future.delayed(const Duration(milliseconds: 400));
       if (!mounted) return;
-      _resetAll();
+      await _resetAll();
     }
+  }
+
+  GirviInvoiceDraft _buildGirviInvoiceDraft() {
+    final customer = _ctrl.selectedCustomer!;
+    final payments = <GirviInvoicePayment>[];
+    for (final mode in _visibleDisbursementModes) {
+      final amount = _disbursementAmountFor(mode);
+      if (amount > 0) {
+        payments.add(
+          GirviInvoicePayment(
+            label: _disbursementModeLabel(mode),
+            amount: amount,
+          ),
+        );
+      }
+    }
+
+    return GirviInvoiceDraft(
+      ticketNo: _ctrl.ticketNo,
+      createdAt: DateTime.now(),
+      customerName: customer.name,
+      customerMobile: customer.mobile,
+      customerCity: customer.city ?? '',
+      items: _pledgedItems.map((item) {
+        final description = item.descriptionCtrl.text.trim();
+        return GirviInvoiceItemDraft(
+          serialNo: item.serialNo,
+          metal: item.metalType.displayName,
+          description: description.isEmpty
+              ? 'Pledged item ${item.serialNo}'
+              : description,
+          purity: item.purityLabel,
+          pieces: item.itemCount,
+          grossWeight: item.grossWeight,
+          lessWeight: item.lessWeight,
+          netWeight: item.netWeight,
+          valuationPurity: item.valuationPurityLabel,
+          fineWeight: item.fineWeight,
+          huid: item.huidCtrl.text.trim(),
+          value: item.itemValue,
+          photoPaths: List.unmodifiable(item.validPhotoPaths),
+        );
+      }).toList(growable: false),
+      totalValue: _ctrl.totalValue,
+      loanAmount: _ctrl.loanAmount,
+      interestRate: _ctrl.interestRate,
+      durationMonths: _ctrl.durationMonths,
+      startDate: _ctrl.startDate,
+      maturityDate: _ctrl.maturityDate,
+      monthlyInterest: _ctrl.monthlyInterest,
+      totalInterest: _ctrl.totalInterestAtMaturity,
+      totalDue: _ctrl.totalDueAtMaturity,
+      payments: List.unmodifiable(payments),
+      disbursementSummary: _disbursementSummaryLabel,
+      idProofType: _ctrl.idProofType?.displayName,
+      idProofNumber: _idProofNoCtrl.text.trim(),
+      idProofImagePath: _idProofImagePath,
+      notes: _notesCtrl.text.trim(),
+    );
   }
 
   Future<void> _resetAll() async {
@@ -484,6 +560,8 @@ extension NewGirviActions on _NewGirviScreenState {
     _setItemPhotoPath(null);
   }
 
+  // Kept temporarily for backward compatibility with older direct-print flow.
+  // ignore: unused_element
   Future<void> _printGirviInvoice() async {
     _syncPledgedItemsToController();
     final customer = _ctrl.selectedCustomer;

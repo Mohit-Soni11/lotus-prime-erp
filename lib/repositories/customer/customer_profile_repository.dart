@@ -46,7 +46,7 @@ class CustomerProfileRepository {
           .where((bill) => !bill.isPaid)
           .fold(0.0, (sum, bill) => sum + bill.dueAmount);
 
-      final loanRows = await (_db.select(_db.loans)
+      final girviRows = await (_db.select(_db.girviLoans)
             ..where((t) => t.customerId.equals(customerId))
             ..orderBy([
               (t) => OrderingTerm(
@@ -56,20 +56,36 @@ class CustomerProfileRepository {
             ]))
           .get();
 
-      final loans = loanRows
-          .map(
-            (loan) => CustomerLoanModel(
-              id: loan.id,
-              loanNo: loan.loanNo,
-              itemDesc: loan.itemDesc,
-              grossWeight: loan.grossWeight,
-              loanAmount: loan.loanAmount,
-              interestRate: loan.interestRate,
-              startDate: loan.startDate,
-              status: loan.status,
-            ),
-          )
-          .toList();
+      final legacyLoanRows = await (_db.select(_db.loans)
+            ..where((t) => t.customerId.equals(customerId)))
+          .get();
+
+      final loansByNumber = <String, CustomerLoanModel>{
+        for (final loan in legacyLoanRows)
+          loan.loanNo: CustomerLoanModel(
+            id: loan.id,
+            loanNo: loan.loanNo,
+            itemDesc: loan.itemDesc,
+            grossWeight: loan.grossWeight,
+            loanAmount: loan.loanAmount,
+            interestRate: loan.interestRate,
+            startDate: loan.startDate,
+            status: loan.status,
+          ),
+        for (final loan in girviRows)
+          loan.ticketNo: CustomerLoanModel(
+            id: loan.id,
+            loanNo: loan.ticketNo,
+            itemDesc: loan.itemDescription,
+            grossWeight: loan.grossWeight,
+            loanAmount: loan.loanAmount,
+            interestRate: loan.interestRate,
+            startDate: loan.startDate,
+            status: loan.status,
+          ),
+      };
+      final loans = loansByNumber.values.toList()
+        ..sort((a, b) => b.startDate.compareTo(a.startDate));
 
       final advanceOrders = await _fetchAdvanceOrders(customerId);
       final dues = _buildDues(bills);

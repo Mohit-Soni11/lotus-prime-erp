@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../../constants/app_routes.dart';
-// âœ… Manager Import
+import '../../../core/router/app_router.dart';
+// ✅ Manager Import
 import '../../../theme/sidebar/sidebar_theme.dart';
 
 class CustomSidebar extends StatefulWidget {
-  final Function(String routeId) onPageSelected;
-  final String activePageRouteId;
+  final String? activePageRouteId;
+  final ValueChanged<String>? onPageSelected;
+  final VoidCallback? onExitApp;
 
   const CustomSidebar({
     super.key,
-    required this.onPageSelected,
-    required this.activePageRouteId,
+    this.activePageRouteId,
+    this.onPageSelected,
+    this.onExitApp,
   });
 
   @override
@@ -23,6 +28,27 @@ class _CustomSidebarState extends State<CustomSidebar> {
   bool _isCollapsed = false;
   int? _hoveredIndex;
   String? _hoveredSubItemRouteId;
+
+  String get _activeRouteId {
+    final legacyRouteId = widget.activePageRouteId;
+    if (legacyRouteId != null) return legacyRouteId;
+    final location = GoRouterState.of(context).matchedLocation;
+    return RouteMapper.toRouteId(location);
+  }
+
+  void _navigate(String routeId) {
+    final legacyNavigation = widget.onPageSelected;
+    if (legacyNavigation != null) {
+      legacyNavigation(routeId);
+      return;
+    }
+    if (routeId == AppRoutes.exitAppRoute) {
+      widget.onExitApp?.call();
+      return;
+    }
+    final path = RouteMapper.toPath(routeId);
+    context.go(path);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +149,7 @@ class _CustomSidebarState extends State<CustomSidebar> {
       required IconData icon,
       required String routeId,
       required int index}) {
-    bool isActive = widget.activePageRouteId == routeId;
+    bool isActive = _activeRouteId == routeId;
     bool isHovered = _hoveredIndex == index;
 
     Widget tileContent = AnimatedContainer(
@@ -182,7 +208,7 @@ class _CustomSidebarState extends State<CustomSidebar> {
       child: GestureDetector(
         onTap: () {
           _closeAllExpandables();
-          widget.onPageSelected(routeId);
+          _navigate(routeId);
         },
         child: tileContent,
       ),
@@ -192,7 +218,7 @@ class _CustomSidebarState extends State<CustomSidebar> {
   // --- COLLAPSED ICON ---
   Widget _buildCollapsedIcon(SidebarItem item, int index) {
     bool isParentActive =
-        item.subItems.any((sub) => sub.routeId == widget.activePageRouteId);
+        item.subItems.any((sub) => sub.routeId == _activeRouteId);
     bool isHovered = _hoveredIndex == index;
 
     return MouseRegion(
@@ -251,7 +277,7 @@ class _CustomSidebarState extends State<CustomSidebar> {
   // --- EXPANDABLE TILE ---
   Widget _buildExpandableTile(SidebarItem item, int index) {
     bool isParentActive =
-        item.subItems.any((sub) => sub.routeId == widget.activePageRouteId);
+        item.subItems.any((sub) => sub.routeId == _activeRouteId);
     final String itemKey = item.title;
 
     _controllers.putIfAbsent(itemKey, () => ExpansibleController());
@@ -301,7 +327,7 @@ class _CustomSidebarState extends State<CustomSidebar> {
 
   // --- SUB MENU TILE ---
   Widget _buildSubMenuTile(MenuItemData data) {
-    bool isActive = widget.activePageRouteId == data.routeId;
+    bool isActive = _activeRouteId == data.routeId;
     bool isHovered = _hoveredSubItemRouteId == data.routeId;
 
     return MouseRegion(
@@ -309,7 +335,7 @@ class _CustomSidebarState extends State<CustomSidebar> {
       onExit: (_) => setState(() => _hoveredSubItemRouteId = null),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: () => widget.onPageSelected(data.routeId),
+        onTap: () => _navigate(data.routeId),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           margin: const EdgeInsets.only(left: 12, bottom: 4, right: 8),

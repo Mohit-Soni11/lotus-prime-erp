@@ -475,8 +475,6 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
   }
 }
 
-// â”€â”€ Coming Soon Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
 class _ComingSoonWidget extends StatelessWidget {
   final String pageTitle;
   const _ComingSoonWidget({required this.pageTitle});

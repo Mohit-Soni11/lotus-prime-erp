@@ -8,11 +8,11 @@
 
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../database/db/app_database.dart';
 import '../../../theme/girvi/girvi_theme.dart';
+import '../../customer/add_customer/add_customer_screen.dart';
 
 class SelectCustomerDialog extends StatefulWidget {
   final AppDatabase db;
@@ -90,18 +90,40 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
     return digits;
   }
 
-  Future<void> _openQuickAddCustomer() async {
-    final created = await showDialog<Customer>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => _QuickAddCustomerDialog(
-        db: widget.db,
-        initialName: _suggestedName,
-        initialMobile: _suggestedMobile,
+  Future<void> _openAddCustomerScreen() async {
+    final lastCustomerId = _all.fold<int>(
+        0, (maxId, customer) => customer.id > maxId ? customer.id : maxId);
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (addCustomerContext) => AddCustomerScreen(
+          initialName: _suggestedName,
+          initialMobile: _suggestedMobile,
+          onBack: () => Navigator.of(addCustomerContext).pop(false),
+          onSaved: () => Navigator.of(addCustomerContext).pop(true),
+        ),
       ),
     );
-    if (created == null || !mounted) return;
-    widget.onSelected(created);
+    if (created != true || !mounted) return;
+
+    final customers = await (widget.db.select(widget.db.customers)
+          ..orderBy([(c) => drift.OrderingTerm.asc(c.name)]))
+        .get();
+    if (!mounted) return;
+
+    final newlyCreated = customers
+        .where((customer) => customer.id > lastCustomerId)
+        .toList()
+      ..sort((a, b) => b.id.compareTo(a.id));
+
+    setState(() {
+      _all = customers;
+      _filtered = customers;
+      _loading = false;
+    });
+
+    if (newlyCreated.isNotEmpty) {
+      widget.onSelected(newlyCreated.first);
+    }
   }
 
   @override
@@ -141,9 +163,9 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
                         color: GirviColors.textDark)),
                 const Spacer(),
                 TextButton.icon(
-                  onPressed: _openQuickAddCustomer,
+                  onPressed: _openAddCustomerScreen,
                   icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
-                  label: const Text('Add New'),
+                  label: const Text('Add New Customer'),
                   style: TextButton.styleFrom(
                     foregroundColor: GirviColors.brandGold,
                     textStyle: GoogleFonts.inter(
@@ -191,7 +213,7 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
                       ? Center(
                           child: _NoCustomerFoundCard(
                             query: _query,
-                            onAdd: _openQuickAddCustomer,
+                            onAdd: _openAddCustomerScreen,
                           ),
                         )
                       : ListView.separated(
@@ -317,322 +339,6 @@ class _NoCustomerFoundCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _QuickAddCustomerDialog extends StatefulWidget {
-  final AppDatabase db;
-  final String initialName;
-  final String initialMobile;
-
-  const _QuickAddCustomerDialog({
-    required this.db,
-    required this.initialName,
-    required this.initialMobile,
-  });
-
-  @override
-  State<_QuickAddCustomerDialog> createState() =>
-      _QuickAddCustomerDialogState();
-}
-
-class _QuickAddCustomerDialogState extends State<_QuickAddCustomerDialog> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nameCtrl;
-  late final TextEditingController _mobileCtrl;
-  late final TextEditingController _cityCtrl;
-  bool _saving = false;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameCtrl = TextEditingController(text: widget.initialName);
-    _mobileCtrl = TextEditingController(text: widget.initialMobile);
-    _cityCtrl = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _nameCtrl.dispose();
-    _mobileCtrl.dispose();
-    _cityCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    FocusScope.of(context).unfocus();
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
-
-    final name = _nameCtrl.text.trim();
-    final mobile = _mobileCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
-    final city = _cityCtrl.text.trim();
-
-    try {
-      final existing = await (widget.db.select(widget.db.customers)
-            ..where((t) => t.mobile.equals(mobile))
-            ..limit(1))
-          .getSingleOrNull();
-      if (existing != null) {
-        if (!mounted) return;
-        Navigator.of(context).pop(existing);
-        return;
-      }
-
-      final parts = name.split(RegExp(r'\s+'));
-      final firstName = parts.first;
-      final lastName = parts.length > 1 ? parts.skip(1).join(' ') : '';
-
-      final id = await widget.db.into(widget.db.customers).insert(
-            CustomersCompanion.insert(
-              name: name,
-              mobile: mobile,
-              city: drift.Value(city.isEmpty ? null : city),
-              type: const drift.Value('Regular'),
-              entityType: const drift.Value('Individual'),
-              firstName: drift.Value(firstName),
-              lastName: drift.Value(lastName.isEmpty ? null : lastName),
-              whatsapp: drift.Value(mobile),
-              customerTier: const drift.Value('Regular'),
-              notes: const drift.Value('Created from New Girvi loan entry.'),
-            ),
-          );
-
-      final created = await (widget.db.select(widget.db.customers)
-            ..where((t) => t.id.equals(id))
-            ..limit(1))
-          .getSingle();
-
-      if (!mounted) return;
-      Navigator.of(context).pop(created);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _saving = false;
-        _error = 'Customer profile could not be created. Please try again.';
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      child: Container(
-        width: 430,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: GirviColors.cardBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: GirviColors.cardBorder),
-          boxShadow: const [
-            BoxShadow(
-              color: GirviColors.shadowMedium,
-              blurRadius: 22,
-              offset: Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: GirviColors.brandGoldLight,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.person_add_alt_1_rounded,
-                      color: GirviColors.brandGold,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Add New Customer',
-                          style: GoogleFonts.manrope(
-                            color: GirviColors.textDark,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Create the customer profile before the Girvi loan.',
-                          style: GirviStyles.caption.copyWith(fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed:
-                        _saving ? null : () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                    color: GirviColors.textMuted,
-                    splashRadius: 18,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              _QuickAddField(
-                controller: _nameCtrl,
-                label: 'Customer Name',
-                hint: 'Enter customer full name',
-                icon: GirviIcons.customer,
-                validator: (value) {
-                  final text = value?.trim() ?? '';
-                  if (text.length < 2) return 'Enter customer name';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              _QuickAddField(
-                controller: _mobileCtrl,
-                label: 'Mobile Number',
-                hint: 'Enter 10 digit mobile number',
-                icon: Icons.call_rounded,
-                keyboardType: TextInputType.phone,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(10),
-                ],
-                validator: (value) {
-                  final mobile =
-                      (value ?? '').replaceAll(RegExp(r'[^0-9]'), '');
-                  if (mobile.length != 10) {
-                    return 'Enter valid 10 digit mobile number';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              _QuickAddField(
-                controller: _cityCtrl,
-                label: 'City / Area',
-                hint: 'Optional city or area',
-                icon: Icons.location_on_outlined,
-              ),
-              if (_error != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  _error!,
-                  style: GoogleFonts.inter(
-                    color: GirviColors.danger,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 18),
-              SizedBox(
-                height: 46,
-                child: ElevatedButton.icon(
-                  onPressed: _saving ? null : _save,
-                  icon: _saving
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: GirviColors.shellBg,
-                          ),
-                        )
-                      : const Icon(Icons.check_circle_outline_rounded,
-                          size: 18),
-                  label: Text(_saving ? 'Creating Profile' : 'Create Profile'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: GirviColors.brandGold,
-                    foregroundColor: GirviColors.shellBg,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    textStyle: GoogleFonts.manrope(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickAddField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-  final String hint;
-  final IconData icon;
-  final TextInputType? keyboardType;
-  final List<TextInputFormatter>? inputFormatters;
-  final String? Function(String?)? validator;
-
-  const _QuickAddField({
-    required this.controller,
-    required this.label,
-    required this.hint,
-    required this.icon,
-    this.keyboardType,
-    this.inputFormatters,
-    this.validator,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      inputFormatters: inputFormatters,
-      validator: validator,
-      style: GirviStyles.fieldInput,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        prefixIcon: Icon(icon, color: GirviColors.brandGold, size: 18),
-        filled: true,
-        fillColor: GirviColors.inputBg,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: GirviColors.cardBorder),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: GirviColors.cardBorder),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide:
-              const BorderSide(color: GirviColors.brandGold, width: 1.4),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: GirviColors.danger),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
       ),
     );
   }
