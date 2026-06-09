@@ -606,7 +606,11 @@ class _LoanTermsGroupHeader extends StatelessWidget {
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: GirviStyles.caption.copyWith(fontSize: 11),
+                style: GirviStyles.caption.copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: GirviColors.textBody,
+                ),
               ),
             ],
           ),
@@ -623,9 +627,9 @@ class _LoanTermsGroupHeader extends StatelessWidget {
             child: Text(
               trailing!,
               style: GoogleFonts.inter(
-                color: GirviColors.textBody,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
+                color: GirviColors.textDark,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
@@ -846,7 +850,11 @@ class _InterestPreviewCard extends StatelessWidget {
                   'Simple interest estimate for $durationMonths months.',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GirviStyles.caption.copyWith(fontSize: 11),
+                  style: GirviStyles.caption.copyWith(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: GirviColors.textBody,
+                  ),
                 ),
               ],
             ),
@@ -960,9 +968,9 @@ class _PreviewStat extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      color: GirviColors.textMuted,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
+                      color: GirviColors.textDark,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -1167,7 +1175,7 @@ class _DisbursementAmountTile extends StatelessWidget {
                   'Rs',
                   style: GoogleFonts.inter(
                     color: color,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -1291,9 +1299,9 @@ class _MiniAmountPanel extends StatelessWidget {
           Text(
             label,
             style: GoogleFonts.inter(
-              color: GirviColors.textMuted,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
+              color: GirviColors.textDark,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 3),

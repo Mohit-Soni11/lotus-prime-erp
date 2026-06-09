@@ -431,49 +431,64 @@ extension NewGirviSections on _NewGirviScreenState {
   Widget _buildSection7KYC() {
     return GirviSectionCard(
       icon: GirviIcons.kyc,
-      title: GirviStrings.secKyc,
-      subtitle: GirviStrings.descKyc,
-      accent: GirviColors.accentKyc,
+      title: 'Optional KYC Document',
+      subtitle: 'Record identity proof only when required for this customer.',
+      accent: GirviColors.brandGold,
+      showAccentBorder: false,
       child: Column(children: [
         Container(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: GirviColors.dangerBg,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: GirviColors.dangerBorder),
+            color: GirviColors.brandGold.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: GirviColors.brandGold.withValues(alpha: 0.22),
+            ),
           ),
           child: Row(children: [
-            const Icon(Icons.privacy_tip_outlined,
-                color: GirviColors.danger, size: 14),
-            const SizedBox(width: 8),
+            const Icon(
+              Icons.privacy_tip_outlined,
+              color: GirviColors.brandGold,
+              size: 18,
+            ),
+            const SizedBox(width: 10),
             Expanded(
-                child: Text(
-                    'RBI guidelines require ID proof for pawn loans above Rs 1,000.',
-                    style: GoogleFonts.inter(
-                        color: GirviColors.danger,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500))),
+              child: Text(
+                'KYC is optional for this entry. Select a document only when you want to record customer identity proof.',
+                style: GoogleFonts.inter(
+                  color: GirviColors.textDark,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w800,
+                  height: 1.35,
+                ),
+              ),
+            ),
           ]),
         ),
         const SizedBox(height: 14),
         GirviDropdown<GirviIdProofType?>(
-          label: 'ID Proof Type',
+          label: 'KYC Document',
           icon: GirviIcons.kyc,
           value: _ctrl.idProofType,
           items: [
             const DropdownMenuItem(
-                value: null, child: Text('- Select ID Type -')),
+              value: null,
+              child: Text('No KYC Document Required'),
+            ),
             ...GirviIdProofType.values.map((e) => DropdownMenuItem(
                   value: e,
                   child: Text(e.displayName),
                 )),
           ],
-          onChanged: _ctrl.setIdProofType,
+          onChanged: (value) {
+            _ctrl.setIdProofType(value);
+            if (value == null) _idProofNoCtrl.clear();
+          },
         ),
         const SizedBox(height: 14),
         GirviInputField(
-          label: 'ID Proof Number',
-          hint: 'Enter document number',
+          label: 'Document Number',
+          hint: 'Enter selected document number',
           icon: GirviIcons.kyc,
           controller: _idProofNoCtrl,
           focusNode: _idProofNoFocus,
@@ -489,12 +504,13 @@ extension NewGirviSections on _NewGirviScreenState {
   Widget _buildSection8Notes() {
     return GirviSectionCard(
       icon: GirviIcons.notes,
-      title: GirviStrings.secNotes,
-      subtitle: GirviStrings.descNotes,
-      accent: GirviColors.accentNotes,
+      title: 'Notes & Remarks',
+      subtitle: 'Internal staff notes for this loan ticket.',
+      accent: GirviColors.brandGold,
+      showAccentBorder: false,
       child: GirviInputField(
-        label: 'Internal Remarks',
-        hint: 'e.g. Customer mentioned item is old family jewellery...',
+        label: 'Staff Remarks',
+        hint: 'Add any internal remark, customer instruction or handling note.',
         icon: GirviIcons.notes,
         controller: _notesCtrl,
         maxLines: 3,

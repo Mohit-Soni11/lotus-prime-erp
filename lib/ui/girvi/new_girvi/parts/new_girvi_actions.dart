@@ -39,7 +39,7 @@ extension NewGirviActions on _NewGirviScreenState {
       huidNumber: _huidCtrl.text,
       itemPhotoPath: _itemPhotoPath,
       invoiceGenerated: generateInvoice,
-      idProofNumber: _idProofNoCtrl.text,
+      idProofNumber: _ctrl.idProofType == null ? null : _idProofNoCtrl.text,
       notes: _notesCtrl.text,
     );
 

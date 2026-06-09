@@ -35,29 +35,29 @@ class GirviStyles {
       );
 
   static TextStyle get sectionTitle => GoogleFonts.manrope(
-        fontSize: 14,
-        fontWeight: FontWeight.w700,
+        fontSize: 15,
+        fontWeight: FontWeight.w900,
         color: GirviColors.textDark,
         letterSpacing: 0.2,
       );
 
   static TextStyle get fieldLabel => GoogleFonts.inter(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: GirviColors.textBody,
+        fontSize: 13,
+        fontWeight: FontWeight.w800,
+        color: GirviColors.textDark,
         letterSpacing: 0.1,
       );
 
   static TextStyle get fieldInput => GoogleFonts.manrope(
-        fontSize: 14,
-        fontWeight: FontWeight.w700,
+        fontSize: 15,
+        fontWeight: FontWeight.w800,
         color: GirviColors.textDark,
       );
 
   static TextStyle get fieldHint => GoogleFonts.inter(
         fontSize: 13,
-        fontWeight: FontWeight.w400,
-        color: GirviColors.textHint,
+        fontWeight: FontWeight.w600,
+        color: GirviColors.textMuted,
       );
 
   static TextStyle get readOnlyValue => GoogleFonts.manrope(
@@ -67,9 +67,9 @@ class GirviStyles {
       );
 
   static TextStyle get readOnlyLabel => GoogleFonts.inter(
-        fontSize: 11,
-        fontWeight: FontWeight.w400,
-        color: GirviColors.textMuted,
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        color: GirviColors.textBody,
       );
 
   static TextStyle get ticketNumber => GoogleFonts.robotoMono(
@@ -87,9 +87,9 @@ class GirviStyles {
       );
 
   static TextStyle get caption => GoogleFonts.inter(
-        fontSize: 11,
-        fontWeight: FontWeight.w400,
-        color: GirviColors.textMuted,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: GirviColors.textBody,
       );
 
   static TextStyle get amountLarge => GoogleFonts.manrope(

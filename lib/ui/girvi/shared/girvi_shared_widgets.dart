@@ -357,7 +357,11 @@ class GirviSectionCard extends StatelessWidget {
                   Text(title, style: GirviStyles.sectionTitle),
                   const SizedBox(height: 2),
                   Text(subtitle,
-                      style: GirviStyles.caption.copyWith(fontSize: 11)),
+                      style: GirviStyles.caption.copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: GirviColors.textBody,
+                      )),
                 ],
               ),
             ]),
