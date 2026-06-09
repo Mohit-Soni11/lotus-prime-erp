@@ -135,6 +135,8 @@ extension NewGirviLayout on _NewGirviScreenState {
 
   Widget _buildTicketSummaryPanel() {
     final customer = _ctrl.selectedCustomer;
+    final photoCount =
+        _pledgedItems.fold<int>(0, (sum, item) => sum + item.photoCount);
     return Container(
       decoration: BoxDecoration(
         color: GirviColors.cardBg,
@@ -252,8 +254,9 @@ extension NewGirviLayout on _NewGirviScreenState {
                 ),
                 _SummaryLine(
                   label: 'Item Photo',
-                  value: _itemPhotoPath == null ? 'Not attached' : 'Attached',
-                  highlight: _itemPhotoPath != null,
+                  value:
+                      photoCount == 0 ? 'Not attached' : '$photoCount attached',
+                  highlight: photoCount > 0,
                 ),
                 _SummaryLine(
                   label: 'Net Weight',

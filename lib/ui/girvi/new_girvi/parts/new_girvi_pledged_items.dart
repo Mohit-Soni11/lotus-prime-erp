@@ -6,7 +6,6 @@ class _PledgedItemDraft {
     required this.onChanged,
   }) {
     customPurityCtrl.text = purity.dbValue;
-    valuationPurityCtrl.text = _formatPurityPercent(purity.fineness * 100);
     for (final controller in [
       descriptionCtrl,
       piecesCtrl,
@@ -44,7 +43,7 @@ class _PledgedItemDraft {
 
   MetalType metalType = MetalType.gold;
   MetalPurity purity = MetalPurity.k22;
-  String? photoPath;
+  final List<String> photoPaths = [];
 
   int get itemCount => (int.tryParse(piecesCtrl.text.trim()) ?? 1).clamp(1, 99);
   double get grossWeight => double.tryParse(grossCtrl.text) ?? 0.0;
@@ -54,18 +53,22 @@ class _PledgedItemDraft {
   double get entryPurityFactor => _entryPurityFactorFor(this);
   double get valuationPurityPercent {
     final parsed = double.tryParse(valuationPurityCtrl.text.trim());
-    if (parsed == null || parsed <= 0) return entryPurityFactor * 100;
+    if (parsed == null || parsed <= 0) return 0;
     return parsed.clamp(0.0, 100.0).toDouble();
   }
 
   double get valuationPurityFactor => valuationPurityPercent / 100;
-  double get fineWeight => netWeight * valuationPurityFactor;
+  bool get usesDirectSilverRate =>
+      metalType == MetalType.silver && valuationPurityCtrl.text.trim().isEmpty;
+  double get fineWeight =>
+      usesDirectSilverRate ? netWeight : netWeight * valuationPurityFactor;
   double get ratePerGram => double.tryParse(rateCtrl.text) ?? 0.0;
   double get itemValue => fineWeight * ratePerGram;
-  bool get hasPhoto =>
-      photoPath != null &&
-      photoPath!.isNotEmpty &&
-      File(photoPath!).existsSync();
+  List<String> get validPhotoPaths => photoPaths
+      .where((path) => path.isNotEmpty && File(path).existsSync())
+      .toList();
+  bool get hasPhoto => validPhotoPaths.isNotEmpty;
+  int get photoCount => validPhotoPaths.length;
 
   String get purityLabel {
     final custom = customPurityCtrl.text.trim();
@@ -73,8 +76,11 @@ class _PledgedItemDraft {
     return purity.dbValue;
   }
 
-  String get valuationPurityLabel =>
-      '${_formatPurityPercent(valuationPurityPercent)}%';
+  String get valuationPurityLabel {
+    if (usesDirectSilverRate) return 'Direct';
+    if (valuationPurityPercent <= 0) return '-';
+    return '${_formatPurityPercent(valuationPurityPercent)}%';
+  }
 
   void setMetalType(MetalType value) {
     metalType = value;
@@ -110,16 +116,12 @@ class _PledgedItemDraft {
       if (_isKnownPurityText(customPurityCtrl.text)) {
         customPurityCtrl.clear();
       }
-      if (valuationPurityCtrl.text.trim().isEmpty) {
-        valuationPurityCtrl.text = '100';
-      }
       return;
     }
     customPurityCtrl.text = purity.dbValue;
     customPurityCtrl.selection = TextSelection.collapsed(
       offset: customPurityCtrl.text.length,
     );
-    valuationPurityCtrl.text = _formatPurityPercent(purity.fineness * 100);
   }
 
   void dispose() {
@@ -280,6 +282,10 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
             _buildPledgedItemsTotals(),
             const SizedBox(height: 10),
             _buildPhotoAuditStrip(),
+            if (_pledgedItems.any((item) => item.hasPhoto)) ...[
+              const SizedBox(height: 10),
+              _buildPledgedPhotoPreviewCard(),
+            ],
           ],
         ],
       ),
@@ -297,11 +303,7 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
         children: [
           _buildValuationGrid(),
           const SizedBox(height: 12),
-          GirviReadOnlyField(
-            label: 'Total Item Value',
-            value: 'Rs ${_fmt.format(_ctrl.totalValue)}',
-            highlighted: _ctrl.totalValue > 0,
-          ),
+          _TotalItemValueHighlight(value: _ctrl.totalValue, formatted: _fmt),
           if (_ctrl.totalValue > 0) ...[
             const SizedBox(height: 12),
             _LtvSuggestionRow(
@@ -491,6 +493,7 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
           _LedgerPhotoCell(
             width: w(54),
             hasPhoto: item.hasPhoto,
+            photoCount: item.photoCount,
             onTap: () => _pickPledgedItemPhoto(item),
             onRemove: () => _removePledgedItemPhoto(item),
           ),
@@ -578,7 +581,7 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
                         _LedgerColumn('S/N', 40),
                         _LedgerColumn('Item', 260),
                         _LedgerColumn('Net', 96),
-                        _LedgerColumn('Valuation %', 106),
+                        _LedgerColumn('Purity', 106),
                         _LedgerColumn('Fine', 96),
                         _LedgerColumn('Rate / g', 126),
                         _LedgerColumn('Value', 126),
@@ -633,14 +636,14 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
             width: w(106),
             controller: item.valuationPurityCtrl,
             focusNode: item.valuationPurityFocus,
-            hint: '75',
+            hint: '',
             suffixText: '%',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
             ],
             textAlign: TextAlign.right,
-            validator: _validateValuationPurity,
+            validator: (value) => _validateValuationPurity(item, value),
           ),
           const SizedBox(width: 6),
           _LedgerReadOnlyCell(
@@ -729,7 +732,8 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
   }
 
   Widget _buildPhotoAuditStrip() {
-    final attached = _pledgedItems.where((item) => item.hasPhoto).length;
+    final attached =
+        _pledgedItems.fold<int>(0, (sum, item) => sum + item.photoCount);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -745,7 +749,7 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
           const SizedBox(width: 9),
           Expanded(
             child: Text(
-              'Photos are optional. Attach them serial-wise from the Photo column after item entry.',
+              'Photos are optional. Attach one or more photos from the Photo column after item entry.',
               style: GoogleFonts.inter(
                 color: GirviColors.brandDeep,
                 fontSize: 12,
@@ -755,12 +759,91 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
           ),
           const SizedBox(width: 10),
           Text(
-            '$attached/${_pledgedItems.length} attached',
+            '$attached attached',
             style: GoogleFonts.manrope(
               color: GirviColors.brandGold,
               fontSize: 13,
               fontWeight: FontWeight.w900,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPledgedPhotoPreviewCard() {
+    final entries = <({int serialNo, String title, String path})>[];
+    for (final item in _pledgedItems) {
+      final description = item.descriptionCtrl.text.trim();
+      final title =
+          description.isEmpty ? 'Pledged Item ${item.serialNo}' : description;
+      for (final path in item.validPhotoPaths) {
+        entries.add((serialNo: item.serialNo, title: title, path: path));
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: GirviColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: GirviColors.brandGoldLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.photo_library_outlined,
+                  color: GirviColors.brandGold,
+                  size: 17,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Pledged Item Photo Preview',
+                  style: GoogleFonts.inter(
+                    color: GirviColors.textDark,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Text(
+                '${entries.length} photos',
+                style: GoogleFonts.manrope(
+                  color: GirviColors.brandGold,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: entries.map((entry) {
+              final item = _pledgedItems.firstWhere(
+                (draft) => draft.serialNo == entry.serialNo,
+              );
+              return _PledgedPhotoThumbnail(
+                serialNo: entry.serialNo,
+                title: entry.title,
+                path: entry.path,
+                onPreview: () => _showPledgedItemPhotoPreview(item, entry.path),
+                onRemove: () => _removePledgedItemPhotoPath(item, entry.path),
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -775,11 +858,120 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
     return null;
   }
 
-  String? _validateValuationPurity(String? value) {
+  String? _validateValuationPurity(_PledgedItemDraft item, String? value) {
+    if (item.metalType == MetalType.silver &&
+        (value == null || value.trim().isEmpty)) {
+      return null;
+    }
     final parsed = double.tryParse(value?.trim() ?? '');
     if (parsed == null || parsed <= 0) return 'Required';
     if (parsed > 100) return 'Max 100';
     return null;
+  }
+}
+
+class _TotalItemValueHighlight extends StatelessWidget {
+  const _TotalItemValueHighlight({
+    required this.value,
+    required this.formatted,
+  });
+
+  final double value;
+  final NumberFormat formatted;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasValue = value > 0;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: BoxDecoration(
+        color: hasValue
+            ? GirviColors.success.withValues(alpha: 0.08)
+            : GirviColors.inputBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: hasValue
+              ? GirviColors.success.withValues(alpha: 0.32)
+              : GirviColors.cardBorder,
+          width: 1.4,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: hasValue
+                  ? GirviColors.success.withValues(alpha: 0.14)
+                  : GirviColors.cardBg,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: hasValue
+                    ? GirviColors.success.withValues(alpha: 0.24)
+                    : GirviColors.cardBorder,
+              ),
+            ),
+            child: Icon(
+              GirviIcons.valuation,
+              color: hasValue ? GirviColors.success : GirviColors.textMuted,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Total Item Value',
+                  style: GirviStyles.caption.copyWith(
+                    color: GirviColors.textBody,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    height: 1.0,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  'Rs ${formatted.format(value)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.manrope(
+                    color:
+                        hasValue ? GirviColors.success : GirviColors.textDark,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    height: 1.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (hasValue)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: GirviColors.success.withValues(alpha: 0.22),
+                ),
+              ),
+              child: Text(
+                'READY',
+                style: GoogleFonts.inter(
+                  color: GirviColors.success,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  height: 1.0,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -1347,12 +1539,14 @@ class _LedgerPhotoCell extends StatelessWidget {
   const _LedgerPhotoCell({
     required this.width,
     required this.hasPhoto,
+    required this.photoCount,
     required this.onTap,
     required this.onRemove,
   });
 
   final double width;
   final bool hasPhoto;
+  final int photoCount;
   final VoidCallback onTap;
   final VoidCallback onRemove;
 
@@ -1382,11 +1576,15 @@ class _LedgerPhotoCell extends StatelessWidget {
                       borderRadius: const BorderRadius.horizontal(
                         left: Radius.circular(8),
                       ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.check_circle_rounded,
-                          color: GirviColors.success,
-                          size: 17,
+                      child: Center(
+                        child: Text(
+                          '$photoCount',
+                          style: GoogleFonts.manrope(
+                            color: GirviColors.success,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                            height: 1.0,
+                          ),
                         ),
                       ),
                     ),
@@ -1424,6 +1622,127 @@ class _LedgerPhotoCell extends StatelessWidget {
                   ),
                 ),
               ),
+      ),
+    );
+  }
+}
+
+class _PledgedPhotoThumbnail extends StatelessWidget {
+  const _PledgedPhotoThumbnail({
+    required this.serialNo,
+    required this.title,
+    required this.path,
+    required this.onPreview,
+    required this.onRemove,
+  });
+
+  final int serialNo;
+  final String title;
+  final String path;
+  final VoidCallback onPreview;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 150,
+      child: Container(
+        decoration: BoxDecoration(
+          color: GirviColors.inputBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: GirviColors.cardBorder),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            InkWell(
+              onTap: onPreview,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(10)),
+              child: ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(10)),
+                child: SizedBox(
+                  height: 88,
+                  child: Image.file(
+                    File(path),
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: GirviColors.inputBgLocked,
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.broken_image_outlined,
+                          color: GirviColors.textMuted,
+                          size: 24,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(9, 7, 7, 7),
+              child: Row(
+                children: [
+                  Container(
+                    width: 26,
+                    height: 26,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: GirviColors.brandGoldLight,
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: Text(
+                      serialNo.toString().padLeft(2, '0'),
+                      style: GoogleFonts.manrope(
+                        color: GirviColors.brandDeep,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        height: 1.0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: GirviColors.textDark,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        height: 1.0,
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: onRemove,
+                    borderRadius: BorderRadius.circular(7),
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: GirviColors.dangerBg,
+                        borderRadius: BorderRadius.circular(7),
+                        border: Border.all(color: GirviColors.dangerBorder),
+                      ),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        color: GirviColors.danger,
+                        size: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1551,7 +1870,7 @@ class _PledgedLedgerBottomBar extends StatelessWidget {
             children: [
               addButton,
               const SizedBox(width: 10),
-              SizedBox(width: 136, child: totals),
+              SizedBox(width: 208, child: totals),
               const SizedBox(width: 10),
               Expanded(
                 child: Wrap(
@@ -1583,7 +1902,6 @@ class _PledgedLedgerMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 56,
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1592,29 +1910,66 @@ class _PledgedLedgerMetric extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GirviStyles.caption.copyWith(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              height: 1.0,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 22,
+                height: 22,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  Icons.inventory_2_outlined,
+                  color: color,
+                  size: 13,
+                ),
+              ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: GirviColors.textDark,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    height: 1.0,
+                  ),
+                ),
+              ),
+              Text(
+                value,
+                style: GoogleFonts.manrope(
+                  color: color,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  height: 1.0,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.manrope(
-              color: color,
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              height: 1.0,
-            ),
+          const SizedBox(height: 7),
+          Row(
+            children: [
+              Expanded(
+                child: _WeightMiniText(
+                  label: 'Items',
+                  value: value.split('/').first.trim(),
+                ),
+              ),
+              Expanded(
+                child: _WeightMiniText(
+                  label: 'Pieces',
+                  value: value.split('/').last.trim(),
+                  color: color,
+                ),
+              ),
+            ],
           ),
         ],
       ),

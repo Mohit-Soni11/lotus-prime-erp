@@ -172,9 +172,21 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     _syncPledgedItemsToController();
   }
 
-  void _setPledgedItemPhotoPath(_PledgedItemDraft item, String? path) {
+  void _addPledgedItemPhotoPaths(_PledgedItemDraft item, List<String> paths) {
     if (!mounted) return;
-    setState(() => item.photoPath = path);
+    setState(() => item.photoPaths.addAll(paths));
+    _syncPledgedItemsToController();
+  }
+
+  void _removePledgedItemPhotoPath(_PledgedItemDraft item, String path) {
+    if (!mounted) return;
+    setState(() => item.photoPaths.remove(path));
+    _syncPledgedItemsToController();
+  }
+
+  void _clearPledgedItemPhotos(_PledgedItemDraft item) {
+    if (!mounted) return;
+    setState(() => item.photoPaths.clear());
     _syncPledgedItemsToController();
   }
 
@@ -275,8 +287,8 @@ class _NewGirviScreenState extends State<NewGirviScreen>
 
   String? _firstAttachedItemPhoto() {
     for (final item in _pledgedItems) {
-      final path = item.photoPath;
-      if (path != null && path.isNotEmpty) return path;
+      final paths = item.validPhotoPaths;
+      if (paths.isNotEmpty) return paths.first;
     }
     return null;
   }
