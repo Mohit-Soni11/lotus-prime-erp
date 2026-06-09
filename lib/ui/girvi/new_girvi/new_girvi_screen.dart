@@ -132,6 +132,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
         .addListener(() => _ctrl.onInterestRateChanged(_interestCtrl.text));
     _durationCtrl
         .addListener(() => _ctrl.onDurationChanged(_durationCtrl.text));
+    _idProofNoCtrl.addListener(_onSummaryTextChanged);
     for (final c in _disbursementControllers) {
       c.addListener(_onDisbursementAmountChanged);
     }
@@ -321,6 +322,10 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     setState(() => _idProofImagePath = path);
   }
 
+  void _onSummaryTextChanged() {
+    if (mounted) setState(() {});
+  }
+
   List<TextEditingController> get _disbursementControllers => [
         _cashDisbursementCtrl,
         _upiDisbursementCtrl,
@@ -380,6 +385,34 @@ class _NewGirviScreenState extends State<NewGirviScreen>
         return 'Cheque';
       case GirviPaymentMode.neft:
         return 'Bank / IMPS';
+    }
+  }
+
+  IconData _disbursementModeIcon(GirviPaymentMode mode) {
+    switch (mode) {
+      case GirviPaymentMode.cash:
+        return GirviIcons.cash;
+      case GirviPaymentMode.upi:
+        return GirviIcons.upi;
+      case GirviPaymentMode.bankTransfer:
+      case GirviPaymentMode.neft:
+        return GirviIcons.bank;
+      case GirviPaymentMode.cheque:
+        return Icons.receipt_long_outlined;
+    }
+  }
+
+  Color _disbursementModeColor(GirviPaymentMode mode) {
+    switch (mode) {
+      case GirviPaymentMode.cash:
+        return GirviColors.success;
+      case GirviPaymentMode.upi:
+        return GirviColors.info;
+      case GirviPaymentMode.bankTransfer:
+      case GirviPaymentMode.neft:
+        return GirviColors.purple;
+      case GirviPaymentMode.cheque:
+        return GirviColors.warning;
     }
   }
 

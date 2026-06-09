@@ -291,6 +291,7 @@ class NewGirviController extends ChangeNotifier {
     required String? huidNumber,
     required String? itemPhotoPath,
     required bool invoiceGenerated,
+    required String disbursementDetails,
     required String? idProofNumber,
     required String? idProofImagePath,
     required String? notes,
@@ -337,7 +338,9 @@ class NewGirviController extends ChangeNotifier {
         loanAmount: drift.Value(_loanAmount),
         interestRate: drift.Value(_interestRate),
         durationMonths: drift.Value(_durationMonths),
-        disbursementMode: drift.Value(_disbursementMode.dbValue),
+        disbursementMode: drift.Value(disbursementDetails.trim().isEmpty
+            ? _disbursementMode.dbValue
+            : disbursementDetails.trim()),
         invoiceGenerated: drift.Value(invoiceGenerated),
         startDate: drift.Value(_startDate),
         maturityDate: drift.Value(maturityDate),

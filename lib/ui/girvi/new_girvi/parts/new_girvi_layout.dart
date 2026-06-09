@@ -103,147 +103,278 @@ extension NewGirviLayout on _NewGirviScreenState {
     final customer = _ctrl.selectedCustomer;
     final photoCount =
         _pledgedItems.fold<int>(0, (sum, item) => sum + item.photoCount);
+    final hasItems = _pledgedItems.isNotEmpty && _ctrl.netWeight > 0;
+    final disbursementReady = _ctrl.loanAmount > 0 &&
+        _totalDisbursementAmount > 0 &&
+        (_totalDisbursementAmount - _ctrl.loanAmount).abs() <= 0.50;
+    final completedSteps = [
+      _ctrl.hasCustomer,
+      hasItems,
+      _ctrl.loanAmount > 0,
+      disbursementReady,
+    ].where((complete) => complete).length;
+    final invoiceReady = completedSteps == 4;
+    final hasKyc =
+        _ctrl.idProofType != null && _idProofNoCtrl.text.trim().isNotEmpty;
+    final ltv = _ctrl.computedLtv.clamp(0.0, 999.0);
+    final paymentParts = [
+      for (final mode in _visibleDisbursementModes)
+        if (_disbursementAmountFor(mode) > 0)
+          _InvoicePaymentPart(
+            label: _disbursementModeLabel(mode),
+            value: 'Rs ${_fmt.format(_disbursementAmountFor(mode))}',
+            icon: _disbursementModeIcon(mode),
+            color: _disbursementModeColor(mode),
+          ),
+    ];
+
     return Container(
       decoration: BoxDecoration(
         color: GirviColors.cardBg,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: GirviColors.cardBorder),
         boxShadow: const [
           BoxShadow(
-            color: GirviColors.shadowLight,
-            blurRadius: 10,
-            offset: Offset(0, 3),
+            color: GirviColors.shadowMedium,
+            blurRadius: 18,
+            offset: Offset(0, 6),
           ),
         ],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            padding: const EdgeInsets.fromLTRB(16, 15, 16, 14),
+            padding: const EdgeInsets.fromLTRB(16, 15, 16, 15),
             decoration: const BoxDecoration(
-              color: GirviColors.shellBg,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+              color: GirviColors.cardBg,
+              border: Border(
+                bottom: BorderSide(color: GirviColors.cardBorder),
+              ),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: GirviColors.brandGold.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: const Icon(GirviIcons.ticket,
-                      color: GirviColors.brandGold, size: 18),
-                ),
-                const SizedBox(width: 11),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Loan Invoice Summary',
-                          style: GoogleFonts.manrope(
-                              color: GirviColors.shellTextTitle,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w900)),
-                      const SizedBox(height: 2),
-                      Text(
-                        _ctrl.ticketNo.isEmpty
-                            ? 'Generating ticket number'
-                            : _ctrl.ticketNo,
-                        style: GirviStyles.ticketNumber.copyWith(fontSize: 12),
-                        overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: GirviColors.brandGoldLight,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: GirviColors.brandGold.withValues(alpha: 0.22),
+                        ),
                       ),
-                    ],
-                  ),
+                      child: const Icon(
+                        Icons.receipt_long_outlined,
+                        color: GirviColors.brandGold,
+                        size: 19,
+                      ),
+                    ),
+                    const SizedBox(width: 11),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'LOAN INVOICE SUMMARY',
+                            style: GoogleFonts.inter(
+                              color: GirviColors.textMuted,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.1,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            _ctrl.ticketNo.isEmpty
+                                ? 'Generating invoice number...'
+                                : _ctrl.ticketNo,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.manrope(
+                              color: GirviColors.textDark,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _StatusPill(
+                      label: invoiceReady ? 'READY' : 'DRAFT',
+                      color: invoiceReady
+                          ? GirviColors.success
+                          : GirviColors.warning,
+                    ),
+                  ],
                 ),
-                _StatusPill(
-                  label: _ctrl.isFormReady ? 'READY' : 'DRAFT',
-                  color: _ctrl.isFormReady
-                      ? GirviColors.success
-                      : GirviColors.warning,
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          minHeight: 5,
+                          value: completedSteps / 4,
+                          backgroundColor: GirviColors.inputBgLocked,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            invoiceReady
+                                ? GirviColors.success
+                                : GirviColors.brandGold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      '$completedSteps / 4 complete',
+                      style: GoogleFonts.inter(
+                        color: GirviColors.textMuted,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _SummaryLine(
-                  label: 'Customer',
-                  value: customer?.name ?? 'Select customer',
-                  highlight: _ctrl.hasCustomer,
+                _InvoiceCustomerCard(
+                  name: customer?.name ?? 'Customer not selected',
+                  mobile: customer?.mobile ??
+                      'Select customer from Customer Details above',
+                  ready: _ctrl.hasCustomer,
                 ),
-                _SummaryLine(
-                  label: 'Mobile',
-                  value: customer?.mobile ?? '-',
-                ),
-                const Divider(height: 24, color: GirviColors.divider),
-                _AmountSummaryTile(
-                  label: 'Loan Disbursement',
-                  value: 'Rs ${_fmt.format(_ctrl.loanAmount)}',
-                  color: GirviColors.brandGold,
+                const SizedBox(height: 12),
+                _InvoiceAmountHero(
+                  loanAmount: 'Rs ${_fmt.format(_ctrl.loanAmount)}',
+                  maturityAmount: 'Rs ${_fmt.format(_ctrl.totalDueAtMaturity)}',
+                  duration: '${_ctrl.durationMonths} months',
                 ),
                 const SizedBox(height: 10),
-                _SummaryLine(
-                  label: 'Item Value',
-                  value: 'Rs ${_fmt.format(_ctrl.totalValue)}',
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final metrics = [
+                      _InvoiceMetricTile(
+                        label: 'Item Value',
+                        value: 'Rs ${_fmt.format(_ctrl.totalValue)}',
+                        icon: GirviIcons.valuation,
+                        color: GirviColors.success,
+                      ),
+                      _InvoiceMetricTile(
+                        label: 'Monthly Interest',
+                        value: 'Rs ${_fmt.format(_ctrl.monthlyInterest)}',
+                        icon: GirviIcons.interestRate,
+                        color: GirviColors.warning,
+                      ),
+                      _InvoiceMetricTile(
+                        label: 'LTV Ratio',
+                        value: '${ltv.toStringAsFixed(1)}%',
+                        icon: Icons.pie_chart_outline_rounded,
+                        color: GirviColors.purple,
+                      ),
+                    ];
+                    if (constraints.maxWidth < 360) {
+                      return Column(
+                        children: [
+                          for (var i = 0; i < metrics.length; i++) ...[
+                            if (i > 0) const SizedBox(height: 8),
+                            metrics[i],
+                          ],
+                        ],
+                      );
+                    }
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (var i = 0; i < metrics.length; i++) ...[
+                          if (i > 0) const SizedBox(width: 7),
+                          Expanded(child: metrics[i]),
+                        ],
+                      ],
+                    );
+                  },
                 ),
-                _SummaryLine(
-                  label: 'LTV Ratio',
-                  value: '${_ctrl.computedLtv.toStringAsFixed(1)}%',
+                const SizedBox(height: 12),
+                _InvoiceDetailSection(
+                  title: 'LOAN TERMS',
+                  icon: GirviIcons.loanTerms,
+                  children: [
+                    _InvoiceDetailRow(
+                      icon: GirviIcons.interestRate,
+                      label: 'Interest Rate',
+                      value:
+                          '${_ctrl.interestRate.toStringAsFixed(2)}% monthly',
+                    ),
+                    _InvoiceDetailRow(
+                      icon: GirviIcons.dates,
+                      label: 'Maturity Date',
+                      value: _dateFmt.format(_ctrl.maturityDate),
+                    ),
+                  ],
                 ),
-                _SummaryLine(
-                  label: 'Monthly Interest',
-                  value: 'Rs ${_fmt.format(_ctrl.monthlyInterest)}',
+                const SizedBox(height: 10),
+                _InvoicePaymentBreakdown(
+                  parts: paymentParts,
+                  totalPaid: 'Rs ${_fmt.format(_totalDisbursementAmount)}',
+                  loanAmount: 'Rs ${_fmt.format(_ctrl.loanAmount)}',
+                  differenceLabel: _remainingDisbursementAmount >= 0
+                      ? 'Remaining Rs ${_fmt.format(_remainingDisbursementAmount)}'
+                      : 'Excess Rs ${_fmt.format(_remainingDisbursementAmount.abs())}',
+                  ready: disbursementReady,
                 ),
-                _SummaryLine(
-                  label: 'Maturity Due',
-                  value: 'Rs ${_fmt.format(_ctrl.totalDueAtMaturity)}',
-                  highlight: _ctrl.loanAmount > 0,
+                const SizedBox(height: 10),
+                _InvoiceDetailSection(
+                  title: 'PLEDGED SECURITY',
+                  icon: GirviIcons.diamond,
+                  children: [
+                    _InvoiceDetailRow(
+                      icon: GirviIcons.weight,
+                      label: 'Items / Net Weight',
+                      value:
+                          '${_ctrl.itemCount} pcs  |  ${_ctrl.netWeight.toStringAsFixed(3)} g',
+                    ),
+                    _InvoiceDetailRow(
+                      icon: GirviIcons.gold,
+                      label: 'Metal / Purity',
+                      value:
+                          '${_ctrl.metalType.displayName}  |  ${_ctrl.metalPurity.displayName}',
+                    ),
+                    _InvoiceDetailRow(
+                      icon: Icons.verified_outlined,
+                      label: 'HUID / Photos',
+                      value:
+                          '${_huidCtrl.text.trim().isEmpty ? 'No HUID' : _huidCtrl.text.trim()}  |  $photoCount photo${photoCount == 1 ? '' : 's'}',
+                      valueColor: photoCount > 0
+                          ? GirviColors.success
+                          : GirviColors.textDark,
+                    ),
+                  ],
                 ),
-                const Divider(height: 24, color: GirviColors.divider),
-                _SummaryLine(
-                  label: 'Metal',
-                  value:
-                      '${_ctrl.metalType.displayName} / ${_ctrl.metalPurity.displayName}',
+                const SizedBox(height: 10),
+                _InvoiceReadinessCard(
+                  customerReady: _ctrl.hasCustomer,
+                  itemsReady: hasItems,
+                  amountReady: _ctrl.loanAmount > 0,
+                  paymentReady: disbursementReady,
+                  kycAttached: hasKyc,
                 ),
-                _SummaryLine(
-                  label: 'HUID',
-                  value: _huidCtrl.text.trim().isEmpty
-                      ? '-'
-                      : _huidCtrl.text.trim(),
-                ),
-                _SummaryLine(
-                  label: 'Item Photo',
-                  value:
-                      photoCount == 0 ? 'Not attached' : '$photoCount attached',
-                  highlight: photoCount > 0,
-                ),
-                _SummaryLine(
-                  label: 'Net Weight',
-                  value: '${_ctrl.netWeight.toStringAsFixed(3)} g',
-                ),
-                _SummaryLine(
-                  label: 'Duration',
-                  value: '${_ctrl.durationMonths} months',
-                ),
-                _SummaryLine(
-                  label: 'Maturity Date',
-                  value: _dateFmt.format(_ctrl.maturityDate),
-                ),
-                _SummaryLine(
-                  label: 'Disbursement',
-                  value: _disbursementSummaryLabel,
-                ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 _TicketActionButton(
-                  label: 'Generate Invoice',
-                  icon: GirviIcons.save,
+                  label: 'Create & Print Invoice',
+                  icon: GirviIcons.print,
                   filled: true,
                   busy: _ctrl.isSaving,
                   onTap: _ctrl.isSaving
@@ -252,19 +383,28 @@ extension NewGirviLayout on _NewGirviScreenState {
                 ),
                 const SizedBox(height: 10),
                 _TicketActionButton(
-                  label: 'Save Without Invoice',
+                  label: 'Save Ticket Only',
                   icon: Icons.inventory_2_outlined,
                   filled: false,
                   onTap: _ctrl.isSaving
                       ? null
                       : () => _onSave(generateInvoice: false),
                 ),
-                const SizedBox(height: 10),
-                _TicketActionButton(
-                  label: 'Reset Entry',
-                  icon: GirviIcons.refresh,
-                  filled: false,
-                  onTap: _ctrl.isSaving ? null : _resetAll,
+                const SizedBox(height: 6),
+                TextButton.icon(
+                  onPressed: _ctrl.isSaving ? null : _resetAll,
+                  style: TextButton.styleFrom(
+                    foregroundColor: GirviColors.textMuted,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  icon: const Icon(GirviIcons.refresh, size: 16),
+                  label: Text(
+                    'Reset this entry',
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
               ],
             ),
