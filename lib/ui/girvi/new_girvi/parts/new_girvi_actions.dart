@@ -18,6 +18,21 @@ extension NewGirviActions on _NewGirviScreenState {
       _showError('Please select a customer first.');
       return;
     }
+    if (_ctrl.loanAmount > 0) {
+      final totalDisbursed = _totalDisbursementAmount;
+      if (totalDisbursed <= 0) {
+        _showError(
+            'Enter the disbursement amount for Cash, UPI, Bank or Cheque.');
+        return;
+      }
+      if ((totalDisbursed - _ctrl.loanAmount).abs() > 0.50) {
+        _showError(
+          'Disbursement total must match the loan amount. Remaining Rs ${_fmt.format(_ctrl.loanAmount - totalDisbursed)}.',
+        );
+        return;
+      }
+    }
+    _syncPrimaryDisbursementMode();
 
     final ok = await _ctrl.saveLoan(
       itemDescription: _itemDescCtrl.text,
@@ -56,6 +71,10 @@ extension NewGirviActions on _NewGirviScreenState {
       _stoneWtCtrl,
       _rateCtrl,
       _loanAmtCtrl,
+      _cashDisbursementCtrl,
+      _upiDisbursementCtrl,
+      _bankDisbursementCtrl,
+      _chequeDisbursementCtrl,
       _idProofNoCtrl,
       _notesCtrl,
     ]) {

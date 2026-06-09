@@ -238,7 +238,7 @@ extension NewGirviLayout on _NewGirviScreenState {
                 ),
                 _SummaryLine(
                   label: 'Disbursement',
-                  value: _ctrl.disbursementMode.displayName,
+                  value: _disbursementSummaryLabel,
                 ),
                 const SizedBox(height: 16),
                 _TicketActionButton(

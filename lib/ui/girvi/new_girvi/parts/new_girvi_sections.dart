@@ -230,7 +230,7 @@ extension NewGirviSections on _NewGirviScreenState {
           builder: (context, constraints) {
             final wide = constraints.maxWidth >= 760;
             final amountField = GirviInputField(
-              label: 'Loan Amount (Rs) *',
+              label: 'Loan Amount (Rs)',
               hint: '0.00',
               icon: GirviIcons.loanTerms,
               controller: _loanAmtCtrl,
@@ -280,7 +280,7 @@ extension NewGirviSections on _NewGirviScreenState {
         const SizedBox(height: 12),
         GirviRowTwo(
           left: GirviInputField(
-            label: 'Interest Rate (% / month) *',
+            label: 'Interest Rate (% / month)',
             hint: '5.0',
             icon: GirviIcons.interestRate,
             controller: _interestCtrl,
@@ -294,7 +294,7 @@ extension NewGirviSections on _NewGirviScreenState {
             validator: _ctrl.validateInterestRate,
           ),
           right: GirviInputField(
-            label: 'Duration (months) *',
+            label: 'Duration (months)',
             hint: '12',
             icon: GirviIcons.dates,
             controller: _durationCtrl,
@@ -315,15 +315,13 @@ extension NewGirviSections on _NewGirviScreenState {
         const SizedBox(height: 14),
         GirviRowTwo(
           left: _DatePickerField(
-            label: 'Start Date *',
+            label: 'Start Date',
             date: _ctrl.startDate,
             onTap: _pickStartDate,
           ),
-          right: GirviReadOnlyField(
+          right: _DateDisplayField(
             label: 'Maturity Date',
-            value: _dateFmt.format(_ctrl.maturityDate),
-            valueColor: GirviColors.textDark,
-            highlighted: false,
+            date: _ctrl.maturityDate,
           ),
         ),
         const SizedBox(height: 18),
@@ -333,12 +331,16 @@ extension NewGirviSections on _NewGirviScreenState {
           subtitle: 'How the loan amount will be paid to the customer.',
         ),
         const SizedBox(height: 12),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: _PaymentModeSelector(
-            selected: _ctrl.disbursementMode,
-            onChanged: _ctrl.setDisbursementMode,
-          ),
+        _DisbursementSplitEditor(
+          modes: _visibleDisbursementModes,
+          selected: _ctrl.disbursementMode,
+          loanAmount: _ctrl.loanAmount,
+          totalAmount: _totalDisbursementAmount,
+          remainingAmount: _remainingDisbursementAmount,
+          controllerFor: _disbursementControllerFor,
+          amountFor: _disbursementAmountFor,
+          modeLabel: _disbursementModeLabel,
+          onModeTap: _activateDisbursementMode,
         ),
         const SizedBox(height: 18),
         _InterestPreviewCard(

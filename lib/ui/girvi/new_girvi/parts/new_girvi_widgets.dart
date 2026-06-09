@@ -716,77 +716,67 @@ class _LtvIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = enabled ? _color : GirviColors.brandGold;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.20)),
-      ),
-      child: Column(children: [
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Loan-to-Value (LTV)', style: GirviStyles.fieldLabel),
-                const SizedBox(height: 3),
-                Text(
-                  enabled
-                      ? 'Loan amount as a percentage of item valuation.'
-                      : 'Default 50%. Enter valuation to activate the slider.',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GirviStyles.caption.copyWith(fontSize: 10),
-                ),
-              ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Loan-to-Value (LTV)', style: GirviStyles.fieldLabel),
+        const SizedBox(height: 6),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          height: GirviStyles.inputHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: enabled
+                ? color.withValues(alpha: 0.06)
+                : GirviColors.inputBgLocked,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: enabled
+                  ? color.withValues(alpha: 0.25)
+                  : GirviColors.cardBorder,
             ),
           ),
-          const SizedBox(width: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: color.withValues(alpha: 0.22)),
-            ),
-            child: Text(
-              '${ltv.toStringAsFixed(1)}%',
-              style: GoogleFonts.manrope(
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                color: color,
+          child: Row(children: [
+            Icon(GirviIcons.loanTerms, color: color, size: 18),
+            const SizedBox(width: 10),
+            Container(width: 1, height: 22, color: GirviColors.cardBorder),
+            const SizedBox(width: 10),
+            Expanded(
+              child: SliderTheme(
+                data: SliderThemeData(
+                  activeTrackColor: color,
+                  thumbColor: color,
+                  inactiveTrackColor: GirviColors.divider,
+                  disabledActiveTrackColor: color.withValues(alpha: 0.35),
+                  disabledThumbColor: color.withValues(alpha: 0.70),
+                  overlayColor: color.withValues(alpha: 0.15),
+                  trackHeight: 3,
+                ),
+                child: Slider(
+                  value: ltv.clamp(0, 100),
+                  min: 0,
+                  max: 100,
+                  divisions: 20,
+                  onChanged: enabled ? onChanged : null,
+                ),
               ),
             ),
-          ),
-        ]),
-        const SizedBox(height: 8),
-        SliderTheme(
-          data: SliderThemeData(
-            activeTrackColor: color,
-            thumbColor: color,
-            inactiveTrackColor: GirviColors.divider,
-            disabledActiveTrackColor: color.withValues(alpha: 0.45),
-            disabledThumbColor: color.withValues(alpha: 0.70),
-            overlayColor: color.withValues(alpha: 0.2),
-            trackHeight: 4,
-          ),
-          child: Slider(
-            value: ltv.clamp(0, 100),
-            min: 0,
-            max: 100,
-            divisions: 20,
-            onChanged: enabled ? onChanged : null,
-          ),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 62,
+              child: Text(
+                '${ltv.toStringAsFixed(1)}%',
+                textAlign: TextAlign.right,
+                style: GoogleFonts.manrope(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                  color: color,
+                ),
+              ),
+            ),
+          ]),
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: ['0%', '25%', '50%', '75%', '100%']
-              .map((t) =>
-                  Text(t, style: GirviStyles.caption.copyWith(fontSize: 9)))
-              .toList(),
-        ),
-      ]),
+      ],
     );
   }
 }
@@ -994,6 +984,335 @@ class _PreviewStat extends StatelessWidget {
       );
 }
 
+class _DisbursementSplitEditor extends StatelessWidget {
+  final List<GirviPaymentMode> modes;
+  final GirviPaymentMode selected;
+  final double loanAmount;
+  final double totalAmount;
+  final double remainingAmount;
+  final TextEditingController Function(GirviPaymentMode mode) controllerFor;
+  final double Function(GirviPaymentMode mode) amountFor;
+  final String Function(GirviPaymentMode mode) modeLabel;
+  final void Function(GirviPaymentMode mode) onModeTap;
+
+  const _DisbursementSplitEditor({
+    required this.modes,
+    required this.selected,
+    required this.loanAmount,
+    required this.totalAmount,
+    required this.remainingAmount,
+    required this.controllerFor,
+    required this.amountFor,
+    required this.modeLabel,
+    required this.onModeTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fmt = NumberFormat('#,##,##0.00', 'en_IN');
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final columns = width >= 920
+            ? 4
+            : width >= 640
+                ? 2
+                : 1;
+        final spacing = columns == 1 ? 0.0 : 10.0;
+        final tileWidth = (width - (spacing * (columns - 1))) / columns;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Wrap(
+              spacing: spacing,
+              runSpacing: 10,
+              children: [
+                for (final mode in modes)
+                  SizedBox(
+                    width: tileWidth,
+                    child: _DisbursementAmountTile(
+                      mode: mode,
+                      label: modeLabel(mode),
+                      controller: controllerFor(mode),
+                      active: selected == mode || amountFor(mode) > 0,
+                      amount: amountFor(mode),
+                      onTap: () => onModeTap(mode),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _DisbursementTotalStrip(
+              loanAmount: loanAmount,
+              totalAmount: totalAmount,
+              remainingAmount: remainingAmount,
+              formatter: fmt,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _DisbursementAmountTile extends StatelessWidget {
+  final GirviPaymentMode mode;
+  final String label;
+  final TextEditingController controller;
+  final bool active;
+  final double amount;
+  final VoidCallback onTap;
+
+  const _DisbursementAmountTile({
+    required this.mode,
+    required this.label,
+    required this.controller,
+    required this.active,
+    required this.amount,
+    required this.onTap,
+  });
+
+  Color get _color {
+    switch (mode) {
+      case GirviPaymentMode.cash:
+        return GirviColors.success;
+      case GirviPaymentMode.upi:
+        return GirviColors.info;
+      case GirviPaymentMode.bankTransfer:
+        return GirviColors.brandGold;
+      case GirviPaymentMode.cheque:
+        return GirviColors.textMuted;
+      case GirviPaymentMode.neft:
+        return GirviColors.brandGold;
+    }
+  }
+
+  IconData get _icon {
+    switch (mode) {
+      case GirviPaymentMode.cash:
+        return GirviIcons.cash;
+      case GirviPaymentMode.upi:
+        return GirviIcons.upi;
+      case GirviPaymentMode.bankTransfer:
+      case GirviPaymentMode.neft:
+        return GirviIcons.bank;
+      case GirviPaymentMode.cheque:
+        return Icons.receipt_long_outlined;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _color;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(11),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: active ? color.withValues(alpha: 0.07) : GirviColors.inputBg,
+          borderRadius: BorderRadius.circular(11),
+          border: Border.all(
+            color:
+                active ? color.withValues(alpha: 0.35) : GirviColors.cardBorder,
+            width: active ? 1.3 : 1.0,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Container(
+                width: 30,
+                height: 30,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(_icon, color: color, size: 15),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.manrope(
+                    color: GirviColors.textDark,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              if (amount > 0)
+                Icon(Icons.check_circle_rounded, color: color, size: 16),
+            ]),
+            const SizedBox(height: 9),
+            Container(
+              height: 42,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: GirviColors.cardBg,
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(
+                  color: active
+                      ? color.withValues(alpha: 0.28)
+                      : GirviColors.cardBorder,
+                ),
+              ),
+              child: Row(children: [
+                Text(
+                  'Rs',
+                  style: GoogleFonts.inter(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    controller: controller,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
+                    ],
+                    textAlign: TextAlign.right,
+                    style: GoogleFonts.manrope(
+                      color: GirviColors.textDark,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      hintText: '0.00',
+                      hintStyle: GirviStyles.fieldHint.copyWith(fontSize: 13),
+                      isDense: true,
+                    ),
+                  ),
+                ),
+              ]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DisbursementTotalStrip extends StatelessWidget {
+  final double loanAmount;
+  final double totalAmount;
+  final double remainingAmount;
+  final NumberFormat formatter;
+
+  const _DisbursementTotalStrip({
+    required this.loanAmount,
+    required this.totalAmount,
+    required this.remainingAmount,
+    required this.formatter,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final balanced = loanAmount > 0 && remainingAmount.abs() <= 0.50;
+    final remainingColor = balanced ? GirviColors.success : GirviColors.warning;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 620;
+        final tiles = [
+          _MiniAmountPanel(
+            label: 'Loan Amount',
+            value: 'Rs ${formatter.format(loanAmount)}',
+            color: GirviColors.brandGold,
+          ),
+          _MiniAmountPanel(
+            label: 'Disbursed',
+            value: 'Rs ${formatter.format(totalAmount)}',
+            color: GirviColors.info,
+          ),
+          _MiniAmountPanel(
+            label: remainingAmount < 0 ? 'Over Limit' : 'Remaining',
+            value: 'Rs ${formatter.format(remainingAmount.abs())}',
+            color: remainingColor,
+          ),
+        ];
+        if (compact) {
+          return Column(
+            children: [
+              for (int i = 0; i < tiles.length; i++) ...[
+                if (i > 0) const SizedBox(height: 8),
+                tiles[i],
+              ],
+            ],
+          );
+        }
+        return Row(
+          children: [
+            for (int i = 0; i < tiles.length; i++) ...[
+              if (i > 0) const SizedBox(width: 10),
+              Expanded(child: tiles[i]),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _MiniAmountPanel extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _MiniAmountPanel({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 58,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              color: GirviColors.textMuted,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.manrope(
+              color: color,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PaymentModeSelector extends StatelessWidget {
   final GirviPaymentMode selected;
   final void Function(GirviPaymentMode) onChanged;
@@ -1005,7 +1324,9 @@ class _PaymentModeSelector extends StatelessWidget {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: GirviPaymentMode.values.map((mode) {
+      children: GirviPaymentMode.values
+          .where((mode) => mode != GirviPaymentMode.neft)
+          .map((mode) {
         final isSelected = mode == selected;
         return GestureDetector(
           onTap: () => onChanged(mode),
@@ -1096,6 +1417,43 @@ class _DatePickerField extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _DateDisplayField extends StatelessWidget {
+  final String label;
+  final DateTime date;
+
+  const _DateDisplayField({
+    required this.label,
+    required this.date,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: GirviStyles.fieldLabel),
+        const SizedBox(height: 6),
+        Container(
+          height: GirviStyles.inputHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: GirviStyles.inputNormal,
+          child: Row(children: [
+            const Icon(GirviIcons.dates,
+                color: GirviColors.accentDates, size: 18),
+            const SizedBox(width: 10),
+            Container(width: 1, height: 22, color: GirviColors.cardBorder),
+            const SizedBox(width: 10),
+            Text(
+              DateFormat('dd MMM yyyy').format(date),
+              style: GirviStyles.fieldInput,
+            ),
+          ]),
+        ),
+      ],
     );
   }
 }

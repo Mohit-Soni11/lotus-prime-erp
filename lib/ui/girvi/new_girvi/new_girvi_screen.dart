@@ -63,6 +63,10 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   final _loanAmtCtrl = TextEditingController();
   final _interestCtrl = TextEditingController(text: '5.0');
   final _durationCtrl = TextEditingController(text: '12');
+  final _cashDisbursementCtrl = TextEditingController();
+  final _upiDisbursementCtrl = TextEditingController();
+  final _bankDisbursementCtrl = TextEditingController();
+  final _chequeDisbursementCtrl = TextEditingController();
   final _idProofNoCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
   String? _itemPhotoPath;
@@ -125,6 +129,9 @@ class _NewGirviScreenState extends State<NewGirviScreen>
         .addListener(() => _ctrl.onInterestRateChanged(_interestCtrl.text));
     _durationCtrl
         .addListener(() => _ctrl.onDurationChanged(_durationCtrl.text));
+    for (final c in _disbursementControllers) {
+      c.addListener(_onDisbursementAmountChanged);
+    }
 
     _loanAmtCtrl.addListener(() {
       _ctrl.onLoanAmountChanged(_loanAmtCtrl.text);
@@ -306,6 +313,102 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     setState(() => _itemPhotoPath = path);
   }
 
+  List<TextEditingController> get _disbursementControllers => [
+        _cashDisbursementCtrl,
+        _upiDisbursementCtrl,
+        _bankDisbursementCtrl,
+        _chequeDisbursementCtrl,
+      ];
+
+  TextEditingController _disbursementControllerFor(GirviPaymentMode mode) {
+    switch (mode) {
+      case GirviPaymentMode.cash:
+        return _cashDisbursementCtrl;
+      case GirviPaymentMode.upi:
+        return _upiDisbursementCtrl;
+      case GirviPaymentMode.bankTransfer:
+        return _bankDisbursementCtrl;
+      case GirviPaymentMode.cheque:
+        return _chequeDisbursementCtrl;
+      case GirviPaymentMode.neft:
+        return _bankDisbursementCtrl;
+    }
+  }
+
+  double _parseAmount(TextEditingController controller) {
+    return double.tryParse(controller.text.trim().replaceAll(',', '')) ?? 0.0;
+  }
+
+  double _disbursementAmountFor(GirviPaymentMode mode) =>
+      _parseAmount(_disbursementControllerFor(mode));
+
+  double get _totalDisbursementAmount =>
+      _disbursementControllers.fold(0.0, (sum, c) => sum + _parseAmount(c));
+
+  double get _remainingDisbursementAmount =>
+      (_ctrl.loanAmount - _totalDisbursementAmount);
+
+  String get _disbursementSummaryLabel {
+    final parts = <String>[];
+    for (final mode in _visibleDisbursementModes) {
+      final amount = _disbursementAmountFor(mode);
+      if (amount > 0) {
+        parts.add('${_disbursementModeLabel(mode)} Rs ${_fmt.format(amount)}');
+      }
+    }
+    if (parts.isEmpty) return _ctrl.disbursementMode.displayName;
+    return parts.join(' + ');
+  }
+
+  String _disbursementModeLabel(GirviPaymentMode mode) {
+    switch (mode) {
+      case GirviPaymentMode.cash:
+        return 'Cash';
+      case GirviPaymentMode.upi:
+        return 'UPI';
+      case GirviPaymentMode.bankTransfer:
+        return 'Bank / IMPS';
+      case GirviPaymentMode.cheque:
+        return 'Cheque';
+      case GirviPaymentMode.neft:
+        return 'Bank / IMPS';
+    }
+  }
+
+  List<GirviPaymentMode> get _visibleDisbursementModes => const [
+        GirviPaymentMode.cash,
+        GirviPaymentMode.upi,
+        GirviPaymentMode.bankTransfer,
+        GirviPaymentMode.cheque,
+      ];
+
+  void _onDisbursementAmountChanged() {
+    _syncPrimaryDisbursementMode();
+    if (mounted) setState(() {});
+  }
+
+  void _syncPrimaryDisbursementMode() {
+    for (final mode in _visibleDisbursementModes) {
+      if (_disbursementAmountFor(mode) > 0) {
+        if (_ctrl.disbursementMode != mode) _ctrl.setDisbursementMode(mode);
+        return;
+      }
+    }
+  }
+
+  void _activateDisbursementMode(GirviPaymentMode mode) {
+    final controller = _disbursementControllerFor(mode);
+    if (_parseAmount(controller) <= 0 && _ctrl.loanAmount > 0) {
+      final remaining = _remainingDisbursementAmount;
+      final fill = remaining > 0
+          ? remaining
+          : (_totalDisbursementAmount <= 0 ? _ctrl.loanAmount : 0.0);
+      if (fill > 0) controller.text = fill.toStringAsFixed(2);
+    }
+    _ctrl.setDisbursementMode(mode);
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
     _ctrl.removeListener(_onControllerUpdate);
@@ -323,6 +426,10 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       _loanAmtCtrl,
       _interestCtrl,
       _durationCtrl,
+      _cashDisbursementCtrl,
+      _upiDisbursementCtrl,
+      _bankDisbursementCtrl,
+      _chequeDisbursementCtrl,
       _idProofNoCtrl,
       _notesCtrl,
     ]) {
