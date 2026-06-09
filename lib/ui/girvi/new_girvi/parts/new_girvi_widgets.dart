@@ -4,6 +4,243 @@ part of '../new_girvi_screen.dart';
 // HELPER WIDGETS (private to this file)
 // =============================================================================
 
+class _KycPhotoCard extends StatelessWidget {
+  final bool enabled;
+  final String? documentName;
+  final String? photoPath;
+  final VoidCallback onCamera;
+  final VoidCallback onGallery;
+  final VoidCallback onPreview;
+  final VoidCallback onRemove;
+
+  const _KycPhotoCard({
+    required this.enabled,
+    required this.documentName,
+    required this.photoPath,
+    required this.onCamera,
+    required this.onGallery,
+    required this.onPreview,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final path = photoPath;
+    final hasPhoto = path != null && path.isNotEmpty && File(path).existsSync();
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: enabled ? GirviColors.inputBg : GirviColors.inputBgLocked,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: hasPhoto
+              ? GirviColors.success.withValues(alpha: 0.45)
+              : GirviColors.cardBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: enabled
+                      ? GirviColors.brandGoldLight
+                      : GirviColors.cardBorder.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(
+                  hasPhoto
+                      ? Icons.verified_rounded
+                      : Icons.document_scanner_outlined,
+                  color: hasPhoto
+                      ? GirviColors.success
+                      : enabled
+                          ? GirviColors.brandGold
+                          : GirviColors.textHint,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Document Photo',
+                      style: GoogleFonts.manrope(
+                        color: GirviColors.textDark,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Text(
+                      !enabled
+                          ? 'Available after selecting an ID'
+                          : hasPhoto
+                              ? '${documentName ?? 'KYC'} attached'
+                              : 'Camera or gallery',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GirviStyles.caption.copyWith(fontSize: 10.5),
+                    ),
+                  ],
+                ),
+              ),
+              if (hasPhoto)
+                IconButton(
+                  tooltip: 'Remove photo',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onRemove,
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: GirviColors.danger,
+                    size: 19,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: hasPhoto ? onPreview : null,
+            child: Container(
+              height: 104,
+              width: double.infinity,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: GirviColors.cardBg,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: GirviColors.cardBorder),
+              ),
+              child: hasPhoto
+                  ? Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.file(File(path), fit: BoxFit.cover),
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: Container(
+                            margin: const EdgeInsets.all(7),
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color:
+                                  GirviColors.shellBg.withValues(alpha: 0.78),
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                            child: const Icon(
+                              Icons.open_in_full_rounded,
+                              color: Colors.white,
+                              size: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          enabled
+                              ? Icons.add_a_photo_outlined
+                              : Icons.lock_outline_rounded,
+                          color: enabled
+                              ? GirviColors.brandGold
+                              : GirviColors.textHint,
+                          size: 25,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          enabled
+                              ? 'Attach a clear photo of the card'
+                              : 'Select an identity document first',
+                          style: GirviStyles.caption.copyWith(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _KycPhotoButton(
+                  icon: Icons.camera_alt_outlined,
+                  label: hasPhoto ? 'Retake' : 'Camera',
+                  enabled: enabled,
+                  onTap: onCamera,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _KycPhotoButton(
+                  icon: Icons.photo_library_outlined,
+                  label: 'Gallery',
+                  enabled: enabled,
+                  onTap: onGallery,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _KycPhotoButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _KycPhotoButton({
+    required this.icon,
+    required this.label,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 38,
+      child: OutlinedButton.icon(
+        onPressed: enabled ? onTap : null,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: GirviColors.brandDeep,
+          side: BorderSide(
+            color: enabled
+                ? GirviColors.brandGold.withValues(alpha: 0.5)
+                : GirviColors.cardBorder,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(9),
+          ),
+        ),
+        icon: Icon(icon, size: 16),
+        label: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _PledgedItemHeader extends StatelessWidget {
   final String? photoPath;
   final VoidCallback onPickPhoto;

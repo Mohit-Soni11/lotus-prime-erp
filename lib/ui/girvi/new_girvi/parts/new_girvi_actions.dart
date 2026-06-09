@@ -40,6 +40,7 @@ extension NewGirviActions on _NewGirviScreenState {
       itemPhotoPath: _itemPhotoPath,
       invoiceGenerated: generateInvoice,
       idProofNumber: _ctrl.idProofType == null ? null : _idProofNoCtrl.text,
+      idProofImagePath: _ctrl.idProofType == null ? null : _idProofImagePath,
       notes: _notesCtrl.text,
     );
 
@@ -81,6 +82,7 @@ extension NewGirviActions on _NewGirviScreenState {
       c.clear();
     }
     _itemPhotoPath = null;
+    _idProofImagePath = null;
     _interestCtrl.text = '5.0';
     _durationCtrl.text = '12';
     await _ctrl.resetForm();
@@ -150,6 +152,140 @@ extension NewGirviActions on _NewGirviScreenState {
           _ctrl.selectCustomer(customer);
           Navigator.pop(context);
         },
+      ),
+    );
+  }
+
+  Future<void> _pickKycPhotoFromGallery() async {
+    if (_ctrl.idProofType == null) {
+      _showError('Select a KYC document before attaching its photo.');
+      return;
+    }
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      dialogTitle: 'Select KYC Document Photo',
+    );
+    final path = result?.files.single.path;
+    if (path == null || path.isEmpty || !mounted) return;
+    await _saveKycPhoto(path);
+  }
+
+  Future<void> _captureKycPhoto() async {
+    if (_ctrl.idProofType == null) {
+      _showError('Select a KYC document before taking its photo.');
+      return;
+    }
+
+    final path = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _KycCameraDialog(),
+    );
+    if (path == null || path.isEmpty || !mounted) return;
+    await _saveKycPhoto(path);
+  }
+
+  Future<void> _saveKycPhoto(String sourcePath) async {
+    try {
+      final source = File(sourcePath);
+      if (!source.existsSync()) {
+        _showError('Selected KYC photo could not be found.');
+        return;
+      }
+
+      final appDir = await getApplicationDocumentsDirectory();
+      final photoDir =
+          Directory(p.join(appDir.path, 'lotus_erp', 'girvi_kyc_photos'));
+      if (!photoDir.existsSync()) {
+        photoDir.createSync(recursive: true);
+      }
+
+      final safeTicket = _ctrl.ticketNo
+          .replaceAll(RegExp(r'[^A-Za-z0-9_-]+'), '_')
+          .replaceAll(RegExp(r'_+'), '_');
+      final extension =
+          p.extension(sourcePath).isEmpty ? '.jpg' : p.extension(sourcePath);
+      final savedPath = p.join(
+        photoDir.path,
+        '${safeTicket}_kyc_${DateTime.now().millisecondsSinceEpoch}$extension',
+      );
+      await source.copy(savedPath);
+
+      if (!mounted) return;
+      _setIdProofImagePath(savedPath);
+    } catch (e) {
+      debugPrint('NewGirviScreen._saveKycPhoto error: $e');
+      if (mounted) {
+        _showError('KYC photo could not be attached. Please try again.');
+      }
+    }
+  }
+
+  void _removeKycPhoto() {
+    _setIdProofImagePath(null);
+  }
+
+  void _showKycPhotoPreview() {
+    final path = _idProofImagePath;
+    if (path == null || path.isEmpty || !File(path).existsSync()) return;
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(28),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 760, maxHeight: 640),
+          decoration: BoxDecoration(
+            color: GirviColors.cardBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: GirviColors.cardBorder),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 12, 10, 10),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.badge_outlined,
+                      color: GirviColors.brandGold,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '${_ctrl.idProofType?.displayName ?? 'KYC'} photo',
+                        style: GoogleFonts.manrope(
+                          color: GirviColors.textDark,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Close',
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: GirviColors.divider),
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(File(path), fit: BoxFit.contain),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -292,6 +292,7 @@ class NewGirviController extends ChangeNotifier {
     required String? itemPhotoPath,
     required bool invoiceGenerated,
     required String? idProofNumber,
+    required String? idProofImagePath,
     required String? notes,
   }) async {
     if (!hasCustomer) {
@@ -344,6 +345,11 @@ class NewGirviController extends ChangeNotifier {
         idProofNumber: drift.Value(idProofNumber?.trim().isEmpty == true
             ? null
             : idProofNumber?.trim()),
+        idProofImagePath: drift.Value(
+          idProofImagePath?.trim().isEmpty == true
+              ? null
+              : idProofImagePath?.trim(),
+        ),
         notes:
             drift.Value(notes?.trim().isEmpty == true ? null : notes?.trim()),
       );

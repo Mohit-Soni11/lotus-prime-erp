@@ -13,6 +13,7 @@ import 'dart:io';
 //               Staggered animations, ListenableBuilder, zero setState.
 // =============================================================================
 
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
@@ -34,6 +35,7 @@ import '../shared/girvi_shared_widgets.dart';
 import '../shared/select_customer_dialog.dart';
 
 part 'parts/new_girvi_actions.dart';
+part 'parts/new_girvi_kyc_camera.dart';
 part 'parts/new_girvi_layout.dart';
 part 'parts/new_girvi_pledged_items.dart';
 part 'parts/new_girvi_sections.dart';
@@ -70,6 +72,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   final _idProofNoCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
   String? _itemPhotoPath;
+  String? _idProofImagePath;
   late final List<_PledgedItemDraft> _pledgedItems;
 
   // â”€â”€ Focus Nodes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -311,6 +314,11 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   void _setItemPhotoPath(String? path) {
     if (!mounted) return;
     setState(() => _itemPhotoPath = path);
+  }
+
+  void _setIdProofImagePath(String? path) {
+    if (!mounted) return;
+    setState(() => _idProofImagePath = path);
   }
 
   List<TextEditingController> get _disbursementControllers => [

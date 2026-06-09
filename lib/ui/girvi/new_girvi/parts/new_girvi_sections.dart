@@ -431,71 +431,134 @@ extension NewGirviSections on _NewGirviScreenState {
   Widget _buildSection7KYC() {
     return GirviSectionCard(
       icon: GirviIcons.kyc,
-      title: 'Optional KYC Document',
-      subtitle: 'Record identity proof only when required for this customer.',
+      title: 'Customer KYC',
+      subtitle: 'Identity proof details and document photo (optional).',
       accent: GirviColors.brandGold,
       showAccentBorder: false,
-      child: Column(children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: GirviColors.brandGold.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: GirviColors.brandGold.withValues(alpha: 0.22),
-            ),
-          ),
-          child: Row(children: [
-            const Icon(
-              Icons.privacy_tip_outlined,
-              color: GirviColors.brandGold,
-              size: 18,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'KYC is optional for this entry. Select a document only when you want to record customer identity proof.',
-                style: GoogleFonts.inter(
-                  color: GirviColors.textDark,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  height: 1.35,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final details = Column(
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+                decoration: BoxDecoration(
+                  color: GirviColors.brandGold.withValues(alpha: 0.055),
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(
+                    color: GirviColors.brandGold.withValues(alpha: 0.18),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.verified_user_outlined,
+                      color: GirviColors.brandGold,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Select an ID, enter its number and attach a clear card photo.',
+                        style: GoogleFonts.inter(
+                          color: GirviColors.textBody,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: GirviColors.cardBg,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: GirviColors.cardBorder),
+                      ),
+                      child: Text(
+                        'OPTIONAL',
+                        style: GoogleFonts.inter(
+                          color: GirviColors.textMuted,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ]),
-        ),
-        const SizedBox(height: 14),
-        GirviDropdown<GirviIdProofType?>(
-          label: 'KYC Document',
-          icon: GirviIcons.kyc,
-          value: _ctrl.idProofType,
-          items: [
-            const DropdownMenuItem(
-              value: null,
-              child: Text('No KYC Document Required'),
-            ),
-            ...GirviIdProofType.values.map((e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(e.displayName),
-                )),
-          ],
-          onChanged: (value) {
-            _ctrl.setIdProofType(value);
-            if (value == null) _idProofNoCtrl.clear();
-          },
-        ),
-        const SizedBox(height: 14),
-        GirviInputField(
-          label: 'Document Number',
-          hint: 'Enter selected document number',
-          icon: GirviIcons.kyc,
-          controller: _idProofNoCtrl,
-          focusNode: _idProofNoFocus,
-          enabled: _ctrl.idProofType != null,
-          keyboardType: TextInputType.text,
-        ),
-      ]),
+              const SizedBox(height: 12),
+              GirviDropdown<GirviIdProofType?>(
+                label: 'Identity Document',
+                icon: GirviIcons.kyc,
+                value: _ctrl.idProofType,
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('Skip KYC for this ticket'),
+                  ),
+                  ...GirviIdProofType.values.map(
+                    (e) => DropdownMenuItem(
+                      value: e,
+                      child: Text(e.displayName),
+                    ),
+                  ),
+                ],
+                onChanged: (value) {
+                  _ctrl.setIdProofType(value);
+                  if (value == null) {
+                    _idProofNoCtrl.clear();
+                    _setIdProofImagePath(null);
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              GirviInputField(
+                label: 'Document Number',
+                hint: _ctrl.idProofType == null
+                    ? 'Select a document first'
+                    : 'Enter ${_ctrl.idProofType!.displayName} number',
+                icon: Icons.pin_outlined,
+                controller: _idProofNoCtrl,
+                focusNode: _idProofNoFocus,
+                enabled: _ctrl.idProofType != null,
+                keyboardType: TextInputType.text,
+              ),
+            ],
+          );
+          final photo = _KycPhotoCard(
+            enabled: _ctrl.idProofType != null,
+            documentName: _ctrl.idProofType?.displayName,
+            photoPath: _idProofImagePath,
+            onCamera: _captureKycPhoto,
+            onGallery: _pickKycPhotoFromGallery,
+            onPreview: _showKycPhotoPreview,
+            onRemove: _removeKycPhoto,
+          );
+
+          if (constraints.maxWidth < 760) {
+            return Column(
+              children: [
+                details,
+                const SizedBox(height: 12),
+                photo,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 7, child: details),
+              const SizedBox(width: 14),
+              Expanded(flex: 5, child: photo),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -513,7 +576,8 @@ extension NewGirviSections on _NewGirviScreenState {
         hint: 'Add any internal remark, customer instruction or handling note.',
         icon: GirviIcons.notes,
         controller: _notesCtrl,
-        maxLines: 3,
+        minLines: 1,
+        maxLines: 5,
         keyboardType: TextInputType.multiline,
       ),
     );

@@ -388,6 +388,7 @@ class GirviInputField extends StatefulWidget {
   final TextEditingController? controller;
   final FocusNode? focusNode;
   final FocusNode? nextFocus;
+  final int? minLines;
   final int maxLines;
   final bool enabled;
   final String? prefixText;
@@ -406,6 +407,7 @@ class GirviInputField extends StatefulWidget {
     this.controller,
     this.focusNode,
     this.nextFocus,
+    this.minLines,
     this.maxLines = 1,
     this.enabled = true,
     this.prefixText,
@@ -457,6 +459,8 @@ class _GirviInputFieldState extends State<GirviInputField> {
 
   @override
   Widget build(BuildContext context) {
+    final acceptsNewlines =
+        widget.keyboardType == TextInputType.multiline && widget.maxLines > 1;
     final hasContent = widget.controller?.text.isNotEmpty ?? false;
     final iconColor = _focused
         ? GirviColors.brandGold
@@ -472,8 +476,14 @@ class _GirviInputFieldState extends State<GirviInputField> {
         AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           height: widget.maxLines > 1 ? null : GirviStyles.inputHeight,
+          constraints: acceptsNewlines
+              ? const BoxConstraints(minHeight: GirviStyles.inputHeight)
+              : null,
           decoration: _dec,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          padding: EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: acceptsNewlines ? 7 : 0,
+          ),
           child: Row(children: [
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
@@ -491,6 +501,7 @@ class _GirviInputFieldState extends State<GirviInputField> {
               child: TextFormField(
                 controller: widget.controller,
                 focusNode: widget.focusNode,
+                minLines: widget.minLines,
                 maxLines: widget.maxLines,
                 enabled: widget.enabled,
                 keyboardType: widget.keyboardType,
@@ -498,16 +509,21 @@ class _GirviInputFieldState extends State<GirviInputField> {
                 validator: widget.validator,
                 onChanged: widget.onChanged,
                 style: GirviStyles.fieldInput,
-                textInputAction: widget.nextFocus != null
-                    ? TextInputAction.next
-                    : TextInputAction.done,
+                textAlignVertical: TextAlignVertical.center,
+                textInputAction: acceptsNewlines
+                    ? TextInputAction.newline
+                    : widget.nextFocus != null
+                        ? TextInputAction.next
+                        : TextInputAction.done,
                 onFieldSubmitted: (_) {
-                  if (widget.nextFocus != null) {
+                  if (!acceptsNewlines && widget.nextFocus != null) {
                     FocusScope.of(context).requestFocus(widget.nextFocus);
                   }
                 },
                 decoration: InputDecoration(
                   border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   hintText: widget.hint,
                   hintStyle: GirviStyles.fieldHint,
                   counterText: '',
