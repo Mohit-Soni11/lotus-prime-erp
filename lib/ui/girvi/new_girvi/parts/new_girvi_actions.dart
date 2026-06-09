@@ -6,6 +6,10 @@ extension NewGirviActions on _NewGirviScreenState {
   Future<void> _onSave({bool generateInvoice = false}) async {
     FocusScope.of(context).unfocus();
     _syncPledgedItemsToController();
+    if (_pledgedItems.isEmpty) {
+      _showError('Please add at least one pledged item before saving.');
+      return;
+    }
     if (!(_formKey.currentState?.validate() ?? false)) {
       _showError('Please fix the errors above before saving.');
       return;
@@ -380,6 +384,7 @@ extension NewGirviActions on _NewGirviScreenState {
               'Gross',
               'Less',
               'Net',
+              'Fine',
               'HUID',
               'Value',
             ],
@@ -395,6 +400,7 @@ extension NewGirviActions on _NewGirviScreenState {
                 '${item.grossWeight.toStringAsFixed(3)} g',
                 '${item.lessWeight.toStringAsFixed(3)} g',
                 '${item.netWeight.toStringAsFixed(3)} g',
+                '${item.fineWeight.toStringAsFixed(3)} g',
                 huid.isEmpty ? '-' : huid,
                 amount(item.itemValue),
               ];

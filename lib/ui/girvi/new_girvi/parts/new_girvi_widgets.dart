@@ -393,6 +393,14 @@ class _TicketActionButton extends StatefulWidget {
 class _TicketActionButtonState extends State<_TicketActionButton> {
   bool _hovered = false;
 
+  void _setHovered(bool value) {
+    if (_hovered == value) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _hovered == value) return;
+      setState(() => _hovered = value);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final enabled = widget.onTap != null;
@@ -403,8 +411,8 @@ class _TicketActionButtonState extends State<_TicketActionButton> {
 
     return MouseRegion(
       cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
+      onEnter: (_) => _setHovered(true),
+      onExit: (_) => _setHovered(false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(

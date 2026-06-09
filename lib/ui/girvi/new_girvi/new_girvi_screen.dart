@@ -94,7 +94,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     _ctrl = NewGirviController(_db);
     _dateLogic = DateCardLogic();
     _dateLogic.init();
-    _pledgedItems = [_createPledgedItemDraft(1)];
+    _pledgedItems = [];
 
     _sectionAnim = List.generate(
         _sectionCount,
@@ -148,14 +148,20 @@ class _NewGirviScreenState extends State<NewGirviScreen>
 
   void _addPledgedItem() {
     if (!mounted) return;
+    late final _PledgedItemDraft item;
     setState(() {
-      _pledgedItems.add(_createPledgedItemDraft(_pledgedItems.length + 1));
+      item = _createPledgedItemDraft(_pledgedItems.length + 1);
+      _pledgedItems.add(item);
     });
     _syncPledgedItemsToController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      item.descriptionFocus.requestFocus();
+    });
   }
 
   void _removePledgedItem(_PledgedItemDraft item) {
-    if (_pledgedItems.length <= 1 || !mounted) return;
+    if (!mounted) return;
     setState(() {
       _pledgedItems.remove(item);
       for (var i = 0; i < _pledgedItems.length; i++) {
@@ -176,15 +182,25 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     for (final item in _pledgedItems) {
       item.dispose();
     }
-    _pledgedItems
-      ..clear()
-      ..add(_createPledgedItemDraft(1));
+    _pledgedItems.clear();
     _syncPledgedItemsToController();
     if (mounted) setState(() {});
   }
 
   void _syncPledgedItemsToController() {
-    if (_pledgedItems.isEmpty) return;
+    if (_pledgedItems.isEmpty) {
+      _setControllerTextIfChanged(_grossWtCtrl, '');
+      _setControllerTextIfChanged(_stoneWtCtrl, '');
+      _setControllerTextIfChanged(_rateCtrl, '');
+      _setControllerTextIfChanged(_loanAmtCtrl, '');
+      _setControllerTextIfChanged(_itemDescCtrl, '');
+      _setControllerTextIfChanged(_huidCtrl, '');
+      _itemPhotoPath = null;
+      if (_ctrl.itemCount != 1) {
+        _ctrl.setItemCount(1);
+      }
+      return;
+    }
 
     final totalGross =
         _pledgedItems.fold<double>(0, (sum, item) => sum + item.grossWeight);
@@ -243,6 +259,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
         '#${item.serialNo} $title | ${item.metalType.displayName} | '
         '${item.purityLabel} | ${item.itemCount} pcs | '
         'Net ${item.netWeight.toStringAsFixed(3)} g | '
+        'Fine ${item.fineWeight.toStringAsFixed(3)} g | '
         'Value Rs ${_fmt.format(item.itemValue)}',
       );
     }
@@ -322,84 +339,95 @@ class _NewGirviScreenState extends State<NewGirviScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: GirviColors.bodyBg,
-      // NAYA APP BAR CALL YAHAN HAI
-      appBar: NewGirviAppBar(
-        onBack: () => Navigator.pop(context),
-      ),
-      body: ListenableBuilder(
-        listenable: _ctrl,
-        builder: (context, _) {
-          return Form(
-            key: _formKey,
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                // â”€â”€ Ticket Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                SliverToBoxAdapter(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final wide = constraints.maxWidth >= 1120;
-                      return wide ? const SizedBox.shrink() : _buildHeaderRow();
-                    },
-                  ),
-                ),
-
-                // â”€â”€ Error Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                if (_ctrl.errorMessage != null)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                      child: GirviErrorBanner(message: _ctrl.errorMessage!),
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.f2): _addPledgedItem,
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          backgroundColor: GirviColors.bodyBg,
+          // NAYA APP BAR CALL YAHAN HAI
+          appBar: NewGirviAppBar(
+            onBack: () => Navigator.pop(context),
+          ),
+          body: ListenableBuilder(
+            listenable: _ctrl,
+            builder: (context, _) {
+              return Form(
+                key: _formKey,
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    // â”€â”€ Ticket Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                    SliverToBoxAdapter(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final wide = constraints.maxWidth >= 1120;
+                          return wide
+                              ? const SizedBox.shrink()
+                              : _buildHeaderRow();
+                        },
+                      ),
                     ),
-                  ),
 
-                // â”€â”€ Sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final wide = constraints.maxWidth >= 1120;
-                        if (!wide) {
-                          return Column(
-                            children: [
-                              _buildMainEntryColumn(),
-                              const SizedBox(height: 16),
-                              _buildTicketSummaryPanel(),
-                            ],
-                          );
-                        }
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 70,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                    // â”€â”€ Error Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                    if (_ctrl.errorMessage != null)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                          child: GirviErrorBanner(message: _ctrl.errorMessage!),
+                        ),
+                      ),
+
+                    // â”€â”€ Sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final wide = constraints.maxWidth >= 1120;
+                            if (!wide) {
+                              return Column(
                                 children: [
-                                  _buildHeaderDeck(),
-                                  const SizedBox(height: 16),
                                   _buildMainEntryColumn(),
+                                  const SizedBox(height: 16),
+                                  _buildTicketSummaryPanel(),
                                 ],
-                              ),
-                            ),
-                            const SizedBox(width: 18),
-                            Expanded(
-                              flex: 30,
-                              child: _buildTicketSummaryPanel(),
-                            ),
-                          ],
-                        );
-                      },
+                              );
+                            }
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  flex: 70,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      _buildHeaderDeck(),
+                                      const SizedBox(height: 16),
+                                      _buildMainEntryColumn(),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 18),
+                                Expanded(
+                                  flex: 30,
+                                  child: _buildTicketSummaryPanel(),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          );
-        },
+              );
+            },
+          ),
+        ),
       ),
 
       // â”€â”€ Bottom Action Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
