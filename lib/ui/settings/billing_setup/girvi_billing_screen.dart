@@ -292,31 +292,23 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
                   const SizedBox(height: 20),
 
                   // â”€â”€ Section 4: Terms & Print â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                  _SectionCard(
+                  const _SectionCard(
                     title: 'Invoice Item Display',
-                    subtitle:
-                        'Choose which Girvi details appear on customer invoices',
+                    subtitle: 'Fixed customer-safe Girvi invoice format',
                     icon: Icons.view_column_outlined,
                     accent: BillingSetupColors.girviBrand,
-                    children: [
-                      _GirviInvoiceDisplayEditor(
-                        model: _model,
-                        onChanged: (updated) =>
-                            setState(() => _model = updated),
-                      ),
-                    ],
+                    children: [_GirviCustomerInvoiceFormat()],
                   ),
                   const SizedBox(height: 20),
                   _SectionCard(
-                    title: 'Terms & Print',
-                    subtitle:
-                        'Customer-facing text printed on every pledge ticket',
+                    title: 'Terms & Operations',
+                    subtitle: 'Saved for internal notices and Girvi operations',
                     icon: Icons.article_outlined,
                     accent: BillingSetupColors.grvTerms,
                     children: [
                       _InputField(
                         label: 'Terms & Conditions',
-                        hint: 'Enter terms printed on pledge tickets...',
+                        hint: 'Enter internal Girvi terms...',
                         ctrl: _termsCtrl,
                         accent: BillingSetupColors.grvTerms,
                         maxLines: 4,
@@ -324,30 +316,10 @@ class _GirviBillingScreenState extends State<GirviBillingScreen> {
                       const SizedBox(height: 14),
                       _InputField(
                         label: 'Footer Message',
-                        hint:
-                            'e.g. Please repay on time and keep this ticket safe.',
+                        hint: 'Optional internal note...',
                         ctrl: _footerCtrl,
                         accent: BillingSetupColors.grvTerms,
                         maxLines: 2,
-                      ),
-                      const SizedBox(height: 14),
-                      _PrintContentToggle(
-                        title: 'Print Terms & Conditions',
-                        subtitle:
-                            'Include saved Girvi terms on customer invoices',
-                        value: _model.printTermsAndConditions,
-                        accent: BillingSetupColors.grvTerms,
-                        onChanged: (value) => setState(() => _model =
-                            _model.copyWith(printTermsAndConditions: value)),
-                      ),
-                      const SizedBox(height: 10),
-                      _PrintContentToggle(
-                        title: 'Print Footer Message',
-                        subtitle: 'Include footer text below the signatures',
-                        value: _model.printFooterMessage,
-                        accent: BillingSetupColors.grvTerms,
-                        onChanged: (value) => setState(() => _model =
-                            _model.copyWith(printFooterMessage: value)),
                       ),
                       const SizedBox(height: 10),
                       // Auto Print toggle
@@ -517,7 +489,7 @@ class _GirviIntroPanel extends StatelessWidget {
                 accent: accent,
               ),
               _SummaryPill(
-                label: '$invoiceFieldCount invoice fields',
+                label: '$invoiceFieldCount fixed columns',
                 icon: Icons.view_column_outlined,
                 accent: accent,
               ),
@@ -553,6 +525,95 @@ class _GirviIntroPanel extends StatelessWidget {
   }
 }
 
+class _GirviCustomerInvoiceFormat extends StatelessWidget {
+  const _GirviCustomerInvoiceFormat();
+
+  static const _items = <(IconData, String, String)>[
+    (
+      Icons.view_column_outlined,
+      '9 fixed item columns',
+      'S/N, Metal, Item, Pcs, HUID, Purity, Gross, Less and Net',
+    ),
+    (
+      Icons.percent_rounded,
+      'Loan details',
+      'Loan amount and monthly interest percentage only',
+    ),
+    (
+      Icons.photo_camera_outlined,
+      'Item photos',
+      'Attached pledged-item photos are included automatically',
+    ),
+    (
+      Icons.visibility_off_outlined,
+      'Internal valuation protected',
+      'Valuation purity, fine weight, rate and value never print',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: _items
+          .map(
+            (item) => Container(
+              width: 330,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: BillingSetupColors.girviBrand.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(11),
+                border: Border.all(
+                  color: BillingSetupColors.girviBrand.withValues(alpha: 0.16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    item.$1,
+                    color: BillingSetupColors.girviBrand,
+                    size: 19,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.$2,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF374151),
+                          ),
+                        ),
+                        Text(
+                          item.$3,
+                          style: GoogleFonts.inter(
+                            fontSize: 9.5,
+                            color: const Color(0xFF9CA3AF),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.lock_outline_rounded,
+                    color: BillingSetupColors.girviBrand,
+                    size: 17,
+                  ),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+// Legacy editor retained so older setup code remains source-compatible.
+// ignore: unused_element
 class _GirviInvoiceDisplayEditor extends StatelessWidget {
   const _GirviInvoiceDisplayEditor({
     required this.model,
@@ -751,6 +812,7 @@ class _GirviDisplayOption {
   final ValueChanged<bool> onChanged;
 }
 
+// ignore: unused_element
 class _PrintContentToggle extends StatelessWidget {
   const _PrintContentToggle({
     required this.title,

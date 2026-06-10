@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';

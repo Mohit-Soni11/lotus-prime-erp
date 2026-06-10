@@ -18,6 +18,21 @@ void main() {
     await db.close();
   });
 
+  test('Customer print defaults keep valuation details private', () {
+    final settings = GirviBillingModel.defaults;
+
+    expect(settings.visibleInvoiceFieldCount, 9);
+    expect(settings.showItemPhotos, isTrue);
+    expect(settings.showValuationPurity, isFalse);
+    expect(settings.showFineWeight, isFalse);
+    expect(settings.showRate, isFalse);
+    expect(settings.showTotalValue, isFalse);
+    expect(settings.showKycDetails, isFalse);
+    expect(settings.showDisbursementDetails, isFalse);
+    expect(settings.printTermsAndConditions, isFalse);
+    expect(settings.printFooterMessage, isFalse);
+  });
+
   test('Girvi billing invoice preferences persist with existing table',
       () async {
     final settings = GirviBillingModel.defaults.copyWith(

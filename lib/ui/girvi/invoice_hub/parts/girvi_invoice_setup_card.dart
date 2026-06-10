@@ -1,115 +1,11 @@
 part of '../girvi_invoice_hub_screen.dart';
 
 extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
-  static const _fieldOptions = <_GirviInvoiceFieldOption>[
-    _GirviInvoiceFieldOption(
-      key: 'metal',
-      title: 'Metal',
-      subtitle: 'Gold, silver or other metal',
-      icon: Icons.category_outlined,
-      group: 'Item Identity',
-    ),
-    _GirviInvoiceFieldOption(
-      key: 'pieces',
-      title: 'Pieces',
-      subtitle: 'Pledged item quantity',
-      icon: Icons.numbers_rounded,
-      group: 'Item Identity',
-    ),
-    _GirviInvoiceFieldOption(
-      key: 'huid',
-      title: 'HUID',
-      subtitle: 'Hallmark identification number',
-      icon: Icons.fingerprint_rounded,
-      group: 'Item Identity',
-    ),
-    _GirviInvoiceFieldOption(
-      key: 'purity',
-      title: 'Entered Purity',
-      subtitle: 'Purity recorded at item entry',
-      icon: Icons.diamond_outlined,
-      group: 'Item Identity',
-    ),
-    _GirviInvoiceFieldOption(
-      key: 'gross',
-      title: 'Gross Weight',
-      subtitle: 'Total item weight',
-      icon: Icons.scale_outlined,
-      group: 'Weight & Valuation',
-    ),
-    _GirviInvoiceFieldOption(
-      key: 'less',
-      title: 'Less Weight',
-      subtitle: 'Stone and non-metal deduction',
-      icon: Icons.remove_circle_outline_rounded,
-      group: 'Weight & Valuation',
-    ),
-    _GirviInvoiceFieldOption(
-      key: 'net',
-      title: 'Net Weight',
-      subtitle: 'Gross minus deductions',
-      icon: Icons.balance_outlined,
-      group: 'Weight & Valuation',
-    ),
-    _GirviInvoiceFieldOption(
-      key: 'valuationPurity',
-      title: 'Valuation Purity',
-      subtitle: 'Purity used for loan valuation',
-      icon: Icons.verified_outlined,
-      group: 'Weight & Valuation',
-    ),
-    _GirviInvoiceFieldOption(
-      key: 'fine',
-      title: 'Fine Weight',
-      subtitle: 'Purity-adjusted metal weight',
-      icon: Icons.monitor_weight_outlined,
-      group: 'Weight & Valuation',
-    ),
-    _GirviInvoiceFieldOption(
-      key: 'rate',
-      title: 'Rate / Gram',
-      subtitle: 'Valuation rate used',
-      icon: Icons.trending_up_rounded,
-      group: 'Weight & Valuation',
-    ),
-    _GirviInvoiceFieldOption(
-      key: 'value',
-      title: 'Item Value',
-      subtitle: 'Calculated pledged item value',
-      icon: Icons.payments_outlined,
-      group: 'Weight & Valuation',
-    ),
-    _GirviInvoiceFieldOption(
-      key: 'photos',
-      title: 'Item Photos',
-      subtitle: 'Print attached pledged item photos',
-      icon: Icons.photo_camera_outlined,
-      group: 'Supporting Details',
-    ),
-    _GirviInvoiceFieldOption(
-      key: 'kyc',
-      title: 'KYC Details',
-      subtitle: 'Print proof type and number',
-      icon: Icons.badge_outlined,
-      group: 'Supporting Details',
-    ),
-    _GirviInvoiceFieldOption(
-      key: 'payment',
-      title: 'Disbursement Details',
-      subtitle: 'Print Cash, UPI, Bank or Cheque split',
-      icon: Icons.account_balance_wallet_outlined,
-      group: 'Supporting Details',
-    ),
-  ];
-
   Widget _buildInvoiceSetupCard() {
-    final settings = _controller.invoiceSettings;
-    final copyEnabled =
-        settings.printTermsAndConditions || settings.printFooterMessage;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _panelLabel('GIRVI BILLING SETUP'),
+        _panelLabel('CUSTOMER PRINT FORMAT'),
         const SizedBox(height: 10),
         Container(
           decoration: BoxDecoration(
@@ -133,7 +29,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
                         borderRadius: BorderRadius.circular(9),
                       ),
                       child: const Icon(
-                        Icons.tune_rounded,
+                        Icons.receipt_long_outlined,
                         color: GirviColors.brandGold,
                         size: 18,
                       ),
@@ -144,7 +40,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Girvi Invoice Setup',
+                            'Fixed Girvi Customer Copy',
                             style: GoogleFonts.inter(
                               color: GirviColors.shellTextTitle,
                               fontSize: 12.5,
@@ -152,7 +48,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
                             ),
                           ),
                           Text(
-                            '${settings.visibleInvoiceFieldCount} saved fields active',
+                            'Customer-safe format linked with Girvi billing',
                             style: GoogleFonts.inter(
                               color: GirviColors.shellTextMuted,
                               fontSize: 9.5,
@@ -161,69 +57,36 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
                         ],
                       ),
                     ),
-                    _setupStatusPill('SAVED SETUP'),
+                    _setupStatusPill('LOCKED'),
                   ],
                 ),
               ),
               const Divider(color: GirviColors.shellBorder, height: 1),
-              _setupActionRow(
-                icon: Icons.settings_backup_restore_rounded,
-                title: 'Use Saved Setup',
-                subtitle: 'Reload settings from Girvi Billing',
-                action: 'Apply',
-                onPressed: _controller.restoreSavedSetup,
+              _fixedFormatRow(
+                icon: Icons.view_column_outlined,
+                title: '9 Fixed Item Columns',
+                subtitle:
+                    'S/N, Metal, Item, Pcs, HUID, Purity, Gross, Less and Net',
               ),
               const Divider(color: GirviColors.shellBorder, height: 1),
-              _setupActionRow(
-                icon: Icons.dashboard_customize_outlined,
-                title: 'Invoice Fields',
-                subtitle: 'Choose item and supporting details',
-                action: 'Edit',
-                onPressed: _showGirviFieldSelector,
+              _fixedFormatRow(
+                icon: Icons.percent_rounded,
+                title: 'Loan Details',
+                subtitle: 'Loan amount and monthly interest percentage only',
               ),
               const Divider(color: GirviColors.shellBorder, height: 1),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.article_outlined,
-                      color: GirviColors.brandGold,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Print Saved Copy',
-                            style: GoogleFonts.inter(
-                              color: GirviColors.shellTextTitle,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          Text(
-                            copyEnabled
-                                ? 'Terms and footer are included'
-                                : 'Terms and footer are hidden',
-                            style: GoogleFonts.inter(
-                              color: GirviColors.shellTextMuted,
-                              fontSize: 9,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Switch(
-                      value: copyEnabled,
-                      onChanged: _controller.setSavedCopyEnabled,
-                      activeThumbColor: GirviColors.brandGold,
-                    ),
-                  ],
-                ),
+              _fixedFormatRow(
+                icon: Icons.photo_camera_outlined,
+                title: 'Item Photos Included',
+                subtitle: 'Attached pledged-item photos print automatically',
+              ),
+              const Divider(color: GirviColors.shellBorder, height: 1),
+              _fixedFormatRow(
+                icon: Icons.visibility_off_outlined,
+                title: 'Internal Valuation Hidden',
+                subtitle:
+                    'Valuation purity, fine weight, rate and value stay private',
+                protected: true,
               ),
             ],
           ),
@@ -232,18 +95,18 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
     );
   }
 
-  Widget _setupActionRow({
+  Widget _fixedFormatRow({
     required IconData icon,
     required String title,
     required String subtitle,
-    required String action,
-    required VoidCallback onPressed,
+    bool protected = false,
   }) {
+    final color = protected ? GirviColors.success : GirviColors.brandGold;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       child: Row(
         children: [
-          Icon(icon, color: GirviColors.brandGold, size: 18),
+          Icon(icon, color: color, size: 18),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -267,24 +130,10 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
               ],
             ),
           ),
-          OutlinedButton(
-            onPressed: onPressed,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: GirviColors.brandGold,
-              side: BorderSide(
-                color: GirviColors.brandGold.withValues(alpha: 0.5),
-              ),
-              minimumSize: Size.zero,
-              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text(
-              action,
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
+          Icon(
+            protected ? Icons.shield_outlined : Icons.check_circle_rounded,
+            color: color,
+            size: 17,
           ),
         ],
       ),
@@ -311,227 +160,4 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
       ),
     );
   }
-
-  void _showGirviFieldSelector() {
-    showGeneralDialog<void>(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: 'Close Girvi invoice field setup',
-      barrierColor: Colors.black.withValues(alpha: 0.5),
-      transitionDuration: const Duration(milliseconds: 240),
-      pageBuilder: (dialogContext, _, __) {
-        return Align(
-          alignment: Alignment.centerRight,
-          child: Material(
-            color: Colors.transparent,
-            child: StatefulBuilder(
-              builder: (context, setPanelState) {
-                return Container(
-                  width: MediaQuery.sizeOf(context).width < 560
-                      ? MediaQuery.sizeOf(context).width - 20
-                      : 460,
-                  height: double.infinity,
-                  margin: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: GirviColors.shellPanelBg,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: GirviColors.shellBorder),
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black54, blurRadius: 28),
-                    ],
-                  ),
-                  child: SafeArea(
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(18, 16, 10, 13),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.dashboard_customize_outlined,
-                                color: GirviColors.brandGold,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Girvi Invoice Fields',
-                                      style: GoogleFonts.inter(
-                                        color: GirviColors.shellTextTitle,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Changes apply to this invoice preview',
-                                      style: GoogleFonts.inter(
-                                        color: GirviColors.shellTextMuted,
-                                        fontSize: 9.5,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () =>
-                                    Navigator.of(dialogContext).pop(),
-                                icon: const Icon(
-                                  Icons.close_rounded,
-                                  color: GirviColors.shellTextMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Divider(
-                          color: GirviColors.shellBorder,
-                          height: 1,
-                        ),
-                        Expanded(
-                          child: ListView(
-                            padding: const EdgeInsets.all(14),
-                            children: [
-                              for (final group in const [
-                                'Item Identity',
-                                'Weight & Valuation',
-                                'Supporting Details',
-                              ])
-                                _buildFieldGroup(
-                                  group,
-                                  setPanelState,
-                                ),
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(14),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: () =>
-                                  Navigator.of(dialogContext).pop(),
-                              icon: const Icon(Icons.check_rounded, size: 18),
-                              label: const Text('APPLY CHANGES'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: GirviColors.brandGold,
-                                foregroundColor: GirviColors.shellBg,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 14),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        );
-      },
-      transitionBuilder: (_, animation, __, child) => SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0.15, 0),
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-        ),
-        child: FadeTransition(opacity: animation, child: child),
-      ),
-    );
-  }
-
-  Widget _buildFieldGroup(String group, StateSetter setPanelState) {
-    final options =
-        _fieldOptions.where((option) => option.group == group).toList();
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: GirviColors.shellBg.withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(11),
-        border: Border.all(color: GirviColors.shellBorder),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 11, 12, 7),
-            child: Row(
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: GirviColors.brandGold,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    group,
-                    style: GoogleFonts.inter(
-                      color: GirviColors.shellTextTitle,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          for (final option in options)
-            SwitchListTile(
-              value: _controller.getCustomizationValue(option.key),
-              onChanged: (value) async {
-                await _controller.setCustomization(option.key, value);
-                setPanelState(() {});
-              },
-              dense: true,
-              activeThumbColor: GirviColors.brandGold,
-              secondary: Icon(
-                option.icon,
-                color: _controller.getCustomizationValue(option.key)
-                    ? GirviColors.brandGold
-                    : GirviColors.shellTextMuted,
-                size: 18,
-              ),
-              title: Text(
-                option.title,
-                style: GoogleFonts.inter(
-                  color: GirviColors.shellTextTitle,
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              subtitle: Text(
-                option.subtitle,
-                style: GoogleFonts.inter(
-                  color: GirviColors.shellTextMuted,
-                  fontSize: 9,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _GirviInvoiceFieldOption {
-  const _GirviInvoiceFieldOption({
-    required this.key,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.group,
-  });
-
-  final String key;
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final String group;
 }

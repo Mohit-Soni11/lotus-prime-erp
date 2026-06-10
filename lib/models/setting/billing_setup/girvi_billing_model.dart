@@ -53,36 +53,21 @@ class GirviBillingModel {
     this.showLessWeight = true,
     this.showNetWeight = true,
     this.showPurity = true,
-    this.showValuationPurity = true,
-    this.showFineWeight = true,
-    this.showRate = true,
+    this.showValuationPurity = false,
+    this.showFineWeight = false,
+    this.showRate = false,
     this.showHuid = true,
-    this.showTotalValue = true,
+    this.showTotalValue = false,
     this.showItemPhotos = true,
-    this.showKycDetails = true,
-    this.showDisbursementDetails = true,
-    this.printTermsAndConditions = true,
-    this.printFooterMessage = true,
+    this.showKycDetails = false,
+    this.showDisbursementDetails = false,
+    this.printTermsAndConditions = false,
+    this.printFooterMessage = false,
   });
 
   static GirviBillingModel get defaults => const GirviBillingModel();
 
-  int get visibleInvoiceFieldCount => [
-        showMetal,
-        showPieces,
-        showGrossWeight,
-        showLessWeight,
-        showNetWeight,
-        showPurity,
-        showValuationPurity,
-        showFineWeight,
-        showRate,
-        showHuid,
-        showTotalValue,
-        showItemPhotos,
-        showKycDetails,
-        showDisbursementDetails,
-      ].where((enabled) => enabled).length;
+  int get visibleInvoiceFieldCount => 9;
 
   GirviBillingModel copyWith({
     String? girviPrefix,

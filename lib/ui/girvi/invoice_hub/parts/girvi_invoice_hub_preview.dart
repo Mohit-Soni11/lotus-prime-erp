@@ -142,10 +142,7 @@ extension GirviInvoiceHubPreview on _GirviInvoiceHubScreenState {
               canChangeOrientation: false,
               canChangePageFormat: false,
               canDebug: false,
-              initialPageFormat:
-                  _controller.selectedFormat == GirviInvoiceFormat.a4
-                      ? PdfPageFormat.a4
-                      : PdfPageFormat.a5,
+              initialPageFormat: _controller.selectedFormat.pageFormat,
             ),
           ),
         );

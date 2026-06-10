@@ -26,10 +26,32 @@ void main() {
     expect(controller.state, GirviInvoiceHubState.ready);
     expect(controller.pdfBytes, isNotEmpty);
     expect(controller.invoiceSettings.showHuid, isFalse);
-    expect(controller.getCustomizationValue('photos'), isFalse);
-
-    await controller.setCustomization('huid', true);
-    expect(controller.getCustomizationValue('huid'), isTrue);
+    expect(
+      GirviInvoicePdfService.customerItemHeaders,
+      const [
+        'S/N',
+        'Metal',
+        'Item',
+        'Pcs',
+        'HUID',
+        'Purity',
+        'Gross Wt.',
+        'Less Wt.',
+        'Net Wt.',
+      ],
+    );
+    expect(
+      GirviInvoicePdfService.customerItemHeaders,
+      isNot(contains('Val. Purity')),
+    );
+    expect(
+      GirviInvoicePdfService.customerItemHeaders,
+      isNot(contains('Rate / g')),
+    );
+    expect(
+      GirviInvoicePdfService.customerItemHeaders,
+      isNot(contains('Value')),
+    );
 
     await controller.switchFormat(GirviInvoiceFormat.compactA5);
     await controller.updatePrintOptions(copies: 2, duplicate: true);
