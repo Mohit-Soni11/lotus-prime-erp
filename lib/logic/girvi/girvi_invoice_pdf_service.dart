@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -23,6 +23,7 @@ enum GirviInvoiceFormat {
 
 class GirviInvoicePdfService {
   static final _amountFormat = NumberFormat('#,##,##0.00', 'en_IN');
+  static final _compactAmountFormat = NumberFormat('#,##,##0', 'en_IN');
   static final _dateFormat = DateFormat('dd MMM yyyy');
 
   static const _navy = PdfColor.fromInt(0xFF172437);
@@ -53,8 +54,9 @@ class GirviInvoicePdfService {
     int copies = 1,
     bool duplicateStamp = false,
   }) async {
+    final devanagariFont = await _loadDevanagariFont();
     final pdf = pw.Document(
-      theme: await _buildTheme(),
+      theme: await _buildTheme(devanagariFont),
       title: 'Girvi Invoice ${draft.ticketNo}',
       author: 'Lotus ERP',
       creator: 'Lotus ERP',
@@ -67,7 +69,7 @@ class GirviInvoicePdfService {
           ? 'DUPLICATE COPY'
           : copy > 0
               ? 'COPY ${copy + 1}'
-              : 'CUSTOMER COPY';
+              : 'ORIGINAL';
       final compact = format == GirviInvoiceFormat.compactA5;
 
       pdf.addPage(
@@ -90,6 +92,8 @@ class GirviInvoicePdfService {
             draft,
             format,
             copyLabel,
+            settings,
+            devanagariFont,
           ),
         ),
       );
@@ -98,7 +102,24 @@ class GirviInvoicePdfService {
     return pdf.save();
   }
 
-  Future<pw.ThemeData> _buildTheme() async {
+  Future<pw.Font?> _loadDevanagariFont() async {
+    const assetPath = 'assets/fonts/lohit_devanagari/Lohit-Devanagari.ttf';
+    try {
+      return pw.Font.ttf(await rootBundle.load(assetPath));
+    } catch (_) {
+      try {
+        final fontFile = File(assetPath);
+        if (fontFile.existsSync()) {
+          return pw.Font.ttf(_asByteData(await fontFile.readAsBytes()));
+        }
+      } catch (_) {
+        // The caller can still generate an English-only invoice.
+      }
+    }
+    return null;
+  }
+
+  Future<pw.ThemeData> _buildTheme(pw.Font? devanagariFont) async {
     final windowsDirectory = Platform.environment['WINDIR'];
     if (windowsDirectory != null) {
       final regularFile = File('$windowsDirectory\\Fonts\\segoeui.ttf');
@@ -110,6 +131,7 @@ class GirviInvoicePdfService {
           return pw.ThemeData.withFont(
             base: pw.Font.ttf(_asByteData(regularBytes)),
             bold: pw.Font.ttf(_asByteData(boldBytes)),
+            fontFallback: devanagariFont == null ? null : [devanagariFont],
           );
         } catch (_) {
           // The built-in fonts remain a reliable fallback.
@@ -119,6 +141,7 @@ class GirviInvoicePdfService {
     return pw.ThemeData.withFont(
       base: pw.Font.helvetica(),
       bold: pw.Font.helveticaBold(),
+      fontFallback: devanagariFont == null ? null : [devanagariFont],
     );
   }
 
@@ -130,37 +153,198 @@ class GirviInvoicePdfService {
     GirviInvoiceDraft draft,
     GirviInvoiceFormat format,
     String copyLabel,
+    GirviBillingModel settings,
+    pw.Font? devanagariFont,
   ) {
     final compact = format == GirviInvoiceFormat.compactA5;
-    final sectionGap = compact ? 10.0 : 14.0;
-    final photos = _loadPhotos(draft);
-
-    return [
-      _buildHeroHeader(draft, compact, copyLabel),
+    final sectionGap = compact ? 8.0 : 10.0;
+    final itemSettings = _combinedItemSettings(draft.items, settings);
+    final photos = _loadPhotos(draft, settings);
+    var nextSection = 1;
+    final widgets = <pw.Widget>[
+      _buildHeroHeader(draft, compact, copyLabel, settings),
       pw.SizedBox(height: sectionGap),
-      _buildCustomerAndLoanPanel(draft, compact),
-      pw.SizedBox(height: sectionGap),
-      pw.NewPage(freeSpace: compact ? 115 : 150),
-      _buildSectionHeading(
-        number: '01',
-        title: 'PLEDGED ITEM DETAILS',
-        subtitle: 'Customer-facing item description and weights',
-        compact: compact,
-      ),
-      pw.SizedBox(height: compact ? 6 : 8),
-      _buildItemsTable(draft, compact),
-      if (photos.isNotEmpty) ...[
-        pw.SizedBox(height: sectionGap),
-        pw.NewPage(freeSpace: compact ? 135 : 175),
-        _buildPhotoSection(photos, compact),
-      ],
+      _buildCustomerAndLoanPanel(draft, compact, settings),
     ];
+    final paymentStrip = _buildPaymentStrip(draft, settings, compact);
+    if (paymentStrip != null) {
+      widgets
+        ..add(pw.SizedBox(height: compact ? 5 : 7))
+        ..add(paymentStrip);
+    }
+    final compactMetrics = _buildCompactLoanMetrics(
+      draft,
+      settings,
+      compact,
+    );
+    if (compactMetrics != null) {
+      widgets
+        ..add(pw.SizedBox(height: compact ? 5 : 7))
+        ..add(compactMetrics);
+    }
+
+    if (draft.items.isNotEmpty) {
+      widgets
+        ..add(pw.SizedBox(height: sectionGap))
+        ..add(pw.NewPage(freeSpace: compact ? 110 : 145))
+        ..add(
+          _buildSectionHeading(
+            number: (nextSection++).toString().padLeft(2, '0'),
+            title: 'PLEDGED ITEMS',
+            subtitle:
+                '${draft.items.length} item${draft.items.length == 1 ? '' : 's'} recorded',
+            compact: compact,
+          ),
+        )
+        ..add(pw.SizedBox(height: compact ? 7 : 9))
+        ..add(
+          _buildItemsTable(
+            draft.items,
+            itemSettings,
+            compact,
+          ),
+        );
+      if (_hasValuationFields(itemSettings)) {
+        widgets
+          ..add(pw.SizedBox(height: compact ? 7 : 9))
+          ..add(pw.NewPage(freeSpace: compact ? 70 : 95))
+          ..add(_buildSubsectionLabel('VALUATION DETAILS', compact))
+          ..add(pw.SizedBox(height: compact ? 5 : 7))
+          ..add(_buildValuationTable(draft.items, itemSettings, compact));
+      }
+    }
+
+    final kycSection = _buildKycSection(draft, settings, compact);
+    if (kycSection != null) {
+      widgets
+        ..add(pw.SizedBox(height: sectionGap))
+        ..add(pw.NewPage(freeSpace: compact ? 115 : 150))
+        ..add(
+          _buildSectionHeading(
+            number: (nextSection++).toString().padLeft(2, '0'),
+            title: 'CUSTOMER KYC',
+            subtitle: 'Identity document recorded with this pledge ticket',
+            compact: compact,
+          ),
+        )
+        ..add(pw.SizedBox(height: compact ? 7 : 9))
+        ..add(kycSection);
+    }
+
+    if (settings.showNotes && (draft.notes?.trim().isNotEmpty ?? false)) {
+      widgets
+        ..add(pw.SizedBox(height: sectionGap))
+        ..add(
+          _buildTextSection(
+            number: (nextSection++).toString().padLeft(2, '0'),
+            title: 'NOTES & REMARKS',
+            subtitle: 'Remarks recorded for this Girvi ticket',
+            body: draft.notes!.trim(),
+            compact: compact,
+          ),
+        );
+    }
+
+    if (photos.isNotEmpty) {
+      widgets
+        ..add(pw.SizedBox(height: sectionGap))
+        ..add(pw.NewPage(freeSpace: compact ? 115 : 145))
+        ..add(
+          _buildPhotoSection(
+            photos,
+            compact,
+            sectionNumber: (nextSection++).toString().padLeft(2, '0'),
+          ),
+        );
+    }
+
+    if (settings.printTermsAndConditions &&
+        (settings.termsAndConditions.trim().isNotEmpty ||
+            settings.termsAndConditionsHindi.trim().isNotEmpty)) {
+      final terms = pairBilingualLines(
+        settings.termsAndConditions,
+        settings.termsAndConditionsHindi,
+      );
+      widgets
+        ..add(pw.SizedBox(height: sectionGap))
+        ..add(pw.NewPage(freeSpace: compact ? 105 : 135))
+        ..add(
+          _buildSectionHeading(
+            number: (nextSection++).toString().padLeft(2, '0'),
+            title: 'TERMS & CONDITIONS',
+            subtitle:
+                'Each condition is printed separately in English and Hindi',
+            compact: compact,
+          ),
+        )
+        ..add(pw.SizedBox(height: compact ? 7 : 9));
+      for (var index = 0; index < terms.length; index++) {
+        if (index > 0) widgets.add(pw.SizedBox(height: compact ? 5 : 7));
+        widgets.add(
+          _buildBilingualTermRow(
+            index: index + 1,
+            english: terms[index].english,
+            hindi: terms[index].hindi,
+            compact: compact,
+            devanagariFont: devanagariFont,
+          ),
+        );
+      }
+    }
+
+    if (settings.printCustomerDeclaration &&
+        (settings.customerDeclaration.trim().isNotEmpty ||
+            settings.customerDeclarationHindi.trim().isNotEmpty)) {
+      widgets
+        ..add(pw.SizedBox(height: sectionGap))
+        ..add(pw.NewPage(freeSpace: compact ? 78 : 105))
+        ..add(
+          _buildCustomerDeclaration(
+            number: (nextSection++).toString().padLeft(2, '0'),
+            english: settings.customerDeclaration,
+            hindi: settings.customerDeclarationHindi,
+            compact: compact,
+            devanagariFont: devanagariFont,
+          ),
+        );
+    }
+    widgets
+      ..add(pw.SizedBox(height: sectionGap))
+      ..add(pw.NewPage(freeSpace: compact ? 68 : 96))
+      ..add(_buildDocumentSignoff(compact, settings));
+    return widgets;
+  }
+
+  static List<({String english, String hindi})> pairBilingualLines(
+    String english,
+    String hindi,
+  ) {
+    List<String> lines(String value) => value
+        .split(RegExp(r'\r?\n'))
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList(growable: false);
+
+    final englishLines = lines(english);
+    final hindiLines = lines(hindi);
+    final count = englishLines.length > hindiLines.length
+        ? englishLines.length
+        : hindiLines.length;
+    return List.generate(
+      count,
+      (index) => (
+        english: index < englishLines.length ? englishLines[index] : '',
+        hindi: index < hindiLines.length ? hindiLines[index] : '',
+      ),
+      growable: false,
+    );
   }
 
   pw.Widget _buildHeroHeader(
     GirviInvoiceDraft draft,
     bool compact,
     String copyLabel,
+    GirviBillingModel settings,
   ) {
     return pw.Container(
       decoration: const pw.BoxDecoration(
@@ -275,32 +459,50 @@ class GirviInvoicePdfService {
                   value: draft.ticketNo,
                   compact: compact,
                 ),
-                pw.Container(
-                  width: 0.7,
-                  height: compact ? 22 : 27,
-                  margin: pw.EdgeInsets.symmetric(
-                    horizontal: compact ? 13 : 18,
-                  ),
-                  color: PdfColors.grey700,
-                ),
+                _buildHeaderDivider(compact),
                 _buildHeaderMeta(
                   label: 'ISSUE DATE',
                   value: _dateFormat.format(draft.createdAt),
                   compact: compact,
                 ),
-                pw.Spacer(),
-                pw.Text(
-                  'Secure customer copy',
-                  style: pw.TextStyle(
-                    color: PdfColors.grey400,
-                    fontSize: compact ? 5.8 : 7,
+                if (settings.showStartDate) ...[
+                  _buildHeaderDivider(compact),
+                  _buildHeaderMeta(
+                    label: 'START DATE',
+                    value: _dateFormat.format(draft.startDate),
+                    compact: compact,
                   ),
-                ),
+                ],
+                if (settings.showMaturityDate || settings.showDuration) ...[
+                  _buildHeaderDivider(compact),
+                  _buildHeaderMeta(
+                    label: settings.showMaturityDate
+                        ? 'MATURITY DATE'
+                        : 'LOAN TENURE',
+                    value: settings.showMaturityDate
+                        ? '${_dateFormat.format(draft.maturityDate)}'
+                            '${settings.showDuration ? ' | ${draft.durationMonths} months' : ''}'
+                        : '${draft.durationMonths} months',
+                    compact: compact,
+                  ),
+                ],
+                pw.Spacer(),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  pw.Widget _buildHeaderDivider(bool compact) {
+    return pw.Container(
+      width: 0.7,
+      height: compact ? 22 : 27,
+      margin: pw.EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 14,
+      ),
+      color: PdfColors.grey700,
     );
   }
 
@@ -316,7 +518,7 @@ class GirviInvoicePdfService {
           label,
           style: pw.TextStyle(
             color: PdfColors.grey400,
-            fontSize: compact ? 5.2 : 6.2,
+            fontSize: compact ? 6.5 : 7.5,
             letterSpacing: 0.5,
           ),
         ),
@@ -325,7 +527,7 @@ class GirviInvoicePdfService {
           value,
           style: pw.TextStyle(
             color: PdfColors.white,
-            fontSize: compact ? 7.2 : 8.5,
+            fontSize: compact ? 8.5 : 10,
             fontWeight: pw.FontWeight.bold,
           ),
         ),
@@ -336,13 +538,39 @@ class GirviInvoicePdfService {
   pw.Widget _buildCustomerAndLoanPanel(
     GirviInvoiceDraft draft,
     bool compact,
+    GirviBillingModel settings,
   ) {
-    final panelHeight = compact ? 82.0 : 101.0;
+    final panelHeight = compact ? 90.0 : 112.0;
+    final showLoanPanel = settings.showLoanAmount ||
+        settings.showInterestRate ||
+        settings.showMonthlyInterest;
+    final customerMeta = <pw.Widget>[
+      if (settings.showCustomerMobile)
+        pw.Expanded(
+          flex: 4,
+          child: _buildCustomerMeta(
+            label: 'MOBILE',
+            value: draft.customerMobile,
+            compact: compact,
+          ),
+        ),
+      if (settings.showCustomerMobile && settings.showCustomerCity)
+        pw.SizedBox(width: compact ? 8 : 12),
+      if (settings.showCustomerCity)
+        pw.Expanded(
+          flex: 6,
+          child: _buildCustomerMeta(
+            label: 'CITY',
+            value: draft.customerCity.isEmpty ? '-' : draft.customerCity,
+            compact: compact,
+          ),
+        ),
+    ];
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Expanded(
-          flex: 5,
+          flex: showLoanPanel ? 5 : 1,
           child: pw.Container(
             height: panelHeight,
             padding: pw.EdgeInsets.all(compact ? 10 : 13),
@@ -366,103 +594,124 @@ class GirviInvoicePdfService {
                     fontWeight: pw.FontWeight.bold,
                   ),
                 ),
-                pw.Spacer(),
-                pw.Row(
-                  children: [
-                    pw.Expanded(
-                      flex: 4,
-                      child: _buildCustomerMeta(
-                        label: 'MOBILE',
-                        value: draft.customerMobile,
-                        compact: compact,
-                      ),
+                if (customerMeta.isNotEmpty) ...[
+                  pw.Spacer(),
+                  pw.Row(children: customerMeta),
+                ],
+              ],
+            ),
+          ),
+        ),
+        if (showLoanPanel) ...[
+          pw.SizedBox(width: compact ? 9 : 12),
+          pw.Expanded(
+            flex: 4,
+            child: pw.Container(
+              height: panelHeight,
+              padding: pw.EdgeInsets.all(compact ? 10 : 13),
+              decoration: pw.BoxDecoration(
+                color: _goldLight,
+                border: pw.Border.all(
+                  color: _gold,
+                  width: 0.8,
+                ),
+                borderRadius: const pw.BorderRadius.all(pw.Radius.circular(7)),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  _buildEyebrow(
+                    settings.showLoanAmount
+                        ? 'LOAN AMOUNT'
+                        : settings.showMonthlyInterest
+                            ? 'MONTHLY INTEREST'
+                            : 'INTEREST RATE',
+                    compact,
+                    color: _gold,
+                  ),
+                  pw.SizedBox(height: compact ? 4 : 6),
+                  pw.Text(
+                    settings.showLoanAmount
+                        ? _amount(draft.loanAmount)
+                        : settings.showMonthlyInterest
+                            ? _amount(draft.monthlyInterest)
+                            : '${draft.interestRate.toStringAsFixed(2)}% monthly',
+                    style: pw.TextStyle(
+                      color: _navy,
+                      fontSize: compact ? 14 : 19,
+                      fontWeight: pw.FontWeight.bold,
                     ),
-                    pw.SizedBox(width: compact ? 8 : 12),
-                    pw.Expanded(
-                      flex: 6,
-                      child: _buildCustomerMeta(
-                        label: 'CITY',
-                        value: draft.customerCity.isEmpty
-                            ? '-'
-                            : draft.customerCity,
-                        compact: compact,
+                  ),
+                  if ((settings.showLoanAmount &&
+                          (settings.showInterestRate ||
+                              settings.showMonthlyInterest)) ||
+                      (!settings.showLoanAmount &&
+                          settings.showInterestRate &&
+                          settings.showMonthlyInterest)) ...[
+                    pw.Spacer(),
+                    pw.Container(
+                      width: double.infinity,
+                      padding: pw.EdgeInsets.symmetric(
+                        horizontal: compact ? 7 : 9,
+                        vertical: compact ? 5 : 6,
+                      ),
+                      decoration: pw.BoxDecoration(
+                        color: PdfColors.white,
+                        borderRadius:
+                            const pw.BorderRadius.all(pw.Radius.circular(4)),
+                        border: pw.Border.all(
+                          color: const PdfColor.fromInt(0xFFEAD6A0),
+                        ),
+                      ),
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+                        children: [
+                          pw.Row(
+                            children: [
+                              pw.Text(
+                                'MONTHLY INTEREST',
+                                style: pw.TextStyle(
+                                  color: _muted,
+                                  fontSize: compact ? 5.5 : 6.5,
+                                  fontWeight: pw.FontWeight.bold,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                              pw.Spacer(),
+                              if (settings.showInterestRate)
+                                pw.Text(
+                                  '${draft.interestRate.toStringAsFixed(2)}% monthly',
+                                  style: pw.TextStyle(
+                                    color: _navy,
+                                    fontSize: compact ? 7 : 8.2,
+                                    fontWeight: pw.FontWeight.bold,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          if (settings.showMonthlyInterest) ...[
+                            pw.SizedBox(height: 2),
+                            pw.Text(
+                              'Rs ${_compactAmountFormat.format(draft.monthlyInterest)} per month',
+                              maxLines: 1,
+                              overflow: pw.TextOverflow.clip,
+                              textAlign: pw.TextAlign.right,
+                              style: pw.TextStyle(
+                                color: _gold,
+                                fontSize: compact ? 7 : 8.4,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        pw.SizedBox(width: compact ? 9 : 12),
-        pw.Expanded(
-          flex: 4,
-          child: pw.Container(
-            height: panelHeight,
-            padding: pw.EdgeInsets.all(compact ? 10 : 13),
-            decoration: pw.BoxDecoration(
-              color: _goldLight,
-              border: pw.Border.all(
-                color: _gold,
-                width: 0.8,
+                ],
               ),
-              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(7)),
-            ),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                _buildEyebrow('LOAN AMOUNT', compact, color: _gold),
-                pw.SizedBox(height: compact ? 4 : 6),
-                pw.Text(
-                  _amount(draft.loanAmount),
-                  style: pw.TextStyle(
-                    color: _navy,
-                    fontSize: compact ? 14 : 19,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-                pw.Spacer(),
-                pw.Container(
-                  width: double.infinity,
-                  padding: pw.EdgeInsets.symmetric(
-                    horizontal: compact ? 7 : 9,
-                    vertical: compact ? 5 : 6,
-                  ),
-                  decoration: pw.BoxDecoration(
-                    color: PdfColors.white,
-                    borderRadius:
-                        const pw.BorderRadius.all(pw.Radius.circular(4)),
-                    border: pw.Border.all(
-                      color: const PdfColor.fromInt(0xFFEAD6A0),
-                    ),
-                  ),
-                  child: pw.Row(
-                    children: [
-                      pw.Text(
-                        'MONTHLY INTEREST',
-                        style: pw.TextStyle(
-                          color: _muted,
-                          fontSize: compact ? 5.5 : 6.5,
-                          fontWeight: pw.FontWeight.bold,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      pw.Spacer(),
-                      pw.Text(
-                        '${draft.interestRate.toStringAsFixed(2)}%',
-                        style: pw.TextStyle(
-                          color: _navy,
-                          fontSize: compact ? 8 : 10,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -476,7 +725,7 @@ class GirviInvoicePdfService {
       value,
       style: pw.TextStyle(
         color: color,
-        fontSize: compact ? 5.8 : 7,
+        fontSize: compact ? 7 : 8.2,
         fontWeight: pw.FontWeight.bold,
         letterSpacing: 0.7,
       ),
@@ -499,7 +748,7 @@ class GirviInvoicePdfService {
           overflow: pw.TextOverflow.clip,
           style: pw.TextStyle(
             color: _ink,
-            fontSize: compact ? 7 : 8.5,
+            fontSize: compact ? 8.5 : 10.2,
             fontWeight: pw.FontWeight.bold,
           ),
         ),
@@ -541,7 +790,7 @@ class GirviInvoicePdfService {
               title,
               style: pw.TextStyle(
                 color: _ink,
-                fontSize: compact ? 8 : 10,
+                fontSize: compact ? 9.5 : 11.5,
                 fontWeight: pw.FontWeight.bold,
                 letterSpacing: 0.5,
               ),
@@ -551,7 +800,7 @@ class GirviInvoicePdfService {
               subtitle,
               style: pw.TextStyle(
                 color: _muted,
-                fontSize: compact ? 5.5 : 6.7,
+                fontSize: compact ? 6.8 : 8,
               ),
             ),
           ],
@@ -567,27 +816,60 @@ class GirviInvoicePdfService {
     );
   }
 
+  GirviInvoiceFieldSettings _combinedItemSettings(
+    List<GirviInvoiceItemDraft> items,
+    GirviBillingModel settings,
+  ) {
+    final metals =
+        items.map((item) => GirviBillingMetal.normalize(item.metal)).toSet();
+    if (metals.isEmpty) return const GirviInvoiceFieldSettings();
+
+    final metalSettings = [
+      for (final metal in metals) settings.settingsForMetal(metal),
+    ];
+    bool enabled(bool Function(GirviInvoiceFieldSettings value) read) =>
+        metalSettings.any(read);
+
+    return GirviInvoiceFieldSettings(
+      showSerialNumber: enabled((value) => value.showSerialNumber),
+      showMetal: enabled((value) => value.showMetal),
+      showItemName: enabled((value) => value.showItemName),
+      showPieces: enabled((value) => value.showPieces),
+      showHuid: enabled((value) => value.showHuid),
+      showPurity: enabled((value) => value.showPurity),
+      showGrossWeight: enabled((value) => value.showGrossWeight),
+      showLessWeight: enabled((value) => value.showLessWeight),
+      showNetWeight: enabled((value) => value.showNetWeight),
+      showValuationPurity: enabled((value) => value.showValuationPurity),
+      showFineWeight: enabled((value) => value.showFineWeight),
+      showRatePerGram: enabled((value) => value.showRatePerGram),
+      showValuationAmount: enabled((value) => value.showValuationAmount),
+      showItemPhotos: enabled((value) => value.showItemPhotos),
+    );
+  }
+
   pw.Widget _buildItemsTable(
-    GirviInvoiceDraft draft,
+    List<GirviInvoiceItemDraft> items,
+    GirviInvoiceFieldSettings settings,
     bool compact,
   ) {
+    final columns = _visibleColumns(settings);
     final rows = <pw.TableRow>[
       pw.TableRow(
         repeat: true,
         decoration: const pw.BoxDecoration(color: _navySoft),
         children: [
-          for (var index = 0; index < customerItemHeaders.length; index++)
+          for (final column in columns)
             _buildTableCell(
-              customerItemHeaders[index],
+              column.header,
               compact: compact,
               header: true,
-              alignment:
-                  index == 2 ? pw.Alignment.centerLeft : pw.Alignment.center,
+              alignment: column.alignment,
             ),
         ],
       ),
-      for (var index = 0; index < draft.items.length; index++)
-        _buildItemRow(draft.items[index], index, compact),
+      for (var index = 0; index < items.length; index++)
+        _buildItemRow(items[index], index, columns, compact),
     ];
 
     return pw.Container(
@@ -596,16 +878,9 @@ class GirviInvoicePdfService {
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
       ),
       child: pw.Table(
-        columnWidths: const {
-          0: pw.FlexColumnWidth(0.42),
-          1: pw.FlexColumnWidth(0.65),
-          2: pw.FlexColumnWidth(2.25),
-          3: pw.FlexColumnWidth(0.44),
-          4: pw.FlexColumnWidth(0.86),
-          5: pw.FlexColumnWidth(0.63),
-          6: pw.FlexColumnWidth(0.84),
-          7: pw.FlexColumnWidth(0.78),
-          8: pw.FlexColumnWidth(0.84),
+        columnWidths: {
+          for (var index = 0; index < columns.length; index++)
+            index: pw.FlexColumnWidth(columns[index].width),
         },
         border: const pw.TableBorder(
           horizontalInside: pw.BorderSide(color: _line, width: 0.45),
@@ -616,40 +891,254 @@ class GirviInvoicePdfService {
     );
   }
 
+  bool _hasValuationFields(GirviInvoiceFieldSettings settings) {
+    return settings.showValuationPurity ||
+        settings.showFineWeight ||
+        settings.showRatePerGram ||
+        settings.showValuationAmount;
+  }
+
+  pw.Widget _buildSubsectionLabel(String label, bool compact) {
+    return pw.Container(
+      padding: pw.EdgeInsets.symmetric(
+        horizontal: compact ? 7 : 9,
+        vertical: compact ? 4 : 5,
+      ),
+      decoration: const pw.BoxDecoration(
+        color: _goldLight,
+        borderRadius: pw.BorderRadius.all(pw.Radius.circular(4)),
+      ),
+      child: pw.Text(
+        label,
+        style: pw.TextStyle(
+          color: _gold,
+          fontSize: compact ? 6.8 : 7.8,
+          fontWeight: pw.FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _buildValuationTable(
+    List<GirviInvoiceItemDraft> items,
+    GirviInvoiceFieldSettings settings,
+    bool compact,
+  ) {
+    final columns = <_GirviInvoiceColumn>[
+      if (settings.showSerialNumber)
+        _GirviInvoiceColumn(
+          header: 'S/N',
+          width: 0.45,
+          alignment: pw.Alignment.center,
+          strong: true,
+          value: (item) => item.serialNo.toString(),
+        ),
+      if (settings.showItemName)
+        _GirviInvoiceColumn(
+          header: 'Item',
+          width: 2.4,
+          alignment: pw.Alignment.centerLeft,
+          strong: true,
+          value: (item) => item.description,
+        ),
+      if (settings.showNetWeight)
+        _GirviInvoiceColumn(
+          header: 'Net Wt.',
+          width: 0.9,
+          alignment: pw.Alignment.centerRight,
+          value: (item) => '${item.netWeight.toStringAsFixed(3)} g',
+        ),
+      if (settings.showValuationPurity)
+        _GirviInvoiceColumn(
+          header: 'Val. Purity',
+          width: 0.85,
+          alignment: pw.Alignment.center,
+          value: (item) => item.valuationPurity,
+        ),
+      if (settings.showFineWeight)
+        _GirviInvoiceColumn(
+          header: 'Fine Wt.',
+          width: 0.9,
+          alignment: pw.Alignment.centerRight,
+          value: (item) => '${item.fineWeight.toStringAsFixed(3)} g',
+        ),
+      if (settings.showRatePerGram)
+        _GirviInvoiceColumn(
+          header: 'Rate / g',
+          width: 1.0,
+          alignment: pw.Alignment.centerRight,
+          value: (item) => _amount(item.ratePerGram),
+        ),
+      if (settings.showValuationAmount)
+        _GirviInvoiceColumn(
+          header: 'Valuation',
+          width: 1.15,
+          alignment: pw.Alignment.centerRight,
+          strong: true,
+          value: (item) => _amount(item.value),
+        ),
+    ];
+
+    if (!settings.showSerialNumber && !settings.showItemName) {
+      columns.insert(
+        0,
+        _GirviInvoiceColumn(
+          header: 'Item',
+          width: 2.4,
+          alignment: pw.Alignment.centerLeft,
+          strong: true,
+          value: (item) => item.description,
+        ),
+      );
+    }
+
+    return _buildColumnTable(items, columns, compact);
+  }
+
+  pw.Widget _buildColumnTable(
+    List<GirviInvoiceItemDraft> items,
+    List<_GirviInvoiceColumn> columns,
+    bool compact,
+  ) {
+    return pw.Container(
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: _line, width: 0.7),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+      ),
+      child: pw.Table(
+        columnWidths: {
+          for (var index = 0; index < columns.length; index++)
+            index: pw.FlexColumnWidth(columns[index].width),
+        },
+        border: const pw.TableBorder(
+          horizontalInside: pw.BorderSide(color: _line, width: 0.45),
+          verticalInside: pw.BorderSide(color: _line, width: 0.45),
+        ),
+        children: [
+          pw.TableRow(
+            repeat: true,
+            decoration: const pw.BoxDecoration(color: _navySoft),
+            children: [
+              for (final column in columns)
+                _buildTableCell(
+                  column.header,
+                  compact: compact,
+                  header: true,
+                  alignment: column.alignment,
+                ),
+            ],
+          ),
+          for (var index = 0; index < items.length; index++)
+            _buildItemRow(items[index], index, columns, compact),
+        ],
+      ),
+    );
+  }
+
   pw.TableRow _buildItemRow(
     GirviInvoiceItemDraft item,
     int index,
+    List<_GirviInvoiceColumn> columns,
     bool compact,
   ) {
-    final values = <String>[
-      item.serialNo.toString(),
-      item.metal,
-      item.description,
-      item.pieces.toString(),
-      item.huid.isEmpty ? '-' : item.huid,
-      item.purity,
-      '${item.grossWeight.toStringAsFixed(3)} g',
-      '${item.lessWeight.toStringAsFixed(3)} g',
-      '${item.netWeight.toStringAsFixed(3)} g',
-    ];
     return pw.TableRow(
       decoration: pw.BoxDecoration(
         color: index.isEven ? PdfColors.white : _surface,
       ),
       children: [
-        for (var cellIndex = 0; cellIndex < values.length; cellIndex++)
+        for (final column in columns)
           _buildTableCell(
-            values[cellIndex],
+            column.value(item),
             compact: compact,
-            alignment: cellIndex == 2
-                ? pw.Alignment.centerLeft
-                : cellIndex >= 6
-                    ? pw.Alignment.centerRight
-                    : pw.Alignment.center,
-            strong: cellIndex == 0 || cellIndex == 2,
+            alignment: column.alignment,
+            strong: column.strong,
           ),
       ],
     );
+  }
+
+  List<_GirviInvoiceColumn> _visibleColumns(
+    GirviInvoiceFieldSettings settings,
+  ) {
+    final columns = <_GirviInvoiceColumn>[
+      if (settings.showSerialNumber)
+        _GirviInvoiceColumn(
+          header: 'S/N',
+          width: 0.46,
+          alignment: pw.Alignment.center,
+          strong: true,
+          value: (item) => item.serialNo.toString(),
+        ),
+      if (settings.showMetal)
+        _GirviInvoiceColumn(
+          header: 'Metal',
+          width: 0.72,
+          alignment: pw.Alignment.center,
+          value: (item) => item.metal,
+        ),
+      if (settings.showItemName)
+        _GirviInvoiceColumn(
+          header: 'Item',
+          width: 2.35,
+          alignment: pw.Alignment.centerLeft,
+          strong: true,
+          value: (item) => item.description,
+        ),
+      if (settings.showPieces)
+        _GirviInvoiceColumn(
+          header: 'Pcs',
+          width: 0.48,
+          alignment: pw.Alignment.center,
+          value: (item) => item.pieces.toString(),
+        ),
+      if (settings.showHuid)
+        _GirviInvoiceColumn(
+          header: 'HUID',
+          width: 0.9,
+          alignment: pw.Alignment.center,
+          value: (item) => item.huid.isEmpty ? '-' : item.huid,
+        ),
+      if (settings.showPurity)
+        _GirviInvoiceColumn(
+          header: 'Purity',
+          width: 0.7,
+          alignment: pw.Alignment.center,
+          value: (item) => item.purity,
+        ),
+      if (settings.showGrossWeight)
+        _GirviInvoiceColumn(
+          header: 'Gross Wt.',
+          width: 0.92,
+          alignment: pw.Alignment.centerRight,
+          value: (item) => '${item.grossWeight.toStringAsFixed(3)} g',
+        ),
+      if (settings.showLessWeight)
+        _GirviInvoiceColumn(
+          header: 'Less Wt.',
+          width: 0.86,
+          alignment: pw.Alignment.centerRight,
+          value: (item) => '${item.lessWeight.toStringAsFixed(3)} g',
+        ),
+      if (settings.showNetWeight)
+        _GirviInvoiceColumn(
+          header: 'Net Wt.',
+          width: 0.92,
+          alignment: pw.Alignment.centerRight,
+          strong: true,
+          value: (item) => '${item.netWeight.toStringAsFixed(3)} g',
+        ),
+    ];
+    if (columns.isNotEmpty) return columns;
+    return [
+      _GirviInvoiceColumn(
+        header: 'Item',
+        width: 1,
+        alignment: pw.Alignment.centerLeft,
+        strong: true,
+        value: (item) => item.description,
+      ),
+    ];
   }
 
   pw.Widget _buildTableCell(
@@ -669,7 +1158,7 @@ class GirviInvoicePdfService {
         value,
         style: pw.TextStyle(
           color: header ? PdfColors.white : _ink,
-          fontSize: header ? (compact ? 5.7 : 6.5) : (compact ? 5.8 : 6.8),
+          fontSize: header ? (compact ? 7.2 : 8) : (compact ? 7.4 : 8.4),
           fontWeight:
               header || strong ? pw.FontWeight.bold : pw.FontWeight.normal,
         ),
@@ -677,9 +1166,13 @@ class GirviInvoicePdfService {
     );
   }
 
-  List<_GirviPhoto> _loadPhotos(GirviInvoiceDraft draft) {
+  List<_GirviPhoto> _loadPhotos(
+    GirviInvoiceDraft draft,
+    GirviBillingModel settings,
+  ) {
     final photos = <_GirviPhoto>[];
     for (final item in draft.items) {
+      if (!settings.settingsForMetal(item.metal).showItemPhotos) continue;
       for (final path in item.photoPaths) {
         final file = File(path);
         if (!file.existsSync()) continue;
@@ -699,10 +1192,378 @@ class GirviInvoicePdfService {
     return photos;
   }
 
-  pw.Widget _buildPhotoSection(
-    List<_GirviPhoto> photos,
+  pw.Widget? _buildPaymentStrip(
+    GirviInvoiceDraft draft,
+    GirviBillingModel settings,
     bool compact,
   ) {
+    if (!settings.showDisbursementDetails) return null;
+    final value = draft.payments.isNotEmpty
+        ? draft.payments
+            .map((payment) => '${payment.label} ${_amount(payment.amount)}')
+            .join('  |  ')
+        : draft.disbursementSummary.trim();
+    if (value.isEmpty) return null;
+
+    return pw.Container(
+      width: double.infinity,
+      padding: pw.EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 10,
+        vertical: compact ? 5 : 6,
+      ),
+      decoration: pw.BoxDecoration(
+        color: _surface,
+        border: pw.Border.all(color: _line, width: 0.65),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+      ),
+      child: pw.Row(
+        children: [
+          pw.Text(
+            'DISBURSEMENT',
+            style: pw.TextStyle(
+              color: _muted,
+              fontSize: compact ? 6 : 7,
+              fontWeight: pw.FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          pw.SizedBox(width: compact ? 8 : 11),
+          pw.Expanded(
+            child: pw.Text(
+              value,
+              textAlign: pw.TextAlign.right,
+              style: pw.TextStyle(
+                color: _ink,
+                fontSize: compact ? 7.2 : 8.3,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget? _buildCompactLoanMetrics(
+    GirviInvoiceDraft draft,
+    GirviBillingModel settings,
+    bool compact,
+  ) {
+    final entries = <_GirviDetailEntry>[
+      if (settings.showTotalInterest)
+        _GirviDetailEntry(
+          label: 'Total Interest at Maturity',
+          value: _amount(draft.totalInterest),
+        ),
+      if (settings.showTotalDue)
+        _GirviDetailEntry(
+          label: 'Total Amount Due',
+          value: _amount(draft.totalDue),
+          strong: true,
+        ),
+      if (settings.showTotalValue)
+        _GirviDetailEntry(
+          label: 'Total Pledged Valuation',
+          value: _amount(draft.totalValue),
+          strong: true,
+        ),
+    ];
+    if (entries.isEmpty) return null;
+    return pw.Row(
+      children: [
+        for (var index = 0; index < entries.length; index++) ...[
+          if (index > 0) pw.SizedBox(width: compact ? 5 : 7),
+          pw.Expanded(child: _buildDetailCard(entries[index], compact)),
+        ],
+      ],
+    );
+  }
+
+  pw.Widget _buildDetailCard(_GirviDetailEntry entry, bool compact) {
+    return pw.Container(
+      padding: pw.EdgeInsets.all(compact ? 7 : 9),
+      decoration: pw.BoxDecoration(
+        color: entry.strong ? _goldLight : _surface,
+        border: pw.Border.all(
+          color: entry.strong ? _gold : _line,
+          width: 0.65,
+        ),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          _buildEyebrow(entry.label.toUpperCase(), compact),
+          pw.SizedBox(height: compact ? 3 : 4),
+          pw.Text(
+            entry.value,
+            style: pw.TextStyle(
+              color: _ink,
+              fontSize: compact ? 8 : 9.5,
+              fontWeight:
+                  entry.strong ? pw.FontWeight.bold : pw.FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildBilingualTermRow({
+    required int index,
+    required String english,
+    required String hindi,
+    required bool compact,
+    required pw.Font? devanagariFont,
+  }) {
+    return pw.Container(
+      width: double.infinity,
+      padding: pw.EdgeInsets.all(compact ? 7 : 9),
+      decoration: pw.BoxDecoration(
+        color: index.isOdd ? _goldLight : _surface,
+        border: pw.Border.all(
+          color: index.isOdd ? const PdfColor.fromInt(0xFFEAD6A0) : _line,
+          width: 0.65,
+        ),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+      ),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Container(
+            width: compact ? 18 : 22,
+            height: compact ? 18 : 22,
+            alignment: pw.Alignment.center,
+            decoration: const pw.BoxDecoration(
+              color: _navy,
+              shape: pw.BoxShape.circle,
+            ),
+            child: pw.Text(
+              index.toString(),
+              style: pw.TextStyle(
+                color: PdfColors.white,
+                fontSize: compact ? 6.5 : 7.5,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
+          pw.SizedBox(width: compact ? 7 : 9),
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                if (english.isNotEmpty)
+                  pw.Text(
+                    english,
+                    style: pw.TextStyle(
+                      color: _ink,
+                      fontSize: compact ? 7 : 8.2,
+                      lineSpacing: 1.8,
+                    ),
+                  ),
+                if (english.isNotEmpty && hindi.isNotEmpty)
+                  pw.SizedBox(height: compact ? 3 : 4),
+                if (hindi.isNotEmpty)
+                  pw.Text(
+                    hindi,
+                    style: pw.TextStyle(
+                      font: devanagariFont,
+                      color: _navySoft,
+                      fontSize: compact ? 7.2 : 8.5,
+                      lineSpacing: 2,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildCustomerDeclaration({
+    required String number,
+    required String english,
+    required String hindi,
+    required bool compact,
+    required pw.Font? devanagariFont,
+  }) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeading(
+          number: number,
+          title: 'CUSTOMER DECLARATION',
+          subtitle: 'Bilingual acknowledgement before signing',
+          compact: compact,
+        ),
+        pw.SizedBox(height: compact ? 7 : 9),
+        pw.Container(
+          width: double.infinity,
+          padding: pw.EdgeInsets.all(compact ? 8 : 11),
+          decoration: pw.BoxDecoration(
+            color: _surface,
+            border: pw.Border.all(color: _line, width: 0.7),
+            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+          ),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              if (english.trim().isNotEmpty)
+                pw.Text(
+                  english.trim(),
+                  style: pw.TextStyle(
+                    color: _ink,
+                    fontSize: compact ? 7.2 : 8.5,
+                    lineSpacing: 2,
+                  ),
+                ),
+              if (english.trim().isNotEmpty && hindi.trim().isNotEmpty)
+                pw.SizedBox(height: compact ? 5 : 7),
+              if (hindi.trim().isNotEmpty)
+                pw.Text(
+                  hindi.trim(),
+                  style: pw.TextStyle(
+                    font: devanagariFont,
+                    color: _navySoft,
+                    fontSize: compact ? 7.4 : 8.8,
+                    lineSpacing: 2.2,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  pw.Widget? _buildKycSection(
+    GirviInvoiceDraft draft,
+    GirviBillingModel settings,
+    bool compact,
+  ) {
+    final showDetails = settings.showKycDetails &&
+        ((draft.idProofType?.trim().isNotEmpty ?? false) ||
+            (draft.idProofNumber?.trim().isNotEmpty ?? false));
+    pw.MemoryImage? image;
+    if (settings.showKycPhoto &&
+        (draft.idProofImagePath?.trim().isNotEmpty ?? false)) {
+      final file = File(draft.idProofImagePath!.trim());
+      if (file.existsSync()) {
+        try {
+          image = pw.MemoryImage(file.readAsBytesSync());
+        } catch (_) {
+          image = null;
+        }
+      }
+    }
+    if (!showDetails && image == null) return null;
+
+    final details = pw.Container(
+      padding: pw.EdgeInsets.all(compact ? 8 : 11),
+      decoration: pw.BoxDecoration(
+        color: _surface,
+        border: pw.Border.all(color: _line),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          if (showDetails) ...[
+            _buildCustomerMeta(
+              label: 'DOCUMENT TYPE',
+              value: draft.idProofType?.trim().isEmpty ?? true
+                  ? '-'
+                  : draft.idProofType!.trim(),
+              compact: compact,
+            ),
+            pw.SizedBox(height: compact ? 7 : 9),
+            _buildCustomerMeta(
+              label: 'DOCUMENT NUMBER',
+              value: draft.idProofNumber?.trim().isEmpty ?? true
+                  ? '-'
+                  : draft.idProofNumber!.trim(),
+              compact: compact,
+            ),
+          ] else
+            pw.Text(
+              'KYC document photo attached',
+              style: pw.TextStyle(
+                color: _ink,
+                fontSize: compact ? 8 : 9.5,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+        ],
+      ),
+    );
+
+    if (image == null) return details;
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Expanded(flex: 5, child: details),
+        pw.SizedBox(width: compact ? 8 : 11),
+        pw.Expanded(
+          flex: 4,
+          child: pw.Container(
+            height: compact ? 80 : 110,
+            padding: const pw.EdgeInsets.all(4),
+            decoration: pw.BoxDecoration(
+              color: PdfColors.white,
+              border: pw.Border.all(color: _line),
+              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+            ),
+            child: pw.Image(image, fit: pw.BoxFit.contain),
+          ),
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _buildTextSection({
+    required String number,
+    required String title,
+    required String subtitle,
+    required String body,
+    required bool compact,
+  }) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeading(
+          number: number,
+          title: title,
+          subtitle: subtitle,
+          compact: compact,
+        ),
+        pw.SizedBox(height: compact ? 7 : 9),
+        pw.Container(
+          width: double.infinity,
+          padding: pw.EdgeInsets.all(compact ? 8 : 11),
+          decoration: pw.BoxDecoration(
+            color: _surface,
+            border: pw.Border.all(color: _line),
+            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+          ),
+          child: pw.Text(
+            body,
+            style: pw.TextStyle(
+              color: _ink,
+              fontSize: compact ? 7.5 : 8.8,
+              lineSpacing: compact ? 2 : 3,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _buildPhotoSection(
+    List<_GirviPhoto> photos,
+    bool compact, {
+    required String sectionNumber,
+  }) {
     const columns = 3;
     final rows = <pw.TableRow>[
       pw.TableRow(
@@ -712,7 +1573,7 @@ class GirviInvoicePdfService {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               _buildSectionHeading(
-                number: '02',
+                number: sectionNumber,
                 title: 'PLEDGED ITEM PHOTOS',
                 subtitle: 'Visual reference attached with this receipt',
                 compact: compact,
@@ -811,7 +1672,7 @@ class GirviInvoicePdfService {
                   '#${photo.serialNo}',
                   style: pw.TextStyle(
                     color: _gold,
-                    fontSize: compact ? 5.5 : 6.3,
+                    fontSize: compact ? 7 : 8,
                     fontWeight: pw.FontWeight.bold,
                   ),
                 ),
@@ -824,7 +1685,7 @@ class GirviInvoicePdfService {
                   overflow: pw.TextOverflow.clip,
                   style: pw.TextStyle(
                     color: _ink,
-                    fontSize: compact ? 5.5 : 6.5,
+                    fontSize: compact ? 7 : 8.2,
                     fontWeight: pw.FontWeight.bold,
                   ),
                 ),
@@ -841,42 +1702,55 @@ class GirviInvoicePdfService {
     GirviInvoiceDraft draft,
     bool compact,
   ) {
-    final isLastPage = context.pageNumber == context.pagesCount;
+    return pw.Align(
+      alignment: pw.Alignment.centerRight,
+      child: pw.Text(
+        '${draft.ticketNo}  |  Page ${context.pageNumber}',
+        style: pw.TextStyle(
+          color: _muted,
+          fontSize: compact ? 6.5 : 7.5,
+          fontWeight: pw.FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _buildDocumentSignoff(
+    bool compact,
+    GirviBillingModel settings,
+  ) {
     return pw.Column(
       mainAxisSize: pw.MainAxisSize.min,
       children: [
-        if (isLastPage) ...[
-          pw.SizedBox(height: compact ? 13 : 20),
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              _buildSignature('Customer Signature', compact),
-              _buildSignature('Authorized Signature', compact),
-            ],
+        if (settings.printFooterMessage &&
+            settings.footerMessage.trim().isNotEmpty) ...[
+          pw.Container(
+            width: double.infinity,
+            padding: pw.EdgeInsets.symmetric(
+              horizontal: compact ? 7 : 9,
+              vertical: compact ? 5 : 6,
+            ),
+            decoration: const pw.BoxDecoration(
+              color: _goldLight,
+              borderRadius: pw.BorderRadius.all(pw.Radius.circular(4)),
+            ),
+            child: pw.Text(
+              settings.footerMessage.trim(),
+              textAlign: pw.TextAlign.center,
+              style: pw.TextStyle(
+                color: _ink,
+                fontSize: compact ? 7 : 8,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
           ),
           pw.SizedBox(height: compact ? 8 : 11),
         ],
-        pw.Container(height: 0.7, color: _line),
-        pw.SizedBox(height: compact ? 4 : 6),
         pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            pw.Text(
-              'LOTUS ERP | GIRVI CUSTOMER COPY',
-              style: pw.TextStyle(
-                color: _navy,
-                fontSize: compact ? 5.2 : 6.2,
-                fontWeight: pw.FontWeight.bold,
-                letterSpacing: 0.4,
-              ),
-            ),
-            pw.Spacer(),
-            pw.Text(
-              '${draft.ticketNo}  |  Page ${context.pageNumber}',
-              style: pw.TextStyle(
-                color: _muted,
-                fontSize: compact ? 5.2 : 6.2,
-              ),
-            ),
+            _buildSignature('Customer Signature', compact),
+            _buildSignature('Authorized Signature / Stamp', compact),
           ],
         ),
       ],
@@ -889,13 +1763,14 @@ class GirviInvoicePdfService {
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [
+          pw.SizedBox(height: compact ? 21 : 30),
           pw.Container(height: 0.7, color: _muted),
           pw.SizedBox(height: 4),
           pw.Text(
             label,
             style: pw.TextStyle(
               color: _muted,
-              fontSize: compact ? 5.8 : 7,
+              fontSize: compact ? 7.5 : 8.5,
             ),
           ),
         ],
@@ -904,6 +1779,34 @@ class GirviInvoicePdfService {
   }
 
   String _amount(double value) => 'Rs ${_amountFormat.format(value)}';
+}
+
+class _GirviInvoiceColumn {
+  const _GirviInvoiceColumn({
+    required this.header,
+    required this.width,
+    required this.alignment,
+    required this.value,
+    this.strong = false,
+  });
+
+  final String header;
+  final double width;
+  final pw.Alignment alignment;
+  final String Function(GirviInvoiceItemDraft item) value;
+  final bool strong;
+}
+
+class _GirviDetailEntry {
+  const _GirviDetailEntry({
+    required this.label,
+    required this.value,
+    this.strong = false,
+  });
+
+  final String label;
+  final String value;
+  final bool strong;
 }
 
 class _GirviPhoto {

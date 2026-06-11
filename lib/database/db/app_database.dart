@@ -20,6 +20,9 @@ import '../tables/finance/bank_transactions.dart';
 import '../tables/finance/cash_transactions.dart';
 import '../tables/girvi/girvi_loans.dart';
 import '../tables/girvi/girvi_payments.dart';
+import '../tables/girvi/girvi_loan_items.dart';
+import '../tables/girvi/girvi_item_photos.dart';
+import '../tables/girvi/girvi_disbursements.dart';
 import '../tables/karigar/karigar_issues.dart';
 import '../tables/karigar/karigar_masters.dart';
 import '../tables/karigar/karigar_receipts.dart';
@@ -61,6 +64,9 @@ part 'app_database.g.dart';
     KarigarReceipts,
     GirviLoans,
     GirviPayments,
+    GirviLoanItems,
+    GirviItemPhotos,
+    GirviDisbursements,
     DeliveryOrders,
     DeliveryItems,
     SalesBillingSettings,
@@ -322,6 +328,38 @@ class AppDatabase extends _$AppDatabase {
             AppLogger.info(
                 'v20 girvi invoice item metadata migration applied.');
           }
+
+          if (from < 21) {
+            await m.createTable(girviLoanItems);
+            await m.createTable(girviItemPhotos);
+            await m.createTable(girviDisbursements);
+            await _backfillGirviStructuredDetails();
+            AppLogger.info(
+                'v21 structured girvi items, photos and disbursements applied.');
+          }
+
+          if (from < 22) {
+            try {
+              await m.addColumn(
+                girviBillingSettings,
+                girviBillingSettings.termsAndConditionsHindi,
+              );
+            } catch (_) {}
+            try {
+              await m.addColumn(
+                girviBillingSettings,
+                girviBillingSettings.customerDeclaration,
+              );
+            } catch (_) {}
+            try {
+              await m.addColumn(
+                girviBillingSettings,
+                girviBillingSettings.customerDeclarationHindi,
+              );
+            } catch (_) {}
+            AppLogger.info(
+                'v22 bilingual Girvi terms and declaration applied.');
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -426,6 +464,111 @@ class AppDatabase extends _$AppDatabase {
           }
         },
       );
+
+  Future<void> _backfillGirviStructuredDetails() async {
+    await customStatement('''
+      INSERT INTO "girvi_loan_items" (
+        "girvi_id",
+        "serial_no",
+        "item_name",
+        "metal_type",
+        "purity",
+        "purity_factor",
+        "pieces",
+        "huid_number",
+        "gross_weight",
+        "less_weight",
+        "net_weight",
+        "valuation_method",
+        "fine_weight",
+        "rate_per_gram",
+        "valuation_amount",
+        "is_legacy"
+      )
+      SELECT
+        loan."id",
+        1,
+        loan."item_description",
+        loan."metal_type",
+        loan."metal_purity",
+        CASE loan."metal_purity"
+          WHEN '24K' THEN 0.999
+          WHEN '22K' THEN 0.916
+          WHEN '18K' THEN 0.750
+          WHEN '14K' THEN 0.585
+          WHEN '999' THEN 0.999
+          WHEN '925' THEN 0.925
+          WHEN '800' THEN 0.800
+          ELSE 0.0
+        END,
+        loan."item_count",
+        loan."huid_number",
+        loan."gross_weight",
+        loan."stone_weight",
+        loan."net_weight",
+        'LEGACY',
+        loan."net_weight",
+        loan."rate_per_gram",
+        loan."total_value",
+        1
+      FROM "girvi_loans" AS loan
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM "girvi_loan_items" AS item
+        WHERE item."girvi_id" = loan."id"
+      )
+    ''');
+
+    await customStatement('''
+      INSERT INTO "girvi_item_photos" (
+        "item_id",
+        "file_path",
+        "sort_order",
+        "is_legacy"
+      )
+      SELECT
+        item."id",
+        loan."item_photo_path",
+        1,
+        1
+      FROM "girvi_loans" AS loan
+      INNER JOIN "girvi_loan_items" AS item
+        ON item."girvi_id" = loan."id" AND item."serial_no" = 1
+      WHERE loan."item_photo_path" IS NOT NULL
+        AND TRIM(loan."item_photo_path") <> ''
+        AND NOT EXISTS (
+          SELECT 1
+          FROM "girvi_item_photos" AS photo
+          WHERE photo."item_id" = item."id"
+        )
+    ''');
+
+    await customStatement('''
+      INSERT INTO "girvi_disbursements" (
+        "girvi_id",
+        "sequence_no",
+        "mode",
+        "display_label",
+        "amount",
+        "details",
+        "is_legacy"
+      )
+      SELECT
+        loan."id",
+        1,
+        'LEGACY',
+        loan."disbursement_mode",
+        loan."loan_amount",
+        loan."disbursement_mode",
+        1
+      FROM "girvi_loans" AS loan
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM "girvi_disbursements" AS entry
+        WHERE entry."girvi_id" = loan."id"
+      )
+    ''');
+  }
 
   Future<void> ensureBillingSetupSchema() async {
     Future<void> runIfNeeded(String statement) async {
@@ -593,6 +736,12 @@ class AppDatabase extends _$AppDatabase {
         m.addColumn(girviBillingSettings, girviBillingSettings.noticeDays));
     await runIfNeeded(() => m.addColumn(
         girviBillingSettings, girviBillingSettings.termsAndConditions));
+    await runIfNeeded(() => m.addColumn(
+        girviBillingSettings, girviBillingSettings.termsAndConditionsHindi));
+    await runIfNeeded(() => m.addColumn(
+        girviBillingSettings, girviBillingSettings.customerDeclaration));
+    await runIfNeeded(() => m.addColumn(
+        girviBillingSettings, girviBillingSettings.customerDeclarationHindi));
     await runIfNeeded(() =>
         m.addColumn(girviBillingSettings, girviBillingSettings.footerMessage));
     await runIfNeeded(() =>
@@ -695,6 +844,11 @@ const List<String> _billingSetupSchemaSafetySql = [
     "reminder_days" INTEGER NOT NULL DEFAULT 15,
     "notice_days" INTEGER NOT NULL DEFAULT 30,
     "terms_and_conditions" TEXT NOT NULL DEFAULT '',
+    "terms_and_conditions_hindi" TEXT NOT NULL DEFAULT 'ऋण राशि पर ब्याज प्रति माह लिया जाएगा।
+नोटिस अवधि के बाद न छुड़ाए गए आभूषणों की नीलामी लागू कानून के अनुसार की जा सकती है।
+ग्राहक समय पर भुगतान और ऋण छुड़ाने के लिए जिम्मेदार है।',
+    "customer_declaration" TEXT NOT NULL DEFAULT 'I declare that the pledged articles belong to me, are free from dispute, and the information provided by me is true. I have verified the item details, loan amount and interest terms, and have received the stated disbursement.',
+    "customer_declaration_hindi" TEXT NOT NULL DEFAULT 'मैं घोषणा करता/करती हूं कि गिरवी रखी गई वस्तुएं मेरी हैं, किसी विवाद से मुक्त हैं और मेरे द्वारा दी गई जानकारी सत्य है। मैंने वस्तुओं का विवरण, ऋण राशि और ब्याज की शर्तें जांच ली हैं तथा बताई गई भुगतान राशि प्राप्त कर ली है।',
     "footer_message" TEXT NOT NULL DEFAULT '',
     "auto_print" INTEGER NOT NULL DEFAULT 1,
     "selected_template" TEXT NOT NULL DEFAULT 'default'
@@ -774,6 +928,9 @@ const List<String> _billingSetupSchemaSafetySql = [
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "reminder_days" INTEGER NOT NULL DEFAULT 15',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "notice_days" INTEGER NOT NULL DEFAULT 30',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "terms_and_conditions" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "terms_and_conditions_hindi" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "customer_declaration" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "customer_declaration_hindi" TEXT NOT NULL DEFAULT ""',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "footer_message" TEXT NOT NULL DEFAULT ""',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "auto_print" INTEGER NOT NULL DEFAULT 1',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "selected_template" TEXT NOT NULL DEFAULT "default"',

@@ -19295,6 +19295,2042 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
   }
 }
 
+class $GirviLoanItemsTable extends GirviLoanItems
+    with TableInfo<$GirviLoanItemsTable, GirviLoanItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GirviLoanItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _girviIdMeta =
+      const VerificationMeta('girviId');
+  @override
+  late final GeneratedColumn<int> girviId = GeneratedColumn<int>(
+      'girvi_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES girvi_loans (id) ON DELETE CASCADE'));
+  static const VerificationMeta _serialNoMeta =
+      const VerificationMeta('serialNo');
+  @override
+  late final GeneratedColumn<int> serialNo = GeneratedColumn<int>(
+      'serial_no', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _itemNameMeta =
+      const VerificationMeta('itemName');
+  @override
+  late final GeneratedColumn<String> itemName = GeneratedColumn<String>(
+      'item_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _metalTypeMeta =
+      const VerificationMeta('metalType');
+  @override
+  late final GeneratedColumn<String> metalType = GeneratedColumn<String>(
+      'metal_type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _purityMeta = const VerificationMeta('purity');
+  @override
+  late final GeneratedColumn<String> purity = GeneratedColumn<String>(
+      'purity', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _purityFactorMeta =
+      const VerificationMeta('purityFactor');
+  @override
+  late final GeneratedColumn<double> purityFactor = GeneratedColumn<double>(
+      'purity_factor', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _piecesMeta = const VerificationMeta('pieces');
+  @override
+  late final GeneratedColumn<int> pieces = GeneratedColumn<int>(
+      'pieces', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  static const VerificationMeta _huidNumberMeta =
+      const VerificationMeta('huidNumber');
+  @override
+  late final GeneratedColumn<String> huidNumber = GeneratedColumn<String>(
+      'huid_number', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _grossWeightMeta =
+      const VerificationMeta('grossWeight');
+  @override
+  late final GeneratedColumn<double> grossWeight = GeneratedColumn<double>(
+      'gross_weight', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _lessWeightMeta =
+      const VerificationMeta('lessWeight');
+  @override
+  late final GeneratedColumn<double> lessWeight = GeneratedColumn<double>(
+      'less_weight', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _netWeightMeta =
+      const VerificationMeta('netWeight');
+  @override
+  late final GeneratedColumn<double> netWeight = GeneratedColumn<double>(
+      'net_weight', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _valuationMethodMeta =
+      const VerificationMeta('valuationMethod');
+  @override
+  late final GeneratedColumn<String> valuationMethod = GeneratedColumn<String>(
+      'valuation_method', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('PURITY'));
+  static const VerificationMeta _valuationPurityPercentMeta =
+      const VerificationMeta('valuationPurityPercent');
+  @override
+  late final GeneratedColumn<double> valuationPurityPercent =
+      GeneratedColumn<double>('valuation_purity_percent', aliasedName, true,
+          type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _fineWeightMeta =
+      const VerificationMeta('fineWeight');
+  @override
+  late final GeneratedColumn<double> fineWeight = GeneratedColumn<double>(
+      'fine_weight', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _ratePerGramMeta =
+      const VerificationMeta('ratePerGram');
+  @override
+  late final GeneratedColumn<double> ratePerGram = GeneratedColumn<double>(
+      'rate_per_gram', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _valuationAmountMeta =
+      const VerificationMeta('valuationAmount');
+  @override
+  late final GeneratedColumn<double> valuationAmount = GeneratedColumn<double>(
+      'valuation_amount', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+      'notes', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _isLegacyMeta =
+      const VerificationMeta('isLegacy');
+  @override
+  late final GeneratedColumn<bool> isLegacy = GeneratedColumn<bool>(
+      'is_legacy', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_legacy" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        girviId,
+        serialNo,
+        itemName,
+        metalType,
+        purity,
+        purityFactor,
+        pieces,
+        huidNumber,
+        grossWeight,
+        lessWeight,
+        netWeight,
+        valuationMethod,
+        valuationPurityPercent,
+        fineWeight,
+        ratePerGram,
+        valuationAmount,
+        notes,
+        isLegacy
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'girvi_loan_items';
+  @override
+  VerificationContext validateIntegrity(Insertable<GirviLoanItem> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('girvi_id')) {
+      context.handle(_girviIdMeta,
+          girviId.isAcceptableOrUnknown(data['girvi_id']!, _girviIdMeta));
+    } else if (isInserting) {
+      context.missing(_girviIdMeta);
+    }
+    if (data.containsKey('serial_no')) {
+      context.handle(_serialNoMeta,
+          serialNo.isAcceptableOrUnknown(data['serial_no']!, _serialNoMeta));
+    } else if (isInserting) {
+      context.missing(_serialNoMeta);
+    }
+    if (data.containsKey('item_name')) {
+      context.handle(_itemNameMeta,
+          itemName.isAcceptableOrUnknown(data['item_name']!, _itemNameMeta));
+    } else if (isInserting) {
+      context.missing(_itemNameMeta);
+    }
+    if (data.containsKey('metal_type')) {
+      context.handle(_metalTypeMeta,
+          metalType.isAcceptableOrUnknown(data['metal_type']!, _metalTypeMeta));
+    } else if (isInserting) {
+      context.missing(_metalTypeMeta);
+    }
+    if (data.containsKey('purity')) {
+      context.handle(_purityMeta,
+          purity.isAcceptableOrUnknown(data['purity']!, _purityMeta));
+    } else if (isInserting) {
+      context.missing(_purityMeta);
+    }
+    if (data.containsKey('purity_factor')) {
+      context.handle(
+          _purityFactorMeta,
+          purityFactor.isAcceptableOrUnknown(
+              data['purity_factor']!, _purityFactorMeta));
+    }
+    if (data.containsKey('pieces')) {
+      context.handle(_piecesMeta,
+          pieces.isAcceptableOrUnknown(data['pieces']!, _piecesMeta));
+    }
+    if (data.containsKey('huid_number')) {
+      context.handle(
+          _huidNumberMeta,
+          huidNumber.isAcceptableOrUnknown(
+              data['huid_number']!, _huidNumberMeta));
+    }
+    if (data.containsKey('gross_weight')) {
+      context.handle(
+          _grossWeightMeta,
+          grossWeight.isAcceptableOrUnknown(
+              data['gross_weight']!, _grossWeightMeta));
+    }
+    if (data.containsKey('less_weight')) {
+      context.handle(
+          _lessWeightMeta,
+          lessWeight.isAcceptableOrUnknown(
+              data['less_weight']!, _lessWeightMeta));
+    }
+    if (data.containsKey('net_weight')) {
+      context.handle(_netWeightMeta,
+          netWeight.isAcceptableOrUnknown(data['net_weight']!, _netWeightMeta));
+    }
+    if (data.containsKey('valuation_method')) {
+      context.handle(
+          _valuationMethodMeta,
+          valuationMethod.isAcceptableOrUnknown(
+              data['valuation_method']!, _valuationMethodMeta));
+    }
+    if (data.containsKey('valuation_purity_percent')) {
+      context.handle(
+          _valuationPurityPercentMeta,
+          valuationPurityPercent.isAcceptableOrUnknown(
+              data['valuation_purity_percent']!, _valuationPurityPercentMeta));
+    }
+    if (data.containsKey('fine_weight')) {
+      context.handle(
+          _fineWeightMeta,
+          fineWeight.isAcceptableOrUnknown(
+              data['fine_weight']!, _fineWeightMeta));
+    }
+    if (data.containsKey('rate_per_gram')) {
+      context.handle(
+          _ratePerGramMeta,
+          ratePerGram.isAcceptableOrUnknown(
+              data['rate_per_gram']!, _ratePerGramMeta));
+    }
+    if (data.containsKey('valuation_amount')) {
+      context.handle(
+          _valuationAmountMeta,
+          valuationAmount.isAcceptableOrUnknown(
+              data['valuation_amount']!, _valuationAmountMeta));
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+          _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
+    }
+    if (data.containsKey('is_legacy')) {
+      context.handle(_isLegacyMeta,
+          isLegacy.isAcceptableOrUnknown(data['is_legacy']!, _isLegacyMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GirviLoanItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GirviLoanItem(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      girviId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}girvi_id'])!,
+      serialNo: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}serial_no'])!,
+      itemName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}item_name'])!,
+      metalType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}metal_type'])!,
+      purity: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}purity'])!,
+      purityFactor: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}purity_factor'])!,
+      pieces: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}pieces'])!,
+      huidNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}huid_number']),
+      grossWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}gross_weight'])!,
+      lessWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}less_weight'])!,
+      netWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}net_weight'])!,
+      valuationMethod: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}valuation_method'])!,
+      valuationPurityPercent: attachedDatabase.typeMapping.read(
+          DriftSqlType.double,
+          data['${effectivePrefix}valuation_purity_percent']),
+      fineWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}fine_weight'])!,
+      ratePerGram: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}rate_per_gram'])!,
+      valuationAmount: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}valuation_amount'])!,
+      notes: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}notes']),
+      isLegacy: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_legacy'])!,
+    );
+  }
+
+  @override
+  $GirviLoanItemsTable createAlias(String alias) {
+    return $GirviLoanItemsTable(attachedDatabase, alias);
+  }
+}
+
+class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final int girviId;
+  final int serialNo;
+  final String itemName;
+  final String metalType;
+  final String purity;
+  final double purityFactor;
+  final int pieces;
+  final String? huidNumber;
+  final double grossWeight;
+  final double lessWeight;
+  final double netWeight;
+  final String valuationMethod;
+  final double? valuationPurityPercent;
+  final double fineWeight;
+  final double ratePerGram;
+  final double valuationAmount;
+  final String? notes;
+  final bool isLegacy;
+  const GirviLoanItem(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.girviId,
+      required this.serialNo,
+      required this.itemName,
+      required this.metalType,
+      required this.purity,
+      required this.purityFactor,
+      required this.pieces,
+      this.huidNumber,
+      required this.grossWeight,
+      required this.lessWeight,
+      required this.netWeight,
+      required this.valuationMethod,
+      this.valuationPurityPercent,
+      required this.fineWeight,
+      required this.ratePerGram,
+      required this.valuationAmount,
+      this.notes,
+      required this.isLegacy});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['girvi_id'] = Variable<int>(girviId);
+    map['serial_no'] = Variable<int>(serialNo);
+    map['item_name'] = Variable<String>(itemName);
+    map['metal_type'] = Variable<String>(metalType);
+    map['purity'] = Variable<String>(purity);
+    map['purity_factor'] = Variable<double>(purityFactor);
+    map['pieces'] = Variable<int>(pieces);
+    if (!nullToAbsent || huidNumber != null) {
+      map['huid_number'] = Variable<String>(huidNumber);
+    }
+    map['gross_weight'] = Variable<double>(grossWeight);
+    map['less_weight'] = Variable<double>(lessWeight);
+    map['net_weight'] = Variable<double>(netWeight);
+    map['valuation_method'] = Variable<String>(valuationMethod);
+    if (!nullToAbsent || valuationPurityPercent != null) {
+      map['valuation_purity_percent'] =
+          Variable<double>(valuationPurityPercent);
+    }
+    map['fine_weight'] = Variable<double>(fineWeight);
+    map['rate_per_gram'] = Variable<double>(ratePerGram);
+    map['valuation_amount'] = Variable<double>(valuationAmount);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['is_legacy'] = Variable<bool>(isLegacy);
+    return map;
+  }
+
+  GirviLoanItemsCompanion toCompanion(bool nullToAbsent) {
+    return GirviLoanItemsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      girviId: Value(girviId),
+      serialNo: Value(serialNo),
+      itemName: Value(itemName),
+      metalType: Value(metalType),
+      purity: Value(purity),
+      purityFactor: Value(purityFactor),
+      pieces: Value(pieces),
+      huidNumber: huidNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(huidNumber),
+      grossWeight: Value(grossWeight),
+      lessWeight: Value(lessWeight),
+      netWeight: Value(netWeight),
+      valuationMethod: Value(valuationMethod),
+      valuationPurityPercent: valuationPurityPercent == null && nullToAbsent
+          ? const Value.absent()
+          : Value(valuationPurityPercent),
+      fineWeight: Value(fineWeight),
+      ratePerGram: Value(ratePerGram),
+      valuationAmount: Value(valuationAmount),
+      notes:
+          notes == null && nullToAbsent ? const Value.absent() : Value(notes),
+      isLegacy: Value(isLegacy),
+    );
+  }
+
+  factory GirviLoanItem.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GirviLoanItem(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      girviId: serializer.fromJson<int>(json['girviId']),
+      serialNo: serializer.fromJson<int>(json['serialNo']),
+      itemName: serializer.fromJson<String>(json['itemName']),
+      metalType: serializer.fromJson<String>(json['metalType']),
+      purity: serializer.fromJson<String>(json['purity']),
+      purityFactor: serializer.fromJson<double>(json['purityFactor']),
+      pieces: serializer.fromJson<int>(json['pieces']),
+      huidNumber: serializer.fromJson<String?>(json['huidNumber']),
+      grossWeight: serializer.fromJson<double>(json['grossWeight']),
+      lessWeight: serializer.fromJson<double>(json['lessWeight']),
+      netWeight: serializer.fromJson<double>(json['netWeight']),
+      valuationMethod: serializer.fromJson<String>(json['valuationMethod']),
+      valuationPurityPercent:
+          serializer.fromJson<double?>(json['valuationPurityPercent']),
+      fineWeight: serializer.fromJson<double>(json['fineWeight']),
+      ratePerGram: serializer.fromJson<double>(json['ratePerGram']),
+      valuationAmount: serializer.fromJson<double>(json['valuationAmount']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      isLegacy: serializer.fromJson<bool>(json['isLegacy']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'girviId': serializer.toJson<int>(girviId),
+      'serialNo': serializer.toJson<int>(serialNo),
+      'itemName': serializer.toJson<String>(itemName),
+      'metalType': serializer.toJson<String>(metalType),
+      'purity': serializer.toJson<String>(purity),
+      'purityFactor': serializer.toJson<double>(purityFactor),
+      'pieces': serializer.toJson<int>(pieces),
+      'huidNumber': serializer.toJson<String?>(huidNumber),
+      'grossWeight': serializer.toJson<double>(grossWeight),
+      'lessWeight': serializer.toJson<double>(lessWeight),
+      'netWeight': serializer.toJson<double>(netWeight),
+      'valuationMethod': serializer.toJson<String>(valuationMethod),
+      'valuationPurityPercent':
+          serializer.toJson<double?>(valuationPurityPercent),
+      'fineWeight': serializer.toJson<double>(fineWeight),
+      'ratePerGram': serializer.toJson<double>(ratePerGram),
+      'valuationAmount': serializer.toJson<double>(valuationAmount),
+      'notes': serializer.toJson<String?>(notes),
+      'isLegacy': serializer.toJson<bool>(isLegacy),
+    };
+  }
+
+  GirviLoanItem copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          int? girviId,
+          int? serialNo,
+          String? itemName,
+          String? metalType,
+          String? purity,
+          double? purityFactor,
+          int? pieces,
+          Value<String?> huidNumber = const Value.absent(),
+          double? grossWeight,
+          double? lessWeight,
+          double? netWeight,
+          String? valuationMethod,
+          Value<double?> valuationPurityPercent = const Value.absent(),
+          double? fineWeight,
+          double? ratePerGram,
+          double? valuationAmount,
+          Value<String?> notes = const Value.absent(),
+          bool? isLegacy}) =>
+      GirviLoanItem(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        girviId: girviId ?? this.girviId,
+        serialNo: serialNo ?? this.serialNo,
+        itemName: itemName ?? this.itemName,
+        metalType: metalType ?? this.metalType,
+        purity: purity ?? this.purity,
+        purityFactor: purityFactor ?? this.purityFactor,
+        pieces: pieces ?? this.pieces,
+        huidNumber: huidNumber.present ? huidNumber.value : this.huidNumber,
+        grossWeight: grossWeight ?? this.grossWeight,
+        lessWeight: lessWeight ?? this.lessWeight,
+        netWeight: netWeight ?? this.netWeight,
+        valuationMethod: valuationMethod ?? this.valuationMethod,
+        valuationPurityPercent: valuationPurityPercent.present
+            ? valuationPurityPercent.value
+            : this.valuationPurityPercent,
+        fineWeight: fineWeight ?? this.fineWeight,
+        ratePerGram: ratePerGram ?? this.ratePerGram,
+        valuationAmount: valuationAmount ?? this.valuationAmount,
+        notes: notes.present ? notes.value : this.notes,
+        isLegacy: isLegacy ?? this.isLegacy,
+      );
+  GirviLoanItem copyWithCompanion(GirviLoanItemsCompanion data) {
+    return GirviLoanItem(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      girviId: data.girviId.present ? data.girviId.value : this.girviId,
+      serialNo: data.serialNo.present ? data.serialNo.value : this.serialNo,
+      itemName: data.itemName.present ? data.itemName.value : this.itemName,
+      metalType: data.metalType.present ? data.metalType.value : this.metalType,
+      purity: data.purity.present ? data.purity.value : this.purity,
+      purityFactor: data.purityFactor.present
+          ? data.purityFactor.value
+          : this.purityFactor,
+      pieces: data.pieces.present ? data.pieces.value : this.pieces,
+      huidNumber:
+          data.huidNumber.present ? data.huidNumber.value : this.huidNumber,
+      grossWeight:
+          data.grossWeight.present ? data.grossWeight.value : this.grossWeight,
+      lessWeight:
+          data.lessWeight.present ? data.lessWeight.value : this.lessWeight,
+      netWeight: data.netWeight.present ? data.netWeight.value : this.netWeight,
+      valuationMethod: data.valuationMethod.present
+          ? data.valuationMethod.value
+          : this.valuationMethod,
+      valuationPurityPercent: data.valuationPurityPercent.present
+          ? data.valuationPurityPercent.value
+          : this.valuationPurityPercent,
+      fineWeight:
+          data.fineWeight.present ? data.fineWeight.value : this.fineWeight,
+      ratePerGram:
+          data.ratePerGram.present ? data.ratePerGram.value : this.ratePerGram,
+      valuationAmount: data.valuationAmount.present
+          ? data.valuationAmount.value
+          : this.valuationAmount,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      isLegacy: data.isLegacy.present ? data.isLegacy.value : this.isLegacy,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GirviLoanItem(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('girviId: $girviId, ')
+          ..write('serialNo: $serialNo, ')
+          ..write('itemName: $itemName, ')
+          ..write('metalType: $metalType, ')
+          ..write('purity: $purity, ')
+          ..write('purityFactor: $purityFactor, ')
+          ..write('pieces: $pieces, ')
+          ..write('huidNumber: $huidNumber, ')
+          ..write('grossWeight: $grossWeight, ')
+          ..write('lessWeight: $lessWeight, ')
+          ..write('netWeight: $netWeight, ')
+          ..write('valuationMethod: $valuationMethod, ')
+          ..write('valuationPurityPercent: $valuationPurityPercent, ')
+          ..write('fineWeight: $fineWeight, ')
+          ..write('ratePerGram: $ratePerGram, ')
+          ..write('valuationAmount: $valuationAmount, ')
+          ..write('notes: $notes, ')
+          ..write('isLegacy: $isLegacy')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+        id,
+        createdAt,
+        updatedAt,
+        girviId,
+        serialNo,
+        itemName,
+        metalType,
+        purity,
+        purityFactor,
+        pieces,
+        huidNumber,
+        grossWeight,
+        lessWeight,
+        netWeight,
+        valuationMethod,
+        valuationPurityPercent,
+        fineWeight,
+        ratePerGram,
+        valuationAmount,
+        notes,
+        isLegacy
+      ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GirviLoanItem &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.girviId == this.girviId &&
+          other.serialNo == this.serialNo &&
+          other.itemName == this.itemName &&
+          other.metalType == this.metalType &&
+          other.purity == this.purity &&
+          other.purityFactor == this.purityFactor &&
+          other.pieces == this.pieces &&
+          other.huidNumber == this.huidNumber &&
+          other.grossWeight == this.grossWeight &&
+          other.lessWeight == this.lessWeight &&
+          other.netWeight == this.netWeight &&
+          other.valuationMethod == this.valuationMethod &&
+          other.valuationPurityPercent == this.valuationPurityPercent &&
+          other.fineWeight == this.fineWeight &&
+          other.ratePerGram == this.ratePerGram &&
+          other.valuationAmount == this.valuationAmount &&
+          other.notes == this.notes &&
+          other.isLegacy == this.isLegacy);
+}
+
+class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<int> girviId;
+  final Value<int> serialNo;
+  final Value<String> itemName;
+  final Value<String> metalType;
+  final Value<String> purity;
+  final Value<double> purityFactor;
+  final Value<int> pieces;
+  final Value<String?> huidNumber;
+  final Value<double> grossWeight;
+  final Value<double> lessWeight;
+  final Value<double> netWeight;
+  final Value<String> valuationMethod;
+  final Value<double?> valuationPurityPercent;
+  final Value<double> fineWeight;
+  final Value<double> ratePerGram;
+  final Value<double> valuationAmount;
+  final Value<String?> notes;
+  final Value<bool> isLegacy;
+  const GirviLoanItemsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.girviId = const Value.absent(),
+    this.serialNo = const Value.absent(),
+    this.itemName = const Value.absent(),
+    this.metalType = const Value.absent(),
+    this.purity = const Value.absent(),
+    this.purityFactor = const Value.absent(),
+    this.pieces = const Value.absent(),
+    this.huidNumber = const Value.absent(),
+    this.grossWeight = const Value.absent(),
+    this.lessWeight = const Value.absent(),
+    this.netWeight = const Value.absent(),
+    this.valuationMethod = const Value.absent(),
+    this.valuationPurityPercent = const Value.absent(),
+    this.fineWeight = const Value.absent(),
+    this.ratePerGram = const Value.absent(),
+    this.valuationAmount = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.isLegacy = const Value.absent(),
+  });
+  GirviLoanItemsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required int girviId,
+    required int serialNo,
+    required String itemName,
+    required String metalType,
+    required String purity,
+    this.purityFactor = const Value.absent(),
+    this.pieces = const Value.absent(),
+    this.huidNumber = const Value.absent(),
+    this.grossWeight = const Value.absent(),
+    this.lessWeight = const Value.absent(),
+    this.netWeight = const Value.absent(),
+    this.valuationMethod = const Value.absent(),
+    this.valuationPurityPercent = const Value.absent(),
+    this.fineWeight = const Value.absent(),
+    this.ratePerGram = const Value.absent(),
+    this.valuationAmount = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.isLegacy = const Value.absent(),
+  })  : girviId = Value(girviId),
+        serialNo = Value(serialNo),
+        itemName = Value(itemName),
+        metalType = Value(metalType),
+        purity = Value(purity);
+  static Insertable<GirviLoanItem> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? girviId,
+    Expression<int>? serialNo,
+    Expression<String>? itemName,
+    Expression<String>? metalType,
+    Expression<String>? purity,
+    Expression<double>? purityFactor,
+    Expression<int>? pieces,
+    Expression<String>? huidNumber,
+    Expression<double>? grossWeight,
+    Expression<double>? lessWeight,
+    Expression<double>? netWeight,
+    Expression<String>? valuationMethod,
+    Expression<double>? valuationPurityPercent,
+    Expression<double>? fineWeight,
+    Expression<double>? ratePerGram,
+    Expression<double>? valuationAmount,
+    Expression<String>? notes,
+    Expression<bool>? isLegacy,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (girviId != null) 'girvi_id': girviId,
+      if (serialNo != null) 'serial_no': serialNo,
+      if (itemName != null) 'item_name': itemName,
+      if (metalType != null) 'metal_type': metalType,
+      if (purity != null) 'purity': purity,
+      if (purityFactor != null) 'purity_factor': purityFactor,
+      if (pieces != null) 'pieces': pieces,
+      if (huidNumber != null) 'huid_number': huidNumber,
+      if (grossWeight != null) 'gross_weight': grossWeight,
+      if (lessWeight != null) 'less_weight': lessWeight,
+      if (netWeight != null) 'net_weight': netWeight,
+      if (valuationMethod != null) 'valuation_method': valuationMethod,
+      if (valuationPurityPercent != null)
+        'valuation_purity_percent': valuationPurityPercent,
+      if (fineWeight != null) 'fine_weight': fineWeight,
+      if (ratePerGram != null) 'rate_per_gram': ratePerGram,
+      if (valuationAmount != null) 'valuation_amount': valuationAmount,
+      if (notes != null) 'notes': notes,
+      if (isLegacy != null) 'is_legacy': isLegacy,
+    });
+  }
+
+  GirviLoanItemsCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<int>? girviId,
+      Value<int>? serialNo,
+      Value<String>? itemName,
+      Value<String>? metalType,
+      Value<String>? purity,
+      Value<double>? purityFactor,
+      Value<int>? pieces,
+      Value<String?>? huidNumber,
+      Value<double>? grossWeight,
+      Value<double>? lessWeight,
+      Value<double>? netWeight,
+      Value<String>? valuationMethod,
+      Value<double?>? valuationPurityPercent,
+      Value<double>? fineWeight,
+      Value<double>? ratePerGram,
+      Value<double>? valuationAmount,
+      Value<String?>? notes,
+      Value<bool>? isLegacy}) {
+    return GirviLoanItemsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      girviId: girviId ?? this.girviId,
+      serialNo: serialNo ?? this.serialNo,
+      itemName: itemName ?? this.itemName,
+      metalType: metalType ?? this.metalType,
+      purity: purity ?? this.purity,
+      purityFactor: purityFactor ?? this.purityFactor,
+      pieces: pieces ?? this.pieces,
+      huidNumber: huidNumber ?? this.huidNumber,
+      grossWeight: grossWeight ?? this.grossWeight,
+      lessWeight: lessWeight ?? this.lessWeight,
+      netWeight: netWeight ?? this.netWeight,
+      valuationMethod: valuationMethod ?? this.valuationMethod,
+      valuationPurityPercent:
+          valuationPurityPercent ?? this.valuationPurityPercent,
+      fineWeight: fineWeight ?? this.fineWeight,
+      ratePerGram: ratePerGram ?? this.ratePerGram,
+      valuationAmount: valuationAmount ?? this.valuationAmount,
+      notes: notes ?? this.notes,
+      isLegacy: isLegacy ?? this.isLegacy,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (girviId.present) {
+      map['girvi_id'] = Variable<int>(girviId.value);
+    }
+    if (serialNo.present) {
+      map['serial_no'] = Variable<int>(serialNo.value);
+    }
+    if (itemName.present) {
+      map['item_name'] = Variable<String>(itemName.value);
+    }
+    if (metalType.present) {
+      map['metal_type'] = Variable<String>(metalType.value);
+    }
+    if (purity.present) {
+      map['purity'] = Variable<String>(purity.value);
+    }
+    if (purityFactor.present) {
+      map['purity_factor'] = Variable<double>(purityFactor.value);
+    }
+    if (pieces.present) {
+      map['pieces'] = Variable<int>(pieces.value);
+    }
+    if (huidNumber.present) {
+      map['huid_number'] = Variable<String>(huidNumber.value);
+    }
+    if (grossWeight.present) {
+      map['gross_weight'] = Variable<double>(grossWeight.value);
+    }
+    if (lessWeight.present) {
+      map['less_weight'] = Variable<double>(lessWeight.value);
+    }
+    if (netWeight.present) {
+      map['net_weight'] = Variable<double>(netWeight.value);
+    }
+    if (valuationMethod.present) {
+      map['valuation_method'] = Variable<String>(valuationMethod.value);
+    }
+    if (valuationPurityPercent.present) {
+      map['valuation_purity_percent'] =
+          Variable<double>(valuationPurityPercent.value);
+    }
+    if (fineWeight.present) {
+      map['fine_weight'] = Variable<double>(fineWeight.value);
+    }
+    if (ratePerGram.present) {
+      map['rate_per_gram'] = Variable<double>(ratePerGram.value);
+    }
+    if (valuationAmount.present) {
+      map['valuation_amount'] = Variable<double>(valuationAmount.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (isLegacy.present) {
+      map['is_legacy'] = Variable<bool>(isLegacy.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GirviLoanItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('girviId: $girviId, ')
+          ..write('serialNo: $serialNo, ')
+          ..write('itemName: $itemName, ')
+          ..write('metalType: $metalType, ')
+          ..write('purity: $purity, ')
+          ..write('purityFactor: $purityFactor, ')
+          ..write('pieces: $pieces, ')
+          ..write('huidNumber: $huidNumber, ')
+          ..write('grossWeight: $grossWeight, ')
+          ..write('lessWeight: $lessWeight, ')
+          ..write('netWeight: $netWeight, ')
+          ..write('valuationMethod: $valuationMethod, ')
+          ..write('valuationPurityPercent: $valuationPurityPercent, ')
+          ..write('fineWeight: $fineWeight, ')
+          ..write('ratePerGram: $ratePerGram, ')
+          ..write('valuationAmount: $valuationAmount, ')
+          ..write('notes: $notes, ')
+          ..write('isLegacy: $isLegacy')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $GirviItemPhotosTable extends GirviItemPhotos
+    with TableInfo<$GirviItemPhotosTable, GirviItemPhoto> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GirviItemPhotosTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _itemIdMeta = const VerificationMeta('itemId');
+  @override
+  late final GeneratedColumn<int> itemId = GeneratedColumn<int>(
+      'item_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES girvi_loan_items (id) ON DELETE CASCADE'));
+  static const VerificationMeta _filePathMeta =
+      const VerificationMeta('filePath');
+  @override
+  late final GeneratedColumn<String> filePath = GeneratedColumn<String>(
+      'file_path', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _sortOrderMeta =
+      const VerificationMeta('sortOrder');
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+      'sort_order', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  static const VerificationMeta _captionMeta =
+      const VerificationMeta('caption');
+  @override
+  late final GeneratedColumn<String> caption = GeneratedColumn<String>(
+      'caption', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _isLegacyMeta =
+      const VerificationMeta('isLegacy');
+  @override
+  late final GeneratedColumn<bool> isLegacy = GeneratedColumn<bool>(
+      'is_legacy', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_legacy" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        itemId,
+        filePath,
+        sortOrder,
+        caption,
+        isLegacy
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'girvi_item_photos';
+  @override
+  VerificationContext validateIntegrity(Insertable<GirviItemPhoto> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('item_id')) {
+      context.handle(_itemIdMeta,
+          itemId.isAcceptableOrUnknown(data['item_id']!, _itemIdMeta));
+    } else if (isInserting) {
+      context.missing(_itemIdMeta);
+    }
+    if (data.containsKey('file_path')) {
+      context.handle(_filePathMeta,
+          filePath.isAcceptableOrUnknown(data['file_path']!, _filePathMeta));
+    } else if (isInserting) {
+      context.missing(_filePathMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(_sortOrderMeta,
+          sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta));
+    }
+    if (data.containsKey('caption')) {
+      context.handle(_captionMeta,
+          caption.isAcceptableOrUnknown(data['caption']!, _captionMeta));
+    }
+    if (data.containsKey('is_legacy')) {
+      context.handle(_isLegacyMeta,
+          isLegacy.isAcceptableOrUnknown(data['is_legacy']!, _isLegacyMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GirviItemPhoto map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GirviItemPhoto(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      itemId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}item_id'])!,
+      filePath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}file_path'])!,
+      sortOrder: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}sort_order'])!,
+      caption: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}caption']),
+      isLegacy: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_legacy'])!,
+    );
+  }
+
+  @override
+  $GirviItemPhotosTable createAlias(String alias) {
+    return $GirviItemPhotosTable(attachedDatabase, alias);
+  }
+}
+
+class GirviItemPhoto extends DataClass implements Insertable<GirviItemPhoto> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final int itemId;
+  final String filePath;
+  final int sortOrder;
+  final String? caption;
+  final bool isLegacy;
+  const GirviItemPhoto(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.itemId,
+      required this.filePath,
+      required this.sortOrder,
+      this.caption,
+      required this.isLegacy});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['item_id'] = Variable<int>(itemId);
+    map['file_path'] = Variable<String>(filePath);
+    map['sort_order'] = Variable<int>(sortOrder);
+    if (!nullToAbsent || caption != null) {
+      map['caption'] = Variable<String>(caption);
+    }
+    map['is_legacy'] = Variable<bool>(isLegacy);
+    return map;
+  }
+
+  GirviItemPhotosCompanion toCompanion(bool nullToAbsent) {
+    return GirviItemPhotosCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      itemId: Value(itemId),
+      filePath: Value(filePath),
+      sortOrder: Value(sortOrder),
+      caption: caption == null && nullToAbsent
+          ? const Value.absent()
+          : Value(caption),
+      isLegacy: Value(isLegacy),
+    );
+  }
+
+  factory GirviItemPhoto.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GirviItemPhoto(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      itemId: serializer.fromJson<int>(json['itemId']),
+      filePath: serializer.fromJson<String>(json['filePath']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      caption: serializer.fromJson<String?>(json['caption']),
+      isLegacy: serializer.fromJson<bool>(json['isLegacy']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'itemId': serializer.toJson<int>(itemId),
+      'filePath': serializer.toJson<String>(filePath),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'caption': serializer.toJson<String?>(caption),
+      'isLegacy': serializer.toJson<bool>(isLegacy),
+    };
+  }
+
+  GirviItemPhoto copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          int? itemId,
+          String? filePath,
+          int? sortOrder,
+          Value<String?> caption = const Value.absent(),
+          bool? isLegacy}) =>
+      GirviItemPhoto(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        itemId: itemId ?? this.itemId,
+        filePath: filePath ?? this.filePath,
+        sortOrder: sortOrder ?? this.sortOrder,
+        caption: caption.present ? caption.value : this.caption,
+        isLegacy: isLegacy ?? this.isLegacy,
+      );
+  GirviItemPhoto copyWithCompanion(GirviItemPhotosCompanion data) {
+    return GirviItemPhoto(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      itemId: data.itemId.present ? data.itemId.value : this.itemId,
+      filePath: data.filePath.present ? data.filePath.value : this.filePath,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      caption: data.caption.present ? data.caption.value : this.caption,
+      isLegacy: data.isLegacy.present ? data.isLegacy.value : this.isLegacy,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GirviItemPhoto(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('itemId: $itemId, ')
+          ..write('filePath: $filePath, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('caption: $caption, ')
+          ..write('isLegacy: $isLegacy')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id, createdAt, updatedAt, itemId, filePath, sortOrder, caption, isLegacy);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GirviItemPhoto &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.itemId == this.itemId &&
+          other.filePath == this.filePath &&
+          other.sortOrder == this.sortOrder &&
+          other.caption == this.caption &&
+          other.isLegacy == this.isLegacy);
+}
+
+class GirviItemPhotosCompanion extends UpdateCompanion<GirviItemPhoto> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<int> itemId;
+  final Value<String> filePath;
+  final Value<int> sortOrder;
+  final Value<String?> caption;
+  final Value<bool> isLegacy;
+  const GirviItemPhotosCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.itemId = const Value.absent(),
+    this.filePath = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.caption = const Value.absent(),
+    this.isLegacy = const Value.absent(),
+  });
+  GirviItemPhotosCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required int itemId,
+    required String filePath,
+    this.sortOrder = const Value.absent(),
+    this.caption = const Value.absent(),
+    this.isLegacy = const Value.absent(),
+  })  : itemId = Value(itemId),
+        filePath = Value(filePath);
+  static Insertable<GirviItemPhoto> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? itemId,
+    Expression<String>? filePath,
+    Expression<int>? sortOrder,
+    Expression<String>? caption,
+    Expression<bool>? isLegacy,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (itemId != null) 'item_id': itemId,
+      if (filePath != null) 'file_path': filePath,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (caption != null) 'caption': caption,
+      if (isLegacy != null) 'is_legacy': isLegacy,
+    });
+  }
+
+  GirviItemPhotosCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<int>? itemId,
+      Value<String>? filePath,
+      Value<int>? sortOrder,
+      Value<String?>? caption,
+      Value<bool>? isLegacy}) {
+    return GirviItemPhotosCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      itemId: itemId ?? this.itemId,
+      filePath: filePath ?? this.filePath,
+      sortOrder: sortOrder ?? this.sortOrder,
+      caption: caption ?? this.caption,
+      isLegacy: isLegacy ?? this.isLegacy,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (itemId.present) {
+      map['item_id'] = Variable<int>(itemId.value);
+    }
+    if (filePath.present) {
+      map['file_path'] = Variable<String>(filePath.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (caption.present) {
+      map['caption'] = Variable<String>(caption.value);
+    }
+    if (isLegacy.present) {
+      map['is_legacy'] = Variable<bool>(isLegacy.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GirviItemPhotosCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('itemId: $itemId, ')
+          ..write('filePath: $filePath, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('caption: $caption, ')
+          ..write('isLegacy: $isLegacy')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $GirviDisbursementsTable extends GirviDisbursements
+    with TableInfo<$GirviDisbursementsTable, GirviDisbursement> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GirviDisbursementsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _girviIdMeta =
+      const VerificationMeta('girviId');
+  @override
+  late final GeneratedColumn<int> girviId = GeneratedColumn<int>(
+      'girvi_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES girvi_loans (id) ON DELETE CASCADE'));
+  static const VerificationMeta _sequenceNoMeta =
+      const VerificationMeta('sequenceNo');
+  @override
+  late final GeneratedColumn<int> sequenceNo = GeneratedColumn<int>(
+      'sequence_no', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _modeMeta = const VerificationMeta('mode');
+  @override
+  late final GeneratedColumn<String> mode = GeneratedColumn<String>(
+      'mode', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _displayLabelMeta =
+      const VerificationMeta('displayLabel');
+  @override
+  late final GeneratedColumn<String> displayLabel = GeneratedColumn<String>(
+      'display_label', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
+      'amount', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _bankAccountIdMeta =
+      const VerificationMeta('bankAccountId');
+  @override
+  late final GeneratedColumn<int> bankAccountId = GeneratedColumn<int>(
+      'bank_account_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _accountNameMeta =
+      const VerificationMeta('accountName');
+  @override
+  late final GeneratedColumn<String> accountName = GeneratedColumn<String>(
+      'account_name', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _referenceNoMeta =
+      const VerificationMeta('referenceNo');
+  @override
+  late final GeneratedColumn<String> referenceNo = GeneratedColumn<String>(
+      'reference_no', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _detailsMeta =
+      const VerificationMeta('details');
+  @override
+  late final GeneratedColumn<String> details = GeneratedColumn<String>(
+      'details', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _isLegacyMeta =
+      const VerificationMeta('isLegacy');
+  @override
+  late final GeneratedColumn<bool> isLegacy = GeneratedColumn<bool>(
+      'is_legacy', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_legacy" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        girviId,
+        sequenceNo,
+        mode,
+        displayLabel,
+        amount,
+        bankAccountId,
+        accountName,
+        referenceNo,
+        details,
+        isLegacy
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'girvi_disbursements';
+  @override
+  VerificationContext validateIntegrity(Insertable<GirviDisbursement> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('girvi_id')) {
+      context.handle(_girviIdMeta,
+          girviId.isAcceptableOrUnknown(data['girvi_id']!, _girviIdMeta));
+    } else if (isInserting) {
+      context.missing(_girviIdMeta);
+    }
+    if (data.containsKey('sequence_no')) {
+      context.handle(
+          _sequenceNoMeta,
+          sequenceNo.isAcceptableOrUnknown(
+              data['sequence_no']!, _sequenceNoMeta));
+    } else if (isInserting) {
+      context.missing(_sequenceNoMeta);
+    }
+    if (data.containsKey('mode')) {
+      context.handle(
+          _modeMeta, mode.isAcceptableOrUnknown(data['mode']!, _modeMeta));
+    } else if (isInserting) {
+      context.missing(_modeMeta);
+    }
+    if (data.containsKey('display_label')) {
+      context.handle(
+          _displayLabelMeta,
+          displayLabel.isAcceptableOrUnknown(
+              data['display_label']!, _displayLabelMeta));
+    } else if (isInserting) {
+      context.missing(_displayLabelMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(_amountMeta,
+          amount.isAcceptableOrUnknown(data['amount']!, _amountMeta));
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('bank_account_id')) {
+      context.handle(
+          _bankAccountIdMeta,
+          bankAccountId.isAcceptableOrUnknown(
+              data['bank_account_id']!, _bankAccountIdMeta));
+    }
+    if (data.containsKey('account_name')) {
+      context.handle(
+          _accountNameMeta,
+          accountName.isAcceptableOrUnknown(
+              data['account_name']!, _accountNameMeta));
+    }
+    if (data.containsKey('reference_no')) {
+      context.handle(
+          _referenceNoMeta,
+          referenceNo.isAcceptableOrUnknown(
+              data['reference_no']!, _referenceNoMeta));
+    }
+    if (data.containsKey('details')) {
+      context.handle(_detailsMeta,
+          details.isAcceptableOrUnknown(data['details']!, _detailsMeta));
+    }
+    if (data.containsKey('is_legacy')) {
+      context.handle(_isLegacyMeta,
+          isLegacy.isAcceptableOrUnknown(data['is_legacy']!, _isLegacyMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GirviDisbursement map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GirviDisbursement(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      girviId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}girvi_id'])!,
+      sequenceNo: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}sequence_no'])!,
+      mode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}mode'])!,
+      displayLabel: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}display_label'])!,
+      amount: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}amount'])!,
+      bankAccountId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}bank_account_id']),
+      accountName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}account_name']),
+      referenceNo: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}reference_no']),
+      details: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}details']),
+      isLegacy: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_legacy'])!,
+    );
+  }
+
+  @override
+  $GirviDisbursementsTable createAlias(String alias) {
+    return $GirviDisbursementsTable(attachedDatabase, alias);
+  }
+}
+
+class GirviDisbursement extends DataClass
+    implements Insertable<GirviDisbursement> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final int girviId;
+  final int sequenceNo;
+  final String mode;
+  final String displayLabel;
+  final double amount;
+  final int? bankAccountId;
+  final String? accountName;
+  final String? referenceNo;
+  final String? details;
+  final bool isLegacy;
+  const GirviDisbursement(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.girviId,
+      required this.sequenceNo,
+      required this.mode,
+      required this.displayLabel,
+      required this.amount,
+      this.bankAccountId,
+      this.accountName,
+      this.referenceNo,
+      this.details,
+      required this.isLegacy});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['girvi_id'] = Variable<int>(girviId);
+    map['sequence_no'] = Variable<int>(sequenceNo);
+    map['mode'] = Variable<String>(mode);
+    map['display_label'] = Variable<String>(displayLabel);
+    map['amount'] = Variable<double>(amount);
+    if (!nullToAbsent || bankAccountId != null) {
+      map['bank_account_id'] = Variable<int>(bankAccountId);
+    }
+    if (!nullToAbsent || accountName != null) {
+      map['account_name'] = Variable<String>(accountName);
+    }
+    if (!nullToAbsent || referenceNo != null) {
+      map['reference_no'] = Variable<String>(referenceNo);
+    }
+    if (!nullToAbsent || details != null) {
+      map['details'] = Variable<String>(details);
+    }
+    map['is_legacy'] = Variable<bool>(isLegacy);
+    return map;
+  }
+
+  GirviDisbursementsCompanion toCompanion(bool nullToAbsent) {
+    return GirviDisbursementsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      girviId: Value(girviId),
+      sequenceNo: Value(sequenceNo),
+      mode: Value(mode),
+      displayLabel: Value(displayLabel),
+      amount: Value(amount),
+      bankAccountId: bankAccountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bankAccountId),
+      accountName: accountName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accountName),
+      referenceNo: referenceNo == null && nullToAbsent
+          ? const Value.absent()
+          : Value(referenceNo),
+      details: details == null && nullToAbsent
+          ? const Value.absent()
+          : Value(details),
+      isLegacy: Value(isLegacy),
+    );
+  }
+
+  factory GirviDisbursement.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GirviDisbursement(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      girviId: serializer.fromJson<int>(json['girviId']),
+      sequenceNo: serializer.fromJson<int>(json['sequenceNo']),
+      mode: serializer.fromJson<String>(json['mode']),
+      displayLabel: serializer.fromJson<String>(json['displayLabel']),
+      amount: serializer.fromJson<double>(json['amount']),
+      bankAccountId: serializer.fromJson<int?>(json['bankAccountId']),
+      accountName: serializer.fromJson<String?>(json['accountName']),
+      referenceNo: serializer.fromJson<String?>(json['referenceNo']),
+      details: serializer.fromJson<String?>(json['details']),
+      isLegacy: serializer.fromJson<bool>(json['isLegacy']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'girviId': serializer.toJson<int>(girviId),
+      'sequenceNo': serializer.toJson<int>(sequenceNo),
+      'mode': serializer.toJson<String>(mode),
+      'displayLabel': serializer.toJson<String>(displayLabel),
+      'amount': serializer.toJson<double>(amount),
+      'bankAccountId': serializer.toJson<int?>(bankAccountId),
+      'accountName': serializer.toJson<String?>(accountName),
+      'referenceNo': serializer.toJson<String?>(referenceNo),
+      'details': serializer.toJson<String?>(details),
+      'isLegacy': serializer.toJson<bool>(isLegacy),
+    };
+  }
+
+  GirviDisbursement copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          int? girviId,
+          int? sequenceNo,
+          String? mode,
+          String? displayLabel,
+          double? amount,
+          Value<int?> bankAccountId = const Value.absent(),
+          Value<String?> accountName = const Value.absent(),
+          Value<String?> referenceNo = const Value.absent(),
+          Value<String?> details = const Value.absent(),
+          bool? isLegacy}) =>
+      GirviDisbursement(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        girviId: girviId ?? this.girviId,
+        sequenceNo: sequenceNo ?? this.sequenceNo,
+        mode: mode ?? this.mode,
+        displayLabel: displayLabel ?? this.displayLabel,
+        amount: amount ?? this.amount,
+        bankAccountId:
+            bankAccountId.present ? bankAccountId.value : this.bankAccountId,
+        accountName: accountName.present ? accountName.value : this.accountName,
+        referenceNo: referenceNo.present ? referenceNo.value : this.referenceNo,
+        details: details.present ? details.value : this.details,
+        isLegacy: isLegacy ?? this.isLegacy,
+      );
+  GirviDisbursement copyWithCompanion(GirviDisbursementsCompanion data) {
+    return GirviDisbursement(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      girviId: data.girviId.present ? data.girviId.value : this.girviId,
+      sequenceNo:
+          data.sequenceNo.present ? data.sequenceNo.value : this.sequenceNo,
+      mode: data.mode.present ? data.mode.value : this.mode,
+      displayLabel: data.displayLabel.present
+          ? data.displayLabel.value
+          : this.displayLabel,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      bankAccountId: data.bankAccountId.present
+          ? data.bankAccountId.value
+          : this.bankAccountId,
+      accountName:
+          data.accountName.present ? data.accountName.value : this.accountName,
+      referenceNo:
+          data.referenceNo.present ? data.referenceNo.value : this.referenceNo,
+      details: data.details.present ? data.details.value : this.details,
+      isLegacy: data.isLegacy.present ? data.isLegacy.value : this.isLegacy,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GirviDisbursement(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('girviId: $girviId, ')
+          ..write('sequenceNo: $sequenceNo, ')
+          ..write('mode: $mode, ')
+          ..write('displayLabel: $displayLabel, ')
+          ..write('amount: $amount, ')
+          ..write('bankAccountId: $bankAccountId, ')
+          ..write('accountName: $accountName, ')
+          ..write('referenceNo: $referenceNo, ')
+          ..write('details: $details, ')
+          ..write('isLegacy: $isLegacy')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      createdAt,
+      updatedAt,
+      girviId,
+      sequenceNo,
+      mode,
+      displayLabel,
+      amount,
+      bankAccountId,
+      accountName,
+      referenceNo,
+      details,
+      isLegacy);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GirviDisbursement &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.girviId == this.girviId &&
+          other.sequenceNo == this.sequenceNo &&
+          other.mode == this.mode &&
+          other.displayLabel == this.displayLabel &&
+          other.amount == this.amount &&
+          other.bankAccountId == this.bankAccountId &&
+          other.accountName == this.accountName &&
+          other.referenceNo == this.referenceNo &&
+          other.details == this.details &&
+          other.isLegacy == this.isLegacy);
+}
+
+class GirviDisbursementsCompanion extends UpdateCompanion<GirviDisbursement> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<int> girviId;
+  final Value<int> sequenceNo;
+  final Value<String> mode;
+  final Value<String> displayLabel;
+  final Value<double> amount;
+  final Value<int?> bankAccountId;
+  final Value<String?> accountName;
+  final Value<String?> referenceNo;
+  final Value<String?> details;
+  final Value<bool> isLegacy;
+  const GirviDisbursementsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.girviId = const Value.absent(),
+    this.sequenceNo = const Value.absent(),
+    this.mode = const Value.absent(),
+    this.displayLabel = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.bankAccountId = const Value.absent(),
+    this.accountName = const Value.absent(),
+    this.referenceNo = const Value.absent(),
+    this.details = const Value.absent(),
+    this.isLegacy = const Value.absent(),
+  });
+  GirviDisbursementsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required int girviId,
+    required int sequenceNo,
+    required String mode,
+    required String displayLabel,
+    required double amount,
+    this.bankAccountId = const Value.absent(),
+    this.accountName = const Value.absent(),
+    this.referenceNo = const Value.absent(),
+    this.details = const Value.absent(),
+    this.isLegacy = const Value.absent(),
+  })  : girviId = Value(girviId),
+        sequenceNo = Value(sequenceNo),
+        mode = Value(mode),
+        displayLabel = Value(displayLabel),
+        amount = Value(amount);
+  static Insertable<GirviDisbursement> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? girviId,
+    Expression<int>? sequenceNo,
+    Expression<String>? mode,
+    Expression<String>? displayLabel,
+    Expression<double>? amount,
+    Expression<int>? bankAccountId,
+    Expression<String>? accountName,
+    Expression<String>? referenceNo,
+    Expression<String>? details,
+    Expression<bool>? isLegacy,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (girviId != null) 'girvi_id': girviId,
+      if (sequenceNo != null) 'sequence_no': sequenceNo,
+      if (mode != null) 'mode': mode,
+      if (displayLabel != null) 'display_label': displayLabel,
+      if (amount != null) 'amount': amount,
+      if (bankAccountId != null) 'bank_account_id': bankAccountId,
+      if (accountName != null) 'account_name': accountName,
+      if (referenceNo != null) 'reference_no': referenceNo,
+      if (details != null) 'details': details,
+      if (isLegacy != null) 'is_legacy': isLegacy,
+    });
+  }
+
+  GirviDisbursementsCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<int>? girviId,
+      Value<int>? sequenceNo,
+      Value<String>? mode,
+      Value<String>? displayLabel,
+      Value<double>? amount,
+      Value<int?>? bankAccountId,
+      Value<String?>? accountName,
+      Value<String?>? referenceNo,
+      Value<String?>? details,
+      Value<bool>? isLegacy}) {
+    return GirviDisbursementsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      girviId: girviId ?? this.girviId,
+      sequenceNo: sequenceNo ?? this.sequenceNo,
+      mode: mode ?? this.mode,
+      displayLabel: displayLabel ?? this.displayLabel,
+      amount: amount ?? this.amount,
+      bankAccountId: bankAccountId ?? this.bankAccountId,
+      accountName: accountName ?? this.accountName,
+      referenceNo: referenceNo ?? this.referenceNo,
+      details: details ?? this.details,
+      isLegacy: isLegacy ?? this.isLegacy,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (girviId.present) {
+      map['girvi_id'] = Variable<int>(girviId.value);
+    }
+    if (sequenceNo.present) {
+      map['sequence_no'] = Variable<int>(sequenceNo.value);
+    }
+    if (mode.present) {
+      map['mode'] = Variable<String>(mode.value);
+    }
+    if (displayLabel.present) {
+      map['display_label'] = Variable<String>(displayLabel.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<double>(amount.value);
+    }
+    if (bankAccountId.present) {
+      map['bank_account_id'] = Variable<int>(bankAccountId.value);
+    }
+    if (accountName.present) {
+      map['account_name'] = Variable<String>(accountName.value);
+    }
+    if (referenceNo.present) {
+      map['reference_no'] = Variable<String>(referenceNo.value);
+    }
+    if (details.present) {
+      map['details'] = Variable<String>(details.value);
+    }
+    if (isLegacy.present) {
+      map['is_legacy'] = Variable<bool>(isLegacy.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GirviDisbursementsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('girviId: $girviId, ')
+          ..write('sequenceNo: $sequenceNo, ')
+          ..write('mode: $mode, ')
+          ..write('displayLabel: $displayLabel, ')
+          ..write('amount: $amount, ')
+          ..write('bankAccountId: $bankAccountId, ')
+          ..write('accountName: $accountName, ')
+          ..write('referenceNo: $referenceNo, ')
+          ..write('details: $details, ')
+          ..write('isLegacy: $isLegacy')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $DeliveryOrdersTable extends DeliveryOrders
     with TableInfo<$DeliveryOrdersTable, DeliveryOrder> {
   @override
@@ -24401,6 +26437,36 @@ class $GirviBillingSettingsTable extends GirviBillingSettings
           'Interest will be charged per month on the loan amount.\n'
           'Unclaimed ornaments after notice period will be auctioned as per law.\n'
           'Customer is responsible for timely repayment.'));
+  static const VerificationMeta _termsAndConditionsHindiMeta =
+      const VerificationMeta('termsAndConditionsHindi');
+  @override
+  late final GeneratedColumn<String> termsAndConditionsHindi = GeneratedColumn<
+          String>('terms_and_conditions_hindi', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('ऋण राशि पर ब्याज प्रति माह लिया जाएगा।\n'
+          'नोटिस अवधि के बाद न छुड़ाए गए आभूषणों की नीलामी लागू कानून के अनुसार की जा सकती है।\n'
+          'ग्राहक समय पर भुगतान और ऋण छुड़ाने के लिए जिम्मेदार है।'));
+  static const VerificationMeta _customerDeclarationMeta =
+      const VerificationMeta('customerDeclaration');
+  @override
+  late final GeneratedColumn<String> customerDeclaration = GeneratedColumn<
+          String>('customer_declaration', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(
+          'I declare that the pledged articles belong to me, are free from dispute, and the information provided by me is true. '
+          'I have verified the item details, loan amount and interest terms, and have received the stated disbursement.'));
+  static const VerificationMeta _customerDeclarationHindiMeta =
+      const VerificationMeta('customerDeclarationHindi');
+  @override
+  late final GeneratedColumn<String> customerDeclarationHindi = GeneratedColumn<
+          String>('customer_declaration_hindi', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(
+          'मैं घोषणा करता/करती हूं कि गिरवी रखी गई वस्तुएं मेरी हैं, किसी विवाद से मुक्त हैं और मेरे द्वारा दी गई जानकारी सत्य है। '
+          'मैंने वस्तुओं का विवरण, ऋण राशि और ब्याज की शर्तें जांच ली हैं तथा बताई गई भुगतान राशि प्राप्त कर ली है।'));
   static const VerificationMeta _footerMessageMeta =
       const VerificationMeta('footerMessage');
   @override
@@ -24441,6 +26507,9 @@ class $GirviBillingSettingsTable extends GirviBillingSettings
         reminderDays,
         noticeDays,
         termsAndConditions,
+        termsAndConditionsHindi,
+        customerDeclaration,
+        customerDeclarationHindi,
         footerMessage,
         autoPrint,
         selectedTemplate
@@ -24521,6 +26590,26 @@ class $GirviBillingSettingsTable extends GirviBillingSettings
           termsAndConditions.isAcceptableOrUnknown(
               data['terms_and_conditions']!, _termsAndConditionsMeta));
     }
+    if (data.containsKey('terms_and_conditions_hindi')) {
+      context.handle(
+          _termsAndConditionsHindiMeta,
+          termsAndConditionsHindi.isAcceptableOrUnknown(
+              data['terms_and_conditions_hindi']!,
+              _termsAndConditionsHindiMeta));
+    }
+    if (data.containsKey('customer_declaration')) {
+      context.handle(
+          _customerDeclarationMeta,
+          customerDeclaration.isAcceptableOrUnknown(
+              data['customer_declaration']!, _customerDeclarationMeta));
+    }
+    if (data.containsKey('customer_declaration_hindi')) {
+      context.handle(
+          _customerDeclarationHindiMeta,
+          customerDeclarationHindi.isAcceptableOrUnknown(
+              data['customer_declaration_hindi']!,
+              _customerDeclarationHindiMeta));
+    }
     if (data.containsKey('footer_message')) {
       context.handle(
           _footerMessageMeta,
@@ -24571,6 +26660,14 @@ class $GirviBillingSettingsTable extends GirviBillingSettings
           .read(DriftSqlType.int, data['${effectivePrefix}notice_days'])!,
       termsAndConditions: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}terms_and_conditions'])!,
+      termsAndConditionsHindi: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}terms_and_conditions_hindi'])!,
+      customerDeclaration: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}customer_declaration'])!,
+      customerDeclarationHindi: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}customer_declaration_hindi'])!,
       footerMessage: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}footer_message'])!,
       autoPrint: attachedDatabase.typeMapping
@@ -24600,6 +26697,9 @@ class GirviBillingSetting extends DataClass
   final int reminderDays;
   final int noticeDays;
   final String termsAndConditions;
+  final String termsAndConditionsHindi;
+  final String customerDeclaration;
+  final String customerDeclarationHindi;
   final String footerMessage;
   final bool autoPrint;
   final String selectedTemplate;
@@ -24616,6 +26716,9 @@ class GirviBillingSetting extends DataClass
       required this.reminderDays,
       required this.noticeDays,
       required this.termsAndConditions,
+      required this.termsAndConditionsHindi,
+      required this.customerDeclaration,
+      required this.customerDeclarationHindi,
       required this.footerMessage,
       required this.autoPrint,
       required this.selectedTemplate});
@@ -24636,6 +26739,11 @@ class GirviBillingSetting extends DataClass
     map['reminder_days'] = Variable<int>(reminderDays);
     map['notice_days'] = Variable<int>(noticeDays);
     map['terms_and_conditions'] = Variable<String>(termsAndConditions);
+    map['terms_and_conditions_hindi'] =
+        Variable<String>(termsAndConditionsHindi);
+    map['customer_declaration'] = Variable<String>(customerDeclaration);
+    map['customer_declaration_hindi'] =
+        Variable<String>(customerDeclarationHindi);
     map['footer_message'] = Variable<String>(footerMessage);
     map['auto_print'] = Variable<bool>(autoPrint);
     map['selected_template'] = Variable<String>(selectedTemplate);
@@ -24658,6 +26766,9 @@ class GirviBillingSetting extends DataClass
       reminderDays: Value(reminderDays),
       noticeDays: Value(noticeDays),
       termsAndConditions: Value(termsAndConditions),
+      termsAndConditionsHindi: Value(termsAndConditionsHindi),
+      customerDeclaration: Value(customerDeclaration),
+      customerDeclarationHindi: Value(customerDeclarationHindi),
       footerMessage: Value(footerMessage),
       autoPrint: Value(autoPrint),
       selectedTemplate: Value(selectedTemplate),
@@ -24682,6 +26793,12 @@ class GirviBillingSetting extends DataClass
       noticeDays: serializer.fromJson<int>(json['noticeDays']),
       termsAndConditions:
           serializer.fromJson<String>(json['termsAndConditions']),
+      termsAndConditionsHindi:
+          serializer.fromJson<String>(json['termsAndConditionsHindi']),
+      customerDeclaration:
+          serializer.fromJson<String>(json['customerDeclaration']),
+      customerDeclarationHindi:
+          serializer.fromJson<String>(json['customerDeclarationHindi']),
       footerMessage: serializer.fromJson<String>(json['footerMessage']),
       autoPrint: serializer.fromJson<bool>(json['autoPrint']),
       selectedTemplate: serializer.fromJson<String>(json['selectedTemplate']),
@@ -24703,6 +26820,11 @@ class GirviBillingSetting extends DataClass
       'reminderDays': serializer.toJson<int>(reminderDays),
       'noticeDays': serializer.toJson<int>(noticeDays),
       'termsAndConditions': serializer.toJson<String>(termsAndConditions),
+      'termsAndConditionsHindi':
+          serializer.toJson<String>(termsAndConditionsHindi),
+      'customerDeclaration': serializer.toJson<String>(customerDeclaration),
+      'customerDeclarationHindi':
+          serializer.toJson<String>(customerDeclarationHindi),
       'footerMessage': serializer.toJson<String>(footerMessage),
       'autoPrint': serializer.toJson<bool>(autoPrint),
       'selectedTemplate': serializer.toJson<String>(selectedTemplate),
@@ -24722,6 +26844,9 @@ class GirviBillingSetting extends DataClass
           int? reminderDays,
           int? noticeDays,
           String? termsAndConditions,
+          String? termsAndConditionsHindi,
+          String? customerDeclaration,
+          String? customerDeclarationHindi,
           String? footerMessage,
           bool? autoPrint,
           String? selectedTemplate}) =>
@@ -24738,6 +26863,11 @@ class GirviBillingSetting extends DataClass
         reminderDays: reminderDays ?? this.reminderDays,
         noticeDays: noticeDays ?? this.noticeDays,
         termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+        termsAndConditionsHindi:
+            termsAndConditionsHindi ?? this.termsAndConditionsHindi,
+        customerDeclaration: customerDeclaration ?? this.customerDeclaration,
+        customerDeclarationHindi:
+            customerDeclarationHindi ?? this.customerDeclarationHindi,
         footerMessage: footerMessage ?? this.footerMessage,
         autoPrint: autoPrint ?? this.autoPrint,
         selectedTemplate: selectedTemplate ?? this.selectedTemplate,
@@ -24772,6 +26902,15 @@ class GirviBillingSetting extends DataClass
       termsAndConditions: data.termsAndConditions.present
           ? data.termsAndConditions.value
           : this.termsAndConditions,
+      termsAndConditionsHindi: data.termsAndConditionsHindi.present
+          ? data.termsAndConditionsHindi.value
+          : this.termsAndConditionsHindi,
+      customerDeclaration: data.customerDeclaration.present
+          ? data.customerDeclaration.value
+          : this.customerDeclaration,
+      customerDeclarationHindi: data.customerDeclarationHindi.present
+          ? data.customerDeclarationHindi.value
+          : this.customerDeclarationHindi,
       footerMessage: data.footerMessage.present
           ? data.footerMessage.value
           : this.footerMessage,
@@ -24797,6 +26936,9 @@ class GirviBillingSetting extends DataClass
           ..write('reminderDays: $reminderDays, ')
           ..write('noticeDays: $noticeDays, ')
           ..write('termsAndConditions: $termsAndConditions, ')
+          ..write('termsAndConditionsHindi: $termsAndConditionsHindi, ')
+          ..write('customerDeclaration: $customerDeclaration, ')
+          ..write('customerDeclarationHindi: $customerDeclarationHindi, ')
           ..write('footerMessage: $footerMessage, ')
           ..write('autoPrint: $autoPrint, ')
           ..write('selectedTemplate: $selectedTemplate')
@@ -24818,6 +26960,9 @@ class GirviBillingSetting extends DataClass
       reminderDays,
       noticeDays,
       termsAndConditions,
+      termsAndConditionsHindi,
+      customerDeclaration,
+      customerDeclarationHindi,
       footerMessage,
       autoPrint,
       selectedTemplate);
@@ -24837,6 +26982,9 @@ class GirviBillingSetting extends DataClass
           other.reminderDays == this.reminderDays &&
           other.noticeDays == this.noticeDays &&
           other.termsAndConditions == this.termsAndConditions &&
+          other.termsAndConditionsHindi == this.termsAndConditionsHindi &&
+          other.customerDeclaration == this.customerDeclaration &&
+          other.customerDeclarationHindi == this.customerDeclarationHindi &&
           other.footerMessage == this.footerMessage &&
           other.autoPrint == this.autoPrint &&
           other.selectedTemplate == this.selectedTemplate);
@@ -24856,6 +27004,9 @@ class GirviBillingSettingsCompanion
   final Value<int> reminderDays;
   final Value<int> noticeDays;
   final Value<String> termsAndConditions;
+  final Value<String> termsAndConditionsHindi;
+  final Value<String> customerDeclaration;
+  final Value<String> customerDeclarationHindi;
   final Value<String> footerMessage;
   final Value<bool> autoPrint;
   final Value<String> selectedTemplate;
@@ -24872,6 +27023,9 @@ class GirviBillingSettingsCompanion
     this.reminderDays = const Value.absent(),
     this.noticeDays = const Value.absent(),
     this.termsAndConditions = const Value.absent(),
+    this.termsAndConditionsHindi = const Value.absent(),
+    this.customerDeclaration = const Value.absent(),
+    this.customerDeclarationHindi = const Value.absent(),
     this.footerMessage = const Value.absent(),
     this.autoPrint = const Value.absent(),
     this.selectedTemplate = const Value.absent(),
@@ -24889,6 +27043,9 @@ class GirviBillingSettingsCompanion
     this.reminderDays = const Value.absent(),
     this.noticeDays = const Value.absent(),
     this.termsAndConditions = const Value.absent(),
+    this.termsAndConditionsHindi = const Value.absent(),
+    this.customerDeclaration = const Value.absent(),
+    this.customerDeclarationHindi = const Value.absent(),
     this.footerMessage = const Value.absent(),
     this.autoPrint = const Value.absent(),
     this.selectedTemplate = const Value.absent(),
@@ -24906,6 +27063,9 @@ class GirviBillingSettingsCompanion
     Expression<int>? reminderDays,
     Expression<int>? noticeDays,
     Expression<String>? termsAndConditions,
+    Expression<String>? termsAndConditionsHindi,
+    Expression<String>? customerDeclaration,
+    Expression<String>? customerDeclarationHindi,
     Expression<String>? footerMessage,
     Expression<bool>? autoPrint,
     Expression<String>? selectedTemplate,
@@ -24925,6 +27085,12 @@ class GirviBillingSettingsCompanion
       if (noticeDays != null) 'notice_days': noticeDays,
       if (termsAndConditions != null)
         'terms_and_conditions': termsAndConditions,
+      if (termsAndConditionsHindi != null)
+        'terms_and_conditions_hindi': termsAndConditionsHindi,
+      if (customerDeclaration != null)
+        'customer_declaration': customerDeclaration,
+      if (customerDeclarationHindi != null)
+        'customer_declaration_hindi': customerDeclarationHindi,
       if (footerMessage != null) 'footer_message': footerMessage,
       if (autoPrint != null) 'auto_print': autoPrint,
       if (selectedTemplate != null) 'selected_template': selectedTemplate,
@@ -24944,6 +27110,9 @@ class GirviBillingSettingsCompanion
       Value<int>? reminderDays,
       Value<int>? noticeDays,
       Value<String>? termsAndConditions,
+      Value<String>? termsAndConditionsHindi,
+      Value<String>? customerDeclaration,
+      Value<String>? customerDeclarationHindi,
       Value<String>? footerMessage,
       Value<bool>? autoPrint,
       Value<String>? selectedTemplate}) {
@@ -24960,6 +27129,11 @@ class GirviBillingSettingsCompanion
       reminderDays: reminderDays ?? this.reminderDays,
       noticeDays: noticeDays ?? this.noticeDays,
       termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+      termsAndConditionsHindi:
+          termsAndConditionsHindi ?? this.termsAndConditionsHindi,
+      customerDeclaration: customerDeclaration ?? this.customerDeclaration,
+      customerDeclarationHindi:
+          customerDeclarationHindi ?? this.customerDeclarationHindi,
       footerMessage: footerMessage ?? this.footerMessage,
       autoPrint: autoPrint ?? this.autoPrint,
       selectedTemplate: selectedTemplate ?? this.selectedTemplate,
@@ -25006,6 +27180,17 @@ class GirviBillingSettingsCompanion
     if (termsAndConditions.present) {
       map['terms_and_conditions'] = Variable<String>(termsAndConditions.value);
     }
+    if (termsAndConditionsHindi.present) {
+      map['terms_and_conditions_hindi'] =
+          Variable<String>(termsAndConditionsHindi.value);
+    }
+    if (customerDeclaration.present) {
+      map['customer_declaration'] = Variable<String>(customerDeclaration.value);
+    }
+    if (customerDeclarationHindi.present) {
+      map['customer_declaration_hindi'] =
+          Variable<String>(customerDeclarationHindi.value);
+    }
     if (footerMessage.present) {
       map['footer_message'] = Variable<String>(footerMessage.value);
     }
@@ -25033,6 +27218,9 @@ class GirviBillingSettingsCompanion
           ..write('reminderDays: $reminderDays, ')
           ..write('noticeDays: $noticeDays, ')
           ..write('termsAndConditions: $termsAndConditions, ')
+          ..write('termsAndConditionsHindi: $termsAndConditionsHindi, ')
+          ..write('customerDeclaration: $customerDeclaration, ')
+          ..write('customerDeclarationHindi: $customerDeclarationHindi, ')
           ..write('footerMessage: $footerMessage, ')
           ..write('autoPrint: $autoPrint, ')
           ..write('selectedTemplate: $selectedTemplate')
@@ -26676,6 +28864,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $KarigarReceiptsTable(this);
   late final $GirviLoansTable girviLoans = $GirviLoansTable(this);
   late final $GirviPaymentsTable girviPayments = $GirviPaymentsTable(this);
+  late final $GirviLoanItemsTable girviLoanItems = $GirviLoanItemsTable(this);
+  late final $GirviItemPhotosTable girviItemPhotos =
+      $GirviItemPhotosTable(this);
+  late final $GirviDisbursementsTable girviDisbursements =
+      $GirviDisbursementsTable(this);
   late final $DeliveryOrdersTable deliveryOrders = $DeliveryOrdersTable(this);
   late final $DeliveryItemsTable deliveryItems = $DeliveryItemsTable(this);
   late final $SalesBillingSettingsTable salesBillingSettings =
@@ -26785,6 +28978,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       'CREATE INDEX idx_girvi_pay_date ON girvi_payments (payment_date)');
   late final Index idxGirviPayType = Index('idx_girvi_pay_type',
       'CREATE INDEX idx_girvi_pay_type ON girvi_payments (payment_type)');
+  late final Index idxGirviItemLoan = Index('idx_girvi_item_loan',
+      'CREATE INDEX idx_girvi_item_loan ON girvi_loan_items (girvi_id)');
+  late final Index idxGirviItemLoanSerial = Index('idx_girvi_item_loan_serial',
+      'CREATE UNIQUE INDEX idx_girvi_item_loan_serial ON girvi_loan_items (girvi_id, serial_no)');
+  late final Index idxGirviPhotoItem = Index('idx_girvi_photo_item',
+      'CREATE INDEX idx_girvi_photo_item ON girvi_item_photos (item_id)');
+  late final Index idxGirviPhotoItemOrder = Index('idx_girvi_photo_item_order',
+      'CREATE UNIQUE INDEX idx_girvi_photo_item_order ON girvi_item_photos (item_id, sort_order)');
+  late final Index idxGirviDisbursementLoan = Index(
+      'idx_girvi_disbursement_loan',
+      'CREATE INDEX idx_girvi_disbursement_loan ON girvi_disbursements (girvi_id)');
+  late final Index idxGirviDisbursementOrder = Index(
+      'idx_girvi_disbursement_order',
+      'CREATE UNIQUE INDEX idx_girvi_disbursement_order ON girvi_disbursements (girvi_id, sequence_no)');
   late final Index idxDeliveryStatus = Index('idx_delivery_status',
       'CREATE INDEX idx_delivery_status ON delivery_orders (status)');
   late final Index idxDeliveryCustomer = Index('idx_delivery_customer',
@@ -26824,6 +29031,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         karigarReceipts,
         girviLoans,
         girviPayments,
+        girviLoanItems,
+        girviItemPhotos,
+        girviDisbursements,
         deliveryOrders,
         deliveryItems,
         salesBillingSettings,
@@ -26880,6 +29090,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         idxGirviPayGirvi,
         idxGirviPayDate,
         idxGirviPayType,
+        idxGirviItemLoan,
+        idxGirviItemLoanSerial,
+        idxGirviPhotoItem,
+        idxGirviPhotoItemOrder,
+        idxGirviDisbursementLoan,
+        idxGirviDisbursementOrder,
         idxDeliveryStatus,
         idxDeliveryCustomer,
         idxDeliveryDate,
@@ -26938,6 +29154,27 @@ abstract class _$AppDatabase extends GeneratedDatabase {
                 limitUpdateKind: UpdateKind.delete),
             result: [
               TableUpdate('girvi_payments', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('girvi_loans',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('girvi_loan_items', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('girvi_loan_items',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('girvi_item_photos', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('girvi_loans',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('girvi_disbursements', kind: UpdateKind.delete),
             ],
           ),
           WritePropagation(
@@ -36397,6 +38634,38 @@ final class $$GirviLoansTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$GirviLoanItemsTable, List<GirviLoanItem>>
+      _girviLoanItemsRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.girviLoanItems,
+              aliasName: $_aliasNameGenerator(
+                  db.girviLoans.id, db.girviLoanItems.girviId));
+
+  $$GirviLoanItemsTableProcessedTableManager get girviLoanItemsRefs {
+    final manager = $$GirviLoanItemsTableTableManager($_db, $_db.girviLoanItems)
+        .filter((f) => f.girviId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_girviLoanItemsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$GirviDisbursementsTable, List<GirviDisbursement>>
+      _girviDisbursementsRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.girviDisbursements,
+              aliasName: $_aliasNameGenerator(
+                  db.girviLoans.id, db.girviDisbursements.girviId));
+
+  $$GirviDisbursementsTableProcessedTableManager get girviDisbursementsRefs {
+    final manager =
+        $$GirviDisbursementsTableTableManager($_db, $_db.girviDisbursements)
+            .filter((f) => f.girviId.id($_item.id));
+
+    final cache =
+        $_typedResult.readTableOrNull(_girviDisbursementsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$GirviLoansTableFilterComposer
@@ -36563,6 +38832,48 @@ class $$GirviLoansTableFilterComposer
             $$GirviPaymentsTableFilterComposer(
               $db: $db,
               $table: $db.girviPayments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> girviLoanItemsRefs(
+      Expression<bool> Function($$GirviLoanItemsTableFilterComposer f) f) {
+    final $$GirviLoanItemsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.girviLoanItems,
+        getReferencedColumn: (t) => t.girviId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoanItemsTableFilterComposer(
+              $db: $db,
+              $table: $db.girviLoanItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> girviDisbursementsRefs(
+      Expression<bool> Function($$GirviDisbursementsTableFilterComposer f) f) {
+    final $$GirviDisbursementsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.girviDisbursements,
+        getReferencedColumn: (t) => t.girviId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviDisbursementsTableFilterComposer(
+              $db: $db,
+              $table: $db.girviDisbursements,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -36889,6 +39200,49 @@ class $$GirviLoansTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> girviLoanItemsRefs<T extends Object>(
+      Expression<T> Function($$GirviLoanItemsTableAnnotationComposer a) f) {
+    final $$GirviLoanItemsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.girviLoanItems,
+        getReferencedColumn: (t) => t.girviId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoanItemsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.girviLoanItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<T> girviDisbursementsRefs<T extends Object>(
+      Expression<T> Function($$GirviDisbursementsTableAnnotationComposer a) f) {
+    final $$GirviDisbursementsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.girviDisbursements,
+            getReferencedColumn: (t) => t.girviId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GirviDisbursementsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.girviDisbursements,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
 }
 
 class $$GirviLoansTableTableManager extends RootTableManager<
@@ -36902,7 +39256,11 @@ class $$GirviLoansTableTableManager extends RootTableManager<
     $$GirviLoansTableUpdateCompanionBuilder,
     (GirviLoan, $$GirviLoansTableReferences),
     GirviLoan,
-    PrefetchHooks Function({bool customerId, bool girviPaymentsRefs})> {
+    PrefetchHooks Function(
+        {bool customerId,
+        bool girviPaymentsRefs,
+        bool girviLoanItemsRefs,
+        bool girviDisbursementsRefs})> {
   $$GirviLoansTableTableManager(_$AppDatabase db, $GirviLoansTable table)
       : super(TableManagerState(
           db: db,
@@ -37080,11 +39438,16 @@ class $$GirviLoansTableTableManager extends RootTableManager<
                   ))
               .toList(),
           prefetchHooksCallback: (
-              {customerId = false, girviPaymentsRefs = false}) {
+              {customerId = false,
+              girviPaymentsRefs = false,
+              girviLoanItemsRefs = false,
+              girviDisbursementsRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
-                if (girviPaymentsRefs) db.girviPayments
+                if (girviPaymentsRefs) db.girviPayments,
+                if (girviLoanItemsRefs) db.girviLoanItems,
+                if (girviDisbursementsRefs) db.girviDisbursements
               ],
               addJoins: <
                   T extends TableManagerState<
@@ -37125,6 +39488,30 @@ class $$GirviLoansTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem: (item,
                                 referencedItems) =>
                             referencedItems.where((e) => e.girviId == item.id),
+                        typedResults: items),
+                  if (girviLoanItemsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$GirviLoansTableReferences
+                            ._girviLoanItemsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$GirviLoansTableReferences(db, table, p0)
+                                .girviLoanItemsRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.girviId == item.id),
+                        typedResults: items),
+                  if (girviDisbursementsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$GirviLoansTableReferences
+                            ._girviDisbursementsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$GirviLoansTableReferences(db, table, p0)
+                                .girviDisbursementsRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.girviId == item.id),
                         typedResults: items)
                 ];
               },
@@ -37144,7 +39531,11 @@ typedef $$GirviLoansTableProcessedTableManager = ProcessedTableManager<
     $$GirviLoansTableUpdateCompanionBuilder,
     (GirviLoan, $$GirviLoansTableReferences),
     GirviLoan,
-    PrefetchHooks Function({bool customerId, bool girviPaymentsRefs})>;
+    PrefetchHooks Function(
+        {bool customerId,
+        bool girviPaymentsRefs,
+        bool girviLoanItemsRefs,
+        bool girviDisbursementsRefs})>;
 typedef $$GirviPaymentsTableCreateCompanionBuilder = GirviPaymentsCompanion
     Function({
   Value<int> id,
@@ -37554,6 +39945,1307 @@ typedef $$GirviPaymentsTableProcessedTableManager = ProcessedTableManager<
     $$GirviPaymentsTableUpdateCompanionBuilder,
     (GirviPayment, $$GirviPaymentsTableReferences),
     GirviPayment,
+    PrefetchHooks Function({bool girviId})>;
+typedef $$GirviLoanItemsTableCreateCompanionBuilder = GirviLoanItemsCompanion
+    Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required int girviId,
+  required int serialNo,
+  required String itemName,
+  required String metalType,
+  required String purity,
+  Value<double> purityFactor,
+  Value<int> pieces,
+  Value<String?> huidNumber,
+  Value<double> grossWeight,
+  Value<double> lessWeight,
+  Value<double> netWeight,
+  Value<String> valuationMethod,
+  Value<double?> valuationPurityPercent,
+  Value<double> fineWeight,
+  Value<double> ratePerGram,
+  Value<double> valuationAmount,
+  Value<String?> notes,
+  Value<bool> isLegacy,
+});
+typedef $$GirviLoanItemsTableUpdateCompanionBuilder = GirviLoanItemsCompanion
+    Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<int> girviId,
+  Value<int> serialNo,
+  Value<String> itemName,
+  Value<String> metalType,
+  Value<String> purity,
+  Value<double> purityFactor,
+  Value<int> pieces,
+  Value<String?> huidNumber,
+  Value<double> grossWeight,
+  Value<double> lessWeight,
+  Value<double> netWeight,
+  Value<String> valuationMethod,
+  Value<double?> valuationPurityPercent,
+  Value<double> fineWeight,
+  Value<double> ratePerGram,
+  Value<double> valuationAmount,
+  Value<String?> notes,
+  Value<bool> isLegacy,
+});
+
+final class $$GirviLoanItemsTableReferences
+    extends BaseReferences<_$AppDatabase, $GirviLoanItemsTable, GirviLoanItem> {
+  $$GirviLoanItemsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $GirviLoansTable _girviIdTable(_$AppDatabase db) =>
+      db.girviLoans.createAlias(
+          $_aliasNameGenerator(db.girviLoanItems.girviId, db.girviLoans.id));
+
+  $$GirviLoansTableProcessedTableManager? get girviId {
+    if ($_item.girviId == null) return null;
+    final manager = $$GirviLoansTableTableManager($_db, $_db.girviLoans)
+        .filter((f) => f.id($_item.girviId!));
+    final item = $_typedResult.readTableOrNull(_girviIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static MultiTypedResultKey<$GirviItemPhotosTable, List<GirviItemPhoto>>
+      _girviItemPhotosRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.girviItemPhotos,
+              aliasName: $_aliasNameGenerator(
+                  db.girviLoanItems.id, db.girviItemPhotos.itemId));
+
+  $$GirviItemPhotosTableProcessedTableManager get girviItemPhotosRefs {
+    final manager =
+        $$GirviItemPhotosTableTableManager($_db, $_db.girviItemPhotos)
+            .filter((f) => f.itemId.id($_item.id));
+
+    final cache =
+        $_typedResult.readTableOrNull(_girviItemPhotosRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$GirviLoanItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $GirviLoanItemsTable> {
+  $$GirviLoanItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get serialNo => $composableBuilder(
+      column: $table.serialNo, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get itemName => $composableBuilder(
+      column: $table.itemName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get metalType => $composableBuilder(
+      column: $table.metalType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get purity => $composableBuilder(
+      column: $table.purity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get purityFactor => $composableBuilder(
+      column: $table.purityFactor, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get pieces => $composableBuilder(
+      column: $table.pieces, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get huidNumber => $composableBuilder(
+      column: $table.huidNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get grossWeight => $composableBuilder(
+      column: $table.grossWeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get lessWeight => $composableBuilder(
+      column: $table.lessWeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get netWeight => $composableBuilder(
+      column: $table.netWeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get valuationMethod => $composableBuilder(
+      column: $table.valuationMethod,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get valuationPurityPercent => $composableBuilder(
+      column: $table.valuationPurityPercent,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get fineWeight => $composableBuilder(
+      column: $table.fineWeight, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get ratePerGram => $composableBuilder(
+      column: $table.ratePerGram, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get valuationAmount => $composableBuilder(
+      column: $table.valuationAmount,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get notes => $composableBuilder(
+      column: $table.notes, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isLegacy => $composableBuilder(
+      column: $table.isLegacy, builder: (column) => ColumnFilters(column));
+
+  $$GirviLoansTableFilterComposer get girviId {
+    final $$GirviLoansTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.girviId,
+        referencedTable: $db.girviLoans,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoansTableFilterComposer(
+              $db: $db,
+              $table: $db.girviLoans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  Expression<bool> girviItemPhotosRefs(
+      Expression<bool> Function($$GirviItemPhotosTableFilterComposer f) f) {
+    final $$GirviItemPhotosTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.girviItemPhotos,
+        getReferencedColumn: (t) => t.itemId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviItemPhotosTableFilterComposer(
+              $db: $db,
+              $table: $db.girviItemPhotos,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$GirviLoanItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GirviLoanItemsTable> {
+  $$GirviLoanItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get serialNo => $composableBuilder(
+      column: $table.serialNo, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get itemName => $composableBuilder(
+      column: $table.itemName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get metalType => $composableBuilder(
+      column: $table.metalType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get purity => $composableBuilder(
+      column: $table.purity, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get purityFactor => $composableBuilder(
+      column: $table.purityFactor,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get pieces => $composableBuilder(
+      column: $table.pieces, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get huidNumber => $composableBuilder(
+      column: $table.huidNumber, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get grossWeight => $composableBuilder(
+      column: $table.grossWeight, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get lessWeight => $composableBuilder(
+      column: $table.lessWeight, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get netWeight => $composableBuilder(
+      column: $table.netWeight, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get valuationMethod => $composableBuilder(
+      column: $table.valuationMethod,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get valuationPurityPercent => $composableBuilder(
+      column: $table.valuationPurityPercent,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get fineWeight => $composableBuilder(
+      column: $table.fineWeight, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get ratePerGram => $composableBuilder(
+      column: $table.ratePerGram, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get valuationAmount => $composableBuilder(
+      column: $table.valuationAmount,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+      column: $table.notes, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isLegacy => $composableBuilder(
+      column: $table.isLegacy, builder: (column) => ColumnOrderings(column));
+
+  $$GirviLoansTableOrderingComposer get girviId {
+    final $$GirviLoansTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.girviId,
+        referencedTable: $db.girviLoans,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoansTableOrderingComposer(
+              $db: $db,
+              $table: $db.girviLoans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GirviLoanItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GirviLoanItemsTable> {
+  $$GirviLoanItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get serialNo =>
+      $composableBuilder(column: $table.serialNo, builder: (column) => column);
+
+  GeneratedColumn<String> get itemName =>
+      $composableBuilder(column: $table.itemName, builder: (column) => column);
+
+  GeneratedColumn<String> get metalType =>
+      $composableBuilder(column: $table.metalType, builder: (column) => column);
+
+  GeneratedColumn<String> get purity =>
+      $composableBuilder(column: $table.purity, builder: (column) => column);
+
+  GeneratedColumn<double> get purityFactor => $composableBuilder(
+      column: $table.purityFactor, builder: (column) => column);
+
+  GeneratedColumn<int> get pieces =>
+      $composableBuilder(column: $table.pieces, builder: (column) => column);
+
+  GeneratedColumn<String> get huidNumber => $composableBuilder(
+      column: $table.huidNumber, builder: (column) => column);
+
+  GeneratedColumn<double> get grossWeight => $composableBuilder(
+      column: $table.grossWeight, builder: (column) => column);
+
+  GeneratedColumn<double> get lessWeight => $composableBuilder(
+      column: $table.lessWeight, builder: (column) => column);
+
+  GeneratedColumn<double> get netWeight =>
+      $composableBuilder(column: $table.netWeight, builder: (column) => column);
+
+  GeneratedColumn<String> get valuationMethod => $composableBuilder(
+      column: $table.valuationMethod, builder: (column) => column);
+
+  GeneratedColumn<double> get valuationPurityPercent => $composableBuilder(
+      column: $table.valuationPurityPercent, builder: (column) => column);
+
+  GeneratedColumn<double> get fineWeight => $composableBuilder(
+      column: $table.fineWeight, builder: (column) => column);
+
+  GeneratedColumn<double> get ratePerGram => $composableBuilder(
+      column: $table.ratePerGram, builder: (column) => column);
+
+  GeneratedColumn<double> get valuationAmount => $composableBuilder(
+      column: $table.valuationAmount, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<bool> get isLegacy =>
+      $composableBuilder(column: $table.isLegacy, builder: (column) => column);
+
+  $$GirviLoansTableAnnotationComposer get girviId {
+    final $$GirviLoansTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.girviId,
+        referencedTable: $db.girviLoans,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoansTableAnnotationComposer(
+              $db: $db,
+              $table: $db.girviLoans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  Expression<T> girviItemPhotosRefs<T extends Object>(
+      Expression<T> Function($$GirviItemPhotosTableAnnotationComposer a) f) {
+    final $$GirviItemPhotosTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.girviItemPhotos,
+        getReferencedColumn: (t) => t.itemId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviItemPhotosTableAnnotationComposer(
+              $db: $db,
+              $table: $db.girviItemPhotos,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$GirviLoanItemsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $GirviLoanItemsTable,
+    GirviLoanItem,
+    $$GirviLoanItemsTableFilterComposer,
+    $$GirviLoanItemsTableOrderingComposer,
+    $$GirviLoanItemsTableAnnotationComposer,
+    $$GirviLoanItemsTableCreateCompanionBuilder,
+    $$GirviLoanItemsTableUpdateCompanionBuilder,
+    (GirviLoanItem, $$GirviLoanItemsTableReferences),
+    GirviLoanItem,
+    PrefetchHooks Function({bool girviId, bool girviItemPhotosRefs})> {
+  $$GirviLoanItemsTableTableManager(
+      _$AppDatabase db, $GirviLoanItemsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GirviLoanItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GirviLoanItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GirviLoanItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<int> girviId = const Value.absent(),
+            Value<int> serialNo = const Value.absent(),
+            Value<String> itemName = const Value.absent(),
+            Value<String> metalType = const Value.absent(),
+            Value<String> purity = const Value.absent(),
+            Value<double> purityFactor = const Value.absent(),
+            Value<int> pieces = const Value.absent(),
+            Value<String?> huidNumber = const Value.absent(),
+            Value<double> grossWeight = const Value.absent(),
+            Value<double> lessWeight = const Value.absent(),
+            Value<double> netWeight = const Value.absent(),
+            Value<String> valuationMethod = const Value.absent(),
+            Value<double?> valuationPurityPercent = const Value.absent(),
+            Value<double> fineWeight = const Value.absent(),
+            Value<double> ratePerGram = const Value.absent(),
+            Value<double> valuationAmount = const Value.absent(),
+            Value<String?> notes = const Value.absent(),
+            Value<bool> isLegacy = const Value.absent(),
+          }) =>
+              GirviLoanItemsCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            girviId: girviId,
+            serialNo: serialNo,
+            itemName: itemName,
+            metalType: metalType,
+            purity: purity,
+            purityFactor: purityFactor,
+            pieces: pieces,
+            huidNumber: huidNumber,
+            grossWeight: grossWeight,
+            lessWeight: lessWeight,
+            netWeight: netWeight,
+            valuationMethod: valuationMethod,
+            valuationPurityPercent: valuationPurityPercent,
+            fineWeight: fineWeight,
+            ratePerGram: ratePerGram,
+            valuationAmount: valuationAmount,
+            notes: notes,
+            isLegacy: isLegacy,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required int girviId,
+            required int serialNo,
+            required String itemName,
+            required String metalType,
+            required String purity,
+            Value<double> purityFactor = const Value.absent(),
+            Value<int> pieces = const Value.absent(),
+            Value<String?> huidNumber = const Value.absent(),
+            Value<double> grossWeight = const Value.absent(),
+            Value<double> lessWeight = const Value.absent(),
+            Value<double> netWeight = const Value.absent(),
+            Value<String> valuationMethod = const Value.absent(),
+            Value<double?> valuationPurityPercent = const Value.absent(),
+            Value<double> fineWeight = const Value.absent(),
+            Value<double> ratePerGram = const Value.absent(),
+            Value<double> valuationAmount = const Value.absent(),
+            Value<String?> notes = const Value.absent(),
+            Value<bool> isLegacy = const Value.absent(),
+          }) =>
+              GirviLoanItemsCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            girviId: girviId,
+            serialNo: serialNo,
+            itemName: itemName,
+            metalType: metalType,
+            purity: purity,
+            purityFactor: purityFactor,
+            pieces: pieces,
+            huidNumber: huidNumber,
+            grossWeight: grossWeight,
+            lessWeight: lessWeight,
+            netWeight: netWeight,
+            valuationMethod: valuationMethod,
+            valuationPurityPercent: valuationPurityPercent,
+            fineWeight: fineWeight,
+            ratePerGram: ratePerGram,
+            valuationAmount: valuationAmount,
+            notes: notes,
+            isLegacy: isLegacy,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$GirviLoanItemsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: (
+              {girviId = false, girviItemPhotosRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (girviItemPhotosRefs) db.girviItemPhotos
+              ],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (girviId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.girviId,
+                    referencedTable:
+                        $$GirviLoanItemsTableReferences._girviIdTable(db),
+                    referencedColumn:
+                        $$GirviLoanItemsTableReferences._girviIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (girviItemPhotosRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$GirviLoanItemsTableReferences
+                            ._girviItemPhotosRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$GirviLoanItemsTableReferences(db, table, p0)
+                                .girviItemPhotosRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.itemId == item.id),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$GirviLoanItemsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $GirviLoanItemsTable,
+    GirviLoanItem,
+    $$GirviLoanItemsTableFilterComposer,
+    $$GirviLoanItemsTableOrderingComposer,
+    $$GirviLoanItemsTableAnnotationComposer,
+    $$GirviLoanItemsTableCreateCompanionBuilder,
+    $$GirviLoanItemsTableUpdateCompanionBuilder,
+    (GirviLoanItem, $$GirviLoanItemsTableReferences),
+    GirviLoanItem,
+    PrefetchHooks Function({bool girviId, bool girviItemPhotosRefs})>;
+typedef $$GirviItemPhotosTableCreateCompanionBuilder = GirviItemPhotosCompanion
+    Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required int itemId,
+  required String filePath,
+  Value<int> sortOrder,
+  Value<String?> caption,
+  Value<bool> isLegacy,
+});
+typedef $$GirviItemPhotosTableUpdateCompanionBuilder = GirviItemPhotosCompanion
+    Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<int> itemId,
+  Value<String> filePath,
+  Value<int> sortOrder,
+  Value<String?> caption,
+  Value<bool> isLegacy,
+});
+
+final class $$GirviItemPhotosTableReferences extends BaseReferences<
+    _$AppDatabase, $GirviItemPhotosTable, GirviItemPhoto> {
+  $$GirviItemPhotosTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $GirviLoanItemsTable _itemIdTable(_$AppDatabase db) =>
+      db.girviLoanItems.createAlias($_aliasNameGenerator(
+          db.girviItemPhotos.itemId, db.girviLoanItems.id));
+
+  $$GirviLoanItemsTableProcessedTableManager? get itemId {
+    if ($_item.itemId == null) return null;
+    final manager = $$GirviLoanItemsTableTableManager($_db, $_db.girviLoanItems)
+        .filter((f) => f.id($_item.itemId!));
+    final item = $_typedResult.readTableOrNull(_itemIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$GirviItemPhotosTableFilterComposer
+    extends Composer<_$AppDatabase, $GirviItemPhotosTable> {
+  $$GirviItemPhotosTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get filePath => $composableBuilder(
+      column: $table.filePath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+      column: $table.sortOrder, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get caption => $composableBuilder(
+      column: $table.caption, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isLegacy => $composableBuilder(
+      column: $table.isLegacy, builder: (column) => ColumnFilters(column));
+
+  $$GirviLoanItemsTableFilterComposer get itemId {
+    final $$GirviLoanItemsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.itemId,
+        referencedTable: $db.girviLoanItems,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoanItemsTableFilterComposer(
+              $db: $db,
+              $table: $db.girviLoanItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GirviItemPhotosTableOrderingComposer
+    extends Composer<_$AppDatabase, $GirviItemPhotosTable> {
+  $$GirviItemPhotosTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get filePath => $composableBuilder(
+      column: $table.filePath, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+      column: $table.sortOrder, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get caption => $composableBuilder(
+      column: $table.caption, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isLegacy => $composableBuilder(
+      column: $table.isLegacy, builder: (column) => ColumnOrderings(column));
+
+  $$GirviLoanItemsTableOrderingComposer get itemId {
+    final $$GirviLoanItemsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.itemId,
+        referencedTable: $db.girviLoanItems,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoanItemsTableOrderingComposer(
+              $db: $db,
+              $table: $db.girviLoanItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GirviItemPhotosTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GirviItemPhotosTable> {
+  $$GirviItemPhotosTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get filePath =>
+      $composableBuilder(column: $table.filePath, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<String> get caption =>
+      $composableBuilder(column: $table.caption, builder: (column) => column);
+
+  GeneratedColumn<bool> get isLegacy =>
+      $composableBuilder(column: $table.isLegacy, builder: (column) => column);
+
+  $$GirviLoanItemsTableAnnotationComposer get itemId {
+    final $$GirviLoanItemsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.itemId,
+        referencedTable: $db.girviLoanItems,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoanItemsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.girviLoanItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GirviItemPhotosTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $GirviItemPhotosTable,
+    GirviItemPhoto,
+    $$GirviItemPhotosTableFilterComposer,
+    $$GirviItemPhotosTableOrderingComposer,
+    $$GirviItemPhotosTableAnnotationComposer,
+    $$GirviItemPhotosTableCreateCompanionBuilder,
+    $$GirviItemPhotosTableUpdateCompanionBuilder,
+    (GirviItemPhoto, $$GirviItemPhotosTableReferences),
+    GirviItemPhoto,
+    PrefetchHooks Function({bool itemId})> {
+  $$GirviItemPhotosTableTableManager(
+      _$AppDatabase db, $GirviItemPhotosTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GirviItemPhotosTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GirviItemPhotosTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GirviItemPhotosTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<int> itemId = const Value.absent(),
+            Value<String> filePath = const Value.absent(),
+            Value<int> sortOrder = const Value.absent(),
+            Value<String?> caption = const Value.absent(),
+            Value<bool> isLegacy = const Value.absent(),
+          }) =>
+              GirviItemPhotosCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            itemId: itemId,
+            filePath: filePath,
+            sortOrder: sortOrder,
+            caption: caption,
+            isLegacy: isLegacy,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required int itemId,
+            required String filePath,
+            Value<int> sortOrder = const Value.absent(),
+            Value<String?> caption = const Value.absent(),
+            Value<bool> isLegacy = const Value.absent(),
+          }) =>
+              GirviItemPhotosCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            itemId: itemId,
+            filePath: filePath,
+            sortOrder: sortOrder,
+            caption: caption,
+            isLegacy: isLegacy,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$GirviItemPhotosTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({itemId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (itemId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.itemId,
+                    referencedTable:
+                        $$GirviItemPhotosTableReferences._itemIdTable(db),
+                    referencedColumn:
+                        $$GirviItemPhotosTableReferences._itemIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$GirviItemPhotosTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $GirviItemPhotosTable,
+    GirviItemPhoto,
+    $$GirviItemPhotosTableFilterComposer,
+    $$GirviItemPhotosTableOrderingComposer,
+    $$GirviItemPhotosTableAnnotationComposer,
+    $$GirviItemPhotosTableCreateCompanionBuilder,
+    $$GirviItemPhotosTableUpdateCompanionBuilder,
+    (GirviItemPhoto, $$GirviItemPhotosTableReferences),
+    GirviItemPhoto,
+    PrefetchHooks Function({bool itemId})>;
+typedef $$GirviDisbursementsTableCreateCompanionBuilder
+    = GirviDisbursementsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required int girviId,
+  required int sequenceNo,
+  required String mode,
+  required String displayLabel,
+  required double amount,
+  Value<int?> bankAccountId,
+  Value<String?> accountName,
+  Value<String?> referenceNo,
+  Value<String?> details,
+  Value<bool> isLegacy,
+});
+typedef $$GirviDisbursementsTableUpdateCompanionBuilder
+    = GirviDisbursementsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<int> girviId,
+  Value<int> sequenceNo,
+  Value<String> mode,
+  Value<String> displayLabel,
+  Value<double> amount,
+  Value<int?> bankAccountId,
+  Value<String?> accountName,
+  Value<String?> referenceNo,
+  Value<String?> details,
+  Value<bool> isLegacy,
+});
+
+final class $$GirviDisbursementsTableReferences extends BaseReferences<
+    _$AppDatabase, $GirviDisbursementsTable, GirviDisbursement> {
+  $$GirviDisbursementsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $GirviLoansTable _girviIdTable(_$AppDatabase db) =>
+      db.girviLoans.createAlias($_aliasNameGenerator(
+          db.girviDisbursements.girviId, db.girviLoans.id));
+
+  $$GirviLoansTableProcessedTableManager? get girviId {
+    if ($_item.girviId == null) return null;
+    final manager = $$GirviLoansTableTableManager($_db, $_db.girviLoans)
+        .filter((f) => f.id($_item.girviId!));
+    final item = $_typedResult.readTableOrNull(_girviIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$GirviDisbursementsTableFilterComposer
+    extends Composer<_$AppDatabase, $GirviDisbursementsTable> {
+  $$GirviDisbursementsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sequenceNo => $composableBuilder(
+      column: $table.sequenceNo, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get mode => $composableBuilder(
+      column: $table.mode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get displayLabel => $composableBuilder(
+      column: $table.displayLabel, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get amount => $composableBuilder(
+      column: $table.amount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get bankAccountId => $composableBuilder(
+      column: $table.bankAccountId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get accountName => $composableBuilder(
+      column: $table.accountName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get referenceNo => $composableBuilder(
+      column: $table.referenceNo, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get details => $composableBuilder(
+      column: $table.details, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isLegacy => $composableBuilder(
+      column: $table.isLegacy, builder: (column) => ColumnFilters(column));
+
+  $$GirviLoansTableFilterComposer get girviId {
+    final $$GirviLoansTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.girviId,
+        referencedTable: $db.girviLoans,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoansTableFilterComposer(
+              $db: $db,
+              $table: $db.girviLoans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GirviDisbursementsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GirviDisbursementsTable> {
+  $$GirviDisbursementsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sequenceNo => $composableBuilder(
+      column: $table.sequenceNo, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get mode => $composableBuilder(
+      column: $table.mode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get displayLabel => $composableBuilder(
+      column: $table.displayLabel,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get amount => $composableBuilder(
+      column: $table.amount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get bankAccountId => $composableBuilder(
+      column: $table.bankAccountId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get accountName => $composableBuilder(
+      column: $table.accountName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get referenceNo => $composableBuilder(
+      column: $table.referenceNo, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get details => $composableBuilder(
+      column: $table.details, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isLegacy => $composableBuilder(
+      column: $table.isLegacy, builder: (column) => ColumnOrderings(column));
+
+  $$GirviLoansTableOrderingComposer get girviId {
+    final $$GirviLoansTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.girviId,
+        referencedTable: $db.girviLoans,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoansTableOrderingComposer(
+              $db: $db,
+              $table: $db.girviLoans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GirviDisbursementsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GirviDisbursementsTable> {
+  $$GirviDisbursementsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get sequenceNo => $composableBuilder(
+      column: $table.sequenceNo, builder: (column) => column);
+
+  GeneratedColumn<String> get mode =>
+      $composableBuilder(column: $table.mode, builder: (column) => column);
+
+  GeneratedColumn<String> get displayLabel => $composableBuilder(
+      column: $table.displayLabel, builder: (column) => column);
+
+  GeneratedColumn<double> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<int> get bankAccountId => $composableBuilder(
+      column: $table.bankAccountId, builder: (column) => column);
+
+  GeneratedColumn<String> get accountName => $composableBuilder(
+      column: $table.accountName, builder: (column) => column);
+
+  GeneratedColumn<String> get referenceNo => $composableBuilder(
+      column: $table.referenceNo, builder: (column) => column);
+
+  GeneratedColumn<String> get details =>
+      $composableBuilder(column: $table.details, builder: (column) => column);
+
+  GeneratedColumn<bool> get isLegacy =>
+      $composableBuilder(column: $table.isLegacy, builder: (column) => column);
+
+  $$GirviLoansTableAnnotationComposer get girviId {
+    final $$GirviLoansTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.girviId,
+        referencedTable: $db.girviLoans,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoansTableAnnotationComposer(
+              $db: $db,
+              $table: $db.girviLoans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GirviDisbursementsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $GirviDisbursementsTable,
+    GirviDisbursement,
+    $$GirviDisbursementsTableFilterComposer,
+    $$GirviDisbursementsTableOrderingComposer,
+    $$GirviDisbursementsTableAnnotationComposer,
+    $$GirviDisbursementsTableCreateCompanionBuilder,
+    $$GirviDisbursementsTableUpdateCompanionBuilder,
+    (GirviDisbursement, $$GirviDisbursementsTableReferences),
+    GirviDisbursement,
+    PrefetchHooks Function({bool girviId})> {
+  $$GirviDisbursementsTableTableManager(
+      _$AppDatabase db, $GirviDisbursementsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GirviDisbursementsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GirviDisbursementsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GirviDisbursementsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<int> girviId = const Value.absent(),
+            Value<int> sequenceNo = const Value.absent(),
+            Value<String> mode = const Value.absent(),
+            Value<String> displayLabel = const Value.absent(),
+            Value<double> amount = const Value.absent(),
+            Value<int?> bankAccountId = const Value.absent(),
+            Value<String?> accountName = const Value.absent(),
+            Value<String?> referenceNo = const Value.absent(),
+            Value<String?> details = const Value.absent(),
+            Value<bool> isLegacy = const Value.absent(),
+          }) =>
+              GirviDisbursementsCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            girviId: girviId,
+            sequenceNo: sequenceNo,
+            mode: mode,
+            displayLabel: displayLabel,
+            amount: amount,
+            bankAccountId: bankAccountId,
+            accountName: accountName,
+            referenceNo: referenceNo,
+            details: details,
+            isLegacy: isLegacy,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required int girviId,
+            required int sequenceNo,
+            required String mode,
+            required String displayLabel,
+            required double amount,
+            Value<int?> bankAccountId = const Value.absent(),
+            Value<String?> accountName = const Value.absent(),
+            Value<String?> referenceNo = const Value.absent(),
+            Value<String?> details = const Value.absent(),
+            Value<bool> isLegacy = const Value.absent(),
+          }) =>
+              GirviDisbursementsCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            girviId: girviId,
+            sequenceNo: sequenceNo,
+            mode: mode,
+            displayLabel: displayLabel,
+            amount: amount,
+            bankAccountId: bankAccountId,
+            accountName: accountName,
+            referenceNo: referenceNo,
+            details: details,
+            isLegacy: isLegacy,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$GirviDisbursementsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({girviId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (girviId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.girviId,
+                    referencedTable:
+                        $$GirviDisbursementsTableReferences._girviIdTable(db),
+                    referencedColumn: $$GirviDisbursementsTableReferences
+                        ._girviIdTable(db)
+                        .id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$GirviDisbursementsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $GirviDisbursementsTable,
+    GirviDisbursement,
+    $$GirviDisbursementsTableFilterComposer,
+    $$GirviDisbursementsTableOrderingComposer,
+    $$GirviDisbursementsTableAnnotationComposer,
+    $$GirviDisbursementsTableCreateCompanionBuilder,
+    $$GirviDisbursementsTableUpdateCompanionBuilder,
+    (GirviDisbursement, $$GirviDisbursementsTableReferences),
+    GirviDisbursement,
     PrefetchHooks Function({bool girviId})>;
 typedef $$DeliveryOrdersTableCreateCompanionBuilder = DeliveryOrdersCompanion
     Function({
@@ -40011,6 +43703,9 @@ typedef $$GirviBillingSettingsTableCreateCompanionBuilder
   Value<int> reminderDays,
   Value<int> noticeDays,
   Value<String> termsAndConditions,
+  Value<String> termsAndConditionsHindi,
+  Value<String> customerDeclaration,
+  Value<String> customerDeclarationHindi,
   Value<String> footerMessage,
   Value<bool> autoPrint,
   Value<String> selectedTemplate,
@@ -40029,6 +43724,9 @@ typedef $$GirviBillingSettingsTableUpdateCompanionBuilder
   Value<int> reminderDays,
   Value<int> noticeDays,
   Value<String> termsAndConditions,
+  Value<String> termsAndConditionsHindi,
+  Value<String> customerDeclaration,
+  Value<String> customerDeclarationHindi,
   Value<String> footerMessage,
   Value<bool> autoPrint,
   Value<String> selectedTemplate,
@@ -40082,6 +43780,18 @@ class $$GirviBillingSettingsTableFilterComposer
 
   ColumnFilters<String> get termsAndConditions => $composableBuilder(
       column: $table.termsAndConditions,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get termsAndConditionsHindi => $composableBuilder(
+      column: $table.termsAndConditionsHindi,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get customerDeclaration => $composableBuilder(
+      column: $table.customerDeclaration,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get customerDeclarationHindi => $composableBuilder(
+      column: $table.customerDeclarationHindi,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get footerMessage => $composableBuilder(
@@ -40147,6 +43857,18 @@ class $$GirviBillingSettingsTableOrderingComposer
       column: $table.termsAndConditions,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get termsAndConditionsHindi => $composableBuilder(
+      column: $table.termsAndConditionsHindi,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get customerDeclaration => $composableBuilder(
+      column: $table.customerDeclaration,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get customerDeclarationHindi => $composableBuilder(
+      column: $table.customerDeclarationHindi,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get footerMessage => $composableBuilder(
       column: $table.footerMessage,
       builder: (column) => ColumnOrderings(column));
@@ -40204,6 +43926,15 @@ class $$GirviBillingSettingsTableAnnotationComposer
   GeneratedColumn<String> get termsAndConditions => $composableBuilder(
       column: $table.termsAndConditions, builder: (column) => column);
 
+  GeneratedColumn<String> get termsAndConditionsHindi => $composableBuilder(
+      column: $table.termsAndConditionsHindi, builder: (column) => column);
+
+  GeneratedColumn<String> get customerDeclaration => $composableBuilder(
+      column: $table.customerDeclaration, builder: (column) => column);
+
+  GeneratedColumn<String> get customerDeclarationHindi => $composableBuilder(
+      column: $table.customerDeclarationHindi, builder: (column) => column);
+
   GeneratedColumn<String> get footerMessage => $composableBuilder(
       column: $table.footerMessage, builder: (column) => column);
 
@@ -40256,6 +43987,9 @@ class $$GirviBillingSettingsTableTableManager extends RootTableManager<
             Value<int> reminderDays = const Value.absent(),
             Value<int> noticeDays = const Value.absent(),
             Value<String> termsAndConditions = const Value.absent(),
+            Value<String> termsAndConditionsHindi = const Value.absent(),
+            Value<String> customerDeclaration = const Value.absent(),
+            Value<String> customerDeclarationHindi = const Value.absent(),
             Value<String> footerMessage = const Value.absent(),
             Value<bool> autoPrint = const Value.absent(),
             Value<String> selectedTemplate = const Value.absent(),
@@ -40273,6 +44007,9 @@ class $$GirviBillingSettingsTableTableManager extends RootTableManager<
             reminderDays: reminderDays,
             noticeDays: noticeDays,
             termsAndConditions: termsAndConditions,
+            termsAndConditionsHindi: termsAndConditionsHindi,
+            customerDeclaration: customerDeclaration,
+            customerDeclarationHindi: customerDeclarationHindi,
             footerMessage: footerMessage,
             autoPrint: autoPrint,
             selectedTemplate: selectedTemplate,
@@ -40290,6 +44027,9 @@ class $$GirviBillingSettingsTableTableManager extends RootTableManager<
             Value<int> reminderDays = const Value.absent(),
             Value<int> noticeDays = const Value.absent(),
             Value<String> termsAndConditions = const Value.absent(),
+            Value<String> termsAndConditionsHindi = const Value.absent(),
+            Value<String> customerDeclaration = const Value.absent(),
+            Value<String> customerDeclarationHindi = const Value.absent(),
             Value<String> footerMessage = const Value.absent(),
             Value<bool> autoPrint = const Value.absent(),
             Value<String> selectedTemplate = const Value.absent(),
@@ -40307,6 +44047,9 @@ class $$GirviBillingSettingsTableTableManager extends RootTableManager<
             reminderDays: reminderDays,
             noticeDays: noticeDays,
             termsAndConditions: termsAndConditions,
+            termsAndConditionsHindi: termsAndConditionsHindi,
+            customerDeclaration: customerDeclaration,
+            customerDeclarationHindi: customerDeclarationHindi,
             footerMessage: footerMessage,
             autoPrint: autoPrint,
             selectedTemplate: selectedTemplate,
@@ -41018,6 +44761,12 @@ class $AppDatabaseManager {
       $$GirviLoansTableTableManager(_db, _db.girviLoans);
   $$GirviPaymentsTableTableManager get girviPayments =>
       $$GirviPaymentsTableTableManager(_db, _db.girviPayments);
+  $$GirviLoanItemsTableTableManager get girviLoanItems =>
+      $$GirviLoanItemsTableTableManager(_db, _db.girviLoanItems);
+  $$GirviItemPhotosTableTableManager get girviItemPhotos =>
+      $$GirviItemPhotosTableTableManager(_db, _db.girviItemPhotos);
+  $$GirviDisbursementsTableTableManager get girviDisbursements =>
+      $$GirviDisbursementsTableTableManager(_db, _db.girviDisbursements);
   $$DeliveryOrdersTableTableManager get deliveryOrders =>
       $$DeliveryOrdersTableTableManager(_db, _db.deliveryOrders);
   $$DeliveryItemsTableTableManager get deliveryItems =>

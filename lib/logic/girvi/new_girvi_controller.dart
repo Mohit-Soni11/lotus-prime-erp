@@ -15,18 +15,22 @@ import 'package:flutter/material.dart';
 
 import '../../database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
+import '../../models/girvi/girvi_persistence_models.dart';
 import '../../models/setting/billing_setup/girvi_billing_model.dart';
+import '../../repositories/girvi/girvi_details_repository.dart';
 import '../../repositories/girvi/girvi_repository.dart';
 import '../../repositories/setting/billing_setup/girvi_billing_repo.dart';
 
 class NewGirviController extends ChangeNotifier {
   final GirviRepository _repo;
+  final GirviDetailsRepository _detailsRepo;
   final GirviBillingRepo _billingRepo;
 
   NewGirviController(
     AppDatabase db, {
     GirviBillingRepo? billingRepo,
   })  : _repo = GirviRepository(db),
+        _detailsRepo = GirviDetailsRepository(db),
         _billingRepo = billingRepo ?? GirviBillingRepo(db: db);
 
   // ── TICKET ────────────────────────────────────────────────────────────────
@@ -313,11 +317,9 @@ class NewGirviController extends ChangeNotifier {
   // ── SAVE ──────────────────────────────────────────────────────────────────
 
   Future<bool> saveLoan({
-    required String itemDescription,
-    required String? huidNumber,
-    required String? itemPhotoPath,
+    required List<GirviLoanItemInput> items,
+    required List<GirviDisbursementInput> disbursements,
     required bool invoiceGenerated,
-    required String disbursementDetails,
     required String? idProofNumber,
     required String? idProofImagePath,
     required String? notes,
@@ -337,36 +339,96 @@ class NewGirviController extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+    if (_ticketNo.trim().isEmpty || _ticketNo.contains('---')) {
+      _errorMessage = 'Ticket number is not ready. Please reopen this screen.';
+      notifyListeners();
+      return false;
+    }
+    if (items.isEmpty) {
+      _errorMessage = 'Please add at least one pledged item';
+      notifyListeners();
+      return false;
+    }
+
+    final totalItemValue =
+        items.fold<double>(0.0, (sum, item) => sum + item.valuationAmount);
+    if (totalItemValue <= 0) {
+      _errorMessage = 'Pledged item valuation must be greater than zero';
+      notifyListeners();
+      return false;
+    }
+    if (_loanAmount - totalItemValue > 0.50) {
+      _errorMessage = 'Loan amount cannot exceed pledged item valuation';
+      notifyListeners();
+      return false;
+    }
 
     _isSaving = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
+      final totalPieces = items.fold<int>(0, (sum, item) => sum + item.pieces);
+      final totalGross =
+          items.fold<double>(0.0, (sum, item) => sum + item.grossWeight);
+      final totalLess =
+          items.fold<double>(0.0, (sum, item) => sum + item.lessWeight);
+      final totalNet =
+          items.fold<double>(0.0, (sum, item) => sum + item.netWeight);
+      final weightedRate = totalNet > 0 ? totalItemValue / totalNet : 0.0;
+      final metalTypes = items.map((item) => item.metalType).toSet();
+      final purities = items.map((item) => item.purity).toSet();
+      final combinedDescription = items
+          .map(
+            (item) => '#${item.serialNo} ${item.itemName.trim()} | '
+                '${item.metalType} | ${item.purity} | ${item.pieces} pcs | '
+                'Net ${item.netWeight.toStringAsFixed(3)} g',
+          )
+          .join('\n');
+      final combinedHuid = items
+          .map((item) => item.huidNumber?.trim() ?? '')
+          .where((value) => value.isNotEmpty)
+          .join(', ');
+      final firstPhotoPath = items
+          .expand((item) => item.photoPaths)
+          .cast<String?>()
+          .firstWhere((path) => path?.trim().isNotEmpty == true,
+              orElse: () => null);
+      final disbursementSummary = disbursements
+          .map(
+            (entry) =>
+                '${entry.displayLabel} Rs ${entry.amount.toStringAsFixed(2)}',
+          )
+          .join(' + ');
+
       final companion = GirviLoansCompanion.insert(
         ticketNo: _ticketNo,
         customerId: _selectedCustomer!.id,
-        itemDescription: itemDescription.trim(),
-        itemCount: drift.Value(_itemCount),
-        huidNumber: drift.Value(
-            huidNumber?.trim().isEmpty == true ? null : huidNumber?.trim()),
-        itemPhotoPath: drift.Value(itemPhotoPath?.trim().isEmpty == true
+        itemDescription: combinedDescription,
+        itemCount: drift.Value(totalPieces),
+        huidNumber:
+            drift.Value(combinedHuid.isEmpty ? null : combinedHuid.trim()),
+        itemPhotoPath: drift.Value(firstPhotoPath?.trim().isEmpty == true
             ? null
-            : itemPhotoPath?.trim()),
-        metalType: drift.Value(_metalType.dbValue),
-        metalPurity: drift.Value(_metalPurity.dbValue),
-        grossWeight: drift.Value(_grossWeight),
-        stoneWeight: drift.Value(_stoneWeight),
-        netWeight: drift.Value(netWeight),
-        ratePerGram: drift.Value(_ratePerGram),
-        totalValue: drift.Value(totalValue),
-        ltvPercent: drift.Value(computedLtv),
+            : firstPhotoPath?.trim()),
+        metalType: drift.Value(
+          metalTypes.length == 1 ? metalTypes.single : MetalType.mixed.dbValue,
+        ),
+        metalPurity: drift.Value(
+          purities.length == 1 ? purities.single : 'Mixed',
+        ),
+        grossWeight: drift.Value(totalGross),
+        stoneWeight: drift.Value(totalLess),
+        netWeight: drift.Value(totalNet),
+        ratePerGram: drift.Value(weightedRate),
+        totalValue: drift.Value(totalItemValue),
+        ltvPercent: drift.Value(
+          totalItemValue > 0 ? (_loanAmount / totalItemValue) * 100 : 0,
+        ),
         loanAmount: drift.Value(_loanAmount),
         interestRate: drift.Value(_interestRate),
         durationMonths: drift.Value(_durationMonths),
-        disbursementMode: drift.Value(disbursementDetails.trim().isEmpty
-            ? _disbursementMode.dbValue
-            : disbursementDetails.trim()),
+        disbursementMode: drift.Value(disbursementSummary),
         invoiceGenerated: drift.Value(invoiceGenerated),
         startDate: drift.Value(_startDate),
         maturityDate: drift.Value(maturityDate),
@@ -383,7 +445,12 @@ class NewGirviController extends ChangeNotifier {
             drift.Value(notes?.trim().isEmpty == true ? null : notes?.trim()),
       );
 
-      await _repo.createLoan(companion);
+      await _detailsRepo.createLoanWithDetails(
+        loan: companion,
+        items: items,
+        disbursements: disbursements,
+        expectedLoanAmount: _loanAmount,
+      );
 
       _successMessage = 'Girvi ticket $_ticketNo created successfully!';
       _isSaving = false;

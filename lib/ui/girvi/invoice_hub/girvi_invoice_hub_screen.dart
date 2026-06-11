@@ -5,6 +5,7 @@ import 'package:printing/printing.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../logic/girvi/girvi_invoice_pdf_service.dart';
 import '../../../models/girvi/girvi_invoice_draft.dart';
+import '../../../models/setting/billing_setup/girvi_billing_model.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 
 part 'parts/girvi_invoice_hub_actions.dart';
@@ -148,11 +149,9 @@ class _GirviInvoiceHubScreenState extends State<GirviInvoiceHubScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildDetectedProfile(),
+                  _buildFormatSelector(),
                   const SizedBox(height: 20),
                   _buildInvoiceSetupCard(),
-                  const SizedBox(height: 20),
-                  _buildFormatSelector(),
                   const SizedBox(height: 20),
                   _buildOutputOptions(),
                   if (_controller.errorMessage != null) ...[

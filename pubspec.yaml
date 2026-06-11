@@ -79,4 +79,5 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/fonts/lohit_devanagari/
     - lib/logo/

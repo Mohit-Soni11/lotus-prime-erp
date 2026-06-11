@@ -55,15 +55,57 @@ extension NewGirviActions on _NewGirviScreenState {
 
   Future<bool> _saveCurrentGirvi({required bool invoiceGenerated}) {
     return _ctrl.saveLoan(
-      itemDescription: _itemDescCtrl.text,
-      huidNumber: _huidCtrl.text,
-      itemPhotoPath: _itemPhotoPath,
+      items: _buildPersistenceItems(),
+      disbursements: _buildPersistenceDisbursements(),
       invoiceGenerated: invoiceGenerated,
-      disbursementDetails: _disbursementSummaryLabel,
       idProofNumber: _ctrl.idProofType == null ? null : _idProofNoCtrl.text,
       idProofImagePath: _ctrl.idProofType == null ? null : _idProofImagePath,
       notes: _notesCtrl.text,
     );
+  }
+
+  List<GirviLoanItemInput> _buildPersistenceItems() {
+    return _pledgedItems
+        .map(
+          (item) => GirviLoanItemInput(
+            serialNo: item.serialNo,
+            itemName: item.descriptionCtrl.text.trim(),
+            metalType: item.metalType.dbValue,
+            purity: item.purityLabel,
+            purityFactor: item.entryPurityFactor,
+            pieces: item.itemCount,
+            huidNumber: item.huidCtrl.text.trim(),
+            grossWeight: item.grossWeight,
+            lessWeight: item.lessWeight,
+            netWeight: item.netWeight,
+            valuationMethod:
+                item.usesDirectSilverRate ? 'DIRECT_RATE' : 'PURITY',
+            valuationPurityPercent:
+                item.usesDirectSilverRate ? null : item.valuationPurityPercent,
+            fineWeight: item.fineWeight,
+            ratePerGram: item.ratePerGram,
+            valuationAmount: item.itemValue,
+            photoPaths: List.unmodifiable(item.validPhotoPaths),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  List<GirviDisbursementInput> _buildPersistenceDisbursements() {
+    final entries = <GirviDisbursementInput>[];
+    for (final mode in _visibleDisbursementModes) {
+      final amount = _disbursementAmountFor(mode);
+      if (amount <= 0) continue;
+      entries.add(
+        GirviDisbursementInput(
+          sequenceNo: entries.length + 1,
+          mode: mode.dbValue,
+          displayLabel: _disbursementModeLabel(mode),
+          amount: amount,
+        ),
+      );
+    }
+    return List.unmodifiable(entries);
   }
 
   Future<void> _openGirviInvoiceHub() async {

@@ -9,10 +9,14 @@ void main() {
     var finalizeCalls = 0;
     final controller = GirviInvoiceHubController(
       draft: _draft,
-      settingsLoader: () async => GirviBillingModel.defaults.copyWith(
-        showHuid: false,
-        showItemPhotos: false,
-        footerMessage: 'Keep this Girvi ticket safe.',
+      settingsLoader: () async => GirviBillingModel.defaults.withMetalSettings(
+        GirviBillingMetal.gold,
+        GirviBillingModel.defaults
+            .settingsForMetal(GirviBillingMetal.gold)
+            .copyWith(
+              showHuid: false,
+              showItemPhotos: false,
+            ),
       ),
       onFinalize: () async {
         finalizeCalls++;
@@ -25,7 +29,18 @@ void main() {
 
     expect(controller.state, GirviInvoiceHubState.ready);
     expect(controller.pdfBytes, isNotEmpty);
-    expect(controller.invoiceSettings.showHuid, isFalse);
+    expect(
+      controller.presentMetals,
+      [GirviBillingMetal.gold, GirviBillingMetal.silver],
+    );
+    expect(controller.effectiveActiveMetal, GirviBillingMetal.gold);
+    expect(
+      controller.getMetalCustomizationValue(
+        GirviBillingMetal.gold,
+        'huid',
+      ),
+      isFalse,
+    );
     expect(
       GirviInvoicePdfService.customerItemHeaders,
       const [
@@ -52,6 +67,60 @@ void main() {
       GirviInvoicePdfService.customerItemHeaders,
       isNot(contains('Value')),
     );
+
+    await controller.setMetalCustomization(
+      GirviBillingMetal.gold,
+      'huid',
+      true,
+    );
+    expect(
+      controller.getMetalCustomizationValue(
+        GirviBillingMetal.gold,
+        'huid',
+      ),
+      isTrue,
+    );
+    await controller.setMetalCustomization(
+      GirviBillingMetal.gold,
+      'valuationAmount',
+      true,
+    );
+    expect(
+      controller.getMetalCustomizationValue(
+        GirviBillingMetal.gold,
+        'valuationAmount',
+      ),
+      isTrue,
+    );
+    expect(
+      controller.getCombinedCustomizationValue('valuationAmount'),
+      isFalse,
+    );
+    await controller.setCombinedCustomization('valuationAmount', true);
+    expect(
+      controller.getCombinedCustomizationValue('valuationAmount'),
+      isTrue,
+    );
+    expect(
+      controller.getMetalCustomizationValue(
+        GirviBillingMetal.silver,
+        'valuationAmount',
+      ),
+      isTrue,
+    );
+
+    await controller.setDocumentCustomization('terms', true);
+    await controller.setDocumentCustomization('declaration', false);
+    await controller.setDocumentCustomization('kycDetails', true);
+    expect(controller.getDocumentCustomizationValue('terms'), isTrue);
+    expect(
+      controller.getDocumentCustomizationValue('declaration'),
+      isFalse,
+    );
+    expect(controller.getDocumentCustomizationValue('kycDetails'), isTrue);
+
+    controller.setActivePrintMetal(GirviBillingMetal.silver);
+    expect(controller.effectiveActiveMetal, GirviBillingMetal.silver);
 
     await controller.switchFormat(GirviInvoiceFormat.compactA5);
     await controller.updatePrintOptions(copies: 2, duplicate: true);
@@ -87,6 +156,21 @@ final _draft = GirviInvoiceDraft(
       ratePerGram: 6823,
       huid: 'HUID123',
       value: 50000,
+    ),
+    GirviInvoiceItemDraft(
+      serialNo: 2,
+      metal: 'Silver',
+      description: 'Silver anklet',
+      purity: '925',
+      pieces: 2,
+      grossWeight: 102,
+      lessWeight: 2,
+      netWeight: 100,
+      valuationPurity: '92.5%',
+      fineWeight: 92.5,
+      ratePerGram: 95,
+      huid: '',
+      value: 9500,
     ),
   ],
   totalValue: 50000,

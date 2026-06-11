@@ -126,7 +126,7 @@ extension GirviInvoiceHubPreview on _GirviInvoiceHubScreenState {
         );
       case GirviInvoiceHubState.ready:
         return Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(12),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: PdfPreview(
