@@ -59,7 +59,8 @@ class GirviBillingSettings extends Table with BaseTable {
   TextColumn get customerDeclarationHindi => text().withDefault(const Constant(
       'मैं घोषणा करता/करती हूं कि गिरवी रखी गई वस्तुएं मेरी हैं, किसी विवाद से मुक्त हैं और मेरे द्वारा दी गई जानकारी सत्य है। '
       'मैंने वस्तुओं का विवरण, ऋण राशि और ब्याज की शर्तें जांच ली हैं तथा बताई गई भुगतान राशि प्राप्त कर ली है।'))();
-  TextColumn get footerMessage => text().withDefault(const Constant(''))();
+  TextColumn get footerMessage => text()
+      .withDefault(const Constant('Please keep this Girvi receipt safely.'))();
   BoolColumn get autoPrint => boolean().withDefault(const Constant(true))();
 
   // Template for future use

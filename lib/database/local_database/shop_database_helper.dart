@@ -15,7 +15,7 @@ class ShopDatabaseHelper {
   static Database? _database;
 
   // 🚀 AUTO-UPDATE ENGINE: Future mein naya column add karna ho, toh ise '3' kar dena
-  static const int _dbVersion = 2;
+  static const int _dbVersion = 3;
 
   factory ShopDatabaseHelper() => _instance;
 
@@ -52,7 +52,9 @@ class ShopDatabaseHelper {
         owner_name TEXT, owner_phone TEXT, owner_whatsapp TEXT,
         est_year TEXT, branch_code TEXT, open_time TEXT, close_time TEXT,
         weekly_off TEXT, brand_display_name TEXT, business_email TEXT,
-        shop_phone TEXT, shop_whatsapp TEXT, logo_path TEXT, signature_path TEXT
+        shop_phone TEXT, shop_whatsapp TEXT,
+        logo_path TEXT, logo_shape TEXT DEFAULT 'circle',
+        signature_path TEXT, signature_shape TEXT DEFAULT 'square'
       )
     ''');
 
@@ -107,10 +109,14 @@ class ShopDatabaseHelper {
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     debugPrint(
         "🔄 [DB] Upgrading database from v$oldVersion to v$newVersion...");
-    // Example for future:
-    // if (oldVersion < 3) {
-    //   await db.execute('ALTER TABLE shop_profile ADD COLUMN new_feature TEXT');
-    // }
+    if (oldVersion < 3) {
+      await db.execute(
+        "ALTER TABLE shop_profile ADD COLUMN logo_shape TEXT DEFAULT 'circle'",
+      );
+      await db.execute(
+        "ALTER TABLE shop_profile ADD COLUMN signature_shape TEXT DEFAULT 'square'",
+      );
+    }
   }
 
   // --- 2. MASTER UPSERT ENGINE (Atomic Transaction) ---

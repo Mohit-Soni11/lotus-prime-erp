@@ -360,6 +360,23 @@ class AppDatabase extends _$AppDatabase {
             AppLogger.info(
                 'v22 bilingual Girvi terms and declaration applied.');
           }
+
+          if (from < 23) {
+            try {
+              await m.addColumn(shopProfiles, shopProfiles.logoPath);
+            } catch (_) {}
+            try {
+              await m.addColumn(shopProfiles, shopProfiles.logoShape);
+            } catch (_) {}
+            try {
+              await m.addColumn(shopProfiles, shopProfiles.signaturePath);
+            } catch (_) {}
+            try {
+              await m.addColumn(shopProfiles, shopProfiles.signatureShape);
+            } catch (_) {}
+            AppLogger.info(
+                'v23 Shop Profile identity paths and shapes applied.');
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -849,7 +866,7 @@ const List<String> _billingSetupSchemaSafetySql = [
 ग्राहक समय पर भुगतान और ऋण छुड़ाने के लिए जिम्मेदार है।',
     "customer_declaration" TEXT NOT NULL DEFAULT 'I declare that the pledged articles belong to me, are free from dispute, and the information provided by me is true. I have verified the item details, loan amount and interest terms, and have received the stated disbursement.',
     "customer_declaration_hindi" TEXT NOT NULL DEFAULT 'मैं घोषणा करता/करती हूं कि गिरवी रखी गई वस्तुएं मेरी हैं, किसी विवाद से मुक्त हैं और मेरे द्वारा दी गई जानकारी सत्य है। मैंने वस्तुओं का विवरण, ऋण राशि और ब्याज की शर्तें जांच ली हैं तथा बताई गई भुगतान राशि प्राप्त कर ली है।',
-    "footer_message" TEXT NOT NULL DEFAULT '',
+    "footer_message" TEXT NOT NULL DEFAULT 'Please keep this Girvi receipt safely.',
     "auto_print" INTEGER NOT NULL DEFAULT 1,
     "selected_template" TEXT NOT NULL DEFAULT 'default'
   )
@@ -931,7 +948,7 @@ const List<String> _billingSetupSchemaSafetySql = [
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "terms_and_conditions_hindi" TEXT NOT NULL DEFAULT ""',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "customer_declaration" TEXT NOT NULL DEFAULT ""',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "customer_declaration_hindi" TEXT NOT NULL DEFAULT ""',
-  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "footer_message" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "footer_message" TEXT NOT NULL DEFAULT "Please keep this Girvi receipt safely."',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "auto_print" INTEGER NOT NULL DEFAULT 1',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "selected_template" TEXT NOT NULL DEFAULT "default"',
   'CREATE UNIQUE INDEX IF NOT EXISTS "idx_sales_billing_metal" ON "sales_billing_settings" ("metal")',

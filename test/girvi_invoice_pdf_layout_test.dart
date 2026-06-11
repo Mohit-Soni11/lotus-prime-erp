@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/logic/girvi/girvi_invoice_pdf_service.dart';
+import 'package:lotus_erp/models/girvi/girvi_invoice_branding.dart';
 import 'package:lotus_erp/models/girvi/girvi_invoice_draft.dart';
 import 'package:lotus_erp/models/setting/billing_setup/girvi_billing_model.dart';
 
@@ -166,6 +167,14 @@ void main() {
       draft: draft,
       format: GirviInvoiceFormat.a4,
       settings: settings,
+      branding: GirviInvoiceBranding(
+        shopName: 'Shree Balaji Jewellers',
+        shopAddress: 'Main Road, Gaya, Bihar 823001',
+        shopMobile: '9876543210',
+        shopGstin: '10ABCDE1234F1Z5',
+        logoPath: photoPath,
+        logoShape: 'square',
+      ),
     );
 
     expect(bytes, isNotEmpty);

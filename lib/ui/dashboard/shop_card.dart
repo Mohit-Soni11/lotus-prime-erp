@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import '../../theme/dashboard/shop_card/shop_card_theme.dart';
 import '../../../../logic/dashboard/shop_card/shop_card_logic.dart';
@@ -134,24 +136,45 @@ class _ShopIdentityCardState extends State<ShopIdentityCard> {
 
   // Need to include these for context if copy pasting file completely:
   Widget _buildProfileImage() {
+    final logoPath = _logic.data.logoPath?.trim() ?? '';
+    final logoFile = logoPath.isEmpty ? null : File(logoPath);
+    final hasLogo = logoFile?.existsSync() ?? false;
+    final isCircle = _logic.data.logoShape.toLowerCase() == 'circle';
+
     return Container(
       width: ShopCardStyles.imgBoxSize,
       height: ShopCardStyles.imgBoxSize,
       decoration: BoxDecoration(
         color: ShopCardColors.imgBg,
-        borderRadius: BorderRadius.circular(ShopCardStyles.imgRadius),
+        shape: isCircle ? BoxShape.circle : BoxShape.rectangle,
+        borderRadius:
+            isCircle ? null : BorderRadius.circular(ShopCardStyles.imgRadius),
         border: Border.all(
             color: ShopCardColors.borderGold,
             width: ShopCardStyles.imgBorderWidth),
         boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10)],
       ),
+      clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
-      child: Text(
-        _logic.shopInitials,
-        style: const TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: ShopCardColors.textGold),
+      child: hasLogo
+          ? Image.file(
+              logoFile!,
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _buildInitials(),
+            )
+          : _buildInitials(),
+    );
+  }
+
+  Widget _buildInitials() {
+    return Text(
+      _logic.shopInitials,
+      style: const TextStyle(
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+        color: ShopCardColors.textGold,
       ),
     );
   }

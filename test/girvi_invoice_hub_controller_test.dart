@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/logic/girvi/girvi_invoice_hub_controller.dart';
 import 'package:lotus_erp/logic/girvi/girvi_invoice_pdf_service.dart';
 import 'package:lotus_erp/models/girvi/girvi_invoice_draft.dart';
+import 'package:lotus_erp/models/girvi/girvi_invoice_branding.dart';
 import 'package:lotus_erp/models/setting/billing_setup/girvi_billing_model.dart';
 
 void main() {
@@ -18,6 +19,11 @@ void main() {
               showItemPhotos: false,
             ),
       ),
+      brandingLoader: () async => const GirviInvoiceBranding(
+        shopName: 'Shree Balaji Jewellers',
+        shopAddress: 'Main Road, Gaya, Bihar 823001',
+        shopMobile: '9876543210',
+      ),
       onFinalize: () async {
         finalizeCalls++;
         return true;
@@ -29,6 +35,11 @@ void main() {
 
     expect(controller.state, GirviInvoiceHubState.ready);
     expect(controller.pdfBytes, isNotEmpty);
+    expect(controller.invoiceBranding.shopName, 'Shree Balaji Jewellers');
+    expect(
+      controller.invoiceBranding.contactLine,
+      'Main Road, Gaya, Bihar 823001  |  Mobile: 9876543210',
+    );
     expect(
       controller.presentMetals,
       [GirviBillingMetal.gold, GirviBillingMetal.silver],

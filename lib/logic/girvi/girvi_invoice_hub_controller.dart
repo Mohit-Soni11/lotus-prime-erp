@@ -5,7 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:printing/printing.dart';
 
 import '../../models/girvi/girvi_invoice_draft.dart';
+import '../../models/girvi/girvi_invoice_branding.dart';
 import '../../models/setting/billing_setup/girvi_billing_model.dart';
+import '../../repositories/girvi/girvi_invoice_branding_repository.dart';
 import '../../repositories/setting/billing_setup/girvi_billing_repo.dart';
 import 'girvi_invoice_pdf_service.dart';
 
@@ -17,17 +19,22 @@ class GirviInvoiceHubController extends ChangeNotifier {
     required Future<bool> Function() onFinalize,
     GirviInvoicePdfService? pdfService,
     Future<GirviBillingModel> Function()? settingsLoader,
+    Future<GirviInvoiceBranding> Function()? brandingLoader,
   })  : _onFinalize = onFinalize,
         _pdfService = pdfService ?? GirviInvoicePdfService(),
-        _settingsLoader = settingsLoader ?? GirviBillingRepo().fetch;
+        _settingsLoader = settingsLoader ?? GirviBillingRepo().fetch,
+        _brandingLoader =
+            brandingLoader ?? GirviInvoiceBrandingRepository().fetch;
 
   final GirviInvoiceDraft draft;
   final Future<bool> Function() _onFinalize;
   final GirviInvoicePdfService _pdfService;
   final Future<GirviBillingModel> Function() _settingsLoader;
+  final Future<GirviInvoiceBranding> Function() _brandingLoader;
 
   GirviInvoiceHubState state = GirviInvoiceHubState.idle;
   GirviBillingModel invoiceSettings = GirviBillingModel.defaults;
+  GirviInvoiceBranding invoiceBranding = GirviInvoiceBranding.fallback;
   GirviInvoiceFormat selectedFormat = GirviInvoiceFormat.a4;
   Uint8List? pdfBytes;
   String? errorMessage;
@@ -37,6 +44,7 @@ class GirviInvoiceHubController extends ChangeNotifier {
   bool isFinalizing = false;
   bool isExporting = false;
   bool _settingsLoaded = false;
+  bool _brandingLoaded = false;
   String? activePrintMetal;
 
   bool get isReady => state == GirviInvoiceHubState.ready && pdfBytes != null;
@@ -76,10 +84,14 @@ class GirviInvoiceHubController extends ChangeNotifier {
       if (!_settingsLoaded) {
         await _loadSavedSettings();
       }
+      if (!_brandingLoaded) {
+        await _loadShopBranding();
+      }
       pdfBytes = await _pdfService.build(
         draft: draft,
         format: selectedFormat,
         settings: invoiceSettings,
+        branding: invoiceBranding,
         copies: printCopies,
         duplicateStamp: includeDuplicateStamp,
       );
@@ -90,6 +102,16 @@ class GirviInvoiceHubController extends ChangeNotifier {
       debugPrint('GirviInvoiceHubController.generatePreview error: $error');
     }
     notifyListeners();
+  }
+
+  Future<void> _loadShopBranding() async {
+    try {
+      invoiceBranding = await _brandingLoader();
+    } catch (error) {
+      invoiceBranding = GirviInvoiceBranding.fallback;
+      debugPrint('Girvi shop profile fallback: $error');
+    }
+    _brandingLoaded = true;
   }
 
   Future<void> _loadSavedSettings() async {
@@ -389,8 +411,12 @@ class GirviInvoiceHubController extends ChangeNotifier {
         showKycPhoto: saved.showKycPhoto,
         showNotes: saved.showNotes,
         printTermsAndConditions: saved.printTermsAndConditions,
+        printCustomerDeclaration: saved.printCustomerDeclaration,
         printFooterMessage: saved.printFooterMessage,
         termsAndConditions: saved.termsAndConditions,
+        termsAndConditionsHindi: saved.termsAndConditionsHindi,
+        customerDeclaration: saved.customerDeclaration,
+        customerDeclarationHindi: saved.customerDeclarationHindi,
         footerMessage: saved.footerMessage,
       );
       await generatePreview();
@@ -443,10 +469,12 @@ class GirviInvoiceHubController extends ChangeNotifier {
 
   Future<bool> printInvoice() async {
     if (!await finalizeIfNeeded()) return false;
+    if (!_brandingLoaded) await _loadShopBranding();
     final bytes = await _pdfService.build(
       draft: draft,
       format: selectedFormat,
       settings: invoiceSettings,
+      branding: invoiceBranding,
       copies: printCopies,
       duplicateStamp: includeDuplicateStamp,
     );
@@ -459,6 +487,7 @@ class GirviInvoiceHubController extends ChangeNotifier {
 
   Future<String?> exportPdf() async {
     if (!await finalizeIfNeeded()) return null;
+    if (!_brandingLoaded) await _loadShopBranding();
     isExporting = true;
     notifyListeners();
     try {
@@ -478,6 +507,7 @@ class GirviInvoiceHubController extends ChangeNotifier {
         draft: draft,
         format: selectedFormat,
         settings: invoiceSettings,
+        branding: invoiceBranding,
         copies: printCopies,
         duplicateStamp: includeDuplicateStamp,
       );

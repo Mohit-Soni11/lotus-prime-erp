@@ -24,10 +24,14 @@ class ShopProfiles extends Table with BaseTable {
   TextColumn get contactNumber => text().nullable()();
   TextColumn get whatsappNumber => text().nullable()(); // Shop WA
 
-  // --- Images (Base64 Strings) ---
-  // SQLite mein TEXT column huge strings store kar sakta hai
+  // --- Corporate Identity ---
   TextColumn get logoBase64 => text().nullable()();
   TextColumn get signatureBase64 => text().nullable()();
+  TextColumn get logoPath => text().nullable()();
+  TextColumn get logoShape => text().withDefault(const Constant('circle'))();
+  TextColumn get signaturePath => text().nullable()();
+  TextColumn get signatureShape =>
+      text().withDefault(const Constant('square'))();
 
   // --- 2. Address & Map ---
   TextColumn get address => text().nullable()();

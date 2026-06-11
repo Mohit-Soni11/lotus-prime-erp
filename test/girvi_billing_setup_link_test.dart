@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
@@ -38,7 +39,11 @@ void main() {
     expect(settings.showKycDetails, isFalse);
     expect(settings.showDisbursementDetails, isFalse);
     expect(settings.printTermsAndConditions, isFalse);
-    expect(settings.printFooterMessage, isFalse);
+    expect(settings.printFooterMessage, isTrue);
+    expect(
+      settings.footerMessage,
+      'Please keep this Girvi receipt safely.',
+    );
   });
 
   test('Girvi billing invoice preferences persist with existing table',
@@ -114,6 +119,29 @@ void main() {
       'मैंने गिरवी और ऋण का विवरण जांच लिया है।',
     );
     expect(saved.printCustomerDeclaration, isTrue);
+  });
+
+  test('legacy blank footer is upgraded to the safe receipt message', () async {
+    final legacy = GirviBillingModel.defaults.copyWith(
+      footerMessage: '',
+      printFooterMessage: false,
+    );
+    await db.into(db.girviBillingSettings).insert(
+          GirviBillingSettingsCompanion(
+            footerMessage: const Value(''),
+            selectedTemplate: Value(
+              GirviBillingTemplateOptions.encode(legacy),
+            ),
+          ),
+        );
+
+    final loaded = await repo.fetch();
+
+    expect(loaded.printFooterMessage, isTrue);
+    expect(
+      loaded.footerMessage,
+      GirviBillingModel.defaultFooterMessage,
+    );
   });
 
   test('Girvi metal settings stay independent', () {

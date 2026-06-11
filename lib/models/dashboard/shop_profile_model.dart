@@ -11,6 +11,8 @@ class ShopProfileModel {
   final String gstin;
   final String bisLicense;
   final String huidNo;
+  final String? logoPath;
+  final String logoShape;
 
   // Visibility Flags (ERP Control)
   final bool showMobile;
@@ -28,6 +30,8 @@ class ShopProfileModel {
     required this.gstin,
     required this.bisLicense,
     required this.huidNo,
+    this.logoPath,
+    this.logoShape = "circle",
     this.showMobile = true,
     this.showEmail = true,
     this.showGst = true,
@@ -46,6 +50,8 @@ class ShopProfileModel {
       gstin: "",
       bisLicense: "",
       huidNo: "",
+      logoPath: null,
+      logoShape: "circle",
     );
   }
 }

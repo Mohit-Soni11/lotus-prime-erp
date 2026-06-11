@@ -6,6 +6,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../../models/girvi/girvi_invoice_draft.dart';
+import '../../models/girvi/girvi_invoice_branding.dart';
 import '../../models/setting/billing_setup/girvi_billing_model.dart';
 
 enum GirviInvoiceFormat {
@@ -51,16 +52,18 @@ class GirviInvoicePdfService {
     required GirviInvoiceDraft draft,
     required GirviInvoiceFormat format,
     GirviBillingModel settings = const GirviBillingModel(),
+    GirviInvoiceBranding branding = GirviInvoiceBranding.fallback,
     int copies = 1,
     bool duplicateStamp = false,
   }) async {
     final devanagariFont = await _loadDevanagariFont();
+    final brandLogo = _loadBrandLogo(branding);
     final pdf = pw.Document(
       theme: await _buildTheme(devanagariFont),
-      title: 'Girvi Invoice ${draft.ticketNo}',
-      author: 'Lotus ERP',
-      creator: 'Lotus ERP',
-      subject: 'Girvi customer receipt',
+      title: 'Pledge Receipt ${draft.ticketNo}',
+      author: branding.shopName,
+      creator: branding.shopName,
+      subject: 'Customer pledge receipt',
     );
     final safeCopies = copies.clamp(1, 5);
 
@@ -93,6 +96,8 @@ class GirviInvoicePdfService {
             format,
             copyLabel,
             settings,
+            branding,
+            brandLogo,
             devanagariFont,
           ),
         ),
@@ -149,11 +154,25 @@ class GirviInvoicePdfService {
     return bytes.buffer.asByteData(bytes.offsetInBytes, bytes.lengthInBytes);
   }
 
+  pw.MemoryImage? _loadBrandLogo(GirviInvoiceBranding branding) {
+    final path = branding.logoPath?.trim() ?? '';
+    if (path.isEmpty) return null;
+    final file = File(path);
+    if (!file.existsSync()) return null;
+    try {
+      return pw.MemoryImage(file.readAsBytesSync());
+    } catch (_) {
+      return null;
+    }
+  }
+
   List<pw.Widget> _buildDocument(
     GirviInvoiceDraft draft,
     GirviInvoiceFormat format,
     String copyLabel,
     GirviBillingModel settings,
+    GirviInvoiceBranding branding,
+    pw.MemoryImage? brandLogo,
     pw.Font? devanagariFont,
   ) {
     final compact = format == GirviInvoiceFormat.compactA5;
@@ -162,7 +181,14 @@ class GirviInvoicePdfService {
     final photos = _loadPhotos(draft, settings);
     var nextSection = 1;
     final widgets = <pw.Widget>[
-      _buildHeroHeader(draft, compact, copyLabel, settings),
+      _buildHeroHeader(
+        draft,
+        compact,
+        copyLabel,
+        settings,
+        branding,
+        brandLogo,
+      ),
       pw.SizedBox(height: sectionGap),
       _buildCustomerAndLoanPanel(draft, compact, settings),
     ];
@@ -345,6 +371,8 @@ class GirviInvoicePdfService {
     bool compact,
     String copyLabel,
     GirviBillingModel settings,
+    GirviInvoiceBranding branding,
+    pw.MemoryImage? brandLogo,
   ) {
     return pw.Container(
       decoration: const pw.BoxDecoration(
@@ -363,82 +391,89 @@ class GirviInvoicePdfService {
             child: pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.center,
               children: [
-                pw.Container(
-                  width: compact ? 31 : 38,
-                  height: compact ? 31 : 38,
-                  alignment: pw.Alignment.center,
-                  decoration: const pw.BoxDecoration(
-                    color: _gold,
-                    shape: pw.BoxShape.circle,
-                  ),
-                  child: pw.Text(
-                    'L',
-                    style: pw.TextStyle(
-                      color: PdfColors.white,
-                      fontSize: compact ? 15 : 19,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
+                _buildBrandMark(
+                  branding,
+                  brandLogo,
+                  compact,
                 ),
-                pw.SizedBox(width: compact ? 9 : 12),
+                pw.SizedBox(width: compact ? 10 : 14),
                 pw.Expanded(
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text(
-                        'LOTUS ERP',
-                        style: pw.TextStyle(
-                          color: _gold,
-                          fontSize: compact ? 7.5 : 9,
-                          fontWeight: pw.FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      pw.SizedBox(height: 2),
-                      pw.Text(
-                        'GIRVI LOAN RECEIPT',
+                        branding.shopName.toUpperCase(),
                         style: pw.TextStyle(
                           color: PdfColors.white,
-                          fontSize: compact ? 14 : 18,
+                          fontSize: compact ? 14 : 19,
                           fontWeight: pw.FontWeight.bold,
-                          letterSpacing: 0.4,
+                          letterSpacing: 0.5,
                         ),
                       ),
-                      pw.SizedBox(height: 2),
-                      pw.Text(
-                        'JEWELLERY | PLEDGE CUSTOMER DOCUMENT',
-                        style: pw.TextStyle(
-                          color: PdfColors.grey300,
-                          fontSize: compact ? 5.5 : 6.5,
-                          letterSpacing: 0.6,
+                      if (branding.shopAddress.trim().isNotEmpty) ...[
+                        pw.SizedBox(height: compact ? 2 : 3),
+                        pw.Text(
+                          branding.shopAddress.trim(),
+                          maxLines: compact ? 1 : 2,
+                          overflow: pw.TextOverflow.clip,
+                          style: pw.TextStyle(
+                            color: PdfColors.grey200,
+                            fontSize: compact ? 7 : 8.5,
+                          ),
                         ),
-                      ),
+                      ],
+                      if (branding.detailLine.isNotEmpty) ...[
+                        pw.SizedBox(height: 2),
+                        pw.Text(
+                          branding.detailLine,
+                          maxLines: 1,
+                          overflow: pw.TextOverflow.clip,
+                          style: pw.TextStyle(
+                            color: _gold,
+                            fontSize: compact ? 6.2 : 7.2,
+                            fontWeight: pw.FontWeight.bold,
+                            letterSpacing: 0.25,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                pw.Container(
-                  padding: pw.EdgeInsets.symmetric(
-                    horizontal: compact ? 8 : 10,
-                    vertical: compact ? 5 : 6,
-                  ),
-                  decoration: pw.BoxDecoration(
-                    color: _navySoft,
-                    border: pw.Border.all(
-                      color: _gold,
-                      width: 0.7,
+                pw.SizedBox(width: compact ? 8 : 12),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Container(
+                      padding: pw.EdgeInsets.symmetric(
+                        horizontal: compact ? 8 : 11,
+                        vertical: compact ? 5 : 7,
+                      ),
+                      decoration: const pw.BoxDecoration(
+                        color: _goldLight,
+                        borderRadius:
+                            pw.BorderRadius.all(pw.Radius.circular(5)),
+                      ),
+                      child: pw.Text(
+                        'PLEDGE RECEIPT',
+                        style: pw.TextStyle(
+                          color: _navy,
+                          fontSize: compact ? 7 : 8.5,
+                          fontWeight: pw.FontWeight.bold,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
                     ),
-                    borderRadius:
-                        const pw.BorderRadius.all(pw.Radius.circular(5)),
-                  ),
-                  child: pw.Text(
-                    copyLabel,
-                    style: pw.TextStyle(
-                      color: _gold,
-                      fontSize: compact ? 6 : 7,
-                      fontWeight: pw.FontWeight.bold,
-                      letterSpacing: 0.7,
+                    pw.SizedBox(height: compact ? 4 : 5),
+                    pw.Text(
+                      copyLabel,
+                      style: pw.TextStyle(
+                        color: _gold,
+                        fontSize: compact ? 5.5 : 6.5,
+                        fontWeight: pw.FontWeight.bold,
+                        letterSpacing: 0.6,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
@@ -492,6 +527,57 @@ class GirviInvoicePdfService {
           ),
         ],
       ),
+    );
+  }
+
+  pw.Widget _buildBrandMark(
+    GirviInvoiceBranding branding,
+    pw.MemoryImage? brandLogo,
+    bool compact,
+  ) {
+    final size = compact ? 40.0 : 52.0;
+    final content = brandLogo == null
+        ? pw.Container(
+            alignment: pw.Alignment.center,
+            color: _gold,
+            child: pw.Text(
+              branding.initial,
+              style: pw.TextStyle(
+                color: PdfColors.white,
+                fontSize: compact ? 17 : 22,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          )
+        : pw.Container(
+            color: PdfColors.white,
+            child: pw.Image(
+              brandLogo,
+              fit: pw.BoxFit.cover,
+            ),
+          );
+    final clipped = branding.logoShape == 'square'
+        ? pw.ClipRRect(
+            horizontalRadius: compact ? 5 : 7,
+            verticalRadius: compact ? 5 : 7,
+            child: content,
+          )
+        : pw.ClipOval(child: content);
+
+    return pw.Container(
+      width: size,
+      height: size,
+      padding: pw.EdgeInsets.all(compact ? 1.5 : 2),
+      decoration: pw.BoxDecoration(
+        color: _gold,
+        shape: branding.logoShape == 'square'
+            ? pw.BoxShape.rectangle
+            : pw.BoxShape.circle,
+        borderRadius: branding.logoShape == 'square'
+            ? const pw.BorderRadius.all(pw.Radius.circular(8))
+            : null,
+      ),
+      child: clipped,
     );
   }
 

@@ -347,10 +347,11 @@ class BasicInfoTabState extends State<BasicInfoTab> {
           title: BasicInfoStrings.titleIdentity,
           subtitle: BasicInfoStrings.subIdentity,
           icon: BasicInfoIcons.brandIdentity,
-          defaultShape: "circle",
+          defaultShape: widget.initialData?.logoShape ?? "circle",
+          initialImagePath: widget.initialData?.logoPath,
           heroTag: "hero_identity_logo",
-          onImageSaved: (File? file) async {
-            String? error = await logic.updateLogo(file);
+          onImageSaved: (File? file, String shape) async {
+            String? error = await logic.updateLogo(file, shape);
             if (error != null && mounted) {
               _showSnackBar(
                   message: error,
@@ -364,10 +365,11 @@ class BasicInfoTabState extends State<BasicInfoTab> {
           title: BasicInfoStrings.titleSignature,
           subtitle: BasicInfoStrings.subSignature,
           icon: BasicInfoIcons.authSignature,
-          defaultShape: "square",
+          defaultShape: widget.initialData?.signatureShape ?? "square",
+          initialImagePath: widget.initialData?.signaturePath,
           heroTag: "hero_auth_signature",
-          onImageSaved: (File? file) async {
-            String? error = await logic.updateSignature(file);
+          onImageSaved: (File? file, String shape) async {
+            String? error = await logic.updateSignature(file, shape);
             if (error != null && mounted) {
               _showSnackBar(
                   message: error,

@@ -9,6 +9,8 @@
 
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 // NOTE: Adjust paths according to your structure
 import '../../../../../../../models/setting/shop_setup/shop_profile_model.dart';
@@ -28,6 +30,10 @@ class BasicInfoLogic {
 
   final ValueNotifier<File?> logoFile = ValueNotifier(null);
   final ValueNotifier<File?> signatureFile = ValueNotifier(null);
+  final ValueNotifier<String> logoShape = ValueNotifier("circle");
+  final ValueNotifier<String> signatureShape = ValueNotifier("square");
+  bool _logoRemoved = false;
+  bool _signatureRemoved = false;
 
   final List<String> weekDays = BasicInfoStrings.weekDaysList;
   static const int _maxFileSize = 5 * 1024 * 1024; // 5 MB
@@ -48,30 +54,39 @@ class BasicInfoLogic {
     if (initialData != null && weekDays.contains(initialData.weeklyOff)) {
       selectedClosureDay.value = initialData.weeklyOff;
     }
+    logoShape.value = initialData?.logoShape ?? "circle";
+    signatureShape.value = initialData?.signatureShape ?? "square";
   }
 
   // --- FILE HANDLING (Pure Logic) ---
-  Future<String?> updateLogo(File? file) async {
+  Future<String?> updateLogo(File? file, String shape) async {
+    logoShape.value = _normalizeShape(shape, "circle");
     if (file == null) {
       logoFile.value = null;
+      _logoRemoved = true;
       return null;
     }
     final int size = await file.length();
     if (size > _maxFileSize) return BasicInfoStrings.errFileTooLarge;
 
-    logoFile.value = file;
+    logoFile.value = await _persistIdentityImage(file, "shop_logo");
+    _logoRemoved = false;
     return null;
   }
 
-  Future<String?> updateSignature(File? file) async {
+  Future<String?> updateSignature(File? file, String shape) async {
+    signatureShape.value = _normalizeShape(shape, "square");
     if (file == null) {
       signatureFile.value = null;
+      _signatureRemoved = true;
       return null;
     }
     final int size = await file.length();
     if (size > _maxFileSize) return BasicInfoStrings.errFileTooLarge;
 
-    signatureFile.value = file;
+    signatureFile.value =
+        await _persistIdentityImage(file, "authorized_signature");
+    _signatureRemoved = false;
     return null;
   }
 
@@ -229,9 +244,49 @@ class BasicInfoLogic {
       shopWhatsapp: shopWhatsapp,
       // 🚀 FIXED: Mapping to logoPath and signaturePath instead of Base64
       // Yeh check karega ki naya file select hua hai ya nahi, warna initial data se le lega
-      logoPath: logoFile.value?.path ?? _initialData?.logoPath,
-      signaturePath: signatureFile.value?.path ?? _initialData?.signaturePath,
+      logoPath:
+          _logoRemoved ? null : logoFile.value?.path ?? _initialData?.logoPath,
+      signaturePath: _signatureRemoved
+          ? null
+          : signatureFile.value?.path ?? _initialData?.signaturePath,
+      logoShape: logoShape.value,
+      signatureShape: signatureShape.value,
     );
+  }
+
+  String _normalizeShape(String value, String fallback) {
+    final normalized = value.trim().toLowerCase();
+    return normalized == "square" || normalized == "circle"
+        ? normalized
+        : fallback;
+  }
+
+  Future<File> _persistIdentityImage(File source, String fileStem) async {
+    final supportDir = await getApplicationSupportDirectory();
+    final identityDir = Directory(p.join(supportDir.path, "shop_identity"));
+    await identityDir.create(recursive: true);
+    final extension = p.extension(source.path).toLowerCase();
+    final safeExtension =
+        extension == ".jpg" || extension == ".jpeg" || extension == ".png"
+            ? extension
+            : ".png";
+    for (final entry in identityDir.listSync()) {
+      if (entry is File && p.basename(entry.path).startsWith("${fileStem}_")) {
+        try {
+          await entry.delete();
+        } catch (_) {
+          // A stale cached file should not block the new identity image.
+        }
+      }
+    }
+    final target = File(
+      p.join(
+        identityDir.path,
+        "${fileStem}_${DateTime.now().millisecondsSinceEpoch}$safeExtension",
+      ),
+    );
+    await target.writeAsBytes(await source.readAsBytes(), flush: true);
+    return target;
   }
 
   // --- MEMORY CLEANUP ---
@@ -243,5 +298,7 @@ class BasicInfoLogic {
     selectedClosureDay.dispose();
     logoFile.dispose();
     signatureFile.dispose();
+    logoShape.dispose();
+    signatureShape.dispose();
   }
 }

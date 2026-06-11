@@ -2759,6 +2759,34 @@ class $ShopProfilesTable extends ShopProfiles
   late final GeneratedColumn<String> signatureBase64 = GeneratedColumn<String>(
       'signature_base64', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _logoPathMeta =
+      const VerificationMeta('logoPath');
+  @override
+  late final GeneratedColumn<String> logoPath = GeneratedColumn<String>(
+      'logo_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _logoShapeMeta =
+      const VerificationMeta('logoShape');
+  @override
+  late final GeneratedColumn<String> logoShape = GeneratedColumn<String>(
+      'logo_shape', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('circle'));
+  static const VerificationMeta _signaturePathMeta =
+      const VerificationMeta('signaturePath');
+  @override
+  late final GeneratedColumn<String> signaturePath = GeneratedColumn<String>(
+      'signature_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _signatureShapeMeta =
+      const VerificationMeta('signatureShape');
+  @override
+  late final GeneratedColumn<String> signatureShape = GeneratedColumn<String>(
+      'signature_shape', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('square'));
   static const VerificationMeta _addressMeta =
       const VerificationMeta('address');
   @override
@@ -2927,6 +2955,10 @@ class $ShopProfilesTable extends ShopProfiles
         whatsappNumber,
         logoBase64,
         signatureBase64,
+        logoPath,
+        logoShape,
+        signaturePath,
+        signatureShape,
         address,
         city,
         state,
@@ -3053,6 +3085,26 @@ class $ShopProfilesTable extends ShopProfiles
           _signatureBase64Meta,
           signatureBase64.isAcceptableOrUnknown(
               data['signature_base64']!, _signatureBase64Meta));
+    }
+    if (data.containsKey('logo_path')) {
+      context.handle(_logoPathMeta,
+          logoPath.isAcceptableOrUnknown(data['logo_path']!, _logoPathMeta));
+    }
+    if (data.containsKey('logo_shape')) {
+      context.handle(_logoShapeMeta,
+          logoShape.isAcceptableOrUnknown(data['logo_shape']!, _logoShapeMeta));
+    }
+    if (data.containsKey('signature_path')) {
+      context.handle(
+          _signaturePathMeta,
+          signaturePath.isAcceptableOrUnknown(
+              data['signature_path']!, _signaturePathMeta));
+    }
+    if (data.containsKey('signature_shape')) {
+      context.handle(
+          _signatureShapeMeta,
+          signatureShape.isAcceptableOrUnknown(
+              data['signature_shape']!, _signatureShapeMeta));
     }
     if (data.containsKey('address')) {
       context.handle(_addressMeta,
@@ -3207,6 +3259,14 @@ class $ShopProfilesTable extends ShopProfiles
           .read(DriftSqlType.string, data['${effectivePrefix}logo_base64']),
       signatureBase64: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}signature_base64']),
+      logoPath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}logo_path']),
+      logoShape: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}logo_shape'])!,
+      signaturePath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}signature_path']),
+      signatureShape: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}signature_shape'])!,
       address: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}address']),
       city: attachedDatabase.typeMapping
@@ -3282,6 +3342,10 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
   final String? whatsappNumber;
   final String? logoBase64;
   final String? signatureBase64;
+  final String? logoPath;
+  final String logoShape;
+  final String? signaturePath;
+  final String signatureShape;
   final String? address;
   final String? city;
   final String? state;
@@ -3325,6 +3389,10 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
       this.whatsappNumber,
       this.logoBase64,
       this.signatureBase64,
+      this.logoPath,
+      required this.logoShape,
+      this.signaturePath,
+      required this.signatureShape,
       this.address,
       this.city,
       this.state,
@@ -3402,6 +3470,14 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
     if (!nullToAbsent || signatureBase64 != null) {
       map['signature_base64'] = Variable<String>(signatureBase64);
     }
+    if (!nullToAbsent || logoPath != null) {
+      map['logo_path'] = Variable<String>(logoPath);
+    }
+    map['logo_shape'] = Variable<String>(logoShape);
+    if (!nullToAbsent || signaturePath != null) {
+      map['signature_path'] = Variable<String>(signaturePath);
+    }
+    map['signature_shape'] = Variable<String>(signatureShape);
     if (!nullToAbsent || address != null) {
       map['address'] = Variable<String>(address);
     }
@@ -3520,6 +3596,14 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
       signatureBase64: signatureBase64 == null && nullToAbsent
           ? const Value.absent()
           : Value(signatureBase64),
+      logoPath: logoPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(logoPath),
+      logoShape: Value(logoShape),
+      signaturePath: signaturePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(signaturePath),
+      signatureShape: Value(signatureShape),
       address: address == null && nullToAbsent
           ? const Value.absent()
           : Value(address),
@@ -3603,6 +3687,10 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
       whatsappNumber: serializer.fromJson<String?>(json['whatsappNumber']),
       logoBase64: serializer.fromJson<String?>(json['logoBase64']),
       signatureBase64: serializer.fromJson<String?>(json['signatureBase64']),
+      logoPath: serializer.fromJson<String?>(json['logoPath']),
+      logoShape: serializer.fromJson<String>(json['logoShape']),
+      signaturePath: serializer.fromJson<String?>(json['signaturePath']),
+      signatureShape: serializer.fromJson<String>(json['signatureShape']),
       address: serializer.fromJson<String?>(json['address']),
       city: serializer.fromJson<String?>(json['city']),
       state: serializer.fromJson<String?>(json['state']),
@@ -3652,6 +3740,10 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
       'whatsappNumber': serializer.toJson<String?>(whatsappNumber),
       'logoBase64': serializer.toJson<String?>(logoBase64),
       'signatureBase64': serializer.toJson<String?>(signatureBase64),
+      'logoPath': serializer.toJson<String?>(logoPath),
+      'logoShape': serializer.toJson<String>(logoShape),
+      'signaturePath': serializer.toJson<String?>(signaturePath),
+      'signatureShape': serializer.toJson<String>(signatureShape),
       'address': serializer.toJson<String?>(address),
       'city': serializer.toJson<String?>(city),
       'state': serializer.toJson<String?>(state),
@@ -3698,6 +3790,10 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
           Value<String?> whatsappNumber = const Value.absent(),
           Value<String?> logoBase64 = const Value.absent(),
           Value<String?> signatureBase64 = const Value.absent(),
+          Value<String?> logoPath = const Value.absent(),
+          String? logoShape,
+          Value<String?> signaturePath = const Value.absent(),
+          String? signatureShape,
           Value<String?> address = const Value.absent(),
           Value<String?> city = const Value.absent(),
           Value<String?> state = const Value.absent(),
@@ -3747,6 +3843,11 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
         signatureBase64: signatureBase64.present
             ? signatureBase64.value
             : this.signatureBase64,
+        logoPath: logoPath.present ? logoPath.value : this.logoPath,
+        logoShape: logoShape ?? this.logoShape,
+        signaturePath:
+            signaturePath.present ? signaturePath.value : this.signaturePath,
+        signatureShape: signatureShape ?? this.signatureShape,
         address: address.present ? address.value : this.address,
         city: city.present ? city.value : this.city,
         state: state.present ? state.value : this.state,
@@ -3811,6 +3912,14 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
       signatureBase64: data.signatureBase64.present
           ? data.signatureBase64.value
           : this.signatureBase64,
+      logoPath: data.logoPath.present ? data.logoPath.value : this.logoPath,
+      logoShape: data.logoShape.present ? data.logoShape.value : this.logoShape,
+      signaturePath: data.signaturePath.present
+          ? data.signaturePath.value
+          : this.signaturePath,
+      signatureShape: data.signatureShape.present
+          ? data.signatureShape.value
+          : this.signatureShape,
       address: data.address.present ? data.address.value : this.address,
       city: data.city.present ? data.city.value : this.city,
       state: data.state.present ? data.state.value : this.state,
@@ -3869,6 +3978,10 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
           ..write('whatsappNumber: $whatsappNumber, ')
           ..write('logoBase64: $logoBase64, ')
           ..write('signatureBase64: $signatureBase64, ')
+          ..write('logoPath: $logoPath, ')
+          ..write('logoShape: $logoShape, ')
+          ..write('signaturePath: $signaturePath, ')
+          ..write('signatureShape: $signatureShape, ')
           ..write('address: $address, ')
           ..write('city: $city, ')
           ..write('state: $state, ')
@@ -3917,6 +4030,10 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
         whatsappNumber,
         logoBase64,
         signatureBase64,
+        logoPath,
+        logoShape,
+        signaturePath,
+        signatureShape,
         address,
         city,
         state,
@@ -3964,6 +4081,10 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
           other.whatsappNumber == this.whatsappNumber &&
           other.logoBase64 == this.logoBase64 &&
           other.signatureBase64 == this.signatureBase64 &&
+          other.logoPath == this.logoPath &&
+          other.logoShape == this.logoShape &&
+          other.signaturePath == this.signaturePath &&
+          other.signatureShape == this.signatureShape &&
           other.address == this.address &&
           other.city == this.city &&
           other.state == this.state &&
@@ -4009,6 +4130,10 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
   final Value<String?> whatsappNumber;
   final Value<String?> logoBase64;
   final Value<String?> signatureBase64;
+  final Value<String?> logoPath;
+  final Value<String> logoShape;
+  final Value<String?> signaturePath;
+  final Value<String> signatureShape;
   final Value<String?> address;
   final Value<String?> city;
   final Value<String?> state;
@@ -4052,6 +4177,10 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
     this.whatsappNumber = const Value.absent(),
     this.logoBase64 = const Value.absent(),
     this.signatureBase64 = const Value.absent(),
+    this.logoPath = const Value.absent(),
+    this.logoShape = const Value.absent(),
+    this.signaturePath = const Value.absent(),
+    this.signatureShape = const Value.absent(),
     this.address = const Value.absent(),
     this.city = const Value.absent(),
     this.state = const Value.absent(),
@@ -4096,6 +4225,10 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
     this.whatsappNumber = const Value.absent(),
     this.logoBase64 = const Value.absent(),
     this.signatureBase64 = const Value.absent(),
+    this.logoPath = const Value.absent(),
+    this.logoShape = const Value.absent(),
+    this.signaturePath = const Value.absent(),
+    this.signatureShape = const Value.absent(),
     this.address = const Value.absent(),
     this.city = const Value.absent(),
     this.state = const Value.absent(),
@@ -4140,6 +4273,10 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
     Expression<String>? whatsappNumber,
     Expression<String>? logoBase64,
     Expression<String>? signatureBase64,
+    Expression<String>? logoPath,
+    Expression<String>? logoShape,
+    Expression<String>? signaturePath,
+    Expression<String>? signatureShape,
     Expression<String>? address,
     Expression<String>? city,
     Expression<String>? state,
@@ -4184,6 +4321,10 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
       if (whatsappNumber != null) 'whatsapp_number': whatsappNumber,
       if (logoBase64 != null) 'logo_base64': logoBase64,
       if (signatureBase64 != null) 'signature_base64': signatureBase64,
+      if (logoPath != null) 'logo_path': logoPath,
+      if (logoShape != null) 'logo_shape': logoShape,
+      if (signaturePath != null) 'signature_path': signaturePath,
+      if (signatureShape != null) 'signature_shape': signatureShape,
       if (address != null) 'address': address,
       if (city != null) 'city': city,
       if (state != null) 'state': state,
@@ -4231,6 +4372,10 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
       Value<String?>? whatsappNumber,
       Value<String?>? logoBase64,
       Value<String?>? signatureBase64,
+      Value<String?>? logoPath,
+      Value<String>? logoShape,
+      Value<String?>? signaturePath,
+      Value<String>? signatureShape,
       Value<String?>? address,
       Value<String?>? city,
       Value<String?>? state,
@@ -4274,6 +4419,10 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
       whatsappNumber: whatsappNumber ?? this.whatsappNumber,
       logoBase64: logoBase64 ?? this.logoBase64,
       signatureBase64: signatureBase64 ?? this.signatureBase64,
+      logoPath: logoPath ?? this.logoPath,
+      logoShape: logoShape ?? this.logoShape,
+      signaturePath: signaturePath ?? this.signaturePath,
+      signatureShape: signatureShape ?? this.signatureShape,
       address: address ?? this.address,
       city: city ?? this.city,
       state: state ?? this.state,
@@ -4359,6 +4508,18 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
     }
     if (signatureBase64.present) {
       map['signature_base64'] = Variable<String>(signatureBase64.value);
+    }
+    if (logoPath.present) {
+      map['logo_path'] = Variable<String>(logoPath.value);
+    }
+    if (logoShape.present) {
+      map['logo_shape'] = Variable<String>(logoShape.value);
+    }
+    if (signaturePath.present) {
+      map['signature_path'] = Variable<String>(signaturePath.value);
+    }
+    if (signatureShape.present) {
+      map['signature_shape'] = Variable<String>(signatureShape.value);
     }
     if (address.present) {
       map['address'] = Variable<String>(address.value);
@@ -4454,6 +4615,10 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
           ..write('whatsappNumber: $whatsappNumber, ')
           ..write('logoBase64: $logoBase64, ')
           ..write('signatureBase64: $signatureBase64, ')
+          ..write('logoPath: $logoPath, ')
+          ..write('logoShape: $logoShape, ')
+          ..write('signaturePath: $signaturePath, ')
+          ..write('signatureShape: $signatureShape, ')
           ..write('address: $address, ')
           ..write('city: $city, ')
           ..write('state: $state, ')
@@ -26474,7 +26639,7 @@ class $GirviBillingSettingsTable extends GirviBillingSettings
       'footer_message', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: false,
-      defaultValue: const Constant(''));
+      defaultValue: const Constant('Please keep this Girvi receipt safely.'));
   static const VerificationMeta _autoPrintMeta =
       const VerificationMeta('autoPrint');
   @override
@@ -30761,6 +30926,10 @@ typedef $$ShopProfilesTableCreateCompanionBuilder = ShopProfilesCompanion
   Value<String?> whatsappNumber,
   Value<String?> logoBase64,
   Value<String?> signatureBase64,
+  Value<String?> logoPath,
+  Value<String> logoShape,
+  Value<String?> signaturePath,
+  Value<String> signatureShape,
   Value<String?> address,
   Value<String?> city,
   Value<String?> state,
@@ -30806,6 +30975,10 @@ typedef $$ShopProfilesTableUpdateCompanionBuilder = ShopProfilesCompanion
   Value<String?> whatsappNumber,
   Value<String?> logoBase64,
   Value<String?> signatureBase64,
+  Value<String?> logoPath,
+  Value<String> logoShape,
+  Value<String?> signaturePath,
+  Value<String> signatureShape,
   Value<String?> address,
   Value<String?> city,
   Value<String?> state,
@@ -30897,6 +31070,19 @@ class $$ShopProfilesTableFilterComposer
 
   ColumnFilters<String> get signatureBase64 => $composableBuilder(
       column: $table.signatureBase64,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get logoPath => $composableBuilder(
+      column: $table.logoPath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get logoShape => $composableBuilder(
+      column: $table.logoShape, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get signaturePath => $composableBuilder(
+      column: $table.signaturePath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get signatureShape => $composableBuilder(
+      column: $table.signatureShape,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get address => $composableBuilder(
@@ -31042,6 +31228,20 @@ class $$ShopProfilesTableOrderingComposer
       column: $table.signatureBase64,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get logoPath => $composableBuilder(
+      column: $table.logoPath, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get logoShape => $composableBuilder(
+      column: $table.logoShape, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get signaturePath => $composableBuilder(
+      column: $table.signaturePath,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get signatureShape => $composableBuilder(
+      column: $table.signatureShape,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get address => $composableBuilder(
       column: $table.address, builder: (column) => ColumnOrderings(column));
 
@@ -31182,6 +31382,18 @@ class $$ShopProfilesTableAnnotationComposer
   GeneratedColumn<String> get signatureBase64 => $composableBuilder(
       column: $table.signatureBase64, builder: (column) => column);
 
+  GeneratedColumn<String> get logoPath =>
+      $composableBuilder(column: $table.logoPath, builder: (column) => column);
+
+  GeneratedColumn<String> get logoShape =>
+      $composableBuilder(column: $table.logoShape, builder: (column) => column);
+
+  GeneratedColumn<String> get signaturePath => $composableBuilder(
+      column: $table.signaturePath, builder: (column) => column);
+
+  GeneratedColumn<String> get signatureShape => $composableBuilder(
+      column: $table.signatureShape, builder: (column) => column);
+
   GeneratedColumn<String> get address =>
       $composableBuilder(column: $table.address, builder: (column) => column);
 
@@ -31297,6 +31509,10 @@ class $$ShopProfilesTableTableManager extends RootTableManager<
             Value<String?> whatsappNumber = const Value.absent(),
             Value<String?> logoBase64 = const Value.absent(),
             Value<String?> signatureBase64 = const Value.absent(),
+            Value<String?> logoPath = const Value.absent(),
+            Value<String> logoShape = const Value.absent(),
+            Value<String?> signaturePath = const Value.absent(),
+            Value<String> signatureShape = const Value.absent(),
             Value<String?> address = const Value.absent(),
             Value<String?> city = const Value.absent(),
             Value<String?> state = const Value.absent(),
@@ -31341,6 +31557,10 @@ class $$ShopProfilesTableTableManager extends RootTableManager<
             whatsappNumber: whatsappNumber,
             logoBase64: logoBase64,
             signatureBase64: signatureBase64,
+            logoPath: logoPath,
+            logoShape: logoShape,
+            signaturePath: signaturePath,
+            signatureShape: signatureShape,
             address: address,
             city: city,
             state: state,
@@ -31385,6 +31605,10 @@ class $$ShopProfilesTableTableManager extends RootTableManager<
             Value<String?> whatsappNumber = const Value.absent(),
             Value<String?> logoBase64 = const Value.absent(),
             Value<String?> signatureBase64 = const Value.absent(),
+            Value<String?> logoPath = const Value.absent(),
+            Value<String> logoShape = const Value.absent(),
+            Value<String?> signaturePath = const Value.absent(),
+            Value<String> signatureShape = const Value.absent(),
             Value<String?> address = const Value.absent(),
             Value<String?> city = const Value.absent(),
             Value<String?> state = const Value.absent(),
@@ -31429,6 +31653,10 @@ class $$ShopProfilesTableTableManager extends RootTableManager<
             whatsappNumber: whatsappNumber,
             logoBase64: logoBase64,
             signatureBase64: signatureBase64,
+            logoPath: logoPath,
+            logoShape: logoShape,
+            signaturePath: signaturePath,
+            signatureShape: signatureShape,
             address: address,
             city: city,
             state: state,

@@ -177,6 +177,8 @@ class GirviInvoiceFieldSettings {
 }
 
 class GirviBillingModel {
+  static const defaultFooterMessage = 'Please keep this Girvi receipt safely.';
+
   final String girviPrefix;
   final int startingNumber;
   final double defaultInterestRate;
@@ -247,7 +249,7 @@ class GirviBillingModel {
     this.customerDeclarationHindi =
         'मैं घोषणा करता/करती हूं कि गिरवी रखी गई वस्तुएं मेरी हैं, किसी विवाद से मुक्त हैं और मेरे द्वारा दी गई जानकारी सत्य है। '
             'मैंने वस्तुओं का विवरण, ऋण राशि और ब्याज की शर्तें जांच ली हैं तथा बताई गई भुगतान राशि प्राप्त कर ली है।',
-    this.footerMessage = '',
+    this.footerMessage = defaultFooterMessage,
     this.autoPrint = true,
     this.selectedTemplate = 'default',
     this.metalInvoiceSettings = const {},
@@ -279,7 +281,7 @@ class GirviBillingModel {
     this.showNotes = false,
     this.printTermsAndConditions = false,
     this.printCustomerDeclaration = true,
-    this.printFooterMessage = false,
+    this.printFooterMessage = true,
   });
 
   static GirviBillingModel get defaults => const GirviBillingModel();

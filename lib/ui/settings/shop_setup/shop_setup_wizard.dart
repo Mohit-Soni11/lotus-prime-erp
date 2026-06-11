@@ -131,6 +131,8 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
           shopWhatsapp: basicMap['shop_whatsapp']?.toString() ?? "",
           logoPath: basicMap['logo_path']?.toString(),
           signaturePath: basicMap['signature_path']?.toString(),
+          logoShape: basicMap['logo_shape']?.toString() ?? "circle",
+          signatureShape: basicMap['signature_shape']?.toString() ?? "square",
         );
       }
 

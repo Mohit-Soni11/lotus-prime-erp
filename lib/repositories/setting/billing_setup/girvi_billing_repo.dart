@@ -79,6 +79,7 @@ class GirviBillingRepo {
 
   // ── Row → Model ───────────────────────────────────────────────────────────
   GirviBillingModel _rowToModel(GirviBillingSetting row) {
+    final usesLegacyBlankFooter = row.footerMessage.trim().isEmpty;
     final base = GirviBillingModel(
       girviPrefix: row.girviPrefix,
       startingNumber: row.startingNumber,
@@ -92,10 +93,16 @@ class GirviBillingRepo {
       termsAndConditionsHindi: row.termsAndConditionsHindi,
       customerDeclaration: row.customerDeclaration,
       customerDeclarationHindi: row.customerDeclarationHindi,
-      footerMessage: row.footerMessage,
+      footerMessage: usesLegacyBlankFooter
+          ? GirviBillingModel.defaultFooterMessage
+          : row.footerMessage,
       autoPrint: row.autoPrint,
       selectedTemplate: row.selectedTemplate,
     );
-    return GirviBillingTemplateOptions.apply(base, row.selectedTemplate);
+    final applied =
+        GirviBillingTemplateOptions.apply(base, row.selectedTemplate);
+    return usesLegacyBlankFooter
+        ? applied.copyWith(printFooterMessage: true)
+        : applied;
   }
 }

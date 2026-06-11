@@ -25,6 +25,8 @@ class ShopProfileModel {
   final String businessEmail;
   final String shopPhone;
   final String shopWhatsapp;
+  final String logoShape;
+  final String signatureShape;
   final String? logoPath; // 🚀 FIXED: Changed from logoBase64
   final String? signaturePath; // 🚀 FIXED: Changed from signatureBase64
 
@@ -44,6 +46,8 @@ class ShopProfileModel {
     this.businessEmail = "",
     this.shopPhone = "",
     this.shopWhatsapp = "",
+    this.logoShape = "circle",
+    this.signatureShape = "square",
     this.logoPath,
     this.signaturePath,
   });
@@ -65,6 +69,8 @@ class ShopProfileModel {
       businessEmail: json['business_email']?.toString() ?? "",
       shopPhone: json['shop_phone']?.toString() ?? "",
       shopWhatsapp: json['shop_whatsapp']?.toString() ?? "",
+      logoShape: _shape(json['logo_shape'], fallback: "circle"),
+      signatureShape: _shape(json['signature_shape'], fallback: "square"),
       logoPath: json['logo_path']?.toString(),
       signaturePath: json['signature_path']?.toString(),
     );
@@ -87,6 +93,8 @@ class ShopProfileModel {
       'business_email': businessEmail,
       'shop_phone': shopPhone,
       'shop_whatsapp': shopWhatsapp,
+      'logo_shape': logoShape,
+      'signature_shape': signatureShape,
       'logo_path': logoPath,
       'signature_path': signaturePath,
     };
@@ -108,6 +116,8 @@ class ShopProfileModel {
     String? businessEmail,
     String? shopPhone,
     String? shopWhatsapp,
+    String? logoShape,
+    String? signatureShape,
     String? logoPath,
     String? signaturePath,
   }) {
@@ -127,6 +137,8 @@ class ShopProfileModel {
       businessEmail: businessEmail ?? this.businessEmail,
       shopPhone: shopPhone ?? this.shopPhone,
       shopWhatsapp: shopWhatsapp ?? this.shopWhatsapp,
+      logoShape: logoShape ?? this.logoShape,
+      signatureShape: signatureShape ?? this.signatureShape,
       logoPath: logoPath ?? this.logoPath,
       signaturePath: signaturePath ?? this.signaturePath,
     );
@@ -151,6 +163,8 @@ class ShopProfileModel {
         other.businessEmail == businessEmail &&
         other.shopPhone == shopPhone &&
         other.shopWhatsapp == shopWhatsapp &&
+        other.logoShape == logoShape &&
+        other.signatureShape == signatureShape &&
         other.logoPath == logoPath &&
         other.signaturePath == signaturePath;
   }
@@ -173,7 +187,16 @@ class ShopProfileModel {
         businessEmail,
         shopPhone,
         shopWhatsapp,
+        logoShape,
+        signatureShape,
         logoPath,
         signaturePath);
+  }
+
+  static String _shape(Object? value, {required String fallback}) {
+    final normalized = value?.toString().trim().toLowerCase();
+    return normalized == "square" || normalized == "circle"
+        ? normalized!
+        : fallback;
   }
 }

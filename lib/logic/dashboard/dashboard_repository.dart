@@ -10,7 +10,9 @@ import '../../models/dashboard/customer_stats_model.dart';
 import '../../constants/enums.dart';
 
 class DashboardRepository {
-  final AppDatabase _db = AppDatabase();
+  DashboardRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
+
+  final AppDatabase _db;
 
   // Stream Controller for Notifications
   final _notificationController =
@@ -61,7 +63,7 @@ class DashboardRepository {
       final rows = await _db.customSelect(
         '''SELECT id, shop_name, legal_name, owner_name, contact_number,
                   email, website, city, state, gstin, bis_license, huid_no,
-                  show_mobile, show_email, show_gst
+                  logo_path, logo_shape, show_mobile, show_email, show_gst
            FROM shop_profiles LIMIT 1''',
         readsFrom: {_db.shopProfiles},
       ).get();
@@ -79,6 +81,8 @@ class DashboardRepository {
           gstin: row.read<String?>('gstin') ?? '',
           bisLicense: row.read<String?>('bis_license') ?? '',
           huidNo: row.read<String?>('huid_no') ?? '',
+          logoPath: row.read<String?>('logo_path'),
+          logoShape: row.read<String?>('logo_shape') ?? 'circle',
           showMobile: (row.read<int?>('show_mobile') ?? 1) == 1,
           showEmail: (row.read<int?>('show_email') ?? 1) == 1,
           showGst: (row.read<int?>('show_gst') ?? 1) == 1,

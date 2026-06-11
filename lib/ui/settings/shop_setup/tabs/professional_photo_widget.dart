@@ -21,8 +21,9 @@ class ProfessionalPhotoUploadSystem extends StatefulWidget {
   final String subtitle;
   final IconData icon;
   final String defaultShape;
+  final String? initialImagePath;
   final String heroTag;
-  final Function(File?)? onImageSaved;
+  final Function(File?, String)? onImageSaved;
   final bool isInitiallyLocked;
 
   const ProfessionalPhotoUploadSystem({
@@ -31,6 +32,7 @@ class ProfessionalPhotoUploadSystem extends StatefulWidget {
     required this.subtitle,
     required this.icon,
     required this.defaultShape,
+    this.initialImagePath,
     required this.heroTag,
     this.onImageSaved,
     this.isInitiallyLocked = true,
@@ -58,6 +60,11 @@ class _ProfessionalPhotoUploadSystemState
     super.initState();
     _currentShape = widget.defaultShape;
     _isLocked = widget.isInitiallyLocked;
+    final initialPath = widget.initialImagePath?.trim() ?? '';
+    if (!kIsWeb && initialPath.isNotEmpty) {
+      final file = File(initialPath);
+      if (file.existsSync()) _selectedImage = file;
+    }
 
     // Appending a unique identifier to prevent Hero animation crashes
     _dynamicHeroTag = "${widget.heroTag}_${UniqueKey().toString()}";
@@ -130,7 +137,7 @@ class _ProfessionalPhotoUploadSystemState
       _selectedImage = newFile;
     });
     if (widget.onImageSaved != null) {
-      widget.onImageSaved!(newFile);
+      widget.onImageSaved!(newFile, _currentShape);
     }
   }
 
