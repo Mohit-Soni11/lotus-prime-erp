@@ -112,9 +112,9 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
     ),
     _GirviInvoiceFieldOption(
       key: 'customerCity',
-      title: 'Customer City',
-      subtitle: 'Selected customer city',
-      icon: Icons.location_city_outlined,
+      title: 'Customer Address',
+      subtitle: 'Full address saved in the customer profile',
+      icon: Icons.location_on_outlined,
       group: 'Customer Details',
     ),
     _GirviInvoiceFieldOption(

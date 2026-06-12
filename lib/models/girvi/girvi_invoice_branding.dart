@@ -6,6 +6,7 @@ class GirviInvoiceBranding {
     required this.shopName,
     required this.shopAddress,
     required this.shopMobile,
+    this.shopAlternateMobile = '',
     this.shopGstin = '',
     this.logoPath,
     this.logoShape = 'circle',
@@ -15,6 +16,7 @@ class GirviInvoiceBranding {
     shopName: 'SHOP PROFILE NOT SET',
     shopAddress: 'Complete Settings > Shop Profile',
     shopMobile: '',
+    shopAlternateMobile: '',
     shopGstin: '',
     logoPath: null,
     logoShape: 'circle',
@@ -23,6 +25,7 @@ class GirviInvoiceBranding {
   final String shopName;
   final String shopAddress;
   final String shopMobile;
+  final String shopAlternateMobile;
   final String shopGstin;
   final String? logoPath;
   final String logoShape;
@@ -36,6 +39,8 @@ class GirviInvoiceBranding {
     final values = <String>[
       if (shopAddress.trim().isNotEmpty) shopAddress.trim(),
       if (shopMobile.trim().isNotEmpty) 'Mobile: ${shopMobile.trim()}',
+      if (shopAlternateMobile.trim().isNotEmpty)
+        'Alt: ${shopAlternateMobile.trim()}',
       if (shopGstin.trim().isNotEmpty) 'GSTIN: ${shopGstin.trim()}',
     ];
     return values.join('  |  ');
@@ -44,6 +49,8 @@ class GirviInvoiceBranding {
   String get detailLine {
     final values = <String>[
       if (shopMobile.trim().isNotEmpty) 'Mobile: ${shopMobile.trim()}',
+      if (shopAlternateMobile.trim().isNotEmpty)
+        'Alt: ${shopAlternateMobile.trim()}',
       if (shopGstin.trim().isNotEmpty) 'GSTIN: ${shopGstin.trim()}',
     ];
     return values.join('  |  ');
@@ -53,6 +60,7 @@ class GirviInvoiceBranding {
     Map<String, dynamic> payload,
   ) {
     final basicInfo = _stringMap(payload['basic_info']);
+    final branding = _stringMap(payload['branding']);
     final address = _stringMap(payload['address']);
     final tax = _stringMap(payload['tax_compliance']);
     final shopName = _firstValue([
@@ -64,6 +72,13 @@ class GirviInvoiceBranding {
       basicInfo['shop_phone'],
       basicInfo['owner_phone'],
     ]);
+    final alternateMobile = _differentValue(
+      mobile,
+      [
+        branding['support_phone'],
+        basicInfo['shop_whatsapp'],
+      ],
+    );
     final formattedAddress = _joinAddress([
       address['addr1'],
       address['addr2'],
@@ -79,6 +94,7 @@ class GirviInvoiceBranding {
           ? GirviInvoiceBranding.fallback.shopAddress
           : formattedAddress,
       shopMobile: mobile,
+      shopAlternateMobile: alternateMobile,
       shopGstin: tax['gstin']?.toString().trim() ?? '',
       logoPath: _nullablePath(basicInfo['logo_path']),
       logoShape: _shape(basicInfo['logo_shape']),
@@ -101,6 +117,23 @@ class GirviInvoiceBranding {
       if (text.isNotEmpty) return text;
     }
     return '';
+  }
+
+  static String _differentValue(
+    String primary,
+    Iterable<Object?> values,
+  ) {
+    final normalizedPrimary = _phoneDigits(primary);
+    for (final value in values) {
+      final text = value?.toString().trim() ?? '';
+      if (text.isEmpty) continue;
+      if (_phoneDigits(text) != normalizedPrimary) return text;
+    }
+    return '';
+  }
+
+  static String _phoneDigits(String value) {
+    return value.replaceAll(RegExp(r'\D'), '');
   }
 
   static String _joinAddress(Iterable<Object?> values) {

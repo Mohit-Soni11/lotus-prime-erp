@@ -43,6 +43,9 @@ class GirviInvoiceBrandingRepository {
       final mobile = (profile.contactNumber?.trim().isNotEmpty ?? false)
           ? profile.contactNumber!.trim()
           : profile.ownerContact?.trim() ?? '';
+      final whatsapp = profile.whatsappNumber?.trim() ?? '';
+      final alternateMobile =
+          _phoneDigits(whatsapp) == _phoneDigits(mobile) ? '' : whatsapp;
 
       return GirviInvoiceBranding(
         shopName: profile.shopName.trim().isEmpty
@@ -52,6 +55,7 @@ class GirviInvoiceBrandingRepository {
             ? GirviInvoiceBranding.fallback.shopAddress
             : address,
         shopMobile: mobile,
+        shopAlternateMobile: alternateMobile,
         shopGstin: profile.gstin?.trim() ?? '',
         logoPath: profile.logoPath?.trim().isEmpty ?? true
             ? null
@@ -66,5 +70,9 @@ class GirviInvoiceBrandingRepository {
   static Future<Map<String, dynamic>?> _loadShopSetup() async {
     final tenantId = await ShopSessionManager.getPermanentTenantId();
     return ShopDatabaseHelper().getMasterPayload(tenantId);
+  }
+
+  static String _phoneDigits(String value) {
+    return value.replaceAll(RegExp(r'\D'), '');
   }
 }

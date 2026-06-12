@@ -32,7 +32,7 @@ class GirviInvoicePdfService {
   static const _gold = PdfColor.fromInt(0xFFC89421);
   static const _goldLight = PdfColor.fromInt(0xFFFBF6E9);
   static const _ink = PdfColor.fromInt(0xFF172033);
-  static const _muted = PdfColor.fromInt(0xFF667085);
+  static const _muted = PdfColor.fromInt(0xFF111111);
   static const _line = PdfColor.fromInt(0xFFD8DEE8);
   static const _surface = PdfColor.fromInt(0xFFF6F8FB);
 
@@ -68,11 +68,10 @@ class GirviInvoicePdfService {
     final safeCopies = copies.clamp(1, 5);
 
     for (var copy = 0; copy < safeCopies; copy++) {
-      final copyLabel = duplicateStamp && copy == 0
-          ? 'DUPLICATE COPY'
-          : copy > 0
-              ? 'COPY ${copy + 1}'
-              : 'ORIGINAL';
+      final copyLabel = documentCopyLabel(
+        reissued: duplicateStamp,
+        copyIndex: copy,
+      );
       final compact = format == GirviInvoiceFormat.compactA5;
 
       pdf.addPage(
@@ -374,6 +373,24 @@ class GirviInvoicePdfService {
     GirviInvoiceBranding branding,
     pw.MemoryImage? brandLogo,
   ) {
+    final issueDateMatchesStartDate =
+        sameCalendarDate(draft.createdAt, draft.startDate);
+    final metadata = <({String label, String value})>[
+      (label: 'RECEIPT NUMBER', value: draft.ticketNo),
+      if (!settings.showStartDate || !issueDateMatchesStartDate)
+        (label: 'ISSUE DATE', value: _dateFormat.format(draft.createdAt)),
+      if (settings.showStartDate)
+        (label: 'START DATE', value: _dateFormat.format(draft.startDate)),
+      if (settings.showMaturityDate || settings.showDuration)
+        (
+          label: settings.showMaturityDate ? 'MATURITY DATE' : 'LOAN TENURE',
+          value: settings.showMaturityDate
+              ? '${_dateFormat.format(draft.maturityDate)}'
+                  '${settings.showDuration ? ' | ${draft.durationMonths} months' : ''}'
+              : '${draft.durationMonths} months',
+        ),
+    ];
+
     return pw.Container(
       decoration: const pw.BoxDecoration(
         color: _navy,
@@ -417,8 +434,9 @@ class GirviInvoicePdfService {
                           maxLines: compact ? 1 : 2,
                           overflow: pw.TextOverflow.clip,
                           style: pw.TextStyle(
-                            color: PdfColors.grey200,
+                            color: PdfColors.white,
                             fontSize: compact ? 7 : 8.5,
+                            fontWeight: pw.FontWeight.bold,
                           ),
                         ),
                       ],
@@ -454,7 +472,7 @@ class GirviInvoicePdfService {
                             pw.BorderRadius.all(pw.Radius.circular(5)),
                       ),
                       child: pw.Text(
-                        'PLEDGE RECEIPT',
+                        'GIRVI RECEIPT',
                         style: pw.TextStyle(
                           color: _navy,
                           fontSize: compact ? 7 : 8.5,
@@ -489,45 +507,36 @@ class GirviInvoicePdfService {
             ),
             child: pw.Row(
               children: [
-                _buildHeaderMeta(
-                  label: 'RECEIPT NUMBER',
-                  value: draft.ticketNo,
-                  compact: compact,
-                ),
-                _buildHeaderDivider(compact),
-                _buildHeaderMeta(
-                  label: 'ISSUE DATE',
-                  value: _dateFormat.format(draft.createdAt),
-                  compact: compact,
-                ),
-                if (settings.showStartDate) ...[
-                  _buildHeaderDivider(compact),
-                  _buildHeaderMeta(
-                    label: 'START DATE',
-                    value: _dateFormat.format(draft.startDate),
-                    compact: compact,
+                for (var index = 0; index < metadata.length; index++) ...[
+                  if (index > 0) _buildHeaderDivider(compact),
+                  pw.Expanded(
+                    child: _buildHeaderMeta(
+                      label: metadata[index].label,
+                      value: metadata[index].value,
+                      compact: compact,
+                    ),
                   ),
                 ],
-                if (settings.showMaturityDate || settings.showDuration) ...[
-                  _buildHeaderDivider(compact),
-                  _buildHeaderMeta(
-                    label: settings.showMaturityDate
-                        ? 'MATURITY DATE'
-                        : 'LOAN TENURE',
-                    value: settings.showMaturityDate
-                        ? '${_dateFormat.format(draft.maturityDate)}'
-                            '${settings.showDuration ? ' | ${draft.durationMonths} months' : ''}'
-                        : '${draft.durationMonths} months',
-                    compact: compact,
-                  ),
-                ],
-                pw.Spacer(),
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  static String documentCopyLabel({
+    required bool reissued,
+    required int copyIndex,
+  }) {
+    if (copyIndex > 0) return 'ADDITIONAL COPY';
+    return reissued ? 'REISSUED BILL' : 'ORIGINAL BILL';
+  }
+
+  static bool sameCalendarDate(DateTime first, DateTime second) {
+    return first.year == second.year &&
+        first.month == second.month &&
+        first.day == second.day;
   }
 
   pw.Widget _buildBrandMark(
@@ -588,7 +597,7 @@ class GirviInvoicePdfService {
       margin: pw.EdgeInsets.symmetric(
         horizontal: compact ? 10 : 14,
       ),
-      color: PdfColors.grey700,
+      color: _gold,
     );
   }
 
@@ -603,9 +612,10 @@ class GirviInvoicePdfService {
         pw.Text(
           label,
           style: pw.TextStyle(
-            color: PdfColors.grey400,
+            color: PdfColors.white,
             fontSize: compact ? 6.5 : 7.5,
             letterSpacing: 0.5,
+            fontWeight: pw.FontWeight.bold,
           ),
         ),
         pw.SizedBox(height: 2),
@@ -636,7 +646,9 @@ class GirviInvoicePdfService {
           flex: 4,
           child: _buildCustomerMeta(
             label: 'MOBILE',
-            value: draft.customerMobile,
+            value: draft.customerMobile.trim().isEmpty
+                ? '--'
+                : draft.customerMobile.trim(),
             compact: compact,
           ),
         ),
@@ -646,9 +658,11 @@ class GirviInvoicePdfService {
         pw.Expanded(
           flex: 6,
           child: _buildCustomerMeta(
-            label: 'CITY',
-            value: draft.customerCity.isEmpty ? '-' : draft.customerCity,
+            label: 'ADDRESS',
+            value: draft.displayCustomerAddress,
             compact: compact,
+            maxLines: 2,
+            fontSize: compact ? 7.2 : 8.5,
           ),
         ),
     ];
@@ -682,7 +696,10 @@ class GirviInvoicePdfService {
                 ),
                 if (customerMeta.isNotEmpty) ...[
                   pw.Spacer(),
-                  pw.Row(children: customerMeta),
+                  pw.Row(
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: customerMeta,
+                  ),
                 ],
               ],
             ),
@@ -822,6 +839,8 @@ class GirviInvoicePdfService {
     required String label,
     required String value,
     required bool compact,
+    int maxLines = 1,
+    double? fontSize,
   }) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -830,12 +849,13 @@ class GirviInvoicePdfService {
         pw.SizedBox(height: 2),
         pw.Text(
           value,
-          maxLines: 1,
+          maxLines: maxLines,
           overflow: pw.TextOverflow.clip,
           style: pw.TextStyle(
-            color: _ink,
-            fontSize: compact ? 8.5 : 10.2,
+            color: PdfColors.black,
+            fontSize: fontSize ?? (compact ? 8.5 : 10.2),
             fontWeight: pw.FontWeight.bold,
+            lineSpacing: 1.5,
           ),
         ),
       ],

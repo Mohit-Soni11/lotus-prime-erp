@@ -12,8 +12,12 @@ void main() {
         'brand_display_name': 'Shree Balaji Jewellers',
         'display_name': 'Balaji Store',
         'shop_phone': '9876543210',
+        'shop_whatsapp': '9123456789',
         'logo_path': r'D:\shop\logo.png',
         'logo_shape': 'square',
+      },
+      'branding': {
+        'support_phone': '9000011111',
       },
       'address': {
         'addr1': 'Main Road',
@@ -33,13 +37,15 @@ void main() {
       'Main Road, Near Tower Chowk, Gaya, Bihar, 823001',
     );
     expect(branding.shopMobile, '9876543210');
+    expect(branding.shopAlternateMobile, '9000011111');
     expect(branding.shopGstin, '10ABCDE1234F1Z5');
     expect(branding.logoPath, r'D:\shop\logo.png');
     expect(branding.logoShape, 'square');
     expect(
       branding.contactLine,
       'Main Road, Near Tower Chowk, Gaya, Bihar, 823001  |  '
-      'Mobile: 9876543210  |  GSTIN: 10ABCDE1234F1Z5',
+      'Mobile: 9876543210  |  Alt: 9000011111  |  '
+      'GSTIN: 10ABCDE1234F1Z5',
     );
     expect(branding.initial, 'S');
   });
@@ -52,6 +58,7 @@ void main() {
           ShopProfilesCompanion.insert(
             shopName: const Value('Anjali Jewellers'),
             contactNumber: const Value('9000011111'),
+            whatsappNumber: const Value('9000022222'),
             address: const Value('Station Road'),
             city: const Value('Gaya'),
             state: const Value('Bihar'),
@@ -71,6 +78,7 @@ void main() {
     expect(branding.shopName, 'Anjali Jewellers');
     expect(branding.shopAddress, 'Station Road, Gaya, Bihar, 823001');
     expect(branding.shopMobile, '9000011111');
+    expect(branding.shopAlternateMobile, '9000022222');
     expect(branding.shopGstin, '10ABCDE1234F1Z5');
     expect(branding.logoPath, r'D:\shop\anjali-logo.png');
     expect(branding.logoShape, 'circle');

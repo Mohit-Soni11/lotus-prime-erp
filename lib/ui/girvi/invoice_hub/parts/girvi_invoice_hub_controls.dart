@@ -145,7 +145,7 @@ extension GirviInvoiceHubControls on _GirviInvoiceHubScreenState {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Duplicate Stamp',
+                          'Reissued Bill',
                           style: GoogleFonts.inter(
                             color: GirviColors.shellTextTitle,
                             fontSize: 12.5,
@@ -153,7 +153,7 @@ extension GirviInvoiceHubControls on _GirviInvoiceHubScreenState {
                           ),
                         ),
                         Text(
-                          'Mark the invoice as duplicate',
+                          'Use when issuing a replacement receipt',
                           style: GoogleFonts.inter(
                             color: GirviColors.shellTextMuted,
                             fontSize: 9.5,

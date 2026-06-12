@@ -144,6 +144,7 @@ extension NewGirviActions on _NewGirviScreenState {
       customerName: customer.name,
       customerMobile: customer.mobile,
       customerCity: customer.city ?? '',
+      customerAddress: _formatInvoiceCustomerAddress(customer),
       items: _pledgedItems.map((item) {
         final description = item.descriptionCtrl.text.trim();
         return GirviInvoiceItemDraft(
@@ -181,6 +182,25 @@ extension NewGirviActions on _NewGirviScreenState {
       idProofImagePath: _idProofImagePath,
       notes: _notesCtrl.text.trim(),
     );
+  }
+
+  String _formatInvoiceCustomerAddress(Customer customer) {
+    final parts = <String>[
+      customer.addressLine1 ?? '',
+      customer.addressLine2 ?? '',
+      customer.city ?? '',
+      customer.state ?? '',
+      customer.pincode ?? '',
+      customer.country.trim().toLowerCase() == 'india' ? '' : customer.country,
+    ];
+    final uniqueParts = <String>[];
+    for (final part in parts) {
+      final value = part.trim();
+      if (value.isNotEmpty && !uniqueParts.contains(value)) {
+        uniqueParts.add(value);
+      }
+    }
+    return uniqueParts.join(', ');
   }
 
   Future<void> _resetAll() async {

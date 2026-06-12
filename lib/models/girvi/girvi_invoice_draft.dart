@@ -54,6 +54,7 @@ class GirviInvoiceDraft {
     required this.customerName,
     required this.customerMobile,
     required this.customerCity,
+    this.customerAddress = '',
     required this.items,
     required this.totalValue,
     required this.loanAmount,
@@ -77,6 +78,7 @@ class GirviInvoiceDraft {
   final String customerName;
   final String customerMobile;
   final String customerCity;
+  final String customerAddress;
   final List<GirviInvoiceItemDraft> items;
   final double totalValue;
   final double loanAmount;
@@ -93,6 +95,11 @@ class GirviInvoiceDraft {
   final String? idProofNumber;
   final String? idProofImagePath;
   final String? notes;
+
+  String get displayCustomerAddress {
+    final fullAddress = customerAddress.trim();
+    return fullAddress.isEmpty ? '--' : fullAddress;
+  }
 
   int get totalPieces => items.fold(0, (total, item) => total + item.pieces);
 

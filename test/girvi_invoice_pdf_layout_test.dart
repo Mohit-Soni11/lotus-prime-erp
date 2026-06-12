@@ -7,6 +7,47 @@ import 'package:lotus_erp/models/girvi/girvi_invoice_draft.dart';
 import 'package:lotus_erp/models/setting/billing_setup/girvi_billing_model.dart';
 
 void main() {
+  test('Girvi receipt uses professional original and reissued labels', () {
+    expect(
+      GirviInvoicePdfService.documentCopyLabel(
+        reissued: false,
+        copyIndex: 0,
+      ),
+      'ORIGINAL BILL',
+    );
+    expect(
+      GirviInvoicePdfService.documentCopyLabel(
+        reissued: true,
+        copyIndex: 0,
+      ),
+      'REISSUED BILL',
+    );
+    expect(
+      GirviInvoicePdfService.documentCopyLabel(
+        reissued: true,
+        copyIndex: 1,
+      ),
+      'ADDITIONAL COPY',
+    );
+  });
+
+  test('Girvi receipt detects duplicate issue and start dates', () {
+    expect(
+      GirviInvoicePdfService.sameCalendarDate(
+        DateTime(2026, 6, 11, 9),
+        DateTime(2026, 6, 11, 18),
+      ),
+      isTrue,
+    );
+    expect(
+      GirviInvoicePdfService.sameCalendarDate(
+        DateTime(2026, 6, 11),
+        DateTime(2026, 6, 12),
+      ),
+      isFalse,
+    );
+  });
+
   test('Girvi bilingual terms preserve one condition per line', () {
     final rows = GirviInvoicePdfService.pairBilingualLines(
       'First English term.\nSecond English term.',
@@ -30,6 +71,8 @@ void main() {
       customerName: 'Rahul Kumar Sharma',
       customerMobile: '98765 43210',
       customerCity: 'Kolkata, West Bengal',
+      customerAddress:
+          '22 Park Street, Near City Market, Kolkata, West Bengal 700016',
       items: [
         GirviInvoiceItemDraft(
           serialNo: 1,
@@ -163,6 +206,7 @@ void main() {
           footerMessage: 'Please keep this Girvi receipt safely.',
         );
 
+    expect(settings.showCustomerCity, isTrue);
     final bytes = await GirviInvoicePdfService().build(
       draft: draft,
       format: GirviInvoiceFormat.a4,
@@ -171,6 +215,7 @@ void main() {
         shopName: 'Shree Balaji Jewellers',
         shopAddress: 'Main Road, Gaya, Bihar 823001',
         shopMobile: '9876543210',
+        shopAlternateMobile: '9123456789',
         shopGstin: '10ABCDE1234F1Z5',
         logoPath: photoPath,
         logoShape: 'square',

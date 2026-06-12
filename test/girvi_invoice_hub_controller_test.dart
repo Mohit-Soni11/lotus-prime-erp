@@ -35,6 +35,7 @@ void main() {
 
     expect(controller.state, GirviInvoiceHubState.ready);
     expect(controller.pdfBytes, isNotEmpty);
+    expect(_draft.displayCustomerAddress, '--');
     expect(controller.invoiceBranding.shopName, 'Shree Balaji Jewellers');
     expect(
       controller.invoiceBranding.contactLine,
