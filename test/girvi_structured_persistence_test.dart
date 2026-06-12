@@ -199,6 +199,89 @@ void main() {
       expect(details.items, hasLength(2));
       expect(details.disbursements, hasLength(2));
     });
+
+    test('New Girvi controller loads and updates an existing ticket', () async {
+      final customerId = await _insertCustomer(db);
+      final loanId = await repository.createLoanWithDetails(
+        loan: _loanInsert(
+          ticketNo: 'GRV-EDIT-1',
+          customerId: customerId,
+          itemDescription: 'Original items',
+          loanAmount: 30000,
+        ).copyWith(
+          invoiceGenerated: const drift.Value(true),
+          interestRate: const drift.Value(1.5),
+          durationMonths: const drift.Value(6),
+          idProofType: const drift.Value('Aadhaar Card'),
+          idProofNumber: const drift.Value('AAD-001'),
+          notes: const drift.Value('Original note'),
+        ),
+        items: _twoItems(),
+        disbursements: _mixedDisbursements(),
+        expectedLoanAmount: 30000,
+      );
+      final controller = NewGirviController(db);
+      addTearDown(controller.dispose);
+
+      final loaded = await controller.initializeForEdit(loanId);
+      controller.onLoanAmountChanged('25000');
+      final saved = await controller.saveLoan(
+        items: const [
+          GirviLoanItemInput(
+            serialNo: 1,
+            itemName: 'Edited gold chain',
+            metalType: 'Gold',
+            purity: '22K',
+            purityFactor: 0.916,
+            pieces: 1,
+            grossWeight: 12,
+            lessWeight: 1,
+            netWeight: 11,
+            valuationMethod: 'PURITY',
+            valuationPurityPercent: 91.6,
+            fineWeight: 10.076,
+            ratePerGram: 7000,
+            valuationAmount: 70532,
+            photoPaths: ['/photos/edited-chain.jpg'],
+          ),
+        ],
+        disbursements: const [
+          GirviDisbursementInput(
+            sequenceNo: 1,
+            mode: 'Cheque',
+            displayLabel: 'Cheque',
+            amount: 25000,
+            referenceNo: 'EDIT-CHQ-1',
+          ),
+        ],
+        invoiceGenerated: false,
+        idProofNumber: 'AAD-EDIT',
+        idProofImagePath: '/kyc/edited-card.jpg',
+        notes: 'Edited note',
+      );
+
+      final loans = await db.select(db.girviLoans).get();
+      final details = await repository.getLoanDetails(loanId);
+
+      expect(loaded, isTrue);
+      expect(controller.isEditMode, isTrue);
+      expect(controller.ticketNo, 'GRV-EDIT-1');
+      expect(controller.selectedCustomer?.id, customerId);
+      expect(saved, isTrue);
+      expect(loans, hasLength(1));
+      expect(details!.loan.ticketNo, 'GRV-EDIT-1');
+      expect(details.loan.loanAmount, 25000);
+      expect(details.loan.invoiceGenerated, isTrue);
+      expect(details.loan.idProofNumber, 'AAD-EDIT');
+      expect(details.loan.notes, 'Edited note');
+      expect(details.items, hasLength(1));
+      expect(details.items.single.item.itemName, 'Edited gold chain');
+      expect(
+        details.items.single.photos.single.filePath,
+        '/photos/edited-chain.jpg',
+      );
+      expect(details.disbursements.single.referenceNo, 'EDIT-CHQ-1');
+    });
   });
 
   test('v20 migration backfills legacy Girvi details without losing data',

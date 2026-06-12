@@ -17,12 +17,16 @@ import '../../repositories/customer/add_customer_repository.dart';
 
 class AddCustomerLogic extends ChangeNotifier {
   final AddCustomerRepository _repo;
+  final int? customerId;
 
-  AddCustomerLogic({AddCustomerRepository? repo})
-      : _repo = repo ?? AddCustomerRepository();
+  AddCustomerLogic({
+    AddCustomerRepository? repo,
+    this.customerId,
+  }) : _repo = repo ?? AddCustomerRepository();
 
   // ── STATE ─────────────────────────────────────────────────────────────────
   AddCustomerFormModel _form = const AddCustomerFormModel();
+  AddCustomerFormModel? _initialEditForm;
   SaveState _saveState = SaveState.idle;
   ActiveField _activeField = ActiveField.none;
   Timer? _mobileDebounce;
@@ -34,6 +38,21 @@ class AddCustomerLogic extends ChangeNotifier {
   ActiveField get activeField => _activeField;
   bool get isSaving => _saveState == SaveState.saving;
   bool get canSave => _form.isReadyToSave && !isSaving;
+  bool get isEditMode => customerId != null;
+
+  Future<AddCustomerFormModel?> loadCustomerForEdit() async {
+    final id = customerId;
+    if (id == null) return null;
+
+    final loadedForm = await _repo.fetchCustomerForEdit(id);
+    if (loadedForm != null) {
+      _form = loadedForm;
+      _initialEditForm = loadedForm;
+      _saveState = SaveState.idle;
+      notifyListeners();
+    }
+    return loadedForm;
+  }
 
   // ── FOCUS ────────────────────────────────────────────────────────────────
   void setActiveField(ActiveField f) {
@@ -107,7 +126,10 @@ class AddCustomerLogic extends ChangeNotifier {
     _mobileDebounce?.cancel();
     if (v.trim().length == 10 && liveErr == null) {
       _mobileDebounce = Timer(const Duration(milliseconds: 600), () async {
-        final isDup = await _repo.isMobileDuplicate(v.trim());
+        final isDup = await _repo.isMobileDuplicate(
+          v.trim(),
+          excludeCustomerId: customerId,
+        );
         if (isDup) {
           _form = _form.copyWith(mobileError: 'Mobile already registered');
           notifyListeners();
@@ -317,7 +339,10 @@ class AddCustomerLogic extends ChangeNotifier {
     _saveState = SaveState.saving;
     notifyListeners();
 
-    final result = await _repo.saveCustomer(_form);
+    final result = await _repo.saveCustomer(
+      _form,
+      customerId: customerId,
+    );
     switch (result) {
       case SaveResult.success:
         _saveState = SaveState.success;
@@ -337,7 +362,7 @@ class AddCustomerLogic extends ChangeNotifier {
 
   // ── RESET ─────────────────────────────────────────────────────────────────
   void resetForm() {
-    _form = const AddCustomerFormModel();
+    _form = _initialEditForm ?? const AddCustomerFormModel();
     _saveState = SaveState.idle;
     _activeField = ActiveField.none;
     notifyListeners();

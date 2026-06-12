@@ -9,6 +9,7 @@ class AddCustomerStrings {
 
   // ── APP BAR ───────────────────────────────────────────────────────────────
   static const String appBarTitle = "ADD NEW CUSTOMER";
+  static const String editAppBarTitle = "EDIT CUSTOMER";
   static const String appBarSubtitle = "ENTERPRISE POS TERMINAL";
   static const String systemOnline = "SYSTEM ONLINE";
   static const String moduleName = "NEW CUSTOMER";
@@ -49,8 +50,10 @@ class AddCustomerStrings {
 
   // ── BUTTONS ───────────────────────────────────────────────────────────────
   static const String btnSave = "Save Customer";
+  static const String btnUpdate = "Update Customer";
   static const String btnSaving = "Saving...";
   static const String btnClear = "Clear Form";
+  static const String btnResetChanges = "Reset Changes";
 
   // ── VALIDATION MESSAGES ──────────────────────────────────────────────────
   static const String errNameEmpty = "Customer name is required";
@@ -63,9 +66,12 @@ class AddCustomerStrings {
 
   // ── SNACKBARS ─────────────────────────────────────────────────────────────
   static const String successMsg = "Customer saved successfully!";
+  static const String updateSuccessMsg = "Customer updated successfully!";
   static const String errorMsg = "Failed to save. Please try again.";
   static const String duplicateMsg = "Mobile number already exists!";
 
   // ── REQUIRED LABEL ───────────────────────────────────────────────────────
   static const String requiredNote = "* Required fields";
+  static const String editRequiredNote =
+      "* Existing customer details loaded for editing";
 }

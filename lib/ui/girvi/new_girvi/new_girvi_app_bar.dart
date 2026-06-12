@@ -12,10 +12,12 @@ import '../../../theme/girvi/girvi_theme.dart';
 
 class NewGirviAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
+  final String title;
 
   const NewGirviAppBar({
     super.key,
     required this.onBack,
+    this.title = GirviStrings.newGirviTitle,
   });
 
   @override
@@ -108,7 +110,7 @@ class _NewGirviAppBarState extends State<NewGirviAppBar>
 
             // â”€â”€ 4. Main Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Text(
-              GirviStrings.newGirviTitle.toUpperCase(),
+              widget.title.toUpperCase(),
               style: GirviStyles.shellTitle.copyWith(
                 fontSize: 18,
                 letterSpacing: 1.2,

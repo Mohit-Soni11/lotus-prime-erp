@@ -373,7 +373,9 @@ extension NewGirviLayout on _NewGirviScreenState {
                 ),
                 const SizedBox(height: 14),
                 _TicketActionButton(
-                  label: 'Create & Print Invoice',
+                  label: _ctrl.isEditMode
+                      ? 'Update & Print Invoice'
+                      : 'Create & Print Invoice',
                   icon: GirviIcons.print,
                   filled: true,
                   busy: _ctrl.isSaving,
@@ -383,29 +385,32 @@ extension NewGirviLayout on _NewGirviScreenState {
                 ),
                 const SizedBox(height: 10),
                 _TicketActionButton(
-                  label: 'Save Ticket Only',
+                  label:
+                      _ctrl.isEditMode ? 'Update Ticket' : 'Save Ticket Only',
                   icon: Icons.inventory_2_outlined,
                   filled: false,
                   onTap: _ctrl.isSaving
                       ? null
                       : () => _onSave(generateInvoice: false),
                 ),
-                const SizedBox(height: 6),
-                TextButton.icon(
-                  onPressed: _ctrl.isSaving ? null : _resetAll,
-                  style: TextButton.styleFrom(
-                    foregroundColor: GirviColors.textMuted,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                  ),
-                  icon: const Icon(GirviIcons.refresh, size: 16),
-                  label: Text(
-                    'Reset this entry',
-                    style: GoogleFonts.inter(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w800,
+                if (!_ctrl.isEditMode) ...[
+                  const SizedBox(height: 6),
+                  TextButton.icon(
+                    onPressed: _ctrl.isSaving ? null : _resetAll,
+                    style: TextButton.styleFrom(
+                      foregroundColor: GirviColors.textMuted,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    icon: const Icon(GirviIcons.refresh, size: 16),
+                    label: Text(
+                      'Reset this entry',
+                      style: GoogleFonts.inter(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),

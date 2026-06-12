@@ -9,8 +9,13 @@ import '../../../theme/customer/add_customer/add_customer_theme.dart';
 
 class AddCustomerAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
+  final String title;
 
-  const AddCustomerAppBar({super.key, required this.onBack});
+  const AddCustomerAppBar({
+    super.key,
+    required this.onBack,
+    this.title = AddCustomerStrings.appBarTitle,
+  });
 
   @override
   Size get preferredSize =>
@@ -79,7 +84,7 @@ class AddCustomerAppBar extends StatelessWidget implements PreferredSizeWidget {
 
             // 4. MAIN TITLE
             Text(
-              AddCustomerStrings.appBarTitle,
+              title,
               style: AddCustomerStyles.appBarTitle,
             ),
 

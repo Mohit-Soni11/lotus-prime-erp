@@ -31,6 +31,7 @@ import '../../../logic/girvi/new_girvi_controller.dart';
 import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_invoice_draft.dart';
 import '../../../models/girvi/girvi_persistence_models.dart';
+import '../../../repositories/girvi/girvi_details_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import '../invoice_hub/girvi_invoice_hub_screen.dart';
 import 'new_girvi_app_bar.dart'; // NAYA IMPORT
@@ -45,7 +46,14 @@ part 'parts/new_girvi_sections.dart';
 part 'parts/new_girvi_widgets.dart';
 
 class NewGirviScreen extends StatefulWidget {
-  const NewGirviScreen({super.key});
+  final int? editLoanId;
+  final VoidCallback? onBack;
+
+  const NewGirviScreen({
+    super.key,
+    this.editLoanId,
+    this.onBack,
+  });
 
   @override
   State<NewGirviScreen> createState() => _NewGirviScreenState();
@@ -149,7 +157,16 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   }
 
   Future<void> _initializeController() async {
-    await _ctrl.initialize();
+    if (widget.editLoanId != null) {
+      final loaded = await _ctrl.initializeForEdit(widget.editLoanId!);
+      if (!mounted) return;
+      final details = _ctrl.editingDetails;
+      if (loaded && details != null) {
+        _applyLoadedGirviToForm(details);
+      }
+    } else {
+      await _ctrl.initialize();
+    }
     if (!mounted) return;
     _setControllerTextIfChanged(
       _interestCtrl,
@@ -159,6 +176,101 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       _durationCtrl,
       _ctrl.durationMonths.toString(),
     );
+    _setControllerTextIfChanged(
+      _loanAmtCtrl,
+      _ctrl.loanAmount > 0 ? _ctrl.loanAmount.toStringAsFixed(2) : '',
+    );
+  }
+
+  void _applyLoadedGirviToForm(GirviLoanDetails details) {
+    final loan = details.loan;
+
+    for (final item in _pledgedItems) {
+      item.dispose();
+    }
+    _pledgedItems.clear();
+
+    for (final itemDetails in details.items) {
+      final draft = _createPledgedItemDraft(itemDetails.item.serialNo);
+      _pledgedItems.add(draft);
+      _populatePledgedDraft(draft, itemDetails);
+    }
+
+    _setControllerTextIfChanged(_idProofNoCtrl, loan.idProofNumber ?? '');
+    _setControllerTextIfChanged(_notesCtrl, loan.notes ?? '');
+    _setControllerTextIfChanged(
+      _interestCtrl,
+      loan.interestRate.toStringAsFixed(2),
+    );
+    _setControllerTextIfChanged(
+      _durationCtrl,
+      loan.durationMonths.toString(),
+    );
+    _setControllerTextIfChanged(
+      _loanAmtCtrl,
+      loan.loanAmount > 0 ? loan.loanAmount.toStringAsFixed(2) : '',
+    );
+    _idProofImagePath = loan.idProofImagePath;
+
+    for (final controller in _disbursementControllers) {
+      _setControllerTextIfChanged(controller, '');
+    }
+    for (final disbursement in details.disbursements) {
+      final mode = GirviPaymentMode.fromDb(disbursement.mode);
+      _setControllerTextIfChanged(
+        _disbursementControllerFor(mode),
+        disbursement.amount.toStringAsFixed(2),
+      );
+    }
+
+    _syncPledgedItemsToController();
+    _syncPrimaryDisbursementMode();
+    _itemPhotoPath = _firstAttachedItemPhoto();
+    if (mounted) setState(() {});
+  }
+
+  void _populatePledgedDraft(
+    _PledgedItemDraft draft,
+    GirviLoanItemDetails details,
+  ) {
+    final item = details.item;
+    final metal = MetalType.fromDb(item.metalType);
+    draft.metalType = metal;
+
+    final matchedPurity = _matchPurityText(metal, item.purity);
+    if (matchedPurity == null) {
+      draft.purity = MetalPurity.other;
+      _setControllerTextIfChanged(draft.customPurityCtrl, item.purity);
+    } else {
+      draft.purity = matchedPurity;
+      _setControllerTextIfChanged(
+          draft.customPurityCtrl, matchedPurity.dbValue);
+    }
+
+    _setControllerTextIfChanged(draft.descriptionCtrl, item.itemName);
+    _setControllerTextIfChanged(draft.piecesCtrl, item.pieces.toString());
+    _setControllerTextIfChanged(draft.huidCtrl, item.huidNumber ?? '');
+    _setControllerTextIfChanged(
+      draft.grossCtrl,
+      item.grossWeight > 0 ? item.grossWeight.toStringAsFixed(3) : '',
+    );
+    _setControllerTextIfChanged(
+      draft.lessCtrl,
+      item.lessWeight > 0 ? item.lessWeight.toStringAsFixed(3) : '',
+    );
+    _setControllerTextIfChanged(
+      draft.valuationPurityCtrl,
+      item.valuationPurityPercent == null
+          ? ''
+          : _formatPurityPercent(item.valuationPurityPercent!),
+    );
+    _setControllerTextIfChanged(
+      draft.rateCtrl,
+      item.ratePerGram > 0 ? item.ratePerGram.toStringAsFixed(2) : '',
+    );
+    draft.photoPaths
+      ..clear()
+      ..addAll(details.photos.map((photo) => photo.filePath));
   }
 
   _PledgedItemDraft _createPledgedItemDraft(int serialNo) {
@@ -340,6 +452,14 @@ class _NewGirviScreenState extends State<NewGirviScreen>
 
   void _onSummaryTextChanged() {
     if (mounted) setState(() {});
+  }
+
+  void _handleBackNavigation() {
+    if (widget.onBack != null) {
+      widget.onBack!();
+      return;
+    }
+    Navigator.of(context).maybePop();
   }
 
   List<TextEditingController> get _disbursementControllers => [
@@ -525,11 +645,22 @@ class _NewGirviScreenState extends State<NewGirviScreen>
           backgroundColor: GirviColors.bodyBg,
           // NAYA APP BAR CALL YAHAN HAI
           appBar: NewGirviAppBar(
-            onBack: () => Navigator.pop(context),
+            title: _ctrl.isEditMode
+                ? 'Edit Girvi Ticket'
+                : GirviStrings.newGirviTitle,
+            onBack: _handleBackNavigation,
           ),
           body: ListenableBuilder(
             listenable: _ctrl,
             builder: (context, _) {
+              if (_ctrl.isLoadingEdit) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    color: GirviColors.brandGold,
+                  ),
+                );
+              }
+
               return Form(
                 key: _formKey,
                 child: CustomScrollView(

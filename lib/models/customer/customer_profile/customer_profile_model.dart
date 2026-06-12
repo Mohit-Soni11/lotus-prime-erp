@@ -15,11 +15,11 @@ enum CreditStatus {
   String get label {
     switch (this) {
       case CreditStatus.clear:
-        return "CLEAR";
+        return "DUE CLEAR";
       case CreditStatus.due:
-        return "DUE";
+        return "DUE OPEN";
       case CreditStatus.defaulter:
-        return "DEFAULTER";
+        return "LIMIT EXCEEDED";
     }
   }
 
@@ -104,7 +104,7 @@ class CustomerBillModel {
       (totalAmount - paidAmount).clamp(0.0, double.infinity);
 
   String get paymentLabel => isPaid
-      ? "COMPLETE"
+      ? "SETTLED"
       : isPartial
           ? "PARTIAL"
           : "UNPAID";
@@ -501,6 +501,10 @@ class CustomerProfileModel {
         creditLimit: creditLimit,
       );
 
+  CreditStatus get accountStatus => creditStatus;
+
+  double get dueLimit => creditLimit;
+
   double get availableCredit =>
       (creditLimit - outstanding).clamp(0, double.infinity);
 
@@ -530,6 +534,9 @@ class CustomerProfileModel {
   double get totalLoanAmount =>
       loans.fold(0.0, (sum, loan) => sum + loan.loanAmount);
 
+  double get totalGirviReceivable =>
+      totalActiveLoanAmount + totalInterestAccrued;
+
   int get activeAdvanceCount =>
       advanceOrders.where((order) => order.isPending || order.isReady).length;
 
@@ -542,6 +549,9 @@ class CustomerProfileModel {
 
   double get totalDueAmount =>
       dues.fold(0.0, (sum, due) => sum + due.dueAmount);
+
+  double get totalDueBillAmount =>
+      dues.fold(0.0, (sum, due) => sum + due.totalAmount);
 
   bool get hasDues => dues.isNotEmpty && totalDueAmount > 0;
 

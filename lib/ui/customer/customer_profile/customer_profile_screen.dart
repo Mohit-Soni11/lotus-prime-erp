@@ -1,27 +1,30 @@
 // -----------------------------------------------------------------------------
 // FILE: customer_profile_screen.dart
-// MODULE: Customer Ã¢â€ â€™ Customer Profile
 // CHANGE LOG:
-//   - TabBar: 2 tabs Ã¢â€ â€™ 3 tabs (Bills | Girvi | Advance Orders)
 //   - Added: Dues & Pending section (above history tabs)
-//   - Edit dialog: improved Ã¢â‚¬â€ more fields (whatsapp, email, address, state, pincode)
 //   - Edit button now shows full-form dialog (not just name/mobile/city)
-//   - All withOpacity() Ã¢â€ â€™ withValues(alpha:) Ã¢â‚¬â€ zero deprecation warnings
 //   - Advance card: tappable "Convert to Sale" button
-//   - All strings/icons/colors from theme Ã¢â‚¬â€ zero hardcoding
 // -----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import '../../../theme/customer/customer_profile/customer_profile_theme.dart';
 import '../../../logic/customer/customer_profile_logic.dart';
+import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../models/customer/customer_profile/customer_profile_model.dart';
+import '../add_customer/add_customer_screen.dart';
 import 'customer_profile_app_bar.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   final int customerId;
   final VoidCallback? onBack;
   final Function(int customerId)? onNewSale;
+  final Function(int billId)? onEditBill;
+  final Function(int loanId)? onEditGirvi;
+  final Function(int advanceOrderId)? onEditAdvance;
   final VoidCallback? onDeleted;
 
   /// Called when user taps "Convert to Sale" on an advance order.
@@ -33,6 +36,9 @@ class CustomerProfileScreen extends StatefulWidget {
     required this.customerId,
     this.onBack,
     this.onNewSale,
+    this.onEditBill,
+    this.onEditGirvi,
+    this.onEditAdvance,
     this.onDeleted,
     this.onConvertAdvanceToSale,
   });
@@ -50,10 +56,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
   // Tab controller: Bills | Girvi | Advance Orders
   late final TabController _tabCtrl;
 
-  // Controllers for credit limit
-  final TextEditingController _creditCtrl = TextEditingController();
+  // Controller for the approved due limit.
+  final TextEditingController _dueLimitCtrl = TextEditingController();
 
-  // Controllers for improved edit dialog
+  // Kept temporarily for the legacy dialog code while the profile module is
+  // migrated in stages. The Edit action now opens AddCustomerScreen instead.
   final TextEditingController _editNameCtrl = TextEditingController();
   final TextEditingController _editMobileCtrl = TextEditingController();
   final TextEditingController _editWhatsappCtrl = TextEditingController();
@@ -74,7 +81,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
       onConvertAdvanceToSale: widget.onConvertAdvanceToSale,
     );
 
-    // Ã¢Å“â€¦ 3 tabs now
     _tabCtrl = TabController(length: 3, vsync: this);
 
     _pageAnim = AnimationController(
@@ -99,7 +105,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     _logic.dispose();
     _pageAnim.dispose();
     _tabCtrl.dispose();
-    _creditCtrl.dispose();
+    _dueLimitCtrl.dispose();
     _editNameCtrl.dispose();
     _editMobileCtrl.dispose();
     _editWhatsappCtrl.dispose();
@@ -118,7 +124,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
       backgroundColor: CustomerProfileColors.bodyBg,
       appBar: CustomerProfileAppBar(
         onBack: widget.onBack ?? () {},
-        customerName: _logic.profile?.name ?? "Customer",
       ),
       body: ListenableBuilder(
         listenable: _logic,
@@ -132,9 +137,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   // MAIN BODY
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildBody(CustomerProfileModel p) {
     return FadeTransition(
       opacity: _fadeIn,
@@ -152,14 +155,12 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             const SizedBox(height: 16),
             _buildContactCard(p),
             const SizedBox(height: 16),
-            _buildCreditCard(p),
+            _buildAccountSnapshotCard(p),
             const SizedBox(height: 16),
-            // Ã¢Å“â€¦ NEW: Dues section Ã¢â‚¬â€ shown only when dues exist
             if (p.hasDues) ...[
               _buildDuesSection(p),
               const SizedBox(height: 16),
             ],
-            // Ã¢Å“â€¦ UPDATED: 3 tabs
             _buildHistoryTabs(p),
           ],
         ),
@@ -167,9 +168,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   // 1. HERO CARD
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildHeroCard(CustomerProfileModel p) {
     final isFemale = p.isFemale;
     final Color avatarBg =
@@ -269,7 +268,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    _buildCreditStatusBadge(p.creditStatus),
+                    _buildAccountStatusBadge(p.accountStatus),
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -298,9 +297,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   // 2. ACTION BUTTONS
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildActionButtons(CustomerProfileModel p) {
     return Row(
       children: [
@@ -323,8 +320,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             bg: CustomerProfileColors.editBg,
             fg: CustomerProfileColors.editText,
             border: CustomerProfileColors.editBorder,
-            // Ã¢Å“â€¦ Full improved edit dialog
-            onTap: () => _showEditDialog(p),
+            onTap: () => _openCustomerEditor(p),
           ),
         ),
         const SizedBox(width: 10),
@@ -360,9 +356,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   // 3. STATS OVERVIEW
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildStatsOverview(CustomerProfileModel p) {
     return Container(
       decoration: CustomerProfileStyles.cardDecoration,
@@ -371,8 +365,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionHeader(
-            icon: Icons.bar_chart_rounded,
-            title: "Customer Overview",
+            icon: Icons.analytics_rounded,
+            title: "Customer Portfolio Overview",
             color: const Color(0xFF7C3AED),
           ),
           const SizedBox(height: 16),
@@ -380,31 +374,31 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             children: [
               Expanded(
                 child: _StatBox(
-                  label: "Total Bills",
+                  label: "Sales Bills",
                   value: p.totalBills.toString(),
                   icon: CustomerProfileIcons.invoice,
                   color: CustomerProfileColors.brandGold,
-                  sub: "Ã¢â€šÂ¹${_fmt(p.totalBillAmount)}",
+                  sub: "Total \u20B9${_fmt(p.totalBillAmount)}",
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _StatBox(
-                  label: "Paid Bills",
+                  label: "Settled Bills",
                   value: p.paidBillsCount.toString(),
                   icon: CustomerProfileIcons.clear,
                   color: const Color(0xFF10B981),
-                  sub: "Ã¢â€šÂ¹${_fmt(p.totalPaidAmount)}",
+                  sub: "Paid \u20B9${_fmt(p.totalPaidAmount)}",
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _StatBox(
-                  label: "Unpaid Bills",
+                  label: "Due Bills",
                   value: p.unpaidBillsCount.toString(),
-                  icon: CustomerProfileIcons.outstanding,
+                  icon: CustomerProfileIcons.dueBills,
                   color: const Color(0xFFF59E0B),
-                  sub: "Due: Ã¢â€šÂ¹${_fmt(p.outstanding)}",
+                  sub: "Due \u20B9${_fmt(p.totalDueAmount)}",
                 ),
               ),
             ],
@@ -414,11 +408,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             children: [
               Expanded(
                 child: _StatBox(
-                  label: "Total Girvi",
+                  label: "Girvi Tickets",
                   value: p.totalLoans.toString(),
                   icon: Icons.lock_outline_rounded,
                   color: const Color(0xFF7C3AED),
-                  sub: "Ã¢â€šÂ¹${_fmt(p.totalLoanAmount)}",
+                  sub: "Principal \u20B9${_fmt(p.totalLoanAmount)}",
                 ),
               ),
               const SizedBox(width: 10),
@@ -428,18 +422,17 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                   value: p.activeLoans.toString(),
                   icon: Icons.lock_rounded,
                   color: const Color(0xFFEF4444),
-                  sub: "Ã¢â€šÂ¹${_fmt(p.totalActiveLoanAmount)}",
+                  sub: "Balance \u20B9${_fmt(p.totalActiveLoanAmount)}",
                 ),
               ),
               const SizedBox(width: 10),
-              // Ã¢Å“â€¦ NEW: Advance Orders stat box
               Expanded(
                 child: _StatBox(
                   label: "Advance Orders",
                   value: p.activeAdvanceCount.toString(),
                   icon: CustomerProfileIcons.advanceOrder,
                   color: CustomerProfileColors.advanceAccent,
-                  sub: "Paid: Ã¢â€šÂ¹${_fmt(p.totalAdvancePaid)}",
+                  sub: "Advance \u20B9${_fmt(p.totalAdvancePaid)}",
                 ),
               ),
             ],
@@ -449,9 +442,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-  // 4. CONTACT CARD
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildContactCard(CustomerProfileModel p) {
     return Container(
       decoration: CustomerProfileStyles.cardDecoration,
@@ -497,17 +487,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-  // 5. CREDIT CARD
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-  Widget _buildCreditCard(CustomerProfileModel p) {
-    final pct = p.usedPercent;
-    final Color barColor = pct < 60
-        ? CustomerProfileColors.progressSafe
-        : pct < 85
-            ? CustomerProfileColors.progressWarn
-            : CustomerProfileColors.progressDanger;
-
+  Widget _buildAccountSnapshotCard(CustomerProfileModel p) {
     return Container(
       decoration: CustomerProfileStyles.cardDecoration,
       padding: CustomerProfileStyles.cardPadding,
@@ -518,15 +498,15 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             children: [
               Expanded(
                 child: _sectionHeader(
-                  icon: CustomerProfileIcons.creditLimit,
-                  title: CustomerProfileStrings.secCredit,
+                  icon: Icons.account_balance_wallet_rounded,
+                  title: CustomerProfileStrings.secAccountSnapshot,
                   color: const Color(0xFF7C3AED),
                 ),
               ),
               GestureDetector(
-                onTap: _logic.editingCreditLimit
-                    ? _logic.cancelEditCreditLimit
-                    : _logic.startEditCreditLimit,
+                onTap: _logic.editingDueLimit
+                    ? _logic.cancelEditDueLimit
+                    : _logic.startEditDueLimit,
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -542,7 +522,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        _logic.editingCreditLimit
+                        _logic.editingDueLimit
                             ? Icons.close_rounded
                             : CustomerProfileIcons.editLimit,
                         color: CustomerProfileColors.brandGold,
@@ -550,7 +530,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        _logic.editingCreditLimit ? "Cancel" : "Set Limit",
+                        _logic.editingDueLimit ? "Cancel" : "Update Due Limit",
                         style: const TextStyle(
                           color: CustomerProfileColors.brandGold,
                           fontSize: 12,
@@ -564,76 +544,60 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             ],
           ),
           const SizedBox(height: 16),
-          if (_logic.editingCreditLimit) ...[
-            _buildCreditLimitEdit(p),
+          if (_logic.editingDueLimit) ...[
+            _buildDueLimitEdit(p),
             const SizedBox(height: 16),
           ],
           Row(
             children: [
               Expanded(
-                child: _creditBox(
-                  label: CustomerProfileStrings.lblCreditLimit,
-                  value: "Ã¢â€šÂ¹${_fmt(p.creditLimit)}",
-                  icon: CustomerProfileIcons.creditLimit,
+                child: _ledgerSummaryBox(
+                  title: "Due Ledger",
+                  primaryLabel: CustomerProfileStrings.lblDueTotal,
+                  primaryValue: "\u20B9${_fmt(p.totalDueAmount)}",
+                  secondaryLabel: CustomerProfileStrings.lblDueBillValue,
+                  secondaryValue: "\u20B9${_fmt(p.totalDueBillAmount)}",
+                  tertiaryLabel: CustomerProfileStrings.lblDueLimit,
+                  tertiaryValue: "\u20B9${_fmt(p.dueLimit)}",
+                  icon: Icons.receipt_long_rounded,
+                  color: const Color(0xFFEA580C),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _ledgerSummaryBox(
+                  title: "Girvi Ledger",
+                  primaryLabel: CustomerProfileStrings.lblGirviBalance,
+                  primaryValue: "\u20B9${_fmt(p.totalActiveLoanAmount)}",
+                  secondaryLabel: CustomerProfileStrings.lblGirviTotal,
+                  secondaryValue: "\u20B9${_fmt(p.totalLoanAmount)}",
+                  tertiaryLabel: "Active Tickets",
+                  tertiaryValue: p.activeLoans.toString(),
+                  icon: Icons.lock_rounded,
                   color: const Color(0xFF7C3AED),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _creditBox(
-                  label: CustomerProfileStrings.lblOutstanding,
-                  value: "Ã¢â€šÂ¹${_fmt(p.outstanding)}",
-                  icon: CustomerProfileIcons.outstanding,
-                  color: p.outstanding > 0
-                      ? CustomerProfileColors.dueIcon
-                      : CustomerProfileColors.clearIcon,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _creditBox(
-                  label: CustomerProfileStrings.lblAvailable,
-                  value: "Ã¢â€šÂ¹${_fmt(p.availableCredit)}",
-                  icon: CustomerProfileIcons.creditStatus,
-                  color: CustomerProfileColors.clearIcon,
+                child: _ledgerSummaryBox(
+                  title: "Interest Ledger",
+                  primaryLabel: CustomerProfileStrings.lblInterestAccrued,
+                  primaryValue: "\u20B9${_fmt(p.totalInterestAccrued)}",
+                  secondaryLabel: CustomerProfileStrings.lblInterestBase,
+                  secondaryValue: "\u20B9${_fmt(p.totalActiveLoanAmount)}",
+                  tertiaryLabel: CustomerProfileStrings.lblGirviReceivable,
+                  tertiaryValue: "\u20B9${_fmt(p.totalGirviReceivable)}",
+                  icon: Icons.trending_up_rounded,
+                  color: const Color(0xFF0F766E),
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Used: ${pct.toStringAsFixed(0)}%",
-                style: CustomerProfileStyles.creditPct,
-              ),
-              _buildCreditStatusBadge(p.creditStatus),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: pct / 100),
-              duration: const Duration(milliseconds: 1000),
-              curve: Curves.easeOutCubic,
-              builder: (_, val, __) => LinearProgressIndicator(
-                value: val,
-                minHeight: 10,
-                backgroundColor: CustomerProfileColors.progressTrack,
-                valueColor: AlwaysStoppedAnimation<Color>(barColor),
-              ),
-            ),
           ),
         ],
       ),
     );
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-  // 6. DUES SECTION Ã¢Å“â€¦ NEW
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildDuesSection(CustomerProfileModel p) {
     return Container(
       decoration: BoxDecoration(
@@ -681,7 +645,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        "Total Due: Ã¢â€šÂ¹${_fmt(p.totalDueAmount)}",
+                        "Total Due: \u20B9${_fmt(p.totalDueAmount)}",
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
@@ -714,7 +678,16 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        onTap: () => _showBillDetails(due.billId),
+        onTap: () => _showBillActions(
+          CustomerBillModel(
+            id: due.billId,
+            billNo: due.billNo,
+            totalAmount: due.totalAmount,
+            paidAmount: due.paidAmount,
+            status: due.paidAmount > 0 ? 'PARTIAL' : 'UNPAID',
+            billDate: due.billDate,
+          ),
+        ),
         child: Container(
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -753,7 +726,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      "${due.formattedDate}  Ã¢â‚¬Â¢  Tap to open",
+                      "${due.formattedDate} | Open invoice actions",
                       style: const TextStyle(
                         fontSize: 11,
                         color: CustomerProfileColors.bodyTextMuted,
@@ -794,7 +767,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
               ),
               const SizedBox(width: 6),
               const Icon(
-                Icons.chevron_right_rounded,
+                Icons.more_horiz_rounded,
                 size: 18,
                 color: CustomerProfileColors.bodyTextMuted,
               ),
@@ -805,9 +778,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-  // 7. HISTORY TABS Ã¢â‚¬â€ Bills | Girvi | Advance Orders Ã¢Å“â€¦ UPDATED
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildHistoryTabs(CustomerProfileModel p) {
     return Container(
       decoration: CustomerProfileStyles.cardDecoration,
@@ -848,7 +818,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                     ],
                   ),
                 ),
-                // Ã¢Å“â€¦ NEW TAB
                 Tab(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -869,7 +838,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
               children: [
                 _buildBillsList(p),
                 _buildGirviList(p),
-                _buildAdvanceList(p), // Ã¢Å“â€¦ NEW
+                _buildAdvanceList(p),
               ],
             ),
           ),
@@ -878,7 +847,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬ BILLS LIST Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildBillsList(CustomerProfileModel p) {
     if (p.bills.isEmpty) {
       return _emptyState(
@@ -912,7 +880,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        onTap: () => _showBillDetails(bill.id),
+        onTap: () => _showBillActions(bill),
         child: Container(
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -949,7 +917,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "Paid: ${bill.formattedPaidAmount}  Ã¢â‚¬Â¢  Due: ${bill.formattedDueAmount}",
+                      "Paid ${bill.formattedPaidAmount} | Due ${bill.formattedDueAmount}",
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -988,7 +956,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
               ),
               const SizedBox(width: 6),
               const Icon(
-                Icons.chevron_right_rounded,
+                Icons.more_horiz_rounded,
                 size: 18,
                 color: CustomerProfileColors.bodyTextMuted,
               ),
@@ -999,13 +967,12 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬ GIRVI LIST Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildGirviList(CustomerProfileModel p) {
     if (p.loans.isEmpty) {
       return _emptyState(
         icon: Icons.lock_outline_rounded,
-        title: "No Girvi Records",
-        sub: "Girvi entries will appear here",
+        title: "No Girvi tickets yet",
+        sub: "Pledge records will appear here after the first Girvi entry.",
       );
     }
     return ListView.builder(
@@ -1022,131 +989,149 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     final Color statusBg =
         active ? const Color(0xFFFEE2E2) : const Color(0xFFD1FAE5);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: CustomerProfileColors.bodyBg,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: active
-              ? const Color(0xFFFCA5A5)
-              : CustomerProfileColors.bodyBorder,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        onTap: () => _showGirviActions(loan),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: CustomerProfileColors.bodyBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: active
+                  ? const Color(0xFFFCA5A5)
+                  : CustomerProfileColors.bodyBorder,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: statusBg,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  active ? Icons.lock_rounded : Icons.lock_open_rounded,
-                  color: statusColor,
-                  size: 18,
-                ),
+              Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: statusBg,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      active ? Icons.lock_rounded : Icons.lock_open_rounded,
+                      color: statusColor,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(loan.loanNo,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: CustomerProfileColors.bodyTextMain,
+                            )),
+                        Text(loan.itemDesc,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: CustomerProfileColors.bodyTextMuted,
+                            )),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: statusBg,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      active ? "ACTIVE" : "RELEASED",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: statusColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.more_horiz_rounded,
+                    size: 20,
+                    color: CustomerProfileColors.bodyTextMuted,
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 12),
+              const Divider(height: 1, color: CustomerProfileColors.divider),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _girviDetail(
+                      "Girvi Principal",
+                      "\u20B9${loan.loanAmount.toStringAsFixed(0)}",
+                      const Color(0xFF7C3AED),
+                    ),
+                  ),
+                  Expanded(
+                    child: _girviDetail(
+                      "Weight",
+                      "${loan.grossWeight.toStringAsFixed(2)} g",
+                      CustomerProfileColors.brandGold,
+                    ),
+                  ),
+                  Expanded(
+                    child: _girviDetail(
+                      "Interest Rate",
+                      "${loan.interestRate.toStringAsFixed(0)}%",
+                      const Color(0xFFEA580C),
+                    ),
+                  ),
+                ],
+              ),
+              if (active) ...[
+                const SizedBox(height: 10),
+                Row(
                   children: [
-                    Text(loan.loanNo,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                          color: CustomerProfileColors.bodyTextMain,
-                        )),
-                    Text(loan.itemDesc,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: CustomerProfileColors.bodyTextMuted,
-                        )),
+                    Expanded(
+                      child: _girviDetail(
+                        "Accrued Interest",
+                        "\u20B9${loan.accruedInterest.toStringAsFixed(0)}",
+                        const Color(0xFFEF4444),
+                      ),
+                    ),
+                    Expanded(
+                      child: _girviDetail(
+                        "Days Active",
+                        "${loan.daysActive} days",
+                        const Color(0xFF0891B2),
+                      ),
+                    ),
+                    Expanded(
+                      child: _girviDetail(
+                        "Started On",
+                        loan.formattedDate,
+                        CustomerProfileColors.bodyTextMuted,
+                      ),
+                    ),
                   ],
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: statusBg,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  active ? "ACTIVE" : "RELEASED",
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: statusColor,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: CustomerProfileColors.divider),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _girviDetail(
-                    "Loan Amount",
-                    "Ã¢â€šÂ¹${loan.loanAmount.toStringAsFixed(0)}",
-                    const Color(0xFF7C3AED)),
-              ),
-              Expanded(
-                child: _girviDetail(
-                    "Weight",
-                    "${loan.grossWeight.toStringAsFixed(2)}g",
-                    CustomerProfileColors.brandGold),
-              ),
-              Expanded(
-                child: _girviDetail(
-                    "Interest @",
-                    "${loan.interestRate.toStringAsFixed(0)}%/mo",
-                    const Color(0xFFEA580C)),
-              ),
-            ],
-          ),
-          if (active) ...[
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: _girviDetail(
-                    "Accrued Interest",
-                    "Ã¢â€šÂ¹${loan.accruedInterest.toStringAsFixed(0)}",
-                    const Color(0xFFEF4444),
-                  ),
-                ),
-                Expanded(
-                  child: _girviDetail(
-                    "Days Active",
-                    "${loan.daysActive} days",
-                    const Color(0xFF0891B2),
-                  ),
-                ),
-                Expanded(
-                  child: _girviDetail(
-                    "Started",
-                    loan.formattedDate,
-                    CustomerProfileColors.bodyTextMuted,
-                  ),
-                ),
               ],
-            ),
-          ],
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬ ADVANCE ORDERS LIST Ã¢Å“â€¦ NEW Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   Widget _buildAdvanceList(CustomerProfileModel p) {
     if (p.advanceOrders.isEmpty) {
       return _emptyState(
@@ -1194,164 +1179,160 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
 
     final bool canConvert = order.isPending || order.isReady;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: CustomerProfileColors.advanceBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: CustomerProfileColors.advanceBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: CustomerProfileColors.shadowLight,
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Ã¢â€â‚¬Ã¢â€â‚¬ TOP ROW Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: statusBg,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: statusBdr),
-                  ),
-                  child: Icon(statusIcon, color: statusText, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        order.orderNo,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                          color: CustomerProfileColors.bodyTextMain,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        "${order.itemName} Ã¢â‚¬Â¢ ${order.metalType} ${order.purity}",
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: CustomerProfileColors.bodyTextMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Status badge
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusBg,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: statusBdr),
-                  ),
-                  child: Text(
-                    order.status.label,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: statusText,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Ã¢â€â‚¬Ã¢â€â‚¬ DETAILS ROW Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 14),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: CustomerProfileColors.bodyBg,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: CustomerProfileColors.bodyBorder),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _advanceDetail(
-                    "Approx Wt.",
-                    "${order.approxWeight.toStringAsFixed(2)}g",
-                    CustomerProfileColors.brandGold,
-                  ),
-                ),
-                Expanded(
-                  child: _advanceDetail(
-                    CustomerProfileStrings.totalAdvancePaid,
-                    "Ã¢â€šÂ¹${_fmt(order.totalAdvancePaid)}",
-                    CustomerProfileColors.advanceAccent,
-                  ),
-                ),
-                Expanded(
-                  child: _advanceDetail(
-                    CustomerProfileStrings.remainingBalance,
-                    "Ã¢â€šÂ¹${_fmt(order.remainingBalance)}",
-                    order.remainingBalance > 0
-                        ? CustomerProfileColors.advanceRemaining
-                        : CustomerProfileColors.clearIcon,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Ã¢â€â‚¬Ã¢â€â‚¬ DELIVERY + BOOKING DATE ROW Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Row(
-              children: [
-                const Icon(CustomerProfileIcons.calendar,
-                    size: 12, color: CustomerProfileColors.bodyTextMuted),
-                const SizedBox(width: 4),
-                Text(
-                  "Booked: ${order.formattedDate}",
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: CustomerProfileColors.bodyTextMuted,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                const Icon(CustomerProfileIcons.deliveryDate,
-                    size: 12, color: CustomerProfileColors.bodyTextMuted),
-                const SizedBox(width: 4),
-                Text(
-                  "Delivery: ${order.formattedDelivery}",
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: CustomerProfileColors.bodyTextMuted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Ã¢â€â‚¬Ã¢â€â‚¬ CONVERT TO SALE BUTTON (only for pending/ready) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-          if (canConvert) ...[
-            const Divider(
-                height: 1, color: CustomerProfileColors.advanceBorder),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: _ConvertToSaleButton(
-                onTap: () => _logic.triggerConvertAdvanceToSale(order.id),
-              ),
+    return GestureDetector(
+      onTap: () => _showAdvanceActions(order),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        decoration: BoxDecoration(
+          color: CustomerProfileColors.advanceBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: CustomerProfileColors.advanceBorder),
+          boxShadow: const [
+            BoxShadow(
+              color: CustomerProfileColors.shadowLight,
+              blurRadius: 8,
+              offset: Offset(0, 2),
             ),
           ],
-        ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: statusBg,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: statusBdr),
+                    ),
+                    child: Icon(statusIcon, color: statusText, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          order.orderNo,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                            color: CustomerProfileColors.bodyTextMain,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          "${order.itemName} | ${order.metalType} ${order.purity}",
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: CustomerProfileColors.bodyTextMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Status badge
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusBg,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: statusBdr),
+                    ),
+                    child: Text(
+                      order.status.label,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: statusText,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 14),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: CustomerProfileColors.bodyBg,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: CustomerProfileColors.bodyBorder),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _advanceDetail(
+                      "Approx. Weight",
+                      "${order.approxWeight.toStringAsFixed(2)}g",
+                      CustomerProfileColors.brandGold,
+                    ),
+                  ),
+                  Expanded(
+                    child: _advanceDetail(
+                      CustomerProfileStrings.totalAdvancePaid,
+                      "\u20B9${_fmt(order.totalAdvancePaid)}",
+                      CustomerProfileColors.advanceAccent,
+                    ),
+                  ),
+                  Expanded(
+                    child: _advanceDetail(
+                      CustomerProfileStrings.remainingBalance,
+                      "\u20B9${_fmt(order.remainingBalance)}",
+                      order.remainingBalance > 0
+                          ? CustomerProfileColors.advanceRemaining
+                          : CustomerProfileColors.clearIcon,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+                  const Icon(CustomerProfileIcons.calendar,
+                      size: 12, color: CustomerProfileColors.bodyTextMuted),
+                  const SizedBox(width: 4),
+                  Text(
+                    "Booked ${order.formattedDate}",
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: CustomerProfileColors.bodyTextMuted,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Icon(CustomerProfileIcons.deliveryDate,
+                      size: 12, color: CustomerProfileColors.bodyTextMuted),
+                  const SizedBox(width: 4),
+                  Text(
+                    "Delivery ${order.formattedDelivery}",
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: CustomerProfileColors.bodyTextMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (canConvert) ...[
+              const Divider(
+                  height: 1, color: CustomerProfileColors.advanceBorder),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: _ConvertToSaleButton(
+                  onTap: () => _logic.triggerConvertAdvanceToSale(order.id),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -1402,417 +1383,23 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-  // IMPROVED EDIT DIALOG Ã¢Å“â€¦ UPDATED Ã¢â‚¬â€ Full form with more fields
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-  void _showBillDetails(int billId) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: FutureBuilder<CustomerBillDetailModel?>(
-            future: _logic.fetchBillDetails(billId),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 560),
-                  child: Container(
-                    padding: const EdgeInsets.all(28),
-                    decoration: BoxDecoration(
-                      color: CustomerProfileColors.bodyPanelBg,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(
-                          color: CustomerProfileColors.brandGold,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          "Opening bill details...",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: CustomerProfileColors.bodyTextMain,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              if (!snapshot.hasData || snapshot.data == null) {
-                return ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 560),
-                  child: Container(
-                    padding: const EdgeInsets.all(28),
-                    decoration: BoxDecoration(
-                      color: CustomerProfileColors.bodyPanelBg,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.receipt_long_outlined,
-                          size: 42,
-                          color: CustomerProfileColors.bodyTextMuted,
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          "Bill details not found",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: CustomerProfileColors.bodyTextMain,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          "This bill could not be loaded from saved records.",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: CustomerProfileColors.bodyTextMuted,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        TextButton(
-                          onPressed: () => Navigator.pop(dialogContext),
-                          child: const Text("Close"),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              final detail = snapshot.data!;
-              final bill = detail.bill;
-              final bool paid = bill.isPaid;
-              final bool partial = bill.isPartial;
-              final Color statusBg = paid
-                  ? CustomerProfileColors.paidBg
-                  : partial
-                      ? CustomerProfileColors.dueBg
-                      : CustomerProfileColors.unpaidBg;
-              final Color statusText = paid
-                  ? CustomerProfileColors.paidText
-                  : partial
-                      ? CustomerProfileColors.dueText
-                      : CustomerProfileColors.unpaidText;
-
-              return ConstrainedBox(
-                constraints:
-                    const BoxConstraints(maxWidth: 820, maxHeight: 700),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: CustomerProfileColors.bodyPanelBg,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: CustomerProfileColors.shadowLight,
-                        blurRadius: 24,
-                        offset: Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.fromLTRB(22, 18, 14, 18),
-                        decoration: const BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: CustomerProfileColors.bodyBorder,
-                            ),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: statusBg,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                CustomerProfileIcons.invoice,
-                                color: statusText,
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    bill.billNo,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w900,
-                                      color: CustomerProfileColors.bodyTextMain,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    "${detail.customerName}  Ã¢â‚¬Â¢  ${bill.formattedDate}",
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color:
-                                          CustomerProfileColors.bodyTextMuted,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: statusBg,
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                bill.paymentLabel,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w900,
-                                  color: statusText,
-                                  letterSpacing: 0.4,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () => Navigator.pop(dialogContext),
-                              icon: const Icon(Icons.close_rounded),
-                              color: CustomerProfileColors.bodyTextMuted,
-                            ),
-                          ],
-                        ),
-                      ),
-                      Flexible(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(22),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Wrap(
-                                spacing: 10,
-                                runSpacing: 10,
-                                children: [
-                                  _buildBillInfoChip(
-                                    title: "Bill Amount",
-                                    value: bill.formattedAmount,
-                                    valueColor:
-                                        CustomerProfileColors.bodyTextMain,
-                                  ),
-                                  _buildBillInfoChip(
-                                    title: "Paid",
-                                    value: bill.formattedPaidAmount,
-                                    valueColor: CustomerProfileColors.paidText,
-                                  ),
-                                  _buildBillInfoChip(
-                                    title: "Due",
-                                    value: bill.formattedDueAmount,
-                                    valueColor: bill.dueAmount > 0
-                                        ? CustomerProfileColors.unpaidText
-                                        : CustomerProfileColors.paidText,
-                                  ),
-                                  _buildBillInfoChip(
-                                    title: "Mobile",
-                                    value: detail.customerMobile.isEmpty
-                                        ? "N/A"
-                                        : detail.customerMobile,
-                                    valueColor:
-                                        CustomerProfileColors.bodyTextMain,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                              const Text(
-                                "Line Items",
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  color: CustomerProfileColors.bodyTextMain,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              if (detail.items.isEmpty)
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(18),
-                                  decoration: BoxDecoration(
-                                    color: CustomerProfileColors.bodyBg,
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: CustomerProfileColors.bodyBorder,
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    "No saved line items found for this bill.",
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color:
-                                          CustomerProfileColors.bodyTextMuted,
-                                    ),
-                                  ),
-                                )
-                              else
-                                ...detail.items.map(_buildBillItemRow),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildBillInfoChip({
-    required String title,
-    required String value,
-    required Color valueColor,
-  }) {
-    return Container(
-      width: 170,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: CustomerProfileColors.bodyBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: CustomerProfileColors.bodyBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: CustomerProfileColors.bodyTextMuted,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              color: valueColor,
-            ),
-          ),
-        ],
+  Future<void> _openCustomerEditor(CustomerProfileModel profile) async {
+    final updated = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (editorContext) => AddCustomerScreen(
+          customerId: profile.id,
+          onBack: () => Navigator.of(editorContext).pop(false),
+          onSaved: () => Navigator.of(editorContext).pop(true),
+        ),
       ),
     );
+
+    if (updated == true && mounted) {
+      await _logic.refresh();
+    }
   }
 
-  Widget _buildBillItemRow(CustomerBillLineItemModel item) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: CustomerProfileColors.bodyBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: CustomerProfileColors.bodyBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  item.itemName,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: CustomerProfileColors.bodyTextMain,
-                  ),
-                ),
-              ),
-              Text(
-                "\u20B9 ${item.itemTotal.toStringAsFixed(2)}",
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  color: CustomerProfileColors.bodyTextMain,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 14,
-            runSpacing: 8,
-            children: [
-              Text(
-                "Purity: ${item.purity?.isNotEmpty == true ? item.purity : 'N/A'}",
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: CustomerProfileColors.bodyTextMuted,
-                ),
-              ),
-              Text(
-                "Gross: ${item.grossWeight.toStringAsFixed(3)} g",
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: CustomerProfileColors.bodyTextMuted,
-                ),
-              ),
-              Text(
-                "Net: ${item.netWeight.toStringAsFixed(3)} g",
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: CustomerProfileColors.bodyTextMuted,
-                ),
-              ),
-              Text(
-                "Rate: \u20B9 ${item.rate.toStringAsFixed(2)}",
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: CustomerProfileColors.bodyTextMuted,
-                ),
-              ),
-              Text(
-                "Making: \u20B9 ${item.makingCharge.toStringAsFixed(2)}",
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: CustomerProfileColors.bodyTextMuted,
-                ),
-              ),
-              if (item.huid?.isNotEmpty == true)
-                Text(
-                  "HUID: ${item.huid}",
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: CustomerProfileColors.bodyTextMuted,
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
+  // ignore: unused_element
   void _showEditDialog(CustomerProfileModel p) {
     // Pre-fill all controllers
     _editNameCtrl.text = p.name;
@@ -1886,7 +1473,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                       const SizedBox(height: 12),
                     ],
 
-                    // Ã¢â€â‚¬Ã¢â€â‚¬ SECTION: Personal Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
                     _editSectionLabel("Personal Info"),
                     const SizedBox(height: 8),
                     _editField(
@@ -1917,7 +1503,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                     ),
                     const SizedBox(height: 16),
 
-                    // Ã¢â€â‚¬Ã¢â€â‚¬ SECTION: Contact Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
                     _editSectionLabel("Contact Details"),
                     const SizedBox(height: 8),
                     Row(
@@ -1951,7 +1536,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                     ),
                     const SizedBox(height: 16),
 
-                    // Ã¢â€â‚¬Ã¢â€â‚¬ SECTION: Address Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
                     _editSectionLabel("Address"),
                     const SizedBox(height: 8),
                     _editField(
@@ -2120,10 +1704,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-  // CREDIT LIMIT EDIT
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-  Widget _buildCreditLimitEdit(CustomerProfileModel p) {
+  // Due limit edit
+  Widget _buildDueLimitEdit(CustomerProfileModel p) {
     return Row(
       children: [
         Expanded(
@@ -2136,7 +1718,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                   color: CustomerProfileColors.brandGold, width: 1.5),
             ),
             child: TextField(
-              controller: _creditCtrl,
+              controller: _dueLimitCtrl,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               style: const TextStyle(
@@ -2147,7 +1729,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
               decoration: const InputDecoration(
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(horizontal: 14),
-                hintText: CustomerProfileStrings.hintCreditLimit,
+                hintText: CustomerProfileStrings.hintDueLimit,
                 hintStyle:
                     TextStyle(color: CustomerProfileColors.bodyTextMuted),
                 prefixIcon: Icon(CustomerProfileIcons.amount,
@@ -2159,9 +1741,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
         const SizedBox(width: 10),
         GestureDetector(
           onTap: () async {
-            final val = double.tryParse(_creditCtrl.text);
+            final val = double.tryParse(_dueLimitCtrl.text);
             if (val == null || val < 0) return;
-            final ok = await _logic.saveCreditLimit(val);
+            final ok = await _logic.saveDueLimit(val);
             if (ok && mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -2179,7 +1761,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
               color: CustomerProfileColors.brandGold,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: _logic.savingCreditLimit
+            child: _logic.savingDueLimit
                 ? const Center(
                     child: SizedBox(
                       width: 18,
@@ -2196,9 +1778,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   // DELETE DIALOG
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   void _showDeleteDialog(CustomerProfileModel p) {
     showDialog(
       context: context,
@@ -2277,9 +1857,744 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   // SHARED HELPERS
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  void _showBillActions(CustomerBillModel bill) {
+    _showRecordActionSheet(
+      title: 'Sales Bill ${bill.billNo}',
+      subtitle: 'Edit the sale, preview the invoice, or print a clean copy.',
+      actions: [
+        _ProfileRecordAction(
+          icon: Icons.edit_note_rounded,
+          title: 'Edit Sales Bill',
+          subtitle: 'Continue in the sales workspace with this bill selected.',
+          color: CustomerProfileColors.editText,
+          onTap: () {
+            if (widget.onEditBill != null) {
+              widget.onEditBill!(bill.id);
+            } else {
+              _showInfoSnack('Sales editing is not configured yet.');
+            }
+          },
+        ),
+        _ProfileRecordAction(
+          icon: Icons.visibility_rounded,
+          title: 'View Invoice',
+          subtitle: 'Open the complete printable invoice preview.',
+          color: CustomerProfileColors.brandGold,
+          onTap: () {
+            _previewBillPdf(bill.id);
+          },
+        ),
+        _ProfileRecordAction(
+          icon: Icons.print_rounded,
+          title: 'Print Invoice',
+          subtitle: 'Send the finished invoice directly to the printer.',
+          color: CustomerProfileColors.clearIcon,
+          onTap: () {
+            _printBillPdf(bill.id);
+          },
+        ),
+      ],
+    );
+  }
+
+  void _showGirviActions(CustomerLoanModel loan) {
+    _showRecordActionSheet(
+      title: 'Girvi Ticket ${loan.loanNo}',
+      subtitle: 'Edit, view, or print this pledged-loan receipt.',
+      actions: [
+        _ProfileRecordAction(
+          icon: Icons.edit_note_rounded,
+          title: 'Edit Girvi Ticket',
+          subtitle:
+              'Continue in the Girvi workspace with this ticket selected.',
+          color: CustomerProfileColors.editText,
+          onTap: () {
+            if (widget.onEditGirvi != null) {
+              widget.onEditGirvi!(loan.id);
+            } else {
+              _showInfoSnack('Girvi editing is not configured yet.');
+            }
+          },
+        ),
+        _ProfileRecordAction(
+          icon: Icons.receipt_long_rounded,
+          title: 'View Girvi Receipt',
+          subtitle: 'Open the receipt as a clean PDF preview only.',
+          color: CustomerProfileColors.brandGold,
+          onTap: () {
+            _previewGirviInvoice(loan.id);
+          },
+        ),
+        _ProfileRecordAction(
+          icon: Icons.print_rounded,
+          title: 'Print Girvi Receipt',
+          subtitle: 'Print the professional pledge receipt.',
+          color: CustomerProfileColors.clearIcon,
+          onTap: () {
+            _printGirviInvoice(loan.id);
+          },
+        ),
+      ],
+    );
+  }
+
+  void _showAdvanceActions(CustomerAdvanceOrderModel order) {
+    _showRecordActionSheet(
+      title: 'Advance Order ${order.orderNo}',
+      subtitle: 'Edit, preview, or print this advance booking record.',
+      actions: [
+        _ProfileRecordAction(
+          icon: Icons.edit_note_rounded,
+          title: 'Edit Advance Order',
+          subtitle:
+              'Continue in the advance workspace with this order selected.',
+          color: CustomerProfileColors.editText,
+          onTap: () {
+            if (widget.onEditAdvance != null) {
+              widget.onEditAdvance!(order.id);
+            } else {
+              _showInfoSnack('Advance editing is not configured yet.');
+            }
+          },
+        ),
+        _ProfileRecordAction(
+          icon: Icons.visibility_rounded,
+          title: 'View Advance Receipt',
+          subtitle: 'Open the complete printable booking preview.',
+          color: CustomerProfileColors.brandGold,
+          onTap: () {
+            _previewAdvancePdf(order);
+          },
+        ),
+        _ProfileRecordAction(
+          icon: Icons.print_rounded,
+          title: 'Print Advance Receipt',
+          subtitle: 'Send the advance receipt directly to the printer.',
+          color: CustomerProfileColors.clearIcon,
+          onTap: () {
+            _printAdvancePdf(order);
+          },
+        ),
+      ],
+    );
+  }
+
+  void _showRecordActionSheet({
+    required String title,
+    required String subtitle,
+    required List<_ProfileRecordAction> actions,
+  }) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Container(
+          margin: const EdgeInsets.all(18),
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: CustomerProfileColors.bodyBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.14),
+                blurRadius: 28,
+                offset: const Offset(0, 16),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    height: 44,
+                    width: 44,
+                    decoration: BoxDecoration(
+                      color: CustomerProfileColors.brandGold.withValues(
+                        alpha: 0.12,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.manage_search_rounded,
+                      color: CustomerProfileColors.brandGold,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: CustomerProfileColors.bodyTextMain,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          subtitle,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: CustomerProfileColors.bodyTextMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(sheetContext).maybePop(),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ...actions.map(
+                (action) => _recordActionTile(action, sheetContext),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _recordActionTile(
+    _ProfileRecordAction action,
+    BuildContext sheetContext,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: action.color.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () async {
+            await Navigator.of(sheetContext).maybePop();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              action.onTap();
+            });
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Container(
+                  height: 42,
+                  width: 42,
+                  decoration: BoxDecoration(
+                    color: action.color.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(action.icon, color: action.color, size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        action.title,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          color: CustomerProfileColors.bodyTextMain,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        action.subtitle,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: CustomerProfileColors.bodyTextMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: action.color,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _previewBillPdf(int billId) async {
+    final detail = await _logic.fetchBillDetails(billId);
+    if (!mounted) return;
+    if (detail == null) {
+      _showInfoSnack('Sales invoice details could not be loaded.');
+      return;
+    }
+    await _showPdfPreview(
+      title: 'Sales Invoice ${detail.bill.billNo}',
+      builder: (_) => _buildSalesBillPdf(detail),
+    );
+  }
+
+  Future<void> _printBillPdf(int billId) async {
+    final detail = await _logic.fetchBillDetails(billId);
+    if (!mounted) return;
+    if (detail == null) {
+      _showInfoSnack('Sales invoice details could not be loaded.');
+      return;
+    }
+    await Printing.layoutPdf(
+      name: 'sales_invoice_${detail.bill.billNo}.pdf',
+      onLayout: (_) => _buildSalesBillPdf(detail),
+    );
+  }
+
+  Future<void> _previewGirviInvoice(int loanId) async {
+    final draft = await _logic.fetchGirviInvoiceDraft(loanId);
+    if (!mounted) return;
+    if (draft == null) {
+      _showInfoSnack('Girvi receipt details could not be loaded.');
+      return;
+    }
+    final controller = GirviInvoiceHubController(
+      draft: draft,
+      onFinalize: () async => true,
+    );
+    try {
+      await controller.generatePreview();
+      if (!mounted) return;
+      final bytes = controller.pdfBytes;
+      if (bytes == null) {
+        _showInfoSnack('Girvi receipt PDF could not be generated.');
+        return;
+      }
+      await _showCleanPdfPreview(
+        builder: (_) async => bytes,
+      );
+    } finally {
+      controller.dispose();
+    }
+  }
+
+  Future<void> _printGirviInvoice(int loanId) async {
+    final draft = await _logic.fetchGirviInvoiceDraft(loanId);
+    if (!mounted) return;
+    if (draft == null) {
+      _showInfoSnack('Girvi receipt details could not be loaded.');
+      return;
+    }
+    final controller = GirviInvoiceHubController(
+      draft: draft,
+      onFinalize: () async => true,
+    );
+    try {
+      final printed = await controller.printInvoice();
+      if (!mounted) return;
+      if (!printed) _showInfoSnack('Girvi receipt could not be printed.');
+    } finally {
+      controller.dispose();
+    }
+  }
+
+  Future<void> _previewAdvancePdf(CustomerAdvanceOrderModel order) {
+    return _showPdfPreview(
+      title: 'Advance Order ${order.orderNo}',
+      builder: (_) => _buildAdvanceOrderPdf(order),
+    );
+  }
+
+  Future<void> _printAdvancePdf(CustomerAdvanceOrderModel order) {
+    return Printing.layoutPdf(
+      name: 'advance_order_${order.orderNo}.pdf',
+      onLayout: (_) => _buildAdvanceOrderPdf(order),
+    );
+  }
+
+  Future<void> _showPdfPreview({
+    required String title,
+    required Future<Uint8List> Function(PdfPageFormat format) builder,
+  }) {
+    return showDialog<void>(
+      context: context,
+      builder: (_) => Dialog(
+        insetPadding: const EdgeInsets.all(24),
+        child: SizedBox(
+          width: 980,
+          height: 720,
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
+                decoration: const BoxDecoration(
+                  color: CustomerProfileColors.shellBg,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon:
+                          const Icon(Icons.close_rounded, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: PdfPreview(
+                  build: builder,
+                  canChangeOrientation: false,
+                  canChangePageFormat: false,
+                  canDebug: false,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCleanPdfPreview({
+    required Future<Uint8List> Function(PdfPageFormat format) builder,
+  }) {
+    return showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.72),
+      builder: (_) => Dialog(
+        insetPadding: EdgeInsets.zero,
+        backgroundColor: Colors.transparent,
+        child: SizedBox.expand(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: PdfPreview(
+                  build: builder,
+                  initialPageFormat: PdfPageFormat.a4,
+                  allowPrinting: false,
+                  allowSharing: false,
+                  canChangeOrientation: false,
+                  canChangePageFormat: false,
+                  canDebug: false,
+                  useActions: false,
+                  maxPageWidth: 820,
+                  scrollViewDecoration: const BoxDecoration(
+                    color: Color(0xFF111827),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 18,
+                right: 18,
+                child: Material(
+                  color: Colors.black.withValues(alpha: 0.62),
+                  shape: const CircleBorder(),
+                  child: IconButton(
+                    tooltip: 'Close preview',
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<Uint8List> _buildSalesBillPdf(CustomerBillDetailModel detail) async {
+    final doc = pw.Document();
+    doc.addPage(
+      pw.MultiPage(
+        pageTheme: const pw.PageTheme(
+          pageFormat: PdfPageFormat.a4,
+          margin: pw.EdgeInsets.all(32),
+        ),
+        build: (context) => [
+          _pdfHeader('SALES INVOICE', detail.bill.billNo),
+          pw.SizedBox(height: 18),
+          _pdfInfoGrid([
+            ['Customer', detail.customerName],
+            [
+              'Mobile',
+              detail.customerMobile.isEmpty ? '-' : detail.customerMobile
+            ],
+            ['Invoice Date', detail.bill.formattedDate],
+            ['Status', detail.bill.paymentLabel],
+            ['Total Amount', _rs(detail.bill.totalAmount)],
+            ['Paid Amount', _rs(detail.bill.paidAmount)],
+            ['Due Amount', _rs(detail.bill.dueAmount)],
+          ]),
+          pw.SizedBox(height: 18),
+          _pdfSectionTitle('Invoice Items'),
+          pw.Table.fromTextArray(
+            headerDecoration: const pw.BoxDecoration(
+              color: PdfColor.fromInt(0xFF17243A),
+            ),
+            headerStyle: pw.TextStyle(
+              color: PdfColors.white,
+              fontWeight: pw.FontWeight.bold,
+              fontSize: 9,
+            ),
+            cellStyle: const pw.TextStyle(fontSize: 9),
+            cellPadding: const pw.EdgeInsets.symmetric(
+              horizontal: 6,
+              vertical: 7,
+            ),
+            headers: const [
+              'S/N',
+              'Item',
+              'HUID',
+              'Purity',
+              'Gross Wt.',
+              'Net Wt.',
+              'Rate',
+              'Making',
+              'Amount',
+            ],
+            data: detail.items.asMap().entries.map((entry) {
+              final item = entry.value;
+              return [
+                '${entry.key + 1}',
+                item.itemName,
+                item.huid?.isNotEmpty == true ? item.huid! : '-',
+                item.purity?.isNotEmpty == true ? item.purity! : '-',
+                '${item.grossWeight.toStringAsFixed(3)} g',
+                '${item.netWeight.toStringAsFixed(3)} g',
+                _rs(item.rate),
+                _rs(item.makingCharge),
+                _rs(item.itemTotal),
+              ];
+            }).toList(),
+          ),
+          pw.SizedBox(height: 18),
+          pw.Container(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                pw.Text('Invoice Total: ${_rs(detail.bill.totalAmount)}',
+                    style: pw.TextStyle(
+                        fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                pw.Text('Paid: ${_rs(detail.bill.paidAmount)}',
+                    style: const pw.TextStyle(fontSize: 11)),
+                pw.Text('Due: ${_rs(detail.bill.dueAmount)}',
+                    style: pw.TextStyle(
+                        fontSize: 12, fontWeight: pw.FontWeight.bold)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+    return doc.save();
+  }
+
+  Future<Uint8List> _buildAdvanceOrderPdf(
+    CustomerAdvanceOrderModel order,
+  ) async {
+    final doc = pw.Document();
+    doc.addPage(
+      pw.MultiPage(
+        pageTheme: const pw.PageTheme(
+          pageFormat: PdfPageFormat.a4,
+          margin: pw.EdgeInsets.all(32),
+        ),
+        build: (context) => [
+          _pdfHeader('ADVANCE ORDER RECEIPT', order.orderNo),
+          pw.SizedBox(height: 18),
+          _pdfInfoGrid([
+            ['Order Number', order.orderNo],
+            ['Item', order.itemName],
+            ['Metal', order.metalType],
+            ['Purity', order.purity],
+            ['Approx Weight', '${order.approxWeight.toStringAsFixed(3)} g'],
+            ['Locked Rate', _rs(order.lockedRate)],
+            ['Booking Type', order.bookingType],
+            ['Status', order.status.label],
+            ['Created On', order.formattedDate],
+            ['Delivery Date', order.formattedDelivery],
+            ['Estimated Total', _rs(order.estimatedTotal)],
+            ['Advance Paid', _rs(order.totalAdvancePaid)],
+            ['Remaining Balance', _rs(order.remainingBalance)],
+          ]),
+          if (order.notes != null && order.notes!.trim().isNotEmpty) ...[
+            pw.SizedBox(height: 18),
+            _pdfSectionTitle('Order Notes'),
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(12),
+              decoration: pw.BoxDecoration(
+                border:
+                    pw.Border.all(color: const PdfColor.fromInt(0xFFD8DEE9)),
+                borderRadius: pw.BorderRadius.circular(10),
+              ),
+              child: pw.Text(order.notes!.trim()),
+            ),
+          ],
+        ],
+      ),
+    );
+    return doc.save();
+  }
+
+  pw.Widget _pdfHeader(String title, String number) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(16),
+      decoration: pw.BoxDecoration(
+        color: const PdfColor.fromInt(0xFF0B1E33),
+        borderRadius: pw.BorderRadius.circular(14),
+      ),
+      child: pw.Row(
+        children: [
+          pw.Container(
+            height: 42,
+            width: 42,
+            alignment: pw.Alignment.center,
+            decoration: pw.BoxDecoration(
+              color: const PdfColor.fromInt(0xFFD59A2B),
+              borderRadius: pw.BorderRadius.circular(12),
+            ),
+            child: pw.Text(
+              'L',
+              style: pw.TextStyle(
+                color: PdfColors.white,
+                fontSize: 20,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
+          pw.SizedBox(width: 14),
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  title,
+                  style: pw.TextStyle(
+                    color: PdfColors.white,
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 4),
+                pw.Text(
+                  number,
+                  style: const pw.TextStyle(
+                    color: PdfColor.fromInt(0xFFF7C66A),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          pw.Text(
+            'LOTUS PRIME ERP',
+            style: const pw.TextStyle(
+              color: PdfColor.fromInt(0xFFF7C66A),
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _pdfInfoGrid(List<List<String>> rows) {
+    return pw.Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: rows.map((row) {
+        return pw.Container(
+          width: 248,
+          padding: const pw.EdgeInsets.all(10),
+          decoration: pw.BoxDecoration(
+            border: pw.Border.all(color: const PdfColor.fromInt(0xFFE1E7F0)),
+            borderRadius: pw.BorderRadius.circular(10),
+          ),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                row[0].toUpperCase(),
+                style: const pw.TextStyle(
+                  color: PdfColor.fromInt(0xFF637083),
+                  fontSize: 7,
+                ),
+              ),
+              pw.SizedBox(height: 4),
+              pw.Text(
+                row[1],
+                style: pw.TextStyle(
+                  color: const PdfColor.fromInt(0xFF111827),
+                  fontSize: 10,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  pw.Widget _pdfSectionTitle(String title) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: pw.BoxDecoration(
+        color: const PdfColor.fromInt(0xFFF7F3EA),
+        borderRadius: pw.BorderRadius.circular(8),
+        border: pw.Border.all(color: const PdfColor.fromInt(0xFFE5B04C)),
+      ),
+      child: pw.Text(
+        title.toUpperCase(),
+        style: pw.TextStyle(
+          color: const PdfColor.fromInt(0xFF8A5D0A),
+          fontSize: 9,
+          fontWeight: pw.FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  String _rs(double value) => 'Rs ${_fmt(value)}';
+
+  void _showInfoSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: CustomerProfileColors.shellBg,
+      ),
+    );
+  }
+
   Widget _buildLoading() {
     return const Center(
       child: Column(
@@ -2370,32 +2685,126 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  Widget _creditBox({
-    required String label,
-    required String value,
+  Widget _ledgerSummaryBox({
+    required String title,
+    required String primaryLabel,
+    required String primaryValue,
+    required String secondaryLabel,
+    required String secondaryValue,
     required IconData icon,
     required Color color,
+    String? tertiaryLabel,
+    String? tertiaryValue,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: CustomerProfileStyles.creditAmount.copyWith(color: color),
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: CustomerProfileColors.bodyTextMain,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 2),
-          Text(label, style: CustomerProfileStyles.creditLabel),
+          const SizedBox(height: 14),
+          Text(
+            primaryLabel,
+            style: CustomerProfileStyles.snapshotLabel,
+          ),
+          const SizedBox(height: 3),
+          Text(
+            primaryValue,
+            style: CustomerProfileStyles.snapshotAmount.copyWith(color: color),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: color.withValues(alpha: 0.14)),
+            ),
+            child: Column(
+              children: [
+                _summaryInlineMetric(
+                  secondaryLabel,
+                  secondaryValue,
+                  color,
+                ),
+                if (tertiaryLabel != null && tertiaryValue != null) ...[
+                  const SizedBox(height: 6),
+                  Divider(height: 1, color: color.withValues(alpha: 0.14)),
+                  const SizedBox(height: 6),
+                  _summaryInlineMetric(
+                    tertiaryLabel,
+                    tertiaryValue,
+                    color,
+                  ),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _summaryInlineMetric(String label, String value, Color color) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: CustomerProfileColors.bodyTextMuted,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 
@@ -2439,7 +2848,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  Widget _buildCreditStatusBadge(CreditStatus status) {
+  Widget _buildAccountStatusBadge(CreditStatus status) {
     final Color bg = status == CreditStatus.clear
         ? CustomerProfileColors.clearBg
         : status == CreditStatus.due
@@ -2525,9 +2934,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
   }
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 // STAT BOX
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 class _StatBox extends StatelessWidget {
   final String label;
   final String value;
@@ -2592,9 +2999,23 @@ class _StatBox extends StatelessWidget {
   }
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 // ACTION BUTTON
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+class _ProfileRecordAction {
+  const _ProfileRecordAction({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+}
+
 class _ActionBtn extends StatefulWidget {
   final IconData icon;
   final String label;
@@ -2674,9 +3095,7 @@ class _ActionBtnState extends State<_ActionBtn> {
   }
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 // TYPE TOGGLE (Regular / VIP)
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 class _TypeToggle extends StatelessWidget {
   final String value;
   final Function(String) onChanged;
@@ -2724,9 +3143,7 @@ class _TypeToggle extends StatelessWidget {
   }
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 // CONVERT TO SALE BUTTON
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 class _ConvertToSaleButton extends StatefulWidget {
   final VoidCallback onTap;
   const _ConvertToSaleButton({required this.onTap});

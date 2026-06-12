@@ -22,6 +22,7 @@ import '../../repositories/girvi/girvi_repository.dart';
 import '../../repositories/setting/billing_setup/girvi_billing_repo.dart';
 
 class NewGirviController extends ChangeNotifier {
+  final AppDatabase _db;
   final GirviRepository _repo;
   final GirviDetailsRepository _detailsRepo;
   final GirviBillingRepo _billingRepo;
@@ -29,7 +30,8 @@ class NewGirviController extends ChangeNotifier {
   NewGirviController(
     AppDatabase db, {
     GirviBillingRepo? billingRepo,
-  })  : _repo = GirviRepository(db),
+  })  : _db = db,
+        _repo = GirviRepository(db),
         _detailsRepo = GirviDetailsRepository(db),
         _billingRepo = billingRepo ?? GirviBillingRepo(db: db);
 
@@ -211,11 +213,19 @@ class NewGirviController extends ChangeNotifier {
 
   // ── STATUS ────────────────────────────────────────────────────────────────
   bool _isSaving = false;
+  bool _isLoadingEdit = false;
+  bool _isEditMode = false;
+  int? _editingLoanId;
+  GirviLoanDetails? _editingDetails;
   String? _errorMessage;
   String? _successMessage;
   bool _initialized = false;
 
   bool get isSaving => _isSaving;
+  bool get isLoadingEdit => _isLoadingEdit;
+  bool get isEditMode => _isEditMode;
+  int? get editingLoanId => _editingLoanId;
+  GirviLoanDetails? get editingDetails => _editingDetails;
   String? get errorMessage => _errorMessage;
   String? get successMessage => _successMessage;
   bool get isFormReady => hasCustomer && _loanAmount > 0 && netWeight > 0;
@@ -246,6 +256,77 @@ class NewGirviController extends ChangeNotifier {
       debugPrint('NewGirviController.initialize error: $e');
     }
     notifyListeners();
+  }
+
+  Future<bool> initializeForEdit(int loanId) async {
+    if (_initialized && _editingLoanId == loanId && _editingDetails != null) {
+      return true;
+    }
+
+    _initialized = true;
+    _isLoadingEdit = true;
+    _isEditMode = true;
+    _editingLoanId = loanId;
+    _errorMessage = null;
+    _successMessage = null;
+    notifyListeners();
+
+    try {
+      _billingSettings = await _billingRepo.fetch();
+      final details = await _detailsRepo.getLoanDetails(loanId);
+      if (details == null) {
+        _errorMessage = 'Selected Girvi ticket could not be found.';
+        _isLoadingEdit = false;
+        notifyListeners();
+        return false;
+      }
+
+      final customer = await (_db.select(_db.customers)
+            ..where((row) => row.id.equals(details.loan.customerId)))
+          .getSingleOrNull();
+      if (customer == null) {
+        _errorMessage =
+            'Customer details for this Girvi ticket could not be loaded.';
+        _isLoadingEdit = false;
+        notifyListeners();
+        return false;
+      }
+
+      final loan = details.loan;
+      _editingDetails = details;
+      _selectedCustomer = customer;
+      _ticketNo = loan.ticketNo;
+      _itemCount = loan.itemCount.clamp(1, 99);
+      _metalType = MetalType.fromDb(loan.metalType);
+      _metalPurity = MetalPurity.fromDb(loan.metalPurity);
+      _grossWeight = loan.grossWeight;
+      _stoneWeight = loan.stoneWeight;
+      _ratePerGram = loan.ratePerGram;
+      _loanAmount = loan.loanAmount;
+      _ltvPercent = loan.ltvPercent;
+      _interestRate = loan.interestRate;
+      _durationMonths = loan.durationMonths;
+      _startDate = loan.startDate;
+      _idProofType = loan.idProofType == null
+          ? null
+          : GirviIdProofType.fromDb(loan.idProofType!);
+      if (details.disbursements.isNotEmpty) {
+        _disbursementMode =
+            GirviPaymentMode.fromDb(details.disbursements.first.mode);
+      } else {
+        _disbursementMode = GirviPaymentMode.fromDb(loan.disbursementMode);
+      }
+
+      _isLoadingEdit = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('NewGirviController.initializeForEdit error: $e');
+      _errorMessage = 'Girvi ticket could not be loaded for editing.';
+      _isLoadingEdit = false;
+      notifyListeners();
+      return false;
+    }
   }
 
   int _durationMonthsFromLabel(String value) {
@@ -429,7 +510,9 @@ class NewGirviController extends ChangeNotifier {
         interestRate: drift.Value(_interestRate),
         durationMonths: drift.Value(_durationMonths),
         disbursementMode: drift.Value(disbursementSummary),
-        invoiceGenerated: drift.Value(invoiceGenerated),
+        invoiceGenerated: drift.Value(
+          invoiceGenerated || (_editingDetails?.loan.invoiceGenerated ?? false),
+        ),
         startDate: drift.Value(_startDate),
         maturityDate: drift.Value(maturityDate),
         idProofType: drift.Value(_idProofType?.dbValue),
@@ -445,14 +528,29 @@ class NewGirviController extends ChangeNotifier {
             drift.Value(notes?.trim().isEmpty == true ? null : notes?.trim()),
       );
 
-      await _detailsRepo.createLoanWithDetails(
-        loan: companion,
-        items: items,
-        disbursements: disbursements,
-        expectedLoanAmount: _loanAmount,
-      );
+      if (_isEditMode && _editingLoanId != null) {
+        final updated = await _detailsRepo.updateLoanWithDetails(
+          loanId: _editingLoanId!,
+          loan: companion,
+          items: items,
+          disbursements: disbursements,
+          expectedLoanAmount: _loanAmount,
+        );
+        if (!updated) {
+          throw StateError('No Girvi ticket was updated.');
+        }
+        _editingDetails = await _detailsRepo.getLoanDetails(_editingLoanId!);
+        _successMessage = 'Girvi ticket $_ticketNo updated successfully!';
+      } else {
+        await _detailsRepo.createLoanWithDetails(
+          loan: companion,
+          items: items,
+          disbursements: disbursements,
+          expectedLoanAmount: _loanAmount,
+        );
+        _successMessage = 'Girvi ticket $_ticketNo created successfully!';
+      }
 
-      _successMessage = 'Girvi ticket $_ticketNo created successfully!';
       _isSaving = false;
       notifyListeners();
       return true;
@@ -477,6 +575,10 @@ class NewGirviController extends ChangeNotifier {
     _ratePerGram = 0.0;
     _ltvPercent = 50.0;
     _loanAmount = 0.0;
+    _editingLoanId = null;
+    _editingDetails = null;
+    _isEditMode = false;
+    _isLoadingEdit = false;
     _interestRate = _billingSettings.defaultInterestRate;
     _durationMonths =
         _durationMonthsFromLabel(_billingSettings.defaultDuration);

@@ -139,6 +139,8 @@ class _ShopIdentityCardState extends State<ShopIdentityCard> {
     final logoPath = _logic.data.logoPath?.trim() ?? '';
     final logoFile = logoPath.isEmpty ? null : File(logoPath);
     final hasLogo = logoFile?.existsSync() ?? false;
+    if (!hasLogo) return const SizedBox.shrink();
+
     final isCircle = _logic.data.logoShape.toLowerCase() == 'circle';
 
     return Container(
@@ -156,25 +158,12 @@ class _ShopIdentityCardState extends State<ShopIdentityCard> {
       ),
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
-      child: hasLogo
-          ? Image.file(
-              logoFile!,
-              width: double.infinity,
-              height: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _buildInitials(),
-            )
-          : _buildInitials(),
-    );
-  }
-
-  Widget _buildInitials() {
-    return Text(
-      _logic.shopInitials,
-      style: const TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
-        color: ShopCardColors.textGold,
+      child: Image.file(
+        logoFile!,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
       ),
     );
   }

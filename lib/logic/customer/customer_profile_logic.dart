@@ -1,14 +1,11 @@
 // -----------------------------------------------------------------------------
 // FILE: customer_profile_logic.dart
-// MODULE: Customer → Customer Profile
-// CHANGE LOG:
-//   - saveEdit: now accepts whatsapp, email, addressLine1, state, pincode
-//   - Added: onConvertAdvanceToSale callback support
-//   - Added: convertAdvanceToSale() — marks order delivered + triggers callback
+// MODULE: Customer -> Customer Profile
 // -----------------------------------------------------------------------------
 
 import 'package:flutter/foundation.dart';
 import '../../models/customer/customer_profile/customer_profile_model.dart';
+import '../../models/girvi/girvi_invoice_draft.dart';
 import '../../repositories/customer/customer_profile_repository.dart';
 
 enum ProfileState { loading, loaded, error, deleting, deleted, saving }
@@ -17,8 +14,7 @@ class CustomerProfileLogic extends ChangeNotifier {
   final CustomerProfileRepository _repo;
   final int customerId;
 
-  // Optional callback: called when an advance order is converted to a new sale
-  // Passes the advanceOrderId so the POS screen can pre-fill it
+  // Optional callback used when an advance order is converted to a sale.
   final Function(int advanceOrderId, int customerId)? onConvertAdvanceToSale;
 
   CustomerProfileLogic({
@@ -29,12 +25,12 @@ class CustomerProfileLogic extends ChangeNotifier {
     _load();
   }
 
-  // ── STATE ─────────────────────────────────────────────────────────────
+  // State
   ProfileState _state = ProfileState.loading;
   CustomerProfileModel? _profile;
   String? _error;
 
-  // Credit limit edit
+  // Due limit edit state. The repository still uses the legacy field name.
   bool _editingCreditLimit = false;
   bool _savingCreditLimit = false;
 
@@ -46,19 +42,21 @@ class CustomerProfileLogic extends ChangeNotifier {
   // Active tab for stats
   int _activeTab = 0;
 
-  // ── GETTERS ──────────────────────────────────────────────────────────
+  // Getters
   ProfileState get state => _state;
   CustomerProfileModel? get profile => _profile;
   String? get error => _error;
   bool get isLoading => _state == ProfileState.loading;
   bool get editingCreditLimit => _editingCreditLimit;
   bool get savingCreditLimit => _savingCreditLimit;
+  bool get editingDueLimit => _editingCreditLimit;
+  bool get savingDueLimit => _savingCreditLimit;
   bool get editMode => _editMode;
   bool get savingEdit => _savingEdit;
   String? get editError => _editError;
   int get activeTab => _activeTab;
 
-  // ── LOAD ─────────────────────────────────────────────────────────────
+  // Load
   Future<void> _load() async {
     _state = ProfileState.loading;
     notifyListeners();
@@ -80,13 +78,20 @@ class CustomerProfileLogic extends ChangeNotifier {
     return _repo.fetchBillDetails(customerId: customerId, billId: billId);
   }
 
-  // ── TAB NAVIGATION ────────────────────────────────────────────────────
+  Future<GirviInvoiceDraft?> fetchGirviInvoiceDraft(int loanId) {
+    return _repo.fetchGirviInvoiceDraft(
+      customerId: customerId,
+      loanId: loanId,
+    );
+  }
+
+  // Tab navigation
   void setTab(int index) {
     _activeTab = index;
     notifyListeners();
   }
 
-  // ── EDIT MODE ─────────────────────────────────────────────────────────
+  // Edit mode
   void enterEditMode() {
     _editMode = true;
     _editError = null;
@@ -99,7 +104,7 @@ class CustomerProfileLogic extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Extended saveEdit — accepts all editable fields from improved dialog
+  /// Saves all editable fields from the profile edit dialog.
   Future<bool> saveEdit({
     required String name,
     required String mobile,
@@ -113,7 +118,6 @@ class CustomerProfileLogic extends ChangeNotifier {
   }) async {
     if (_profile == null) return false;
 
-    // Validation
     if (name.trim().isEmpty) {
       _editError = "Name cannot be empty";
       notifyListeners();
@@ -160,7 +164,13 @@ class CustomerProfileLogic extends ChangeNotifier {
     return ok;
   }
 
-  // ── CREDIT LIMIT ─────────────────────────────────────────────────────
+  // Due limit
+  void startEditDueLimit() => startEditCreditLimit();
+
+  void cancelEditDueLimit() => cancelEditCreditLimit();
+
+  Future<bool> saveDueLimit(double newLimit) => saveCreditLimit(newLimit);
+
   void startEditCreditLimit() {
     _editingCreditLimit = true;
     notifyListeners();
@@ -186,15 +196,12 @@ class CustomerProfileLogic extends ChangeNotifier {
     return ok;
   }
 
-  // ── CONVERT ADVANCE → NEW SALE ───────────────────────────────────────  ✅ NEW
-  /// Called when user taps "Convert to Sale" on an advance order card.
-  /// Triggers the onConvertAdvanceToSale callback with orderId + customerId
-  /// so the parent can navigate to Sales POS with pre-filled data.
+  // Convert advance to new sale
   void triggerConvertAdvanceToSale(int advanceOrderId) {
     onConvertAdvanceToSale?.call(advanceOrderId, customerId);
   }
 
-  // ── DELETE ────────────────────────────────────────────────────────────
+  // Delete
   Future<bool> deleteCustomer() async {
     _state = ProfileState.deleting;
     notifyListeners();

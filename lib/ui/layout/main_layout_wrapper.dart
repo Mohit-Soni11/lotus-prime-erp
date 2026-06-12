@@ -92,25 +92,56 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
   String _activePageRouteId = AppRoutes.dashboardRoute;
   int? _activeCustomerId;
 
+  void _openSalesWorkspace() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PosMasterSaleScreen()),
+    );
+  }
+
+  void _openGirviWorkspace({int? editLoanId}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => NewGirviScreen(
+          editLoanId: editLoanId,
+          onBack: () => Navigator.pop(context),
+        ),
+      ),
+    );
+  }
+
+  void _openAdvanceWorkspace() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BookingAdvanceScreen(
+          onBack: () => Navigator.pop(context),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomerProfile(int customerId) {
+    return CustomerProfileScreen(
+      customerId: customerId,
+      onBack: () => Navigator.pop(context),
+      onDeleted: () => Navigator.pop(context),
+      onNewSale: (_) => _openSalesWorkspace(),
+      onEditBill: (_) => _openSalesWorkspace(),
+      onEditGirvi: (loanId) => _openGirviWorkspace(editLoanId: loanId),
+      onEditAdvance: (_) => _openAdvanceWorkspace(),
+      onConvertAdvanceToSale: (_, __) => _openSalesWorkspace(),
+    );
+  }
+
   // â”€â”€ Central Navigation Controller â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   // âœ… NEW: customerId ke saath navigate â€” Payment Status â†’ Customer Profile
   void _navigateToWithId(String routeId, {int? customerId}) {
     if (routeId == AppRoutes.customerProfileRoute && customerId != null) {
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (_) => CustomerProfileScreen(
-                    customerId: customerId,
-                    onBack: () => Navigator.pop(context),
-                    onDeleted: () => Navigator.pop(context),
-                    onNewSale: (_) {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const PosMasterSaleScreen()));
-                    },
-                  )));
+      Navigator.push(context,
+          MaterialPageRoute(builder: (_) => _buildCustomerProfile(customerId)));
     } else {
       _navigateTo(routeId);
     }
@@ -167,18 +198,8 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (_) => CustomerProfileScreen(
-                                    customerId: customerId,
-                                    onBack: () => Navigator.pop(context),
-                                    onDeleted: () => Navigator.pop(context),
-                                    onNewSale: (_) {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const PosMasterSaleScreen()));
-                                    },
-                                  )));
+                              builder: (_) =>
+                                  _buildCustomerProfile(customerId)));
                     },
                   )));
     } else if (routeId == AppRoutes.addCustomerRoute) {

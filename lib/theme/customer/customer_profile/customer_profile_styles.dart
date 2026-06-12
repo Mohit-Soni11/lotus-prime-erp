@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 // FILE: customer_profile_styles.dart
-// MODULE: Customer â†’ Customer Profile
+// MODULE: Customer -> Customer Profile
 // -----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
@@ -10,18 +10,18 @@ import 'customer_profile_colors.dart';
 class CustomerProfileStyles {
   CustomerProfileStyles._();
 
-  // â”€â”€ DIMENSIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Dimensions
   static const double appBarHeight = 70.0;
   static const double avatarSize = 80.0;
   static const double actionBtnH = 56.0;
   static const double cardRadius = 16.0;
   static const double sectionIconBox = 38.0;
 
-  // â”€â”€ SPACING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Spacing
   static const EdgeInsets pagePadding = EdgeInsets.fromLTRB(20, 20, 20, 40);
   static const EdgeInsets cardPadding = EdgeInsets.all(20);
 
-  // â”€â”€ APP BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // App bar
   static TextStyle get appBarTitle => GoogleFonts.inter(
         fontSize: 17,
         fontWeight: FontWeight.w700,
@@ -43,7 +43,7 @@ class CustomerProfileStyles {
     letterSpacing: 0.8,
   );
 
-  // â”€â”€ AVATAR & NAME â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Avatar and name
   static TextStyle get avatarInitials => GoogleFonts.manrope(
         fontSize: 28,
         fontWeight: FontWeight.w800,
@@ -63,7 +63,7 @@ class CustomerProfileStyles {
         color: CustomerProfileColors.bodyTextMuted,
       );
 
-  // â”€â”€ SECTION HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Section header
   static TextStyle get sectionTitle => GoogleFonts.manrope(
         fontSize: 15,
         fontWeight: FontWeight.w700,
@@ -77,7 +77,7 @@ class CustomerProfileStyles {
         letterSpacing: 1.2,
       );
 
-  // â”€â”€ INFO ROWS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Information rows
   static TextStyle get infoLabel => GoogleFonts.inter(
         fontSize: 12,
         fontWeight: FontWeight.w500,
@@ -90,32 +90,32 @@ class CustomerProfileStyles {
         color: CustomerProfileColors.bodyTextMain,
       );
 
-  // â”€â”€ CREDIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  static TextStyle get creditAmount => GoogleFonts.manrope(
+  // Account snapshot metrics
+  static TextStyle get snapshotAmount => GoogleFonts.manrope(
         fontSize: 20,
         fontWeight: FontWeight.w800,
         color: CustomerProfileColors.bodyTextMain,
         height: 1.0,
       );
 
-  static TextStyle get creditLabel => GoogleFonts.inter(
+  static TextStyle get snapshotLabel => GoogleFonts.inter(
         fontSize: 11,
         color: CustomerProfileColors.bodyTextMuted,
       );
 
-  static TextStyle get creditPct => GoogleFonts.inter(
+  static TextStyle get snapshotMeta => GoogleFonts.inter(
         fontSize: 12,
         fontWeight: FontWeight.w700,
         color: CustomerProfileColors.bodyTextMuted,
       );
 
-  // â”€â”€ ACTION BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Action button
   static TextStyle get actionBtnText => GoogleFonts.manrope(
         fontSize: 13,
         fontWeight: FontWeight.w700,
       );
 
-  // â”€â”€ BILL CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Bill card
   static TextStyle get billNo => GoogleFonts.inter(
         fontSize: 13,
         fontWeight: FontWeight.w700,
@@ -134,16 +134,17 @@ class CustomerProfileStyles {
         color: CustomerProfileColors.bodyTextMuted,
       );
 
-  // â”€â”€ DECORATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Decorations
   static BoxDecoration get cardDecoration => BoxDecoration(
         color: CustomerProfileColors.bodyPanelBg,
         borderRadius: BorderRadius.circular(cardRadius),
         border: Border.all(color: CustomerProfileColors.bodyBorder),
         boxShadow: const [
           BoxShadow(
-              color: CustomerProfileColors.shadowLight,
-              blurRadius: 10,
-              offset: Offset(0, 3)),
+            color: CustomerProfileColors.shadowLight,
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
         ],
       );
 
@@ -151,8 +152,9 @@ class CustomerProfileStyles {
         color: CustomerProfileColors.brandGoldBg,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-            color: CustomerProfileColors.brandGold.withValues(alpha: 0.4),
-            width: 2),
+          color: CustomerProfileColors.brandGold.withValues(alpha: 0.4),
+          width: 2,
+        ),
         boxShadow: [
           BoxShadow(
             color: CustomerProfileColors.brandGold.withValues(alpha: 0.2),

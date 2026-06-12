@@ -1,9 +1,6 @@
 // -----------------------------------------------------------------------------
 // FILE: customer_profile_colors.dart
-// MODULE: Customer → Customer Profile
-// CHANGE LOG:
-//   - Added: Advance Orders color palette
-//   - Added: Dues section color palette
+// MODULE: Customer -> Customer Profile
 // -----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
@@ -11,26 +8,27 @@ import 'package:flutter/material.dart';
 class CustomerProfileColors {
   CustomerProfileColors._();
 
-  // ── SHELL (Dark App Bar) ─────────────────────────────────────────────────
+  // Shell
   static const Color shellBg = Color(0xFF111827);
   static const Color shellPanelBg = Color(0xFF1F2937);
   static const Color shellBorder = Color(0xFF374151);
   static const Color shellTextTitle = Color(0xFFF9FAFB);
   static const Color shellTextMuted = Color(0xFF9CA3AF);
 
-  // ── BODY ─────────────────────────────────────────────────────────────────
+  // Body
   static const Color bodyBg = Color(0xFFF9F6F0);
   static const Color bodyPanelBg = Color(0xFFFFFFFF);
   static const Color bodyBorder = Color(0xFFE8E3DA);
   static const Color bodyTextMain = Color(0xFF1E293B);
   static const Color bodyTextMuted = Color(0xFF64748B);
 
-  // ── BRAND ────────────────────────────────────────────────────────────────
+  // Brand
   static const Color brandGold = Color(0xFFD4AF37);
+  static const Color goldGradientStart = Color(0xFFFFD700);
   static const Color brandGoldLight = Color(0x1AD4AF37);
   static const Color brandGoldBg = Color(0xFFFAF6EC);
 
-  // ── CREDIT STATUS ─────────────────────────────────────────────────────────
+  // Account status
   static const Color clearBg = Color(0xFFD1FAE5);
   static const Color clearText = Color(0xFF065F46);
   static const Color clearBorder = Color(0xFF6EE7B7);
@@ -46,7 +44,7 @@ class CustomerProfileColors {
   static const Color defaulterBorder = Color(0xFFFCA5A5);
   static const Color defaulterIcon = Color(0xFFEF4444);
 
-  // ── CUSTOMER TYPE ─────────────────────────────────────────────────────────
+  // Customer type
   static const Color vipBg = Color(0xFFFFF8E1);
   static const Color vipText = Color(0xFF996B00);
   static const Color vipBorder = Color(0xFFD4AF37);
@@ -54,7 +52,7 @@ class CustomerProfileColors {
   static const Color regularText = Color(0xFF1D4ED8);
   static const Color regularBorder = Color(0xFF93C5FD);
 
-  // ── 4 ACTION BUTTONS ──────────────────────────────────────────────────────
+  // Primary actions
   static const Color newSaleBg = Color(0xFFD4AF37);
   static const Color newSaleText = Color(0xFF000000);
   static const Color editBg = Color(0xFFEFF6FF);
@@ -67,13 +65,13 @@ class CustomerProfileColors {
   static const Color deleteText = Color(0xFF991B1B);
   static const Color deleteBorder = Color(0xFFFCA5A5);
 
-  // ── BILL HISTORY ──────────────────────────────────────────────────────────
+  // Billing activity
   static const Color paidBg = Color(0xFFD1FAE5);
   static const Color paidText = Color(0xFF065F46);
   static const Color unpaidBg = Color(0xFFFEE2E2);
   static const Color unpaidText = Color(0xFF991B1B);
 
-  // ── CREDIT LIMIT BAR ──────────────────────────────────────────────────────
+  // Due limit bar
   static const Color progressTrack = Color(0xFFE8E3DA);
   static const Color progressSafe = Color(0xFF10B981);
   static const Color progressWarn = Color(0xFFF59E0B);
@@ -83,7 +81,7 @@ class CustomerProfileColors {
   static const Color shadowLight = Color(0x0F000000);
   static const Color divider = Color(0xFFE8E3DA);
 
-  // ── ADVANCE ORDERS ───────────────────────────────────────────────────────  ✅ NEW
+  // Advance orders
   static const Color advanceBg = Color(0xFFF0F9FF);
   static const Color advanceBorder = Color(0xFFBAE6FD);
   static const Color advanceAccent = Color(0xFF0284C7);
@@ -98,7 +96,7 @@ class CustomerProfileColors {
   static const Color advanceAmountColor = Color(0xFFD4AF37);
   static const Color advanceRemaining = Color(0xFFEF4444);
 
-  // ── DUES SECTION ─────────────────────────────────────────────────────────  ✅ NEW
+  // Dues
   static const Color duesSectionBg = Color(0xFFFFFBEB);
   static const Color duesSectionBorder = Color(0xFFFDE68A);
   static const Color duesSectionAccent = Color(0xFFB45309);

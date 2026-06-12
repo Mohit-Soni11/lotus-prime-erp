@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,12 +10,11 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'config/app_config.dart';
 import 'config/env_config.dart';
 import 'core/logging/app_logger.dart';
+import 'core/router/app_router.dart';
 import 'database/db/app_database.dart';
 import 'database/seeds/database_seeder.dart';
 import 'firebase_options.dart';
 import 'theme/dashboard/app/uv.dart';
-import 'ui/auth/login_screen.dart';
-import 'ui/layout/main_layout_wrapper.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,7 +38,7 @@ Future<void> main() async {
   await runZonedGuarded(() async {
     try {
       await _bootstrapApplication();
-      runApp(const LotusERPApp());
+      runApp(LotusERPApp(routerConfig: createAppRouter()));
     } catch (error, stackTrace) {
       AppLogger.error(
         'Application bootstrap failed.',
@@ -71,6 +69,7 @@ Future<void> _bootstrapApplication() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  initAuthRouting();
 
   final database = AppDatabase();
   if (EnvConfig.enableDemoSeed) {
@@ -88,11 +87,16 @@ String _formatStartupError(Object error) {
 }
 
 class LotusERPApp extends StatelessWidget {
-  const LotusERPApp({super.key});
+  final RouterConfig<Object> routerConfig;
+
+  const LotusERPApp({
+    super.key,
+    required this.routerConfig,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: AppConfig.appName,
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.dark,
@@ -102,39 +106,7 @@ class LotusERPApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: GoogleFonts.inter().fontFamily,
       ),
-      home: const AuthGate(),
-    );
-  }
-}
-
-class AuthGate extends StatelessWidget {
-  const AuthGate({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return const BootstrapFailureScreen(
-            errorMessage: 'Authentication service is temporarily unavailable.',
-          );
-        }
-
-        if (snapshot.hasData) {
-          return const MainLayoutWrapper();
-        }
-
-        return const LoginScreen();
-      },
+      routerConfig: routerConfig,
     );
   }
 }

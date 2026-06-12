@@ -18,7 +18,9 @@ extension NewGirviActions on _NewGirviScreenState {
     _showSuccess(_ctrl.successMessage ?? GirviStrings.successGirviSaved);
     await Future.delayed(const Duration(milliseconds: 400));
     if (!mounted) return;
-    await _resetAll();
+    if (!_ctrl.isEditMode) {
+      await _resetAll();
+    }
   }
 
   bool _validateGirviEntry() {
@@ -119,7 +121,9 @@ extension NewGirviActions on _NewGirviScreenState {
       _showSuccess(_ctrl.successMessage ?? GirviStrings.successGirviSaved);
       await Future.delayed(const Duration(milliseconds: 400));
       if (!mounted) return;
-      await _resetAll();
+      if (!_ctrl.isEditMode) {
+        await _resetAll();
+      }
     }
   }
 

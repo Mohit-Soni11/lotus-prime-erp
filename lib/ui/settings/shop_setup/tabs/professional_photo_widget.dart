@@ -23,7 +23,7 @@ class ProfessionalPhotoUploadSystem extends StatefulWidget {
   final String defaultShape;
   final String? initialImagePath;
   final String heroTag;
-  final Function(File?, String)? onImageSaved;
+  final Future<void> Function(File?, String)? onImageSaved;
   final bool isInitiallyLocked;
 
   const ProfessionalPhotoUploadSystem({
@@ -131,13 +131,19 @@ class _ProfessionalPhotoUploadSystemState
     }
   }
 
-  void _updateImage(File? newFile) {
-    _logic.clearImageCache(_selectedImage);
-    setState(() {
-      _selectedImage = newFile;
-    });
-    if (widget.onImageSaved != null) {
-      widget.onImageSaved!(newFile, _currentShape);
+  Future<void> _updateImage(File? newFile) async {
+    if (_isProcessing) return;
+
+    setState(() => _isProcessing = true);
+    try {
+      if (widget.onImageSaved != null) {
+        await widget.onImageSaved!(newFile, _currentShape);
+      }
+      _logic.clearImageCache(_selectedImage);
+      if (!mounted) return;
+      setState(() => _selectedImage = newFile);
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
@@ -189,9 +195,9 @@ class _ProfessionalPhotoUploadSystemState
                       icon: BasicInfoIcons.removeTrash,
                       label: BasicInfoStrings.photoOptRemove,
                       color: BasicInfoColors.btnDanger,
-                      onTap: () {
+                      onTap: () async {
                         Navigator.pop(context);
-                        _updateImage(null);
+                        await _updateImage(null);
                       }),
               ],
             ),
@@ -394,12 +400,12 @@ class _ProfessionalPhotoUploadSystemState
                         padding: BasicInfoStyles.padActionBtn,
                         elevation: 2,
                       ),
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.pop(context);
                         setState(() {
                           _currentShape = tempShape;
                         });
-                        _updateImage(tempImage);
+                        await _updateImage(tempImage);
                       },
                       child: const Text(BasicInfoStrings.btnSavePhoto,
                           style: TextStyle(

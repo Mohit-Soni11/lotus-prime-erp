@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 
 import '../../models/customer/customer_profile/customer_profile_model.dart';
+import '../../models/girvi/girvi_invoice_draft.dart';
 
 class CustomerProfileRepository {
   final AppDatabase _db;
@@ -164,6 +165,127 @@ class CustomerProfileRepository {
     }
   }
 
+  Future<GirviInvoiceDraft?> fetchGirviInvoiceDraft({
+    required int customerId,
+    required int loanId,
+  }) async {
+    try {
+      final loan = await (_db.select(_db.girviLoans)
+            ..where(
+              (t) => t.id.equals(loanId) & t.customerId.equals(customerId),
+            ))
+          .getSingleOrNull();
+      if (loan == null) return null;
+
+      final customer = await (_db.select(_db.customers)
+            ..where((t) => t.id.equals(customerId)))
+          .getSingleOrNull();
+      if (customer == null) return null;
+
+      final itemRows = await (_db.select(_db.girviLoanItems)
+            ..where((t) => t.girviId.equals(loanId))
+            ..orderBy([(t) => OrderingTerm(expression: t.serialNo)]))
+          .get();
+
+      final itemIds = itemRows.map((item) => item.id).toList(growable: false);
+      final photoRows = itemIds.isEmpty
+          ? const <GirviItemPhoto>[]
+          : await (_db.select(_db.girviItemPhotos)
+                ..where((t) => t.itemId.isIn(itemIds))
+                ..orderBy([
+                  (t) => OrderingTerm(expression: t.itemId),
+                  (t) => OrderingTerm(expression: t.sortOrder),
+                ]))
+              .get();
+
+      final photosByItem = <int, List<String>>{};
+      for (final photo in photoRows) {
+        photosByItem.putIfAbsent(photo.itemId, () => []).add(photo.filePath);
+      }
+
+      final disbursementRows = await (_db.select(_db.girviDisbursements)
+            ..where((t) => t.girviId.equals(loanId))
+            ..orderBy([(t) => OrderingTerm(expression: t.sequenceNo)]))
+          .get();
+
+      final monthlyInterest = loan.loanAmount * loan.interestRate / 100;
+      final totalInterest = monthlyInterest * loan.durationMonths;
+      final maturityDate = loan.maturityDate ??
+          DateTime(
+            loan.startDate.year,
+            loan.startDate.month + loan.durationMonths,
+            loan.startDate.day,
+          );
+
+      final payments = disbursementRows
+          .map(
+            (entry) => GirviInvoicePayment(
+              label: entry.displayLabel,
+              amount: entry.amount,
+            ),
+          )
+          .toList(growable: false);
+
+      final disbursementSummary = payments.isEmpty
+          ? loan.disbursementMode
+          : payments
+              .map(
+                (entry) =>
+                    '${entry.label} Rs ${entry.amount.toStringAsFixed(2)}',
+              )
+              .join(' + ');
+
+      return GirviInvoiceDraft(
+        ticketNo: loan.ticketNo,
+        createdAt: loan.createdAt,
+        customerName: customer.name,
+        customerMobile: customer.mobile,
+        customerCity: customer.city ?? '',
+        customerAddress: _formatCustomerAddress(customer),
+        items: itemRows
+            .map(
+              (item) => GirviInvoiceItemDraft(
+                serialNo: item.serialNo,
+                metal: item.metalType,
+                description: item.itemName,
+                purity: item.purity,
+                pieces: item.pieces,
+                grossWeight: item.grossWeight,
+                lessWeight: item.lessWeight,
+                netWeight: item.netWeight,
+                valuationPurity:
+                    item.valuationPurityPercent?.toStringAsFixed(2) ?? '',
+                fineWeight: item.fineWeight,
+                ratePerGram: item.ratePerGram,
+                huid: item.huidNumber ?? '',
+                value: item.valuationAmount,
+                photoPaths:
+                    List.unmodifiable(photosByItem[item.id] ?? const []),
+              ),
+            )
+            .toList(growable: false),
+        totalValue: loan.totalValue,
+        loanAmount: loan.loanAmount,
+        interestRate: loan.interestRate,
+        durationMonths: loan.durationMonths,
+        startDate: loan.startDate,
+        maturityDate: maturityDate,
+        monthlyInterest: monthlyInterest,
+        totalInterest: totalInterest,
+        totalDue: loan.loanAmount + totalInterest,
+        payments: List.unmodifiable(payments),
+        disbursementSummary: disbursementSummary,
+        idProofType: loan.idProofType,
+        idProofNumber: loan.idProofNumber,
+        idProofImagePath: loan.idProofImagePath,
+        notes: loan.notes,
+      );
+    } catch (e) {
+      debugPrint("Customer girvi invoice draft fetch error: $e");
+      return null;
+    }
+  }
+
   Future<List<CustomerAdvanceOrderModel>> _fetchAdvanceOrders(
     int customerId,
   ) async {
@@ -230,6 +352,25 @@ class CustomerProfileRepository {
           ),
         )
         .toList();
+  }
+
+  String _formatCustomerAddress(Customer customer) {
+    final parts = <String>[
+      customer.addressLine1 ?? '',
+      customer.addressLine2 ?? '',
+      customer.city ?? '',
+      customer.state ?? '',
+      customer.pincode ?? '',
+      customer.country.trim().toLowerCase() == 'india' ? '' : customer.country,
+    ];
+    final cleanParts = <String>[];
+    for (final part in parts) {
+      final value = part.trim();
+      if (value.isNotEmpty && !cleanParts.contains(value)) {
+        cleanParts.add(value);
+      }
+    }
+    return cleanParts.join(', ');
   }
 
   Future<bool> updateCustomer({

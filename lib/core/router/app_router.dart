@@ -380,6 +380,7 @@ class RouteMapper {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 final _authNotifier = ValueNotifier<bool>(false);
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 /// Call this once during app bootstrap (main.dart) to wire Firebase auth
 /// state changes into the router's refreshListenable.
@@ -439,7 +440,7 @@ class _ComingSoonScreen extends StatelessWidget {
 
 GoRouter createAppRouter() {
   return GoRouter(
-    navigatorKey: GlobalKey<NavigatorState>(),
+    navigatorKey: _rootNavigatorKey,
     initialLocation: RoutePaths.dashboard,
     refreshListenable: _authNotifier,
     redirect: (context, state) {
@@ -467,6 +468,33 @@ GoRouter createAppRouter() {
       ),
 
       // ── APP SHELL (sidebar + content) ────────────────────────────────────────
+      GoRoute(
+        path: RoutePaths.girviNew,
+        builder: (context, state) {
+          final editLoanId = int.tryParse(
+            state.uri.queryParameters['editLoanId'] ?? '',
+          );
+          final returnCustomerId = int.tryParse(
+            state.uri.queryParameters['returnCustomerId'] ?? '',
+          );
+
+          return NewGirviScreen(
+            editLoanId: editLoanId,
+            onBack: () {
+              if (returnCustomerId != null) {
+                context.go('/app/customer/profile/$returnCustomerId');
+                return;
+              }
+              if (context.canPop()) {
+                context.pop();
+                return;
+              }
+              context.go(RoutePaths.girviList);
+            },
+          );
+        },
+      ),
+
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
@@ -521,6 +549,17 @@ GoRouter createAppRouter() {
                 onBack: () => context.pop(),
                 onDeleted: () => context.pop(),
                 onNewSale: (_) => context.go(RoutePaths.salesPos),
+                onEditBill: (_) => context.go(RoutePaths.salesPos),
+                onEditGirvi: (loanId) => context.go(
+                  Uri(
+                    path: RoutePaths.girviNew,
+                    queryParameters: {
+                      'editLoanId': '$loanId',
+                      'returnCustomerId': '$id',
+                    },
+                  ).toString(),
+                ),
+                onEditAdvance: (_) => context.go(RoutePaths.salesBooking),
               );
             },
           ),
@@ -670,11 +709,6 @@ GoRouter createAppRouter() {
           ),
 
           // ── GIRVI ─────────────────────────────────────────────────────────────
-          GoRoute(
-            path: RoutePaths.girviNew,
-            builder: (_, __) => const NewGirviScreen(),
-          ),
-
           GoRoute(
             path: RoutePaths.girviList,
             builder: (context, state) => GirviListScreen(

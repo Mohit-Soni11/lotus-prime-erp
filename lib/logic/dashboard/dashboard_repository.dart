@@ -8,11 +8,18 @@ import '../../models/dashboard/search_result.dart';
 import '../../models/dashboard/notification_item.dart';
 import '../../models/dashboard/customer_stats_model.dart';
 import '../../constants/enums.dart';
+import '../../database/local_database/shop_database_helper.dart';
+import '../../repositories/setting/shop_setup/shop_session_manager.dart';
 
 class DashboardRepository {
-  DashboardRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
+  DashboardRepository({
+    AppDatabase? db,
+    Future<Map<String, dynamic>?> Function()? shopSetupLoader,
+  })  : _db = db ?? AppDatabase(),
+        _shopSetupLoader = shopSetupLoader ?? _loadShopSetup;
 
   final AppDatabase _db;
+  final Future<Map<String, dynamic>?> Function() _shopSetupLoader;
 
   // Stream Controller for Notifications
   final _notificationController =
@@ -70,6 +77,15 @@ class DashboardRepository {
 
       if (rows.isNotEmpty) {
         final row = rows.first;
+        final driftLogoPath = row.read<String?>('logo_path')?.trim() ?? '';
+        final driftLogoShape = row.read<String?>('logo_shape')?.trim() ?? '';
+        final savedIdentity = driftLogoPath.isEmpty
+            ? await _fetchSavedIdentity()
+            : (
+                logoPath: driftLogoPath,
+                logoShape: _normalizeLogoShape(driftLogoShape),
+              );
+
         return ShopProfileModel(
           displayName: row.read<String?>('shop_name') ?? 'My Shop',
           ownerName: row.read<String?>('owner_name') ?? '--',
@@ -81,8 +97,8 @@ class DashboardRepository {
           gstin: row.read<String?>('gstin') ?? '',
           bisLicense: row.read<String?>('bis_license') ?? '',
           huidNo: row.read<String?>('huid_no') ?? '',
-          logoPath: row.read<String?>('logo_path'),
-          logoShape: row.read<String?>('logo_shape') ?? 'circle',
+          logoPath: savedIdentity.logoPath,
+          logoShape: savedIdentity.logoShape,
           showMobile: (row.read<int?>('show_mobile') ?? 1) == 1,
           showEmail: (row.read<int?>('show_email') ?? 1) == 1,
           showGst: (row.read<int?>('show_gst') ?? 1) == 1,
@@ -232,5 +248,35 @@ class DashboardRepository {
 
   void dispose() {
     _notificationController.close();
+  }
+
+  Future<({String? logoPath, String logoShape})> _fetchSavedIdentity() async {
+    try {
+      final payload = await _shopSetupLoader();
+      final rawBasicInfo = payload?['basic_info'];
+      final basicInfo = rawBasicInfo is Map
+          ? rawBasicInfo.map(
+              (key, value) => MapEntry(key.toString(), value),
+            )
+          : const <String, dynamic>{};
+      final logoPath = basicInfo['logo_path']?.toString().trim() ?? '';
+      return (
+        logoPath: logoPath.isEmpty ? null : logoPath,
+        logoShape: _normalizeLogoShape(
+          basicInfo['logo_shape']?.toString() ?? '',
+        ),
+      );
+    } catch (_) {
+      return (logoPath: null, logoShape: 'circle');
+    }
+  }
+
+  static Future<Map<String, dynamic>?> _loadShopSetup() async {
+    final tenantId = await ShopSessionManager.getPermanentTenantId();
+    return ShopDatabaseHelper().getMasterPayload(tenantId);
+  }
+
+  static String _normalizeLogoShape(String value) {
+    return value.trim().toLowerCase() == 'square' ? 'square' : 'circle';
   }
 }

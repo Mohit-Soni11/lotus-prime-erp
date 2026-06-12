@@ -30,6 +30,7 @@ import 'add_customer_app_bar.dart'; // âœ… Added external AppBar (Adjust pat
 class AddCustomerScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final VoidCallback? onSaved;
+  final int? customerId;
   final String? initialName;
   final String? initialMobile;
   final String? initialAddress;
@@ -38,6 +39,7 @@ class AddCustomerScreen extends StatefulWidget {
     super.key,
     this.onBack,
     this.onSaved,
+    this.customerId,
     this.initialName,
     this.initialMobile,
     this.initialAddress,
@@ -96,6 +98,10 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
 
   String? _selectedCountry = 'India';
   String? _selectedState;
+  bool _isLoadingInitialData = false;
+  String? _initialLoadError;
+
+  bool get _isEditMode => widget.customerId != null;
 
   static const List<String> _countries = [
     'India',
@@ -111,7 +117,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
   @override
   void initState() {
     super.initState();
-    _logic = AddCustomerLogic();
+    _logic = AddCustomerLogic(customerId: widget.customerId);
     _logic.addListener(_rebuild);
 
     _anims = List.generate(
@@ -134,8 +140,63 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     }
 
     _attachFocusListeners();
-    _memberIdCtrl.text = _logic.generateMembershipId();
-    _applyInitialValues();
+    _initializeForm();
+  }
+
+  Future<void> _initializeForm() async {
+    if (!_isEditMode) {
+      _memberIdCtrl.text = _logic.generateMembershipId();
+      _applyInitialValues();
+      return;
+    }
+
+    setState(() => _isLoadingInitialData = true);
+    final form = await _logic.loadCustomerForEdit();
+    if (!mounted) return;
+
+    if (form == null) {
+      setState(() {
+        _isLoadingInitialData = false;
+        _initialLoadError = 'Customer details could not be loaded.';
+      });
+      return;
+    }
+
+    _populateControllers(form);
+    setState(() {
+      _isLoadingInitialData = false;
+      _initialLoadError = null;
+    });
+  }
+
+  void _populateControllers(AddCustomerFormModel form) {
+    _firstNameCtrl.text = form.firstName;
+    _lastNameCtrl.text = form.lastName;
+    _companyCtrl.text = form.companyName;
+    _contactCtrl.text = form.contactPersonName;
+    _mobileCtrl.text = form.mobile;
+    _whatsappCtrl.text = form.whatsapp;
+    _emailCtrl.text = form.email;
+    _altContactCtrl.text = form.alternateContact;
+    _panCtrl.text = form.panNumber;
+    _idProofNoCtrl.text = form.idProofNumber;
+    _gstCtrl.text = form.gstNumber;
+    _addr1Ctrl.text = form.addressLine1;
+    _addr2Ctrl.text = form.addressLine2;
+    _cityCtrl.text = form.city;
+    _pincodeCtrl.text = form.pincode;
+    _openBalCtrl.text = _numberText(form.openingBalance);
+    _creditLimCtrl.text = _numberText(form.creditLimit);
+    _memberIdCtrl.text = form.membershipId;
+    _notesCtrl.text = form.notes;
+    _selectedCountry = form.country.trim().isEmpty ? 'India' : form.country;
+    _selectedState = form.state.trim().isEmpty ? null : form.state;
+  }
+
+  String _numberText(double value) {
+    return value == value.roundToDouble()
+        ? value.toInt().toString()
+        : value.toString();
   }
 
   void _applyInitialValues() {
@@ -302,7 +363,12 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     final ok = await _logic.saveCustomer();
     if (!mounted) return;
     if (ok) {
-      _showSnack(AddCustomerStrings.successMsg, isSuccess: true);
+      _showSnack(
+        _isEditMode
+            ? AddCustomerStrings.updateSuccessMsg
+            : AddCustomerStrings.successMsg,
+        isSuccess: true,
+      );
       await Future.delayed(const Duration(milliseconds: 800));
       if (!mounted) return;
       final onSaved = widget.onSaved;
@@ -319,6 +385,14 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
   }
 
   void _handleClear() {
+    if (_isEditMode) {
+      _logic.resetForm();
+      _populateControllers(_logic.form);
+      setState(() {});
+      FocusScope.of(context).unfocus();
+      return;
+    }
+
     for (final c in [
       _firstNameCtrl,
       _lastNameCtrl,
@@ -384,109 +458,147 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
         appBar: AddCustomerAppBar(
           // âœ… Replaced hardcoded AppBar with external component
           onBack: widget.onBack ?? () => Navigator.maybePop(context),
+          title: _isEditMode
+              ? AddCustomerStrings.editAppBarTitle
+              : AddCustomerStrings.appBarTitle,
         ),
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: AddCustomerStyles.pagePadding,
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _anim(0, _buildPhotoSection()),
-                const SizedBox(height: 20),
-                _anim(
-                    1,
-                    _buildSection(
-                      icon: AddCustomerIcons.name,
-                      title: 'Personal Information',
-                      subtitle: 'Identity & entity details',
-                      accent:
-                          const Color(0xFF4F46E5), // Previously _C.accentPerson
-                      stepNumber: 1,
-                      child: _buildPersonalSection(),
-                    )),
-                const SizedBox(height: 16),
-                _anim(
-                    2,
-                    _buildSection(
-                      icon: AddCustomerIcons.contactSection,
-                      title: AddCustomerStrings.secContact,
-                      subtitle: 'Mobile, WhatsApp & email',
-                      accent: const Color(
-                          0xFF059669), // Previously _C.accentContact
-                      stepNumber: 2,
-                      child: _buildContactSection(),
-                    )),
-                const SizedBox(height: 16),
-                _anim(
-                    3,
-                    _buildSection(
-                      icon: Icons.verified_user_rounded,
-                      title: 'KYC & Compliance',
-                      subtitle: 'PAN, ID proof & GST details',
-                      accent:
-                          const Color(0xFFD97706), // Previously _C.accentKyc
-                      stepNumber: 3,
-                      child: _buildKycSection(),
-                    )),
-                const SizedBox(height: 16),
-                _anim(
-                    4,
-                    _buildSection(
-                      icon: AddCustomerIcons.locationSection,
-                      title: AddCustomerStrings.secLocation,
-                      subtitle: 'Delivery & billing address',
-                      accent: const Color(
-                          0xFF0284C7), // Previously _C.accentAddress
-                      stepNumber: 4,
-                      child: _buildAddressSection(),
-                    )),
-                const SizedBox(height: 16),
-                _anim(
-                    5,
-                    _buildSection(
-                      icon: Icons.account_balance_wallet_rounded,
-                      title: 'Account & Billing',
-                      subtitle: 'Credit limit, tier & membership',
-                      accent: const Color(
-                          0xFF7C3AED), // Previously _C.accentBilling
-                      stepNumber: 5,
-                      child: _buildBillingSection(),
-                    )),
-                const SizedBox(height: 16),
-                _anim(
-                    6,
-                    _buildSection(
-                      icon: Icons.favorite_border_rounded,
-                      title: 'Preferences & CRM',
-                      subtitle: 'Sizes, family & personalization',
-                      accent:
-                          const Color(0xFFDB2777), // Previously _C.accentPref
-                      stepNumber: 6,
-                      child: _buildPreferencesSection(),
-                    )),
-                const SizedBox(height: 16),
-                _anim(
-                    7,
-                    _buildSection(
-                      icon: AddCustomerIcons.notes,
-                      title: 'Additional Info',
-                      subtitle: 'Referral source & internal notes',
-                      accent: const Color(
-                          0xFF475569), // Previously _C.accentAdditional
-                      stepNumber: 7,
-                      child: _buildAdditionalSection(),
-                    )),
-                const SizedBox(height: 28),
-                _anim(7, _buildActionButtons()),
-                const SizedBox(height: 8),
-                Center(
-                    child: Text(AddCustomerStrings.requiredNote,
-                        style: AddCustomerStyles.requiredNote)),
-              ],
-            ),
-          ),
+          child: _isLoadingInitialData
+              ? const Center(child: CircularProgressIndicator())
+              : _initialLoadError != null
+                  ? _buildInitialLoadError()
+                  : SingleChildScrollView(
+                      padding: AddCustomerStyles.pagePadding,
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _anim(0, _buildPhotoSection()),
+                          const SizedBox(height: 20),
+                          _anim(
+                              1,
+                              _buildSection(
+                                icon: AddCustomerIcons.name,
+                                title: 'Personal Information',
+                                subtitle: 'Identity & entity details',
+                                accent: const Color(
+                                    0xFF4F46E5), // Previously _C.accentPerson
+                                stepNumber: 1,
+                                child: _buildPersonalSection(),
+                              )),
+                          const SizedBox(height: 16),
+                          _anim(
+                              2,
+                              _buildSection(
+                                icon: AddCustomerIcons.contactSection,
+                                title: AddCustomerStrings.secContact,
+                                subtitle: 'Mobile, WhatsApp & email',
+                                accent: const Color(
+                                    0xFF059669), // Previously _C.accentContact
+                                stepNumber: 2,
+                                child: _buildContactSection(),
+                              )),
+                          const SizedBox(height: 16),
+                          _anim(
+                              3,
+                              _buildSection(
+                                icon: Icons.verified_user_rounded,
+                                title: 'KYC & Compliance',
+                                subtitle: 'PAN, ID proof & GST details',
+                                accent: const Color(
+                                    0xFFD97706), // Previously _C.accentKyc
+                                stepNumber: 3,
+                                child: _buildKycSection(),
+                              )),
+                          const SizedBox(height: 16),
+                          _anim(
+                              4,
+                              _buildSection(
+                                icon: AddCustomerIcons.locationSection,
+                                title: AddCustomerStrings.secLocation,
+                                subtitle: 'Delivery & billing address',
+                                accent: const Color(
+                                    0xFF0284C7), // Previously _C.accentAddress
+                                stepNumber: 4,
+                                child: _buildAddressSection(),
+                              )),
+                          const SizedBox(height: 16),
+                          _anim(
+                              5,
+                              _buildSection(
+                                icon: Icons.account_balance_wallet_rounded,
+                                title: 'Account & Billing',
+                                subtitle: 'Credit limit, tier & membership',
+                                accent: const Color(
+                                    0xFF7C3AED), // Previously _C.accentBilling
+                                stepNumber: 5,
+                                child: _buildBillingSection(),
+                              )),
+                          const SizedBox(height: 16),
+                          _anim(
+                              6,
+                              _buildSection(
+                                icon: Icons.favorite_border_rounded,
+                                title: 'Preferences & CRM',
+                                subtitle: 'Sizes, family & personalization',
+                                accent: const Color(
+                                    0xFFDB2777), // Previously _C.accentPref
+                                stepNumber: 6,
+                                child: _buildPreferencesSection(),
+                              )),
+                          const SizedBox(height: 16),
+                          _anim(
+                              7,
+                              _buildSection(
+                                icon: AddCustomerIcons.notes,
+                                title: 'Additional Info',
+                                subtitle: 'Referral source & internal notes',
+                                accent: const Color(
+                                    0xFF475569), // Previously _C.accentAdditional
+                                stepNumber: 7,
+                                child: _buildAdditionalSection(),
+                              )),
+                          const SizedBox(height: 28),
+                          _anim(7, _buildActionButtons()),
+                          const SizedBox(height: 8),
+                          Center(
+                            child: Text(
+                              _isEditMode
+                                  ? AddCustomerStrings.editRequiredNote
+                                  : AddCustomerStrings.requiredNote,
+                              style: AddCustomerStyles.requiredNote,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInitialLoadError() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.error_outline_rounded,
+            color: AddCustomerColors.error,
+            size: 42,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _initialLoadError!,
+            style: AddCustomerStyles.sectionTitle,
+          ),
+          const SizedBox(height: 14),
+          FilledButton.icon(
+            onPressed: _initializeForm,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Retry'),
+          ),
+        ],
       ),
     );
   }
@@ -1497,7 +1609,11 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       OutlinedButton.icon(
         onPressed: saving ? null : _handleClear,
         icon: const Icon(Icons.refresh_rounded, size: 18),
-        label: const Text(AddCustomerStrings.btnClear),
+        label: Text(
+          _isEditMode
+              ? AddCustomerStrings.btnResetChanges
+              : AddCustomerStrings.btnClear,
+        ),
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.black87,
           side: const BorderSide(color: Color(0xFFE5E7EB), width: 1.5),
@@ -1544,7 +1660,10 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
                           size: 20,
                           color: canSave ? Colors.black87 : Colors.black54),
                       const SizedBox(width: 10),
-                      Text(AddCustomerStrings.btnSave,
+                      Text(
+                          _isEditMode
+                              ? AddCustomerStrings.btnUpdate
+                              : AddCustomerStrings.btnSave,
                           style: AddCustomerStyles.saveBtnText.copyWith(
                               color:
                                   canSave ? Colors.black87 : Colors.black54)),
