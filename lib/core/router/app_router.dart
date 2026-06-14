@@ -824,17 +824,23 @@ GoRouter createAppRouter() {
 
           GoRoute(
             path: RoutePaths.financeDueReport,
-            builder: (_, __) => const DueReportScreen(),
+            builder: (context, state) => DueReportScreen(
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
+            ),
           ),
 
           GoRoute(
             path: RoutePaths.financeDueCollection,
-            builder: (_, __) => const DueCollectionEntryScreen(),
+            builder: (context, state) => DueCollectionEntryScreen(
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
+            ),
           ),
 
           GoRoute(
             path: RoutePaths.financeDueReceipts,
-            builder: (_, __) => const DueReceiptHistoryScreen(),
+            builder: (context, state) => DueReceiptHistoryScreen(
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
+            ),
           ),
 
           // ── REPORTS ────────────────────────────────────────────────────────────

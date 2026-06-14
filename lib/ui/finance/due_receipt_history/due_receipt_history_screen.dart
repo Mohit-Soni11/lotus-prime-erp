@@ -16,7 +16,9 @@ import 'due_receipt_history_list.dart';
 import 'due_receipt_history_summary_panel.dart';
 
 class DueReceiptHistoryScreen extends StatefulWidget {
-  const DueReceiptHistoryScreen({super.key});
+  final VoidCallback? onBack;
+
+  const DueReceiptHistoryScreen({super.key, this.onBack});
 
   @override
   State<DueReceiptHistoryScreen> createState() =>
@@ -40,6 +42,10 @@ class _DueReceiptHistoryScreenState extends State<DueReceiptHistoryScreen> {
 
   void _handleBack() {
     if (!mounted) return;
+    if (widget.onBack != null) {
+      widget.onBack!();
+      return;
+    }
     Navigator.of(context).maybePop();
   }
 

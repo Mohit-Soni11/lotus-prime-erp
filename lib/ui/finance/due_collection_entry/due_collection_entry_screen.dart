@@ -13,6 +13,7 @@ import '../../../theme/finance/due_collection_entry/due_collection_entry_theme.d
 enum _PremiumNoticeType { success, warning, error }
 
 class DueCollectionEntryScreen extends StatefulWidget {
+  final VoidCallback? onBack;
   final int? initialCustomerId;
   final String? initialCustomerName;
   final String? initialMobile;
@@ -20,6 +21,7 @@ class DueCollectionEntryScreen extends StatefulWidget {
 
   const DueCollectionEntryScreen({
     super.key,
+    this.onBack,
     this.initialCustomerId,
     this.initialCustomerName,
     this.initialMobile,
@@ -58,6 +60,10 @@ class _DueCollectionEntryScreenState extends State<DueCollectionEntryScreen> {
 
   void _handleBack() {
     if (!mounted) return;
+    if (widget.onBack != null) {
+      widget.onBack!();
+      return;
+    }
     Navigator.of(context).maybePop();
   }
 

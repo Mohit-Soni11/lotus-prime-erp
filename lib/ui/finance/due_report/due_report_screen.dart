@@ -17,7 +17,9 @@ import 'due_report_filter_bar.dart';
 import 'due_report_summary_panel.dart';
 
 class DueReportScreen extends StatefulWidget {
-  const DueReportScreen({super.key});
+  final VoidCallback? onBack;
+
+  const DueReportScreen({super.key, this.onBack});
 
   @override
   State<DueReportScreen> createState() => _DueReportScreenState();
@@ -40,6 +42,10 @@ class _DueReportScreenState extends State<DueReportScreen> {
 
   void _handleBack() {
     if (!mounted) return;
+    if (widget.onBack != null) {
+      widget.onBack!();
+      return;
+    }
     Navigator.of(context).maybePop();
   }
 
