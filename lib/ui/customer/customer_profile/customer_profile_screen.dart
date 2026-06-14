@@ -29,6 +29,7 @@ class CustomerProfileScreen extends StatefulWidget {
   final Function(int billId)? onEditBill;
   final Function(int loanId)? onEditGirvi;
   final Function(int advanceOrderId)? onEditAdvance;
+  final Function(int customerId, String billNo)? onCollectDue;
   final VoidCallback? onDeleted;
 
   /// Called when user taps "Convert to Sale" on an advance order.
@@ -43,6 +44,7 @@ class CustomerProfileScreen extends StatefulWidget {
     this.onEditBill,
     this.onEditGirvi,
     this.onEditAdvance,
+    this.onCollectDue,
     this.onDeleted,
     this.onConvertAdvanceToSale,
   });
@@ -1898,6 +1900,20 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             _printBillPdf(bill.id);
           },
         ),
+        if (bill.dueAmount > 0.5)
+          _ProfileRecordAction(
+            icon: Icons.payments_rounded,
+            title: 'Collect Due',
+            subtitle: 'Open due collection with this invoice selected.',
+            color: CustomerProfileColors.duesAmount,
+            onTap: () {
+              if (widget.onCollectDue != null) {
+                widget.onCollectDue!(widget.customerId, bill.billNo);
+              } else {
+                _showInfoSnack('Due collection is not configured yet.');
+              }
+            },
+          ),
       ],
     );
   }
@@ -1980,6 +1996,16 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             _printAdvancePdf(order);
           },
         ),
+        if (order.isPending || order.isReady)
+          _ProfileRecordAction(
+            icon: Icons.point_of_sale_rounded,
+            title: 'Convert to Sale',
+            subtitle: 'Carry this booking into the sales workspace.',
+            color: CustomerProfileColors.advanceConvertBtn,
+            onTap: () {
+              _logic.triggerConvertAdvanceToSale(order.id);
+            },
+          ),
       ],
     );
   }

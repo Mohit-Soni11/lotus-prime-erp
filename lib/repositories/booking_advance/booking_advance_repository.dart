@@ -178,6 +178,22 @@ class BookingAdvanceRepository {
     });
   }
 
+  Future<bool> markConvertedToSale({
+    required int orderId,
+    required String invoiceNumber,
+  }) async {
+    final updated = await (_db.update(_db.salesOrders)
+          ..where((tbl) => tbl.id.equals(orderId)))
+        .write(
+      SalesOrdersCompanion(
+        status: const Value('DELIVERED'),
+        notes: Value('Converted to sales invoice $invoiceNumber'),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+    return updated > 0;
+  }
+
   // ===========================================================================
   // CUSTOMER SEARCH
   // ===========================================================================

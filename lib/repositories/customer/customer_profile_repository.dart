@@ -291,7 +291,11 @@ class CustomerProfileRepository {
   ) async {
     try {
       final orderRows = await (_db.select(_db.salesOrders)
-            ..where((t) => t.customerId.equals(customerId))
+            ..where(
+              (t) =>
+                  t.customerId.equals(customerId) &
+                  (t.status.equals('PENDING') | t.status.equals('READY')),
+            )
             ..orderBy([
               (t) =>
                   OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc)

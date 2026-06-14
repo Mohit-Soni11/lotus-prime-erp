@@ -511,12 +511,16 @@ GoRouter createAppRouter() {
           final editBillId = int.tryParse(
             state.uri.queryParameters['editBillId'] ?? '',
           );
+          final convertAdvanceId = int.tryParse(
+            state.uri.queryParameters['convertAdvanceId'] ?? '',
+          );
           final returnCustomerId = int.tryParse(
             state.uri.queryParameters['returnCustomerId'] ?? '',
           );
 
           return PosMasterSaleScreen(
             editBillId: editBillId,
+            convertAdvanceId: convertAdvanceId,
             onBack: () {
               if (returnCustomerId != null) {
                 context.go('/app/customer/profile/$returnCustomerId');
@@ -637,6 +641,25 @@ GoRouter createAppRouter() {
                     queryParameters: {
                       'editAdvanceId': '$orderId',
                       'returnCustomerId': '$id',
+                    },
+                  ).toString(),
+                ),
+                onConvertAdvanceToSale: (orderId, customerId) => context.go(
+                  Uri(
+                    path: RoutePaths.salesPos,
+                    queryParameters: {
+                      'convertAdvanceId': '$orderId',
+                      'returnCustomerId': '$customerId',
+                    },
+                  ).toString(),
+                ),
+                onCollectDue: (customerId, billNo) => context.go(
+                  Uri(
+                    path: RoutePaths.financeDueCollection,
+                    queryParameters: {
+                      'customerId': '$customerId',
+                      'billNo': billNo,
+                      'returnCustomerId': '$customerId',
                     },
                   ).toString(),
                 ),
@@ -831,9 +854,27 @@ GoRouter createAppRouter() {
 
           GoRoute(
             path: RoutePaths.financeDueCollection,
-            builder: (context, state) => DueCollectionEntryScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
+            builder: (context, state) {
+              final initialCustomerId = int.tryParse(
+                state.uri.queryParameters['customerId'] ?? '',
+              );
+              final returnCustomerId = int.tryParse(
+                state.uri.queryParameters['returnCustomerId'] ?? '',
+              );
+              final initialBillNo = state.uri.queryParameters['billNo'];
+
+              return DueCollectionEntryScreen(
+                initialCustomerId: initialCustomerId,
+                initialBillNo: initialBillNo,
+                onBack: () {
+                  if (returnCustomerId != null) {
+                    context.go('/app/customer/profile/$returnCustomerId');
+                    return;
+                  }
+                  _goBackOr(context, RoutePaths.dashboard);
+                },
+              );
+            },
           ),
 
           GoRoute(

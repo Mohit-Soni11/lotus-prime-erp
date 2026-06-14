@@ -20,6 +20,7 @@ import '../../../helpers/search/fuzzy_search_helper.dart';
 import '../../../repositories/sales & orders/pos/pos_hold_repository.dart';
 import '../../../repositories/sales & orders/pos/pos_checkout_repository.dart';
 import '../../../repositories/sales & orders/pos/pos_stock_lookup_repository.dart';
+import '../../../repositories/booking_advance/booking_advance_repository.dart';
 import '../../../repositories/setting/metal_rate/metal_rate_quote_service.dart';
 import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
 import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
@@ -44,6 +45,8 @@ class PosBillingController extends ChangeNotifier {
   final AppDatabase _db = AppDatabase();
   final PosHoldRepository _holdRepo = PosHoldRepository();
   final PosCheckoutRepository _checkoutRepo = PosCheckoutRepository();
+  final BookingAdvanceRepository _bookingAdvanceRepo =
+      BookingAdvanceRepository();
   final ShopSetupRepository _shopRepo = ShopSetupRepository();
   final PosStockLookupRepository _stockLookupRepo = PosStockLookupRepository();
   final MetalRateQuoteService _rateQuoteService = MetalRateQuoteService();
@@ -719,6 +722,11 @@ class PosBillingController extends ChangeNotifier {
   String? editLoadError;
   bool get isEditingExistingBill => editingBillId != null;
 
+  int? convertedAdvanceOrderId;
+  bool isLoadingAdvanceConversion = false;
+  String? advanceConversionError;
+  bool get isConvertingAdvance => convertedAdvanceOrderId != null;
+
   Future<bool> initializeForEdit(int billId) async {
     isLoadingEditBill = true;
     editLoadError = null;
@@ -801,6 +809,79 @@ class PosBillingController extends ChangeNotifier {
       isLoadingEditBill = false;
       notifyListeners();
     }
+  }
+
+  Future<bool> initializeFromAdvanceOrder(int orderId) async {
+    isLoadingAdvanceConversion = true;
+    advanceConversionError = null;
+    notifyListeners();
+
+    try {
+      final details = await _bookingAdvanceRepo.fetchEditableBooking(orderId);
+      if (details == null) {
+        advanceConversionError =
+            'Advance order could not be loaded for conversion.';
+        return false;
+      }
+
+      clearEntirePOS(isHolding: false, refreshInvoicePreview: false);
+      convertedAdvanceOrderId = orderId;
+
+      final order = details.order;
+      await _restoreSelectedCustomer(order.customerId);
+      billingMode = BillingMode.retail;
+      billType = BillType.normal;
+
+      final item = SaleItemModel(metal: _metalFromDb(order.metalType));
+      item.addListener(_onChildItemChanged);
+      item.descCtrl.text = order.itemName;
+      item.pcsCtrl.text = '1';
+      item.purityCtrl.text = order.purity;
+      item.grossCtrl.text = _formatEditNumber(order.approxWeight);
+      item.lessCtrl.clear();
+      item.rateCtrl.text = _formatEditNumber(order.lockedRate);
+      saleItems.add(item);
+      activeRowIndex = 0;
+
+      final totalAdvance =
+          details.advances.fold<double>(0, (sum, row) => sum + row.amountPaid);
+      advCtrl.text = _formatEditNumber(totalAdvance);
+
+      notifyListeners();
+      return true;
+    } catch (_) {
+      advanceConversionError =
+          'Advance order could not be loaded for conversion.';
+      return false;
+    } finally {
+      isLoadingAdvanceConversion = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> markConvertedAdvanceDeliveredIfNeeded(
+    String invoiceNumber,
+  ) async {
+    final orderId = convertedAdvanceOrderId;
+    if (orderId == null) return;
+
+    try {
+      final success = await _bookingAdvanceRepo.markConvertedToSale(
+        orderId: orderId,
+        invoiceNumber: invoiceNumber,
+      );
+      if (success) {
+        convertedAdvanceOrderId = null;
+        advanceConversionError = null;
+      } else {
+        advanceConversionError =
+            'Invoice saved, but advance order status was not updated.';
+      }
+    } catch (_) {
+      advanceConversionError =
+          'Invoice saved, but advance order status was not updated.';
+    }
+    notifyListeners();
   }
 
   String _formatEditNumber(double value) {
@@ -1513,6 +1594,8 @@ class PosBillingController extends ChangeNotifier {
     editingBillId = null;
     editingBillDate = null;
     editLoadError = null;
+    convertedAdvanceOrderId = null;
+    advanceConversionError = null;
     _committedInvoiceNumber = null;
     selectedCustomer = null;
     customerSuggestions = [];

@@ -772,6 +772,7 @@ class PosInvoiceController extends ChangeNotifier {
     */
     billing.markCurrentSaleCommitted(result.invoiceNumber);
     billing.updateInvoiceSequencePreview(result.invoiceSequence + 1);
+    await billing.markConvertedAdvanceDeliveredIfNeeded(result.invoiceNumber);
 
     if (result.invoiceNumber != inv.invoiceNumber) {
       invoice = _copyInvoiceWithNumber(inv, result.invoiceNumber);

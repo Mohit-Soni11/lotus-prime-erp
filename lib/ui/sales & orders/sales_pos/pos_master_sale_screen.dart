@@ -25,10 +25,12 @@ class PosMasterSaleScreen extends StatefulWidget {
   const PosMasterSaleScreen({
     super.key,
     this.editBillId,
+    this.convertAdvanceId,
     this.onBack,
   });
 
   final int? editBillId;
+  final int? convertAdvanceId;
   final VoidCallback? onBack;
 
   @override
@@ -40,6 +42,8 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
   late final PosBillingController _ctrl;
   bool _isLoadingEditBill = false;
   String? _editLoadError;
+  bool _isLoadingAdvanceConversion = false;
+  String? _advanceConversionError;
 
   @override
   void initState() {
@@ -50,6 +54,13 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _loadEditBill(editBillId);
       });
+    } else {
+      final convertAdvanceId = widget.convertAdvanceId;
+      if (convertAdvanceId != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _loadAdvanceConversion(convertAdvanceId);
+        });
+      }
     }
   }
 
@@ -71,6 +82,25 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
     });
   }
 
+  Future<void> _loadAdvanceConversion(int orderId) async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingAdvanceConversion = true;
+      _advanceConversionError = null;
+    });
+
+    final loaded = await _ctrl.initializeFromAdvanceOrder(orderId);
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingAdvanceConversion = false;
+      _advanceConversionError = loaded
+          ? null
+          : _ctrl.advanceConversionError ??
+              'Advance order could not be loaded for conversion.';
+    });
+  }
+
   @override
   void dispose() {
     _ctrl.dispose();
@@ -89,7 +119,9 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
         appBar: PosAppBar(
           title: widget.editBillId != null
               ? 'Edit Sales Bill'
-              : "${_ctrl.shopName} - POS TERMINAL",
+              : widget.convertAdvanceId != null
+                  ? 'Convert Advance to Sale'
+                  : "${_ctrl.shopName} - POS TERMINAL",
           // Removed userName, userRole, and userInitials from here
           onBack: widget.onBack ?? () => Navigator.maybePop(context),
         ),
@@ -100,13 +132,14 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
   }
 
   Widget _buildBody() {
-    if (_isLoadingEditBill) {
+    if (_isLoadingEditBill || _isLoadingAdvanceConversion) {
       return const Center(
         child: CircularProgressIndicator(color: SalesPosColors.brandGold),
       );
     }
 
-    if (_editLoadError != null) {
+    final loadError = _editLoadError ?? _advanceConversionError;
+    if (loadError != null) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -118,7 +151,7 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              _editLoadError!,
+              loadError,
               style: const TextStyle(
                 color: SalesPosColors.textDark,
                 fontSize: 16,
