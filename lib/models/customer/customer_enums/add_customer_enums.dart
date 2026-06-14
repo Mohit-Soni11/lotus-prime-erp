@@ -20,16 +20,46 @@ enum CustomerEntityType {
 
 // ── 2. CUSTOMER TIER ─────────────────────────────────────────────────────────
 enum CustomerTier {
-  regular('Regular'),
-  silver('Silver'),
-  gold('Gold'),
-  vip('VIP');
+  regular(
+    'Regular',
+    'Standard',
+    'Everyday client profile',
+  ),
+  silver(
+    'Silver',
+    'Silver',
+    'Growing client relationship',
+  ),
+  gold(
+    'Gold',
+    'Gold',
+    'High-value purchase profile',
+  ),
+  vip(
+    'VIP',
+    'Elite',
+    'Priority client account',
+  );
 
+  /// Stable database label. Keep this compatible with existing saved records.
   final String label;
-  const CustomerTier(this.label);
+  final String displayLabel;
+  final String description;
 
-  static CustomerTier fromLabel(String l) => CustomerTier.values
-      .firstWhere((e) => e.label == l, orElse: () => CustomerTier.regular);
+  const CustomerTier(this.label, this.displayLabel, this.description);
+
+  static CustomerTier fromLabel(String value) {
+    final normalized = value.trim().toLowerCase();
+    if (normalized == 'standard') return CustomerTier.regular;
+    if (normalized == 'elite') return CustomerTier.vip;
+
+    return CustomerTier.values.firstWhere(
+      (tier) =>
+          tier.label.toLowerCase() == normalized ||
+          tier.displayLabel.toLowerCase() == normalized,
+      orElse: () => CustomerTier.regular,
+    );
+  }
 }
 
 // ── 3. GENDER ────────────────────────────────────────────────────────────────

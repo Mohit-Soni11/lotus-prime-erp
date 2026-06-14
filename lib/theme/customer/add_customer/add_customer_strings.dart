@@ -43,10 +43,10 @@ class AddCustomerStrings {
   static const String hintNotes = "Any special notes...";
 
   // ── CUSTOMER TYPE ─────────────────────────────────────────────────────────
-  static const String typeRegular = "Regular";
-  static const String typeVip = "VIP";
-  static const String typeRegularSub = "Standard customer";
-  static const String typeVipSub = "Premium member";
+  static const String typeRegular = "Standard";
+  static const String typeVip = "Elite";
+  static const String typeRegularSub = "Everyday client profile";
+  static const String typeVipSub = "Priority client account";
 
   // ── BUTTONS ───────────────────────────────────────────────────────────────
   static const String btnSave = "Save Customer";

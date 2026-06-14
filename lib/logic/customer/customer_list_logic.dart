@@ -1,14 +1,15 @@
 // -----------------------------------------------------------------------------
 // FILE: customer_list_logic.dart
-// MODULE: Customer → Customer List
-// DESCRIPTION: Main controller. Handles search, filter, sort, and state.
-//              Uses ChangeNotifier for zero-lag UI updates.
+// MODULE: Customer -> Customer List
+// DESCRIPTION: Controller for search, filter, sort, refresh, and UI state.
 // -----------------------------------------------------------------------------
 
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
-import '../../models/customer/customer_list/customer_list_ui_model.dart';
+
 import '../../models/customer/customer_enums/customer_list_enums.dart';
+import '../../models/customer/customer_list/customer_list_ui_model.dart';
 import '../../repositories/customer/customer_list_repository.dart';
 
 class CustomerListLogic extends ChangeNotifier {
@@ -19,7 +20,6 @@ class CustomerListLogic extends ChangeNotifier {
     _init();
   }
 
-  // ── STATE ─────────────────────────────────────────────────────────────────
   CustomerListState _state = CustomerListState.loading;
   List<CustomerListItemModel> _allCustomers = [];
   List<CustomerListItemModel> _filteredList = [];
@@ -28,8 +28,8 @@ class CustomerListLogic extends ChangeNotifier {
   CustomerSort _activeSort = CustomerSort.newest;
   String _searchQuery = "";
   String? _errorMessage;
+  Timer? _searchDebounce;
 
-  // ── GETTERS ──────────────────────────────────────────────────────────────
   CustomerListState get state => _state;
   List<CustomerListItemModel> get customers => _filteredList;
   CustomerListStatsModel get stats => _stats;
@@ -37,20 +37,16 @@ class CustomerListLogic extends ChangeNotifier {
   CustomerSort get activeSort => _activeSort;
   String get searchQuery => _searchQuery;
   String? get errorMessage => _errorMessage;
+
   bool get isLoading => _state == CustomerListState.loading;
   bool get isEmpty => _state == CustomerListState.empty;
   bool get isSearching => _searchQuery.isNotEmpty;
+  int get totalLoadedCount => _allCustomers.length;
 
-  // Search debounce timer
-  Timer? _searchDebounce;
-
-  // ── INIT ─────────────────────────────────────────────────────────────────
   Future<void> _init() async {
-    await _loadStats();
-    await _loadCustomers();
+    await refresh();
   }
 
-  // ── LOAD DATA ────────────────────────────────────────────────────────────
   Future<void> _loadCustomers() async {
     _state = CustomerListState.loading;
     notifyListeners();
@@ -63,52 +59,33 @@ class CustomerListLogic extends ChangeNotifier {
 
       _allCustomers = data;
       _applySearch();
-
       _state = _filteredList.isEmpty
           ? CustomerListState.empty
           : CustomerListState.loaded;
+      _errorMessage = null;
     } catch (e) {
-      debugPrint("❌ CustomerListLogic Error: $e");
-      _errorMessage = "Failed to load customers. Please try again.";
+      debugPrint("CustomerListLogic load error: $e");
+      _errorMessage = "Failed to load clients. Please try again.";
       _state = CustomerListState.error;
     }
 
     notifyListeners();
   }
 
-  Future<void> _loadStats() async {
-    _stats = await _repo.fetchStats();
-    notifyListeners();
-  }
-
-  // ── SEARCH ────────────────────────────────────────────────────────────────
   void onSearchChanged(String query) {
-    _searchQuery = query;
-
-    // Debounce: wait 300ms after user stops typing
+    _searchQuery = query.trim();
     _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 300), () async {
-      if (_searchQuery.isEmpty) {
-        _applySearch();
-        _state = _filteredList.isEmpty
-            ? CustomerListState.empty
-            : CustomerListState.loaded;
-        notifyListeners();
-      } else {
-        _state = CustomerListState.searching;
-        notifyListeners();
-
-        final results = await _repo.searchCustomers(_searchQuery);
-        _filteredList = results;
-        _state = _filteredList.isEmpty
-            ? CustomerListState.empty
-            : CustomerListState.loaded;
-        notifyListeners();
-      }
+    _searchDebounce = Timer(const Duration(milliseconds: 180), () {
+      _applySearch();
+      _state = _filteredList.isEmpty
+          ? CustomerListState.empty
+          : CustomerListState.loaded;
+      notifyListeners();
     });
   }
 
   void clearSearch() {
+    _searchDebounce?.cancel();
     _searchQuery = "";
     _applySearch();
     _state = _filteredList.isEmpty
@@ -117,7 +94,6 @@ class CustomerListLogic extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── FILTER ────────────────────────────────────────────────────────────────
   void setFilter(CustomerFilter filter) {
     if (_activeFilter == filter) return;
     _activeFilter = filter;
@@ -125,32 +101,62 @@ class CustomerListLogic extends ChangeNotifier {
     _loadCustomers();
   }
 
-  // ── SORT ──────────────────────────────────────────────────────────────────
   void setSort(CustomerSort sort) {
     if (_activeSort == sort) return;
     _activeSort = sort;
     _loadCustomers();
   }
 
-  // ── REFRESH ───────────────────────────────────────────────────────────────
   Future<void> refresh() async {
-    await _loadStats();
-    await _loadCustomers();
+    _state = CustomerListState.loading;
+    notifyListeners();
+
+    try {
+      final allCustomers =
+          await _repo.getAllCustomers(sort: CustomerSort.newest);
+      _stats = CustomerListStatsModel.fromCustomers(allCustomers);
+
+      if (_activeFilter == CustomerFilter.all &&
+          _activeSort == CustomerSort.newest) {
+        _allCustomers = allCustomers;
+      } else {
+        _allCustomers = await _repo.getAllCustomers(
+          filter: _activeFilter,
+          sort: _activeSort,
+        );
+      }
+
+      _applySearch();
+      _state = _filteredList.isEmpty
+          ? CustomerListState.empty
+          : CustomerListState.loaded;
+      _errorMessage = null;
+    } catch (e) {
+      debugPrint("CustomerListLogic refresh error: $e");
+      _stats = CustomerListStatsModel.empty();
+      _errorMessage = "Failed to refresh clients. Please try again.";
+      _state = CustomerListState.error;
+    }
+
+    notifyListeners();
   }
 
-  // ── PRIVATE ───────────────────────────────────────────────────────────────
   void _applySearch() {
     if (_searchQuery.isEmpty) {
-      _filteredList = List.from(_allCustomers);
-    } else {
-      final q = _searchQuery.toLowerCase();
-      _filteredList = _allCustomers
-          .where((c) =>
-              c.name.toLowerCase().contains(q) ||
-              c.mobile.contains(q) ||
-              c.city.toLowerCase().contains(q))
-          .toList();
+      _filteredList = List<CustomerListItemModel>.from(_allCustomers);
+      return;
     }
+
+    final query = _searchQuery.toLowerCase();
+    _filteredList = _allCustomers.where((customer) {
+      return customer.name.toLowerCase().contains(query) ||
+          customer.mobile.toLowerCase().contains(query) ||
+          customer.city.toLowerCase().contains(query) ||
+          customer.type.value.toLowerCase().contains(query) ||
+          customer.type.displayLabel.toLowerCase().contains(query) ||
+          customer.lastActivityLabel.toLowerCase().contains(query) ||
+          customer.lastActivityDetail.toLowerCase().contains(query);
+    }).toList();
   }
 
   @override

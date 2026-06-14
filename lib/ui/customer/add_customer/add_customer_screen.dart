@@ -1313,7 +1313,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
             ])),
       ]),
       const SizedBox(height: 20),
-      Text('CUSTOMER TIER / CATEGORY', style: AddCustomerStyles.fieldLabel),
+      Text('CLIENT CATEGORY', style: AddCustomerStyles.fieldLabel),
       const SizedBox(height: 10),
       Row(
         children: CustomerTier.values.map((t) {
@@ -1326,7 +1326,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
               onTap: () => _logic.setCustomerTier(t),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                curve: Curves.easeOutCubic,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? _tierColor(t).withValues(alpha: 0.12)
@@ -1337,17 +1339,39 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
                           isSelected ? _tierColor(t) : const Color(0xFFE5E7EB),
                       width: isSelected ? 1.5 : 1),
                 ),
-                child: Column(children: [
-                  Icon(_tierIcon(t),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _tierIcon(t),
                       color: isSelected ? _tierColor(t) : Colors.black54,
-                      size: 18),
-                  const SizedBox(height: 4),
-                  Text(t.label,
+                      size: 18,
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      t.displayLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.manrope(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: isSelected ? _tierColor(t) : Colors.black87)),
-                ]),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: isSelected ? _tierColor(t) : Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      t.description,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected ? _tierColor(t) : Colors.black45,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ));

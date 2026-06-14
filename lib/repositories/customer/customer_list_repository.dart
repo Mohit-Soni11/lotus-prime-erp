@@ -1,181 +1,301 @@
 // -----------------------------------------------------------------------------
 // FILE: customer_list_repository.dart
-// MODULE: Customer → Customer List
-// DESCRIPTION: Data access layer. Fetches from Drift DB and maps to UI models.
+// MODULE: Customer -> Customer List
+// DESCRIPTION: Aggregates customer directory data from billing, advance, and
+//              girvi records into fast UI-ready models.
 // -----------------------------------------------------------------------------
 
-import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
-import '../../models/customer/customer_list/customer_list_ui_model.dart';
+
 import '../../models/customer/customer_enums/customer_list_enums.dart';
+import '../../models/customer/customer_list/customer_list_ui_model.dart';
 
 class CustomerListRepository {
   final AppDatabase _db;
 
   CustomerListRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // 1. LIVE STREAM: All Customers (watches DB changes in real-time)
-  // ──────────────────────────────────────────────────────────────────────────
   Stream<List<CustomerListItemModel>> watchAllCustomers() {
-    return _db.select(_db.customers).watch().asyncMap((rows) async {
-      // For each customer, also fetch their bill count
-      List<CustomerListItemModel> result = [];
-      for (final row in rows) {
-        final billCount = await _getBillCount(row.id);
-        result.add(_mapToUiModel(row, billCount));
-      }
-      return result;
-    });
+    return _db.select(_db.customers).watch().asyncMap(
+          (_) => getAllCustomers(sort: CustomerSort.newest),
+        );
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // 2. SEARCH: Filter by name or mobile
-  // ──────────────────────────────────────────────────────────────────────────
   Future<List<CustomerListItemModel>> searchCustomers(String query) async {
-    try {
-      final term = query.toLowerCase().trim();
-      if (term.isEmpty) return getAllCustomers();
+    final term = query.trim().toLowerCase();
+    if (term.isEmpty) return getAllCustomers();
 
-      final rows = await (_db.select(_db.customers)
-            ..where(
-                (tbl) => tbl.name.contains(term) | tbl.mobile.contains(term))
-            ..orderBy([(t) => OrderingTerm(expression: t.name)]))
-          .get();
-
-      List<CustomerListItemModel> result = [];
-      for (final row in rows) {
-        final billCount = await _getBillCount(row.id);
-        result.add(_mapToUiModel(row, billCount));
-      }
-      return result;
-    } catch (e) {
-      debugPrint("❌ Search Error: $e");
-      return [];
-    }
+    final customers = await getAllCustomers(sort: CustomerSort.newest);
+    return customers.where((customer) {
+      return customer.name.toLowerCase().contains(term) ||
+          customer.mobile.toLowerCase().contains(term) ||
+          customer.city.toLowerCase().contains(term) ||
+          customer.lastActivityLabel.toLowerCase().contains(term);
+    }).toList();
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // 3. FETCH ALL with optional filter
-  // ──────────────────────────────────────────────────────────────────────────
   Future<List<CustomerListItemModel>> getAllCustomers({
     CustomerFilter filter = CustomerFilter.all,
     CustomerSort sort = CustomerSort.newest,
   }) async {
     try {
-      final query = _db.select(_db.customers);
-
-      // Apply filter
-      switch (filter) {
-        case CustomerFilter.vip:
-          query.where((tbl) => tbl.type.equals('VIP'));
-          break;
-        case CustomerFilter.regular:
-          query.where((tbl) => tbl.type.equals('Regular'));
-          break;
-        case CustomerFilter.today:
-          final today = DateTime.now();
-          final start = DateTime(today.year, today.month, today.day);
-          query.where((tbl) => tbl.createdAt.isBiggerOrEqualValue(start));
-          break;
-        case CustomerFilter.all:
-          break;
-      }
-
-      // Apply sort
-      switch (sort) {
-        case CustomerSort.nameAsc:
-          query.orderBy([(t) => OrderingTerm(expression: t.name)]);
-          break;
-        case CustomerSort.nameDesc:
-          query.orderBy([
-            (t) => OrderingTerm(expression: t.name, mode: OrderingMode.desc)
-          ]);
-          break;
-        case CustomerSort.newest:
-          query.orderBy([
-            (t) =>
-                OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc)
-          ]);
-          break;
-        case CustomerSort.oldest:
-          query.orderBy([(t) => OrderingTerm(expression: t.createdAt)]);
-          break;
-        case CustomerSort.mostBills:
-          // Will sort after fetching bill counts
-          break;
-      }
-
-      final rows = await query.get();
-      List<CustomerListItemModel> result = [];
-      for (final row in rows) {
-        final billCount = await _getBillCount(row.id);
-        result.add(_mapToUiModel(row, billCount));
-      }
-
-      // Post-sort for mostBills
-      if (sort == CustomerSort.mostBills) {
-        result.sort((a, b) => b.billCount.compareTo(a.billCount));
-      }
-
-      return result;
+      final rows = await _db.select(_db.customers).get();
+      final models = await _mapCustomers(rows);
+      final filtered = _applyFilter(models, filter);
+      _sortCustomers(filtered, sort);
+      return filtered;
     } catch (e) {
-      debugPrint("❌ Fetch Error: $e");
+      debugPrint("Customer list fetch error: $e");
       return [];
     }
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // 4. STATS
-  // ──────────────────────────────────────────────────────────────────────────
   Future<CustomerListStatsModel> fetchStats() async {
     try {
-      final all = await _db.select(_db.customers).get();
-      final total = all.length;
-      final vip = all.where((c) => c.type == 'VIP').length;
-
-      final today = DateTime.now();
-      final start = DateTime(today.year, today.month, today.day);
-      final todayNew = all.where((c) => c.createdAt.isAfter(start)).length;
-
-      return CustomerListStatsModel(
-        totalCount: total,
-        todayCount: todayNew,
-        vipCount: vip,
-      );
+      final customers = await getAllCustomers(sort: CustomerSort.newest);
+      return CustomerListStatsModel.fromCustomers(customers);
     } catch (e) {
-      debugPrint("❌ Stats Error: $e");
+      debugPrint("Customer list stats error: $e");
       return CustomerListStatsModel.empty();
     }
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // PRIVATE HELPERS
-  // ──────────────────────────────────────────────────────────────────────────
-  Future<int> _getBillCount(int customerId) async {
-    try {
-      final countExpr = _db.bills.id.count();
-      final query = _db.selectOnly(_db.bills)
-        ..addColumns([countExpr])
-        ..where(_db.bills.customerId.equals(customerId));
-      final result = await query.getSingleOrNull();
-      return result?.read(countExpr) ?? 0;
-    } catch (_) {
-      return 0;
+  Future<List<CustomerListItemModel>> _mapCustomers(
+    List<Customer> customers,
+  ) async {
+    final aggregates = {
+      for (final customer in customers)
+        customer.id: _CustomerActivity(customer),
+    };
+
+    if (aggregates.isEmpty) return [];
+
+    final bills = await _db.select(_db.bills).get();
+    for (final bill in bills) {
+      final customerId = bill.customerId;
+      if (customerId == null || !aggregates.containsKey(customerId)) continue;
+
+      final aggregate = aggregates[customerId]!;
+      final status = bill.status.trim().toUpperCase();
+      final isCancelled = status == 'CANCELLED' || status == 'VOID';
+      final dueAmount =
+          (bill.finalAmount - bill.paidAmount).clamp(0.0, double.infinity);
+
+      if (!isCancelled) {
+        aggregate.billCount += 1;
+        aggregate.invoiceValue += bill.finalAmount;
+        aggregate.dueAmount += dueAmount.toDouble();
+      }
+
+      final billLabel = bill.sourceAdvanceOrderNo?.trim().isNotEmpty == true
+          ? "Advance invoice ${bill.billNo}"
+          : "Invoice ${bill.billNo}";
+      final detail = dueAmount > 0.01
+          ? "Due ${_formatMoney(dueAmount.toDouble())}"
+          : "Sales bill settled";
+
+      aggregate.touch(
+        when: bill.updatedAt ?? bill.billDate,
+        kind: CustomerActivityKind.invoice,
+        label: billLabel,
+        detail: detail,
+        priority: 40,
+      );
+    }
+
+    final orders = await _db.select(_db.salesOrders).get();
+    for (final order in orders) {
+      final aggregate = aggregates[order.customerId];
+      if (aggregate == null) continue;
+
+      final status = order.status.trim().toUpperCase();
+      final isOpen = status == 'PENDING' || status == 'READY';
+      if (isOpen) aggregate.activeAdvanceCount += 1;
+
+      final activityDate = _latestDate([
+        order.updatedAt,
+        order.deliveryDate,
+        order.createdAt,
+      ]);
+      aggregate.touch(
+        when: activityDate,
+        kind: CustomerActivityKind.advance,
+        label: isOpen
+            ? "Advance order ${order.orderNo}"
+            : "Advance ${status.toLowerCase()}",
+        detail: "${order.itemName} - ${order.metalType} ${order.purity}",
+        priority: 30,
+      );
+    }
+
+    final girviLoans = await _db.select(_db.girviLoans).get();
+    for (final loan in girviLoans) {
+      final aggregate = aggregates[loan.customerId];
+      if (aggregate == null) continue;
+
+      final status = loan.status.trim().toUpperCase();
+      final isOpen = status == 'ACTIVE' ||
+          status == 'OVERDUE' ||
+          status == 'PARTIAL_RELEASE';
+      if (isOpen) aggregate.activeGirviCount += 1;
+
+      final activityDate = _latestDate([
+        loan.updatedAt,
+        loan.releaseDate,
+        loan.lastInterestPaidDate,
+        loan.startDate,
+      ]);
+      aggregate.touch(
+        when: activityDate,
+        kind: CustomerActivityKind.girvi,
+        label: "Girvi ticket ${loan.ticketNo}",
+        detail: "${loan.itemDescription} - ${_formatMoney(loan.loanAmount)}",
+        priority: 20,
+      );
+    }
+
+    return aggregates.values.map((aggregate) => aggregate.toModel()).toList();
+  }
+
+  List<CustomerListItemModel> _applyFilter(
+    List<CustomerListItemModel> customers,
+    CustomerFilter filter,
+  ) {
+    switch (filter) {
+      case CustomerFilter.standard:
+        return customers
+            .where((customer) => customer.type == CustomerType.standard)
+            .toList();
+      case CustomerFilter.silver:
+        return customers
+            .where((customer) => customer.type == CustomerType.silver)
+            .toList();
+      case CustomerFilter.gold:
+        return customers
+            .where((customer) => customer.type == CustomerType.gold)
+            .toList();
+      case CustomerFilter.elite:
+        return customers
+            .where((customer) => customer.type == CustomerType.elite)
+            .toList();
+      case CustomerFilter.today:
+        return customers
+            .where((customer) => customer.hasActivityToday)
+            .toList();
+      case CustomerFilter.all:
+        return List<CustomerListItemModel>.from(customers);
     }
   }
 
-  CustomerListItemModel _mapToUiModel(dynamic row, int billCount) {
-    final name = row.name as String? ?? "Unknown";
+  void _sortCustomers(
+    List<CustomerListItemModel> customers,
+    CustomerSort sort,
+  ) {
+    switch (sort) {
+      case CustomerSort.nameAsc:
+        customers.sort((a, b) => a.name.compareTo(b.name));
+        break;
+      case CustomerSort.nameDesc:
+        customers.sort((a, b) => b.name.compareTo(a.name));
+        break;
+      case CustomerSort.newest:
+        customers.sort(
+          (a, b) => b.lastActivityAt.compareTo(a.lastActivityAt),
+        );
+        break;
+      case CustomerSort.oldest:
+        customers.sort(
+          (a, b) => a.lastActivityAt.compareTo(b.lastActivityAt),
+        );
+        break;
+      case CustomerSort.mostBills:
+        customers.sort((a, b) {
+          final billSort = b.billCount.compareTo(a.billCount);
+          if (billSort != 0) return billSort;
+          return b.lastActivityAt.compareTo(a.lastActivityAt);
+        });
+        break;
+    }
+  }
+
+  DateTime _latestDate(List<DateTime?> values) {
+    final dates = values.whereType<DateTime>().toList();
+    if (dates.isEmpty) return DateTime.now();
+    dates.sort((a, b) => b.compareTo(a));
+    return dates.first;
+  }
+
+  static String _formatMoney(double value) {
+    final amount = value.abs();
+    if (amount >= 10000000)
+      return "Rs ${(value / 10000000).toStringAsFixed(1)}Cr";
+    if (amount >= 100000) return "Rs ${(value / 100000).toStringAsFixed(1)}L";
+    if (amount >= 1000) return "Rs ${(value / 1000).toStringAsFixed(1)}K";
+    return "Rs ${value.toStringAsFixed(0)}";
+  }
+}
+
+class _CustomerActivity {
+  final Customer customer;
+
+  int billCount = 0;
+  int activeAdvanceCount = 0;
+  int activeGirviCount = 0;
+  double invoiceValue = 0;
+  double dueAmount = 0;
+
+  late DateTime lastActivityAt;
+  CustomerActivityKind lastActivityKind = CustomerActivityKind.profile;
+  String lastActivityLabel = "Client profile created";
+  String lastActivityDetail = "No transaction posted yet";
+  int _lastPriority = 0;
+
+  _CustomerActivity(this.customer) {
+    lastActivityAt = customer.updatedAt ?? customer.createdAt;
+    if (customer.updatedAt != null) {
+      lastActivityLabel = "Client profile updated";
+      lastActivityDetail = "Profile information changed";
+    }
+  }
+
+  void touch({
+    required DateTime when,
+    required CustomerActivityKind kind,
+    required String label,
+    required String detail,
+    required int priority,
+  }) {
+    final isNewer = when.isAfter(lastActivityAt);
+    final isSameMoment = when.isAtSameMomentAs(lastActivityAt);
+    if (!isNewer && !(isSameMoment && priority > _lastPriority)) return;
+
+    lastActivityAt = when;
+    lastActivityKind = kind;
+    lastActivityLabel = label;
+    lastActivityDetail = detail;
+    _lastPriority = priority;
+  }
+
+  CustomerListItemModel toModel() {
+    final name =
+        customer.name.trim().isEmpty ? "Unknown Client" : customer.name;
     return CustomerListItemModel(
-      id: row.id as int,
+      id: customer.id,
       name: name,
-      mobile: row.mobile as String? ?? "",
-      city: row.city as String? ?? "",
-      type: CustomerType.fromString(row.type as String?),
+      mobile: customer.mobile,
+      city: customer.city ?? "",
+      type: CustomerType.fromString(customer.type),
       billCount: billCount,
-      createdAt: row.createdAt as DateTime? ?? DateTime.now(),
+      activeAdvanceCount: activeAdvanceCount,
+      activeGirviCount: activeGirviCount,
+      invoiceValue: invoiceValue,
+      dueAmount: dueAmount,
+      createdAt: customer.createdAt,
+      lastActivityAt: lastActivityAt,
+      lastActivityKind: lastActivityKind,
+      lastActivityLabel: lastActivityLabel,
+      lastActivityDetail: lastActivityDetail,
       initials: CustomerListItemModel.buildInitials(name),
     );
   }

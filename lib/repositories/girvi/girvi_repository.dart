@@ -46,6 +46,26 @@ class GirviRepository {
     return '$resolvedPrefix${next.toString().padLeft(4, '0')}';
   }
 
+  Future<String> generateNextPaymentReceiptNo({
+    String prefix = 'GIP-',
+    int startingNumber = 1,
+  }) async {
+    final rows = await (_db.select(_db.girviPayments)
+          ..where((payment) => payment.receiptNo.like('$prefix%')))
+        .get();
+
+    var highest = startingNumber - 1;
+    final trailingNumber = RegExp(r'(\d+)$');
+    for (final row in rows) {
+      final match = trailingNumber.firstMatch(row.receiptNo ?? '');
+      final value = int.tryParse(match?.group(1) ?? '');
+      if (value != null && value > highest) highest = value;
+    }
+
+    final next = highest + 1;
+    return '$prefix${next.toString().padLeft(5, '0')}';
+  }
+
   // ════════════════════════════════════════════════════════════════════════════
   // CREATE LOAN
   // ════════════════════════════════════════════════════════════════════════════
@@ -285,11 +305,87 @@ class GirviRepository {
     return _db.into(_db.girviPayments).insert(companion);
   }
 
+  Future<int> recordPayment({
+    required int loanId,
+    required GirviPaymentType paymentType,
+    required GirviPaymentMode paymentMode,
+    required double amount,
+    required DateTime paymentDate,
+    int? monthsCovered,
+    DateTime? interestFromDate,
+    DateTime? interestToDate,
+    String? receiptNo,
+    String? notes,
+  }) async {
+    if (amount <= 0) {
+      throw ArgumentError.value(amount, 'amount', 'Payment amount must be > 0');
+    }
+
+    return _db.transaction(() async {
+      final loan = await getLoanById(loanId);
+      if (loan == null) {
+        throw StateError('Girvi loan not found for payment entry');
+      }
+
+      var balanceAfter = loan.loanAmount;
+      var loanUpdate = GirviLoansCompanion(
+        updatedAt: drift.Value(DateTime.now()),
+      );
+
+      if (paymentType == GirviPaymentType.interest) {
+        loanUpdate = loanUpdate.copyWith(
+          lastInterestPaidDate: drift.Value(interestToDate ?? paymentDate),
+        );
+      }
+
+      if (paymentType == GirviPaymentType.partialPrincipal) {
+        if (amount > loan.loanAmount) {
+          throw ArgumentError.value(
+            amount,
+            'amount',
+            'Principal payment cannot exceed outstanding principal',
+          );
+        }
+        balanceAfter =
+            (loan.loanAmount - amount).clamp(0.0, double.infinity).toDouble();
+        loanUpdate = loanUpdate.copyWith(
+          loanAmount: drift.Value(balanceAfter),
+        );
+      }
+
+      final updated = await updateLoan(loanId, loanUpdate);
+      if (!updated) {
+        throw StateError('Unable to update girvi loan before payment entry');
+      }
+
+      return _db.into(_db.girviPayments).insert(
+            GirviPaymentsCompanion.insert(
+              girviId: loanId,
+              paymentType: paymentType.dbValue,
+              paymentDate: drift.Value(paymentDate),
+              amount: drift.Value(amount),
+              paymentMode: drift.Value(paymentMode.dbValue),
+              monthsCovered: drift.Value(monthsCovered),
+              interestFromDate: drift.Value(interestFromDate),
+              interestToDate: drift.Value(interestToDate),
+              balanceAfter: drift.Value(balanceAfter),
+              receiptNo: drift.Value(receiptNo),
+              notes: drift.Value(notes),
+            ),
+          );
+    });
+  }
+
   Future<List<GirviPayment>> getPaymentsForLoan(int loanId) async {
     return (_db.select(_db.girviPayments)
           ..where((p) => p.girviId.equals(loanId))
           ..orderBy([(p) => drift.OrderingTerm.desc(p.paymentDate)]))
         .get();
+  }
+
+  Future<List<GirviPaymentModel>> getPaymentModelsForLoan(int loanId) async {
+    final rows = await getPaymentsForLoan(loanId);
+    return rows.map(_mapPayment).toList();
   }
 
   Future<double> getTotalPaidForLoan(int loanId) async {
@@ -366,6 +462,24 @@ class GirviRepository {
       releaseNotes: row.releaseNotes,
       releasedBy: row.releasedBy,
       updatedAt: row.updatedAt,
+    );
+  }
+
+  GirviPaymentModel _mapPayment(GirviPayment row) {
+    return GirviPaymentModel(
+      id: row.id,
+      girviId: row.girviId,
+      paymentDate: row.paymentDate,
+      amount: row.amount,
+      paymentType: row.paymentType,
+      paymentMode: row.paymentMode,
+      monthsCovered: row.monthsCovered,
+      interestFromDate: row.interestFromDate,
+      interestToDate: row.interestToDate,
+      balanceAfter: row.balanceAfter,
+      receiptNo: row.receiptNo,
+      notes: row.notes,
+      createdAt: row.createdAt,
     );
   }
 }

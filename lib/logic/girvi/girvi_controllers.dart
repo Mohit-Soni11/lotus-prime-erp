@@ -237,6 +237,396 @@ class GirviReleaseController extends ChangeNotifier {
 }
 
 // =============================================================================
+// FILE        : girvi_interest_entry_controller.dart
+// MODULE      : Girvi / Pawn
+// LAYER       : Logic / Controller
+// DESCRIPTION : Records running interest/principal payment entries against
+//               active girvi tickets and keeps payment history in sync.
+// =============================================================================
+
+class GirviInterestEntryController extends ChangeNotifier {
+  final GirviRepository _repo;
+
+  GirviInterestEntryController(AppDatabase db) : _repo = GirviRepository(db);
+
+  List<GirviLoanWithCustomer> _allLoans = [];
+  List<GirviLoanWithCustomer> _filteredLoans = [];
+  List<GirviPaymentModel> _payments = [];
+  GirviLoanWithCustomer? _selectedLoan;
+
+  GirviPaymentType _paymentType = GirviPaymentType.interest;
+  GirviPaymentMode _paymentMode = GirviPaymentMode.cash;
+  DateTime _paymentDate = DateTime.now();
+  DateTime? _interestFromDate;
+  DateTime? _interestToDate;
+  String _searchQuery = '';
+  String _amountInput = '';
+  String _monthsInput = '1';
+  String _receiptNo = '';
+  String _notes = '';
+
+  bool _isLoading = true;
+  bool _isSaving = false;
+  String? _errorMessage;
+  String? _successMessage;
+
+  List<GirviLoanWithCustomer> get loans => _filteredLoans;
+  List<GirviPaymentModel> get payments => _payments;
+  GirviLoanWithCustomer? get selectedLoan => _selectedLoan;
+  GirviPaymentType get paymentType => _paymentType;
+  GirviPaymentMode get paymentMode => _paymentMode;
+  DateTime get paymentDate => _paymentDate;
+  DateTime? get interestFromDate => _interestFromDate;
+  DateTime? get interestToDate => _interestToDate;
+  String get amountInput => _amountInput;
+  String get monthsInput => _monthsInput;
+  String get receiptNo => _receiptNo;
+  String get notes => _notes;
+  bool get isLoading => _isLoading;
+  bool get isSaving => _isSaving;
+  String? get errorMessage => _errorMessage;
+  String? get successMessage => _successMessage;
+
+  bool get hasLoans => _allLoans.isNotEmpty;
+  double get amount => double.tryParse(_amountInput) ?? 0.0;
+  int get monthsCovered => int.tryParse(_monthsInput) ?? 0;
+  bool get isInterestEntry =>
+      _paymentType == GirviPaymentType.interest ||
+      _paymentType == GirviPaymentType.partialInterest;
+
+  double get expectedInterest {
+    final loan = _selectedLoan?.loan;
+    if (loan == null) return 0.0;
+    final months = monthsCovered <= 0 ? 1 : monthsCovered;
+    return loan.interestForMonths(months.toDouble());
+  }
+
+  double get totalCollectedForSelected =>
+      _payments.fold<double>(0, (sum, item) => sum + item.amount);
+
+  double get principalRepaidForSelected => _payments
+      .where((item) => item.type == GirviPaymentType.partialPrincipal)
+      .fold<double>(0, (sum, item) => sum + item.amount);
+
+  double get interestCollectedForSelected => _payments
+      .where((item) =>
+          item.type == GirviPaymentType.interest ||
+          item.type == GirviPaymentType.partialInterest)
+      .fold<double>(0, (sum, item) => sum + item.amount);
+
+  double get principalDisbursedForSelected {
+    final loan = _selectedLoan?.loan;
+    if (loan == null) return 0;
+    return loan.loanAmount + principalRepaidForSelected;
+  }
+
+  List<GirviPaymentType> get entryPaymentTypes => const [
+        GirviPaymentType.interest,
+        GirviPaymentType.partialInterest,
+        GirviPaymentType.partialPrincipal,
+        GirviPaymentType.penalty,
+      ];
+
+  Future<void> load() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _repo.syncOverdueStatus();
+      await _loadLoans();
+      _applySearch();
+      if (_filteredLoans.isNotEmpty) {
+        await _setSelectedLoan(_filteredLoans.first, notifyAtStart: false);
+      }
+    } catch (e) {
+      debugPrint('GirviInterestEntryController.load error: $e');
+      _errorMessage = 'Unable to load girvi interest entries.';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> refresh() async {
+    final selectedId = _selectedLoan?.loan.id;
+    await _reloadAfterMutation(selectedId: selectedId, keepMessages: true);
+  }
+
+  Future<void> selectLoan(GirviLoanWithCustomer data) async {
+    await _setSelectedLoan(data);
+  }
+
+  void onSearchChanged(String query) {
+    _searchQuery = query.trim().toLowerCase();
+    _applySearch();
+    notifyListeners();
+  }
+
+  void setPaymentType(GirviPaymentType value) {
+    _paymentType = value;
+    _errorMessage = null;
+    _successMessage = null;
+
+    if (value == GirviPaymentType.interest) {
+      _amountInput = expectedInterest.toStringAsFixed(2);
+    } else if (value == GirviPaymentType.partialPrincipal ||
+        value == GirviPaymentType.penalty) {
+      _amountInput = '';
+    }
+
+    notifyListeners();
+  }
+
+  void setPaymentMode(GirviPaymentMode value) {
+    _paymentMode = value;
+    notifyListeners();
+  }
+
+  void setPaymentDate(DateTime value) {
+    _paymentDate = value;
+    notifyListeners();
+  }
+
+  void setInterestFromDate(DateTime value) {
+    _interestFromDate = value;
+    _syncMonthsFromPeriod();
+    notifyListeners();
+  }
+
+  void setInterestToDate(DateTime value) {
+    _interestToDate = value;
+    _syncMonthsFromPeriod();
+    notifyListeners();
+  }
+
+  void onAmountChanged(String value) {
+    _amountInput = value;
+    _errorMessage = null;
+    _successMessage = null;
+    notifyListeners();
+  }
+
+  void onMonthsChanged(String value) {
+    _monthsInput = value;
+    if (_paymentType == GirviPaymentType.interest) {
+      _amountInput = expectedInterest.toStringAsFixed(2);
+    }
+    notifyListeners();
+  }
+
+  void onReceiptChanged(String value) {
+    _receiptNo = value.trim();
+    notifyListeners();
+  }
+
+  void onNotesChanged(String value) {
+    _notes = value;
+    notifyListeners();
+  }
+
+  Future<bool> recordPayment() async {
+    final selected = _selectedLoan;
+    if (selected == null) {
+      _errorMessage = 'Select a girvi ticket before recording a payment.';
+      notifyListeners();
+      return false;
+    }
+
+    final value = amount;
+    if (value <= 0) {
+      _errorMessage = 'Enter a valid payment amount.';
+      notifyListeners();
+      return false;
+    }
+
+    if (_paymentType == GirviPaymentType.partialPrincipal &&
+        value > selected.loan.loanAmount) {
+      _errorMessage = 'Principal payment cannot exceed outstanding principal.';
+      notifyListeners();
+      return false;
+    }
+
+    if (isInterestEntry) {
+      if (monthsCovered <= 0) {
+        _errorMessage = 'Enter the number of interest months covered.';
+        notifyListeners();
+        return false;
+      }
+      final from = _interestFromDate;
+      final to = _interestToDate;
+      if (from != null && to != null && to.isBefore(from)) {
+        _errorMessage = 'Interest period end date cannot be before start date.';
+        notifyListeners();
+        return false;
+      }
+    }
+
+    _isSaving = true;
+    _errorMessage = null;
+    _successMessage = null;
+    notifyListeners();
+
+    try {
+      await _repo.recordPayment(
+        loanId: selected.loan.id,
+        paymentType: _paymentType,
+        paymentMode: _paymentMode,
+        amount: value,
+        paymentDate: _paymentDate,
+        monthsCovered: isInterestEntry ? monthsCovered : null,
+        interestFromDate: isInterestEntry ? _interestFromDate : null,
+        interestToDate: isInterestEntry ? _interestToDate : null,
+        receiptNo: _receiptNo.isEmpty ? null : _receiptNo,
+        notes: _notes.trim().isEmpty ? null : _notes.trim(),
+      );
+
+      _successMessage = 'Payment entry recorded successfully.';
+      await _reloadAfterMutation(selectedId: selected.loan.id);
+      return true;
+    } catch (e) {
+      debugPrint('GirviInterestEntryController.recordPayment error: $e');
+      _errorMessage = 'Payment entry failed. Please review and try again.';
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _loadLoans() async {
+    final rows = await _repo.getLoansWithCustomer();
+    _allLoans = rows.where((item) => !item.loan.isClosed).toList()
+      ..sort((a, b) {
+        final aDate = a.loan.updatedAt ?? a.loan.startDate;
+        final bDate = b.loan.updatedAt ?? b.loan.startDate;
+        return bDate.compareTo(aDate);
+      });
+  }
+
+  void _applySearch() {
+    if (_searchQuery.isEmpty) {
+      _filteredLoans = List<GirviLoanWithCustomer>.from(_allLoans);
+      return;
+    }
+
+    _filteredLoans = _allLoans.where((item) {
+      final loan = item.loan;
+      return loan.ticketNo.toLowerCase().contains(_searchQuery) ||
+          item.customerName.toLowerCase().contains(_searchQuery) ||
+          item.customerMobile.contains(_searchQuery) ||
+          loan.itemDescription.toLowerCase().contains(_searchQuery);
+    }).toList();
+  }
+
+  Future<void> _setSelectedLoan(
+    GirviLoanWithCustomer data, {
+    bool notifyAtStart = true,
+  }) async {
+    _selectedLoan = data;
+    _payments = [];
+    _errorMessage = null;
+    _successMessage = null;
+    _resetFormFromLoan(data.loan);
+
+    if (notifyAtStart) notifyListeners();
+
+    final results = await Future.wait([
+      _repo.getPaymentModelsForLoan(data.loan.id),
+      _repo.generateNextPaymentReceiptNo(),
+    ]);
+
+    _payments = results[0] as List<GirviPaymentModel>;
+    _receiptNo = results[1] as String;
+    notifyListeners();
+  }
+
+  Future<void> _reloadAfterMutation({
+    int? selectedId,
+    bool keepMessages = false,
+  }) async {
+    final success = _successMessage;
+    final error = _errorMessage;
+    await _loadLoans();
+    _applySearch();
+
+    GirviLoanWithCustomer? next;
+    if (selectedId != null) {
+      for (final item in _allLoans) {
+        if (item.loan.id == selectedId) {
+          next = item;
+          break;
+        }
+      }
+    }
+
+    if (next == null && _filteredLoans.isNotEmpty) {
+      next = _filteredLoans.first;
+    }
+
+    if (next == null) {
+      _selectedLoan = null;
+      _payments = [];
+      _resetEmptyForm();
+    } else {
+      await _setSelectedLoan(next, notifyAtStart: false);
+    }
+
+    if (keepMessages) {
+      _successMessage = success;
+      _errorMessage = error;
+    } else if (success != null) {
+      _successMessage = success;
+    }
+  }
+
+  void _resetFormFromLoan(GirviLoanModel loan) {
+    _paymentType = GirviPaymentType.interest;
+    _paymentMode = GirviPaymentMode.cash;
+    _paymentDate = DateTime.now();
+    _interestFromDate = loan.lastInterestPaidDate ?? loan.startDate;
+    _interestToDate = DateTime.now();
+    final suggestedMonths = _suggestedMonths(loan);
+    _monthsInput = suggestedMonths.toString();
+    _amountInput =
+        loan.interestForMonths(suggestedMonths.toDouble()).toStringAsFixed(2);
+    _notes = '';
+    _receiptNo = '';
+  }
+
+  void _resetEmptyForm() {
+    _paymentType = GirviPaymentType.interest;
+    _paymentMode = GirviPaymentMode.cash;
+    _paymentDate = DateTime.now();
+    _interestFromDate = null;
+    _interestToDate = null;
+    _monthsInput = '1';
+    _amountInput = '';
+    _receiptNo = '';
+    _notes = '';
+  }
+
+  int _suggestedMonths(GirviLoanModel loan) {
+    final from = loan.lastInterestPaidDate ?? loan.startDate;
+    final days = DateTime.now().difference(from).inDays;
+    if (days <= 0) return 1;
+    return (days / 30).ceil().clamp(1, 120);
+  }
+
+  void _syncMonthsFromPeriod() {
+    final from = _interestFromDate;
+    final to = _interestToDate;
+    if (from == null || to == null || to.isBefore(from)) return;
+    final days = to.difference(from).inDays;
+    final months = days <= 0 ? 1 : (days / 30).ceil().clamp(1, 120);
+    _monthsInput = months.toString();
+    if (_paymentType == GirviPaymentType.interest) {
+      _amountInput = expectedInterest.toStringAsFixed(2);
+    }
+  }
+}
+
+// =============================================================================
 // FILE        : interest_calc_controller.dart
 // MODULE      : Girvi / Pawn
 // LAYER       : Logic / Controller

@@ -90,7 +90,13 @@ class _GirviListScreenState extends State<GirviListScreen>
 
   void _openCalculator() {
     Navigator.push(
-        context, MaterialPageRoute(builder: (_) => const InterestCalcScreen()));
+      context,
+      MaterialPageRoute(
+        builder: (_) => InterestCalcScreen(
+          onBack: () => Navigator.of(context).maybePop(),
+        ),
+      ),
+    );
   }
 
   @override

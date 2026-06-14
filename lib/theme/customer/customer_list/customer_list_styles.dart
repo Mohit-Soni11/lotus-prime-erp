@@ -1,10 +1,12 @@
 // -----------------------------------------------------------------------------
 // FILE: customer_list_styles.dart
-// MODULE: Customer â†’ Customer List
+// MODULE: Customer -> Customer List
+// DESCRIPTION: Typography, spacing, and decoration tokens.
 // -----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import 'customer_list_colors.dart';
 
 class CustomerListStyles {
@@ -12,155 +14,237 @@ class CustomerListStyles {
 
   static const double appBarHeight = 70.0;
   static const double searchBarHeight = 52.0;
-  static const double filterBarHeight = 48.0;
-  static const double cardBorderRadius = 16.0;
-  static const double chipBorderRadius = 20.0;
-  static const double avatarSize = 52.0;
+  static const double filterBarHeight = 44.0;
+  static const double cardBorderRadius = 14.0;
+  static const double chipBorderRadius = 22.0;
+  static const double avatarSize = 54.0;
 
   static const EdgeInsets cardPaddingH =
-      EdgeInsets.symmetric(horizontal: 20, vertical: 18);
+      EdgeInsets.symmetric(horizontal: 18, vertical: 16);
   static const EdgeInsets chipPadding =
-      EdgeInsets.symmetric(horizontal: 16, vertical: 8);
+      EdgeInsets.symmetric(horizontal: 14, vertical: 9);
 
-  // â”€â”€ TYPOGRAPHY (Updated to Premium Style) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get appBarTitle => GoogleFonts.inter(
-        fontSize: 18, // Changed to 18
+        fontSize: 18,
         fontWeight: FontWeight.w700,
         color: CustomerListColors.shellTextTitle,
-        letterSpacing: 1.2, // Changed to 1.2
+        letterSpacing: 1.2,
       );
 
   static const TextStyle systemOnlineText = TextStyle(
     color: CustomerListColors.onlineGreen,
-    fontSize: 12.0, // Changed to 12.0
+    fontSize: 12,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.5,
   );
 
+  static TextStyle get pageTitle => GoogleFonts.manrope(
+        fontSize: 22,
+        fontWeight: FontWeight.w900,
+        color: CustomerListColors.bodyTextMain,
+        height: 1.05,
+      );
+
+  static TextStyle get pageSubtitle => GoogleFonts.inter(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: CustomerListColors.bodyTextMuted,
+      );
+
   static TextStyle get statsValue => GoogleFonts.manrope(
-      fontSize: 24,
-      fontWeight: FontWeight.w800,
-      color: CustomerListColors.bodyTextMain,
-      height: 1.0);
+        fontSize: 25,
+        fontWeight: FontWeight.w900,
+        color: CustomerListColors.bodyTextMain,
+        height: 1,
+      );
+
   static TextStyle get statsLabel => GoogleFonts.inter(
-      fontSize: 12,
-      fontWeight: FontWeight.w600,
-      color: CustomerListColors.bodyTextMuted,
-      letterSpacing: 0.5);
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        color: CustomerListColors.bodyTextMuted,
+      );
+
+  static TextStyle get statsCaption => GoogleFonts.inter(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: CustomerListColors.bodyTextSoft,
+      );
 
   static TextStyle get searchText => GoogleFonts.inter(
-      fontSize: 14,
-      fontWeight: FontWeight.w500,
-      color: CustomerListColors.bodyTextMain);
-  static TextStyle get searchHint =>
-      GoogleFonts.inter(fontSize: 14, color: CustomerListColors.bodyTextMuted);
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: CustomerListColors.bodyTextMain,
+      );
+
+  static TextStyle get searchHint => GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: CustomerListColors.bodyTextMuted,
+      );
 
   static TextStyle get chipActive => GoogleFonts.inter(
-      fontSize: 13,
-      fontWeight: FontWeight.w700,
-      color: CustomerListColors.chipActive);
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        color: CustomerListColors.brandGoldDark,
+      );
+
   static TextStyle get chipInactive => GoogleFonts.inter(
-      fontSize: 13,
-      fontWeight: FontWeight.w600,
-      color: CustomerListColors.chipInactive);
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        color: CustomerListColors.chipInactive,
+      );
+
+  static TextStyle get toolbarButton => GoogleFonts.inter(
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        color: CustomerListColors.bodyTextMain,
+      );
+
+  static TextStyle get resultTitle => GoogleFonts.manrope(
+        fontSize: 15,
+        fontWeight: FontWeight.w900,
+        color: CustomerListColors.bodyTextMain,
+      );
+
+  static TextStyle get resultMeta => GoogleFonts.inter(
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        color: CustomerListColors.bodyTextMuted,
+      );
 
   static TextStyle get customerName => GoogleFonts.manrope(
-      fontSize: 16,
-      fontWeight: FontWeight.w800,
-      color: CustomerListColors.bodyTextMain);
+        fontSize: 16,
+        fontWeight: FontWeight.w900,
+        color: CustomerListColors.bodyTextMain,
+      );
+
   static TextStyle get customerMobile => GoogleFonts.inter(
-      fontSize: 14,
-      fontWeight: FontWeight.w600,
-      color: CustomerListColors.bodyTextMain,
-      letterSpacing: 0.5);
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: CustomerListColors.bodyTextMain,
+      );
+
   static TextStyle get customerDetail => GoogleFonts.inter(
-      fontSize: 12,
-      fontWeight: FontWeight.w500,
-      color: CustomerListColors.bodyTextMuted);
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: CustomerListColors.bodyTextMuted,
+      );
+
   static TextStyle get customerSince => GoogleFonts.inter(
-      fontSize: 11,
-      fontWeight: FontWeight.w500,
-      color: CustomerListColors.bodyTextMuted);
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: CustomerListColors.bodyTextSoft,
+      );
 
   static TextStyle get invoiceCount => GoogleFonts.manrope(
-      fontSize: 16,
-      fontWeight: FontWeight.w800,
-      color: CustomerListColors.bodyTextMain);
+        fontSize: 16,
+        fontWeight: FontWeight.w900,
+        color: CustomerListColors.bodyTextMain,
+      );
+
   static TextStyle get invoiceLabel => GoogleFonts.inter(
-      fontSize: 11,
-      fontWeight: FontWeight.w600,
-      color: CustomerListColors.bodyTextMuted);
+        fontSize: 10,
+        fontWeight: FontWeight.w800,
+        color: CustomerListColors.bodyTextMuted,
+      );
+
+  static TextStyle get metricValue => GoogleFonts.manrope(
+        fontSize: 14,
+        fontWeight: FontWeight.w900,
+        color: CustomerListColors.bodyTextMain,
+      );
+
+  static TextStyle get metricLabel => GoogleFonts.inter(
+        fontSize: 10,
+        fontWeight: FontWeight.w800,
+        color: CustomerListColors.bodyTextMuted,
+      );
+
+  static TextStyle get activityLabel => GoogleFonts.inter(
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        color: CustomerListColors.bodyTextMain,
+      );
+
+  static TextStyle get activityMeta => GoogleFonts.inter(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: CustomerListColors.bodyTextMuted,
+      );
 
   static TextStyle get vipBadge => GoogleFonts.inter(
-      fontSize: 10,
-      fontWeight: FontWeight.w800,
-      color: CustomerListColors.vipBadgeText,
-      letterSpacing: 0.8);
+        fontSize: 10,
+        fontWeight: FontWeight.w900,
+        color: CustomerListColors.vipBadgeText,
+      );
+
   static TextStyle get regularBadge => GoogleFonts.inter(
-      fontSize: 10,
-      fontWeight: FontWeight.w700,
-      color: CustomerListColors.regularBadgeText,
-      letterSpacing: 0.5);
+        fontSize: 10,
+        fontWeight: FontWeight.w800,
+        color: CustomerListColors.regularBadgeText,
+      );
 
   static TextStyle get emptyTitle => GoogleFonts.manrope(
-      fontSize: 18,
-      fontWeight: FontWeight.w800,
-      color: CustomerListColors.bodyTextMain);
-  static TextStyle get emptySubtitle => GoogleFonts.inter(
-      fontSize: 14,
-      fontWeight: FontWeight.w500,
-      color: CustomerListColors.bodyTextMuted);
+        fontSize: 19,
+        fontWeight: FontWeight.w900,
+        color: CustomerListColors.bodyTextMain,
+      );
 
-  // â”€â”€ DECORATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  static TextStyle get emptySubtitle => GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: CustomerListColors.bodyTextMuted,
+      );
+
   static BoxDecoration get cardDecoration => BoxDecoration(
         color: CustomerListColors.bodyPanelBg,
         borderRadius: BorderRadius.circular(cardBorderRadius),
-        border: Border.all(
-            color: CustomerListColors.bodyBorder.withValues(alpha: 0.5),
-            width: 1),
+        border: Border.all(color: CustomerListColors.bodyBorder),
         boxShadow: const [
           BoxShadow(
-              color: CustomerListColors.shadowLight,
-              blurRadius: 12,
-              offset: Offset(0, 4))
+            color: CustomerListColors.shadowLight,
+            blurRadius: 16,
+            offset: Offset(0, 6),
+          ),
         ],
       );
 
   static BoxDecoration get cardDecorationHover => BoxDecoration(
-        color: CustomerListColors.bodyPanelBg,
+        color: CustomerListColors.cardHover,
         borderRadius: BorderRadius.circular(cardBorderRadius),
-        border: Border.all(color: CustomerListColors.brandGold, width: 1.5),
+        border: Border.all(color: CustomerListColors.brandGold, width: 1.3),
         boxShadow: [
           BoxShadow(
-              color: CustomerListColors.brandGold.withValues(alpha: 0.15),
-              blurRadius: 20,
-              offset: const Offset(0, 8))
+            color: CustomerListColors.brandGold.withValues(alpha: 0.18),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
         ],
       );
 
   static BoxDecoration get searchDecoration => BoxDecoration(
         color: CustomerListColors.searchBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: CustomerListColors.searchBorder, width: 1),
+        border: Border.all(color: CustomerListColors.searchBorder),
         boxShadow: const [
           BoxShadow(
-              color: CustomerListColors.shadowLight,
-              blurRadius: 10,
-              offset: Offset(0, 2))
+            color: CustomerListColors.shadowLight,
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
         ],
       );
 
   static BoxDecoration get statsCardDecoration => BoxDecoration(
         color: CustomerListColors.bodyPanelBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-            color: CustomerListColors.bodyBorder.withValues(alpha: 0.5),
-            width: 1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: CustomerListColors.bodyBorder),
         boxShadow: const [
           BoxShadow(
-              color: CustomerListColors.shadowLight,
-              blurRadius: 15,
-              offset: Offset(0, 6))
+            color: CustomerListColors.shadowLight,
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
         ],
       );
 }

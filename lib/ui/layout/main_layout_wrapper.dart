@@ -367,8 +367,14 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
                     },
                   )));
     } else if (routeId == AppRoutes.interestCalcRoute) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (_) => const InterestCalcScreen()));
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => InterestCalcScreen(
+            onBack: () => Navigator.of(context).maybePop(),
+          ),
+        ),
+      );
     } else if (routeId == AppRoutes.noticeAuctionRoute) {
       Navigator.push(
           context,

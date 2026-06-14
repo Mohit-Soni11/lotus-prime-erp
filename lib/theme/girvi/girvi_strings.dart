@@ -24,8 +24,8 @@ class GirviStrings {
   static const String listSub = 'All pawn loans';
   static const String releaseTitle = 'GIRVI RELEASE';
   static const String releaseSub = 'Redeem & settle';
-  static const String calcTitle = 'INTEREST CALCULATOR';
-  static const String calcSub = 'Loan interest computation';
+  static const String calcTitle = 'INTEREST ENTRY';
+  static const String calcSub = 'Payment ledger';
   static const String noticeTitle = 'NOTICE & AUCTION';
   static const String noticeSub = 'Overdue management';
 

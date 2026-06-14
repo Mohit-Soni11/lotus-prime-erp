@@ -96,9 +96,9 @@ class SidebarMenu {
       icon: Icons.lock_outline_rounded,
       subItems: [
         MenuItemData(AppRoutes.newGirviRoute),
+        MenuItemData(AppRoutes.interestCalcRoute),
         MenuItemData(AppRoutes.girviReleaseRoute),
         MenuItemData(AppRoutes.defaulterListRoute),
-        MenuItemData(AppRoutes.interestCalcRoute),
         MenuItemData(AppRoutes.noticeAuctionRoute),
       ],
     ),

@@ -140,9 +140,9 @@ class GirviLoanModel {
     return days / 30.0;
   }
 
-  /// Accrued interest = loanAmount Ã— (interestRate/100) Ã— monthsElapsed
+  /// Accrued interest from the last paid interest date, or from loan start.
   double get accruedInterest =>
-      loanAmount * (interestRate / 100) * monthsElapsed;
+      loanAmount * (interestRate / 100) * unpaidMonths;
 
   /// Simple interest for a given number of months
   double interestForMonths(double months) =>

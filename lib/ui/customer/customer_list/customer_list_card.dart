@@ -1,13 +1,14 @@
 // -----------------------------------------------------------------------------
 // FILE: customer_list_card.dart
-// MODULE: Customer â†’ Customer List
-// DESCRIPTION: Individual customer card. Cream BG + White card.
-//              Hover effect with gold border glow.
+// MODULE: Customer -> Customer List
+// DESCRIPTION: Production customer row with activity, account, and status cues.
 // -----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
-import '../../../theme/customer/customer_list/customer_list_theme.dart';
+
+import '../../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../../models/customer/customer_list/customer_list_ui_model.dart';
+import '../../../theme/customer/customer_list/customer_list_theme.dart';
 
 class CustomerListCard extends StatefulWidget {
   final CustomerListItemModel customer;
@@ -32,39 +33,42 @@ class _CustomerListCardState extends State<CustomerListCard> {
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: _isHovered
-              ? CustomerListStyles.cardDecorationHover
-              : CustomerListStyles.cardDecoration,
-          child: Padding(
-            padding: CustomerListStyles.cardPaddingH,
-            child: Row(
+      child: AnimatedScale(
+        scale: _isHovered ? 1.004 : 1,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: _isHovered
+                ? CustomerListStyles.cardDecorationHover
+                : CustomerListStyles.cardDecoration,
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
               children: [
-                // â”€â”€ AVATAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                _buildAvatar(),
-                const SizedBox(width: 16),
-
-                // â”€â”€ MAIN INFO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                Expanded(child: _buildMainInfo()),
-                const SizedBox(width: 12),
-
-                // â”€â”€ INVOICE COUNT (FIXED) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                _buildInvoiceBox(),
-                const SizedBox(width: 12),
-
-                // â”€â”€ ARROW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                AnimatedOpacity(
-                  opacity: _isHovered ? 1.0 : 0.3,
-                  duration: const Duration(milliseconds: 180),
-                  child: const Icon(
-                    CustomerListIcons.arrowRight,
-                    color: CustomerListColors.brandGold,
-                    size: 16,
+                Positioned.fill(
+                  left: 0,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: _isHovered ? 5 : 3,
+                      color: _activityAccent,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: CustomerListStyles.cardPaddingH,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxWidth < 880;
+                      return compact
+                          ? _buildCompactLayout()
+                          : _buildWideLayout();
+                    },
                   ),
                 ),
               ],
@@ -75,51 +79,93 @@ class _CustomerListCardState extends State<CustomerListCard> {
     );
   }
 
+  Widget _buildWideLayout() {
+    return Row(
+      children: [
+        _buildAvatar(),
+        const SizedBox(width: 16),
+        Expanded(flex: 5, child: _buildIdentity()),
+        const SizedBox(width: 18),
+        Expanded(flex: 4, child: _buildActivityPill()),
+        const SizedBox(width: 18),
+        _buildMetricRail(),
+        const SizedBox(width: 12),
+        _buildOpenArrow(),
+      ],
+    );
+  }
+
+  Widget _buildCompactLayout() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _buildAvatar(),
+            const SizedBox(width: 14),
+            Expanded(child: _buildIdentity()),
+            _buildOpenArrow(),
+          ],
+        ),
+        const SizedBox(height: 14),
+        _buildActivityPill(),
+        const SizedBox(height: 12),
+        _buildMetricRail(compact: true),
+      ],
+    );
+  }
+
   Widget _buildAvatar() {
     return Stack(
+      clipBehavior: Clip.none,
       children: [
-        Container(
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           width: CustomerListStyles.avatarSize,
           height: CustomerListStyles.avatarSize,
           decoration: BoxDecoration(
-            color: widget.customer.isVip
-                ? CustomerListColors.vipBadgeBg
-                : CustomerListColors.brandGoldLight,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: widget.customer.isVip
-                  ? CustomerListColors.vipBadgeBorder
-                  : CustomerListColors.brandGold.withValues(alpha: 0.3),
-              width: 1.5,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: widget.customer.isVip
+                  ? const [
+                      CustomerListColors.brandGoldBg,
+                      CustomerListColors.vipBadgeBg,
+                    ]
+                  : const [
+                      CustomerListColors.infoBg,
+                      CustomerListColors.bodyPanelBg,
+                    ],
             ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _activityAccent.withValues(alpha: 0.45)),
           ),
           alignment: Alignment.center,
           child: Text(
             widget.customer.initials,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: CustomerListColors.brandGold,
+              fontWeight: FontWeight.w900,
+              color: widget.customer.isVip
+                  ? CustomerListColors.brandGoldDark
+                  : CustomerListColors.info,
             ),
           ),
         ),
-        if (widget.customer.isNewToday)
+        if (widget.customer.isActiveAccount)
           Positioned(
-            top: -2,
-            right: -2,
+            right: -3,
+            bottom: -3,
             child: Container(
-              width: 12,
-              height: 12,
-              decoration: const BoxDecoration(
-                color: CustomerListColors.onlineGreen,
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: CustomerListColors.success,
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: CustomerListColors.onlineGreen,
-                    blurRadius: 6,
-                    spreadRadius: 1,
-                  ),
-                ],
+                border: Border.all(
+                  color: CustomerListColors.bodyPanelBg,
+                  width: 3,
+                ),
               ),
             ),
           ),
@@ -127,68 +173,54 @@ class _CustomerListCardState extends State<CustomerListCard> {
     );
   }
 
-  Widget _buildMainInfo() {
+  Widget _buildIdentity() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Name + Badge row
         Row(
           children: [
             Flexible(
               child: Text(
                 widget.customer.name,
                 style: CustomerListStyles.customerName,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: 8),
             _buildTypeBadge(),
+            if (widget.customer.hasDue) ...[
+              const SizedBox(width: 6),
+              _buildSmallBadge(
+                "DUE",
+                CustomerListColors.dangerBg,
+                CustomerListColors.dangerText,
+              ),
+            ],
           ],
         ),
-        const SizedBox(height: 6),
-
-        // Mobile
-        Row(
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 12,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            const Icon(
+            _buildInlineMeta(
               CustomerListIcons.phone,
-              size: 13,
-              color: CustomerListColors.bodyTextMuted,
+              widget.customer.mobile.isEmpty
+                  ? "No mobile"
+                  : widget.customer.mobile,
             ),
-            const SizedBox(width: 5),
-            Text(
-              widget.customer.mobile,
-              style: CustomerListStyles.customerMobile,
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-
-        // City + Since
-        Row(
-          children: [
-            const Icon(
+            _buildInlineMeta(
               CustomerListIcons.city,
-              size: 12,
-              color: CustomerListColors.bodyTextMuted,
-            ),
-            const SizedBox(width: 4),
-            Text(
               widget.customer.city.isEmpty
                   ? CustomerListStrings.noCity
                   : widget.customer.city,
-              style: CustomerListStyles.customerDetail,
             ),
-            const SizedBox(width: 12),
-            const Icon(
+            _buildInlineMeta(
               CustomerListIcons.calendar,
-              size: 12,
-              color: CustomerListColors.bodyTextMuted,
-            ),
-            const SizedBox(width: 4),
-            Text(
               "Since ${widget.customer.formattedDate}",
-              style: CustomerListStyles.customerSince,
+              muted: true,
             ),
           ],
         ),
@@ -196,87 +228,325 @@ class _CustomerListCardState extends State<CustomerListCard> {
     );
   }
 
-  Widget _buildTypeBadge() {
-    if (widget.customer.isVip) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: CustomerListColors.vipBadgeBg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: CustomerListColors.vipBadgeBorder,
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              CustomerListIcons.vipBadge,
-              size: 10,
-              color: CustomerListColors.vipBadgeText,
-            ),
-            const SizedBox(width: 4),
-            Text("ELITE", style: CustomerListStyles.vipBadge), // Fixed text
-          ],
-        ),
-      );
-    } else {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: CustomerListColors.regularBadgeBg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: CustomerListColors.regularBadgeBorder,
-            width: 1,
-          ),
-        ),
-        child: Text("STANDARD",
-            style: CustomerListStyles.regularBadge), // Fixed text
-      );
-    }
-  }
-
-  Widget _buildInvoiceBox() {
-    // Renamed from _buildBillBox
+  Widget _buildActivityPill() {
+    final colors = _activityPalette;
     return Container(
-      width: 64,
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: widget.customer.billCount > 0
-            ? CustomerListColors.brandGoldLight
-            : CustomerListColors.bodyBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: widget.customer.billCount > 0
-              ? CustomerListColors.brandGold.withValues(alpha: 0.3)
-              : CustomerListColors.bodyBorder,
-        ),
+        color: colors.background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.accent.withValues(alpha: 0.22)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
-          Icon(
-            CustomerListIcons.invoice,
-            size: 14,
-            color: widget.customer.billCount > 0
-                ? CustomerListColors.brandGold
-                : CustomerListColors.bodyTextMuted,
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: CustomerListColors.bodyPanelBg.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(_activityIcon, size: 17, color: colors.accent),
           ),
-          const SizedBox(height: 4),
-          Text(
-            widget.customer.billCount.toString(),
-            style: CustomerListStyles.invoiceCount, // Fixed variable
-            textAlign: TextAlign.center,
-          ),
-          Text(
-            "INVOICES", // Fixed text
-            style: CustomerListStyles.invoiceLabel, // Fixed variable
-            textAlign: TextAlign.center,
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.customer.lastActivityLabel,
+                  style: CustomerListStyles.activityLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  "${widget.customer.activityAgeLabel} - ${widget.customer.lastActivityDetail}",
+                  style: CustomerListStyles.activityMeta,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildMetricRail({bool compact = false}) {
+    final metrics = [
+      _MetricTile(
+        icon: CustomerListIcons.invoice,
+        label: "Invoices",
+        value: widget.customer.billCount.toString(),
+        accent: CustomerListColors.info,
+        background: CustomerListColors.infoBg,
+      ),
+      _MetricTile(
+        icon: CustomerListIcons.due,
+        label: "Due",
+        value: _formatMoney(widget.customer.dueAmount),
+        accent: widget.customer.hasDue
+            ? CustomerListColors.danger
+            : CustomerListColors.success,
+        background: widget.customer.hasDue
+            ? CustomerListColors.dangerBg
+            : CustomerListColors.successBg,
+      ),
+      _MetricTile(
+        icon: CustomerListIcons.girvi,
+        label: "Girvi",
+        value: widget.customer.activeGirviCount.toString(),
+        accent: CustomerListColors.violet,
+        background: CustomerListColors.violetBg,
+      ),
+      _MetricTile(
+        icon: CustomerListIcons.advance,
+        label: "Advance",
+        value: widget.customer.activeAdvanceCount.toString(),
+        accent: CustomerListColors.teal,
+        background: CustomerListColors.tealBg,
+      ),
+    ];
+
+    if (compact) {
+      return Wrap(spacing: 8, runSpacing: 8, children: metrics);
+    }
+
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      for (int i = 0; i < metrics.length; i++) ...[
+        metrics[i],
+        if (i != metrics.length - 1) const SizedBox(width: 8),
+      ],
+    ]);
+  }
+
+  Widget _buildOpenArrow() {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        color: _isHovered
+            ? CustomerListColors.brandGoldBg
+            : CustomerListColors.bodyPanelMuted,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: _isHovered
+              ? CustomerListColors.brandGold
+              : CustomerListColors.bodyBorder,
+        ),
+      ),
+      child: Icon(
+        CustomerListIcons.arrowRight,
+        size: 14,
+        color: _isHovered
+            ? CustomerListColors.brandGoldDark
+            : CustomerListColors.bodyTextSoft,
+      ),
+    );
+  }
+
+  Widget _buildInlineMeta(IconData icon, String text, {bool muted = false}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 13,
+          color: muted
+              ? CustomerListColors.bodyTextSoft
+              : CustomerListColors.bodyTextMuted,
+        ),
+        const SizedBox(width: 5),
+        Text(
+          text,
+          style: muted
+              ? CustomerListStyles.customerSince
+              : CustomerListStyles.customerDetail,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTypeBadge() {
+    final tier = widget.customer.type;
+    final Color background;
+    final Color foreground;
+    final Color border;
+    final IconData icon;
+
+    switch (tier) {
+      case CustomerType.elite:
+        background = CustomerListColors.vipBadgeBg;
+        foreground = CustomerListColors.vipBadgeText;
+        border = CustomerListColors.vipBadgeBorder;
+        icon = CustomerListIcons.vipBadge;
+        break;
+      case CustomerType.gold:
+        background = CustomerListColors.brandGoldBg;
+        foreground = CustomerListColors.brandGoldDark;
+        border = CustomerListColors.brandGold;
+        icon = Icons.star_rounded;
+        break;
+      case CustomerType.silver:
+        background = CustomerListColors.bodyPanelMuted;
+        foreground = CustomerListColors.bodyTextMuted;
+        border = CustomerListColors.bodyTextSoft;
+        icon = Icons.star_half_rounded;
+        break;
+      case CustomerType.standard:
+        background = CustomerListColors.regularBadgeBg;
+        foreground = CustomerListColors.regularBadgeText;
+        border = CustomerListColors.regularBadgeBorder;
+        icon = CustomerListIcons.defaultAvatar;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: border.withValues(alpha: 0.75)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: foreground),
+          const SizedBox(width: 4),
+          Text(
+            tier.displayLabel.toUpperCase(),
+            style: CustomerListStyles.regularBadge.copyWith(color: foreground),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSmallBadge(String text, Color background, Color foreground) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: CustomerListStyles.regularBadge.copyWith(color: foreground),
+      ),
+    );
+  }
+
+  Color get _activityAccent => _activityPalette.accent;
+
+  IconData get _activityIcon {
+    switch (widget.customer.lastActivityKind) {
+      case CustomerActivityKind.profile:
+        return CustomerListIcons.defaultAvatar;
+      case CustomerActivityKind.invoice:
+        return CustomerListIcons.invoice;
+      case CustomerActivityKind.advance:
+        return CustomerListIcons.advance;
+      case CustomerActivityKind.girvi:
+        return CustomerListIcons.girvi;
+    }
+  }
+
+  _ActivityPalette get _activityPalette {
+    switch (widget.customer.lastActivityKind) {
+      case CustomerActivityKind.profile:
+        return const _ActivityPalette(
+          accent: CustomerListColors.brandGold,
+          background: CustomerListColors.brandGoldBg,
+        );
+      case CustomerActivityKind.invoice:
+        return const _ActivityPalette(
+          accent: CustomerListColors.info,
+          background: CustomerListColors.infoBg,
+        );
+      case CustomerActivityKind.advance:
+        return const _ActivityPalette(
+          accent: CustomerListColors.teal,
+          background: CustomerListColors.tealBg,
+        );
+      case CustomerActivityKind.girvi:
+        return const _ActivityPalette(
+          accent: CustomerListColors.violet,
+          background: CustomerListColors.violetBg,
+        );
+    }
+  }
+
+  static String _formatMoney(double value) {
+    if (value <= 0.01) return "Rs 0";
+    if (value >= 10000000)
+      return "Rs ${(value / 10000000).toStringAsFixed(1)}Cr";
+    if (value >= 100000) return "Rs ${(value / 100000).toStringAsFixed(1)}L";
+    if (value >= 1000) return "Rs ${(value / 1000).toStringAsFixed(1)}K";
+    return "Rs ${value.toStringAsFixed(0)}";
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color accent;
+  final Color background;
+
+  const _MetricTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.accent,
+    required this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 92,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: background.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: accent),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: CustomerListStyles.metricValue,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 1),
+          Text(
+            label.toUpperCase(),
+            style: CustomerListStyles.metricLabel,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActivityPalette {
+  final Color accent;
+  final Color background;
+
+  const _ActivityPalette({
+    required this.accent,
+    required this.background,
+  });
 }

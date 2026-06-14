@@ -810,7 +810,9 @@ GoRouter createAppRouter() {
 
           GoRoute(
             path: RoutePaths.girviInterest,
-            builder: (_, __) => const InterestCalcScreen(),
+            builder: (context, state) => InterestCalcScreen(
+              onBack: () => _goBackOr(context, RoutePaths.girviList),
+            ),
           ),
 
           GoRoute(

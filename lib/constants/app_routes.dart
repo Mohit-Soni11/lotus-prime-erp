@@ -180,7 +180,7 @@ class AppRoutes {
     // Girvi / Pawn Loan ✅
     newGirviRoute: 'New Girvi Ticket',
     girviReleaseRoute: 'Girvi Ledger',
-    interestCalcRoute: 'Interest Calculator',
+    interestCalcRoute: 'Interest Entry',
     noticeAuctionRoute: 'Notice & Auction',
 
     // Finance & Ledgers
