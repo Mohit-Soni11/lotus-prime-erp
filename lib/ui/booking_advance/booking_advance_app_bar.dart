@@ -10,7 +10,13 @@ import '../../../theme/booking_advance/booking_advance_theme.dart';
 class BookingAdvanceAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final VoidCallback onBack;
-  const BookingAdvanceAppBar({super.key, required this.onBack});
+  final String title;
+
+  const BookingAdvanceAppBar({
+    super.key,
+    required this.onBack,
+    this.title = BookingAdvanceStrings.appBarTitle,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(70.0);
@@ -60,8 +66,8 @@ class BookingAdvanceAppBar extends StatelessWidget
             const SizedBox(width: 14),
 
             // Main Title
-            const Text(
-              BookingAdvanceStrings.appBarTitle,
+            Text(
+              title,
               style: BookingAdvanceStyles
                   .headerTitle, // Ensure this style has a good font weight and letter spacing
             ),

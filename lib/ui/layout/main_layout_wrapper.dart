@@ -92,10 +92,15 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
   String _activePageRouteId = AppRoutes.dashboardRoute;
   int? _activeCustomerId;
 
-  void _openSalesWorkspace() {
+  void _openSalesWorkspace({int? editBillId}) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const PosMasterSaleScreen()),
+      MaterialPageRoute(
+        builder: (_) => PosMasterSaleScreen(
+          editBillId: editBillId,
+          onBack: () => Navigator.maybePop(context),
+        ),
+      ),
     );
   }
 
@@ -111,11 +116,12 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
     );
   }
 
-  void _openAdvanceWorkspace() {
+  void _openAdvanceWorkspace({int? editOrderId}) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => BookingAdvanceScreen(
+          editOrderId: editOrderId,
           onBack: () => Navigator.pop(context),
         ),
       ),
@@ -128,9 +134,9 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
       onBack: () => Navigator.pop(context),
       onDeleted: () => Navigator.pop(context),
       onNewSale: (_) => _openSalesWorkspace(),
-      onEditBill: (_) => _openSalesWorkspace(),
+      onEditBill: (billId) => _openSalesWorkspace(editBillId: billId),
       onEditGirvi: (loanId) => _openGirviWorkspace(editLoanId: loanId),
-      onEditAdvance: (_) => _openAdvanceWorkspace(),
+      onEditAdvance: (orderId) => _openAdvanceWorkspace(editOrderId: orderId),
       onConvertAdvanceToSale: (_, __) => _openSalesWorkspace(),
     );
   }

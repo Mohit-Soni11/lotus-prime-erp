@@ -50,8 +50,14 @@ class BookingAdvanceController extends ChangeNotifier {
   bool get isNumberLoading => _isNumberLoading;
   String get currentFinancialYear => _currentFinancialYear;
   int get nextSequence => _nextSequence;
+  int? editingOrderId;
+  String? _editingOrderNo;
+  bool isLoadingEditOrder = false;
+  String? editLoadError;
+  bool get isEditMode => editingOrderId != null;
 
   String get formattedBookingNo {
+    if (_editingOrderNo != null) return _editingOrderNo!;
     if (_isNumberLoading) return 'Loading...';
     return 'BK-LJ-$_currentFinancialYear-${_nextSequence.toString().padLeft(4, '0')}';
   }
@@ -248,6 +254,66 @@ class BookingAdvanceController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> initializeForEdit(int orderId) async {
+    isLoadingEditOrder = true;
+    editLoadError = null;
+    notifyListeners();
+
+    try {
+      final details = await _repo.fetchEditableBooking(orderId);
+      if (details == null) {
+        editLoadError = 'Advance order could not be loaded for editing.';
+        return false;
+      }
+
+      _clearAll();
+      final order = details.order;
+      editingOrderId = order.id;
+      _editingOrderNo = order.orderNo;
+      selectedCustomerId = order.customerId;
+
+      final customer = details.customer;
+      if (customer != null) {
+        mobileCtrl.text = customer.mobile;
+        nameCtrl.text = customer.name;
+        cityCtrl.text = customer.city ?? '';
+      }
+
+      bookingType = order.bookingType.toUpperCase() == 'LOCKED'
+          ? BookingType.locked
+          : BookingType.open;
+      lockedRateCtrl.text = _formatNumber(order.lockedRate);
+      deliveryDate = order.deliveryDate;
+
+      final item = BookingItemModel(metal: _metalFromLabel(order.metalType));
+      item.addListener(_onChildChanged);
+      item.descCtrl.text = order.itemName;
+      item.purityCtrl.text = order.purity;
+      item.grossCtrl.text = _formatNumber(order.approxWeight);
+      item.lessCtrl.text = '';
+      item.rateCtrl.text = _formatNumber(order.lockedRate);
+      bookingItems.add(item);
+      activeItemIndex = 0;
+
+      final totalAdvance =
+          details.advances.fold<double>(0, (sum, row) => sum + row.amountPaid);
+      cashCtrl.text = _formatNumber(totalAdvance);
+      _cashInput = totalAdvance;
+      if (details.advances.isNotEmpty && lockedRateCtrl.text.isEmpty) {
+        lockedRateCtrl.text = _formatNumber(details.advances.first.rateOnDate);
+      }
+
+      notifyListeners();
+      return true;
+    } catch (error) {
+      editLoadError = 'Advance order could not be loaded for editing.';
+      return false;
+    } finally {
+      isLoadingEditOrder = false;
+      notifyListeners();
+    }
+  }
+
   // ── SAVE BOOKING ──────────────────────────────────────────────────────────
   /// Returns a named record with success flag, message, and saved booking number.
   /// bookingNo is used by the UI layer for receipt generation (Step 3).
@@ -276,6 +342,36 @@ class BookingAdvanceController extends ChangeNotifier {
       final perItemAdv = bookingItems.isEmpty
           ? totalAdvance
           : totalAdvance / bookingItems.length;
+
+      if (editingOrderId != null) {
+        final item = bookingItems.first;
+        await _repo.updateBooking(
+          orderId: editingOrderId!,
+          customerId: selectedCustomerId ?? 0,
+          itemName: item.descCtrl.text.trim().isEmpty
+              ? '${item.metal.displayName} Item'
+              : item.descCtrl.text.trim(),
+          metalType: item.metal.displayName,
+          purity: item.purityCtrl.text.isEmpty ? '22K' : item.purityCtrl.text,
+          approxWeight: item.netWt,
+          bookingType: bookingType == BookingType.locked ? 'LOCKED' : 'OPEN',
+          lockedRate: bookingType == BookingType.locked ? lockedRate : 0.0,
+          deliveryDate: deliveryDate,
+          notes: null,
+          totalAdvance: totalAdvance,
+          rateOnDate: _p(item.rateCtrl.text),
+        );
+
+        _clearAll();
+        isSaving = false;
+        notifyListeners();
+
+        return (
+          success: true,
+          message: 'Booking $savedBookingNo updated successfully!',
+          bookingNo: savedBookingNo,
+        );
+      }
 
       for (final item in bookingItems) {
         await _repo.saveNewBooking(
@@ -343,6 +439,9 @@ class BookingAdvanceController extends ChangeNotifier {
     _upiInput = 0;
     _cardInput = 0;
     selectedCustomerId = null;
+    editingOrderId = null;
+    _editingOrderNo = null;
+    editLoadError = null;
     bookingType = BookingType.open;
     deliveryDate = null;
     customerResults = [];
@@ -362,6 +461,27 @@ class BookingAdvanceController extends ChangeNotifier {
   // ── HELPERS ───────────────────────────────────────────────────────────────
   double _p(String t) =>
       double.tryParse(t.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+
+  String _formatNumber(double value) {
+    if (value.abs() < 0.0001) return '';
+    final rounded = value.roundToDouble();
+    if ((value - rounded).abs() < 0.0001) return rounded.toStringAsFixed(0);
+    return value
+        .toStringAsFixed(3)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
+  }
+
+  MetalType _metalFromLabel(String label) {
+    final normalized = label.trim().toUpperCase();
+    for (final metal in MetalType.values) {
+      if (metal.displayName == normalized ||
+          metal.name.toUpperCase() == normalized) {
+        return metal;
+      }
+    }
+    return MetalType.gold;
+  }
 
   @override
   void dispose() {

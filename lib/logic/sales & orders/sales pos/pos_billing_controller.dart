@@ -713,6 +713,149 @@ class PosBillingController extends ChangeNotifier {
     unawaited(_prefillWholesaleBhawFromMaster());
   }
 
+  int? editingBillId;
+  DateTime? editingBillDate;
+  bool isLoadingEditBill = false;
+  String? editLoadError;
+  bool get isEditingExistingBill => editingBillId != null;
+
+  Future<bool> initializeForEdit(int billId) async {
+    isLoadingEditBill = true;
+    editLoadError = null;
+    notifyListeners();
+
+    try {
+      final details = await _checkoutRepo.fetchEditableBill(billId);
+      if (details == null) {
+        editLoadError = 'Sales bill could not be loaded for editing.';
+        return false;
+      }
+
+      clearEntirePOS(isHolding: false, refreshInvoicePreview: false);
+      editingBillId = billId;
+
+      final bill = details.bill;
+      editingBillDate = bill.billDate;
+      _committedInvoiceNumber = bill.billNo;
+      billingMode = _billingModeFromDb(bill.billingMode);
+      billType = _billTypeFromDb(bill.billType);
+      oldGoldMode = _oldGoldModeFromDb(bill.oldGoldMode);
+      discountType = DiscountType.flatAmount;
+      promiseDate = bill.promiseDate;
+
+      nameCtrl.text = bill.customerName ?? '';
+      mobileCtrl.text = bill.mobile ?? '';
+      cityCtrl.clear();
+      discountCtrl.text = _formatEditNumber(bill.discount);
+      cashCtrl.text = _formatEditNumber(bill.cashPaid);
+      upiCtrl.text = _formatEditNumber(bill.upiPaid);
+      cardCtrl.text = _formatEditNumber(bill.cardPaid);
+      advCtrl.text = _formatEditNumber(bill.advancePaid);
+
+      if (bill.customerId != null) {
+        await _restoreSelectedCustomer(bill.customerId);
+      }
+
+      for (final row in details.items) {
+        final item = SaleItemModel(
+          metal: _metalFromDb(row.metalType),
+          makingChargeType: _makingChargeTypeFromDb(row.makingChargeType),
+          isLessPerPiece: row.lessWeightPerPiece,
+        );
+        item.addListener(_onChildItemChanged);
+        item.descCtrl.text = row.itemName;
+        item.pcsCtrl.text = row.quantity.toString();
+        item.huidCtrl.text = row.huid ?? '';
+        item.purityCtrl.text = row.purity;
+        item.grossCtrl.text = _formatEditNumber(row.grossWeight);
+        item.lessCtrl.text = _formatEditNumber(row.lessWeight);
+        item.rateCtrl.text = _formatEditNumber(row.rate);
+        item.makingCtrl.text = _formatEditNumber(row.makingChargeInput);
+        if (row.linkedStockItemId != null && row.linkedStockSku != null) {
+          item.attachStockReference(
+            stockItemId: row.linkedStockItemId!,
+            sku: row.linkedStockSku!,
+          );
+        }
+        saleItems.add(item);
+      }
+
+      for (final row in details.oldGoldItems) {
+        final item = OldGoldItemModel(metal: _metalFromDb(row.metalType));
+        item.addListener(_onChildItemChanged);
+        item.descCtrl.text = row.itemDescription;
+        item.grossCtrl.text = _formatEditNumber(row.grossWeight);
+        item.lessCtrl.text = _formatEditNumber(row.lessWeight);
+        item.purityCtrl.text = _formatEditNumber(row.purity);
+        item.rateCtrl.text = _formatEditNumber(row.rate);
+        oldGoldItems.add(item);
+      }
+
+      activeRowIndex = saleItems.isEmpty ? -1 : 0;
+      notifyListeners();
+      return true;
+    } catch (error) {
+      editLoadError = 'Sales bill could not be loaded for editing.';
+      return false;
+    } finally {
+      isLoadingEditBill = false;
+      notifyListeners();
+    }
+  }
+
+  String _formatEditNumber(double value) {
+    if (value.abs() < 0.0001) return '';
+    final rounded = value.roundToDouble();
+    if ((value - rounded).abs() < 0.0001) {
+      return rounded.toStringAsFixed(0);
+    }
+    return value
+        .toStringAsFixed(3)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
+  }
+
+  MetalType _metalFromDb(String value) {
+    final normalized = value.trim().toUpperCase();
+    for (final metal in MetalType.values) {
+      if (metal.displayName == normalized ||
+          metal.name.toUpperCase() == normalized) {
+        return metal;
+      }
+    }
+    return MetalType.gold;
+  }
+
+  MakingChargeType _makingChargeTypeFromDb(String value) {
+    switch (value.trim().toUpperCase()) {
+      case 'PERCENTAGE':
+        return MakingChargeType.percentage;
+      case 'PER_KG':
+        return MakingChargeType.perKg;
+      case 'PER_PIECE':
+        return MakingChargeType.perPiece;
+      case 'PER_GRAM':
+      default:
+        return MakingChargeType.perGram;
+    }
+  }
+
+  BillingMode _billingModeFromDb(String value) {
+    return value.trim().toUpperCase() == 'WHOLESALE'
+        ? BillingMode.wholesale
+        : BillingMode.retail;
+  }
+
+  BillType _billTypeFromDb(String value) {
+    return value.trim().toUpperCase() == 'GST' ? BillType.gst : BillType.normal;
+  }
+
+  OldGoldAdjustMode _oldGoldModeFromDb(String value) {
+    return value.trim().toUpperCase() == 'METAL_ADJUST'
+        ? OldGoldAdjustMode.metalAdjust
+        : OldGoldAdjustMode.cashAdjust;
+  }
+
   Future<void> _initializeInvoiceNumberPreview() async {
     await _initShopName();
     await refreshInvoiceSequencePreview();
@@ -1367,6 +1510,9 @@ class PosBillingController extends ChangeNotifier {
     bool isHolding = false,
     bool refreshInvoicePreview = true,
   }) {
+    editingBillId = null;
+    editingBillDate = null;
+    editLoadError = null;
     _committedInvoiceNumber = null;
     selectedCustomer = null;
     customerSuggestions = [];

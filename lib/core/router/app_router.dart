@@ -382,6 +382,16 @@ class RouteMapper {
 final _authNotifier = ValueNotifier<bool>(false);
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
+void _goBackOr(BuildContext context, String fallbackPath) {
+  if (context.canPop()) {
+    context.pop();
+    return;
+  }
+
+  final currentPath = GoRouterState.of(context).uri.toString();
+  context.go(currentPath == fallbackPath ? RoutePaths.dashboard : fallbackPath);
+}
+
 /// Call this once during app bootstrap (main.dart) to wire Firebase auth
 /// state changes into the router's refreshListenable.
 void initAuthRouting() {
@@ -495,6 +505,60 @@ GoRouter createAppRouter() {
         },
       ),
 
+      GoRoute(
+        path: RoutePaths.salesPos,
+        builder: (context, state) {
+          final editBillId = int.tryParse(
+            state.uri.queryParameters['editBillId'] ?? '',
+          );
+          final returnCustomerId = int.tryParse(
+            state.uri.queryParameters['returnCustomerId'] ?? '',
+          );
+
+          return PosMasterSaleScreen(
+            editBillId: editBillId,
+            onBack: () {
+              if (returnCustomerId != null) {
+                context.go('/app/customer/profile/$returnCustomerId');
+                return;
+              }
+              if (context.canPop()) {
+                context.pop();
+                return;
+              }
+              context.go(RoutePaths.dashboard);
+            },
+          );
+        },
+      ),
+
+      GoRoute(
+        path: RoutePaths.salesBooking,
+        builder: (context, state) {
+          final editAdvanceId = int.tryParse(
+            state.uri.queryParameters['editAdvanceId'] ?? '',
+          );
+          final returnCustomerId = int.tryParse(
+            state.uri.queryParameters['returnCustomerId'] ?? '',
+          );
+
+          return BookingAdvanceScreen(
+            editOrderId: editAdvanceId,
+            onBack: () {
+              if (returnCustomerId != null) {
+                context.go('/app/customer/profile/$returnCustomerId');
+                return;
+              }
+              if (context.canPop()) {
+                context.pop();
+                return;
+              }
+              context.go(RoutePaths.salesPos);
+            },
+          );
+        },
+      ),
+
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
@@ -525,7 +589,7 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.customerList,
             builder: (context, state) => CustomerListScreen(
-              onBack: () => context.pop(),
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
               onAddCustomer: () => context.go(RoutePaths.customerAdd),
               onCustomerTap: (customerId) =>
                   context.go('/app/customer/profile/$customerId'),
@@ -535,7 +599,7 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.customerAdd,
             builder: (context, state) => AddCustomerScreen(
-              onBack: () => context.pop(),
+              onBack: () => _goBackOr(context, RoutePaths.customerList),
               onSaved: () => context.go(RoutePaths.customerList),
             ),
           ),
@@ -546,10 +610,18 @@ GoRouter createAppRouter() {
               final id = int.parse(state.pathParameters['id']!);
               return CustomerProfileScreen(
                 customerId: id,
-                onBack: () => context.pop(),
-                onDeleted: () => context.pop(),
+                onBack: () => _goBackOr(context, RoutePaths.customerList),
+                onDeleted: () => context.go(RoutePaths.customerList),
                 onNewSale: (_) => context.go(RoutePaths.salesPos),
-                onEditBill: (_) => context.go(RoutePaths.salesPos),
+                onEditBill: (billId) => context.go(
+                  Uri(
+                    path: RoutePaths.salesPos,
+                    queryParameters: {
+                      'editBillId': '$billId',
+                      'returnCustomerId': '$id',
+                    },
+                  ).toString(),
+                ),
                 onEditGirvi: (loanId) => context.go(
                   Uri(
                     path: RoutePaths.girviNew,
@@ -559,7 +631,15 @@ GoRouter createAppRouter() {
                     },
                   ).toString(),
                 ),
-                onEditAdvance: (_) => context.go(RoutePaths.salesBooking),
+                onEditAdvance: (orderId) => context.go(
+                  Uri(
+                    path: RoutePaths.salesBooking,
+                    queryParameters: {
+                      'editAdvanceId': '$orderId',
+                      'returnCustomerId': '$id',
+                    },
+                  ).toString(),
+                ),
               );
             },
           ),
@@ -573,7 +653,7 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.supplierList,
             builder: (context, state) => SupplierListScreen(
-              onBack: () => context.pop(),
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
               onAddSupplier: () => context.go(RoutePaths.supplierAdd),
               onSupplierTap: (supplierId) =>
                   context.go('/app/supplier/profile/$supplierId'),
@@ -583,7 +663,7 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.supplierAdd,
             builder: (context, state) => AddSupplierScreen(
-              onBack: () => context.pop(),
+              onBack: () => _goBackOr(context, RoutePaths.supplierList),
               onSaved: () => context.go(RoutePaths.supplierList),
             ),
           ),
@@ -594,8 +674,8 @@ GoRouter createAppRouter() {
               final id = int.parse(state.pathParameters['id']!);
               return SupplierProfileScreen(
                 supplierId: id,
-                onBack: () => context.pop(),
-                onDeleted: () => context.pop(),
+                onBack: () => _goBackOr(context, RoutePaths.supplierList),
+                onDeleted: () => context.go(RoutePaths.supplierList),
                 onNewStock: () => context.go(RoutePaths.stockAdd),
               );
             },
@@ -603,21 +683,9 @@ GoRouter createAppRouter() {
 
           // ── SALES & ORDERS ────────────────────────────────────────────────────
           GoRoute(
-            path: RoutePaths.salesPos,
-            builder: (_, __) => const PosMasterSaleScreen(),
-          ),
-
-          GoRoute(
-            path: RoutePaths.salesBooking,
-            builder: (context, state) => BookingAdvanceScreen(
-              onBack: () => context.pop(),
-            ),
-          ),
-
-          GoRoute(
             path: RoutePaths.salesDelivery,
             builder: (context, state) => DeliveryManagementScreen(
-              onBack: () => context.pop(),
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),
 
@@ -645,7 +713,7 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.stockInventory,
             builder: (context, state) => InventoryScreen(
-              onBack: () => context.pop(),
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),
 
@@ -695,7 +763,7 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.karigarPending,
             builder: (context, state) => PendingJobsScreen(
-              onBack: () => context.pop(),
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
               onReceiveGoods: (issueId) =>
                   context.go('${RoutePaths.karigarReceive}?issueId=$issueId'),
             ),
@@ -704,7 +772,7 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.karigarLedger,
             builder: (context, state) => KarigarHisaabScreen(
-              onBack: () => context.pop(),
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),
 
@@ -712,7 +780,7 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.girviList,
             builder: (context, state) => GirviListScreen(
-              onBack: () => context.pop(),
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
               onNewGirvi: () => context.go(RoutePaths.girviNew),
             ),
           ),
@@ -725,7 +793,7 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.girviNotice,
             builder: (context, state) => NoticeAuctionScreen(
-              onBack: () => context.pop(),
+              onBack: () => _goBackOr(context, RoutePaths.girviList),
             ),
           ),
 
@@ -743,7 +811,7 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.financeExpense,
             builder: (context, state) => ExpenseScreen(
-              onBack: () => context.pop(),
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),
 
@@ -773,7 +841,7 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.reportDayBook,
             builder: (context, state) => DayBookScreen(
-              onBack: () => context.pop(),
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),
 

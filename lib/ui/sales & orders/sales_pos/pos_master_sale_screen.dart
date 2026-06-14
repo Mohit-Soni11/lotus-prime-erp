@@ -22,7 +22,14 @@ import 'pos_old_gold_table.dart';
 import 'pos_right_billing_panel.dart';
 
 class PosMasterSaleScreen extends StatefulWidget {
-  const PosMasterSaleScreen({super.key});
+  const PosMasterSaleScreen({
+    super.key,
+    this.editBillId,
+    this.onBack,
+  });
+
+  final int? editBillId;
+  final VoidCallback? onBack;
 
   @override
   State<PosMasterSaleScreen> createState() => _PosMasterSaleScreenState();
@@ -31,11 +38,37 @@ class PosMasterSaleScreen extends StatefulWidget {
 class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
   //  The master controller driving the entire screen
   late final PosBillingController _ctrl;
+  bool _isLoadingEditBill = false;
+  String? _editLoadError;
 
   @override
   void initState() {
     super.initState();
     _ctrl = PosBillingController();
+    final editBillId = widget.editBillId;
+    if (editBillId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadEditBill(editBillId);
+      });
+    }
+  }
+
+  Future<void> _loadEditBill(int billId) async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingEditBill = true;
+      _editLoadError = null;
+    });
+
+    final loaded = await _ctrl.initializeForEdit(billId);
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingEditBill = false;
+      _editLoadError = loaded
+          ? null
+          : _ctrl.editLoadError ?? 'Bill could not be loaded for editing.';
+    });
   }
 
   @override
@@ -52,93 +85,133 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
       child: Scaffold(
         backgroundColor: SalesPosColors.bodyBg,
 
-        //  Top app bar 
+        //  Top app bar
         appBar: PosAppBar(
-          title: "${_ctrl.shopName} - POS TERMINAL",
+          title: widget.editBillId != null
+              ? 'Edit Sales Bill'
+              : "${_ctrl.shopName} - POS TERMINAL",
           // Removed userName, userRole, and userInitials from here
-          onBack: () => Navigator.pop(context),
+          onBack: widget.onBack ?? () => Navigator.maybePop(context),
         ),
 
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 12.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ==========================================
-                // LEFT COLUMN (70%) - SMART SCROLL ZONE
-                // ==========================================
-                Expanded(
-                  flex: 70,
-                  child: SingleChildScrollView(
-                    controller: _ctrl.tableScrollCtrl,
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        //  HEADER COMPONENT ROW 
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final bool sideBySide = constraints.maxWidth > 720;
-                            if (sideBySide) {
-                              return IntrinsicHeight(
-                                child: Row(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    PosTopControlBar(ctrl: _ctrl),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                        child:
-                                            PosInvoiceStatusBar(ctrl: _ctrl)),
-                                  ],
-                                ),
-                              );
-                            }
-                            // Responsive fallback for smaller screens
-                            return Column(
-                              mainAxisSize: MainAxisSize.min,
+        body: _buildBody(),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoadingEditBill) {
+      return const Center(
+        child: CircularProgressIndicator(color: SalesPosColors.brandGold),
+      );
+    }
+
+    if (_editLoadError != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.receipt_long_rounded,
+              color: SalesPosColors.bodyTextMuted,
+              size: 44,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _editLoadError!,
+              style: const TextStyle(
+                color: SalesPosColors.textDark,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: widget.onBack ?? () => Navigator.maybePop(context),
+              child: const Text('Back'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 12.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ==========================================
+            // LEFT COLUMN (70%) - SMART SCROLL ZONE
+            // ==========================================
+            Expanded(
+              flex: 70,
+              child: SingleChildScrollView(
+                controller: _ctrl.tableScrollCtrl,
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    //  HEADER COMPONENT ROW
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final bool sideBySide = constraints.maxWidth > 720;
+                        if (sideBySide) {
+                          return IntrinsicHeight(
+                            child: Row(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 PosTopControlBar(ctrl: _ctrl),
-                                const SizedBox(height: 12),
-                                PosInvoiceStatusBar(ctrl: _ctrl),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: PosInvoiceStatusBar(ctrl: _ctrl),
+                                ),
                               ],
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 14),
-
-                        //  CUSTOMER INFO 
-                        PosCustomerDetailsPanel(ctrl: _ctrl),
-                        const SizedBox(height: 16),
-
-                        //  MAIN CART TABLE 
-                        PosSaleItemsTable(ctrl: _ctrl),
-                        const SizedBox(height: 16),
-
-                        //  OLD GOLD / EXCHANGE TABLE 
-                        PosOldGoldTable(ctrl: _ctrl),
-
-                        // Extra bottom padding for scroll comfort
-                        const SizedBox(height: 40),
-                      ],
+                            ),
+                          );
+                        }
+                        // Responsive fallback for smaller screens
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            PosTopControlBar(ctrl: _ctrl),
+                            const SizedBox(height: 12),
+                            PosInvoiceStatusBar(ctrl: _ctrl),
+                          ],
+                        );
+                      },
                     ),
-                  ),
-                ),
+                    const SizedBox(height: 14),
 
-                const SizedBox(width: 18),
+                    //  CUSTOMER INFO
+                    PosCustomerDetailsPanel(ctrl: _ctrl),
+                    const SizedBox(height: 16),
 
-                // ==========================================
-                // Right billing column
-                // ==========================================
-                Expanded(
-                  flex: 30,
-                  child: PosRightBillingPanel(ctrl: _ctrl),
+                    //  MAIN CART TABLE
+                    PosSaleItemsTable(ctrl: _ctrl),
+                    const SizedBox(height: 16),
+
+                    //  OLD GOLD / EXCHANGE TABLE
+                    PosOldGoldTable(ctrl: _ctrl),
+
+                    // Extra bottom padding for scroll comfort
+                    const SizedBox(height: 40),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
+
+            const SizedBox(width: 18),
+
+            // ==========================================
+            // Right billing column
+            // ==========================================
+            Expanded(
+              flex: 30,
+              child: PosRightBillingPanel(ctrl: _ctrl),
+            ),
+          ],
         ),
       ),
     );

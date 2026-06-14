@@ -1153,12 +1153,12 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                               hasIncompleteDraft
                                   ? "INVOICE INCOMPLETE"
                                   : isReturn && _refundMethod != null
-                                  ? "CHANGE RETURNED VIA ${_refundMethod!}"
-                                  : isReturn
-                                      ? "CHANGE DUE TO CUSTOMER"
-                                      : isPaid
-                                          ? "INVOICE SETTLED"
-                                          : "BALANCE OUTSTANDING",
+                                      ? "CHANGE RETURNED VIA ${_refundMethod!}"
+                                      : isReturn
+                                          ? "CHANGE DUE TO CUSTOMER"
+                                          : isPaid
+                                              ? "INVOICE SETTLED"
+                                              : "BALANCE OUTSTANDING",
                               style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w900,
@@ -1177,10 +1177,10 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                           hasIncompleteDraft
                               ? SalesPosIcons.dueWarning
                               : (isReturn && _refundMethod != null) || isPaid
-                              ? SalesPosIcons.settledVerified
-                              : isReturn
-                                  ? SalesPosIcons.returnChange
-                                  : SalesPosIcons.dueWarning,
+                                  ? SalesPosIcons.settledVerified
+                                  : isReturn
+                                      ? SalesPosIcons.returnChange
+                                      : SalesPosIcons.dueWarning,
                           color: balanceColor,
                           size: 32),
                     ],
@@ -1494,12 +1494,16 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
 
                     icon: const Icon(SalesPosIcons.printReceipt,
                         color: Colors.white, size: 20),
-                    label: const Text("GENERATE INVOICE",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 14,
-                            letterSpacing: 1.0)),
+                    label: Text(
+                      widget.ctrl.isEditingExistingBill
+                          ? "UPDATE INVOICE"
+                          : "GENERATE INVOICE",
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                          letterSpacing: 1.0),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: SalesPosColors.success,
                       elevation: 0,

@@ -12,6 +12,18 @@ import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 
+class EditableBookingAdvance {
+  const EditableBookingAdvance({
+    required this.order,
+    required this.customer,
+    required this.advances,
+  });
+
+  final SalesOrder order;
+  final Customer? customer;
+  final List<OrderAdvance> advances;
+}
+
 class BookingAdvanceRepository {
   final AppDatabase _db;
 
@@ -94,6 +106,75 @@ class BookingAdvanceRepository {
 
       debugPrint('✅ Booking saved: $orderNo | Advance: ₹$totalAdvance');
       return orderId;
+    });
+  }
+
+  Future<EditableBookingAdvance?> fetchEditableBooking(int orderId) async {
+    final order = await (_db.select(_db.salesOrders)
+          ..where((tbl) => tbl.id.equals(orderId)))
+        .getSingleOrNull();
+    if (order == null) return null;
+
+    final customer = await (_db.select(_db.customers)
+          ..where((tbl) => tbl.id.equals(order.customerId)))
+        .getSingleOrNull();
+    final advances = await (_db.select(_db.orderAdvances)
+          ..where((tbl) => tbl.orderId.equals(orderId))
+          ..orderBy([(tbl) => OrderingTerm.asc(tbl.paymentDate)]))
+        .get();
+
+    return EditableBookingAdvance(
+      order: order,
+      customer: customer,
+      advances: advances,
+    );
+  }
+
+  Future<void> updateBooking({
+    required int orderId,
+    required int customerId,
+    required String itemName,
+    required String metalType,
+    required String purity,
+    required double approxWeight,
+    required String bookingType,
+    required double lockedRate,
+    required DateTime? deliveryDate,
+    required String? notes,
+    required double totalAdvance,
+    required double rateOnDate,
+  }) async {
+    await _db.transaction(() async {
+      await (_db.update(_db.salesOrders)
+            ..where((tbl) => tbl.id.equals(orderId)))
+          .write(
+        SalesOrdersCompanion(
+          customerId: Value(customerId),
+          itemName: Value(itemName),
+          metalType: Value(metalType),
+          purity: Value(purity),
+          approxWeight: Value(approxWeight),
+          bookingType: Value(bookingType),
+          lockedRate: Value(lockedRate),
+          deliveryDate: Value(deliveryDate),
+          notes: Value(notes),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+
+      await (_db.delete(_db.orderAdvances)
+            ..where((tbl) => tbl.orderId.equals(orderId)))
+          .go();
+
+      if (totalAdvance > 0) {
+        await _db.into(_db.orderAdvances).insert(
+              OrderAdvancesCompanion.insert(
+                orderId: orderId,
+                amountPaid: Value(totalAdvance),
+                rateOnDate: Value(rateOnDate),
+              ),
+            );
+      }
     });
   }
 

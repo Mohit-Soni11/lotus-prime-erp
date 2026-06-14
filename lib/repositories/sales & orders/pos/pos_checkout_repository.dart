@@ -20,6 +20,18 @@ class PosCheckoutCommitResult {
   });
 }
 
+class PosEditableBill {
+  const PosEditableBill({
+    required this.bill,
+    required this.items,
+    required this.oldGoldItems,
+  });
+
+  final Bill bill;
+  final List<BillItem> items;
+  final List<BillOldGoldItem> oldGoldItems;
+}
+
 class PosCheckoutRepository {
   final AppDatabase _db;
 
@@ -146,6 +158,132 @@ class PosCheckoutRepository {
         billId: billId,
         invoiceNumber: resolved.billNumber,
         invoiceSequence: resolved.sequence,
+      );
+    });
+  }
+
+  Future<PosEditableBill?> fetchEditableBill(int billId) async {
+    final bill = await (_db.select(_db.bills)
+          ..where((tbl) => tbl.id.equals(billId)))
+        .getSingleOrNull();
+    if (bill == null) return null;
+
+    final items = await (_db.select(_db.billItems)
+          ..where((tbl) => tbl.billId.equals(billId))
+          ..orderBy([(tbl) => OrderingTerm.asc(tbl.lineNo)]))
+        .get();
+    final oldGoldItems = await (_db.select(_db.billOldGoldItems)
+          ..where((tbl) => tbl.billId.equals(billId))
+          ..orderBy([(tbl) => OrderingTerm.asc(tbl.lineNo)]))
+        .get();
+
+    return PosEditableBill(
+      bill: bill,
+      items: items,
+      oldGoldItems: oldGoldItems,
+    );
+  }
+
+  Future<void> updateSale({
+    required int billId,
+    required PosInvoiceModel invoice,
+    required int? customerId,
+  }) async {
+    await _db.transaction(() async {
+      await (_db.update(_db.bills)..where((tbl) => tbl.id.equals(billId)))
+          .write(
+        BillsCompanion(
+          billNo: Value(invoice.invoiceNumber),
+          customerId: Value(customerId),
+          customerName: Value(
+            invoice.customerName.trim().isNotEmpty
+                ? invoice.customerName.trim()
+                : null,
+          ),
+          mobile: Value(
+            invoice.customerMobile.trim().isNotEmpty
+                ? invoice.customerMobile.trim()
+                : null,
+          ),
+          billingMode: Value(_dbBillingMode(invoice.billingMode)),
+          billType: Value(_dbBillType(invoice.billType)),
+          paymentStatus: Value(_resolvePaymentStatus(invoice)),
+          totalAmount: Value(invoice.grossAmount),
+          discount: Value(invoice.discountAmount),
+          taxableAmount: Value(invoice.taxableAmount),
+          cgstAmount: Value(invoice.cgst),
+          sgstAmount: Value(invoice.sgst),
+          gstAmount: Value(invoice.totalGst),
+          makingTotal: Value(invoice.totalMakingCharge),
+          finalAmount: Value(invoice.netPayable),
+          paidAmount: Value(invoice.totalPaid),
+          cashPaid: Value(invoice.cashPaid),
+          upiPaid: Value(invoice.upiPaid),
+          cardPaid: Value(invoice.cardPaid),
+          advancePaid: Value(invoice.advancePaid),
+          dueAmount: Value(_dueAmount(invoice)),
+          oldGoldDeduction: Value(invoice.totalOldGoldDeduction),
+          oldGoldMode: Value(_dbOldGoldMode(invoice.oldGoldMode)),
+          billDate: Value(invoice.invoiceDate),
+          promiseDate: Value(invoice.promiseDate),
+          status: const Value('ACTIVE'),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+
+      await (_db.delete(_db.billItems)
+            ..where((tbl) => tbl.billId.equals(billId)))
+          .go();
+      await (_db.delete(_db.billOldGoldItems)
+            ..where((tbl) => tbl.billId.equals(billId)))
+          .go();
+
+      for (var index = 0; index < invoice.saleItems.length; index++) {
+        final item = invoice.saleItems[index];
+        final itemName = item.descCtrl.text.trim().isNotEmpty
+            ? item.descCtrl.text.trim()
+            : item.metal.displayName;
+
+        await _db.into(_db.billItems).insert(
+              BillItemsCompanion(
+                billId: Value(billId),
+                lineNo: Value(index + 1),
+                metalType: Value(item.metal.displayName),
+                itemName: Value(itemName),
+                huid: Value(
+                  item.huidCtrl.text.trim().isNotEmpty
+                      ? item.huidCtrl.text.trim()
+                      : null,
+                ),
+                purity: Value(
+                  item.purityCtrl.text.trim().isNotEmpty
+                      ? item.purityCtrl.text.trim()
+                      : '-',
+                ),
+                quantity: Value(item.pcs),
+                grossWeight: Value(_parseSafeNumber(item.grossCtrl.text)),
+                lessWeight: Value(_parseSafeNumber(item.lessCtrl.text)),
+                lessWeightPerPiece: Value(item.isLessPerPiece),
+                netWeight: Value(item.netWt),
+                fineWeight: Value(item.fineWt),
+                rate: Value(item.rate),
+                makingChargeType: Value(
+                  _dbMakingChargeType(item.makingChargeType),
+                ),
+                makingChargeInput: Value(
+                  _parseSafeNumber(item.makingCtrl.text),
+                ),
+                makingCharge: Value(item.makingAmt),
+                itemTotal: Value(item.totalValue),
+                linkedStockItemId: Value(item.linkedStockItemId),
+                linkedStockSku: Value(item.linkedStockSku),
+              ),
+            );
+      }
+
+      await _persistOldGoldItems(
+        billId: billId,
+        oldGoldItems: invoice.oldGoldItems,
       );
     });
   }

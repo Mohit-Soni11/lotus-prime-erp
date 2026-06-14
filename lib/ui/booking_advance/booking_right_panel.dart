@@ -357,14 +357,17 @@ class _BookingRightPanelState extends State<BookingRightPanel> {
                         height: 22,
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2.5))
-                    : const Row(
+                    : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                            Icon(BookingAdvanceIcons.saveBooking,
+                            const Icon(BookingAdvanceIcons.saveBooking,
                                 color: Colors.white, size: 22),
-                            SizedBox(width: 10),
-                            Text(BookingAdvanceStrings.btnSaveBooking,
-                                style: TextStyle(
+                            const SizedBox(width: 10),
+                            Text(
+                                ctrl.isEditMode
+                                    ? 'UPDATE BOOKING'
+                                    : BookingAdvanceStrings.btnSaveBooking,
+                                style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w900,
@@ -372,12 +375,14 @@ class _BookingRightPanelState extends State<BookingRightPanel> {
                           ])),
           ),
         ),
-        const SizedBox(height: 10),
-        // CLEAR
-        _HoverOutlineBtn(
-            label: BookingAdvanceStrings.btnClearAll,
-            icon: BookingAdvanceIcons.clearAll,
-            onTap: ctrl.clearAll),
+        if (!ctrl.isEditMode) ...[
+          const SizedBox(height: 10),
+          // CLEAR
+          _HoverOutlineBtn(
+              label: BookingAdvanceStrings.btnClearAll,
+              icon: BookingAdvanceIcons.clearAll,
+              onTap: ctrl.clearAll),
+        ],
       ]),
     );
   }

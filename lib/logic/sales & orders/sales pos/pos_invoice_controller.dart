@@ -506,7 +506,7 @@ class PosInvoiceController extends ChangeNotifier {
   PosInvoiceModel _buildInvoiceSnapshot() {
     return PosInvoiceModel(
       invoiceNumber: billing.formattedInvoice,
-      invoiceDate: DateTime.now(),
+      invoiceDate: billing.editingBillDate ?? DateTime.now(),
       billType: billing.billType,
       billingMode: billing.billingMode,
       shopName: _realShopName,
@@ -541,7 +541,7 @@ class PosInvoiceController extends ChangeNotifier {
 
   // ==========================================
   //  STEP 1: Reserve the next sequence number from the database.
-  // Drift tables do not expose count() directly here. 
+  // Drift tables do not expose count() directly here.
   //         select().get() se list lo, .length lo
   // ==========================================
   Future<void> _syncNextInvoicePreview() async {
@@ -714,6 +714,19 @@ class PosInvoiceController extends ChangeNotifier {
   Future<void> _saveBillToDatabase(PosInvoiceModel inv) async {
     if (isSavedToDb) return;
 
+    final editingBillId = billing.editingBillId;
+    if (editingBillId != null) {
+      await _checkoutRepo.updateSale(
+        billId: editingBillId,
+        invoice: inv,
+        customerId: billing.selectedCustomer?.id,
+      );
+      savedBillDbId = editingBillId;
+      billing.markCurrentSaleCommitted(inv.invoiceNumber);
+      isSavedToDb = true;
+      return;
+    }
+
     if (billing.isCurrentSaleCommitted) {
       final existingBill = await (_db.select(_db.bills)
             ..where((tbl) => tbl.billNo.equals(inv.invoiceNumber)))
@@ -808,6 +821,23 @@ class PosInvoiceController extends ChangeNotifier {
       genState = InvoiceGenState.error;
     }
     notifyListeners();
+  }
+
+  Future<Uint8List?> generatePreviewPdfBytes({
+    PrintFormat format = PrintFormat.a4,
+    bool includeAllMetals = true,
+  }) async {
+    selectedFormat = format;
+    await generateInvoice();
+    final currentInvoice = invoice;
+    if (currentInvoice == null || genState == InvoiceGenState.error) {
+      return null;
+    }
+    return _buildPdf(
+      currentInvoice,
+      format,
+      includeAllMetals: includeAllMetals,
+    );
   }
 
   Future<void> _refreshActivePreviewPdf() async {
@@ -992,105 +1022,99 @@ class PosInvoiceController extends ChangeNotifier {
       itemsByMetal.putIfAbsent(item.metal, () => []).add(item);
     }
 
-    return pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          ..._collectMetals(inv)
-              .where((metal) => (itemsByMetal[metal] ?? []).isNotEmpty)
-              .map((metal) {
-            final items = itemsByMetal[metal]!;
-            final activeConfig = getMetalConfig(metal);
-            final sectionTotal =
-                items.fold(0.0, (sum, item) => sum + item.totalValue);
+    return pw
+        .Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+      ..._collectMetals(inv)
+          .where((metal) => (itemsByMetal[metal] ?? []).isNotEmpty)
+          .map((metal) {
+        final items = itemsByMetal[metal]!;
+        final activeConfig = getMetalConfig(metal);
+        final sectionTotal =
+            items.fold(0.0, (sum, item) => sum + item.totalValue);
 
-            return pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
+        return pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Container(
+              width: double.infinity,
+              padding:
+                  const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              decoration: const pw.BoxDecoration(color: PdfColors.grey100),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text("${metal.displayName} ITEM DETAILS",
+                      style: pw.TextStyle(
+                          fontSize: 8,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.grey800)),
+                  pw.Text(
+                      "Section Total: Rs ${sectionTotal.toStringAsFixed(2)}",
+                      style: pw.TextStyle(
+                          fontSize: 8, fontWeight: pw.FontWeight.bold)),
+                ],
+              ),
+            ),
+            pw.Table(
+              border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
               children: [
-                pw.Container(
-                  width: double.infinity,
-                  padding: const pw.EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 5),
-                  decoration: const pw.BoxDecoration(color: PdfColors.grey100),
-                  child: pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                      pw.Text("${metal.displayName} ITEM DETAILS",
-                          style: pw.TextStyle(
-                              fontSize: 8,
-                              fontWeight: pw.FontWeight.bold,
-                              color: PdfColors.grey800)),
-                      pw.Text("Section Total: Rs ${sectionTotal.toStringAsFixed(2)}",
-                          style: pw.TextStyle(
-                              fontSize: 8, fontWeight: pw.FontWeight.bold)),
-                    ],
-                  ),
-                ),
-                pw.Table(
-                  border:
-                      pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+                pw.TableRow(
+                  decoration: const pw.BoxDecoration(color: PdfColors.amber50),
                   children: [
-                    pw.TableRow(
-                      decoration:
-                          const pw.BoxDecoration(color: PdfColors.amber50),
-                      children: [
-                        _th("#"),
-                        _th("Item Description"),
-                        if (activeConfig.showPurity) _th("Purity"),
-                        if (activeConfig.showGrossWt) _th("Gross(g)"),
-                        if (activeConfig.showLessWt) _th("Less(g)"),
-                        if (activeConfig.showNetWt)
-                          _th(isWholesale ? "Fine(g)" : "Net(g)"),
-                        if (activeConfig.showRate) _th("Rate"),
-                        if (activeConfig.showMaking ||
-                            activeConfig.showMakingType)
-                          _th(isWholesale ? "Labour" : "Making"),
-                        if (activeConfig.showAmount) _th("Amount"),
-                      ],
-                    ),
-                    ...items.asMap().entries.map((e) {
-                      final i = e.value;
-                      String desc = i.descCtrl.text.isNotEmpty
-                          ? i.descCtrl.text
-                          : "${i.metal.name.toUpperCase()} ITEM";
-                      if (activeConfig.showHuid &&
-                          i.huidCtrl.text.isNotEmpty) {
-                        desc += "\n[HUID: ${i.huidCtrl.text}]";
-                      }
-                      if (activeConfig.showPcs && i.pcs > 1) {
-                        desc += " (${i.pcs} pcs)";
-                      }
-
-                      return pw.TableRow(children: [
-                        _cell("${e.key + 1}"),
-                        _cell(desc),
-                        if (activeConfig.showPurity) _cell(_formatPurity(i)),
-                        if (activeConfig.showGrossWt)
-                          _cell(i.grossCtrl.text.isNotEmpty
-                              ? i.grossCtrl.text
-                              : "0.000"),
-                        if (activeConfig.showLessWt)
-                          _cell(i.totalLessWt.toStringAsFixed(3)),
-                        if (activeConfig.showNetWt)
-                          _cell(isWholesale
-                              ? i.fineWt.toStringAsFixed(3)
-                              : i.netWt.toStringAsFixed(3)),
-                        if (activeConfig.showRate)
-                          _cell(i.rate.toStringAsFixed(0)),
-                        if (activeConfig.showMaking ||
-                            activeConfig.showMakingType)
-                          _cell(_formatMakingCharge(i, activeConfig,
-                              isWholesale: isWholesale)),
-                        if (activeConfig.showAmount)
-                          _cell(i.totalValue.toStringAsFixed(2)),
-                      ]);
-                    }),
+                    _th("#"),
+                    _th("Item Description"),
+                    if (activeConfig.showPurity) _th("Purity"),
+                    if (activeConfig.showGrossWt) _th("Gross(g)"),
+                    if (activeConfig.showLessWt) _th("Less(g)"),
+                    if (activeConfig.showNetWt)
+                      _th(isWholesale ? "Fine(g)" : "Net(g)"),
+                    if (activeConfig.showRate) _th("Rate"),
+                    if (activeConfig.showMaking || activeConfig.showMakingType)
+                      _th(isWholesale ? "Labour" : "Making"),
+                    if (activeConfig.showAmount) _th("Amount"),
                   ],
                 ),
-                pw.SizedBox(height: 10),
+                ...items.asMap().entries.map((e) {
+                  final i = e.value;
+                  String desc = i.descCtrl.text.isNotEmpty
+                      ? i.descCtrl.text
+                      : "${i.metal.name.toUpperCase()} ITEM";
+                  if (activeConfig.showHuid && i.huidCtrl.text.isNotEmpty) {
+                    desc += "\n[HUID: ${i.huidCtrl.text}]";
+                  }
+                  if (activeConfig.showPcs && i.pcs > 1) {
+                    desc += " (${i.pcs} pcs)";
+                  }
+
+                  return pw.TableRow(children: [
+                    _cell("${e.key + 1}"),
+                    _cell(desc),
+                    if (activeConfig.showPurity) _cell(_formatPurity(i)),
+                    if (activeConfig.showGrossWt)
+                      _cell(i.grossCtrl.text.isNotEmpty
+                          ? i.grossCtrl.text
+                          : "0.000"),
+                    if (activeConfig.showLessWt)
+                      _cell(i.totalLessWt.toStringAsFixed(3)),
+                    if (activeConfig.showNetWt)
+                      _cell(isWholesale
+                          ? i.fineWt.toStringAsFixed(3)
+                          : i.netWt.toStringAsFixed(3)),
+                    if (activeConfig.showRate) _cell(i.rate.toStringAsFixed(0)),
+                    if (activeConfig.showMaking || activeConfig.showMakingType)
+                      _cell(_formatMakingCharge(i, activeConfig,
+                          isWholesale: isWholesale)),
+                    if (activeConfig.showAmount)
+                      _cell(i.totalValue.toStringAsFixed(2)),
+                  ]);
+                }),
               ],
-            );
-          }),
-        ]);
+            ),
+            pw.SizedBox(height: 10),
+          ],
+        );
+      }),
+    ]);
   }
 
   pw.Widget _th(String text) => pw.Padding(
@@ -1111,8 +1135,9 @@ class PosInvoiceController extends ChangeNotifier {
           item.makingCtrl.text.replaceAll(RegExp(r'[^0-9.]'), ''),
         ) ??
         0.0;
-    final inputLabel =
-        input <= 0 ? '-' : '${_formatCompactNumber(input)}${item.makingChargeType.symbol}';
+    final inputLabel = input <= 0
+        ? '-'
+        : '${_formatCompactNumber(input)}${item.makingChargeType.symbol}';
     final amount = isWholesale ? item.wholesaleLabourAmt : item.makingAmt;
     final amountLabel = 'Rs ${amount.toStringAsFixed(0)}';
 
@@ -1534,9 +1559,8 @@ class PosInvoiceController extends ChangeNotifier {
       pw.SizedBox(height: 6),
       pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
         pw.Expanded(
-            child: pw.Text(footerMessage,
-                style:
-                    const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+          child: pw.Text(footerMessage,
+              style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
         ),
         pw.Text("${inv.shopName}  E&OE",
             style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey500)),
