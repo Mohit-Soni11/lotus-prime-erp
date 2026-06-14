@@ -53,6 +53,8 @@ class PosCheckoutRepository {
   Future<PosCheckoutCommitResult> finalizeSale({
     required PosInvoiceModel invoice,
     required int? customerId,
+    int? sourceAdvanceOrderId,
+    String? sourceAdvanceOrderNo,
   }) async {
     return _db.transaction(() async {
       final resolved = await _resolveInvoiceNumber(
@@ -97,6 +99,8 @@ class PosCheckoutRepository {
               oldGoldMode: Value(_dbOldGoldMode(invoice.oldGoldMode)),
               billDate: Value(invoice.invoiceDate),
               promiseDate: Value(invoice.promiseDate),
+              sourceAdvanceOrderId: Value(sourceAdvanceOrderId),
+              sourceAdvanceOrderNo: Value(_nullable(sourceAdvanceOrderNo)),
               status: const Value('ACTIVE'),
             ),
           );
@@ -679,6 +683,11 @@ class PosCheckoutRepository {
 
   String _buildLedgerReferenceId(String billNumber, String paymentMode) {
     return '$billNumber#$paymentMode';
+  }
+
+  String? _nullable(String? value) {
+    final text = value?.trim() ?? '';
+    return text.isEmpty ? null : text;
   }
 }
 

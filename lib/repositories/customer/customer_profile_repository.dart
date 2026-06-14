@@ -39,6 +39,8 @@ class CustomerProfileRepository {
               paidAmount: bill.paidAmount,
               status: bill.status,
               billDate: bill.billDate,
+              sourceAdvanceOrderId: bill.sourceAdvanceOrderId,
+              sourceAdvanceOrderNo: bill.sourceAdvanceOrderNo,
             ),
           )
           .toList();
@@ -136,6 +138,8 @@ class CustomerProfileRepository {
         paidAmount: bill.paidAmount,
         status: bill.status,
         billDate: bill.billDate,
+        sourceAdvanceOrderId: bill.sourceAdvanceOrderId,
+        sourceAdvanceOrderNo: bill.sourceAdvanceOrderNo,
       );
 
       final items = itemRows
@@ -353,6 +357,8 @@ class CustomerProfileRepository {
             totalAmount: bill.totalAmount,
             paidAmount: bill.paidAmount,
             billDate: bill.billDate,
+            sourceAdvanceOrderId: bill.sourceAdvanceOrderId,
+            sourceAdvanceOrderNo: bill.sourceAdvanceOrderNo,
           ),
         )
         .toList();

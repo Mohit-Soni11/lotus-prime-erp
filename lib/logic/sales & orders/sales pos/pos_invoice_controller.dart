@@ -740,6 +740,8 @@ class PosInvoiceController extends ChangeNotifier {
     final result = await _checkoutRepo.finalizeSale(
       invoice: inv,
       customerId: billing.selectedCustomer?.id,
+      sourceAdvanceOrderId: billing.convertedAdvanceOrderId,
+      sourceAdvanceOrderNo: billing.convertedAdvanceOrderNo,
     );
 
     savedBillDbId = result.billId;

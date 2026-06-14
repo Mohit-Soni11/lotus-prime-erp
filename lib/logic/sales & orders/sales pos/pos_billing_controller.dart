@@ -723,6 +723,7 @@ class PosBillingController extends ChangeNotifier {
   bool get isEditingExistingBill => editingBillId != null;
 
   int? convertedAdvanceOrderId;
+  String? convertedAdvanceOrderNo;
   bool isLoadingAdvanceConversion = false;
   String? advanceConversionError;
   bool get isConvertingAdvance => convertedAdvanceOrderId != null;
@@ -828,6 +829,7 @@ class PosBillingController extends ChangeNotifier {
       convertedAdvanceOrderId = orderId;
 
       final order = details.order;
+      convertedAdvanceOrderNo = order.orderNo;
       await _restoreSelectedCustomer(order.customerId);
       billingMode = BillingMode.retail;
       billType = BillType.normal;
@@ -872,6 +874,7 @@ class PosBillingController extends ChangeNotifier {
       );
       if (success) {
         convertedAdvanceOrderId = null;
+        convertedAdvanceOrderNo = null;
         advanceConversionError = null;
       } else {
         advanceConversionError =
@@ -1595,6 +1598,7 @@ class PosBillingController extends ChangeNotifier {
     editingBillDate = null;
     editLoadError = null;
     convertedAdvanceOrderId = null;
+    convertedAdvanceOrderNo = null;
     advanceConversionError = null;
     _committedInvoiceNumber = null;
     selectedCustomer = null;

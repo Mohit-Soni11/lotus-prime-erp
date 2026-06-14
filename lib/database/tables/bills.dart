@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'base_table.dart';
 import 'customers.dart';
+import 'sales_orders.dart';
 
 @DataClassName('Bill')
 // ✅ Date par index lagaya taaki Dashboard "Today/Month" ka data turant laye
@@ -42,5 +43,9 @@ class Bills extends Table with BaseTable {
   // Meta
   DateTimeColumn get billDate => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get promiseDate => dateTime().nullable()();
+  IntColumn get sourceAdvanceOrderId => integer()
+      .nullable()
+      .references(SalesOrders, #id, onDelete: KeyAction.setNull)();
+  TextColumn get sourceAdvanceOrderNo => text().nullable()();
   TextColumn get status => text().withDefault(const Constant('ACTIVE'))();
 }

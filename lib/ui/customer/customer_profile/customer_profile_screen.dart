@@ -692,6 +692,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             paidAmount: due.paidAmount,
             status: due.paidAmount > 0 ? 'PARTIAL' : 'UNPAID',
             billDate: due.billDate,
+            sourceAdvanceOrderId: due.sourceAdvanceOrderId,
+            sourceAdvanceOrderNo: due.sourceAdvanceOrderNo,
           ),
         ),
         child: Container(
@@ -930,6 +932,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                         color: CustomerProfileColors.bodyTextMuted,
                       ),
                     ),
+                    if (bill.isFromAdvanceOrder) ...[
+                      const SizedBox(height: 5),
+                      _advanceSourceChip(bill.advanceSourceLabel),
+                    ],
                   ],
                 ),
               ),
@@ -1365,6 +1371,36 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _advanceSourceChip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: CustomerProfileColors.advanceBg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: CustomerProfileColors.advanceBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            CustomerProfileIcons.advanceOrder,
+            size: 11,
+            color: CustomerProfileColors.advanceAccent,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: CustomerProfileColors.advanceAccent,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1867,7 +1903,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
   void _showBillActions(CustomerBillModel bill) {
     _showRecordActionSheet(
       title: 'Sales Bill ${bill.billNo}',
-      subtitle: 'Edit the sale, preview the invoice, or print a clean copy.',
+      subtitle: bill.isFromAdvanceOrder
+          ? 'Converted from ${bill.advanceSourceLabel}. Edit, preview, or print.'
+          : 'Edit the sale, preview the invoice, or print a clean copy.',
       actions: [
         _ProfileRecordAction(
           icon: Icons.edit_note_rounded,

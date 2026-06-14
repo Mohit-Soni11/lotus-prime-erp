@@ -76,6 +76,8 @@ class CustomerBillModel {
   final double paidAmount;
   final String status;
   final DateTime billDate;
+  final int? sourceAdvanceOrderId;
+  final String? sourceAdvanceOrderNo;
 
   const CustomerBillModel({
     required this.id,
@@ -83,6 +85,8 @@ class CustomerBillModel {
     required this.totalAmount,
     required this.status,
     required this.billDate,
+    this.sourceAdvanceOrderId,
+    this.sourceAdvanceOrderNo,
     this.paidAmount = 0.0,
   });
 
@@ -99,6 +103,16 @@ class CustomerBillModel {
   bool get isPartial => !isPaid && paidAmount > _kPaymentTolerance;
   bool get isUnpaid => !isPaid && !isPartial;
   bool get isActive => status.toUpperCase() == 'ACTIVE';
+  bool get isFromAdvanceOrder =>
+      sourceAdvanceOrderId != null ||
+      (sourceAdvanceOrderNo != null && sourceAdvanceOrderNo!.trim().isNotEmpty);
+
+  String get advanceSourceLabel {
+    final orderNo = sourceAdvanceOrderNo?.trim();
+    return orderNo == null || orderNo.isEmpty
+        ? 'Advance Order'
+        : 'Advance Order $orderNo';
+  }
 
   double get dueAmount =>
       (totalAmount - paidAmount).clamp(0.0, double.infinity);
@@ -316,6 +330,8 @@ class CustomerDueModel {
   final double totalAmount;
   final double paidAmount;
   final DateTime billDate;
+  final int? sourceAdvanceOrderId;
+  final String? sourceAdvanceOrderNo;
 
   const CustomerDueModel({
     required this.billId,
@@ -323,7 +339,13 @@ class CustomerDueModel {
     required this.totalAmount,
     required this.paidAmount,
     required this.billDate,
+    this.sourceAdvanceOrderId,
+    this.sourceAdvanceOrderNo,
   });
+
+  bool get isFromAdvanceOrder =>
+      sourceAdvanceOrderId != null ||
+      (sourceAdvanceOrderNo != null && sourceAdvanceOrderNo!.trim().isNotEmpty);
 
   double get dueAmount =>
       (totalAmount - paidAmount).clamp(0.0, double.infinity);

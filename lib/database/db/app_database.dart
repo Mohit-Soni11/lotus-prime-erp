@@ -377,6 +377,18 @@ class AppDatabase extends _$AppDatabase {
             AppLogger.info(
                 'v23 Shop Profile identity paths and shapes applied.');
           }
+
+          if (from < 24) {
+            try {
+              await m.addColumn(bills, bills.sourceAdvanceOrderId);
+            } catch (_) {}
+            try {
+              await m.addColumn(bills, bills.sourceAdvanceOrderNo);
+            } catch (_) {}
+            await _backfillAdvanceBillSources();
+            AppLogger.info(
+                'v24 advance order to sales bill source links applied.');
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -770,6 +782,38 @@ class AppDatabase extends _$AppDatabase {
         'CREATE UNIQUE INDEX IF NOT EXISTS "idx_sales_billing_metal" ON "sales_billing_settings" ("metal")'));
     await runIfNeeded(() => customStatement(
         'CREATE UNIQUE INDEX IF NOT EXISTS "idx_purchase_billing_metal" ON "purchase_billing_settings" ("metal")'));
+  }
+
+  Future<void> _backfillAdvanceBillSources() async {
+    try {
+      await customStatement('''
+        UPDATE bills
+        SET
+          source_advance_order_id = (
+            SELECT sales_orders.id
+            FROM sales_orders
+            WHERE sales_orders.customer_id = bills.customer_id
+              AND sales_orders.notes = 'Converted to sales invoice ' || bills.bill_no
+            LIMIT 1
+          ),
+          source_advance_order_no = (
+            SELECT sales_orders.order_no
+            FROM sales_orders
+            WHERE sales_orders.customer_id = bills.customer_id
+              AND sales_orders.notes = 'Converted to sales invoice ' || bills.bill_no
+            LIMIT 1
+          )
+        WHERE source_advance_order_id IS NULL
+          AND EXISTS (
+            SELECT 1
+            FROM sales_orders
+            WHERE sales_orders.customer_id = bills.customer_id
+              AND sales_orders.notes = 'Converted to sales invoice ' || bills.bill_no
+          )
+      ''');
+    } catch (error) {
+      AppLogger.warning('Advance bill source backfill skipped: $error');
+    }
   }
 }
 
