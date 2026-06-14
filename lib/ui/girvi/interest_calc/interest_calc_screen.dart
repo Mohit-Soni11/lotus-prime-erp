@@ -9,11 +9,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
 
 import '../../../database/db/app_database.dart';
 import '../../../logic/girvi/girvi_controllers.dart';
+import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
+import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import '../shared/girvi_shared_widgets.dart';
 
@@ -46,6 +50,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
   final _moneyFmt = NumberFormat('#,##,##0.00', 'en_IN');
   final _dateFmt = DateFormat('dd MMM yyyy');
   bool _syncingText = false;
+  bool _openingReceipt = false;
 
   @override
   void initState() {
@@ -150,6 +155,100 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
         content: Text(_ctrl.successMessage ?? 'Payment entry recorded.'),
         backgroundColor: GirviColors.success,
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Future<void> _previewGirviReceipt(GirviLoanWithCustomer data) async {
+    if (_openingReceipt) return;
+    setState(() => _openingReceipt = true);
+    try {
+      final draft =
+          await CustomerProfileRepository(db: _db).fetchGirviInvoiceDraft(
+        customerId: data.loan.customerId,
+        loanId: data.loan.id,
+      );
+      if (!mounted) return;
+      if (draft == null) {
+        _showInfoSnack('Girvi receipt details could not be loaded.');
+        return;
+      }
+
+      final controller = GirviInvoiceHubController(
+        draft: draft,
+        onFinalize: () async => true,
+      );
+      try {
+        await controller.generatePreview();
+        if (!mounted) return;
+        final bytes = controller.pdfBytes;
+        if (bytes == null) {
+          _showInfoSnack('Girvi receipt PDF could not be generated.');
+          return;
+        }
+        await _showReceiptPreview(pdfBytes: bytes);
+      } finally {
+        controller.dispose();
+      }
+    } catch (error) {
+      if (mounted) {
+        _showInfoSnack('Girvi receipt preview could not be opened.');
+      }
+    } finally {
+      if (mounted) setState(() => _openingReceipt = false);
+    }
+  }
+
+  void _showInfoSnack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: GirviColors.shellBg,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Future<void> _showReceiptPreview({required Uint8List pdfBytes}) {
+    return showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.74),
+      useSafeArea: false,
+      builder: (dialogContext) => Dialog.fullscreen(
+        backgroundColor: const Color(0xFF111827),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: PdfPreview(
+                build: (_) async => pdfBytes,
+                initialPageFormat: PdfPageFormat.a4,
+                allowPrinting: false,
+                allowSharing: false,
+                canChangeOrientation: false,
+                canChangePageFormat: false,
+                canDebug: false,
+                useActions: false,
+                maxPageWidth: 860,
+                scrollViewDecoration: const BoxDecoration(
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 18,
+              right: 18,
+              child: Material(
+                color: Colors.black.withValues(alpha: 0.62),
+                shape: const CircleBorder(),
+                child: IconButton(
+                  tooltip: 'Close preview',
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -343,11 +442,9 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
       );
     }
 
-    return CustomScrollView(
+    return ListView(
       physics: const BouncingScrollPhysics(),
-      slivers: [
-        SliverList(delegate: SliverChildListDelegate(content)),
-      ],
+      children: content,
     );
   }
 
@@ -363,22 +460,25 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
 
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF111827)],
+        gradient: LinearGradient(
+          colors: [
+            GirviColors.cardBg,
+            GirviColors.brandGold.withValues(alpha: 0.055),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF334155)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: GirviColors.cardBorder),
         boxShadow: const [
           BoxShadow(
-            color: GirviColors.shadowMedium,
-            blurRadius: 18,
-            offset: Offset(0, 8),
+            color: GirviColors.shadowLight,
+            blurRadius: 12,
+            offset: Offset(0, 4),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -393,7 +493,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                   color: GirviColors.brandGold.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: GirviColors.brandGold.withValues(alpha: 0.35),
+                    color: GirviColors.brandGold.withValues(alpha: 0.30),
                   ),
                 ),
                 child: const Icon(
@@ -410,7 +510,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                     Text(
                       'Loan Overview',
                       style: GoogleFonts.inter(
-                        color: GirviColors.shellTextMuted,
+                        color: GirviColors.textMuted,
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
@@ -432,7 +532,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        color: GirviColors.shellTextTitle,
+                        color: GirviColors.textDark,
                         fontSize: 14,
                         fontWeight: FontWeight.w900,
                       ),
@@ -447,7 +547,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        color: GirviColors.shellTextMuted,
+                        color: GirviColors.textMuted,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
@@ -456,7 +556,23 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                 ),
               ),
               const SizedBox(width: 12),
-              _StatusPill(label: loan.statusLabel, color: loan.statusColor),
+              SizedBox(
+                width: 150,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _StatusPill(
+                        label: loan.statusLabel, color: loan.statusColor),
+                    const SizedBox(height: 8),
+                    _OverviewActionButton(
+                      label: _openingReceipt ? 'Opening...' : 'View Receipt',
+                      icon: Icons.visibility_rounded,
+                      busy: _openingReceipt,
+                      onTap: () => _previewGirviReceipt(data),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 18),
@@ -464,33 +580,33 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
             builder: (context, constraints) {
               final compact = constraints.maxWidth < 960;
               final principalPanel = _OverviewMoneyPanel(
-                title: 'Principal Position',
-                primaryLabel: 'Outstanding Principal',
-                primaryValue: 'Rs ${_moneyFmt.format(loan.loanAmount)}',
-                secondaryLabel: 'Principal disbursed',
-                secondaryValue: 'Rs ${_moneyFmt.format(principalDisbursed)}',
-                tertiaryLabel: 'Principal repaid',
-                tertiaryValue: 'Rs ${_moneyFmt.format(principalRepaid)}',
+                title: 'Principal',
+                primaryLabel: 'Principal Amount',
+                primaryValue: 'Rs ${_moneyFmt.format(principalDisbursed)}',
+                secondaryLabel: 'Outstanding Balance',
+                secondaryValue: 'Rs ${_moneyFmt.format(loan.loanAmount)}',
+                tertiaryLabel: principalRepaid > 0 ? 'Principal Repaid' : null,
+                tertiaryValue: principalRepaid > 0
+                    ? 'Rs ${_moneyFmt.format(principalRepaid)}'
+                    : null,
                 icon: GirviIcons.loanTerms,
                 color: GirviColors.purple,
-                progress: principalProgress,
+                progress: principalRepaid > 0 ? principalProgress : null,
               );
 
               final interestPanel = _OverviewMoneyPanel(
-                title: 'Interest Position',
-                primaryLabel: 'Interest due now',
-                primaryValue: 'Rs ${_moneyFmt.format(loan.accruedInterest)}',
-                secondaryLabel: 'Monthly interest',
-                secondaryValue:
-                    'Rs ${_moneyFmt.format(loan.interestForMonths(1))}',
-                tertiaryLabel: 'Interest collected',
-                tertiaryValue: 'Rs ${_moneyFmt.format(interestCollected)}',
+                title: 'Interest',
+                primaryLabel: 'Interest Collected',
+                primaryValue: 'Rs ${_moneyFmt.format(interestCollected)}',
+                secondaryLabel: 'Interest Rate',
+                secondaryValue: _formatInterestRate(loan.interestRate),
+                tertiaryLabel: 'Due Now',
+                tertiaryValue: 'Rs ${_moneyFmt.format(loan.accruedInterest)}',
                 icon: GirviIcons.interestRate,
                 color: GirviColors.warning,
               );
 
               final termsPanel = _OverviewTermsPanel(
-                rate: _formatInterestRate(loan.interestRate),
                 tenure: '${loan.durationMonths} months',
                 startDate: _dateFmt.format(loan.startDate),
                 maturityDate: loan.maturityDate == null
@@ -517,11 +633,11 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(flex: 4, child: principalPanel),
+                  Expanded(child: principalPanel),
                   const SizedBox(width: 12),
-                  Expanded(flex: 4, child: interestPanel),
+                  Expanded(child: interestPanel),
                   const SizedBox(width: 12),
-                  Expanded(flex: 3, child: termsPanel),
+                  Expanded(child: termsPanel),
                 ],
               );
             },
@@ -1263,10 +1379,10 @@ class _OverviewMoneyPanel extends StatelessWidget {
   final String title;
   final String primaryLabel;
   final String primaryValue;
-  final String secondaryLabel;
-  final String secondaryValue;
-  final String tertiaryLabel;
-  final String tertiaryValue;
+  final String? secondaryLabel;
+  final String? secondaryValue;
+  final String? tertiaryLabel;
+  final String? tertiaryValue;
   final IconData icon;
   final Color color;
   final double? progress;
@@ -1275,10 +1391,10 @@ class _OverviewMoneyPanel extends StatelessWidget {
     required this.title,
     required this.primaryLabel,
     required this.primaryValue,
-    required this.secondaryLabel,
-    required this.secondaryValue,
-    required this.tertiaryLabel,
-    required this.tertiaryValue,
+    this.secondaryLabel,
+    this.secondaryValue,
+    this.tertiaryLabel,
+    this.tertiaryValue,
     required this.icon,
     required this.color,
     this.progress,
@@ -1286,13 +1402,35 @@ class _OverviewMoneyPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final supporting = <_OverviewMiniValue>[
+      if (secondaryLabel != null && secondaryValue != null)
+        _OverviewMiniValue(
+          label: secondaryLabel!,
+          value: secondaryValue!,
+          color: color,
+        ),
+      if (tertiaryLabel != null && tertiaryValue != null)
+        _OverviewMiniValue(
+          label: tertiaryLabel!,
+          value: tertiaryValue!,
+          color: color,
+        ),
+    ];
+
     return Container(
-      constraints: const BoxConstraints(minHeight: 178),
-      padding: const EdgeInsets.all(16),
+      constraints: const BoxConstraints(minHeight: 206),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.065),
+        color: GirviColors.cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.11)),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.045),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1307,7 +1445,7 @@ class _OverviewMoneyPanel extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: GirviColors.shellTextTitle,
+                    color: GirviColors.textDark,
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
                   ),
@@ -1319,7 +1457,7 @@ class _OverviewMoneyPanel extends StatelessWidget {
           Text(
             primaryLabel,
             style: GoogleFonts.inter(
-              color: GirviColors.shellTextMuted,
+              color: GirviColors.textMuted,
               fontSize: 11,
               fontWeight: FontWeight.w800,
             ),
@@ -1333,7 +1471,7 @@ class _OverviewMoneyPanel extends StatelessWidget {
               child: Text(
                 primaryValue,
                 style: GoogleFonts.manrope(
-                  color: GirviColors.shellTextTitle,
+                  color: GirviColors.textDark,
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
                 ),
@@ -1344,26 +1482,17 @@ class _OverviewMoneyPanel extends StatelessWidget {
             const SizedBox(height: 12),
             _ProgressTrack(value: progress!, color: color),
           ],
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _OverviewMiniValue(
-                  label: secondaryLabel,
-                  value: secondaryValue,
-                  color: color,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _OverviewMiniValue(
-                  label: tertiaryLabel,
-                  value: tertiaryValue,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
+          if (supporting.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                for (var i = 0; i < supporting.length; i++) ...[
+                  Expanded(child: supporting[i]),
+                  if (i != supporting.length - 1) const SizedBox(width: 10),
+                ],
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -1371,7 +1500,6 @@ class _OverviewMoneyPanel extends StatelessWidget {
 }
 
 class _OverviewTermsPanel extends StatelessWidget {
-  final String rate;
   final String tenure;
   final String startDate;
   final String maturityDate;
@@ -1379,7 +1507,6 @@ class _OverviewTermsPanel extends StatelessWidget {
   final String totalCollected;
 
   const _OverviewTermsPanel({
-    required this.rate,
     required this.tenure,
     required this.startDate,
     required this.maturityDate,
@@ -1389,13 +1516,54 @@ class _OverviewTermsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tiles = [
+      _OverviewInfoTile(
+        label: 'Tenure',
+        value: tenure,
+        icon: GirviIcons.dates,
+        color: GirviColors.info,
+      ),
+      _OverviewInfoTile(
+        label: 'Start Date',
+        value: startDate,
+        icon: GirviIcons.dates,
+        color: GirviColors.brandGold,
+      ),
+      _OverviewInfoTile(
+        label: 'Maturity',
+        value: maturityDate,
+        icon: GirviIcons.dates,
+        color: GirviColors.purple,
+      ),
+      _OverviewInfoTile(
+        label: 'Paid Till',
+        value: paidTill,
+        icon: GirviIcons.markDone,
+        color: GirviColors.success,
+      ),
+      _OverviewInfoTile(
+        label: 'Total Collected',
+        value: totalCollected,
+        icon: GirviIcons.cash,
+        color: GirviColors.info,
+        wide: true,
+      ),
+    ];
+
     return Container(
-      constraints: const BoxConstraints(minHeight: 178),
-      padding: const EdgeInsets.all(16),
+      constraints: const BoxConstraints(minHeight: 206),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.065),
+        color: GirviColors.cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.11)),
+        border: Border.all(color: GirviColors.info.withValues(alpha: 0.20)),
+        boxShadow: [
+          BoxShadow(
+            color: GirviColors.info.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1414,7 +1582,7 @@ class _OverviewTermsPanel extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: GirviColors.shellTextTitle,
+                    color: GirviColors.textDark,
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
                   ),
@@ -1423,42 +1591,42 @@ class _OverviewTermsPanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          _OverviewInfoLine(
-            label: 'Interest Rate',
-            value: rate,
-            icon: GirviIcons.interestRate,
-            color: GirviColors.warning,
-          ),
-          _OverviewInfoLine(
-            label: 'Tenure',
-            value: tenure,
-            icon: GirviIcons.dates,
-            color: GirviColors.info,
-          ),
-          _OverviewInfoLine(
-            label: 'Start Date',
-            value: startDate,
-            icon: GirviIcons.dates,
-            color: GirviColors.brandGold,
-          ),
-          _OverviewInfoLine(
-            label: 'Maturity',
-            value: maturityDate,
-            icon: GirviIcons.dates,
-            color: GirviColors.purple,
-          ),
-          _OverviewInfoLine(
-            label: 'Paid Till',
-            value: paidTill,
-            icon: GirviIcons.markDone,
-            color: GirviColors.success,
-          ),
-          _OverviewInfoLine(
-            label: 'Total Collected',
-            value: totalCollected,
-            icon: GirviIcons.cash,
-            color: GirviColors.info,
-            isLast: true,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final twoColumns = constraints.maxWidth >= 320;
+              if (!twoColumns) {
+                return Column(
+                  children: [
+                    for (var i = 0; i < tiles.length; i++) ...[
+                      tiles[i],
+                      if (i != tiles.length - 1) const SizedBox(height: 9),
+                    ],
+                  ],
+                );
+              }
+
+              return Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: tiles[0]),
+                      const SizedBox(width: 9),
+                      Expanded(child: tiles[1]),
+                    ],
+                  ),
+                  const SizedBox(height: 9),
+                  Row(
+                    children: [
+                      Expanded(child: tiles[2]),
+                      const SizedBox(width: 9),
+                      Expanded(child: tiles[3]),
+                    ],
+                  ),
+                  const SizedBox(height: 9),
+                  tiles[4],
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -1482,9 +1650,9 @@ class _OverviewMiniValue extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.10),
+        color: color.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1494,7 +1662,7 @@ class _OverviewMiniValue extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              color: GirviColors.shellTextMuted,
+              color: GirviColors.textMuted,
               fontSize: 10,
               fontWeight: FontWeight.w700,
             ),
@@ -1505,7 +1673,7 @@ class _OverviewMiniValue extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.manrope(
-              color: GirviColors.shellTextTitle,
+              color: GirviColors.textDark,
               fontSize: 13,
               fontWeight: FontWeight.w900,
             ),
@@ -1516,63 +1684,61 @@ class _OverviewMiniValue extends StatelessWidget {
   }
 }
 
-class _OverviewInfoLine extends StatelessWidget {
+class _OverviewInfoTile extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
   final Color color;
-  final bool isLast;
+  final bool wide;
 
-  const _OverviewInfoLine({
+  const _OverviewInfoTile({
     required this.label,
     required this.value,
     required this.icon,
     required this.color,
-    this.isLast = false,
+    this.wide = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 10),
-      margin: EdgeInsets.only(bottom: isLast ? 0 : 10),
+      constraints: BoxConstraints(minHeight: wide ? 58 : 64),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        border: isLast
-            ? null
-            : Border(
-                bottom: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.08),
+        color: color.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: color, size: 14),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: GirviColors.textMuted,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 15),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                color: GirviColors.shellTextMuted,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Flexible(
-            child: Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.right,
-              style: GoogleFonts.manrope(
-                color: GirviColors.shellTextTitle,
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-              ),
+          const SizedBox(height: 7),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.manrope(
+              color: GirviColors.textDark,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
             ),
           ),
         ],
@@ -1601,7 +1767,7 @@ class _ProgressTrack extends StatelessWidget {
           child: LinearProgressIndicator(
             minHeight: 7,
             value: safeValue,
-            backgroundColor: Colors.white.withValues(alpha: 0.08),
+            backgroundColor: color.withValues(alpha: 0.12),
             valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
         ),
@@ -1609,7 +1775,7 @@ class _ProgressTrack extends StatelessWidget {
         Text(
           '${(safeValue * 100).toStringAsFixed(0)}% principal recovered',
           style: GoogleFonts.inter(
-            color: GirviColors.shellTextMuted,
+            color: GirviColors.textMuted,
             fontSize: 10,
             fontWeight: FontWeight.w700,
           ),
@@ -1719,6 +1885,70 @@ class _StatusPill extends StatelessWidget {
           color: color,
           fontSize: 10,
           fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _OverviewActionButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool busy;
+  final VoidCallback onTap;
+
+  const _OverviewActionButton({
+    required this.label,
+    required this.icon,
+    required this.busy,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: busy ? null : onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        height: 34,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: GirviColors.shellBg,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: GirviColors.shellBorder),
+          boxShadow: const [
+            BoxShadow(
+              color: GirviColors.shadowLight,
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (busy)
+              const SizedBox(
+                width: 13,
+                height: 13,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: GirviColors.brandGold,
+                ),
+              )
+            else
+              Icon(icon, color: GirviColors.brandGold, size: 15),
+            const SizedBox(width: 7),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                color: GirviColors.shellTextTitle,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
         ),
       ),
     );
