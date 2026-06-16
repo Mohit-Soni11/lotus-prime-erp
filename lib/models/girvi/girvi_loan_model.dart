@@ -34,6 +34,8 @@ class GirviLoanWithCustomer {
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 class GirviLoanModel {
+  static const int compoundCycleMonths = 12;
+
   final int id;
   final String ticketNo;
   final int customerId;
@@ -125,28 +127,126 @@ class GirviLoanModel {
     return ref.difference(startDate).inDays;
   }
 
-  /// Full months elapsed (for interest calculation)
+  /// Chargeable months elapsed. Any started month is billed as a full month.
   double get monthsElapsed {
     final ref = releaseDate ?? DateTime.now();
-    final days = ref.difference(startDate).inDays;
-    return days / 30.0;
+    return chargeableMonthsBetween(startDate, ref).toDouble();
   }
 
-  /// Months since last interest was paid (for partial interest scenarios)
+  /// Chargeable months since last interest was paid.
   double get unpaidMonths {
     if (lastInterestPaidDate == null) return monthsElapsed;
     final ref = releaseDate ?? DateTime.now();
-    final days = ref.difference(lastInterestPaidDate!).inDays;
-    return days / 30.0;
+    return chargeableMonthsBetween(lastInterestPaidDate!, ref).toDouble();
   }
 
-  /// Accrued interest from the last paid interest date, or from loan start.
-  double get accruedInterest =>
-      loanAmount * (interestRate / 100) * unpaidMonths;
+  /// Accrued unpaid interest. After every 12 unpaid chargeable months, the
+  /// pending interest is capitalised and the next month runs on that balance.
+  double get accruedInterest => interestForMonths(unpaidMonths);
 
-  /// Simple interest for a given number of months
-  double interestForMonths(double months) =>
-      loanAmount * (interestRate / 100) * months;
+  /// Compound-aware interest for unpaid months.
+  double interestForMonths(double months) {
+    return calculateCompoundInterest(
+      principal: loanAmount,
+      monthlyRatePercent: interestRate,
+      months: months.ceil(),
+    );
+  }
+
+  static double calculateCompoundInterest({
+    required double principal,
+    required double monthlyRatePercent,
+    required int months,
+  }) {
+    if (months <= 0 || principal <= 0 || monthlyRatePercent <= 0) {
+      return 0;
+    }
+
+    final monthlyRate = monthlyRatePercent / 100;
+    var principalBase = principal;
+    var totalInterest = 0.0;
+    var remainingMonths = months;
+
+    while (remainingMonths >= compoundCycleMonths) {
+      final cycleInterest = principalBase * monthlyRate * compoundCycleMonths;
+      totalInterest += cycleInterest;
+      principalBase += cycleInterest;
+      remainingMonths -= compoundCycleMonths;
+    }
+
+    if (remainingMonths > 0) {
+      totalInterest += principalBase * monthlyRate * remainingMonths;
+    }
+
+    return totalInterest;
+  }
+
+  /// Simple monthly interest used when a customer pays interest in advance.
+  double get monthlyInterest => loanAmount * (interestRate / 100);
+
+  double simpleInterestForMonths(int months) =>
+      monthlyInterest * months.clamp(0, 1000000);
+
+  int interestMonthsCoveredByAmount(double amount) {
+    if (amount <= 0 || monthlyInterest <= 0) return 0;
+    return amount ~/ monthlyInterest;
+  }
+
+  int interestMonthsCoveredByPayment({
+    required double amount,
+    required DateTime fromDate,
+    required DateTime paymentDate,
+  }) {
+    if (amount <= 0 || monthlyInterest <= 0) return 0;
+
+    final dueMonths = chargeableMonthsBetween(fromDate, paymentDate);
+    if (dueMonths <= 0) return interestMonthsCoveredByAmount(amount);
+
+    final dueInterest = interestForMonths(dueMonths.toDouble());
+    if (amount >= dueInterest) {
+      final advanceAmount = amount - dueInterest;
+      return dueMonths + interestMonthsCoveredByAmount(advanceAmount);
+    }
+
+    var coveredMonths = 0;
+    var chargedTillNow = 0.0;
+    for (var month = 1; month <= dueMonths; month++) {
+      final chargedThroughMonth = interestForMonths(month.toDouble());
+      final monthInterest = chargedThroughMonth - chargedTillNow;
+      if (chargedTillNow + monthInterest > amount) break;
+      coveredMonths = month;
+      chargedTillNow = chargedThroughMonth;
+    }
+    return coveredMonths;
+  }
+
+  static int chargeableMonthsBetween(DateTime from, DateTime to) {
+    if (!to.isAfter(from)) return 0;
+    final wholeMonths = ((to.year - from.year) * 12) + to.month - from.month;
+    final monthAnchor = addChargeableMonths(from, wholeMonths);
+    if (!to.isAfter(monthAnchor)) {
+      return wholeMonths == 0 ? 1 : wholeMonths;
+    }
+    return wholeMonths + 1;
+  }
+
+  static DateTime addChargeableMonths(DateTime from, int months) {
+    if (months <= 0) return from;
+    final targetMonthIndex = from.month + months - 1;
+    final year = from.year + (targetMonthIndex ~/ 12);
+    final month = (targetMonthIndex % 12) + 1;
+    final day = from.day.clamp(1, DateUtils.getDaysInMonth(year, month));
+    return DateTime(
+      year,
+      month,
+      day,
+      from.hour,
+      from.minute,
+      from.second,
+      from.millisecond,
+      from.microsecond,
+    );
+  }
 
   /// Total amount due to release = principal + total interest
   double get totalDue => loanAmount + accruedInterest;

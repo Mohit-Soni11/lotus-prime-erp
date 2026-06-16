@@ -3,6 +3,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/models/girvi/girvi_enums.dart';
+import 'package:lotus_erp/models/girvi/girvi_loan_model.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_repository.dart';
 
 void main() {
@@ -73,9 +74,69 @@ void main() {
     expect(payments.single.balanceAfter, 38000);
     expect(payments.single.paymentMode, GirviPaymentMode.upi.dbValue);
   });
+
+  test('interest payment advances paid-through date without reducing principal',
+      () async {
+    final loanId = await _insertLoan(
+      db,
+      loanAmount: 5000,
+      interestRate: 5,
+      startDate: DateTime(2026, 1, 1),
+    );
+
+    await repository.recordPayment(
+      loanId: loanId,
+      paymentType: GirviPaymentType.interest,
+      paymentMode: GirviPaymentMode.cash,
+      amount: 4000,
+      paymentDate: DateTime(2026, 4, 1),
+      receiptNo: 'GIP-ADV-001',
+    );
+
+    final loan = await repository.getLoanById(loanId);
+    final payment = (await repository.getPaymentModelsForLoan(loanId)).single;
+
+    expect(loan!.loanAmount, 5000);
+    expect(loan.lastInterestPaidDate, DateTime(2027, 5, 1));
+    expect(payment.amount, 4000);
+    expect(payment.monthsCovered, 16);
+    expect(payment.interestFromDate, DateTime(2026, 1, 1));
+    expect(payment.interestToDate, DateTime(2027, 5, 1));
+    expect(payment.balanceAfter, 5000);
+  });
+
+  test('girvi interest charges started months and compounds annually', () {
+    final oneStartedMonth = _loanModel(
+      loanAmount: 5000,
+      interestRate: 5,
+      startDate: DateTime(2026, 1, 1),
+      releaseDate: DateTime(2026, 1, 2),
+    );
+    final annualCycle = _loanModel(
+      loanAmount: 5000,
+      interestRate: 5,
+      startDate: DateTime(2026, 1, 1),
+      releaseDate: DateTime(2027, 1, 1),
+    );
+    final monthAfterAnnualCycle = _loanModel(
+      loanAmount: 5000,
+      interestRate: 5,
+      startDate: DateTime(2026, 1, 1),
+      releaseDate: DateTime(2027, 2, 1),
+    );
+
+    expect(oneStartedMonth.accruedInterest, 250);
+    expect(annualCycle.accruedInterest, 3000);
+    expect(monthAfterAnnualCycle.accruedInterest, 3400);
+  });
 }
 
-Future<int> _insertLoan(AppDatabase db) async {
+Future<int> _insertLoan(
+  AppDatabase db, {
+  double loanAmount = 50000,
+  double interestRate = 5,
+  DateTime? startDate,
+}) async {
   final customerId = await db.into(db.customers).insert(
         CustomersCompanion.insert(
           name: 'Interest Entry Customer',
@@ -92,9 +153,39 @@ Future<int> _insertLoan(AppDatabase db) async {
           netWeight: const drift.Value(12),
           ratePerGram: const drift.Value(7000),
           totalValue: const drift.Value(84000),
-          loanAmount: const drift.Value(50000),
-          interestRate: const drift.Value(5),
-          startDate: drift.Value(DateTime(2026, 1, 1)),
+          loanAmount: drift.Value(loanAmount),
+          interestRate: drift.Value(interestRate),
+          startDate: drift.Value(startDate ?? DateTime(2026, 1, 1)),
         ),
       );
+}
+
+GirviLoanModel _loanModel({
+  required double loanAmount,
+  required double interestRate,
+  required DateTime startDate,
+  DateTime? releaseDate,
+}) {
+  return GirviLoanModel(
+    id: 1,
+    ticketNo: 'GRV-TEST',
+    customerId: 1,
+    itemDescription: 'Gold item',
+    itemCount: 1,
+    metalType: 'Gold',
+    metalPurity: '22K',
+    grossWeight: 1,
+    stoneWeight: 0,
+    netWeight: 1,
+    ratePerGram: 1,
+    totalValue: 1,
+    ltvPercent: 1,
+    loanAmount: loanAmount,
+    interestRate: interestRate,
+    durationMonths: 12,
+    disbursementMode: 'Cash',
+    startDate: startDate,
+    releaseDate: releaseDate,
+    createdAt: startDate,
+  );
 }

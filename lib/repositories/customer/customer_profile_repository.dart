@@ -84,6 +84,7 @@ class CustomerProfileRepository {
             loanAmount: loan.loanAmount,
             interestRate: loan.interestRate,
             startDate: loan.startDate,
+            lastInterestPaidDate: loan.lastInterestPaidDate,
             status: loan.status,
           ),
       };

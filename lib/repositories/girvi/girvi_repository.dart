@@ -326,15 +326,39 @@ class GirviRepository {
       if (loan == null) {
         throw StateError('Girvi loan not found for payment entry');
       }
+      final loanModel = _mapLoan(loan);
 
       var balanceAfter = loan.loanAmount;
+      var resolvedMonthsCovered = monthsCovered;
+      var resolvedInterestFromDate = interestFromDate;
+      var resolvedInterestToDate = interestToDate;
       var loanUpdate = GirviLoansCompanion(
         updatedAt: drift.Value(DateTime.now()),
       );
 
       if (paymentType == GirviPaymentType.interest) {
+        final interestStart = loanModel.lastInterestPaidDate ??
+            interestFromDate ??
+            loanModel.startDate;
+        final coveredMonths = loanModel.interestMonthsCoveredByPayment(
+          amount: amount,
+          fromDate: interestStart,
+          paymentDate: paymentDate,
+        );
+        if (coveredMonths <= 0) {
+          throw ArgumentError.value(
+            amount,
+            'amount',
+            'Interest payment must cover at least one full interest month',
+          );
+        }
+        final paidThrough =
+            GirviLoanModel.addChargeableMonths(interestStart, coveredMonths);
+        resolvedMonthsCovered = coveredMonths;
+        resolvedInterestFromDate = interestStart;
+        resolvedInterestToDate = paidThrough;
         loanUpdate = loanUpdate.copyWith(
-          lastInterestPaidDate: drift.Value(interestToDate ?? paymentDate),
+          lastInterestPaidDate: drift.Value(paidThrough),
         );
       }
 
@@ -365,9 +389,9 @@ class GirviRepository {
               paymentDate: drift.Value(paymentDate),
               amount: drift.Value(amount),
               paymentMode: drift.Value(paymentMode.dbValue),
-              monthsCovered: drift.Value(monthsCovered),
-              interestFromDate: drift.Value(interestFromDate),
-              interestToDate: drift.Value(interestToDate),
+              monthsCovered: drift.Value(resolvedMonthsCovered),
+              interestFromDate: drift.Value(resolvedInterestFromDate),
+              interestToDate: drift.Value(resolvedInterestToDate),
               balanceAfter: drift.Value(balanceAfter),
               receiptNo: drift.Value(receiptNo),
               notes: drift.Value(notes),

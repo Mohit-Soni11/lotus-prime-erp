@@ -5,6 +5,8 @@
 
 import 'package:flutter/foundation.dart';
 
+import '../../girvi/girvi_loan_model.dart';
+
 enum CustomerGender { male, female }
 
 enum CreditStatus {
@@ -195,6 +197,7 @@ class CustomerLoanModel {
   final double loanAmount;
   final double interestRate;
   final DateTime startDate;
+  final DateTime? lastInterestPaidDate;
   final String status;
 
   const CustomerLoanModel({
@@ -205,6 +208,7 @@ class CustomerLoanModel {
     required this.loanAmount,
     required this.interestRate,
     required this.startDate,
+    this.lastInterestPaidDate,
     required this.status,
   });
 
@@ -212,8 +216,13 @@ class CustomerLoanModel {
   bool get isReleased => status.toUpperCase() == 'RELEASED';
 
   double get accruedInterest {
-    final months = DateTime.now().difference(startDate).inDays / 30;
-    return (loanAmount * interestRate / 100) * months;
+    final from = lastInterestPaidDate ?? startDate;
+    final months = GirviLoanModel.chargeableMonthsBetween(from, DateTime.now());
+    return GirviLoanModel.calculateCompoundInterest(
+      principal: loanAmount,
+      monthlyRatePercent: interestRate,
+      months: months,
+    );
   }
 
   String get formattedDate {
