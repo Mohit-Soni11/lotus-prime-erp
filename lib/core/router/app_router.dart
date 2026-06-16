@@ -506,6 +506,19 @@ GoRouter createAppRouter() {
       ),
 
       GoRoute(
+        path: RoutePaths.girviInterest,
+        builder: (context, state) => InterestCalcScreen(
+          onBack: () {
+            if (context.canPop()) {
+              context.pop();
+              return;
+            }
+            context.go(RoutePaths.girviList);
+          },
+        ),
+      ),
+
+      GoRoute(
         path: RoutePaths.salesPos,
         builder: (context, state) {
           final editBillId = int.tryParse(
@@ -805,13 +818,6 @@ GoRouter createAppRouter() {
             builder: (context, state) => GirviListScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
               onNewGirvi: () => context.go(RoutePaths.girviNew),
-            ),
-          ),
-
-          GoRoute(
-            path: RoutePaths.girviInterest,
-            builder: (context, state) => InterestCalcScreen(
-              onBack: () => _goBackOr(context, RoutePaths.girviList),
             ),
           ),
 

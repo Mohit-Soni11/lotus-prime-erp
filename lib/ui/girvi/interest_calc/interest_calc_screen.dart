@@ -336,6 +336,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
   }
 
   Widget _buildLoanPanel() {
+    final selectedLoanId = _ctrl.selectedLoan?.loan.id;
     return Container(
       decoration: GirviStyles.card,
       clipBehavior: Clip.antiAlias,
@@ -352,11 +353,11 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Open Girvi Tickets',
+                      Text('Customer Girvi Book',
                           style: GirviStyles.sectionTitle),
                       const SizedBox(height: 2),
                       Text(
-                        '${_ctrl.loans.length} active account${_ctrl.loans.length == 1 ? '' : 's'} ready for collection',
+                        '${_ctrl.openCustomerCount} customer${_ctrl.openCustomerCount == 1 ? '' : 's'} | ${_ctrl.openTicketCount} open ticket${_ctrl.openTicketCount == 1 ? '' : 's'}',
                         style: GirviStyles.caption.copyWith(
                           color: GirviColors.textMuted,
                         ),
@@ -364,40 +365,46 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                     ],
                   ),
                 ),
-                _CountBadge(value: _ctrl.loans.length.toString()),
+                _CountBadge(value: _ctrl.customerAccounts.length.toString()),
               ],
             ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
-            child: _SearchField(controller: _searchCtrl),
+            child: _SearchField(
+              controller: _searchCtrl,
+              hintText: 'Search customer, mobile, ticket or item',
+            ),
           ),
           Expanded(
-            child: _ctrl.loans.isEmpty
+            child: _ctrl.customerAccounts.isEmpty
                 ? _EmptyState(
                     icon: GirviIcons.search,
-                    title: _ctrl.hasLoans
-                        ? 'No Matching Ticket'
-                        : 'No Open Girvi Ticket',
-                    message: _ctrl.hasLoans
-                        ? 'Adjust the search text to find the correct ticket.'
+                    title: _ctrl.hasCustomerAccounts
+                        ? 'No Matching Customer'
+                        : 'No Open Girvi Customer',
+                    message: _ctrl.hasCustomerAccounts
+                        ? 'Adjust the search text to find the correct customer or ticket.'
                         : 'Create a girvi ticket first, then record payments here.',
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
                     physics: const BouncingScrollPhysics(),
-                    itemCount: _ctrl.loans.length,
+                    itemCount: _ctrl.customerAccounts.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
-                      final item = _ctrl.loans[index];
+                      final account = _ctrl.customerAccounts[index];
                       final selected =
-                          item.loan.id == _ctrl.selectedLoan?.loan.id;
-                      return _LoanTile(
-                        data: item,
+                          account.customerId == _ctrl.selectedCustomerId;
+                      return _CustomerGirviCard(
+                        account: account,
                         selected: selected,
+                        selectedLoanId: selectedLoanId,
                         moneyFmt: _moneyFmt,
                         dateFmt: _dateFmt,
-                        onTap: () => _ctrl.selectLoan(item),
+                        onCustomerTap: () =>
+                            _ctrl.selectCustomerAccount(account),
+                        onLoanTap: _ctrl.selectLoan,
                       );
                     },
                   ),
@@ -409,14 +416,22 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
 
   Widget _buildWorkspace({bool shrink = false}) {
     final selected = _ctrl.selectedLoan;
+    final selectedCustomer = _ctrl.selectedCustomerAccount;
     final content = selected == null
         ? [
-            const _EmptyState(
-              icon: GirviIcons.cash,
-              title: 'Select a Girvi Ticket',
-              message: 'Choose a ticket from the left to record a payment.',
-              large: true,
-            )
+            if (selectedCustomer == null)
+              const _EmptyState(
+                icon: GirviIcons.customer,
+                title: 'Select a Customer',
+                message:
+                    'Choose one customer from the left, then select the exact Girvi ticket for collection.',
+                large: true,
+              )
+            else
+              _CustomerReadyPanel(
+                account: selectedCustomer,
+                moneyFmt: _moneyFmt,
+              ),
           ]
         : [
             _buildSelectedSummary(selected),
@@ -913,8 +928,12 @@ class _HeaderIconButtonState extends State<_HeaderIconButton> {
 
 class _SearchField extends StatelessWidget {
   final TextEditingController controller;
+  final String hintText;
 
-  const _SearchField({required this.controller});
+  const _SearchField({
+    required this.controller,
+    required this.hintText,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -932,7 +951,7 @@ class _SearchField extends StatelessWidget {
               style: GirviStyles.fieldInput.copyWith(fontSize: 14),
               decoration: InputDecoration(
                 border: InputBorder.none,
-                hintText: 'Search ticket, customer, mobile, item',
+                hintText: hintText,
                 hintStyle: GirviStyles.fieldHint,
               ),
             ),
@@ -943,30 +962,108 @@ class _SearchField extends StatelessWidget {
   }
 }
 
-class _LoanTile extends StatelessWidget {
-  final GirviLoanWithCustomer data;
-  final bool selected;
+class _CustomerReadyPanel extends StatelessWidget {
+  final GirviCustomerGirviAccount account;
   final NumberFormat moneyFmt;
-  final DateFormat dateFmt;
-  final VoidCallback onTap;
 
-  const _LoanTile({
-    required this.data,
-    required this.selected,
+  const _CustomerReadyPanel({
+    required this.account,
     required this.moneyFmt,
-    required this.dateFmt,
-    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final loan = data.loan;
+    return GirviSectionCard(
+      icon: GirviIcons.customer,
+      title: account.customerName,
+      subtitle:
+          '${account.ticketCount} open Girvi ticket${account.ticketCount == 1 ? '' : 's'} available for this customer',
+      accent: account.hasOverdueTickets ? GirviColors.danger : GirviColors.info,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              _MiniMoney(
+                label: 'Outstanding',
+                value: 'Rs ${moneyFmt.format(account.outstandingPrincipal)}',
+                color: GirviColors.purple,
+              ),
+              const SizedBox(width: 10),
+              _MiniMoney(
+                label: 'Interest Due',
+                value: 'Rs ${moneyFmt.format(account.interestDue)}',
+                color: account.hasOverdueTickets
+                    ? GirviColors.danger
+                    : GirviColors.warning,
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: GirviColors.infoBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: GirviColors.info.withValues(alpha: 0.20),
+              ),
+            ),
+            child: Row(
+              children: [
+                const _IconBox(
+                  icon: GirviIcons.ticket,
+                  color: GirviColors.info,
+                  dark: true,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Select the exact Girvi ticket from the customer stack on the left to open the collection desk.',
+                    style: GoogleFonts.inter(
+                      color: GirviColors.textBody,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CustomerGirviCard extends StatelessWidget {
+  final GirviCustomerGirviAccount account;
+  final bool selected;
+  final int? selectedLoanId;
+  final NumberFormat moneyFmt;
+  final DateFormat dateFmt;
+  final VoidCallback onCustomerTap;
+  final ValueChanged<GirviLoanWithCustomer> onLoanTap;
+
+  const _CustomerGirviCard({
+    required this.account,
+    required this.selected,
+    required this.selectedLoanId,
+    required this.moneyFmt,
+    required this.dateFmt,
+    required this.onCustomerTap,
+    required this.onLoanTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: onCustomerTap,
       borderRadius: BorderRadius.circular(13),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
         decoration: BoxDecoration(
           color: selected
               ? GirviColors.brandGold.withValues(alpha: 0.08)
@@ -983,17 +1080,20 @@ class _LoanTile extends StatelessWidget {
             Row(
               children: [
                 _IconBox(
-                  icon: GirviIcons.ticket,
-                  color: selected ? GirviColors.brandGold : loan.statusColor,
+                  icon: GirviIcons.customer,
+                  color: selected
+                      ? GirviColors.brandGold
+                      : account.hasOverdueTickets
+                          ? GirviColors.danger
+                          : GirviColors.info,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(loan.ticketNo, style: GirviStyles.ticketNumber),
                       Text(
-                        data.customerName,
+                        account.customerName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
@@ -1002,33 +1102,58 @@ class _LoanTile extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
+                      const SizedBox(height: 2),
+                      Text(
+                        [
+                          account.customerMobile,
+                          if ((account.customerCity ?? '').trim().isNotEmpty)
+                            account.customerCity!.trim(),
+                        ].join(' | '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GirviStyles.caption.copyWith(
+                          color: GirviColors.textMuted,
+                          fontSize: 11,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                _StatusPill(label: loan.statusLabel, color: loan.statusColor),
+                const SizedBox(width: 8),
+                _StatusPill(
+                  label:
+                      '${account.ticketCount} ticket${account.ticketCount == 1 ? '' : 's'}',
+                  color: account.hasOverdueTickets
+                      ? GirviColors.danger
+                      : GirviColors.success,
+                ),
+                const SizedBox(width: 6),
+                AnimatedRotation(
+                  turns: selected ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 180),
+                  child: const Icon(
+                    GirviIcons.expandDown,
+                    color: GirviColors.textMuted,
+                    size: 20,
+                  ),
+                ),
               ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              loan.itemSummary,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GirviStyles.caption.copyWith(color: GirviColors.textMuted),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
                 _MiniMoney(
-                  label: 'Principal',
-                  value: 'Rs ${moneyFmt.format(loan.loanAmount)}',
+                  label: 'Outstanding',
+                  value: 'Rs ${moneyFmt.format(account.outstandingPrincipal)}',
                   color: GirviColors.purple,
                 ),
                 const SizedBox(width: 10),
                 _MiniMoney(
                   label: 'Interest Due',
-                  value: 'Rs ${moneyFmt.format(loan.accruedInterest)}',
-                  color:
-                      loan.isOverdue ? GirviColors.danger : GirviColors.warning,
+                  value: 'Rs ${moneyFmt.format(account.interestDue)}',
+                  color: account.hasOverdueTickets
+                      ? GirviColors.danger
+                      : GirviColors.warning,
                 ),
               ],
             ),
@@ -1040,15 +1165,174 @@ class _LoanTile extends StatelessWidget {
                 const SizedBox(width: 5),
                 Expanded(
                   child: Text(
-                    loan.lastInterestPaidDate == null
-                        ? 'No interest payment recorded'
-                        : 'Paid till ${dateFmt.format(loan.lastInterestPaidDate!)}',
+                    account.hasOverdueTickets
+                        ? '${account.overdueTicketCount} overdue ticket${account.overdueTicketCount == 1 ? '' : 's'} need attention'
+                        : 'Latest activity ${dateFmt.format(account.latestActivity)}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GirviStyles.caption.copyWith(
                       fontSize: 11,
-                      color: GirviColors.textMuted,
+                      color: account.hasOverdueTickets
+                          ? GirviColors.danger
+                          : GirviColors.textMuted,
                     ),
+                  ),
+                ),
+              ],
+            ),
+            if (selected) ...[
+              const SizedBox(height: 12),
+              Container(height: 1, color: GirviColors.divider),
+              const SizedBox(height: 8),
+              Text(
+                'Select Girvi Ticket',
+                style: GoogleFonts.inter(
+                  color: GirviColors.textMuted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 7),
+              for (var i = 0; i < account.loans.length; i++) ...[
+                _TicketStackRow(
+                  data: account.loans[i],
+                  selected: account.loans[i].loan.id == selectedLoanId,
+                  moneyFmt: moneyFmt,
+                  dateFmt: dateFmt,
+                  onTap: () => onLoanTap(account.loans[i]),
+                ),
+                if (i != account.loans.length - 1)
+                  Container(height: 1, color: GirviColors.divider),
+              ],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TicketStackRow extends StatelessWidget {
+  final GirviLoanWithCustomer data;
+  final bool selected;
+  final NumberFormat moneyFmt;
+  final DateFormat dateFmt;
+  final VoidCallback onTap;
+
+  const _TicketStackRow({
+    required this.data,
+    required this.selected,
+    required this.moneyFmt,
+    required this.dateFmt,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final loan = data.loan;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected
+              ? GirviColors.brandGold.withValues(alpha: 0.12)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: loan.statusColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Icon(
+                GirviIcons.ticket,
+                color: loan.statusColor,
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          loan.ticketNo,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GirviStyles.ticketNumber.copyWith(
+                            fontSize: 12,
+                            color: selected
+                                ? GirviColors.brandDeep
+                                : GirviColors.brandGold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      _TinyTag(label: loan.statusLabel),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    loan.itemSummary,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GirviStyles.caption.copyWith(
+                      color: GirviColors.textMuted,
+                      fontSize: 11,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    loan.lastInterestPaidDate == null
+                        ? 'Interest not received yet'
+                        : 'Paid till ${dateFmt.format(loan.lastInterestPaidDate!)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GirviStyles.caption.copyWith(
+                      color: GirviColors.textMuted,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  'Rs ${moneyFmt.format(loan.loanAmount)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.manrope(
+                    color: GirviColors.textDark,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Due Rs ${moneyFmt.format(loan.accruedInterest)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: loan.isOverdue
+                        ? GirviColors.danger
+                        : GirviColors.warning,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],

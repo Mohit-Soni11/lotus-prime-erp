@@ -251,8 +251,11 @@ class GirviInterestEntryController extends ChangeNotifier {
 
   List<GirviLoanWithCustomer> _allLoans = [];
   List<GirviLoanWithCustomer> _filteredLoans = [];
+  List<GirviCustomerGirviAccount> _customerAccounts = [];
+  List<GirviCustomerGirviAccount> _filteredCustomerAccounts = [];
   List<GirviPaymentModel> _payments = [];
   GirviLoanWithCustomer? _selectedLoan;
+  int? _selectedCustomerId;
 
   GirviPaymentType _paymentType = GirviPaymentType.interest;
   GirviPaymentMode _paymentMode = GirviPaymentMode.cash;
@@ -271,8 +274,11 @@ class GirviInterestEntryController extends ChangeNotifier {
   String? _successMessage;
 
   List<GirviLoanWithCustomer> get loans => _filteredLoans;
+  List<GirviCustomerGirviAccount> get customerAccounts =>
+      _filteredCustomerAccounts;
   List<GirviPaymentModel> get payments => _payments;
   GirviLoanWithCustomer? get selectedLoan => _selectedLoan;
+  int? get selectedCustomerId => _selectedCustomerId;
   GirviPaymentType get paymentType => _paymentType;
   GirviPaymentMode get paymentMode => _paymentMode;
   DateTime get paymentDate => _paymentDate;
@@ -288,6 +294,21 @@ class GirviInterestEntryController extends ChangeNotifier {
   String? get successMessage => _successMessage;
 
   bool get hasLoans => _allLoans.isNotEmpty;
+  int get openCustomerCount => _customerAccounts.length;
+  int get openTicketCount => _allLoans.length;
+  bool get hasCustomerAccounts => _customerAccounts.isNotEmpty;
+  GirviCustomerGirviAccount? get selectedCustomerAccount {
+    final id = _selectedCustomerId;
+    if (id == null) return null;
+    for (final account in _filteredCustomerAccounts) {
+      if (account.customerId == id) return account;
+    }
+    for (final account in _customerAccounts) {
+      if (account.customerId == id) return account;
+    }
+    return null;
+  }
+
   double get amount => double.tryParse(_amountInput) ?? 0.0;
   int get monthsCovered => int.tryParse(_monthsInput) ?? 0;
   bool get isInterestEntry =>
@@ -347,9 +368,7 @@ class GirviInterestEntryController extends ChangeNotifier {
       await _repo.syncOverdueStatus();
       await _loadLoans();
       _applySearch();
-      if (_filteredLoans.isNotEmpty) {
-        await _setSelectedLoan(_filteredLoans.first, notifyAtStart: false);
-      }
+      _clearSelectedLoan(clearCustomer: true);
     } catch (e) {
       debugPrint('GirviInterestEntryController.load error: $e');
       _errorMessage = 'Unable to load girvi interest entries.';
@@ -364,7 +383,19 @@ class GirviInterestEntryController extends ChangeNotifier {
     await _reloadAfterMutation(selectedId: selectedId, keepMessages: true);
   }
 
+  void selectCustomerAccount(GirviCustomerGirviAccount account) {
+    final sameCustomer = _selectedCustomerId == account.customerId;
+    _selectedCustomerId = account.customerId;
+    if (!sameCustomer) {
+      _clearSelectedLoan(clearCustomer: false);
+    }
+    _errorMessage = null;
+    _successMessage = null;
+    notifyListeners();
+  }
+
   Future<void> selectLoan(GirviLoanWithCustomer data) async {
+    _selectedCustomerId = data.loan.customerId;
     await _setSelectedLoan(data);
   }
 
@@ -532,27 +563,31 @@ class GirviInterestEntryController extends ChangeNotifier {
         final bDate = b.loan.updatedAt ?? b.loan.startDate;
         return bDate.compareTo(aDate);
       });
+    _customerAccounts = _buildCustomerAccounts(_allLoans);
   }
 
   void _applySearch() {
     if (_searchQuery.isEmpty) {
       _filteredLoans = List<GirviLoanWithCustomer>.from(_allLoans);
-      return;
+    } else {
+      _filteredLoans = _allLoans.where((item) {
+        final loan = item.loan;
+        return loan.ticketNo.toLowerCase().contains(_searchQuery) ||
+            item.customerName.toLowerCase().contains(_searchQuery) ||
+            item.customerMobile.contains(_searchQuery) ||
+            loan.itemDescription.toLowerCase().contains(_searchQuery);
+      }).toList();
     }
 
-    _filteredLoans = _allLoans.where((item) {
-      final loan = item.loan;
-      return loan.ticketNo.toLowerCase().contains(_searchQuery) ||
-          item.customerName.toLowerCase().contains(_searchQuery) ||
-          item.customerMobile.contains(_searchQuery) ||
-          loan.itemDescription.toLowerCase().contains(_searchQuery);
-    }).toList();
+    _filteredCustomerAccounts = _buildCustomerAccounts(_filteredLoans);
+    _syncSelectionWithFilteredResults();
   }
 
   Future<void> _setSelectedLoan(
     GirviLoanWithCustomer data, {
     bool notifyAtStart = true,
   }) async {
+    _selectedCustomerId = data.loan.customerId;
     _selectedLoan = data;
     _payments = [];
     _errorMessage = null;
@@ -590,14 +625,8 @@ class GirviInterestEntryController extends ChangeNotifier {
       }
     }
 
-    if (next == null && _filteredLoans.isNotEmpty) {
-      next = _filteredLoans.first;
-    }
-
     if (next == null) {
-      _selectedLoan = null;
-      _payments = [];
-      _resetEmptyForm();
+      _clearSelectedLoan(clearCustomer: _selectedCustomerId == null);
     } else {
       await _setSelectedLoan(next, notifyAtStart: false);
     }
@@ -608,6 +637,65 @@ class GirviInterestEntryController extends ChangeNotifier {
     } else if (success != null) {
       _successMessage = success;
     }
+  }
+
+  List<GirviCustomerGirviAccount> _buildCustomerAccounts(
+    List<GirviLoanWithCustomer> loans,
+  ) {
+    final grouped = <int, List<GirviLoanWithCustomer>>{};
+    for (final item in loans) {
+      grouped.putIfAbsent(item.loan.customerId, () => []).add(item);
+    }
+
+    final accounts = grouped.entries.map((entry) {
+      final customerLoans = entry.value
+        ..sort((a, b) {
+          final aDate = a.loan.updatedAt ?? a.loan.startDate;
+          final bDate = b.loan.updatedAt ?? b.loan.startDate;
+          return bDate.compareTo(aDate);
+        });
+      return GirviCustomerGirviAccount(
+        customerId: entry.key,
+        customerName: customerLoans.first.customerName,
+        customerMobile: customerLoans.first.customerMobile,
+        customerCity: customerLoans.first.customerCity,
+        loans: List.unmodifiable(customerLoans),
+      );
+    }).toList()
+      ..sort((a, b) => b.latestActivity.compareTo(a.latestActivity));
+
+    return List.unmodifiable(accounts);
+  }
+
+  void _syncSelectionWithFilteredResults() {
+    final customerId = _selectedCustomerId;
+    if (customerId == null) return;
+
+    final customerVisible = _filteredCustomerAccounts.any(
+      (account) => account.customerId == customerId,
+    );
+    if (!customerVisible) {
+      _selectedCustomerId = null;
+      _clearSelectedLoan(clearCustomer: false);
+      return;
+    }
+
+    final selectedLoanId = _selectedLoan?.loan.id;
+    if (selectedLoanId == null) return;
+
+    final loanVisible = _filteredLoans.any(
+      (item) => item.loan.id == selectedLoanId,
+    );
+    if (!loanVisible) {
+      _clearSelectedLoan(clearCustomer: false);
+    }
+  }
+
+  void _clearSelectedLoan({required bool clearCustomer}) {
+    if (clearCustomer) _selectedCustomerId = null;
+    _selectedLoan = null;
+    _payments = [];
+    _resetEmptyForm();
   }
 
   void _resetFormFromLoan(GirviLoanModel loan) {
@@ -666,6 +754,48 @@ class GirviInterestEntryController extends ChangeNotifier {
       _interestFromDate = from;
       _interestToDate = GirviLoanModel.addChargeableMonths(from, coveredMonths);
     }
+  }
+}
+
+class GirviCustomerGirviAccount {
+  const GirviCustomerGirviAccount({
+    required this.customerId,
+    required this.customerName,
+    required this.customerMobile,
+    required this.customerCity,
+    required this.loans,
+  });
+
+  final int customerId;
+  final String customerName;
+  final String customerMobile;
+  final String? customerCity;
+  final List<GirviLoanWithCustomer> loans;
+
+  int get ticketCount => loans.length;
+
+  double get outstandingPrincipal => loans.fold<double>(
+        0,
+        (sum, item) => sum + item.loan.loanAmount,
+      );
+
+  double get interestDue => loans.fold<double>(
+        0,
+        (sum, item) => sum + item.loan.accruedInterest,
+      );
+
+  int get overdueTicketCount =>
+      loans.where((item) => item.loan.isOverdue).length;
+
+  bool get hasOverdueTickets => overdueTicketCount > 0;
+
+  DateTime get latestActivity {
+    DateTime latest = loans.first.loan.updatedAt ?? loans.first.loan.startDate;
+    for (final item in loans.skip(1)) {
+      final current = item.loan.updatedAt ?? item.loan.startDate;
+      if (current.isAfter(latest)) latest = current;
+    }
+    return latest;
   }
 }
 
