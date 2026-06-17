@@ -5,6 +5,8 @@
 // DESCRIPTION : Interest Entry workspace for recording running girvi payments.
 // =============================================================================
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -209,7 +211,44 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
     );
   }
 
-  Future<void> _showReceiptPreview({required Uint8List pdfBytes}) {
+  Future<void> _showReceiptPreview({required Uint8List pdfBytes}) async {
+    final sides = await _rasterReceiptSides(pdfBytes);
+    if (!mounted) return;
+    if (sides.isEmpty) {
+      return _showCleanReceiptPreview(pdfBytes: pdfBytes);
+    }
+
+    return showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.78),
+      useSafeArea: false,
+      builder: (dialogContext) => Material(
+        type: MaterialType.transparency,
+        child: _GirviReceiptFlipPreview(
+          sides: sides,
+          onClose: () => Navigator.of(dialogContext).pop(),
+        ),
+      ),
+    );
+  }
+
+  Future<List<PdfRaster>> _rasterReceiptSides(Uint8List pdfBytes) async {
+    try {
+      final info = await Printing.info();
+      if (!info.canRaster) return const [];
+
+      final sides = <PdfRaster>[];
+      await for (final page in Printing.raster(pdfBytes, dpi: 144)) {
+        sides.add(page);
+        if (sides.length == 2) break;
+      }
+      return List.unmodifiable(sides);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<void> _showCleanReceiptPreview({required Uint8List pdfBytes}) {
     return showDialog<void>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.74),
@@ -336,7 +375,6 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
   }
 
   Widget _buildLoanPanel() {
-    final selectedLoanId = _ctrl.selectedLoan?.loan.id;
     return Container(
       decoration: GirviStyles.card,
       clipBehavior: Clip.antiAlias,
@@ -399,12 +437,10 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                       return _CustomerGirviCard(
                         account: account,
                         selected: selected,
-                        selectedLoanId: selectedLoanId,
                         moneyFmt: _moneyFmt,
                         dateFmt: _dateFmt,
                         onCustomerTap: () =>
                             _ctrl.selectCustomerAccount(account),
-                        onLoanTap: _ctrl.selectLoan,
                       );
                     },
                   ),
@@ -417,38 +453,49 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
   Widget _buildWorkspace({bool shrink = false}) {
     final selected = _ctrl.selectedLoan;
     final selectedCustomer = _ctrl.selectedCustomerAccount;
-    final content = selected == null
+    final content = selectedCustomer == null
         ? [
-            if (selectedCustomer == null)
-              const _EmptyState(
-                icon: GirviIcons.customer,
-                title: 'Select a Customer',
-                message:
-                    'Choose one customer from the left, then select the exact Girvi ticket for collection.',
-                large: true,
-              )
-            else
-              _CustomerReadyPanel(
-                account: selectedCustomer,
-                moneyFmt: _moneyFmt,
-              ),
+            const _EmptyState(
+              icon: GirviIcons.customer,
+              title: 'Select a Customer',
+              message:
+                  'Choose one customer from the left to view all open Girvi bills.',
+              large: true,
+            ),
           ]
-        : [
-            _buildSelectedSummary(selected),
-            const SizedBox(height: 14),
-            if (_ctrl.errorMessage != null) ...[
-              GirviErrorBanner(message: _ctrl.errorMessage!),
-              const SizedBox(height: 12),
-            ],
-            if (_ctrl.successMessage != null) ...[
-              _SuccessBanner(message: _ctrl.successMessage!),
-              const SizedBox(height: 12),
-            ],
-            _buildPaymentForm(selected),
-            const SizedBox(height: 14),
-            _buildPaymentHistory(),
-            const SizedBox(height: 28),
-          ];
+        : selected == null
+            ? [
+                _CustomerReadyPanel(
+                  account: selectedCustomer,
+                  moneyFmt: _moneyFmt,
+                  dateFmt: _dateFmt,
+                  selectedLoanId: null,
+                  onLoanTap: _ctrl.selectLoan,
+                ),
+                const SizedBox(height: 14),
+                const _EmptyState(
+                  icon: GirviIcons.ticket,
+                  title: 'Select a Girvi Bill',
+                  message:
+                      'Open the exact bill from the list above to record interest or principal collection.',
+                ),
+              ]
+            : [
+                _buildSelectedSummary(selected),
+                const SizedBox(height: 14),
+                if (_ctrl.errorMessage != null) ...[
+                  GirviErrorBanner(message: _ctrl.errorMessage!),
+                  const SizedBox(height: 12),
+                ],
+                if (_ctrl.successMessage != null) ...[
+                  _SuccessBanner(message: _ctrl.successMessage!),
+                  const SizedBox(height: 12),
+                ],
+                _buildPaymentForm(selected),
+                const SizedBox(height: 14),
+                _buildPaymentHistory(),
+                const SizedBox(height: 28),
+              ];
 
     if (shrink) {
       return Column(
@@ -580,6 +627,13 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                         label: loan.statusLabel, color: loan.statusColor),
                     const SizedBox(height: 8),
                     _OverviewActionButton(
+                      label: 'Change Bill',
+                      icon: Icons.swap_horiz_rounded,
+                      busy: false,
+                      onTap: _ctrl.showBillSelectionForSelectedCustomer,
+                    ),
+                    const SizedBox(height: 8),
+                    _OverviewActionButton(
                       label: _openingReceipt ? 'Opening...' : 'View Receipt',
                       icon: Icons.visibility_rounded,
                       busy: _openingReceipt,
@@ -611,12 +665,12 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
 
               final interestPanel = _OverviewMoneyPanel(
                 title: 'Interest',
-                primaryLabel: 'Interest Collected',
-                primaryValue: 'Rs ${_moneyFmt.format(interestCollected)}',
-                secondaryLabel: 'Interest Rate',
-                secondaryValue: _formatInterestRate(loan.interestRate),
-                tertiaryLabel: 'Due Now',
-                tertiaryValue: 'Rs ${_moneyFmt.format(loan.accruedInterest)}',
+                primaryLabel: 'Due Now',
+                primaryValue: 'Rs ${_moneyFmt.format(loan.accruedInterest)}',
+                secondaryLabel: 'Interest Collected',
+                secondaryValue: 'Rs ${_moneyFmt.format(interestCollected)}',
+                tertiaryLabel: 'Monthly Rate',
+                tertiaryValue: _formatInterestRate(loan.interestRate),
                 icon: GirviIcons.interestRate,
                 color: GirviColors.warning,
               );
@@ -870,6 +924,345 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
   }
 }
 
+class _GirviReceiptFlipPreview extends StatefulWidget {
+  const _GirviReceiptFlipPreview({
+    required this.sides,
+    required this.onClose,
+  });
+
+  final List<PdfRaster> sides;
+  final VoidCallback onClose;
+
+  @override
+  State<_GirviReceiptFlipPreview> createState() =>
+      _GirviReceiptFlipPreviewState();
+}
+
+class _GirviReceiptFlipPreviewState extends State<_GirviReceiptFlipPreview>
+    with SingleTickerProviderStateMixin {
+  static const double _minZoom = 0.70;
+  static const double _maxZoom = 4.0;
+
+  late final AnimationController _flipController;
+  late final TransformationController _viewController;
+  DateTime? _lastPointerDownAt;
+  Offset? _lastPointerDownPosition;
+
+  @override
+  void initState() {
+    super.initState();
+    _flipController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 620),
+    );
+    _viewController = TransformationController();
+  }
+
+  @override
+  void dispose() {
+    _flipController.dispose();
+    _viewController.dispose();
+    super.dispose();
+  }
+
+  void _toggleSide() {
+    if (widget.sides.length < 2 || _flipController.isAnimating) return;
+    if (_flipController.value < 0.5) {
+      _flipController.forward();
+    } else {
+      _flipController.reverse();
+    }
+  }
+
+  void _handlePointerDown(PointerDownEvent event) {
+    final now = DateTime.now();
+    final lastAt = _lastPointerDownAt;
+    final lastPosition = _lastPointerDownPosition;
+    final isDoubleClick = lastAt != null &&
+        now.difference(lastAt) <= const Duration(milliseconds: 360) &&
+        lastPosition != null &&
+        (event.position - lastPosition).distance <= 16;
+
+    _lastPointerDownAt = now;
+    _lastPointerDownPosition = event.position;
+
+    if (isDoubleClick) {
+      _lastPointerDownAt = null;
+      _lastPointerDownPosition = null;
+      _toggleSide();
+    }
+  }
+
+  void _zoomBy(double factor) {
+    final currentScale = _viewController.value.getMaxScaleOnAxis();
+    if (currentScale <= 0) return;
+    final nextScale =
+        (currentScale * factor).clamp(_minZoom, _maxZoom).toDouble();
+    if ((nextScale - currentScale).abs() < 0.01) return;
+    _viewController.value = _viewController.value.clone()
+      ..scale(nextScale / currentScale);
+  }
+
+  void _resetZoom() {
+    _viewController.value = Matrix4.identity();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.expand(
+      child: Stack(
+        children: [
+          const Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(color: Color(0xFF111827)),
+            ),
+          ),
+          Positioned.fill(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final firstSide = widget.sides.first;
+                final aspectRatio = firstSide.width / firstSide.height;
+                return Listener(
+                  onPointerDown: _handlePointerDown,
+                  child: InteractiveViewer(
+                    transformationController: _viewController,
+                    minScale: _minZoom,
+                    maxScale: _maxZoom,
+                    scaleFactor: 160,
+                    trackpadScrollCausesScale: true,
+                    boundaryMargin: const EdgeInsets.all(320),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth:
+                              math.min(constraints.maxWidth * 0.94, 1180.0),
+                          maxHeight: constraints.maxHeight * 0.94,
+                        ),
+                        child: AspectRatio(
+                          aspectRatio: aspectRatio,
+                          child: MouseRegion(
+                            cursor: widget.sides.length > 1
+                                ? SystemMouseCursors.click
+                                : MouseCursor.defer,
+                            child: AnimatedBuilder(
+                              animation: _flipController,
+                              builder: (context, _) {
+                                final angle = _flipController.value * math.pi;
+                                final showingBack = angle > math.pi / 2 &&
+                                    widget.sides.length > 1;
+                                final side = showingBack
+                                    ? widget.sides[1]
+                                    : widget.sides.first;
+
+                                return Transform(
+                                  alignment: Alignment.center,
+                                  transform: Matrix4.identity()
+                                    ..setEntry(3, 2, 0.0012)
+                                    ..rotateY(angle),
+                                  child: showingBack
+                                      ? Transform(
+                                          alignment: Alignment.center,
+                                          transform: Matrix4.identity()
+                                            ..rotateY(math.pi),
+                                          child: _GirviReceiptFlipSide(
+                                            raster: side,
+                                          ),
+                                        )
+                                      : _GirviReceiptFlipSide(raster: side),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          Positioned(
+            top: 18,
+            right: 18,
+            child: Material(
+              color: Colors.black.withValues(alpha: 0.62),
+              shape: const CircleBorder(),
+              child: IconButton(
+                tooltip: 'Close preview',
+                onPressed: widget.onClose,
+                icon: const Icon(Icons.close_rounded, color: Colors.white),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 18,
+            bottom: 18,
+            child: _FlipHint(canFlip: widget.sides.length > 1),
+          ),
+          Positioned(
+            right: 18,
+            bottom: 18,
+            child: _FlipPreviewToolbar(
+              canFlip: widget.sides.length > 1,
+              onFlip: _toggleSide,
+              onZoomIn: () => _zoomBy(1.18),
+              onZoomOut: () => _zoomBy(0.84),
+              onReset: _resetZoom,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FlipHint extends StatelessWidget {
+  const _FlipHint({required this.canFlip});
+
+  final bool canFlip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.58),
+      borderRadius: BorderRadius.circular(999),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              canFlip ? Icons.touch_app_rounded : Icons.receipt_long_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              canFlip ? 'Double click to flip front/back' : 'Receipt preview',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FlipPreviewToolbar extends StatelessWidget {
+  const _FlipPreviewToolbar({
+    required this.canFlip,
+    required this.onFlip,
+    required this.onZoomIn,
+    required this.onZoomOut,
+    required this.onReset,
+  });
+
+  final bool canFlip;
+  final VoidCallback onFlip;
+  final VoidCallback onZoomIn;
+  final VoidCallback onZoomOut;
+  final VoidCallback onReset;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.62),
+      borderRadius: BorderRadius.circular(18),
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _FlipPreviewToolButton(
+              tooltip: 'Zoom out',
+              icon: Icons.remove_rounded,
+              onPressed: onZoomOut,
+            ),
+            _FlipPreviewToolButton(
+              tooltip: 'Reset zoom',
+              icon: Icons.center_focus_strong_rounded,
+              onPressed: onReset,
+            ),
+            _FlipPreviewToolButton(
+              tooltip: 'Zoom in',
+              icon: Icons.add_rounded,
+              onPressed: onZoomIn,
+            ),
+            if (canFlip)
+              _FlipPreviewToolButton(
+                tooltip: 'Flip page',
+                icon: Icons.flip_rounded,
+                onPressed: onFlip,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FlipPreviewToolButton extends StatelessWidget {
+  const _FlipPreviewToolButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      constraints: const BoxConstraints.tightFor(width: 42, height: 42),
+      padding: EdgeInsets.zero,
+      style: IconButton.styleFrom(
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20),
+    );
+  }
+}
+
+class _GirviReceiptFlipSide extends StatelessWidget {
+  const _GirviReceiptFlipSide({required this.raster});
+
+  final PdfRaster raster;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.34),
+            blurRadius: 36,
+            offset: const Offset(0, 22),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Image(
+          image: PdfRasterImage(raster),
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
+        ),
+      ),
+    );
+  }
+}
+
 class _HeaderIconButton extends StatefulWidget {
   final String tooltip;
   final IconData icon;
@@ -965,10 +1358,16 @@ class _SearchField extends StatelessWidget {
 class _CustomerReadyPanel extends StatelessWidget {
   final GirviCustomerGirviAccount account;
   final NumberFormat moneyFmt;
+  final DateFormat dateFmt;
+  final int? selectedLoanId;
+  final ValueChanged<GirviLoanWithCustomer> onLoanTap;
 
   const _CustomerReadyPanel({
     required this.account,
     required this.moneyFmt,
+    required this.dateFmt,
+    required this.selectedLoanId,
+    required this.onLoanTap,
   });
 
   @override
@@ -1001,33 +1400,60 @@ class _CustomerReadyPanel extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: GirviColors.infoBg,
+              color: GirviColors.inputBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: GirviColors.info.withValues(alpha: 0.20),
-              ),
+              border: Border.all(color: GirviColors.cardBorder),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const _IconBox(
-                  icon: GirviIcons.ticket,
-                  color: GirviColors.info,
-                  dark: true,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Select the exact Girvi ticket from the customer stack on the left to open the collection desk.',
-                    style: GoogleFonts.inter(
-                      color: GirviColors.textBody,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      height: 1.35,
+                Row(
+                  children: [
+                    const _IconBox(
+                      icon: GirviIcons.ticket,
+                      color: GirviColors.info,
+                      dark: true,
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Girvi Bills',
+                            style: GoogleFonts.inter(
+                              color: GirviColors.textDark,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Select the exact bill to open the collection desk.',
+                            style: GirviStyles.caption.copyWith(
+                              color: GirviColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _CountBadge(value: account.ticketCount.toString()),
+                  ],
                 ),
+                const SizedBox(height: 12),
+                for (var i = 0; i < account.loans.length; i++) ...[
+                  _TicketStackRow(
+                    data: account.loans[i],
+                    selected: account.loans[i].loan.id == selectedLoanId,
+                    moneyFmt: moneyFmt,
+                    dateFmt: dateFmt,
+                    onTap: () => onLoanTap(account.loans[i]),
+                  ),
+                  if (i != account.loans.length - 1)
+                    Container(height: 1, color: GirviColors.divider),
+                ],
               ],
             ),
           ),
@@ -1040,20 +1466,16 @@ class _CustomerReadyPanel extends StatelessWidget {
 class _CustomerGirviCard extends StatelessWidget {
   final GirviCustomerGirviAccount account;
   final bool selected;
-  final int? selectedLoanId;
   final NumberFormat moneyFmt;
   final DateFormat dateFmt;
   final VoidCallback onCustomerTap;
-  final ValueChanged<GirviLoanWithCustomer> onLoanTap;
 
   const _CustomerGirviCard({
     required this.account,
     required this.selected,
-    required this.selectedLoanId,
     required this.moneyFmt,
     required this.dateFmt,
     required this.onCustomerTap,
-    required this.onLoanTap,
   });
 
   @override
@@ -1128,14 +1550,11 @@ class _CustomerGirviCard extends StatelessWidget {
                       : GirviColors.success,
                 ),
                 const SizedBox(width: 6),
-                AnimatedRotation(
-                  turns: selected ? 0.5 : 0,
-                  duration: const Duration(milliseconds: 180),
-                  child: const Icon(
-                    GirviIcons.expandDown,
-                    color: GirviColors.textMuted,
-                    size: 20,
-                  ),
+                Icon(
+                  selected ? GirviIcons.markDone : Icons.chevron_right_rounded,
+                  color:
+                      selected ? GirviColors.brandGold : GirviColors.textMuted,
+                  size: 20,
                 ),
               ],
             ),
@@ -1180,32 +1599,6 @@ class _CustomerGirviCard extends StatelessWidget {
                 ),
               ],
             ),
-            if (selected) ...[
-              const SizedBox(height: 12),
-              Container(height: 1, color: GirviColors.divider),
-              const SizedBox(height: 8),
-              Text(
-                'Select Girvi Ticket',
-                style: GoogleFonts.inter(
-                  color: GirviColors.textMuted,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const SizedBox(height: 7),
-              for (var i = 0; i < account.loans.length; i++) ...[
-                _TicketStackRow(
-                  data: account.loans[i],
-                  selected: account.loans[i].loan.id == selectedLoanId,
-                  moneyFmt: moneyFmt,
-                  dateFmt: dateFmt,
-                  onTap: () => onLoanTap(account.loans[i]),
-                ),
-                if (i != account.loans.length - 1)
-                  Container(height: 1, color: GirviColors.divider),
-              ],
-            ],
           ],
         ),
       ),
@@ -1213,7 +1606,7 @@ class _CustomerGirviCard extends StatelessWidget {
   }
 }
 
-class _TicketStackRow extends StatelessWidget {
+class _TicketStackRow extends StatefulWidget {
   final GirviLoanWithCustomer data;
   final bool selected;
   final NumberFormat moneyFmt;
@@ -1229,115 +1622,187 @@ class _TicketStackRow extends StatelessWidget {
   });
 
   @override
+  State<_TicketStackRow> createState() => _TicketStackRowState();
+}
+
+class _TicketStackRowState extends State<_TicketStackRow> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    final loan = data.loan;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected
-              ? GirviColors.brandGold.withValues(alpha: 0.12)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: loan.statusColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(9),
+    final loan = widget.data.loan;
+    final highlighted = widget.selected || _hovered;
+    final accent = widget.selected
+        ? GirviColors.brandGold
+        : loan.isOverdue
+            ? GirviColors.danger
+            : GirviColors.info;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOutCubic,
+          scale: _hovered && !widget.selected ? 1.006 : 1,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            decoration: BoxDecoration(
+              color: widget.selected
+                  ? GirviColors.brandGold.withValues(alpha: 0.15)
+                  : _hovered
+                      ? GirviColors.info.withValues(alpha: 0.07)
+                      : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: widget.selected
+                    ? GirviColors.brandGold
+                    : _hovered
+                        ? GirviColors.info.withValues(alpha: 0.32)
+                        : Colors.transparent,
+                width: widget.selected ? 1.4 : 1,
               ),
-              child: Icon(
-                GirviIcons.ticket,
-                color: loan.statusColor,
-                size: 16,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          loan.ticketNo,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GirviStyles.ticketNumber.copyWith(
-                            fontSize: 12,
-                            color: selected
-                                ? GirviColors.brandDeep
-                                : GirviColors.brandGold,
-                          ),
-                        ),
+              boxShadow: highlighted
+                  ? [
+                      BoxShadow(
+                        color: accent.withValues(alpha: 0.10),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
-                      const SizedBox(width: 6),
-                      _TinyTag(label: loan.statusLabel),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    loan.itemSummary,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GirviStyles.caption.copyWith(
-                      color: GirviColors.textMuted,
-                      fontSize: 11,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    loan.lastInterestPaidDate == null
-                        ? 'Interest not received yet'
-                        : 'Paid till ${dateFmt.format(loan.lastInterestPaidDate!)}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GirviStyles.caption.copyWith(
-                      color: GirviColors.textMuted,
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
-              ),
+                    ]
+                  : const [],
             ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            child: Row(
               children: [
-                Text(
-                  'Rs ${moneyFmt.format(loan.loanAmount)}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.manrope(
-                    color: GirviColors.textDark,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 4,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: highlighted ? accent : Colors.transparent,
+                    borderRadius: BorderRadius.circular(99),
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  'Due Rs ${moneyFmt.format(loan.accruedInterest)}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: loan.isOverdue
-                        ? GirviColors.danger
-                        : GirviColors.warning,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
+                const SizedBox(width: 8),
+                Container(
+                  width: 34,
+                  height: 34,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: loan.statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(9),
                   ),
+                  child: Icon(
+                    GirviIcons.ticket,
+                    color: loan.statusColor,
+                    size: 16,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              loan.ticketNo,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GirviStyles.ticketNumber.copyWith(
+                                fontSize: 12,
+                                color: widget.selected
+                                    ? GirviColors.brandDeep
+                                    : GirviColors.brandGold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          _TinyTag(label: loan.statusLabel),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        loan.itemSummary,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GirviStyles.caption.copyWith(
+                          color: GirviColors.textMuted,
+                          fontSize: 11,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        loan.lastInterestPaidDate == null
+                            ? 'Interest not received yet'
+                            : 'Paid till ${widget.dateFmt.format(loan.lastInterestPaidDate!)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GirviStyles.caption.copyWith(
+                          color: GirviColors.textMuted,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Rs ${widget.moneyFmt.format(loan.loanAmount)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.manrope(
+                        color: GirviColors.textDark,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Due Rs ${widget.moneyFmt.format(loan.accruedInterest)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: loan.isOverdue
+                            ? GirviColors.danger
+                            : GirviColors.warning,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 10),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 160),
+                  child: widget.selected
+                      ? const Icon(
+                          GirviIcons.markDone,
+                          key: ValueKey('selected'),
+                          color: GirviColors.brandGold,
+                          size: 20,
+                        )
+                      : Icon(
+                          Icons.chevron_right_rounded,
+                          key: ValueKey(_hovered),
+                          color: _hovered
+                              ? GirviColors.info
+                              : GirviColors.textMuted,
+                          size: 20,
+                        ),
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -1730,7 +2195,7 @@ class _OverviewMoneyPanel extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textDark,
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -1741,12 +2206,12 @@ class _OverviewMoneyPanel extends StatelessWidget {
           Text(
             primaryLabel,
             style: GoogleFonts.inter(
-              color: GirviColors.textMuted,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
+              color: GirviColors.textDark,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           SizedBox(
             width: double.infinity,
             child: FittedBox(
@@ -1756,7 +2221,7 @@ class _OverviewMoneyPanel extends StatelessWidget {
                 primaryValue,
                 style: GoogleFonts.manrope(
                   color: GirviColors.textDark,
-                  fontSize: 24,
+                  fontSize: 28,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -1946,9 +2411,9 @@ class _OverviewMiniValue extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              color: GirviColors.textMuted,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
+              color: GirviColors.textDark,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 3),
@@ -1958,7 +2423,7 @@ class _OverviewMiniValue extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.manrope(
               color: GirviColors.textDark,
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -1998,7 +2463,7 @@ class _OverviewInfoTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: color, size: 14),
+              Icon(icon, color: color, size: 16),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -2006,9 +2471,9 @@ class _OverviewInfoTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: GirviColors.textMuted,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
+                    color: GirviColors.textDark,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
@@ -2021,7 +2486,7 @@ class _OverviewInfoTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.manrope(
               color: GirviColors.textDark,
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -2059,9 +2524,9 @@ class _ProgressTrack extends StatelessWidget {
         Text(
           '${(safeValue * 100).toStringAsFixed(0)}% principal recovered',
           style: GoogleFonts.inter(
-            color: GirviColors.textMuted,
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
+            color: GirviColors.textDark,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ],
@@ -2096,8 +2561,9 @@ class _MiniMoney extends StatelessWidget {
             Text(
               label,
               style: GirviStyles.caption.copyWith(
-                fontSize: 10,
-                color: GirviColors.textMuted,
+                fontSize: 11,
+                color: GirviColors.textDark,
+                fontWeight: FontWeight.w900,
               ),
             ),
             const SizedBox(height: 2),
@@ -2106,8 +2572,8 @@ class _MiniMoney extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.manrope(
-                color: color,
-                fontSize: 12,
+                color: GirviColors.textDark,
+                fontSize: 13,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -2132,15 +2598,15 @@ class _IconBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 36,
-      height: 36,
+      width: dark ? 42 : 38,
+      height: dark ? 42 : 38,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: color.withValues(alpha: dark ? 0.18 : 0.11),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withValues(alpha: 0.22)),
       ),
-      child: Icon(icon, color: color, size: 18),
+      child: Icon(icon, color: color, size: dark ? 22 : 20),
     );
   }
 }

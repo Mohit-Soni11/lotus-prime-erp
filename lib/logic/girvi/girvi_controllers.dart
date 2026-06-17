@@ -399,6 +399,14 @@ class GirviInterestEntryController extends ChangeNotifier {
     await _setSelectedLoan(data);
   }
 
+  void showBillSelectionForSelectedCustomer() {
+    if (_selectedCustomerId == null) return;
+    _clearSelectedLoan(clearCustomer: false);
+    _errorMessage = null;
+    _successMessage = null;
+    notifyListeners();
+  }
+
   void onSearchChanged(String query) {
     _searchQuery = query.trim().toLowerCase();
     _applySearch();

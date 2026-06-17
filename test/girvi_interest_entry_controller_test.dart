@@ -55,6 +55,13 @@ void main() {
 
     expect(controller.selectedLoan?.loan.ticketNo, 'GRV-A-001');
 
+    controller.showBillSelectionForSelectedCustomer();
+
+    expect(controller.selectedCustomerId, firstCustomer);
+    expect(controller.selectedLoan, isNull);
+
+    await controller.selectLoan(firstTicket);
+
     controller.onSearchChanged('GRV-A-002');
 
     expect(controller.customerAccounts, hasLength(1));
