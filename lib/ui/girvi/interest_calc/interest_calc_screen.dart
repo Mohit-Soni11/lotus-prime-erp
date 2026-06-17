@@ -410,8 +410,10 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                       const SizedBox(height: 2),
                       Text(
                         '${_ctrl.openCustomerCount} customer${_ctrl.openCustomerCount == 1 ? '' : 's'} | ${_ctrl.openTicketCount} open ticket${_ctrl.openTicketCount == 1 ? '' : 's'}',
-                        style: GirviStyles.caption.copyWith(
-                          color: GirviColors.textMuted,
+                        style: GoogleFonts.inter(
+                          color: GirviColors.textDark,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ],
@@ -589,9 +591,9 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                     Text(
                       'Loan Overview',
                       style: GoogleFonts.inter(
-                        color: GirviColors.textMuted,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
+                        color: GirviColors.textDark,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -612,7 +614,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         color: GirviColors.textDark,
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -626,9 +628,9 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        color: GirviColors.textMuted,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                        color: GirviColors.textDark,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
                   ],
@@ -1488,15 +1490,17 @@ class _CustomerReadyPanel extends StatelessWidget {
                             'Girvi Bills',
                             style: GoogleFonts.inter(
                               color: GirviColors.textDark,
-                              fontSize: 14,
+                              fontSize: 16,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             'Select the exact bill to open the collection desk.',
-                            style: GirviStyles.caption.copyWith(
-                              color: GirviColors.textMuted,
+                            style: GoogleFonts.inter(
+                              color: GirviColors.textDark,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ],
@@ -1583,8 +1587,8 @@ class _CustomerGirviCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
                           color: GirviColors.textDark,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -1596,9 +1600,10 @@ class _CustomerGirviCard extends StatelessWidget {
                         ].join(' | '),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GirviStyles.caption.copyWith(
-                          color: GirviColors.textMuted,
-                          fontSize: 11,
+                        style: GoogleFonts.inter(
+                          color: GirviColors.textDark,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ],
@@ -1652,11 +1657,12 @@ class _CustomerGirviCard extends StatelessWidget {
                         : 'Latest activity ${dateFmt.format(account.latestActivity)}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GirviStyles.caption.copyWith(
-                      fontSize: 11,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
                       color: account.hasOverdueTickets
                           ? GirviColors.danger
-                          : GirviColors.textMuted,
+                          : GirviColors.textDark,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                 ),
@@ -1714,7 +1720,7 @@ class _TicketStackRowState extends State<_TicketStackRow> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 12),
             decoration: BoxDecoration(
               color: widget.selected
                   ? GirviColors.brandGold.withValues(alpha: 0.15)
@@ -1745,7 +1751,7 @@ class _TicketStackRowState extends State<_TicketStackRow> {
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   width: 4,
-                  height: 52,
+                  height: 62,
                   decoration: BoxDecoration(
                     color: highlighted ? accent : Colors.transparent,
                     borderRadius: BorderRadius.circular(99),
@@ -1753,8 +1759,8 @@ class _TicketStackRowState extends State<_TicketStackRow> {
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  width: 34,
-                  height: 34,
+                  width: 38,
+                  height: 38,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: loan.statusColor.withValues(alpha: 0.12),
@@ -1779,7 +1785,7 @@ class _TicketStackRowState extends State<_TicketStackRow> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GirviStyles.ticketNumber.copyWith(
-                                fontSize: 12,
+                                fontSize: 13,
                                 color: widget.selected
                                     ? GirviColors.brandDeep
                                     : GirviColors.brandGold,
@@ -1802,9 +1808,10 @@ class _TicketStackRowState extends State<_TicketStackRow> {
                         loan.itemSummary,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GirviStyles.caption.copyWith(
-                          color: GirviColors.textMuted,
-                          fontSize: 11,
+                        style: GoogleFonts.inter(
+                          color: GirviColors.textDark,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                       const SizedBox(height: 3),
@@ -1814,9 +1821,10 @@ class _TicketStackRowState extends State<_TicketStackRow> {
                             : 'Paid till ${widget.dateFmt.format(loan.lastInterestPaidDate!)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GirviStyles.caption.copyWith(
-                          color: GirviColors.textMuted,
-                          fontSize: 10,
+                        style: GoogleFonts.inter(
+                          color: GirviColors.textDark,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ],
@@ -1832,7 +1840,7 @@ class _TicketStackRowState extends State<_TicketStackRow> {
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.manrope(
                         color: GirviColors.textDark,
-                        fontSize: 12,
+                        fontSize: 14,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -1842,11 +1850,9 @@ class _TicketStackRowState extends State<_TicketStackRow> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        color: loan.isOverdue
-                            ? GirviColors.danger
-                            : GirviColors.warning,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
+                        color: GirviColors.textDark,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
                   ],
@@ -2443,7 +2449,7 @@ class _AmountShortcutButtonState extends State<_AmountShortcutButton> {
                 widget.label,
                 style: GoogleFonts.inter(
                   color: GirviColors.textDark,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -2452,7 +2458,7 @@ class _AmountShortcutButtonState extends State<_AmountShortcutButton> {
                 widget.value,
                 style: GoogleFonts.manrope(
                   color: GirviColors.textDark,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -2510,7 +2516,7 @@ class _PaymentHistoryRow extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
                           color: GirviColors.textDark,
-                          fontSize: 13,
+                          fontSize: 14,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -2526,9 +2532,10 @@ class _PaymentHistoryRow extends StatelessWidget {
                   '${dateFmt.format(payment.paymentDate)}  |  ${payment.mode.displayName}  |  $period',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GirviStyles.caption.copyWith(
-                    color: GirviColors.textMuted,
-                    fontSize: 11,
+                  style: GoogleFonts.inter(
+                    color: GirviColors.textDark,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],
@@ -2541,16 +2548,17 @@ class _PaymentHistoryRow extends StatelessWidget {
               Text(
                 'Rs ${moneyFmt.format(payment.amount)}',
                 style: GoogleFonts.manrope(
-                  color: color,
-                  fontSize: 15,
+                  color: GirviColors.textDark,
+                  fontSize: 16,
                   fontWeight: FontWeight.w900,
                 ),
               ),
               Text(
                 'Balance Rs ${moneyFmt.format(payment.balanceAfter)}',
-                style: GirviStyles.caption.copyWith(
-                  fontSize: 10,
-                  color: GirviColors.textMuted,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: GirviColors.textDark,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ],
@@ -2658,7 +2666,7 @@ class _CollectionFocusStrip extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         color: GirviColors.textDark,
-                        fontSize: 13,
+                        fontSize: 15,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -2668,8 +2676,8 @@ class _CollectionFocusStrip extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        color: accent,
-                        fontSize: 12,
+                        color: GirviColors.textDark,
+                        fontSize: 13,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -2778,8 +2786,8 @@ class _FocusMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: wide ? 180 : 136,
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      width: wide ? 198 : 150,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: GirviColors.cardBg,
         borderRadius: BorderRadius.circular(11),
@@ -2794,7 +2802,7 @@ class _FocusMetric extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               color: GirviColors.textDark,
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -2806,7 +2814,7 @@ class _FocusMetric extends StatelessWidget {
               value,
               style: GoogleFonts.manrope(
                 color: GirviColors.textDark,
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -2873,8 +2881,8 @@ class _InterestBreakdownPanel extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         color: GirviColors.textDark,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
                   ],
@@ -2947,7 +2955,7 @@ class _InterestBreakdownRow extends StatelessWidget {
         'Base Rs ${moneyFmt.format(line.principalBase)} | Monthly Rs ${moneyFmt.format(line.monthlyInterest)}';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
       decoration: BoxDecoration(
         color: line.cycleNumber == 1
             ? GirviColors.warning.withValues(alpha: 0.08)
@@ -2973,7 +2981,7 @@ class _InterestBreakdownRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textDark,
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -2984,8 +2992,8 @@ class _InterestBreakdownRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textDark,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ],
@@ -3005,7 +3013,7 @@ class _InterestBreakdownRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.manrope(
               color: GirviColors.textDark,
-              fontSize: 15,
+              fontSize: 17,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -3031,8 +3039,8 @@ class _BreakdownPeriodChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: wide ? 130 : 96,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      width: wide ? 150 : 112,
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
@@ -3046,7 +3054,7 @@ class _BreakdownPeriodChip extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.manrope(
               color: GirviColors.textDark,
-              fontSize: 15,
+              fontSize: 17,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -3058,7 +3066,7 @@ class _BreakdownPeriodChip extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 color: GirviColors.textDark,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -3095,7 +3103,7 @@ class _BreakdownTotalPill extends StatelessWidget {
             label,
             style: GoogleFonts.inter(
               color: GirviColors.textDark,
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -3104,7 +3112,7 @@ class _BreakdownTotalPill extends StatelessWidget {
             value,
             style: GoogleFonts.manrope(
               color: GirviColors.textDark,
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -3185,7 +3193,7 @@ class _OverviewMoneyPanel extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textDark,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -3197,7 +3205,7 @@ class _OverviewMoneyPanel extends StatelessWidget {
             primaryLabel,
             style: GoogleFonts.inter(
               color: GirviColors.textDark,
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -3211,7 +3219,7 @@ class _OverviewMoneyPanel extends StatelessWidget {
                 primaryValue,
                 style: GoogleFonts.manrope(
                   color: GirviColors.textDark,
-                  fontSize: 28,
+                  fontSize: 30,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -3322,7 +3330,7 @@ class _OverviewTermsPanel extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textDark,
-                    fontSize: 13,
+                    fontSize: 15,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -3402,7 +3410,7 @@ class _OverviewMiniValue extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               color: GirviColors.textDark,
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -3413,7 +3421,7 @@ class _OverviewMiniValue extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.manrope(
               color: GirviColors.textDark,
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -3462,7 +3470,7 @@ class _OverviewInfoTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textDark,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -3476,7 +3484,7 @@ class _OverviewInfoTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.manrope(
               color: GirviColors.textDark,
-              fontSize: 13,
+              fontSize: 15,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -3515,8 +3523,8 @@ class _ProgressTrack extends StatelessWidget {
           '${(safeValue * 100).toStringAsFixed(0)}% principal recovered',
           style: GoogleFonts.inter(
             color: GirviColors.textDark,
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
           ),
         ),
       ],
@@ -3551,7 +3559,7 @@ class _MiniMoney extends StatelessWidget {
             Text(
               label,
               style: GirviStyles.caption.copyWith(
-                fontSize: 11,
+                fontSize: 12,
                 color: GirviColors.textDark,
                 fontWeight: FontWeight.w900,
               ),
@@ -3563,7 +3571,7 @@ class _MiniMoney extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.manrope(
                 color: GirviColors.textDark,
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -3622,8 +3630,8 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label.toUpperCase(),
         style: GoogleFonts.inter(
-          color: color,
-          fontSize: 10,
+          color: GirviColors.textDark,
+          fontSize: 12,
           fontWeight: FontWeight.w900,
         ),
       ),
@@ -3684,7 +3692,7 @@ class _OverviewActionButton extends StatelessWidget {
               label,
               style: GoogleFonts.inter(
                 color: GirviColors.shellTextTitle,
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -3749,8 +3757,8 @@ class _TinyTag extends StatelessWidget {
           color: color == GirviColors.brandGold
               ? GirviColors.brandDeep
               : GirviColors.textDark,
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
+          fontSize: 12,
+          fontWeight: FontWeight.w900,
         ),
       ),
     );
@@ -3777,7 +3785,7 @@ class _ReviewMetric extends StatelessWidget {
         Text(
           label,
           style: GirviStyles.caption.copyWith(
-            fontSize: 11,
+            fontSize: 12,
             color: GirviColors.textDark,
             fontWeight: FontWeight.w900,
           ),
@@ -3882,8 +3890,10 @@ class _EmptyState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: GirviStyles.caption.copyWith(
-                color: GirviColors.textMuted,
+              style: GoogleFonts.inter(
+                color: GirviColors.textDark,
+                fontSize: large ? 14 : 13,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ],
