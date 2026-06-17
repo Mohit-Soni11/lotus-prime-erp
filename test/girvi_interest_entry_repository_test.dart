@@ -103,9 +103,35 @@ void main() {
     expect(payment.interestFromDate, DateTime(2026, 1, 1));
     expect(payment.interestToDate, DateTime(2027, 5, 1));
     expect(payment.balanceAfter, 5000);
+
+    final advanceSnapshot = _loanModel(
+      loanAmount: 5000,
+      interestRate: 5,
+      startDate: DateTime(2026, 1, 1),
+      releaseDate: DateTime(2026, 4, 1),
+      lastInterestPaidDate: loan.lastInterestPaidDate,
+    );
+    expect(advanceSnapshot.accruedInterest, 0);
+    expect(advanceSnapshot.advanceInterestMonths, 13);
+    expect(advanceSnapshot.advanceInterestAmount, 3250);
   });
 
   test('girvi interest charges started months and compounds annually', () {
+    expect(
+      GirviLoanModel.chargeableMonthsBetween(
+        DateTime(2025, 6, 17),
+        DateTime(2026, 6, 17, 14, 8),
+      ),
+      12,
+    );
+    expect(
+      GirviLoanModel.chargeableMonthsBetween(
+        DateTime(2025, 6, 17),
+        DateTime(2026, 6, 18),
+      ),
+      13,
+    );
+
     final oneStartedMonth = _loanModel(
       loanAmount: 5000,
       interestRate: 5,
@@ -124,10 +150,30 @@ void main() {
       startDate: DateTime(2026, 1, 1),
       releaseDate: DateTime(2027, 2, 1),
     );
+    final seventeenMonthLoan = _loanModel(
+      loanAmount: 50000,
+      interestRate: 5,
+      startDate: DateTime(2025, 2, 9),
+      releaseDate: DateTime(2026, 6, 17),
+    );
+    final seventeenMonthBreakdown = seventeenMonthLoan.accruedInterestBreakdown;
+    final seventeenMonthElapsed =
+        seventeenMonthLoan.unpaidInterestElapsedPeriod;
 
     expect(oneStartedMonth.accruedInterest, 250);
     expect(annualCycle.accruedInterest, 3000);
     expect(monthAfterAnnualCycle.accruedInterest, 3400);
+    expect(seventeenMonthBreakdown, hasLength(2));
+    expect(seventeenMonthBreakdown[0].months, 12);
+    expect(seventeenMonthBreakdown[0].principalBase, 50000);
+    expect(seventeenMonthBreakdown[0].interestAmount, 30000);
+    expect(seventeenMonthBreakdown[0].capitalizedAfterLine, isTrue);
+    expect(seventeenMonthBreakdown[1].months, 5);
+    expect(seventeenMonthBreakdown[1].principalBase, 80000);
+    expect(seventeenMonthBreakdown[1].interestAmount, 20000);
+    expect(seventeenMonthElapsed.years, 1);
+    expect(seventeenMonthElapsed.months, 4);
+    expect(seventeenMonthElapsed.days, 8);
   });
 }
 
@@ -165,6 +211,7 @@ GirviLoanModel _loanModel({
   required double interestRate,
   required DateTime startDate,
   DateTime? releaseDate,
+  DateTime? lastInterestPaidDate,
 }) {
   return GirviLoanModel(
     id: 1,
@@ -186,6 +233,7 @@ GirviLoanModel _loanModel({
     disbursementMode: 'Cash',
     startDate: startDate,
     releaseDate: releaseDate,
+    lastInterestPaidDate: lastInterestPaidDate,
     createdAt: startDate,
   );
 }

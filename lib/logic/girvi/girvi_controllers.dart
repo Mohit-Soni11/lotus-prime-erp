@@ -329,7 +329,8 @@ class GirviInterestEntryController extends ChangeNotifier {
   double get expectedInterest {
     final loan = _selectedLoan?.loan;
     if (loan == null) return 0.0;
-    final months = monthsCovered <= 0 ? 1 : monthsCovered;
+    final months = monthsCovered;
+    if (months <= 0) return 0.0;
     return loan.interestForMonths(months.toDouble());
   }
 
@@ -419,7 +420,7 @@ class GirviInterestEntryController extends ChangeNotifier {
     _successMessage = null;
 
     if (value == GirviPaymentType.interest) {
-      _amountInput = expectedInterest.toStringAsFixed(2);
+      _amountInput = _formatAmountInput(expectedInterest);
       _syncMonthsFromAmount();
     } else if (value == GirviPaymentType.partialPrincipal ||
         value == GirviPaymentType.penalty) {
@@ -467,7 +468,7 @@ class GirviInterestEntryController extends ChangeNotifier {
   void onMonthsChanged(String value) {
     _monthsInput = value;
     if (_paymentType == GirviPaymentType.interest) {
-      _amountInput = expectedInterest.toStringAsFixed(2);
+      _amountInput = _formatAmountInput(expectedInterest);
     }
     notifyListeners();
   }
@@ -713,11 +714,14 @@ class GirviInterestEntryController extends ChangeNotifier {
     final interestFrom = loan.lastInterestPaidDate ?? loan.startDate;
     _interestFromDate = interestFrom;
     final suggestedMonths = _suggestedMonths(loan);
-    _interestToDate =
-        GirviLoanModel.addChargeableMonths(interestFrom, suggestedMonths);
+    _interestToDate = suggestedMonths <= 0
+        ? interestFrom
+        : GirviLoanModel.addChargeableMonths(interestFrom, suggestedMonths);
     _monthsInput = suggestedMonths.toString();
-    _amountInput =
-        loan.interestForMonths(suggestedMonths.toDouble()).toStringAsFixed(2);
+    _amountInput = suggestedMonths <= 0
+        ? ''
+        : _formatAmountInput(
+            loan.interestForMonths(suggestedMonths.toDouble()));
     _notes = '';
     _receiptNo = '';
   }
@@ -735,6 +739,7 @@ class GirviInterestEntryController extends ChangeNotifier {
   }
 
   int _suggestedMonths(GirviLoanModel loan) {
+    if (loan.hasAdvanceInterest) return 0;
     final from = loan.lastInterestPaidDate ?? loan.startDate;
     final months = GirviLoanModel.chargeableMonthsBetween(from, DateTime.now());
     if (months <= 0) return 1;
@@ -749,7 +754,7 @@ class GirviInterestEntryController extends ChangeNotifier {
         GirviLoanModel.chargeableMonthsBetween(from, to).clamp(1, 120);
     _monthsInput = months.toString();
     if (_paymentType == GirviPaymentType.interest) {
-      _amountInput = expectedInterest.toStringAsFixed(2);
+      _amountInput = _formatAmountInput(expectedInterest);
     }
   }
 
@@ -762,6 +767,12 @@ class GirviInterestEntryController extends ChangeNotifier {
       _interestFromDate = from;
       _interestToDate = GirviLoanModel.addChargeableMonths(from, coveredMonths);
     }
+  }
+
+  String _formatAmountInput(double value) {
+    if (value <= 0) return '';
+    if (value == value.roundToDouble()) return value.toStringAsFixed(0);
+    return value.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
   }
 }
 
