@@ -17335,6 +17335,18 @@ class $GirviLoansTable extends GirviLoans
   late final GeneratedColumn<String> releasedBy = GeneratedColumn<String>(
       'released_by', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _expectedDeliveryDateMeta =
+      const VerificationMeta('expectedDeliveryDate');
+  @override
+  late final GeneratedColumn<DateTime> expectedDeliveryDate =
+      GeneratedColumn<DateTime>('expected_delivery_date', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _deliveredAtMeta =
+      const VerificationMeta('deliveredAt');
+  @override
+  late final GeneratedColumn<DateTime> deliveredAt = GeneratedColumn<DateTime>(
+      'delivered_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -17374,7 +17386,9 @@ class $GirviLoansTable extends GirviLoans
         releaseTotalAmount,
         releasePaymentMode,
         releaseNotes,
-        releasedBy
+        releasedBy,
+        expectedDeliveryDate,
+        deliveredAt
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -17599,6 +17613,18 @@ class $GirviLoansTable extends GirviLoans
           releasedBy.isAcceptableOrUnknown(
               data['released_by']!, _releasedByMeta));
     }
+    if (data.containsKey('expected_delivery_date')) {
+      context.handle(
+          _expectedDeliveryDateMeta,
+          expectedDeliveryDate.isAcceptableOrUnknown(
+              data['expected_delivery_date']!, _expectedDeliveryDateMeta));
+    }
+    if (data.containsKey('delivered_at')) {
+      context.handle(
+          _deliveredAtMeta,
+          deliveredAt.isAcceptableOrUnknown(
+              data['delivered_at']!, _deliveredAtMeta));
+    }
     return context;
   }
 
@@ -17685,6 +17711,11 @@ class $GirviLoansTable extends GirviLoans
           .read(DriftSqlType.string, data['${effectivePrefix}release_notes']),
       releasedBy: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}released_by']),
+      expectedDeliveryDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime,
+          data['${effectivePrefix}expected_delivery_date']),
+      deliveredAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}delivered_at']),
     );
   }
 
@@ -17774,7 +17805,8 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
   /// Path to scanned ID proof document
   final String? idProofImagePath;
 
-  /// ACTIVE | RELEASED | OVERDUE | AUCTIONED | PARTIAL_RELEASE
+  /// ACTIVE | RELEASED | OVERDUE | AUCTIONED | PARTIAL_RELEASE |
+  /// READY_FOR_DELIVERY
   final String status;
   final String? notes;
 
@@ -17798,6 +17830,12 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
 
   /// Who processed the release (staff name / ID)
   final String? releasedBy;
+
+  /// Customer's promised pickup date after partial/full settlement.
+  final DateTime? expectedDeliveryDate;
+
+  /// Actual item handover timestamp. Null means item is still in shop custody.
+  final DateTime? deliveredAt;
   const GirviLoan(
       {required this.id,
       required this.createdAt,
@@ -17836,7 +17874,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       this.releaseTotalAmount,
       this.releasePaymentMode,
       this.releaseNotes,
-      this.releasedBy});
+      this.releasedBy,
+      this.expectedDeliveryDate,
+      this.deliveredAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -17911,6 +17951,12 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
     }
     if (!nullToAbsent || releasedBy != null) {
       map['released_by'] = Variable<String>(releasedBy);
+    }
+    if (!nullToAbsent || expectedDeliveryDate != null) {
+      map['expected_delivery_date'] = Variable<DateTime>(expectedDeliveryDate);
+    }
+    if (!nullToAbsent || deliveredAt != null) {
+      map['delivered_at'] = Variable<DateTime>(deliveredAt);
     }
     return map;
   }
@@ -17988,6 +18034,12 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       releasedBy: releasedBy == null && nullToAbsent
           ? const Value.absent()
           : Value(releasedBy),
+      expectedDeliveryDate: expectedDeliveryDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(expectedDeliveryDate),
+      deliveredAt: deliveredAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deliveredAt),
     );
   }
 
@@ -18036,6 +18088,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           serializer.fromJson<String?>(json['releasePaymentMode']),
       releaseNotes: serializer.fromJson<String?>(json['releaseNotes']),
       releasedBy: serializer.fromJson<String?>(json['releasedBy']),
+      expectedDeliveryDate:
+          serializer.fromJson<DateTime?>(json['expectedDeliveryDate']),
+      deliveredAt: serializer.fromJson<DateTime?>(json['deliveredAt']),
     );
   }
   @override
@@ -18081,6 +18136,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       'releasePaymentMode': serializer.toJson<String?>(releasePaymentMode),
       'releaseNotes': serializer.toJson<String?>(releaseNotes),
       'releasedBy': serializer.toJson<String?>(releasedBy),
+      'expectedDeliveryDate':
+          serializer.toJson<DateTime?>(expectedDeliveryDate),
+      'deliveredAt': serializer.toJson<DateTime?>(deliveredAt),
     };
   }
 
@@ -18122,7 +18180,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           Value<double?> releaseTotalAmount = const Value.absent(),
           Value<String?> releasePaymentMode = const Value.absent(),
           Value<String?> releaseNotes = const Value.absent(),
-          Value<String?> releasedBy = const Value.absent()}) =>
+          Value<String?> releasedBy = const Value.absent(),
+          Value<DateTime?> expectedDeliveryDate = const Value.absent(),
+          Value<DateTime?> deliveredAt = const Value.absent()}) =>
       GirviLoan(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -18179,6 +18239,10 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
         releaseNotes:
             releaseNotes.present ? releaseNotes.value : this.releaseNotes,
         releasedBy: releasedBy.present ? releasedBy.value : this.releasedBy,
+        expectedDeliveryDate: expectedDeliveryDate.present
+            ? expectedDeliveryDate.value
+            : this.expectedDeliveryDate,
+        deliveredAt: deliveredAt.present ? deliveredAt.value : this.deliveredAt,
       );
   GirviLoan copyWithCompanion(GirviLoansCompanion data) {
     return GirviLoan(
@@ -18264,6 +18328,11 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           : this.releaseNotes,
       releasedBy:
           data.releasedBy.present ? data.releasedBy.value : this.releasedBy,
+      expectedDeliveryDate: data.expectedDeliveryDate.present
+          ? data.expectedDeliveryDate.value
+          : this.expectedDeliveryDate,
+      deliveredAt:
+          data.deliveredAt.present ? data.deliveredAt.value : this.deliveredAt,
     );
   }
 
@@ -18307,7 +18376,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           ..write('releaseTotalAmount: $releaseTotalAmount, ')
           ..write('releasePaymentMode: $releasePaymentMode, ')
           ..write('releaseNotes: $releaseNotes, ')
-          ..write('releasedBy: $releasedBy')
+          ..write('releasedBy: $releasedBy, ')
+          ..write('expectedDeliveryDate: $expectedDeliveryDate, ')
+          ..write('deliveredAt: $deliveredAt')
           ..write(')'))
         .toString();
   }
@@ -18351,7 +18422,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
         releaseTotalAmount,
         releasePaymentMode,
         releaseNotes,
-        releasedBy
+        releasedBy,
+        expectedDeliveryDate,
+        deliveredAt
       ]);
   @override
   bool operator ==(Object other) =>
@@ -18394,7 +18467,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           other.releaseTotalAmount == this.releaseTotalAmount &&
           other.releasePaymentMode == this.releasePaymentMode &&
           other.releaseNotes == this.releaseNotes &&
-          other.releasedBy == this.releasedBy);
+          other.releasedBy == this.releasedBy &&
+          other.expectedDeliveryDate == this.expectedDeliveryDate &&
+          other.deliveredAt == this.deliveredAt);
 }
 
 class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
@@ -18436,6 +18511,8 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
   final Value<String?> releasePaymentMode;
   final Value<String?> releaseNotes;
   final Value<String?> releasedBy;
+  final Value<DateTime?> expectedDeliveryDate;
+  final Value<DateTime?> deliveredAt;
   const GirviLoansCompanion({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -18475,6 +18552,8 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     this.releasePaymentMode = const Value.absent(),
     this.releaseNotes = const Value.absent(),
     this.releasedBy = const Value.absent(),
+    this.expectedDeliveryDate = const Value.absent(),
+    this.deliveredAt = const Value.absent(),
   });
   GirviLoansCompanion.insert({
     this.id = const Value.absent(),
@@ -18515,6 +18594,8 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     this.releasePaymentMode = const Value.absent(),
     this.releaseNotes = const Value.absent(),
     this.releasedBy = const Value.absent(),
+    this.expectedDeliveryDate = const Value.absent(),
+    this.deliveredAt = const Value.absent(),
   })  : ticketNo = Value(ticketNo),
         customerId = Value(customerId),
         itemDescription = Value(itemDescription);
@@ -18557,6 +18638,8 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     Expression<String>? releasePaymentMode,
     Expression<String>? releaseNotes,
     Expression<String>? releasedBy,
+    Expression<DateTime>? expectedDeliveryDate,
+    Expression<DateTime>? deliveredAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -18600,6 +18683,9 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
         'release_payment_mode': releasePaymentMode,
       if (releaseNotes != null) 'release_notes': releaseNotes,
       if (releasedBy != null) 'released_by': releasedBy,
+      if (expectedDeliveryDate != null)
+        'expected_delivery_date': expectedDeliveryDate,
+      if (deliveredAt != null) 'delivered_at': deliveredAt,
     });
   }
 
@@ -18641,7 +18727,9 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       Value<double?>? releaseTotalAmount,
       Value<String?>? releasePaymentMode,
       Value<String?>? releaseNotes,
-      Value<String?>? releasedBy}) {
+      Value<String?>? releasedBy,
+      Value<DateTime?>? expectedDeliveryDate,
+      Value<DateTime?>? deliveredAt}) {
     return GirviLoansCompanion(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
@@ -18681,6 +18769,8 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       releasePaymentMode: releasePaymentMode ?? this.releasePaymentMode,
       releaseNotes: releaseNotes ?? this.releaseNotes,
       releasedBy: releasedBy ?? this.releasedBy,
+      expectedDeliveryDate: expectedDeliveryDate ?? this.expectedDeliveryDate,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
     );
   }
 
@@ -18802,6 +18892,13 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     if (releasedBy.present) {
       map['released_by'] = Variable<String>(releasedBy.value);
     }
+    if (expectedDeliveryDate.present) {
+      map['expected_delivery_date'] =
+          Variable<DateTime>(expectedDeliveryDate.value);
+    }
+    if (deliveredAt.present) {
+      map['delivered_at'] = Variable<DateTime>(deliveredAt.value);
+    }
     return map;
   }
 
@@ -18845,7 +18942,9 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
           ..write('releaseTotalAmount: $releaseTotalAmount, ')
           ..write('releasePaymentMode: $releasePaymentMode, ')
           ..write('releaseNotes: $releaseNotes, ')
-          ..write('releasedBy: $releasedBy')
+          ..write('releasedBy: $releasedBy, ')
+          ..write('expectedDeliveryDate: $expectedDeliveryDate, ')
+          ..write('deliveredAt: $deliveredAt')
           ..write(')'))
         .toString();
   }
@@ -18944,6 +19043,22 @@ class $GirviPaymentsTable extends GirviPayments
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
+  static const VerificationMeta _principalComponentMeta =
+      const VerificationMeta('principalComponent');
+  @override
+  late final GeneratedColumn<double> principalComponent =
+      GeneratedColumn<double>('principal_component', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0.0));
+  static const VerificationMeta _interestComponentMeta =
+      const VerificationMeta('interestComponent');
+  @override
+  late final GeneratedColumn<double> interestComponent =
+      GeneratedColumn<double>('interest_component', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0.0));
   static const VerificationMeta _receiptNoMeta =
       const VerificationMeta('receiptNo');
   @override
@@ -18969,6 +19084,8 @@ class $GirviPaymentsTable extends GirviPayments
         interestFromDate,
         interestToDate,
         balanceAfter,
+        principalComponent,
+        interestComponent,
         receiptNo,
         notes
       ];
@@ -19047,6 +19164,18 @@ class $GirviPaymentsTable extends GirviPayments
           balanceAfter.isAcceptableOrUnknown(
               data['balance_after']!, _balanceAfterMeta));
     }
+    if (data.containsKey('principal_component')) {
+      context.handle(
+          _principalComponentMeta,
+          principalComponent.isAcceptableOrUnknown(
+              data['principal_component']!, _principalComponentMeta));
+    }
+    if (data.containsKey('interest_component')) {
+      context.handle(
+          _interestComponentMeta,
+          interestComponent.isAcceptableOrUnknown(
+              data['interest_component']!, _interestComponentMeta));
+    }
     if (data.containsKey('receipt_no')) {
       context.handle(_receiptNoMeta,
           receiptNo.isAcceptableOrUnknown(data['receipt_no']!, _receiptNoMeta));
@@ -19088,6 +19217,10 @@ class $GirviPaymentsTable extends GirviPayments
           DriftSqlType.dateTime, data['${effectivePrefix}interest_to_date']),
       balanceAfter: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}balance_after'])!,
+      principalComponent: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}principal_component'])!,
+      interestComponent: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}interest_component'])!,
       receiptNo: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}receipt_no']),
       notes: attachedDatabase.typeMapping
@@ -19131,6 +19264,12 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
   /// Running outstanding balance AFTER this payment
   final double balanceAfter;
 
+  /// Principal portion of a Girvi release settlement payment.
+  final double principalComponent;
+
+  /// Interest portion of a Girvi release settlement payment.
+  final double interestComponent;
+
   /// Optional receipt/ref number
   final String? receiptNo;
 
@@ -19149,6 +19288,8 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
       this.interestFromDate,
       this.interestToDate,
       required this.balanceAfter,
+      required this.principalComponent,
+      required this.interestComponent,
       this.receiptNo,
       this.notes});
   @override
@@ -19174,6 +19315,8 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
       map['interest_to_date'] = Variable<DateTime>(interestToDate);
     }
     map['balance_after'] = Variable<double>(balanceAfter);
+    map['principal_component'] = Variable<double>(principalComponent);
+    map['interest_component'] = Variable<double>(interestComponent);
     if (!nullToAbsent || receiptNo != null) {
       map['receipt_no'] = Variable<String>(receiptNo);
     }
@@ -19205,6 +19348,8 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
           ? const Value.absent()
           : Value(interestToDate),
       balanceAfter: Value(balanceAfter),
+      principalComponent: Value(principalComponent),
+      interestComponent: Value(interestComponent),
       receiptNo: receiptNo == null && nullToAbsent
           ? const Value.absent()
           : Value(receiptNo),
@@ -19230,6 +19375,9 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
           serializer.fromJson<DateTime?>(json['interestFromDate']),
       interestToDate: serializer.fromJson<DateTime?>(json['interestToDate']),
       balanceAfter: serializer.fromJson<double>(json['balanceAfter']),
+      principalComponent:
+          serializer.fromJson<double>(json['principalComponent']),
+      interestComponent: serializer.fromJson<double>(json['interestComponent']),
       receiptNo: serializer.fromJson<String?>(json['receiptNo']),
       notes: serializer.fromJson<String?>(json['notes']),
     );
@@ -19250,6 +19398,8 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
       'interestFromDate': serializer.toJson<DateTime?>(interestFromDate),
       'interestToDate': serializer.toJson<DateTime?>(interestToDate),
       'balanceAfter': serializer.toJson<double>(balanceAfter),
+      'principalComponent': serializer.toJson<double>(principalComponent),
+      'interestComponent': serializer.toJson<double>(interestComponent),
       'receiptNo': serializer.toJson<String?>(receiptNo),
       'notes': serializer.toJson<String?>(notes),
     };
@@ -19268,6 +19418,8 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
           Value<DateTime?> interestFromDate = const Value.absent(),
           Value<DateTime?> interestToDate = const Value.absent(),
           double? balanceAfter,
+          double? principalComponent,
+          double? interestComponent,
           Value<String?> receiptNo = const Value.absent(),
           Value<String?> notes = const Value.absent()}) =>
       GirviPayment(
@@ -19287,6 +19439,8 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
         interestToDate:
             interestToDate.present ? interestToDate.value : this.interestToDate,
         balanceAfter: balanceAfter ?? this.balanceAfter,
+        principalComponent: principalComponent ?? this.principalComponent,
+        interestComponent: interestComponent ?? this.interestComponent,
         receiptNo: receiptNo.present ? receiptNo.value : this.receiptNo,
         notes: notes.present ? notes.value : this.notes,
       );
@@ -19315,6 +19469,12 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
       balanceAfter: data.balanceAfter.present
           ? data.balanceAfter.value
           : this.balanceAfter,
+      principalComponent: data.principalComponent.present
+          ? data.principalComponent.value
+          : this.principalComponent,
+      interestComponent: data.interestComponent.present
+          ? data.interestComponent.value
+          : this.interestComponent,
       receiptNo: data.receiptNo.present ? data.receiptNo.value : this.receiptNo,
       notes: data.notes.present ? data.notes.value : this.notes,
     );
@@ -19335,6 +19495,8 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
           ..write('interestFromDate: $interestFromDate, ')
           ..write('interestToDate: $interestToDate, ')
           ..write('balanceAfter: $balanceAfter, ')
+          ..write('principalComponent: $principalComponent, ')
+          ..write('interestComponent: $interestComponent, ')
           ..write('receiptNo: $receiptNo, ')
           ..write('notes: $notes')
           ..write(')'))
@@ -19355,6 +19517,8 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
       interestFromDate,
       interestToDate,
       balanceAfter,
+      principalComponent,
+      interestComponent,
       receiptNo,
       notes);
   @override
@@ -19373,6 +19537,8 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
           other.interestFromDate == this.interestFromDate &&
           other.interestToDate == this.interestToDate &&
           other.balanceAfter == this.balanceAfter &&
+          other.principalComponent == this.principalComponent &&
+          other.interestComponent == this.interestComponent &&
           other.receiptNo == this.receiptNo &&
           other.notes == this.notes);
 }
@@ -19390,6 +19556,8 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
   final Value<DateTime?> interestFromDate;
   final Value<DateTime?> interestToDate;
   final Value<double> balanceAfter;
+  final Value<double> principalComponent;
+  final Value<double> interestComponent;
   final Value<String?> receiptNo;
   final Value<String?> notes;
   const GirviPaymentsCompanion({
@@ -19405,6 +19573,8 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
     this.interestFromDate = const Value.absent(),
     this.interestToDate = const Value.absent(),
     this.balanceAfter = const Value.absent(),
+    this.principalComponent = const Value.absent(),
+    this.interestComponent = const Value.absent(),
     this.receiptNo = const Value.absent(),
     this.notes = const Value.absent(),
   });
@@ -19421,6 +19591,8 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
     this.interestFromDate = const Value.absent(),
     this.interestToDate = const Value.absent(),
     this.balanceAfter = const Value.absent(),
+    this.principalComponent = const Value.absent(),
+    this.interestComponent = const Value.absent(),
     this.receiptNo = const Value.absent(),
     this.notes = const Value.absent(),
   })  : girviId = Value(girviId),
@@ -19438,6 +19610,8 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
     Expression<DateTime>? interestFromDate,
     Expression<DateTime>? interestToDate,
     Expression<double>? balanceAfter,
+    Expression<double>? principalComponent,
+    Expression<double>? interestComponent,
     Expression<String>? receiptNo,
     Expression<String>? notes,
   }) {
@@ -19454,6 +19628,8 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
       if (interestFromDate != null) 'interest_from_date': interestFromDate,
       if (interestToDate != null) 'interest_to_date': interestToDate,
       if (balanceAfter != null) 'balance_after': balanceAfter,
+      if (principalComponent != null) 'principal_component': principalComponent,
+      if (interestComponent != null) 'interest_component': interestComponent,
       if (receiptNo != null) 'receipt_no': receiptNo,
       if (notes != null) 'notes': notes,
     });
@@ -19472,6 +19648,8 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
       Value<DateTime?>? interestFromDate,
       Value<DateTime?>? interestToDate,
       Value<double>? balanceAfter,
+      Value<double>? principalComponent,
+      Value<double>? interestComponent,
       Value<String?>? receiptNo,
       Value<String?>? notes}) {
     return GirviPaymentsCompanion(
@@ -19487,6 +19665,8 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
       interestFromDate: interestFromDate ?? this.interestFromDate,
       interestToDate: interestToDate ?? this.interestToDate,
       balanceAfter: balanceAfter ?? this.balanceAfter,
+      principalComponent: principalComponent ?? this.principalComponent,
+      interestComponent: interestComponent ?? this.interestComponent,
       receiptNo: receiptNo ?? this.receiptNo,
       notes: notes ?? this.notes,
     );
@@ -19531,6 +19711,12 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
     if (balanceAfter.present) {
       map['balance_after'] = Variable<double>(balanceAfter.value);
     }
+    if (principalComponent.present) {
+      map['principal_component'] = Variable<double>(principalComponent.value);
+    }
+    if (interestComponent.present) {
+      map['interest_component'] = Variable<double>(interestComponent.value);
+    }
     if (receiptNo.present) {
       map['receipt_no'] = Variable<String>(receiptNo.value);
     }
@@ -19555,6 +19741,8 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
           ..write('interestFromDate: $interestFromDate, ')
           ..write('interestToDate: $interestToDate, ')
           ..write('balanceAfter: $balanceAfter, ')
+          ..write('principalComponent: $principalComponent, ')
+          ..write('interestComponent: $interestComponent, ')
           ..write('receiptNo: $receiptNo, ')
           ..write('notes: $notes')
           ..write(')'))
@@ -39090,6 +39278,8 @@ typedef $$GirviLoansTableCreateCompanionBuilder = GirviLoansCompanion Function({
   Value<String?> releasePaymentMode,
   Value<String?> releaseNotes,
   Value<String?> releasedBy,
+  Value<DateTime?> expectedDeliveryDate,
+  Value<DateTime?> deliveredAt,
 });
 typedef $$GirviLoansTableUpdateCompanionBuilder = GirviLoansCompanion Function({
   Value<int> id,
@@ -39130,6 +39320,8 @@ typedef $$GirviLoansTableUpdateCompanionBuilder = GirviLoansCompanion Function({
   Value<String?> releasePaymentMode,
   Value<String?> releaseNotes,
   Value<String?> releasedBy,
+  Value<DateTime?> expectedDeliveryDate,
+  Value<DateTime?> deliveredAt,
 });
 
 final class $$GirviLoansTableReferences
@@ -39328,6 +39520,13 @@ class $$GirviLoansTableFilterComposer
 
   ColumnFilters<String> get releasedBy => $composableBuilder(
       column: $table.releasedBy, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get expectedDeliveryDate => $composableBuilder(
+      column: $table.expectedDeliveryDate,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get deliveredAt => $composableBuilder(
+      column: $table.deliveredAt, builder: (column) => ColumnFilters(column));
 
   $$CustomersTableFilterComposer get customerId {
     final $$CustomersTableFilterComposer composer = $composerBuilder(
@@ -39549,6 +39748,13 @@ class $$GirviLoansTableOrderingComposer
   ColumnOrderings<String> get releasedBy => $composableBuilder(
       column: $table.releasedBy, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<DateTime> get expectedDeliveryDate => $composableBuilder(
+      column: $table.expectedDeliveryDate,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get deliveredAt => $composableBuilder(
+      column: $table.deliveredAt, builder: (column) => ColumnOrderings(column));
+
   $$CustomersTableOrderingComposer get customerId {
     final $$CustomersTableOrderingComposer composer = $composerBuilder(
         composer: this,
@@ -39689,6 +39895,12 @@ class $$GirviLoansTableAnnotationComposer
 
   GeneratedColumn<String> get releasedBy => $composableBuilder(
       column: $table.releasedBy, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get expectedDeliveryDate => $composableBuilder(
+      column: $table.expectedDeliveryDate, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deliveredAt => $composableBuilder(
+      column: $table.deliveredAt, builder: (column) => column);
 
   $$CustomersTableAnnotationComposer get customerId {
     final $$CustomersTableAnnotationComposer composer = $composerBuilder(
@@ -39840,6 +40052,8 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             Value<String?> releasePaymentMode = const Value.absent(),
             Value<String?> releaseNotes = const Value.absent(),
             Value<String?> releasedBy = const Value.absent(),
+            Value<DateTime?> expectedDeliveryDate = const Value.absent(),
+            Value<DateTime?> deliveredAt = const Value.absent(),
           }) =>
               GirviLoansCompanion(
             id: id,
@@ -39880,6 +40094,8 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             releasePaymentMode: releasePaymentMode,
             releaseNotes: releaseNotes,
             releasedBy: releasedBy,
+            expectedDeliveryDate: expectedDeliveryDate,
+            deliveredAt: deliveredAt,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -39920,6 +40136,8 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             Value<String?> releasePaymentMode = const Value.absent(),
             Value<String?> releaseNotes = const Value.absent(),
             Value<String?> releasedBy = const Value.absent(),
+            Value<DateTime?> expectedDeliveryDate = const Value.absent(),
+            Value<DateTime?> deliveredAt = const Value.absent(),
           }) =>
               GirviLoansCompanion.insert(
             id: id,
@@ -39960,6 +40178,8 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             releasePaymentMode: releasePaymentMode,
             releaseNotes: releaseNotes,
             releasedBy: releasedBy,
+            expectedDeliveryDate: expectedDeliveryDate,
+            deliveredAt: deliveredAt,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
@@ -40080,6 +40300,8 @@ typedef $$GirviPaymentsTableCreateCompanionBuilder = GirviPaymentsCompanion
   Value<DateTime?> interestFromDate,
   Value<DateTime?> interestToDate,
   Value<double> balanceAfter,
+  Value<double> principalComponent,
+  Value<double> interestComponent,
   Value<String?> receiptNo,
   Value<String?> notes,
 });
@@ -40097,6 +40319,8 @@ typedef $$GirviPaymentsTableUpdateCompanionBuilder = GirviPaymentsCompanion
   Value<DateTime?> interestFromDate,
   Value<DateTime?> interestToDate,
   Value<double> balanceAfter,
+  Value<double> principalComponent,
+  Value<double> interestComponent,
   Value<String?> receiptNo,
   Value<String?> notes,
 });
@@ -40164,6 +40388,14 @@ class $$GirviPaymentsTableFilterComposer
 
   ColumnFilters<double> get balanceAfter => $composableBuilder(
       column: $table.balanceAfter, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get principalComponent => $composableBuilder(
+      column: $table.principalComponent,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get interestComponent => $composableBuilder(
+      column: $table.interestComponent,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get receiptNo => $composableBuilder(
       column: $table.receiptNo, builder: (column) => ColumnFilters(column));
@@ -40238,6 +40470,14 @@ class $$GirviPaymentsTableOrderingComposer
       column: $table.balanceAfter,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<double> get principalComponent => $composableBuilder(
+      column: $table.principalComponent,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get interestComponent => $composableBuilder(
+      column: $table.interestComponent,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get receiptNo => $composableBuilder(
       column: $table.receiptNo, builder: (column) => ColumnOrderings(column));
 
@@ -40307,6 +40547,12 @@ class $$GirviPaymentsTableAnnotationComposer
   GeneratedColumn<double> get balanceAfter => $composableBuilder(
       column: $table.balanceAfter, builder: (column) => column);
 
+  GeneratedColumn<double> get principalComponent => $composableBuilder(
+      column: $table.principalComponent, builder: (column) => column);
+
+  GeneratedColumn<double> get interestComponent => $composableBuilder(
+      column: $table.interestComponent, builder: (column) => column);
+
   GeneratedColumn<String> get receiptNo =>
       $composableBuilder(column: $table.receiptNo, builder: (column) => column);
 
@@ -40369,6 +40615,8 @@ class $$GirviPaymentsTableTableManager extends RootTableManager<
             Value<DateTime?> interestFromDate = const Value.absent(),
             Value<DateTime?> interestToDate = const Value.absent(),
             Value<double> balanceAfter = const Value.absent(),
+            Value<double> principalComponent = const Value.absent(),
+            Value<double> interestComponent = const Value.absent(),
             Value<String?> receiptNo = const Value.absent(),
             Value<String?> notes = const Value.absent(),
           }) =>
@@ -40385,6 +40633,8 @@ class $$GirviPaymentsTableTableManager extends RootTableManager<
             interestFromDate: interestFromDate,
             interestToDate: interestToDate,
             balanceAfter: balanceAfter,
+            principalComponent: principalComponent,
+            interestComponent: interestComponent,
             receiptNo: receiptNo,
             notes: notes,
           ),
@@ -40401,6 +40651,8 @@ class $$GirviPaymentsTableTableManager extends RootTableManager<
             Value<DateTime?> interestFromDate = const Value.absent(),
             Value<DateTime?> interestToDate = const Value.absent(),
             Value<double> balanceAfter = const Value.absent(),
+            Value<double> principalComponent = const Value.absent(),
+            Value<double> interestComponent = const Value.absent(),
             Value<String?> receiptNo = const Value.absent(),
             Value<String?> notes = const Value.absent(),
           }) =>
@@ -40417,6 +40669,8 @@ class $$GirviPaymentsTableTableManager extends RootTableManager<
             interestFromDate: interestFromDate,
             interestToDate: interestToDate,
             balanceAfter: balanceAfter,
+            principalComponent: principalComponent,
+            interestComponent: interestComponent,
             receiptNo: receiptNo,
             notes: notes,
           ),

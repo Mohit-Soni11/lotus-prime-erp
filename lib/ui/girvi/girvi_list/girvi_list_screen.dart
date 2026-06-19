@@ -72,6 +72,11 @@ class _GirviListScreenState extends State<GirviListScreen>
   }
 
   void _openRelease(GirviLoanWithCustomer data) {
+    if (data.loan.girviStatus == GirviStatus.partialRelease ||
+        data.loan.girviStatus == GirviStatus.readyForDelivery) {
+      _openCalculator();
+      return;
+    }
     Navigator.push(
       context,
       MaterialPageRoute(

@@ -52,6 +52,164 @@ void main() {
     expect(loan.lastInterestPaidDate, periodTo);
   });
 
+  test('records interest ledger payment without stopping future accrual',
+      () async {
+    final loanId = await _insertLoan(
+      db,
+      startDate: DateTime(2025, 2, 9),
+    );
+
+    final paymentId = await repository.recordInterestLedgerPayment(
+      loanId: loanId,
+      paymentMode: GirviPaymentMode.cash,
+      amount: 20000,
+      paymentDate: DateTime(2026, 6, 17),
+      monthsCovered: 5,
+      receiptNo: 'GIP-LEDGER-001',
+      notes: 'Running interest ledger payment',
+    );
+
+    final payments = await repository.getPaymentModelsForLoan(loanId);
+    final loan = await repository.getLoanById(loanId);
+    final loansWithCustomer = await repository.getLoansWithCustomer();
+
+    expect(paymentId, isPositive);
+    expect(payments, hasLength(1));
+    expect(payments.single.type, GirviPaymentType.interest);
+    expect(payments.single.amount, 20000);
+    expect(payments.single.monthsCovered, 5);
+    expect(payments.single.interestFromDate, isNull);
+    expect(payments.single.interestToDate, isNull);
+    expect(payments.single.balanceAfter, 50000);
+    expect(loan!.lastInterestPaidDate, isNull);
+    expect(loansWithCustomer.single.interestPaidTotal, 20000);
+
+    final ledgerSnapshot = GirviLoanWithCustomer(
+      loan: _loanModel(
+        loanAmount: 50000,
+        interestRate: 5,
+        startDate: DateTime(2025, 2, 9),
+        releaseDate: DateTime(2026, 6, 17),
+      ),
+      customerName: 'Interest Entry Customer',
+      customerMobile: '9999999999',
+      interestPaidTotal: 20000,
+    );
+
+    expect(ledgerSnapshot.grossInterestAccrued, 50000);
+    expect(ledgerSnapshot.netInterestDue, 30000);
+    expect(ledgerSnapshot.advanceInterestCredit, 0);
+    expect(ledgerSnapshot.totalPayable, 80000);
+  });
+
+  test('tracks partial release settlement, ready state and final delivery',
+      () async {
+    final loanId = await _insertLoan(db);
+    final firstPaymentDate = DateTime(2026, 6, 19);
+    final promisedPickup = DateTime(2026, 6, 21);
+
+    final partial = await repository.recordReleaseSettlement(
+      loanId: loanId,
+      principalDue: 50000,
+      interestDue: 20000,
+      principalReceived: 20000,
+      interestReceived: 10000,
+      paymentMode: GirviPaymentMode.cash,
+      paymentDate: firstPaymentDate,
+      expectedDeliveryDate: promisedPickup,
+      receiptNo: 'GIP-SET-001',
+    );
+
+    var loan = await repository.getLoanById(loanId);
+    var payments = await repository.getPaymentModelsForLoan(loanId);
+
+    expect(partial.fullySettled, isFalse);
+    expect(partial.principalRemaining, 30000);
+    expect(partial.interestRemaining, 10000);
+    expect(loan!.status, GirviStatus.partialRelease.dbValue);
+    expect(loan.releaseDate, isNull);
+    expect(loan.expectedDeliveryDate, promisedPickup);
+    expect(payments.single.principalComponent, 20000);
+    expect(payments.single.interestComponent, 10000);
+    expect(payments.single.balanceAfter, 40000);
+
+    final completed = await repository.recordReleaseSettlement(
+      loanId: loanId,
+      principalDue: 30000,
+      interestDue: 10000,
+      principalReceived: 30000,
+      interestReceived: 10000,
+      paymentMode: GirviPaymentMode.upi,
+      paymentDate: DateTime(2026, 6, 20),
+      expectedDeliveryDate: promisedPickup,
+      receiptNo: 'GIP-SET-002',
+    );
+
+    loan = await repository.getLoanById(loanId);
+    payments = await repository.getPaymentModelsForLoan(loanId);
+
+    expect(completed.fullySettled, isTrue);
+    expect(completed.totalRemaining, 0);
+    expect(loan!.status, GirviStatus.readyForDelivery.dbValue);
+    expect(loan.releaseDate, DateTime(2026, 6, 20));
+    expect(loan.deliveredAt, isNull);
+    expect(loan.releasePrincipal, 50000);
+    expect(loan.releaseInterest, 20000);
+    expect(loan.releaseTotalAmount, 70000);
+    expect(payments, hasLength(2));
+
+    final deliveredAt = DateTime(2026, 6, 21, 11, 30);
+    final delivered = await repository.markGirviDelivered(
+      loanId: loanId,
+      deliveredAt: deliveredAt,
+      deliveredBy: 'Test Staff',
+    );
+    loan = await repository.getLoanById(loanId);
+
+    expect(delivered, isTrue);
+    expect(loan!.status, GirviStatus.released.dbValue);
+    expect(loan.deliveredAt, deliveredAt);
+    expect(loan.releasedBy, 'Test Staff');
+  });
+
+  test('reconciles legacy zero-principal open loan as ready for delivery',
+      () async {
+    final now = DateTime.now();
+    final loanId = await _insertLoan(
+      db,
+      startDate: now.subtract(const Duration(days: 1)),
+    );
+
+    await repository.recordInterestLedgerPayment(
+      loanId: loanId,
+      paymentMode: GirviPaymentMode.cash,
+      amount: 2500,
+      paymentDate: now,
+      receiptNo: 'GIP-LEGACY-I',
+    );
+    await repository.recordPayment(
+      loanId: loanId,
+      paymentType: GirviPaymentType.partialPrincipal,
+      paymentMode: GirviPaymentMode.cash,
+      amount: 50000,
+      paymentDate: now,
+      receiptNo: 'GIP-LEGACY-P',
+    );
+
+    final updated = await repository.syncSettlementStatus();
+    final loan = await repository.getLoanById(loanId);
+    final joined = (await repository.getLoansWithCustomer()).single;
+
+    expect(updated, 1);
+    expect(loan!.loanAmount, 0);
+    expect(loan.status, GirviStatus.readyForDelivery.dbValue);
+    expect(loan.releaseDate, isNotNull);
+    expect(joined.originalPrincipal, 50000);
+    expect(joined.principalDue, 0);
+    expect(joined.grossInterestAccrued, 2500);
+    expect(joined.netInterestDue, 0);
+  });
+
   test('records partial principal payment and updates outstanding principal',
       () async {
     final loanId = await _insertLoan(db);

@@ -105,7 +105,8 @@ class GirviLoans extends Table with BaseTable {
   TextColumn get idProofImagePath => text().nullable()();
 
   // ── STATUS ────────────────────────────────────────────────────────────────
-  /// ACTIVE | RELEASED | OVERDUE | AUCTIONED | PARTIAL_RELEASE
+  /// ACTIVE | RELEASED | OVERDUE | AUCTIONED | PARTIAL_RELEASE |
+  /// READY_FOR_DELIVERY
   TextColumn get status => text().withDefault(const Constant('ACTIVE'))();
 
   // ── NOTES ─────────────────────────────────────────────────────────────────
@@ -132,4 +133,10 @@ class GirviLoans extends Table with BaseTable {
 
   /// Who processed the release (staff name / ID)
   TextColumn get releasedBy => text().nullable()();
+
+  /// Customer's promised pickup date after partial/full settlement.
+  DateTimeColumn get expectedDeliveryDate => dateTime().nullable()();
+
+  /// Actual item handover timestamp. Null means item is still in shop custody.
+  DateTimeColumn get deliveredAt => dateTime().nullable()();
 }

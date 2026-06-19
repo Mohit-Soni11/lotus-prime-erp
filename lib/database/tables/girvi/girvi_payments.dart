@@ -47,6 +47,13 @@ class GirviPayments extends Table with BaseTable {
   /// Running outstanding balance AFTER this payment
   RealColumn get balanceAfter => real().withDefault(const Constant(0.0))();
 
+  /// Principal portion of a Girvi release settlement payment.
+  RealColumn get principalComponent =>
+      real().withDefault(const Constant(0.0))();
+
+  /// Interest portion of a Girvi release settlement payment.
+  RealColumn get interestComponent => real().withDefault(const Constant(0.0))();
+
   /// Optional receipt/ref number
   TextColumn get receiptNo => text().nullable()();
 

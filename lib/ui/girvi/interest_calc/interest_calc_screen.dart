@@ -21,6 +21,7 @@ import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
+import '../notice_auction/notice_auction_screen.dart';
 import '../shared/girvi_shared_widgets.dart';
 
 class InterestCalcScreen extends StatefulWidget {
@@ -42,6 +43,8 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
 
   final _searchCtrl = TextEditingController();
   final _amountCtrl = TextEditingController();
+  final _releasePrincipalCtrl = TextEditingController();
+  final _releaseInterestCtrl = TextEditingController();
   final _monthsCtrl = TextEditingController();
   final _receiptCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
@@ -69,6 +72,16 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
     _amountCtrl.addListener(() {
       if (!_syncingText) _ctrl.onAmountChanged(_amountCtrl.text);
     });
+    _releasePrincipalCtrl.addListener(() {
+      if (!_syncingText) {
+        _ctrl.onReleasePrincipalChanged(_releasePrincipalCtrl.text);
+      }
+    });
+    _releaseInterestCtrl.addListener(() {
+      if (!_syncingText) {
+        _ctrl.onReleaseInterestChanged(_releaseInterestCtrl.text);
+      }
+    });
     _monthsCtrl.addListener(() {
       if (!_syncingText) _ctrl.onMonthsChanged(_monthsCtrl.text);
     });
@@ -90,6 +103,8 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
     _ctrl.dispose();
     _searchCtrl.dispose();
     _amountCtrl.dispose();
+    _releasePrincipalCtrl.dispose();
+    _releaseInterestCtrl.dispose();
     _monthsCtrl.dispose();
     _receiptCtrl.dispose();
     _notesCtrl.dispose();
@@ -100,6 +115,8 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
   void _syncFields() {
     _syncingText = true;
     _setText(_amountCtrl, _ctrl.amountInput);
+    _setText(_releasePrincipalCtrl, _ctrl.releasePrincipalInput);
+    _setText(_releaseInterestCtrl, _ctrl.releaseInterestInput);
     _setText(_monthsCtrl, _ctrl.monthsInput);
     _setText(_receiptCtrl, _ctrl.receiptNo);
     _setText(_notesCtrl, _ctrl.notes);
@@ -161,12 +178,35 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
     );
   }
 
+  Future<void> _openNoticeAuction() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => NoticeAuctionScreen(
+          onBack: () => Navigator.of(context).maybePop(),
+        ),
+      ),
+    );
+    if (mounted) await _ctrl.refresh();
+  }
+
   void _setPaymentAmount(double value) {
     final nextValue = _formatEntryAmountInput(value);
     _syncingText = true;
     _setText(_amountCtrl, nextValue);
     _syncingText = false;
     _ctrl.onAmountChanged(nextValue);
+  }
+
+  void _fillFullSettlement() {
+    final principal =
+        _formatEntryAmountInput(_ctrl.releasePrincipalDueForSelected);
+    final interest = _formatEntryAmountInput(_ctrl.netInterestDueForSelected);
+    _syncingText = true;
+    _setText(_releasePrincipalCtrl, principal);
+    _setText(_releaseInterestCtrl, interest);
+    _syncingText = false;
+    _ctrl.onReleasePrincipalChanged(principal);
+    _ctrl.onReleaseInterestChanged(interest);
   }
 
   String _formatEntryAmountInput(double value) {
@@ -484,7 +524,6 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                 _CustomerReadyPanel(
                   account: selectedCustomer,
                   moneyFmt: _moneyFmt,
-                  dateFmt: _dateFmt,
                   selectedLoanId: null,
                   onLoanTap: _ctrl.selectLoan,
                 ),
@@ -529,12 +568,33 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
   Widget _buildSelectedSummary(GirviLoanWithCustomer data) {
     final loan = data.loan;
     final principalDisbursed = _ctrl.principalDisbursedForSelected;
-    final principalRepaid = _ctrl.principalRepaidForSelected;
+    final principalRepaid = _ctrl.principalRepaidForSelected +
+        _ctrl.releasePrincipalCollectedForSelected;
     final interestCollected = _ctrl.interestCollectedForSelected;
     final totalCollected = _ctrl.totalCollectedForSelected;
-    final unpaidMonths = loan.unpaidMonths.ceil();
-    final interestBreakdown = loan.accruedInterestBreakdown;
-    final elapsedPeriod = loan.unpaidInterestElapsedPeriod;
+    final grossInterestAccrued = _ctrl.grossInterestAccruedForSelected;
+    final netInterestDue = _ctrl.netInterestDueForSelected;
+    final advanceInterestCredit = _ctrl.advanceInterestCreditForSelected;
+    final settlementComplete =
+        loan.girviStatus == GirviStatus.readyForDelivery ||
+            loan.girviStatus == GirviStatus.released;
+    final currentMonthlyInterest =
+        _ctrl.currentLedgerMonthlyInterestForSelected;
+    final totalPayable = _ctrl.releasePrincipalDueForSelected + netInterestDue;
+    final totalMonths = loan.monthsElapsed.ceil();
+    final interestBreakdown = GirviLoanModel.calculateCompoundInterestBreakdown(
+      principal: principalDisbursed,
+      monthlyRatePercent: loan.interestRate,
+      months: loan.monthsElapsed.ceil(),
+    );
+    final elapsedPeriod = GirviLoanModel.elapsedPeriodBetween(
+      loan.startDate,
+      loan.releaseDate ?? DateTime.now(),
+    );
+    final advanceMonths =
+        advanceInterestCredit <= 0 || currentMonthlyInterest <= 0
+            ? 0
+            : (advanceInterestCredit / currentMonthlyInterest).floor();
     final principalProgress = principalDisbursed <= 0
         ? 0.0
         : (principalRepaid / principalDisbursed).clamp(0.0, 1.0).toDouble();
@@ -665,24 +725,23 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
           ),
           const SizedBox(height: 16),
           _CollectionFocusStrip(
-            interestDue: loan.accruedInterest,
-            monthlyInterest: loan.monthlyInterest,
-            totalPayable: loan.totalDue,
-            unpaidMonths: unpaidMonths,
-            advanceAmount: loan.advanceInterestAmount,
-            advanceMonths: loan.advanceInterestMonths,
-            advancePaidTill: loan.lastInterestPaidDate,
+            interestDue: netInterestDue,
+            monthlyInterest: currentMonthlyInterest,
+            totalPayable: totalPayable,
+            unpaidMonths: totalMonths,
+            advanceAmount: advanceInterestCredit,
+            advanceMonths: advanceMonths,
+            settlementComplete: settlementComplete,
             isOverdue: loan.isOverdue,
             moneyFmt: _moneyFmt,
-            dateFmt: _dateFmt,
           ),
           if (interestBreakdown.isNotEmpty) ...[
             const SizedBox(height: 12),
             _InterestBreakdownPanel(
               lines: interestBreakdown,
-              totalMonths: unpaidMonths,
+              totalMonths: totalMonths,
               elapsedPeriod: elapsedPeriod,
-              totalInterest: loan.accruedInterest,
+              totalInterest: grossInterestAccrued,
               moneyFmt: _moneyFmt,
             ),
           ],
@@ -695,7 +754,8 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                 primaryLabel: 'Principal Amount',
                 primaryValue: 'Rs ${_moneyFmt.format(principalDisbursed)}',
                 secondaryLabel: 'Outstanding Balance',
-                secondaryValue: 'Rs ${_moneyFmt.format(loan.loanAmount)}',
+                secondaryValue:
+                    'Rs ${_moneyFmt.format(_ctrl.releasePrincipalDueForSelected)}',
                 tertiaryLabel: principalRepaid > 0 ? 'Principal Repaid' : null,
                 tertiaryValue: principalRepaid > 0
                     ? 'Rs ${_moneyFmt.format(principalRepaid)}'
@@ -708,21 +768,22 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
               final interestPanel = _OverviewMoneyPanel(
                 title: 'Interest',
                 primaryLabel: 'Due Now',
-                primaryValue: 'Rs ${_moneyFmt.format(loan.accruedInterest)}',
-                secondaryLabel: loan.hasAdvanceInterest
-                    ? 'Advance Paid'
-                    : 'Interest Collected',
-                secondaryValue: loan.hasAdvanceInterest
-                    ? 'Rs ${_moneyFmt.format(loan.advanceInterestAmount)}'
-                    : 'Rs ${_moneyFmt.format(interestCollected)}',
-                tertiaryLabel:
-                    loan.hasAdvanceInterest ? 'Advance Months' : 'Monthly Rate',
-                tertiaryValue: loan.hasAdvanceInterest
-                    ? '${loan.advanceInterestMonths} month${loan.advanceInterestMonths == 1 ? '' : 's'}'
-                    : _formatInterestRate(loan.interestRate),
+                primaryValue: 'Rs ${_moneyFmt.format(netInterestDue)}',
+                secondaryLabel: advanceInterestCredit > 0
+                    ? settlementComplete
+                        ? 'Excess Received'
+                        : 'Advance Credit'
+                    : 'Gross Interest',
+                secondaryValue: advanceInterestCredit > 0
+                    ? 'Rs ${_moneyFmt.format(advanceInterestCredit)}'
+                    : 'Rs ${_moneyFmt.format(grossInterestAccrued)}',
+                tertiaryLabel: 'Interest Paid',
+                tertiaryValue: 'Rs ${_moneyFmt.format(interestCollected)}',
                 icon: GirviIcons.interestRate,
-                color: loan.hasAdvanceInterest
-                    ? GirviColors.success
+                color: advanceInterestCredit > 0
+                    ? settlementComplete
+                        ? GirviColors.danger
+                        : GirviColors.success
                     : GirviColors.warning,
               );
 
@@ -732,9 +793,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                 maturityDate: loan.maturityDate == null
                     ? 'Not set'
                     : _dateFmt.format(loan.maturityDate!),
-                paidTill: loan.lastInterestPaidDate == null
-                    ? 'Not recorded'
-                    : _dateFmt.format(loan.lastInterestPaidDate!),
+                paidTill: 'Rs ${_moneyFmt.format(interestCollected)}',
                 totalCollected: 'Rs ${_moneyFmt.format(totalCollected)}',
               );
 
@@ -767,13 +826,6 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
     );
   }
 
-  String _formatInterestRate(double value) {
-    final normalized = value == value.roundToDouble()
-        ? value.toStringAsFixed(0)
-        : value.toStringAsFixed(2);
-    return '$normalized% / month';
-  }
-
   Widget _buildPaymentForm(GirviLoanWithCustomer data) {
     return GirviSectionCard(
       icon: GirviIcons.cash,
@@ -788,134 +840,196 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: _ctrl.entryPaymentTypes.map((type) {
-              return _SelectablePill(
-                label: type.displayName,
-                selected: _ctrl.paymentType == type,
-                icon: _iconForPaymentType(type),
-                color: _colorForPaymentType(type),
-                onTap: () => _ctrl.setPaymentType(type),
-              );
-            }).toList(),
+            children: [
+              ..._ctrl.entryPaymentTypes.map((type) {
+                return _SelectablePill(
+                  label: type.displayName,
+                  selected: _ctrl.paymentType == type,
+                  icon: _iconForPaymentType(type),
+                  color: _colorForPaymentType(type),
+                  onTap: () => _ctrl.setPaymentType(type),
+                );
+              }),
+              _WorkflowActionPill(
+                label: 'Notice / Auction',
+                icon: GirviIcons.auctioned,
+                color: GirviColors.danger,
+                onTap: _openNoticeAuction,
+              ),
+            ],
           ),
           const SizedBox(height: 18),
-          GirviRowTwo(
-            left: GirviInputField(
-              label: 'Amount Received',
-              hint: '0.00',
-              icon: GirviIcons.cash,
-              controller: _amountCtrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-              ],
-              prefixText: 'Rs ',
-            ),
-            right: GirviInputField(
-              label: 'Months Covered',
-              hint: '1',
-              icon: GirviIcons.dates,
-              controller: _monthsCtrl,
-              enabled: _ctrl.isInterestEntry,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              suffixText: 'mo',
-            ),
-          ),
-          const SizedBox(height: 10),
-          _AmountShortcutRail(
-            paymentType: _ctrl.paymentType,
-            isInterestEntry: _ctrl.isInterestEntry,
-            interestDue: data.loan.accruedInterest,
-            monthlyInterest: data.loan.monthlyInterest,
-            principalOutstanding: data.loan.loanAmount,
-            expectedInterest: _ctrl.expectedInterest,
-            moneyFmt: _moneyFmt,
-            onPick: _setPaymentAmount,
-          ),
-          const SizedBox(height: 14),
-          GirviRowTwo(
-            left: _DateField(
-              label: 'Collection Date',
-              value: _dateFmt.format(_ctrl.paymentDate),
-              icon: GirviIcons.dates,
-              onTap: () => _pickDate(
-                initialDate: _ctrl.paymentDate,
-                onPicked: _ctrl.setPaymentDate,
+          if (_ctrl.isReadyForDelivery)
+            _ReadyForDeliveryPanel(
+              expectedDeliveryDate: data.loan.expectedDeliveryDate,
+              principalCollected: _ctrl.principalRepaidForSelected +
+                  _ctrl.releasePrincipalCollectedForSelected,
+              interestCollected: _ctrl.interestCollectedForSelected,
+              moneyFmt: _moneyFmt,
+              dateFmt: _dateFmt,
+              isSaving: _ctrl.isSaving,
+              onDeliver: _recordPayment,
+            )
+          else ...[
+            if (_ctrl.isInterestEntry)
+              GirviRowTwo(
+                left: GirviInputField(
+                  label: 'Amount Received',
+                  hint: '0',
+                  icon: GirviIcons.cash,
+                  controller: _amountCtrl,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                  ],
+                  prefixText: 'Rs ',
+                ),
+                right: GirviInputField(
+                  label: 'Equivalent Months',
+                  hint: '1',
+                  icon: GirviIcons.dates,
+                  controller: _monthsCtrl,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  suffixText: 'mo',
+                ),
+              )
+            else
+              GirviRowTwo(
+                left: GirviInputField(
+                  label: 'Principal Amount Received',
+                  hint: '0',
+                  icon: GirviIcons.loanTerms,
+                  controller: _releasePrincipalCtrl,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                  ],
+                  prefixText: 'Rs ',
+                ),
+                right: GirviInputField(
+                  label: 'Interest Amount Received',
+                  hint: '0',
+                  icon: GirviIcons.interestRate,
+                  controller: _releaseInterestCtrl,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                  ],
+                  prefixText: 'Rs ',
+                ),
               ),
-            ),
-            right: GirviInputField(
-              label: 'Receipt Number',
-              hint: 'Auto generated',
-              icon: GirviIcons.ticket,
-              controller: _receiptCtrl,
-            ),
-          ),
-          if (_ctrl.isInterestEntry) ...[
+            const SizedBox(height: 10),
+            if (_ctrl.isInterestEntry)
+              _AmountShortcutRail(
+                paymentType: _ctrl.paymentType,
+                isInterestEntry: true,
+                interestDue: _ctrl.netInterestDueForSelected,
+                monthlyInterest: _ctrl.currentLedgerMonthlyInterestForSelected,
+                principalOutstanding: data.loan.loanAmount,
+                expectedInterest: _ctrl.expectedInterest,
+                moneyFmt: _moneyFmt,
+                onPick: _setPaymentAmount,
+              )
+            else
+              _ReleaseSettlementBalanceStrip(
+                principalDue: _ctrl.releasePrincipalDueForSelected,
+                interestDue: _ctrl.netInterestDueForSelected,
+                principalCollected: _ctrl.releasePrincipalCollectedForSelected,
+                interestCollected: _ctrl.releaseInterestCollectedForSelected,
+                moneyFmt: _moneyFmt,
+                onFillFull: _fillFullSettlement,
+              ),
+            if (_ctrl.isInterestEntry) ...[
+              const SizedBox(height: 10),
+              _InterestLedgerBalanceStrip(
+                grossInterest: _ctrl.grossInterestAccruedForSelected,
+                interestPaid: _ctrl.interestCollectedForSelected,
+                netDue: _ctrl.netInterestDueForSelected,
+                equivalentMonths: _ctrl.interestMonthsCoveredByAmount,
+                moneyFmt: _moneyFmt,
+              ),
+            ],
             const SizedBox(height: 14),
             GirviRowTwo(
               left: _DateField(
-                label: 'Interest Period From',
-                value: _ctrl.interestFromDate == null
-                    ? 'Select date'
-                    : _dateFmt.format(_ctrl.interestFromDate!),
+                label: 'Collection Date',
+                value: _dateFmt.format(_ctrl.paymentDate),
                 icon: GirviIcons.dates,
                 onTap: () => _pickDate(
-                  initialDate: _ctrl.interestFromDate ?? data.loan.startDate,
-                  onPicked: _ctrl.setInterestFromDate,
+                  initialDate: _ctrl.paymentDate,
+                  onPicked: _ctrl.setPaymentDate,
                 ),
               ),
-              right: _DateField(
-                label: 'Interest Period To',
-                value: _ctrl.interestToDate == null
-                    ? 'Select date'
-                    : _dateFmt.format(_ctrl.interestToDate!),
-                icon: GirviIcons.dates,
-                onTap: () => _pickDate(
-                  initialDate: _ctrl.interestToDate ?? DateTime.now(),
-                  onPicked: _ctrl.setInterestToDate,
-                ),
+              right: GirviInputField(
+                label: 'Receipt Number',
+                hint: 'Auto generated',
+                icon: GirviIcons.ticket,
+                controller: _receiptCtrl,
               ),
             ),
+            if (!_ctrl.isInterestEntry) ...[
+              const SizedBox(height: 14),
+              _DateField(
+                label: 'Expected Settlement / Pickup Date',
+                value: _dateFmt.format(_ctrl.expectedDeliveryDate),
+                icon: GirviIcons.dates,
+                onTap: () => _pickDate(
+                  initialDate: _ctrl.expectedDeliveryDate,
+                  onPicked: _ctrl.setExpectedDeliveryDate,
+                ),
+              ),
+            ],
+            const SizedBox(height: 18),
+            Text('Payment Mode', style: GirviStyles.fieldLabel),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: GirviPaymentMode.values.map((mode) {
+                return _SelectablePill(
+                  label: mode.displayName,
+                  selected: _ctrl.paymentMode == mode,
+                  icon: _iconForPaymentMode(mode),
+                  color: GirviColors.brandGold,
+                  onTap: () => _ctrl.setPaymentMode(mode),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+            GirviInputField(
+              label: 'Internal Notes',
+              hint: 'Optional remarks for audit trail',
+              icon: GirviIcons.notes,
+              controller: _notesCtrl,
+              minLines: 2,
+              maxLines: 3,
+              keyboardType: TextInputType.multiline,
+            ),
+            const SizedBox(height: 18),
+            _EntryReviewBar(
+              enteredAmount: _ctrl.isInterestEntry
+                  ? _ctrl.amount
+                  : _ctrl.releaseEntryTotal,
+              paymentType: _ctrl.paymentType,
+              interestDue: _ctrl.netInterestDueForSelected,
+              principalOutstanding: _ctrl.releasePrincipalDueForSelected,
+              moneyFmt: _moneyFmt,
+              isSaving: _ctrl.isSaving,
+              actionLabel: _ctrl.isInterestEntry
+                  ? 'Record Interest Payment'
+                  : _ctrl.releaseEntryTotal + 0.01 >=
+                          _ctrl.releaseTotalDueForSelected
+                      ? 'Complete Settlement'
+                      : 'Record Partial Settlement',
+              actionIcon:
+                  _ctrl.isInterestEntry ? GirviIcons.save : GirviIcons.release,
+              onRecord: _recordPayment,
+            ),
           ],
-          const SizedBox(height: 18),
-          Text('Payment Mode', style: GirviStyles.fieldLabel),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: GirviPaymentMode.values.map((mode) {
-              return _SelectablePill(
-                label: mode.displayName,
-                selected: _ctrl.paymentMode == mode,
-                icon: _iconForPaymentMode(mode),
-                color: GirviColors.brandGold,
-                onTap: () => _ctrl.setPaymentMode(mode),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 16),
-          GirviInputField(
-            label: 'Internal Notes',
-            hint: 'Optional remarks for audit trail',
-            icon: GirviIcons.notes,
-            controller: _notesCtrl,
-            minLines: 2,
-            maxLines: 3,
-            keyboardType: TextInputType.multiline,
-          ),
-          const SizedBox(height: 18),
-          _EntryReviewBar(
-            expectedInterest: _ctrl.expectedInterest,
-            enteredAmount: _ctrl.amount,
-            paymentType: _ctrl.paymentType,
-            interestDue: data.loan.accruedInterest,
-            principalOutstanding: data.loan.loanAmount,
-            moneyFmt: _moneyFmt,
-            isSaving: _ctrl.isSaving,
-            onRecord: _recordPayment,
-          ),
         ],
       ),
     );
@@ -1423,14 +1537,12 @@ class _SearchField extends StatelessWidget {
 class _CustomerReadyPanel extends StatelessWidget {
   final GirviCustomerGirviAccount account;
   final NumberFormat moneyFmt;
-  final DateFormat dateFmt;
   final int? selectedLoanId;
   final ValueChanged<GirviLoanWithCustomer> onLoanTap;
 
   const _CustomerReadyPanel({
     required this.account,
     required this.moneyFmt,
-    required this.dateFmt,
     required this.selectedLoanId,
     required this.onLoanTap,
   });
@@ -1515,7 +1627,6 @@ class _CustomerReadyPanel extends StatelessWidget {
                     data: account.loans[i],
                     selected: account.loans[i].loan.id == selectedLoanId,
                     moneyFmt: moneyFmt,
-                    dateFmt: dateFmt,
                     onTap: () => onLoanTap(account.loans[i]),
                   ),
                   if (i != account.loans.length - 1)
@@ -1679,14 +1790,12 @@ class _TicketStackRow extends StatefulWidget {
   final GirviLoanWithCustomer data;
   final bool selected;
   final NumberFormat moneyFmt;
-  final DateFormat dateFmt;
   final VoidCallback onTap;
 
   const _TicketStackRow({
     required this.data,
     required this.selected,
     required this.moneyFmt,
-    required this.dateFmt,
     required this.onTap,
   });
 
@@ -1816,9 +1925,9 @@ class _TicketStackRowState extends State<_TicketStackRow> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        loan.lastInterestPaidDate == null
+                        widget.data.interestPaidTotal <= 0
                             ? 'Interest not received yet'
-                            : 'Paid till ${widget.dateFmt.format(loan.lastInterestPaidDate!)}',
+                            : 'Interest paid Rs ${widget.moneyFmt.format(widget.data.interestPaidTotal)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
@@ -1835,7 +1944,7 @@ class _TicketStackRowState extends State<_TicketStackRow> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'Rs ${widget.moneyFmt.format(loan.loanAmount)}',
+                      'Rs ${widget.moneyFmt.format(widget.data.principalDue)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.manrope(
@@ -1846,7 +1955,7 @@ class _TicketStackRowState extends State<_TicketStackRow> {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'Due Rs ${widget.moneyFmt.format(loan.accruedInterest)}',
+                      'Due Rs ${widget.moneyFmt.format(widget.data.netInterestDue)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
@@ -1937,6 +2046,66 @@ class _SelectablePill extends StatelessWidget {
   }
 }
 
+class _WorkflowActionPill extends StatefulWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _WorkflowActionPill({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  State<_WorkflowActionPill> createState() => _WorkflowActionPillState();
+}
+
+class _WorkflowActionPillState extends State<_WorkflowActionPill> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+          decoration: BoxDecoration(
+            color: widget.color.withValues(alpha: _hovered ? 0.14 : 0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: widget.color.withValues(alpha: _hovered ? 0.42 : 0.24),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(widget.icon, color: widget.color, size: 17),
+              const SizedBox(width: 8),
+              Text(
+                widget.label,
+                style: GoogleFonts.inter(
+                  color: GirviColors.textDark,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _DateField extends StatelessWidget {
   final String label;
   final String value;
@@ -1993,23 +2162,25 @@ class _DateField extends StatelessWidget {
 }
 
 class _EntryReviewBar extends StatelessWidget {
-  final double expectedInterest;
   final double enteredAmount;
   final GirviPaymentType paymentType;
   final double interestDue;
   final double principalOutstanding;
   final NumberFormat moneyFmt;
   final bool isSaving;
+  final String actionLabel;
+  final IconData actionIcon;
   final VoidCallback onRecord;
 
   const _EntryReviewBar({
-    required this.expectedInterest,
     required this.enteredAmount,
     required this.paymentType,
     required this.interestDue,
     required this.principalOutstanding,
     required this.moneyFmt,
     required this.isSaving,
+    required this.actionLabel,
+    required this.actionIcon,
     required this.onRecord,
   });
 
@@ -2017,7 +2188,6 @@ class _EntryReviewBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final signal = _EntryReviewSignal.resolve(
       paymentType: paymentType,
-      expectedInterest: expectedInterest,
       enteredAmount: enteredAmount,
       interestDue: interestDue,
       principalOutstanding: principalOutstanding,
@@ -2046,9 +2216,9 @@ class _EntryReviewBar extends StatelessWidget {
                   color: Colors.white,
                 ),
               )
-            : const Icon(GirviIcons.save, size: 18),
+            : Icon(actionIcon, size: 18),
         label: Text(
-          isSaving ? 'Saving...' : 'Record Payment',
+          isSaving ? 'Saving...' : actionLabel,
           style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: FontWeight.w900,
@@ -2169,7 +2339,6 @@ class _EntryReviewSignal {
 
   static _EntryReviewSignal resolve({
     required GirviPaymentType paymentType,
-    required double expectedInterest,
     required double enteredAmount,
     required double interestDue,
     required double principalOutstanding,
@@ -2180,7 +2349,6 @@ class _EntryReviewSignal {
     if (enteredAmount <= 0) {
       final pending = _referenceValue(
         paymentType: paymentType,
-        expectedInterest: expectedInterest,
         interestDue: interestDue,
         principalOutstanding: principalOutstanding,
       );
@@ -2198,43 +2366,44 @@ class _EntryReviewSignal {
 
     switch (paymentType) {
       case GirviPaymentType.interest:
-        final shortBy = math.max(expectedInterest - enteredAmount, 0.0);
-        final extra = math.max(enteredAmount - expectedInterest, 0.0);
-        if (expectedInterest <= 0) {
+        final remaining = math.max(interestDue - enteredAmount, 0.0);
+        final advance = math.max(enteredAmount - interestDue, 0.0);
+        if (interestDue <= 0) {
           return _EntryReviewSignal(
-            title: 'Interest Entry Ready',
-            message: 'No due interest is pending for the selected period.',
-            referenceLabel: 'Expected Interest',
-            referenceValue: amount(expectedInterest),
-            balanceLabel: 'Extra',
+            title: 'Advance Interest Credit',
+            message:
+                'This amount will be held as advance credit against future interest.',
+            referenceLabel: 'Net Interest Due',
+            referenceValue: amount(interestDue),
+            balanceLabel: 'Advance',
             balanceValue: amount(enteredAmount),
             icon: GirviIcons.markDone,
             color: GirviColors.success,
           );
         }
-        if (shortBy > 0) {
+        if (remaining > 0) {
           return _EntryReviewSignal(
-            title: 'Interest Short',
-            message: '${amount(shortBy)} less than the expected interest.',
-            referenceLabel: 'Expected Interest',
-            referenceValue: amount(expectedInterest),
-            balanceLabel: 'Short By',
-            balanceValue: amount(shortBy),
-            icon: GirviIcons.warning,
-            color: GirviColors.warning,
+            title: 'Interest Part Received',
+            message: '${amount(remaining)} interest will remain due.',
+            referenceLabel: 'Net Interest Due',
+            referenceValue: amount(interestDue),
+            balanceLabel: 'After Entry',
+            balanceValue: amount(remaining),
+            icon: GirviIcons.interestRate,
+            color: GirviColors.info,
           );
         }
         return _EntryReviewSignal(
-          title: extra > 0 ? 'Advance Interest' : 'Interest Ready',
-          message: extra > 0
-              ? '${amount(extra)} will be treated as extra against this interest entry.'
-              : 'Amount matches the expected interest for the selected months.',
-          referenceLabel: 'Expected Interest',
-          referenceValue: amount(expectedInterest),
-          balanceLabel: extra > 0 ? 'Extra' : 'Balance',
-          balanceValue: amount(extra),
+          title: advance > 0 ? 'Advance Interest Credit' : 'Interest Cleared',
+          message: advance > 0
+              ? '${amount(advance)} will auto-adjust against future interest.'
+              : 'This entry clears the current net interest due.',
+          referenceLabel: 'Net Interest Due',
+          referenceValue: amount(interestDue),
+          balanceLabel: advance > 0 ? 'Advance' : 'After Entry',
+          balanceValue: amount(advance),
           icon: GirviIcons.markDone,
-          color: extra > 0 ? GirviColors.info : GirviColors.success,
+          color: advance > 0 ? GirviColors.info : GirviColors.success,
         );
 
       case GirviPaymentType.partialInterest:
@@ -2296,7 +2465,7 @@ class _EntryReviewSignal {
   static String _referenceLabel(GirviPaymentType paymentType) {
     switch (paymentType) {
       case GirviPaymentType.interest:
-        return 'Expected Interest';
+        return 'Net Interest Due';
       case GirviPaymentType.partialInterest:
         return 'Interest Due';
       case GirviPaymentType.partialPrincipal:
@@ -2310,13 +2479,12 @@ class _EntryReviewSignal {
 
   static double _referenceValue({
     required GirviPaymentType paymentType,
-    required double expectedInterest,
     required double interestDue,
     required double principalOutstanding,
   }) {
     switch (paymentType) {
       case GirviPaymentType.interest:
-        return expectedInterest;
+        return interestDue;
       case GirviPaymentType.partialInterest:
       case GirviPaymentType.penalty:
         return interestDue;
@@ -2325,6 +2493,284 @@ class _EntryReviewSignal {
       case GirviPaymentType.fullRelease:
         return principalOutstanding + interestDue;
     }
+  }
+}
+
+class _ReleaseSettlementBalanceStrip extends StatelessWidget {
+  final double principalDue;
+  final double interestDue;
+  final double principalCollected;
+  final double interestCollected;
+  final NumberFormat moneyFmt;
+  final VoidCallback onFillFull;
+
+  const _ReleaseSettlementBalanceStrip({
+    required this.principalDue,
+    required this.interestDue,
+    required this.principalCollected,
+    required this.interestCollected,
+    required this.moneyFmt,
+    required this.onFillFull,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: GirviColors.purple.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: GirviColors.purple.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+            spacing: 9,
+            runSpacing: 9,
+            children: [
+              _FocusMetric(
+                label: 'Principal Due',
+                value: 'Rs ${moneyFmt.format(principalDue)}',
+                color: GirviColors.purple,
+                wide: true,
+              ),
+              _FocusMetric(
+                label: 'Interest Due',
+                value: 'Rs ${moneyFmt.format(interestDue)}',
+                color: GirviColors.warning,
+                wide: true,
+              ),
+              _FocusMetric(
+                label: 'Already Settled',
+                value:
+                    'Rs ${moneyFmt.format(principalCollected + interestCollected)}',
+                color: GirviColors.success,
+                wide: true,
+              ),
+              _FocusMetric(
+                label: 'Total Balance',
+                value: 'Rs ${moneyFmt.format(principalDue + interestDue)}',
+                color: GirviColors.danger,
+                wide: true,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: onFillFull,
+              icon: const Icon(Icons.done_all_rounded, size: 17),
+              label: const Text('Fill Full Settlement'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: GirviColors.success,
+                side: BorderSide(
+                  color: GirviColors.success.withValues(alpha: 0.42),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReadyForDeliveryPanel extends StatelessWidget {
+  final DateTime? expectedDeliveryDate;
+  final double principalCollected;
+  final double interestCollected;
+  final NumberFormat moneyFmt;
+  final DateFormat dateFmt;
+  final bool isSaving;
+  final VoidCallback onDeliver;
+
+  const _ReadyForDeliveryPanel({
+    required this.expectedDeliveryDate,
+    required this.principalCollected,
+    required this.interestCollected,
+    required this.moneyFmt,
+    required this.dateFmt,
+    required this.isSaving,
+    required this.onDeliver,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: GirviColors.success.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: GirviColors.success.withValues(alpha: 0.30)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const _IconBox(
+                icon: GirviIcons.release,
+                color: GirviColors.success,
+                dark: true,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Settlement Complete',
+                      style: GoogleFonts.inter(
+                        color: GirviColors.textDark,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Payment is complete. Item remains in shop custody until handover.',
+                      style: GoogleFonts.inter(
+                        color: GirviColors.textDark,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 9,
+            runSpacing: 9,
+            children: [
+              _FocusMetric(
+                label: 'Principal Received',
+                value: 'Rs ${moneyFmt.format(principalCollected)}',
+                color: GirviColors.purple,
+                wide: true,
+              ),
+              _FocusMetric(
+                label: 'Interest Received',
+                value: 'Rs ${moneyFmt.format(interestCollected)}',
+                color: GirviColors.warning,
+                wide: true,
+              ),
+              _FocusMetric(
+                label: 'Expected Pickup',
+                value: expectedDeliveryDate == null
+                    ? 'Not set'
+                    : dateFmt.format(expectedDeliveryDate!),
+                color: GirviColors.info,
+                wide: true,
+              ),
+              const _FocusMetric(
+                label: 'Custody Status',
+                value: 'In Shop',
+                color: GirviColors.success,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 48,
+            child: ElevatedButton.icon(
+              onPressed: isSaving ? null : onDeliver,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: GirviColors.success,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              icon: isSaving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.inventory_2_rounded, size: 18),
+              label: Text(
+                isSaving ? 'Delivering...' : 'Confirm Item Delivered',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InterestLedgerBalanceStrip extends StatelessWidget {
+  final double grossInterest;
+  final double interestPaid;
+  final double netDue;
+  final int equivalentMonths;
+  final NumberFormat moneyFmt;
+
+  const _InterestLedgerBalanceStrip({
+    required this.grossInterest,
+    required this.interestPaid,
+    required this.netDue,
+    required this.equivalentMonths,
+    required this.moneyFmt,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final monthLabel =
+        equivalentMonths <= 0 ? 'Under 1 mo' : '$equivalentMonths mo';
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: GirviColors.info.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: GirviColors.info.withValues(alpha: 0.18)),
+      ),
+      child: Wrap(
+        spacing: 9,
+        runSpacing: 9,
+        children: [
+          _FocusMetric(
+            label: 'Gross Interest',
+            value: 'Rs ${moneyFmt.format(grossInterest)}',
+            color: GirviColors.warning,
+            wide: true,
+          ),
+          _FocusMetric(
+            label: 'Interest Paid',
+            value: 'Rs ${moneyFmt.format(interestPaid)}',
+            color: GirviColors.success,
+            wide: true,
+          ),
+          _FocusMetric(
+            label: 'Net Due',
+            value: 'Rs ${moneyFmt.format(netDue)}',
+            color: netDue > 0 ? GirviColors.danger : GirviColors.success,
+            wide: true,
+          ),
+          _FocusMetric(
+            label: 'Entry Equals',
+            value: monthLabel,
+            color: GirviColors.info,
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -2484,12 +2930,13 @@ class _PaymentHistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _colorForType(payment.type);
-    final period = payment.interestFromDate != null &&
-            payment.interestToDate != null
-        ? '${dateFmt.format(payment.interestFromDate!)} - ${dateFmt.format(payment.interestToDate!)}'
-        : payment.monthsCovered == null
-            ? 'No interest period'
-            : '${payment.monthsCovered} month${payment.monthsCovered == 1 ? '' : 's'}';
+    final period = payment.type == GirviPaymentType.fullRelease
+        ? 'Principal Rs ${moneyFmt.format(payment.principalComponent)} | Interest Rs ${moneyFmt.format(payment.interestComponent)}'
+        : payment.interestFromDate != null && payment.interestToDate != null
+            ? '${dateFmt.format(payment.interestFromDate!)} - ${dateFmt.format(payment.interestToDate!)}'
+            : payment.monthsCovered == null
+                ? 'No interest period'
+                : '${payment.monthsCovered} month${payment.monthsCovered == 1 ? '' : 's'}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -2554,7 +3001,9 @@ class _PaymentHistoryRow extends StatelessWidget {
                 ),
               ),
               Text(
-                'Balance Rs ${moneyFmt.format(payment.balanceAfter)}',
+                payment.type == GirviPaymentType.fullRelease
+                    ? 'Settlement Balance Rs ${moneyFmt.format(payment.balanceAfter)}'
+                    : 'Balance Rs ${moneyFmt.format(payment.balanceAfter)}',
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   color: GirviColors.textDark,
@@ -2605,10 +3054,9 @@ class _CollectionFocusStrip extends StatelessWidget {
   final int unpaidMonths;
   final double advanceAmount;
   final int advanceMonths;
-  final DateTime? advancePaidTill;
+  final bool settlementComplete;
   final bool isOverdue;
   final NumberFormat moneyFmt;
-  final DateFormat dateFmt;
 
   const _CollectionFocusStrip({
     required this.interestDue,
@@ -2617,29 +3065,32 @@ class _CollectionFocusStrip extends StatelessWidget {
     required this.unpaidMonths,
     required this.advanceAmount,
     required this.advanceMonths,
-    required this.advancePaidTill,
+    required this.settlementComplete,
     required this.isOverdue,
     required this.moneyFmt,
-    required this.dateFmt,
   });
 
   @override
   Widget build(BuildContext context) {
-    final hasAdvance = advanceMonths > 0;
-    final accent = hasAdvance
+    final hasAdvance = advanceMonths > 0 && !settlementComplete;
+    final accent = settlementComplete
         ? GirviColors.success
-        : isOverdue
-            ? GirviColors.danger
-            : unpaidMonths > 0
-                ? GirviColors.warning
-                : GirviColors.success;
-    final statusText = hasAdvance
-        ? 'Advance active for $advanceMonths month${advanceMonths == 1 ? '' : 's'}'
-        : isOverdue
-            ? 'Overdue'
-            : unpaidMonths > 0
-                ? '$unpaidMonths month${unpaidMonths == 1 ? '' : 's'} due'
-                : 'No month due';
+        : hasAdvance
+            ? GirviColors.success
+            : isOverdue
+                ? GirviColors.danger
+                : unpaidMonths > 0
+                    ? GirviColors.warning
+                    : GirviColors.success;
+    final statusText = settlementComplete
+        ? 'Settlement complete - item awaiting delivery'
+        : hasAdvance
+            ? 'Advance credit about $advanceMonths month${advanceMonths == 1 ? '' : 's'}'
+            : isOverdue
+                ? 'Overdue'
+                : unpaidMonths > 0
+                    ? '$unpaidMonths month${unpaidMonths == 1 ? '' : 's'} due'
+                    : 'No month due';
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -2690,7 +3141,7 @@ class _CollectionFocusStrip extends StatelessWidget {
           final metrics = Wrap(
             spacing: 9,
             runSpacing: 9,
-            children: hasAdvance
+            children: settlementComplete
                 ? [
                     _FocusMetric(
                       label: 'Due Now',
@@ -2698,52 +3149,77 @@ class _CollectionFocusStrip extends StatelessWidget {
                       color: GirviColors.success,
                     ),
                     _FocusMetric(
-                      label: 'Advance Paid',
+                      label: 'Excess Received',
                       value: 'Rs ${moneyFmt.format(advanceAmount)}',
-                      color: GirviColors.success,
+                      color: advanceAmount > 0
+                          ? GirviColors.danger
+                          : GirviColors.success,
                       wide: true,
                     ),
-                    _FocusMetric(
-                      label: 'Advance Months',
-                      value:
-                          '$advanceMonths month${advanceMonths == 1 ? '' : 's'}',
+                    const _FocusMetric(
+                      label: 'Custody',
+                      value: 'In Shop',
                       color: GirviColors.info,
-                    ),
-                    _FocusMetric(
-                      label: 'Paid Till',
-                      value: advancePaidTill == null
-                          ? 'Not recorded'
-                          : dateFmt.format(advancePaidTill!),
-                      color: GirviColors.brandGold,
-                      wide: true,
-                    ),
-                  ]
-                : [
-                    _FocusMetric(
-                      label: 'Due Now',
-                      value: 'Rs ${moneyFmt.format(interestDue)}',
-                      color: accent,
-                      wide: true,
-                    ),
-                    _FocusMetric(
-                      label: 'Months Due',
-                      value:
-                          '$unpaidMonths month${unpaidMonths == 1 ? '' : 's'}',
-                      color: accent,
-                    ),
-                    _FocusMetric(
-                      label: 'Monthly Interest',
-                      value: 'Rs ${moneyFmt.format(monthlyInterest)}',
-                      color: GirviColors.info,
-                      wide: true,
                     ),
                     _FocusMetric(
                       label: 'Total Payable',
                       value: 'Rs ${moneyFmt.format(totalPayable)}',
-                      color: GirviColors.purple,
+                      color: GirviColors.success,
                       wide: true,
                     ),
-                  ],
+                  ]
+                : hasAdvance
+                    ? [
+                        _FocusMetric(
+                          label: 'Due Now',
+                          value: 'Rs ${moneyFmt.format(interestDue)}',
+                          color: GirviColors.success,
+                        ),
+                        _FocusMetric(
+                          label: 'Advance Credit',
+                          value: 'Rs ${moneyFmt.format(advanceAmount)}',
+                          color: GirviColors.success,
+                          wide: true,
+                        ),
+                        _FocusMetric(
+                          label: 'Advance Months',
+                          value:
+                              '$advanceMonths month${advanceMonths == 1 ? '' : 's'}',
+                          color: GirviColors.info,
+                        ),
+                        _FocusMetric(
+                          label: 'Monthly Interest',
+                          value: 'Rs ${moneyFmt.format(monthlyInterest)}',
+                          color: GirviColors.brandGold,
+                          wide: true,
+                        ),
+                      ]
+                    : [
+                        _FocusMetric(
+                          label: 'Due Now',
+                          value: 'Rs ${moneyFmt.format(interestDue)}',
+                          color: accent,
+                          wide: true,
+                        ),
+                        _FocusMetric(
+                          label: 'Months Due',
+                          value:
+                              '$unpaidMonths month${unpaidMonths == 1 ? '' : 's'}',
+                          color: accent,
+                        ),
+                        _FocusMetric(
+                          label: 'Monthly Interest',
+                          value: 'Rs ${moneyFmt.format(monthlyInterest)}',
+                          color: GirviColors.info,
+                          wide: true,
+                        ),
+                        _FocusMetric(
+                          label: 'Total Payable',
+                          value: 'Rs ${moneyFmt.format(totalPayable)}',
+                          color: GirviColors.purple,
+                          wide: true,
+                        ),
+                      ],
           );
 
           if (compact) {
@@ -3283,7 +3759,7 @@ class _OverviewTermsPanel extends StatelessWidget {
         color: GirviColors.purple,
       ),
       _OverviewInfoTile(
-        label: 'Paid Till',
+        label: 'Interest Paid',
         value: paidTill,
         icon: GirviIcons.markDone,
         color: GirviColors.success,

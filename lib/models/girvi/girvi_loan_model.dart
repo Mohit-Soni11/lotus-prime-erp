@@ -20,13 +20,44 @@ class GirviLoanWithCustomer {
   final String customerName;
   final String customerMobile;
   final String? customerCity;
+  final double interestPaidTotal;
+  final double principalPaidTotal;
+  final double legacyPrincipalRepaidTotal;
 
   const GirviLoanWithCustomer({
     required this.loan,
     required this.customerName,
     required this.customerMobile,
     this.customerCity,
+    this.interestPaidTotal = 0,
+    this.principalPaidTotal = 0,
+    this.legacyPrincipalRepaidTotal = 0,
   });
+
+  double get originalPrincipal => loan.loanAmount + legacyPrincipalRepaidTotal;
+
+  double get grossInterestAccrued => GirviLoanModel.calculateCompoundInterest(
+        principal: originalPrincipal,
+        monthlyRatePercent: loan.interestRate,
+        months: loan.monthsElapsed.ceil(),
+      );
+
+  double get netInterestDue {
+    final due = grossInterestAccrued - interestPaidTotal;
+    return due <= 0 ? 0 : due;
+  }
+
+  double get advanceInterestCredit {
+    final advance = interestPaidTotal - grossInterestAccrued;
+    return advance <= 0 ? 0 : advance;
+  }
+
+  double get principalDue {
+    final due = loan.loanAmount - principalPaidTotal;
+    return due <= 0 ? 0 : due;
+  }
+
+  double get totalPayable => principalDue + netInterestDue;
 }
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -117,6 +148,8 @@ class GirviLoanModel {
   final String? releasePaymentMode;
   final String? releaseNotes;
   final String? releasedBy;
+  final DateTime? expectedDeliveryDate;
+  final DateTime? deliveredAt;
 
   final DateTime createdAt;
   final DateTime? updatedAt;
@@ -159,6 +192,8 @@ class GirviLoanModel {
     this.releasePaymentMode,
     this.releaseNotes,
     this.releasedBy,
+    this.expectedDeliveryDate,
+    this.deliveredAt,
     this.updatedAt,
   });
 
@@ -447,6 +482,8 @@ class GirviLoanModel {
         return const Color(0xFF3B82F6);
       case GirviStatus.partialRelease:
         return const Color(0xFFF59E0B);
+      case GirviStatus.readyForDelivery:
+        return const Color(0xFF10B981);
       case GirviStatus.auctioned:
         return const Color(0xFF6B7280);
     }
@@ -479,6 +516,8 @@ class GirviPaymentModel {
   final DateTime? interestFromDate;
   final DateTime? interestToDate;
   final double balanceAfter;
+  final double principalComponent;
+  final double interestComponent;
   final String? receiptNo;
   final String? notes;
   final DateTime createdAt;
@@ -492,6 +531,8 @@ class GirviPaymentModel {
     required this.paymentMode,
     required this.balanceAfter,
     required this.createdAt,
+    this.principalComponent = 0,
+    this.interestComponent = 0,
     this.monthsCovered,
     this.interestFromDate,
     this.interestToDate,
@@ -506,6 +547,20 @@ class GirviPaymentModel {
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // GIRVI SUMMARY MODEL â€” for dashboard/overview
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+class GirviSettlementResult {
+  final bool fullySettled;
+  final double principalRemaining;
+  final double interestRemaining;
+
+  const GirviSettlementResult({
+    required this.fullySettled,
+    required this.principalRemaining,
+    required this.interestRemaining,
+  });
+
+  double get totalRemaining => principalRemaining + interestRemaining;
+}
 
 class GirviSummaryModel {
   final int totalActive;

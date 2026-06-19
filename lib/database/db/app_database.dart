@@ -389,6 +389,33 @@ class AppDatabase extends _$AppDatabase {
             AppLogger.info(
                 'v24 advance order to sales bill source links applied.');
           }
+
+          if (from < 25) {
+            try {
+              await m.addColumn(
+                girviLoans,
+                girviLoans.expectedDeliveryDate,
+              );
+            } catch (_) {}
+            try {
+              await m.addColumn(girviLoans, girviLoans.deliveredAt);
+            } catch (_) {}
+            try {
+              await m.addColumn(
+                girviPayments,
+                girviPayments.principalComponent,
+              );
+            } catch (_) {}
+            try {
+              await m.addColumn(
+                girviPayments,
+                girviPayments.interestComponent,
+              );
+            } catch (_) {}
+            AppLogger.info(
+              'v25 Girvi settlement and delivery workflow applied.',
+            );
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

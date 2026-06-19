@@ -45,6 +45,7 @@ class GirviListController extends ChangeNotifier {
     try {
       // Sync overdue status
       await _repo.syncOverdueStatus();
+      await _repo.syncSettlementStatus();
 
       // Load all loans + summary in parallel
       final results = await Future.wait([
@@ -264,9 +265,12 @@ class GirviInterestEntryController extends ChangeNotifier {
   DateTime? _interestToDate;
   String _searchQuery = '';
   String _amountInput = '';
+  String _releasePrincipalInput = '';
+  String _releaseInterestInput = '';
   String _monthsInput = '1';
   String _receiptNo = '';
   String _notes = '';
+  DateTime _expectedDeliveryDate = DateTime.now();
 
   bool _isLoading = true;
   bool _isSaving = false;
@@ -285,9 +289,12 @@ class GirviInterestEntryController extends ChangeNotifier {
   DateTime? get interestFromDate => _interestFromDate;
   DateTime? get interestToDate => _interestToDate;
   String get amountInput => _amountInput;
+  String get releasePrincipalInput => _releasePrincipalInput;
+  String get releaseInterestInput => _releaseInterestInput;
   String get monthsInput => _monthsInput;
   String get receiptNo => _receiptNo;
   String get notes => _notes;
+  DateTime get expectedDeliveryDate => _expectedDeliveryDate;
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
   String? get errorMessage => _errorMessage;
@@ -310,28 +317,24 @@ class GirviInterestEntryController extends ChangeNotifier {
   }
 
   double get amount => double.tryParse(_amountInput) ?? 0.0;
+  double get releasePrincipalReceived =>
+      double.tryParse(_releasePrincipalInput) ?? 0.0;
+  double get releaseInterestReceived =>
+      double.tryParse(_releaseInterestInput) ?? 0.0;
+  double get releaseEntryTotal =>
+      releasePrincipalReceived + releaseInterestReceived;
   int get monthsCovered => int.tryParse(_monthsInput) ?? 0;
-  bool get isInterestEntry =>
-      _paymentType == GirviPaymentType.interest ||
-      _paymentType == GirviPaymentType.partialInterest;
+  bool get isInterestEntry => _paymentType == GirviPaymentType.interest;
   int get interestMonthsCoveredByAmount {
-    final loan = _selectedLoan?.loan;
-    if (loan == null) return 0;
-    final from =
-        loan.lastInterestPaidDate ?? _interestFromDate ?? loan.startDate;
-    return loan.interestMonthsCoveredByPayment(
-      amount: amount,
-      fromDate: from,
-      paymentDate: _paymentDate,
-    );
+    final monthlyInterest = currentLedgerMonthlyInterestForSelected;
+    if (amount <= 0 || monthlyInterest <= 0) return 0;
+    return amount ~/ monthlyInterest;
   }
 
   double get expectedInterest {
-    final loan = _selectedLoan?.loan;
-    if (loan == null) return 0.0;
     final months = monthsCovered;
     if (months <= 0) return 0.0;
-    return loan.interestForMonths(months.toDouble());
+    return currentLedgerMonthlyInterestForSelected * months;
   }
 
   double get totalCollectedForSelected =>
@@ -341,23 +344,74 @@ class GirviInterestEntryController extends ChangeNotifier {
       .where((item) => item.type == GirviPaymentType.partialPrincipal)
       .fold<double>(0, (sum, item) => sum + item.amount);
 
-  double get interestCollectedForSelected => _payments
-      .where((item) =>
-          item.type == GirviPaymentType.interest ||
-          item.type == GirviPaymentType.partialInterest)
-      .fold<double>(0, (sum, item) => sum + item.amount);
+  double get interestCollectedForSelected =>
+      _payments.fold<double>(0, (sum, item) {
+        if (item.type == GirviPaymentType.interest ||
+            item.type == GirviPaymentType.partialInterest) {
+          return sum + item.amount;
+        }
+        if (item.type == GirviPaymentType.fullRelease) {
+          return sum + item.interestComponent;
+        }
+        return sum;
+      });
+
+  double get releasePrincipalCollectedForSelected => _payments
+      .where((item) => item.type == GirviPaymentType.fullRelease)
+      .fold<double>(0, (sum, item) => sum + item.principalComponent);
+
+  double get releaseInterestCollectedForSelected => _payments
+      .where((item) => item.type == GirviPaymentType.fullRelease)
+      .fold<double>(0, (sum, item) => sum + item.interestComponent);
+
+  double get currentLedgerMonthlyInterestForSelected {
+    final selected = _selectedLoan;
+    if (selected == null) return 0;
+    final loan = selected.loan;
+    final breakdown = GirviLoanModel.calculateCompoundInterestBreakdown(
+      principal: selected.originalPrincipal,
+      monthlyRatePercent: loan.interestRate,
+      months: loan.monthsElapsed.ceil(),
+    );
+    if (breakdown.isEmpty) {
+      return selected.originalPrincipal * (loan.interestRate / 100);
+    }
+    return breakdown.last.monthlyInterest;
+  }
+
+  double get grossInterestAccruedForSelected {
+    return _selectedLoan?.grossInterestAccrued ?? 0;
+  }
+
+  double get netInterestDueForSelected {
+    final due = grossInterestAccruedForSelected - interestCollectedForSelected;
+    return due <= 0 ? 0 : due;
+  }
+
+  double get advanceInterestCreditForSelected {
+    final credit =
+        interestCollectedForSelected - grossInterestAccruedForSelected;
+    return credit <= 0 ? 0 : credit;
+  }
+
+  double get releaseTotalDueForSelected {
+    return releasePrincipalDueForSelected + netInterestDueForSelected;
+  }
+
+  double get releasePrincipalDueForSelected {
+    return _selectedLoan?.principalDue ?? 0;
+  }
+
+  bool get isReadyForDelivery =>
+      _selectedLoan?.loan.girviStatus == GirviStatus.readyForDelivery;
 
   double get principalDisbursedForSelected {
-    final loan = _selectedLoan?.loan;
-    if (loan == null) return 0;
-    return loan.loanAmount + principalRepaidForSelected;
+    return _selectedLoan?.originalPrincipal ?? 0;
   }
 
   List<GirviPaymentType> get entryPaymentTypes => const [
         GirviPaymentType.interest,
-        GirviPaymentType.partialInterest,
-        GirviPaymentType.partialPrincipal,
-        GirviPaymentType.penalty,
+        GirviPaymentType.fullRelease,
       ];
 
   Future<void> load() async {
@@ -367,6 +421,7 @@ class GirviInterestEntryController extends ChangeNotifier {
 
     try {
       await _repo.syncOverdueStatus();
+      await _repo.syncSettlementStatus();
       await _loadLoans();
       _applySearch();
       _clearSelectedLoan(clearCustomer: true);
@@ -381,6 +436,7 @@ class GirviInterestEntryController extends ChangeNotifier {
 
   Future<void> refresh() async {
     final selectedId = _selectedLoan?.loan.id;
+    await _repo.syncSettlementStatus();
     await _reloadAfterMutation(selectedId: selectedId, keepMessages: true);
   }
 
@@ -420,11 +476,14 @@ class GirviInterestEntryController extends ChangeNotifier {
     _successMessage = null;
 
     if (value == GirviPaymentType.interest) {
-      _amountInput = _formatAmountInput(expectedInterest);
+      _amountInput = _formatAmountInput(netInterestDueForSelected);
       _syncMonthsFromAmount();
-    } else if (value == GirviPaymentType.partialPrincipal ||
-        value == GirviPaymentType.penalty) {
-      _amountInput = '';
+    } else if (value == GirviPaymentType.fullRelease) {
+      _releasePrincipalInput =
+          _formatAmountInput(releasePrincipalDueForSelected);
+      _releaseInterestInput = _formatAmountInput(netInterestDueForSelected);
+      _expectedDeliveryDate =
+          _selectedLoan?.loan.expectedDeliveryDate ?? DateTime.now();
     }
 
     notifyListeners();
@@ -465,6 +524,25 @@ class GirviInterestEntryController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void onReleasePrincipalChanged(String value) {
+    _releasePrincipalInput = value;
+    _errorMessage = null;
+    _successMessage = null;
+    notifyListeners();
+  }
+
+  void onReleaseInterestChanged(String value) {
+    _releaseInterestInput = value;
+    _errorMessage = null;
+    _successMessage = null;
+    notifyListeners();
+  }
+
+  void setExpectedDeliveryDate(DateTime value) {
+    _expectedDeliveryDate = value;
+    notifyListeners();
+  }
+
   void onMonthsChanged(String value) {
     _monthsInput = value;
     if (_paymentType == GirviPaymentType.interest) {
@@ -491,34 +569,35 @@ class GirviInterestEntryController extends ChangeNotifier {
       return false;
     }
 
-    final value = amount;
-    if (value <= 0) {
+    final value = isInterestEntry ? amount : releaseEntryTotal;
+    if (!isReadyForDelivery && value <= 0) {
       _errorMessage = 'Enter a valid payment amount.';
       notifyListeners();
       return false;
     }
 
-    if (_paymentType == GirviPaymentType.partialPrincipal &&
-        value > selected.loan.loanAmount) {
-      _errorMessage = 'Principal payment cannot exceed outstanding principal.';
-      notifyListeners();
-      return false;
+    if (_paymentType == GirviPaymentType.fullRelease) {
+      if (releasePrincipalReceived > releasePrincipalDueForSelected + 0.01) {
+        _errorMessage = 'Principal received cannot exceed principal due.';
+        notifyListeners();
+        return false;
+      }
+      if (releaseInterestReceived > netInterestDueForSelected + 0.01) {
+        _errorMessage = 'Interest received cannot exceed interest due.';
+        notifyListeners();
+        return false;
+      }
+      if (_expectedDeliveryDate.isBefore(
+        DateTime(_paymentDate.year, _paymentDate.month, _paymentDate.day),
+      )) {
+        _errorMessage =
+            'Expected pickup date cannot be before collection date.';
+        notifyListeners();
+        return false;
+      }
     }
 
     if (isInterestEntry) {
-      if (_paymentType == GirviPaymentType.interest &&
-          interestMonthsCoveredByAmount <= 0) {
-        _errorMessage =
-            'Interest payment must cover at least one full month. Use Partial Interest for a smaller amount.';
-        notifyListeners();
-        return false;
-      }
-      if (_paymentType == GirviPaymentType.partialInterest &&
-          monthsCovered <= 0) {
-        _errorMessage = 'Enter the number of interest months covered.';
-        notifyListeners();
-        return false;
-      }
       final from = _interestFromDate;
       final to = _interestToDate;
       if (from != null && to != null && to.isBefore(from)) {
@@ -534,24 +613,49 @@ class GirviInterestEntryController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _repo.recordPayment(
-        loanId: selected.loan.id,
-        paymentType: _paymentType,
-        paymentMode: _paymentMode,
-        amount: value,
-        paymentDate: _paymentDate,
-        monthsCovered: _paymentType == GirviPaymentType.interest
-            ? interestMonthsCoveredByAmount
-            : isInterestEntry
-                ? monthsCovered
-                : null,
-        interestFromDate: isInterestEntry ? _interestFromDate : null,
-        interestToDate: isInterestEntry ? _interestToDate : null,
-        receiptNo: _receiptNo.isEmpty ? null : _receiptNo,
-        notes: _notes.trim().isEmpty ? null : _notes.trim(),
-      );
+      if (_paymentType == GirviPaymentType.fullRelease) {
+        if (isReadyForDelivery) {
+          await _repo.markGirviDelivered(
+            loanId: selected.loan.id,
+            deliveredAt: DateTime.now(),
+            deliveredBy: 'Staff',
+          );
+          _successMessage = 'Girvi item delivered successfully.';
+        } else {
+          final result = await _repo.recordReleaseSettlement(
+            loanId: selected.loan.id,
+            principalDue: releasePrincipalDueForSelected,
+            interestDue: netInterestDueForSelected,
+            principalReceived: releasePrincipalReceived,
+            interestReceived: releaseInterestReceived,
+            paymentMode: _paymentMode,
+            paymentDate: _paymentDate,
+            expectedDeliveryDate: _expectedDeliveryDate,
+            receiptNo: _receiptNo.isEmpty ? null : _receiptNo,
+            notes: _notes.trim().isEmpty ? null : _notes.trim(),
+            processedBy: 'Staff',
+          );
+          _successMessage = result.fullySettled
+              ? 'Settlement complete. Girvi is ready for delivery.'
+              : 'Partial settlement recorded. Balance remains pending.';
+        }
+      } else {
+        await _repo.recordInterestLedgerPayment(
+          loanId: selected.loan.id,
+          paymentMode: _paymentMode,
+          amount: value,
+          paymentDate: _paymentDate,
+          monthsCovered: interestMonthsCoveredByAmount <= 0
+              ? null
+              : interestMonthsCoveredByAmount,
+          interestFromDate: null,
+          interestToDate: null,
+          receiptNo: _receiptNo.isEmpty ? null : _receiptNo,
+          notes: _notes.trim().isEmpty ? null : _notes.trim(),
+        );
+      }
 
-      _successMessage = 'Payment entry recorded successfully.';
+      _successMessage ??= 'Interest payment recorded successfully.';
       await _reloadAfterMutation(selectedId: selected.loan.id);
       return true;
     } catch (e) {
@@ -612,6 +716,15 @@ class GirviInterestEntryController extends ChangeNotifier {
 
     _payments = results[0] as List<GirviPaymentModel>;
     _receiptNo = results[1] as String;
+    if (_paymentType == GirviPaymentType.interest) {
+      _amountInput = _formatAmountInput(netInterestDueForSelected);
+      _syncMonthsFromAmount();
+    } else if (_paymentType == GirviPaymentType.fullRelease) {
+      _releasePrincipalInput =
+          _formatAmountInput(releasePrincipalDueForSelected);
+      _releaseInterestInput = _formatAmountInput(netInterestDueForSelected);
+      _expectedDeliveryDate = data.loan.expectedDeliveryDate ?? DateTime.now();
+    }
     notifyListeners();
   }
 
@@ -621,6 +734,7 @@ class GirviInterestEntryController extends ChangeNotifier {
   }) async {
     final success = _successMessage;
     final error = _errorMessage;
+    final previousPaymentType = _paymentType;
     await _loadLoans();
     _applySearch();
 
@@ -638,6 +752,13 @@ class GirviInterestEntryController extends ChangeNotifier {
       _clearSelectedLoan(clearCustomer: _selectedCustomerId == null);
     } else {
       await _setSelectedLoan(next, notifyAtStart: false);
+      if (previousPaymentType == GirviPaymentType.fullRelease &&
+          next.loan.girviStatus == GirviStatus.partialRelease) {
+        _paymentType = GirviPaymentType.fullRelease;
+        _releasePrincipalInput =
+            _formatAmountInput(releasePrincipalDueForSelected);
+        _releaseInterestInput = _formatAmountInput(netInterestDueForSelected);
+      }
     }
 
     if (keepMessages) {
@@ -708,10 +829,12 @@ class GirviInterestEntryController extends ChangeNotifier {
   }
 
   void _resetFormFromLoan(GirviLoanModel loan) {
-    _paymentType = GirviPaymentType.interest;
+    _paymentType = loan.girviStatus == GirviStatus.readyForDelivery
+        ? GirviPaymentType.fullRelease
+        : GirviPaymentType.interest;
     _paymentMode = GirviPaymentMode.cash;
     _paymentDate = DateTime.now();
-    final interestFrom = loan.lastInterestPaidDate ?? loan.startDate;
+    final interestFrom = loan.startDate;
     _interestFromDate = interestFrom;
     final suggestedMonths = _suggestedMonths(loan);
     _interestToDate = suggestedMonths <= 0
@@ -722,6 +845,9 @@ class GirviInterestEntryController extends ChangeNotifier {
         ? ''
         : _formatAmountInput(
             loan.interestForMonths(suggestedMonths.toDouble()));
+    _releasePrincipalInput = '';
+    _releaseInterestInput = '';
+    _expectedDeliveryDate = loan.expectedDeliveryDate ?? DateTime.now();
     _notes = '';
     _receiptNo = '';
   }
@@ -734,13 +860,15 @@ class GirviInterestEntryController extends ChangeNotifier {
     _interestToDate = null;
     _monthsInput = '1';
     _amountInput = '';
+    _releasePrincipalInput = '';
+    _releaseInterestInput = '';
     _receiptNo = '';
     _notes = '';
+    _expectedDeliveryDate = DateTime.now();
   }
 
   int _suggestedMonths(GirviLoanModel loan) {
-    if (loan.hasAdvanceInterest) return 0;
-    final from = loan.lastInterestPaidDate ?? loan.startDate;
+    final from = loan.startDate;
     final months = GirviLoanModel.chargeableMonthsBetween(from, DateTime.now());
     if (months <= 0) return 1;
     return months.clamp(1, 120);
@@ -762,7 +890,7 @@ class GirviInterestEntryController extends ChangeNotifier {
     final coveredMonths = interestMonthsCoveredByAmount;
     _monthsInput = coveredMonths <= 0 ? '0' : coveredMonths.toString();
     final loan = _selectedLoan?.loan;
-    final from = loan?.lastInterestPaidDate ?? _interestFromDate;
+    final from = _interestFromDate ?? loan?.startDate;
     if (loan != null && from != null && coveredMonths > 0) {
       _interestFromDate = from;
       _interestToDate = GirviLoanModel.addChargeableMonths(from, coveredMonths);
@@ -795,12 +923,12 @@ class GirviCustomerGirviAccount {
 
   double get outstandingPrincipal => loans.fold<double>(
         0,
-        (sum, item) => sum + item.loan.loanAmount,
+        (sum, item) => sum + item.principalDue,
       );
 
   double get interestDue => loans.fold<double>(
         0,
-        (sum, item) => sum + item.loan.accruedInterest,
+        (sum, item) => sum + item.netInterestDue,
       );
 
   int get overdueTicketCount =>

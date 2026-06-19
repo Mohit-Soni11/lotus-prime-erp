@@ -133,6 +133,41 @@ class GirviRepository {
 
     final rows = await query.get();
 
+    final loanIds =
+        rows.map((row) => row.readTable(_db.girviLoans).id).toList();
+    final interestPaidByLoan = <int, double>{};
+    final principalPaidByLoan = <int, double>{};
+    final legacyPrincipalRepaidByLoan = <int, double>{};
+    if (loanIds.isNotEmpty) {
+      final paymentRows = await (_db.select(_db.girviPayments)
+            ..where((payment) => payment.girviId.isIn(loanIds)))
+          .get();
+      for (final payment in paymentRows) {
+        final type = GirviPaymentType.fromDb(payment.paymentType);
+        if (type == GirviPaymentType.interest ||
+            type == GirviPaymentType.partialInterest) {
+          interestPaidByLoan[payment.girviId] =
+              (interestPaidByLoan[payment.girviId] ?? 0) + payment.amount;
+        } else if (type == GirviPaymentType.fullRelease &&
+            payment.interestComponent > 0) {
+          interestPaidByLoan[payment.girviId] =
+              (interestPaidByLoan[payment.girviId] ?? 0) +
+                  payment.interestComponent;
+        }
+        if (type == GirviPaymentType.fullRelease &&
+            payment.principalComponent > 0) {
+          principalPaidByLoan[payment.girviId] =
+              (principalPaidByLoan[payment.girviId] ?? 0) +
+                  payment.principalComponent;
+        }
+        if (type == GirviPaymentType.partialPrincipal) {
+          legacyPrincipalRepaidByLoan[payment.girviId] =
+              (legacyPrincipalRepaidByLoan[payment.girviId] ?? 0) +
+                  payment.amount;
+        }
+      }
+    }
+
     var result = rows.map((row) {
       final loan = row.readTable(_db.girviLoans);
       final customer = row.readTable(_db.customers);
@@ -141,6 +176,9 @@ class GirviRepository {
         customerName: customer.name,
         customerMobile: customer.mobile,
         customerCity: customer.city,
+        interestPaidTotal: interestPaidByLoan[loan.id] ?? 0,
+        principalPaidTotal: principalPaidByLoan[loan.id] ?? 0,
+        legacyPrincipalRepaidTotal: legacyPrincipalRepaidByLoan[loan.id] ?? 0,
       );
     }).toList();
 
@@ -192,6 +230,7 @@ class GirviRepository {
           totalInterestDue += model.accruedInterest;
           totalValue += loan.totalValue;
         case GirviStatus.released:
+        case GirviStatus.readyForDelivery:
           totalReleased++;
         case GirviStatus.auctioned:
           totalAuctioned++;
@@ -270,6 +309,8 @@ class GirviRepository {
           releasePaymentMode: drift.Value(paymentMode),
           releaseNotes: drift.Value(notes),
           releasedBy: drift.Value(releasedBy),
+          expectedDeliveryDate: drift.Value(DateTime.now()),
+          deliveredAt: drift.Value(DateTime.now()),
           updatedAt: drift.Value(DateTime.now()),
         ),
       );
@@ -288,6 +329,8 @@ class GirviRepository {
               paymentMode:
                   drift.Value(paymentMode), // withDefault → drift.Value
               balanceAfter: const drift.Value(0.0), // withDefault → drift.Value
+              principalComponent: drift.Value(principal),
+              interestComponent: drift.Value(interest),
               notes: const drift.Value(
                   'Full release settlement'), // nullable   → drift.Value
             ),
@@ -303,6 +346,172 @@ class GirviRepository {
 
   Future<int> addPayment(GirviPaymentsCompanion companion) async {
     return _db.into(_db.girviPayments).insert(companion);
+  }
+
+  Future<GirviSettlementResult> recordReleaseSettlement({
+    required int loanId,
+    required double principalDue,
+    required double interestDue,
+    required double principalReceived,
+    required double interestReceived,
+    required GirviPaymentMode paymentMode,
+    required DateTime paymentDate,
+    required DateTime expectedDeliveryDate,
+    String? receiptNo,
+    String? notes,
+    String? processedBy,
+  }) async {
+    const tolerance = 0.01;
+    if (principalReceived < 0 || interestReceived < 0) {
+      throw ArgumentError('Release amounts cannot be negative');
+    }
+    if (principalReceived + interestReceived <= 0) {
+      throw ArgumentError('Enter a principal or interest amount');
+    }
+    if (principalReceived > principalDue + tolerance) {
+      throw ArgumentError('Principal received exceeds principal due');
+    }
+    if (interestReceived > interestDue + tolerance) {
+      throw ArgumentError('Interest received exceeds interest due');
+    }
+
+    return _db.transaction(() async {
+      final loan = await getLoanById(loanId);
+      if (loan == null) {
+        throw StateError('Girvi loan not found for release settlement');
+      }
+      if (GirviStatus.fromDb(loan.status).isClosed) {
+        throw StateError('Girvi loan is already closed');
+      }
+
+      final principalRemaining =
+          (principalDue - principalReceived).clamp(0.0, double.infinity);
+      final interestRemaining =
+          (interestDue - interestReceived).clamp(0.0, double.infinity);
+      final fullySettled =
+          principalRemaining <= tolerance && interestRemaining <= tolerance;
+      final amountReceived = principalReceived + interestReceived;
+
+      final updated = await updateLoan(
+        loanId,
+        GirviLoansCompanion(
+          status: drift.Value(
+            fullySettled
+                ? GirviStatus.readyForDelivery.dbValue
+                : GirviStatus.partialRelease.dbValue,
+          ),
+          releaseDate: fullySettled
+              ? drift.Value(paymentDate)
+              : const drift.Value.absent(),
+          releasePrincipal:
+              drift.Value((loan.releasePrincipal ?? 0) + principalReceived),
+          releaseInterest:
+              drift.Value((loan.releaseInterest ?? 0) + interestReceived),
+          releasePenalty: const drift.Value(0),
+          releaseTotalAmount:
+              drift.Value((loan.releaseTotalAmount ?? 0) + amountReceived),
+          releasePaymentMode: drift.Value(paymentMode.dbValue),
+          releaseNotes: drift.Value(notes),
+          releasedBy: drift.Value(processedBy),
+          expectedDeliveryDate: drift.Value(expectedDeliveryDate),
+          updatedAt: drift.Value(DateTime.now()),
+        ),
+      );
+      if (!updated) {
+        throw StateError('Unable to update Girvi settlement');
+      }
+
+      await _db.into(_db.girviPayments).insert(
+            GirviPaymentsCompanion.insert(
+              girviId: loanId,
+              paymentType: GirviPaymentType.fullRelease.dbValue,
+              paymentDate: drift.Value(paymentDate),
+              amount: drift.Value(amountReceived),
+              paymentMode: drift.Value(paymentMode.dbValue),
+              balanceAfter: drift.Value(principalRemaining + interestRemaining),
+              principalComponent: drift.Value(principalReceived),
+              interestComponent: drift.Value(interestReceived),
+              receiptNo: drift.Value(receiptNo),
+              notes: drift.Value(notes),
+            ),
+          );
+
+      return GirviSettlementResult(
+        fullySettled: fullySettled,
+        principalRemaining: principalRemaining,
+        interestRemaining: interestRemaining,
+      );
+    });
+  }
+
+  Future<bool> markGirviDelivered({
+    required int loanId,
+    required DateTime deliveredAt,
+    String? deliveredBy,
+  }) async {
+    return _db.transaction(() async {
+      final loan = await getLoanById(loanId);
+      if (loan == null) throw StateError('Girvi loan not found');
+      if (GirviStatus.fromDb(loan.status) != GirviStatus.readyForDelivery) {
+        throw StateError('Girvi must be fully settled before delivery');
+      }
+      return updateLoan(
+        loanId,
+        GirviLoansCompanion(
+          status: drift.Value(GirviStatus.released.dbValue),
+          deliveredAt: drift.Value(deliveredAt),
+          releasedBy: drift.Value(deliveredBy ?? loan.releasedBy),
+          updatedAt: drift.Value(DateTime.now()),
+        ),
+      );
+    });
+  }
+
+  Future<int> recordInterestLedgerPayment({
+    required int loanId,
+    required GirviPaymentMode paymentMode,
+    required double amount,
+    required DateTime paymentDate,
+    int? monthsCovered,
+    DateTime? interestFromDate,
+    DateTime? interestToDate,
+    String? receiptNo,
+    String? notes,
+  }) async {
+    if (amount <= 0) {
+      throw ArgumentError.value(amount, 'amount', 'Payment amount must be > 0');
+    }
+
+    return _db.transaction(() async {
+      final loan = await getLoanById(loanId);
+      if (loan == null) {
+        throw StateError('Girvi loan not found for interest payment');
+      }
+
+      final updated = await updateLoan(
+        loanId,
+        GirviLoansCompanion(updatedAt: drift.Value(DateTime.now())),
+      );
+      if (!updated) {
+        throw StateError('Unable to update girvi loan before payment entry');
+      }
+
+      return _db.into(_db.girviPayments).insert(
+            GirviPaymentsCompanion.insert(
+              girviId: loanId,
+              paymentType: GirviPaymentType.interest.dbValue,
+              paymentDate: drift.Value(paymentDate),
+              amount: drift.Value(amount),
+              paymentMode: drift.Value(paymentMode.dbValue),
+              monthsCovered: drift.Value(monthsCovered),
+              interestFromDate: drift.Value(interestFromDate),
+              interestToDate: drift.Value(interestToDate),
+              balanceAfter: drift.Value(loan.loanAmount),
+              receiptNo: drift.Value(receiptNo),
+              notes: drift.Value(notes),
+            ),
+          );
+    });
   }
 
   Future<int> recordPayment({
@@ -446,6 +655,89 @@ class GirviRepository {
   // PRIVATE — MAP DB ROW → MODEL
   // ════════════════════════════════════════════════════════════════════════════
 
+  Future<int> syncSettlementStatus() async {
+    const tolerance = 0.01;
+    final openLoans = await (_db.select(_db.girviLoans)
+          ..where(
+            (loan) =>
+                loan.status.equals(GirviStatus.active.dbValue) |
+                loan.status.equals(GirviStatus.overdue.dbValue) |
+                loan.status.equals(GirviStatus.partialRelease.dbValue),
+          ))
+        .get();
+    if (openLoans.isEmpty) return 0;
+
+    final loanIds = openLoans.map((loan) => loan.id).toList();
+    final payments = await (_db.select(_db.girviPayments)
+          ..where((payment) => payment.girviId.isIn(loanIds)))
+        .get();
+    final paymentsByLoan = <int, List<GirviPayment>>{};
+    for (final payment in payments) {
+      paymentsByLoan.putIfAbsent(payment.girviId, () => []).add(payment);
+    }
+
+    var updatedCount = 0;
+    final now = DateTime.now();
+    for (final loan in openLoans) {
+      final loanPayments = paymentsByLoan[loan.id] ?? const <GirviPayment>[];
+      if (loanPayments.isEmpty) continue;
+
+      var legacyPrincipalRepaid = 0.0;
+      var releasePrincipalPaid = 0.0;
+      var interestPaid = 0.0;
+      DateTime? latestPaymentDate;
+
+      for (final payment in loanPayments) {
+        final type = GirviPaymentType.fromDb(payment.paymentType);
+        if (type == GirviPaymentType.partialPrincipal) {
+          legacyPrincipalRepaid += payment.amount;
+        } else if (type == GirviPaymentType.interest ||
+            type == GirviPaymentType.partialInterest) {
+          interestPaid += payment.amount;
+        } else if (type == GirviPaymentType.fullRelease) {
+          releasePrincipalPaid += payment.principalComponent;
+          interestPaid += payment.interestComponent;
+        }
+
+        if (latestPaymentDate == null ||
+            payment.paymentDate.isAfter(latestPaymentDate)) {
+          latestPaymentDate = payment.paymentDate;
+        }
+      }
+
+      final originalPrincipal = loan.loanAmount + legacyPrincipalRepaid;
+      final principalDue =
+          (loan.loanAmount - releasePrincipalPaid).clamp(0.0, double.infinity);
+      final interestMonths = GirviLoanModel.chargeableMonthsBetween(
+        loan.startDate,
+        loan.releaseDate ?? now,
+      );
+      final grossInterest = GirviLoanModel.calculateCompoundInterest(
+        principal: originalPrincipal,
+        monthlyRatePercent: loan.interestRate,
+        months: interestMonths,
+      );
+      final interestDue =
+          (grossInterest - interestPaid).clamp(0.0, double.infinity);
+
+      if (principalDue <= tolerance && interestDue <= tolerance) {
+        final settlementDate = loan.releaseDate ?? latestPaymentDate ?? now;
+        final updated = await updateLoan(
+          loan.id,
+          GirviLoansCompanion(
+            status: drift.Value(GirviStatus.readyForDelivery.dbValue),
+            releaseDate: drift.Value(settlementDate),
+            expectedDeliveryDate: drift.Value(loan.expectedDeliveryDate ?? now),
+            updatedAt: drift.Value(now),
+          ),
+        );
+        if (updated) updatedCount++;
+      }
+    }
+
+    return updatedCount;
+  }
+
   GirviLoanModel _mapLoan(GirviLoan row) {
     return GirviLoanModel(
       id: row.id,
@@ -485,6 +777,8 @@ class GirviRepository {
       releasePaymentMode: row.releasePaymentMode,
       releaseNotes: row.releaseNotes,
       releasedBy: row.releasedBy,
+      expectedDeliveryDate: row.expectedDeliveryDate,
+      deliveredAt: row.deliveredAt,
       updatedAt: row.updatedAt,
     );
   }
@@ -501,6 +795,8 @@ class GirviRepository {
       interestFromDate: row.interestFromDate,
       interestToDate: row.interestToDate,
       balanceAfter: row.balanceAfter,
+      principalComponent: row.principalComponent,
+      interestComponent: row.interestComponent,
       receiptNo: row.receiptNo,
       notes: row.notes,
       createdAt: row.createdAt,

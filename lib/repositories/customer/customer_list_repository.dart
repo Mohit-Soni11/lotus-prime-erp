@@ -137,7 +137,8 @@ class CustomerListRepository {
       final status = loan.status.trim().toUpperCase();
       final isOpen = status == 'ACTIVE' ||
           status == 'OVERDUE' ||
-          status == 'PARTIAL_RELEASE';
+          status == 'PARTIAL_RELEASE' ||
+          status == 'READY_FOR_DELIVERY';
       if (isOpen) aggregate.activeGirviCount += 1;
 
       final activityDate = _latestDate([

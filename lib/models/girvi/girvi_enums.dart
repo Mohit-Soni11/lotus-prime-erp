@@ -17,7 +17,8 @@ enum GirviStatus {
   active('ACTIVE', 'Active'),
   released('RELEASED', 'Released'),
   overdue('OVERDUE', 'Overdue'),
-  partialRelease('PARTIAL_RELEASE', 'Partial Release'),
+  partialRelease('PARTIAL_RELEASE', 'Settlement Pending'),
+  readyForDelivery('READY_FOR_DELIVERY', 'Ready for Delivery'),
   auctioned('AUCTIONED', 'Auctioned'),
   ;
 
@@ -108,7 +109,7 @@ enum GirviPaymentType {
   interest('INTEREST', 'Interest Payment'),
   partialPrincipal('PARTIAL_PRINCIPAL', 'Partial Principal'),
   partialInterest('PARTIAL_INTEREST', 'Partial Interest'),
-  fullRelease('FULL_RELEASE', 'Full Release'),
+  fullRelease('FULL_RELEASE', 'Girvi Release'),
   penalty('PENALTY', 'Penalty / Fine'),
   ;
 
