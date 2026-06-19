@@ -9,9 +9,11 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../../../constants/app_routes.dart';
 import '../../../database/db/app_database.dart';
 import '../../../logic/girvi/girvi_controllers.dart';
 import '../../../models/girvi/girvi_enums.dart';
@@ -20,7 +22,6 @@ import '../../../theme/girvi/girvi_theme.dart';
 import 'girvi_list_app_bar.dart'; // NAYA IMPORT
 import '../shared/girvi_shared_widgets.dart';
 import '../girvi_release/girvi_release_screen.dart';
-import '../interest_calc/interest_calc_screen.dart';
 
 class GirviListScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -94,14 +95,7 @@ class _GirviListScreenState extends State<GirviListScreen>
   }
 
   void _openCalculator() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => InterestCalcScreen(
-          onBack: () => Navigator.of(context).maybePop(),
-        ),
-      ),
-    );
+    context.go('/app${AppRoutes.interestCalcRoute}');
   }
 
   @override

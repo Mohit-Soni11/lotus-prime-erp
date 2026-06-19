@@ -19,7 +19,12 @@ import 'defaulter_filter_bar.dart';
 import 'defaulter_data_table.dart';
 
 class DefaulterListScreen extends StatefulWidget {
-  const DefaulterListScreen({super.key});
+  final VoidCallback? onBack;
+
+  const DefaulterListScreen({
+    super.key,
+    this.onBack,
+  });
 
   @override
   State<DefaulterListScreen> createState() => _DefaulterListScreenState();
@@ -95,7 +100,7 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
 
       // ── APP BAR (Fixed according to updated premium design) ──────
       appBar: DefaulterAppBar(
-        onBack: () => Navigator.of(context).pop(), // Only passing onBack now
+        onBack: widget.onBack ?? () => Navigator.of(context).maybePop(),
       ),
 
       // ── BODY ─────────────────────────────────

@@ -495,11 +495,7 @@ GoRouter createAppRouter() {
                 context.go('/app/customer/profile/$returnCustomerId');
                 return;
               }
-              if (context.canPop()) {
-                context.pop();
-                return;
-              }
-              context.go(RoutePaths.girviList);
+              context.go(RoutePaths.dashboard);
             },
           );
         },
@@ -508,13 +504,7 @@ GoRouter createAppRouter() {
       GoRoute(
         path: RoutePaths.girviInterest,
         builder: (context, state) => InterestCalcScreen(
-          onBack: () {
-            if (context.canPop()) {
-              context.pop();
-              return;
-            }
-            context.go(RoutePaths.girviList);
-          },
+          onBack: () => context.go(RoutePaths.dashboard),
         ),
       ),
 
@@ -682,7 +672,9 @@ GoRouter createAppRouter() {
 
           GoRoute(
             path: RoutePaths.customerDefaulters,
-            builder: (_, __) => const DefaulterListScreen(),
+            builder: (context, state) => DefaulterListScreen(
+              onBack: () => context.go(RoutePaths.dashboard),
+            ),
           ),
 
           // ── SUPPLIER ──────────────────────────────────────────────────────────
@@ -824,7 +816,7 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.girviNotice,
             builder: (context, state) => NoticeAuctionScreen(
-              onBack: () => _goBackOr(context, RoutePaths.girviList),
+              onBack: () => context.go(RoutePaths.dashboard),
             ),
           ),
 

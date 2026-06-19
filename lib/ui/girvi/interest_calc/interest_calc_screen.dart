@@ -9,19 +9,20 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
 import '../../../database/db/app_database.dart';
+import '../../../core/router/app_router.dart';
 import '../../../logic/girvi/girvi_controllers.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
-import '../notice_auction/notice_auction_screen.dart';
 import '../shared/girvi_shared_widgets.dart';
 
 class InterestCalcScreen extends StatefulWidget {
@@ -178,15 +179,8 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
     );
   }
 
-  Future<void> _openNoticeAuction() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => NoticeAuctionScreen(
-          onBack: () => Navigator.of(context).maybePop(),
-        ),
-      ),
-    );
-    if (mounted) await _ctrl.refresh();
+  void _openNoticeAuction() {
+    context.go(RoutePaths.girviNotice);
   }
 
   void _setPaymentAmount(double value) {

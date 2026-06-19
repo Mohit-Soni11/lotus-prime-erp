@@ -92,6 +92,15 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
   String _activePageRouteId = AppRoutes.dashboardRoute;
   int? _activeCustomerId;
 
+  void _returnToDashboard() {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    if (!mounted) return;
+    setState(() {
+      _activePageRouteId = AppRoutes.dashboardRoute;
+      _activeCustomerId = null;
+    });
+  }
+
   void _openSalesWorkspace({int? editBillId}) {
     Navigator.push(
       context,
@@ -177,7 +186,9 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
       Navigator.push(
           context,
           PageRouteBuilder(
-            pageBuilder: (_, animation, __) => const DefaulterListScreen(),
+            pageBuilder: (_, animation, __) => DefaulterListScreen(
+              onBack: _returnToDashboard,
+            ),
             transitionsBuilder: (_, animation, __, child) => FadeTransition(
               opacity:
                   CurvedAnimation(parent: animation, curve: Curves.easeOut),
@@ -352,7 +363,11 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
 
     else if (routeId == AppRoutes.newGirviRoute) {
       Navigator.push(
-          context, MaterialPageRoute(builder: (_) => const NewGirviScreen()));
+        context,
+        MaterialPageRoute(
+          builder: (_) => NewGirviScreen(onBack: _returnToDashboard),
+        ),
+      );
     } else if (routeId == AppRoutes.girviReleaseRoute) {
       Navigator.push(
           context,
@@ -361,9 +376,12 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
                     onBack: () => Navigator.pop(context),
                     onNewGirvi: () {
                       Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const NewGirviScreen()));
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              NewGirviScreen(onBack: _returnToDashboard),
+                        ),
+                      );
                     },
                   )));
     } else if (routeId == AppRoutes.interestCalcRoute) {
@@ -371,7 +389,7 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
         context,
         MaterialPageRoute(
           builder: (_) => InterestCalcScreen(
-            onBack: () => Navigator.of(context).maybePop(),
+            onBack: _returnToDashboard,
           ),
         ),
       );
@@ -380,7 +398,7 @@ class _MainLayoutWrapperState extends State<MainLayoutWrapper> {
           context,
           MaterialPageRoute(
               builder: (_) => NoticeAuctionScreen(
-                    onBack: () => Navigator.pop(context),
+                    onBack: _returnToDashboard,
                   )));
     }
 
