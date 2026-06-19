@@ -38,10 +38,10 @@
 // =============================================================================
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../database/db/app_database.dart';
 import '../../models/reports/day_book/day_book_models.dart';
+import '../../core/logging/app_logger.dart';
 
 class DayBookRepository {
   final AppDatabase _db;
@@ -151,7 +151,7 @@ class DayBookRepository {
         prediction: prediction,
       );
     } catch (e, stack) {
-      debugPrint('❌ DayBookRepository.fetchDayBook: $e\n$stack');
+      AppLogger.debug('❌ DayBookRepository.fetchDayBook: $e\n$stack');
       rethrow;
     }
   }
@@ -192,7 +192,7 @@ class DayBookRepository {
         payments: PaymentBreakup(cash: paidTotal),
       );
     } catch (e) {
-      debugPrint('❌ _fetchGstBills: $e');
+      AppLogger.debug('❌ _fetchGstBills: $e');
       return const GstBillSummary();
     }
   }
@@ -226,7 +226,7 @@ class DayBookRepository {
         payments: PaymentBreakup(cash: paid),
       );
     } catch (e) {
-      debugPrint('❌ _fetchNonGstBills: $e');
+      AppLogger.debug('❌ _fetchNonGstBills: $e');
       return const NonGstBillSummary();
     }
   }
@@ -252,7 +252,7 @@ class DayBookRepository {
       }
       return map;
     } catch (e) {
-      debugPrint('❌ _fetchIncomeByCategory: $e');
+      AppLogger.debug('❌ _fetchIncomeByCategory: $e');
       return {};
     }
   }
@@ -278,7 +278,7 @@ class DayBookRepository {
       }
       return map;
     } catch (e) {
-      debugPrint('❌ _fetchExpenseByCategory: $e');
+      AppLogger.debug('❌ _fetchExpenseByCategory: $e');
       return {};
     }
   }
@@ -317,7 +317,7 @@ class DayBookRepository {
 
       return MetalWeight.fromEntries(totals);
     } catch (e) {
-      debugPrint('❌ _fetchKarigarFinishedGoods: $e');
+      AppLogger.debug('❌ _fetchKarigarFinishedGoods: $e');
       return const MetalWeight();
     }
   }
@@ -350,7 +350,7 @@ class DayBookRepository {
 
       return MetalWeight.fromEntries(totals);
     } catch (e) {
-      debugPrint('❌ _fetchGirviSecurityDeposit: $e');
+      AppLogger.debug('❌ _fetchGirviSecurityDeposit: $e');
       return const MetalWeight();
     }
   }
@@ -390,7 +390,7 @@ class DayBookRepository {
 
       return MetalWeight.fromEntries(totals);
     } catch (e) {
-      debugPrint('❌ _fetchRetailMetalDispatch: $e');
+      AppLogger.debug('❌ _fetchRetailMetalDispatch: $e');
       return const MetalWeight();
     }
   }
@@ -422,7 +422,7 @@ class DayBookRepository {
 
       return MetalWeight.fromEntries(totals);
     } catch (e) {
-      debugPrint('❌ _fetchKarigarIssues: $e');
+      AppLogger.debug('❌ _fetchKarigarIssues: $e');
       return const MetalWeight();
     }
   }
@@ -435,7 +435,7 @@ class DayBookRepository {
       final profile = await (_db.select(_db.shopProfiles)).getSingleOrNull();
       return profile?.openingCashBalance ?? 0.0;
     } catch (e) {
-      debugPrint('❌ _fetchOpeningCash: $e');
+      AppLogger.debug('❌ _fetchOpeningCash: $e');
       return 0.0;
     }
   }
@@ -463,7 +463,7 @@ class DayBookRepository {
       final total = rows.fold(0.0, (sum, r) => sum + r.amount);
       return total / 7;
     } catch (e) {
-      debugPrint('❌ _fetch7DayExpenseAvg: $e');
+      AppLogger.debug('❌ _fetch7DayExpenseAvg: $e');
       return 0;
     }
   }
@@ -540,7 +540,7 @@ class DayBookRepository {
         cheque: cheque,
       );
     } catch (e) {
-      debugPrint('❌ _fetchPaymentBreakup: $e');
+      AppLogger.debug('❌ _fetchPaymentBreakup: $e');
       return const PaymentBreakup();
     }
   }
@@ -570,7 +570,7 @@ class DayBookRepository {
       final bankTotal = bankRows.fold<double>(0, (sum, r) => sum + r.amount);
       return cashTotal + bankTotal;
     } catch (e) {
-      debugPrint('_fetchDueCollectionReceipts: $e');
+      AppLogger.debug('_fetchDueCollectionReceipts: $e');
       return 0;
     }
   }

@@ -22,6 +22,8 @@ class GirviLoanWithCustomer {
   final String? customerCity;
   final double interestPaidTotal;
   final double principalPaidTotal;
+  final double interestDiscountTotal;
+  final double principalDiscountTotal;
   final double legacyPrincipalRepaidTotal;
 
   const GirviLoanWithCustomer({
@@ -31,6 +33,8 @@ class GirviLoanWithCustomer {
     this.customerCity,
     this.interestPaidTotal = 0,
     this.principalPaidTotal = 0,
+    this.interestDiscountTotal = 0,
+    this.principalDiscountTotal = 0,
     this.legacyPrincipalRepaidTotal = 0,
   });
 
@@ -43,7 +47,8 @@ class GirviLoanWithCustomer {
       );
 
   double get netInterestDue {
-    final due = grossInterestAccrued - interestPaidTotal;
+    final due =
+        grossInterestAccrued - interestPaidTotal - interestDiscountTotal;
     return due <= 0 ? 0 : due;
   }
 
@@ -53,7 +58,7 @@ class GirviLoanWithCustomer {
   }
 
   double get principalDue {
-    final due = loan.loanAmount - principalPaidTotal;
+    final due = loan.loanAmount - principalPaidTotal - principalDiscountTotal;
     return due <= 0 ? 0 : due;
   }
 
@@ -144,6 +149,7 @@ class GirviLoanModel {
   final double? releasePrincipal;
   final double? releaseInterest;
   final double? releasePenalty;
+  final double? releaseDiscount;
   final double? releaseTotalAmount;
   final String? releasePaymentMode;
   final String? releaseNotes;
@@ -188,6 +194,7 @@ class GirviLoanModel {
     this.releasePrincipal,
     this.releaseInterest,
     this.releasePenalty,
+    this.releaseDiscount,
     this.releaseTotalAmount,
     this.releasePaymentMode,
     this.releaseNotes,
@@ -518,6 +525,8 @@ class GirviPaymentModel {
   final double balanceAfter;
   final double principalComponent;
   final double interestComponent;
+  final double principalDiscountComponent;
+  final double interestDiscountComponent;
   final String? receiptNo;
   final String? notes;
   final DateTime createdAt;
@@ -533,6 +542,8 @@ class GirviPaymentModel {
     required this.createdAt,
     this.principalComponent = 0,
     this.interestComponent = 0,
+    this.principalDiscountComponent = 0,
+    this.interestDiscountComponent = 0,
     this.monthsCovered,
     this.interestFromDate,
     this.interestToDate,
@@ -542,6 +553,8 @@ class GirviPaymentModel {
 
   GirviPaymentType get type => GirviPaymentType.fromDb(paymentType);
   GirviPaymentMode get mode => GirviPaymentMode.fromDb(paymentMode);
+  double get discountAmount =>
+      principalDiscountComponent + interestDiscountComponent;
 }
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -552,14 +565,19 @@ class GirviSettlementResult {
   final bool fullySettled;
   final double principalRemaining;
   final double interestRemaining;
+  final double principalDiscount;
+  final double interestDiscount;
 
   const GirviSettlementResult({
     required this.fullySettled,
     required this.principalRemaining,
     required this.interestRemaining,
+    this.principalDiscount = 0,
+    this.interestDiscount = 0,
   });
 
   double get totalRemaining => principalRemaining + interestRemaining;
+  double get discountApplied => principalDiscount + interestDiscount;
 }
 
 class GirviSummaryModel {

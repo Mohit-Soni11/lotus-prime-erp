@@ -9,6 +9,7 @@
 
 import 'package:intl/intl.dart';
 import '../../finance/cash_book/cash_book_enums.dart';
+import 'package:flutter/foundation.dart';
 
 class ExpenseModel {
   final int id;

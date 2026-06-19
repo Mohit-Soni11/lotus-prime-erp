@@ -32,6 +32,7 @@ import 'tabs/address_card_tab.dart';
 import 'tabs/tax_gst_tab.dart';
 import 'tabs/banking_tab.dart';
 import 'tabs/branding_tab.dart';
+import '../../../core/logging/app_logger.dart';
 
 class ShopSetupWizard extends StatefulWidget {
   const ShopSetupWizard({super.key});
@@ -140,7 +141,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
         setState(() => _isFetchingInitialData = false);
       }
     } catch (e) {
-      debugPrint("❌ Fetch Error: $e");
+      AppLogger.error("❌ Fetch Error: $e");
       if (mounted) setState(() => _isFetchingInitialData = false);
     }
   }
@@ -180,7 +181,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
           }
         }
       } catch (e) {
-        debugPrint("Validation Crash Blocked: $e");
+        AppLogger.debug("Validation Crash Blocked: $e");
       }
     }
 
@@ -254,7 +255,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
           "longitude": lng,
         };
       } catch (e) {
-        debugPrint("Address Extraction Error: $e");
+        AppLogger.error("Address Extraction Error: $e");
       }
 
       // 2. SMART GST EXTRACTION
@@ -277,7 +278,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
           }
         }
       } catch (e) {
-        debugPrint("GST Extraction Error: $e");
+        AppLogger.error("GST Extraction Error: $e");
       }
 
       // 3. SMART BANKING EXTRACTION
@@ -288,7 +289,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
           bankingList = bankLogic!.accountsNotifier.value;
         }
       } catch (e) {
-        debugPrint("Banking Extraction Error: $e");
+        AppLogger.error("Banking Extraction Error: $e");
       }
 
       // 4. SMART BRANDING EXTRACTION
@@ -299,7 +300,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
           brandingData = brandLogic!.brandingData;
         }
       } catch (e) {
-        debugPrint("Branding Extraction Error: $e");
+        AppLogger.error("Branding Extraction Error: $e");
       }
 
       // 🎯 MASTER PAYLOAD SUBMISSION
@@ -321,7 +322,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
     } catch (e) {
       setState(() => _isLoading = false);
       _showErrorSnackbar("System Error: Setup could not be saved.");
-      debugPrint("Master Submission Crash Log: $e");
+      AppLogger.debug("Master Submission Crash Log: $e");
     }
   }
 
@@ -348,13 +349,13 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
                     whatsapp: fetchedWa,
                     email: fetchedEmail);
               } catch (e) {
-                debugPrint("Auto Sync Ignored: $e");
+                AppLogger.debug("Auto Sync Ignored: $e");
               }
             }
           }
         }
       } catch (e) {
-        debugPrint("Auto Fetch Engine Blocked a Crash: $e");
+        AppLogger.debug("Auto Fetch Engine Blocked a Crash: $e");
       }
     });
   }

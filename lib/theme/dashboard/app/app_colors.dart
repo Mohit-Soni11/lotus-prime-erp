@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
-class UV {
-  static const AppColors colors = AppColors();
-  // Icons aur Styles bhi yahan connect honge future mein
-}
+// NOTE: The UV facade class is defined in uv.dart (single source of truth).
+// This file only defines the AppColors token system used by UV.colors.
 
 class AppColors {
   const AppColors();

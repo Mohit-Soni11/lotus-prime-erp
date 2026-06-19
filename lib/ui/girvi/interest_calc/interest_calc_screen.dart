@@ -9,14 +9,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
 import '../../../database/db/app_database.dart';
-import '../../../core/router/app_router.dart';
 import '../../../logic/girvi/girvi_controllers.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../models/girvi/girvi_enums.dart';
@@ -24,6 +22,7 @@ import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import '../shared/girvi_shared_widgets.dart';
+import 'package:flutter/foundation.dart';
 
 class InterestCalcScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -46,8 +45,8 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
   final _amountCtrl = TextEditingController();
   final _releasePrincipalCtrl = TextEditingController();
   final _releaseInterestCtrl = TextEditingController();
+  final _releaseDiscountCtrl = TextEditingController();
   final _monthsCtrl = TextEditingController();
-  final _receiptCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
 
   late final AnimationController _fadeCtrl;
@@ -83,11 +82,13 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
         _ctrl.onReleaseInterestChanged(_releaseInterestCtrl.text);
       }
     });
+    _releaseDiscountCtrl.addListener(() {
+      if (!_syncingText) {
+        _ctrl.onReleaseDiscountChanged(_releaseDiscountCtrl.text);
+      }
+    });
     _monthsCtrl.addListener(() {
       if (!_syncingText) _ctrl.onMonthsChanged(_monthsCtrl.text);
-    });
-    _receiptCtrl.addListener(() {
-      if (!_syncingText) _ctrl.onReceiptChanged(_receiptCtrl.text);
     });
     _notesCtrl.addListener(() {
       if (!_syncingText) _ctrl.onNotesChanged(_notesCtrl.text);
@@ -106,8 +107,8 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
     _amountCtrl.dispose();
     _releasePrincipalCtrl.dispose();
     _releaseInterestCtrl.dispose();
+    _releaseDiscountCtrl.dispose();
     _monthsCtrl.dispose();
-    _receiptCtrl.dispose();
     _notesCtrl.dispose();
     _fadeCtrl.dispose();
     super.dispose();
@@ -118,8 +119,8 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
     _setText(_amountCtrl, _ctrl.amountInput);
     _setText(_releasePrincipalCtrl, _ctrl.releasePrincipalInput);
     _setText(_releaseInterestCtrl, _ctrl.releaseInterestInput);
+    _setText(_releaseDiscountCtrl, _ctrl.releaseDiscountInput);
     _setText(_monthsCtrl, _ctrl.monthsInput);
-    _setText(_receiptCtrl, _ctrl.receiptNo);
     _setText(_notesCtrl, _ctrl.notes);
     _syncingText = false;
   }
@@ -179,28 +180,12 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
     );
   }
 
-  void _openNoticeAuction() {
-    context.go(RoutePaths.girviNotice);
-  }
-
   void _setPaymentAmount(double value) {
     final nextValue = _formatEntryAmountInput(value);
     _syncingText = true;
     _setText(_amountCtrl, nextValue);
     _syncingText = false;
     _ctrl.onAmountChanged(nextValue);
-  }
-
-  void _fillFullSettlement() {
-    final principal =
-        _formatEntryAmountInput(_ctrl.releasePrincipalDueForSelected);
-    final interest = _formatEntryAmountInput(_ctrl.netInterestDueForSelected);
-    _syncingText = true;
-    _setText(_releasePrincipalCtrl, principal);
-    _setText(_releaseInterestCtrl, interest);
-    _syncingText = false;
-    _ctrl.onReleasePrincipalChanged(principal);
-    _ctrl.onReleaseInterestChanged(interest);
   }
 
   String _formatEntryAmountInput(double value) {
@@ -220,7 +205,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
       );
       if (!mounted) return;
       if (draft == null) {
-        _showInfoSnack('Girvi receipt details could not be loaded.');
+        _showInfoSnack('Girvi invoice details could not be loaded.');
         return;
       }
 
@@ -233,7 +218,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
         if (!mounted) return;
         final bytes = controller.pdfBytes;
         if (bytes == null) {
-          _showInfoSnack('Girvi receipt PDF could not be generated.');
+          _showInfoSnack('Girvi invoice PDF could not be generated.');
           return;
         }
         await _showReceiptPreview(pdfBytes: bytes);
@@ -242,7 +227,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
       }
     } catch (error) {
       if (mounted) {
-        _showInfoSnack('Girvi receipt preview could not be opened.');
+        _showInfoSnack('Girvi invoice preview could not be opened.');
       }
     } finally {
       if (mounted) setState(() => _openingReceipt = false);
@@ -707,7 +692,8 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                     ),
                     const SizedBox(height: 8),
                     _OverviewActionButton(
-                      label: _openingReceipt ? 'Opening...' : 'View Receipt',
+                      label:
+                          _openingReceipt ? 'Opening...' : 'View Girvi Invoice',
                       icon: Icons.visibility_rounded,
                       busy: _openingReceipt,
                       onTap: () => _previewGirviReceipt(data),
@@ -834,23 +820,15 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: [
-              ..._ctrl.entryPaymentTypes.map((type) {
-                return _SelectablePill(
-                  label: type.displayName,
-                  selected: _ctrl.paymentType == type,
-                  icon: _iconForPaymentType(type),
-                  color: _colorForPaymentType(type),
-                  onTap: () => _ctrl.setPaymentType(type),
-                );
-              }),
-              _WorkflowActionPill(
-                label: 'Notice / Auction',
-                icon: GirviIcons.auctioned,
-                color: GirviColors.danger,
-                onTap: _openNoticeAuction,
-              ),
-            ],
+            children: _ctrl.entryPaymentTypes.map((type) {
+              return _SelectablePill(
+                label: type.displayName,
+                selected: _ctrl.paymentType == type,
+                icon: _iconForPaymentType(type),
+                color: _colorForPaymentType(type),
+                onTap: () => _ctrl.setPaymentType(type),
+              );
+            }).toList(),
           ),
           const SizedBox(height: 18),
           if (_ctrl.isReadyForDelivery)
@@ -859,6 +837,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
               principalCollected: _ctrl.principalRepaidForSelected +
                   _ctrl.releasePrincipalCollectedForSelected,
               interestCollected: _ctrl.interestCollectedForSelected,
+              discountGiven: _ctrl.releaseDiscountForSelected,
               moneyFmt: _moneyFmt,
               dateFmt: _dateFmt,
               isSaving: _ctrl.isSaving,
@@ -890,31 +869,48 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                 ),
               )
             else
-              GirviRowTwo(
-                left: GirviInputField(
-                  label: 'Principal Amount Received',
-                  hint: '0',
-                  icon: GirviIcons.loanTerms,
-                  controller: _releasePrincipalCtrl,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                  ],
-                  prefixText: 'Rs ',
-                ),
-                right: GirviInputField(
-                  label: 'Interest Amount Received',
-                  hint: '0',
-                  icon: GirviIcons.interestRate,
-                  controller: _releaseInterestCtrl,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                  ],
-                  prefixText: 'Rs ',
-                ),
+              Column(
+                children: [
+                  GirviRowTwo(
+                    left: GirviInputField(
+                      label: 'Principal Amount Received',
+                      hint: '0',
+                      icon: GirviIcons.loanTerms,
+                      controller: _releasePrincipalCtrl,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      ],
+                      prefixText: 'Rs ',
+                    ),
+                    right: GirviInputField(
+                      label: 'Interest Amount Received',
+                      hint: '0',
+                      icon: GirviIcons.interestRate,
+                      controller: _releaseInterestCtrl,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      ],
+                      prefixText: 'Rs ',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  GirviInputField(
+                    label: 'Settlement Discount / Waiver',
+                    hint: '0',
+                    icon: Icons.local_offer_rounded,
+                    controller: _releaseDiscountCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                    ],
+                    prefixText: 'Rs ',
+                  ),
+                ],
               ),
             const SizedBox(height: 10),
             if (_ctrl.isInterestEntry)
@@ -934,8 +930,10 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                 interestDue: _ctrl.netInterestDueForSelected,
                 principalCollected: _ctrl.releasePrincipalCollectedForSelected,
                 interestCollected: _ctrl.releaseInterestCollectedForSelected,
+                previousDiscount: _ctrl.releaseDiscountForSelected,
+                discount: _ctrl.releaseDiscount,
+                cashEntered: _ctrl.releaseEntryTotal,
                 moneyFmt: _moneyFmt,
-                onFillFull: _fillFullSettlement,
               ),
             if (_ctrl.isInterestEntry) ...[
               const SizedBox(height: 10),
@@ -948,8 +946,8 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
               ),
             ],
             const SizedBox(height: 14),
-            GirviRowTwo(
-              left: _DateField(
+            if (_ctrl.isInterestEntry)
+              _DateField(
                 label: 'Collection Date',
                 value: _dateFmt.format(_ctrl.paymentDate),
                 icon: GirviIcons.dates,
@@ -957,26 +955,28 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                   initialDate: _ctrl.paymentDate,
                   onPicked: _ctrl.setPaymentDate,
                 ),
-              ),
-              right: GirviInputField(
-                label: 'Receipt Number',
-                hint: 'Auto generated',
-                icon: GirviIcons.ticket,
-                controller: _receiptCtrl,
-              ),
-            ),
-            if (!_ctrl.isInterestEntry) ...[
-              const SizedBox(height: 14),
-              _DateField(
-                label: 'Expected Settlement / Pickup Date',
-                value: _dateFmt.format(_ctrl.expectedDeliveryDate),
-                icon: GirviIcons.dates,
-                onTap: () => _pickDate(
-                  initialDate: _ctrl.expectedDeliveryDate,
-                  onPicked: _ctrl.setExpectedDeliveryDate,
+              )
+            else
+              GirviRowTwo(
+                left: _DateField(
+                  label: 'Collection Date',
+                  value: _dateFmt.format(_ctrl.paymentDate),
+                  icon: GirviIcons.dates,
+                  onTap: () => _pickDate(
+                    initialDate: _ctrl.paymentDate,
+                    onPicked: _ctrl.setPaymentDate,
+                  ),
+                ),
+                right: _DateField(
+                  label: 'Expected Pickup Date',
+                  value: _dateFmt.format(_ctrl.expectedDeliveryDate),
+                  icon: GirviIcons.dates,
+                  onTap: () => _pickDate(
+                    initialDate: _ctrl.expectedDeliveryDate,
+                    onPicked: _ctrl.setExpectedDeliveryDate,
+                  ),
                 ),
               ),
-            ],
             const SizedBox(height: 18),
             Text('Payment Mode', style: GirviStyles.fieldLabel),
             const SizedBox(height: 8),
@@ -1008,6 +1008,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
               enteredAmount: _ctrl.isInterestEntry
                   ? _ctrl.amount
                   : _ctrl.releaseEntryTotal,
+              discountAmount: _ctrl.isInterestEntry ? 0 : _ctrl.releaseDiscount,
               paymentType: _ctrl.paymentType,
               interestDue: _ctrl.netInterestDueForSelected,
               principalOutstanding: _ctrl.releasePrincipalDueForSelected,
@@ -1015,9 +1016,9 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
               isSaving: _ctrl.isSaving,
               actionLabel: _ctrl.isInterestEntry
                   ? 'Record Interest Payment'
-                  : _ctrl.releaseEntryTotal + 0.01 >=
+                  : _ctrl.releaseSettlementValue + 0.01 >=
                           _ctrl.releaseTotalDueForSelected
-                      ? 'Complete Settlement'
+                      ? 'Mark Ready for Delivery'
                       : 'Record Partial Settlement',
               actionIcon:
                   _ctrl.isInterestEntry ? GirviIcons.save : GirviIcons.release,
@@ -1034,7 +1035,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
       icon: GirviIcons.list,
       title: 'Payment History',
       subtitle:
-          '${_ctrl.payments.length} receipt${_ctrl.payments.length == 1 ? '' : 's'} recorded for this ticket',
+          '${_ctrl.payments.length} payment entr${_ctrl.payments.length == 1 ? 'y' : 'ies'} recorded for this ticket',
       accent: GirviColors.info,
       child: _ctrl.payments.isEmpty
           ? const _EmptyState(
@@ -1311,7 +1312,7 @@ class _FlipHint extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              canFlip ? 'Double click to flip front/back' : 'Receipt preview',
+              canFlip ? 'Double click to flip front/back' : 'Invoice preview',
               style: GoogleFonts.inter(
                 color: Colors.white,
                 fontSize: 12,
@@ -2040,66 +2041,6 @@ class _SelectablePill extends StatelessWidget {
   }
 }
 
-class _WorkflowActionPill extends StatefulWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _WorkflowActionPill({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  State<_WorkflowActionPill> createState() => _WorkflowActionPillState();
-}
-
-class _WorkflowActionPillState extends State<_WorkflowActionPill> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: InkWell(
-        onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-          decoration: BoxDecoration(
-            color: widget.color.withValues(alpha: _hovered ? 0.14 : 0.08),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: widget.color.withValues(alpha: _hovered ? 0.42 : 0.24),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(widget.icon, color: widget.color, size: 17),
-              const SizedBox(width: 8),
-              Text(
-                widget.label,
-                style: GoogleFonts.inter(
-                  color: GirviColors.textDark,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _DateField extends StatelessWidget {
   final String label;
   final String value;
@@ -2157,6 +2098,7 @@ class _DateField extends StatelessWidget {
 
 class _EntryReviewBar extends StatelessWidget {
   final double enteredAmount;
+  final double discountAmount;
   final GirviPaymentType paymentType;
   final double interestDue;
   final double principalOutstanding;
@@ -2168,6 +2110,7 @@ class _EntryReviewBar extends StatelessWidget {
 
   const _EntryReviewBar({
     required this.enteredAmount,
+    required this.discountAmount,
     required this.paymentType,
     required this.interestDue,
     required this.principalOutstanding,
@@ -2183,6 +2126,7 @@ class _EntryReviewBar extends StatelessWidget {
     final signal = _EntryReviewSignal.resolve(
       paymentType: paymentType,
       enteredAmount: enteredAmount,
+      discountAmount: discountAmount,
       interestDue: interestDue,
       principalOutstanding: principalOutstanding,
       moneyFmt: moneyFmt,
@@ -2276,6 +2220,12 @@ class _EntryReviewBar extends StatelessWidget {
                     label: 'Entry Amount',
                     value: 'Rs ${moneyFmt.format(enteredAmount)}',
                   ),
+                  if (paymentType == GirviPaymentType.fullRelease &&
+                      discountAmount > 0)
+                    _ReviewMetric(
+                      label: 'Discount',
+                      value: 'Rs ${moneyFmt.format(discountAmount)}',
+                    ),
                   _ReviewMetric(
                     label: signal.balanceLabel,
                     value: signal.balanceValue,
@@ -2334,13 +2284,14 @@ class _EntryReviewSignal {
   static _EntryReviewSignal resolve({
     required GirviPaymentType paymentType,
     required double enteredAmount,
+    required double discountAmount,
     required double interestDue,
     required double principalOutstanding,
     required NumberFormat moneyFmt,
   }) {
     String amount(double value) => 'Rs ${moneyFmt.format(value)}';
 
-    if (enteredAmount <= 0) {
+    if (enteredAmount + discountAmount <= 0) {
       final pending = _referenceValue(
         paymentType: paymentType,
         interestDue: interestDue,
@@ -2442,13 +2393,20 @@ class _EntryReviewSignal {
 
       case GirviPaymentType.fullRelease:
         final totalPayable = principalOutstanding + interestDue;
-        final balance = math.max(totalPayable - enteredAmount, 0.0);
+        final balance =
+            math.max(totalPayable - enteredAmount - discountAmount, 0.0);
         return _EntryReviewSignal(
-          title: balance > 0 ? 'Release Short' : 'Release Ready',
-          message: '${amount(balance)} will remain after this entry.',
+          title: balance > 0
+              ? 'Settlement Balance Pending'
+              : 'Settlement Complete',
+          message: balance > 0
+              ? '${amount(balance)} will remain after this entry.'
+              : discountAmount > 0
+                  ? '${amount(discountAmount)} discount applied. Ticket will move to Ready for Delivery.'
+                  : 'Ticket will move to Ready for Delivery after saving.',
           referenceLabel: 'Total Payable',
           referenceValue: amount(totalPayable),
-          balanceLabel: 'After Entry',
+          balanceLabel: balance > 0 ? 'Balance After' : 'Balance',
           balanceValue: amount(balance),
           icon: GirviIcons.release,
           color: balance > 0 ? GirviColors.warning : GirviColors.success,
@@ -2495,76 +2453,297 @@ class _ReleaseSettlementBalanceStrip extends StatelessWidget {
   final double interestDue;
   final double principalCollected;
   final double interestCollected;
+  final double previousDiscount;
+  final double discount;
+  final double cashEntered;
   final NumberFormat moneyFmt;
-  final VoidCallback onFillFull;
 
   const _ReleaseSettlementBalanceStrip({
     required this.principalDue,
     required this.interestDue,
     required this.principalCollected,
     required this.interestCollected,
+    required this.previousDiscount,
+    required this.discount,
+    required this.cashEntered,
     required this.moneyFmt,
-    required this.onFillFull,
   });
 
   @override
   Widget build(BuildContext context) {
+    final grossDue = principalDue + interestDue;
+    final netPayable = math.max(grossDue - discount, 0.0);
+    final balanceAfter = math.max(netPayable - cashEntered, 0.0);
+    final earlierCash = principalCollected + interestCollected;
+    final hasPriorSettlement = earlierCash > 0 || previousDiscount > 0;
+    final balanceColor =
+        balanceAfter > 0 ? GirviColors.warning : GirviColors.success;
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: GirviColors.purple.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: GirviColors.purple.withValues(alpha: 0.18)),
+        color: GirviColors.inputBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: GirviColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Wrap(
-            spacing: 9,
-            runSpacing: 9,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return _SettlementHeader(
+                label: 'Net Payable',
+                amount: _money(netPayable),
+                helper: discount > 0
+                    ? 'Amount after settlement discount'
+                    : 'Principal due plus interest due',
+              );
+            },
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: GirviColors.cardBg,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: GirviColors.divider),
+            ),
+            child: Column(
+              children: [
+                _SettlementBreakdownRow(
+                  label: 'Principal Due',
+                  value: _money(principalDue),
+                  color: GirviColors.purple,
+                ),
+                _SettlementBreakdownRow(
+                  label: 'Interest Due',
+                  value: _money(interestDue),
+                  color: GirviColors.warning,
+                ),
+                const Divider(height: 18, color: GirviColors.divider),
+                _SettlementBreakdownRow(
+                  label: 'Gross Settlement',
+                  value: _money(grossDue),
+                  color: GirviColors.textDark,
+                  strong: true,
+                ),
+                _SettlementBreakdownRow(
+                  label: 'Discount / Waiver',
+                  value: discount > 0 ? '- ${_money(discount)}' : _money(0),
+                  color: discount > 0
+                      ? GirviColors.success
+                      : GirviColors.textMuted,
+                ),
+                _SettlementBreakdownRow(
+                  label: 'Cash Entered',
+                  value: _money(cashEntered),
+                  color: GirviColors.success,
+                ),
+                const Divider(height: 18, color: GirviColors.divider),
+                _SettlementBreakdownRow(
+                  label: 'Balance After',
+                  value: _money(balanceAfter),
+                  color: balanceColor,
+                  strong: true,
+                ),
+              ],
+            ),
+          ),
+          if (hasPriorSettlement) ...[
+            const SizedBox(height: 10),
+            _PriorSettlementNote(
+              earlierCash: earlierCash,
+              previousDiscount: previousDiscount,
+              moneyFmt: moneyFmt,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _money(double value) => 'Rs ${moneyFmt.format(value)}';
+}
+
+class _SettlementHeader extends StatelessWidget {
+  final String label;
+  final String amount;
+  final String helper;
+
+  const _SettlementHeader({
+    required this.label,
+    required this.amount,
+    required this.helper,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: GirviColors.success.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: GirviColors.success.withValues(alpha: 0.22),
+            ),
+          ),
+          child: const Icon(
+            Icons.verified_rounded,
+            color: GirviColors.success,
+            size: 21,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _FocusMetric(
-                label: 'Principal Due',
-                value: 'Rs ${moneyFmt.format(principalDue)}',
-                color: GirviColors.purple,
-                wide: true,
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: GirviColors.textDark,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-              _FocusMetric(
-                label: 'Interest Due',
-                value: 'Rs ${moneyFmt.format(interestDue)}',
-                color: GirviColors.warning,
-                wide: true,
+              const SizedBox(height: 2),
+              FittedBox(
+                alignment: Alignment.centerLeft,
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  amount,
+                  style: GoogleFonts.manrope(
+                    color: GirviColors.textDark,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
-              _FocusMetric(
-                label: 'Already Settled',
-                value:
-                    'Rs ${moneyFmt.format(principalCollected + interestCollected)}',
-                color: GirviColors.success,
-                wide: true,
-              ),
-              _FocusMetric(
-                label: 'Total Balance',
-                value: 'Rs ${moneyFmt.format(principalDue + interestDue)}',
-                color: GirviColors.danger,
-                wide: true,
+              const SizedBox(height: 2),
+              Text(
+                helper,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: GirviColors.textMuted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: onFillFull,
-              icon: const Icon(Icons.done_all_rounded, size: 17),
-              label: const Text('Fill Full Settlement'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: GirviColors.success,
-                side: BorderSide(
-                  color: GirviColors.success.withValues(alpha: 0.42),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SettlementBreakdownRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  final bool strong;
+
+  const _SettlementBreakdownRow({
+    required this.label,
+    required this.value,
+    required this.color,
+    this.strong = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                color: GirviColors.textBody,
+                fontSize: 12,
+                fontWeight: strong ? FontWeight.w900 : FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.manrope(
+              color: color,
+              fontSize: strong ? 15 : 14,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PriorSettlementNote extends StatelessWidget {
+  final double earlierCash;
+  final double previousDiscount;
+  final NumberFormat moneyFmt;
+
+  const _PriorSettlementNote({
+    required this.earlierCash,
+    required this.previousDiscount,
+    required this.moneyFmt,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = <String>[
+      if (earlierCash > 0) 'cash Rs ${moneyFmt.format(earlierCash)}',
+      if (previousDiscount > 0)
+        'discount Rs ${moneyFmt.format(previousDiscount)}',
+    ];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: BoxDecoration(
+        color: GirviColors.info.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: GirviColors.info.withValues(alpha: 0.16)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.history_rounded,
+            color: GirviColors.info,
+            size: 17,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Already settled before this entry: ${parts.join(', ')}',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                color: GirviColors.textBody,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
@@ -2578,6 +2757,7 @@ class _ReadyForDeliveryPanel extends StatelessWidget {
   final DateTime? expectedDeliveryDate;
   final double principalCollected;
   final double interestCollected;
+  final double discountGiven;
   final NumberFormat moneyFmt;
   final DateFormat dateFmt;
   final bool isSaving;
@@ -2587,6 +2767,7 @@ class _ReadyForDeliveryPanel extends StatelessWidget {
     required this.expectedDeliveryDate,
     required this.principalCollected,
     required this.interestCollected,
+    required this.discountGiven,
     required this.moneyFmt,
     required this.dateFmt,
     required this.isSaving,
@@ -2656,6 +2837,13 @@ class _ReadyForDeliveryPanel extends StatelessWidget {
                 color: GirviColors.warning,
                 wide: true,
               ),
+              if (discountGiven > 0)
+                _FocusMetric(
+                  label: 'Discount Approved',
+                  value: 'Rs ${moneyFmt.format(discountGiven)}',
+                  color: GirviColors.info,
+                  wide: true,
+                ),
               _FocusMetric(
                 label: 'Expected Pickup',
                 value: expectedDeliveryDate == null
@@ -2925,7 +3113,7 @@ class _PaymentHistoryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _colorForType(payment.type);
     final period = payment.type == GirviPaymentType.fullRelease
-        ? 'Principal Rs ${moneyFmt.format(payment.principalComponent)} | Interest Rs ${moneyFmt.format(payment.interestComponent)}'
+        ? 'Principal Cash Rs ${moneyFmt.format(payment.principalComponent)} | Interest Cash Rs ${moneyFmt.format(payment.interestComponent)}'
         : payment.interestFromDate != null && payment.interestToDate != null
             ? '${dateFmt.format(payment.interestFromDate!)} - ${dateFmt.format(payment.interestToDate!)}'
             : payment.monthsCovered == null
@@ -2962,10 +3150,6 @@ class _PaymentHistoryRow extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (payment.receiptNo != null) ...[
-                      const SizedBox(width: 8),
-                      _TinyTag(label: payment.receiptNo!),
-                    ],
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -2987,13 +3171,24 @@ class _PaymentHistoryRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'Rs ${moneyFmt.format(payment.amount)}',
+                payment.type == GirviPaymentType.fullRelease
+                    ? 'Cash Rs ${moneyFmt.format(payment.amount)}'
+                    : 'Rs ${moneyFmt.format(payment.amount)}',
                 style: GoogleFonts.manrope(
                   color: GirviColors.textDark,
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                 ),
               ),
+              if (payment.discountAmount > 0)
+                Text(
+                  'Discount Rs ${moneyFmt.format(payment.discountAmount)}',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: GirviColors.info,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               Text(
                 payment.type == GirviPaymentType.fullRelease
                     ? 'Settlement Balance Rs ${moneyFmt.format(payment.balanceAfter)}'

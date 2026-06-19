@@ -14,6 +14,7 @@ import '../../../../../../../models/setting/shop_setup/shop_profile_model.dart';
 import '../../../../../models/setting/shop_setup/tabs/shop_branding_model.dart';
 import '../../../../../models/setting/shop_setup/enums/branding_enums.dart';
 import '../../../../../helpers/branding/branding_validators.dart';
+import '../../../../../core/logging/app_logger.dart';
 
 class BrandingLogic extends ChangeNotifier {
   // --- CORE DATA MODEL ---
@@ -197,10 +198,10 @@ class BrandingLogic extends ChangeNotifier {
     final Uri url = Uri.parse(urlString);
     try {
       if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-        debugPrint('System Error: Could not launch $url');
+        AppLogger.debug('System Error: Could not launch $url');
       }
     } catch (e) {
-      debugPrint('Launch Error: $e');
+      AppLogger.debug('Launch Error: $e');
     }
   }
 

@@ -20,6 +20,7 @@ import '../../../models/finance/bank_book/bank_book_enums.dart';
 import '../../../models/finance/bank_book/bank_account_model.dart';
 import '../../../models/finance/bank_book/bank_book_summary_model.dart';
 import '../../../repositories/finance/bank_book_repository.dart';
+import '../../../core/logging/app_logger.dart';
 
 class BankBookController extends ChangeNotifier {
   BankBookController() {
@@ -196,7 +197,7 @@ class BankBookController extends ChangeNotifier {
         _applyFiltersAndGroup();
       },
       onError: (e) {
-        debugPrint('❌ BankBookController watch error: $e');
+        AppLogger.debug('❌ BankBookController watch error: $e');
         _errorMessage = 'Failed to load transactions.';
         _isLoading = false;
         notifyListeners();

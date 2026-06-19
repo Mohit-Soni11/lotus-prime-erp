@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -38,7 +39,11 @@ Future<void> main() async {
   await runZonedGuarded(() async {
     try {
       await _bootstrapApplication();
-      runApp(LotusERPApp(routerConfig: createAppRouter()));
+      runApp(
+        ProviderScope(
+          child: LotusERPApp(routerConfig: createAppRouter()),
+        ),
+      );
     } catch (error, stackTrace) {
       AppLogger.error(
         'Application bootstrap failed.',

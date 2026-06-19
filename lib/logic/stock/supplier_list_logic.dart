@@ -12,6 +12,7 @@ import '../../database/db/app_database.dart';
 import '../../models/stock/supplier_model/supplier_model.dart';
 import '../../models/stock/supplier_model/supplier_enums.dart';
 import '../../repositories/supplier/supplier_repository.dart';
+import '../../core/logging/app_logger.dart';
 
 enum SupplierListState { loading, loaded, empty, error, searching }
 
@@ -58,7 +59,7 @@ class SupplierListLogic extends ChangeNotifier {
     } catch (e) {
       _state = SupplierListState.error;
       _errorMessage = 'Failed to load suppliers. Please try again.';
-      debugPrint('SupplierListLogic._loadSuppliers: $e');
+      AppLogger.debug('SupplierListLogic._loadSuppliers: $e');
       notifyListeners();
     }
   }

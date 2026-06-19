@@ -20,7 +20,6 @@
 // =============================================================================
 
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 // FIX: Added drift import to access ComparableExpr extension methods
@@ -29,6 +28,7 @@ import 'package:drift/drift.dart';
 import '../../../database/db/app_database.dart';
 import '../../../models/finance/cash_book/cash_book_enums.dart';
 import '../../../models/dashboard/cash_register_model.dart';
+import '../../../core/logging/app_logger.dart';
 
 class CashRegisterLogic {
   final AppDatabase _db;
@@ -76,7 +76,7 @@ class CashRegisterLogic {
         _emitComputed();
       },
       onError: (e) {
-        debugPrint('CashRegister income watch error: $e');
+        AppLogger.debug('CashRegister income watch error: $e');
         _emitFallback();
       },
     );
@@ -95,7 +95,7 @@ class CashRegisterLogic {
         _emitComputed();
       },
       onError: (e) {
-        debugPrint('❌ CashRegister Expense watch error: $e');
+        AppLogger.debug('❌ CashRegister Expense watch error: $e');
       },
     );
   }
@@ -133,7 +133,7 @@ class CashRegisterLogic {
         ));
       }
     } catch (e) {
-      debugPrint('❌ CashRegister compute error: $e');
+      AppLogger.debug('❌ CashRegister compute error: $e');
       _emitFallback();
     } finally {
       _isComputing = false;

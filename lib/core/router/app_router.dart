@@ -34,10 +34,10 @@ import '../../ui/dashboard/dashboard_screen.dart';
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
 import '../../ui/settings/settings_dashboard/settings_screen.dart';
 
-// ── SALES & ORDERS ────────────────────────────────────────────────────────────
-import '../../ui/sales & orders/sales_pos/pos_master_sale_screen.dart';
+// ── sales_orders ────────────────────────────────────────────────────────────
+import '../../ui/sales_orders/sales_pos/pos_master_sale_screen.dart';
 import '../../ui/booking_advance/booking_advance_screen.dart';
-import '../../ui/sales & orders/delivery/delivery_management_screen.dart';
+import '../../ui/sales_orders/delivery/delivery_management_screen.dart';
 
 // ── STOCK ─────────────────────────────────────────────────────────────────────
 import '../../ui/stock/add_stock/add_stock_hub_screen.dart';
@@ -55,7 +55,7 @@ import '../../ui/stock/supplier/add_supplier/add_supplier_screen.dart';
 import '../../ui/stock/supplier/supplier_profile/supplier_profile_screen.dart';
 
 // ── PURCHASE ────────────────────────────────────────────────────────────────────
-import '../../ui/purchase & orders/purchase_entry/purchase_entry_screen.dart';
+import '../../ui/purchase_orders/purchase_entry/purchase_entry_screen.dart';
 
 // ── FINANCE ─────────────────────────────────────────────────────────────────────
 import '../../ui/finance/cash_book/cash_book_screen.dart';
@@ -113,7 +113,7 @@ class RoutePaths {
   static const String supplierAdd = '/app/supplier/add';
   static const String supplierProfile = '/app/supplier/profile/:id';
 
-  // Sales & Orders
+  // sales_orders
   static const String salesPos = '/app/sales/pos';
   static const String salesBooking = '/app/sales/booking';
   static const String salesDelivery = '/app/sales/delivery';
@@ -709,7 +709,7 @@ GoRouter createAppRouter() {
             },
           ),
 
-          // ── SALES & ORDERS ────────────────────────────────────────────────────
+          // ── sales_orders ────────────────────────────────────────────────────
           GoRoute(
             path: RoutePaths.salesDelivery,
             builder: (context, state) => DeliveryManagementScreen(

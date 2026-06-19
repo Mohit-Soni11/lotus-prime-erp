@@ -14,6 +14,7 @@ import '../../database/db/app_database.dart';
 import '../../models/karigar/karigar_directory/karigar_directory_enums.dart';
 import '../../models/karigar/karigar_directory/karigar_directory_ui_model.dart';
 import '../../repositories/karigar/karigar_directory_repository.dart';
+import '../../core/logging/app_logger.dart';
 
 class KarigarDirectoryLogic extends ChangeNotifier {
   final KarigarDirectoryRepository _repo;
@@ -71,7 +72,7 @@ class KarigarDirectoryLogic extends ChangeNotifier {
           ? KarigarDirectoryState.empty
           : KarigarDirectoryState.loaded;
     } catch (e) {
-      debugPrint('KarigarDirectoryLogic._loadKarigars error: $e');
+      AppLogger.debug('KarigarDirectoryLogic._loadKarigars error: $e');
       _errorMessage = 'Failed to load karigar list. Please try again.';
       _state = KarigarDirectoryState.error;
     }

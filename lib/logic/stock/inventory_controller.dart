@@ -17,6 +17,7 @@ import 'package:flutter/foundation.dart';
 import '../../database/db/app_database.dart';
 import '../../models/stock/stock_item_model/stock_enums.dart';
 import '../../models/stock/inventory/inventory_stats_model.dart';
+import '../../core/logging/app_logger.dart';
 
 class InventoryController extends ChangeNotifier {
   final AppDatabase _db;
@@ -145,7 +146,7 @@ class InventoryController extends ChangeNotifier {
         platinumWeight: platinum.fold(0.0, (s, i) => s + _grossWeightOf(i)),
       );
     } catch (e) {
-      debugPrint('InventoryController.loadStats error: $e');
+      AppLogger.debug('InventoryController.loadStats error: $e');
       _errorMessage = 'Could not load inventory data.';
     } finally {
       _isLoading = false;

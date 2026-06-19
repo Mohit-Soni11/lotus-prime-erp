@@ -102,6 +102,34 @@ void main() {
     expect(ledgerSnapshot.totalPayable, 80000);
   });
 
+  test('normalizes payment amount and rejects duplicate receipt refs',
+      () async {
+    final loanId = await _insertLoan(db);
+
+    await repository.recordInterestLedgerPayment(
+      loanId: loanId,
+      paymentMode: GirviPaymentMode.cash,
+      amount: 123.456,
+      paymentDate: DateTime(2026, 6, 19),
+      receiptNo: '  GIP-UNIQ-001  ',
+    );
+
+    final payment = (await repository.getPaymentModelsForLoan(loanId)).single;
+    expect(payment.amount, 123.46);
+    expect(payment.receiptNo, 'GIP-UNIQ-001');
+
+    expect(
+      () => repository.recordInterestLedgerPayment(
+        loanId: loanId,
+        paymentMode: GirviPaymentMode.cash,
+        amount: 10,
+        paymentDate: DateTime(2026, 6, 20),
+        receiptNo: 'GIP-UNIQ-001',
+      ),
+      throwsA(anything),
+    );
+  });
+
   test('tracks partial release settlement, ready state and final delivery',
       () async {
     final loanId = await _insertLoan(db);
@@ -170,6 +198,67 @@ void main() {
     expect(loan!.status, GirviStatus.released.dbValue);
     expect(loan.deliveredAt, deliveredAt);
     expect(loan.releasedBy, 'Test Staff');
+  });
+
+  test('applies final release discount to interest first and audits waiver',
+      () async {
+    final loanId = await _insertLoan(
+      db,
+      interestRate: 4,
+      startDate: DateTime(2026, 1, 1),
+    );
+    final settlement = await repository.recordReleaseSettlement(
+      loanId: loanId,
+      principalDue: 50000,
+      interestDue: 12000,
+      principalReceived: 50000,
+      interestReceived: 10000,
+      discountAmount: 2000,
+      paymentMode: GirviPaymentMode.cash,
+      paymentDate: DateTime(2026, 6, 19),
+      expectedDeliveryDate: DateTime(2026, 6, 20),
+      receiptNo: 'GIP-DISC-001',
+    );
+
+    final loan = await repository.getLoanById(loanId);
+    final payment = (await repository.getPaymentModelsForLoan(loanId)).single;
+    final joined = (await repository.getLoansWithCustomer()).single;
+
+    expect(settlement.fullySettled, isTrue);
+    expect(settlement.discountApplied, 2000);
+    expect(settlement.interestDiscount, 2000);
+    expect(settlement.principalDiscount, 0);
+    expect(loan!.status, GirviStatus.readyForDelivery.dbValue);
+    expect(loan.releaseTotalAmount, 60000);
+    expect(loan.releaseDiscount, 2000);
+    expect(payment.amount, 60000);
+    expect(payment.principalComponent, 50000);
+    expect(payment.interestComponent, 10000);
+    expect(payment.interestDiscountComponent, 2000);
+    expect(payment.principalDiscountComponent, 0);
+    expect(payment.balanceAfter, 0);
+    expect(joined.principalDue, 0);
+    expect(joined.interestPaidTotal, 10000);
+    expect(joined.interestDiscountTotal, 2000);
+  });
+
+  test('rejects discount on an incomplete release settlement', () async {
+    final loanId = await _insertLoan(db);
+
+    expect(
+      () => repository.recordReleaseSettlement(
+        loanId: loanId,
+        principalDue: 50000,
+        interestDue: 12000,
+        principalReceived: 30000,
+        interestReceived: 10000,
+        discountAmount: 2000,
+        paymentMode: GirviPaymentMode.cash,
+        paymentDate: DateTime(2026, 6, 19),
+        expectedDeliveryDate: DateTime(2026, 6, 20),
+      ),
+      throwsArgumentError,
+    );
   });
 
   test('reconciles legacy zero-principal open loan as ready for delivery',

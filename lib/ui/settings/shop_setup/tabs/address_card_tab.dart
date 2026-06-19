@@ -18,6 +18,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../../theme/settings/shop_setup/tabs/address/address_theme.dart';
 import '../../../../logic/setting/shop_setup/tabs/address/address_logic.dart';
 import '../../../../logic/setting/shop_setup/tabs/address/address_map_logic.dart';
+import '../../../../core/logging/app_logger.dart';
 
 class AddressTab extends StatefulWidget {
   // ðŸš€ NEW: Receive initial data from parent
@@ -111,7 +112,7 @@ class AddressTabState extends State<AddressTab> {
             } catch (_) {}
           });
         } catch (e) {
-          debugPrint("Map Coordinate Auto-Fill Error: $e");
+          AppLogger.error("Map Coordinate Auto-Fill Error: $e");
         }
       }
     }

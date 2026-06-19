@@ -13,6 +13,7 @@ import '../../models/stock/supplier_model/supplier_model.dart';
 import '../../repositories/purchase/purchase_entry_repository.dart';
 import '../../repositories/setting/metal_rate/metal_rate_quote_service.dart';
 import '../../repositories/supplier/supplier_repository.dart';
+import '../../core/logging/app_logger.dart';
 
 class PurchaseEntryController extends ChangeNotifier {
   PurchaseEntryController() {
@@ -258,7 +259,7 @@ class PurchaseEntryController extends ChangeNotifier {
       supplierSuggestions = [];
       counterpartNotFound = customerSuggestions.isEmpty;
     } catch (error) {
-      debugPrint('Purchase customer search failed: $error');
+      AppLogger.debug('Purchase customer search failed: $error');
       customerSuggestions = [];
       counterpartNotFound = false;
     }
@@ -287,7 +288,7 @@ class PurchaseEntryController extends ChangeNotifier {
       customerSuggestions = [];
       counterpartNotFound = supplierSuggestions.isEmpty;
     } catch (error) {
-      debugPrint('Purchase supplier search failed: $error');
+      AppLogger.debug('Purchase supplier search failed: $error');
       supplierSuggestions = [];
       counterpartNotFound = false;
     }
@@ -491,7 +492,7 @@ class PurchaseEntryController extends ChangeNotifier {
       await _syncNextPurchaseSequence();
       return true;
     } catch (error) {
-      debugPrint('PurchaseEntryController.savePurchase: $error');
+      AppLogger.debug('PurchaseEntryController.savePurchase: $error');
       _saveErrorMessage =
           'The purchase could not be saved. Please review the details and try again.';
       return false;

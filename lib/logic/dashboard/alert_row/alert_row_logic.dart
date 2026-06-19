@@ -37,6 +37,7 @@ import 'package:intl/intl.dart';
 import '../../../database/db/app_database.dart';
 import '../../../models/dashboard/alert_card_model.dart';
 import '../../../constants/app_routes.dart';
+import '../../../core/logging/app_logger.dart';
 
 // ── Stock Thresholds (Python ke GOLD_MIN, GOLD_HALF jaisa) ────────────────────
 const int _kGoldCriticalQty = 3; // Items <= yeh → CRITICAL
@@ -123,7 +124,7 @@ class AlertRowLogic extends ChangeNotifier {
       _hasError = false;
       notifyListeners();
     } catch (e) {
-      debugPrint('❌ AlertRowLogic Error: $e');
+      AppLogger.debug('❌ AlertRowLogic Error: $e');
       _onError();
     }
   }

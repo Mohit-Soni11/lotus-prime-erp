@@ -53,7 +53,7 @@ class AppRoutes {
   static const String addSupplierRoute = '/supplier/add';
 
   // ============================================================
-  // SALES & ORDERS MODULE
+  // sales_orders MODULE
   // ============================================================
   static const String newSaleRoute = '/sales/new';
   static const String bookingAdvanceRoute = '/sales/booking';
@@ -85,7 +85,7 @@ class AppRoutes {
 
   // ============================================================
   // GIRVI / PAWN LOAN MODULE
-  // ✅ All 4 routes wired in main_layout_wrapper.dart v5
+  // ✅ All 4 routes wired through app_router.dart and AppShell.
   //    newGirviRoute      → NewGirviScreen
   //    girviReleaseRoute  → GirviListScreen (release happens inside)
   //    interestCalcRoute  → InterestCalcScreen
@@ -154,7 +154,7 @@ class AppRoutes {
     supplierListRoute: 'Supplier List',
     addSupplierRoute: 'Add New Supplier',
 
-    // Sales & Orders
+    // sales_orders
     newSaleRoute: 'New Sale (POS)',
     bookingAdvanceRoute: 'Booking & Advance',
     deliveryManagementRoute: 'Delivery Management',

@@ -7,10 +7,10 @@
 // ==========================================
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../database/db/app_database.dart';
 import '../../models/customer/defaulter_model.dart';
+import '../../core/logging/app_logger.dart';
 
 class DefaulterRepository {
   // Singleton pattern — same as DashboardRepository
@@ -84,11 +84,11 @@ class DefaulterRepository {
       // --- STEP 2: Sort by days overdue descending (most critical first) ---
       defaulters.sort((a, b) => b.daysOverdue.compareTo(a.daysOverdue));
 
-      debugPrint(
+      AppLogger.debug(
           '✅ DefaulterRepository: ${defaulters.length} defaulters fetched.');
       return defaulters;
     } catch (e) {
-      debugPrint('❌ DefaulterRepository.fetchAllDefaulters Error: $e');
+      AppLogger.debug('❌ DefaulterRepository.fetchAllDefaulters Error: $e');
       rethrow;
     }
   }
@@ -162,7 +162,7 @@ class DefaulterRepository {
           .then((list) => list.length);
       return count;
     } catch (e) {
-      debugPrint('❌ DefaulterRepository.fetchDefaulterCount Error: $e');
+      AppLogger.debug('❌ DefaulterRepository.fetchDefaulterCount Error: $e');
       return 0;
     }
   }

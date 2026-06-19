@@ -8,12 +8,13 @@
 // -----------------------------------------------------------------------------
 
 import 'dart:io';
-import 'package:flutter/foundation.dart'; // 🚀 UPGRADE: For kIsWeb
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart' as native_crop;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import '../../../../../core/logging/app_logger.dart';
+import 'package:flutter/foundation.dart';
 
 class PhotoUploadLogic {
   final ImagePicker _picker = ImagePicker();
@@ -53,7 +54,7 @@ class PhotoUploadLogic {
 
       return File(pickedFile.path);
     } catch (e) {
-      debugPrint("Picker Error: $e");
+      AppLogger.error("Picker Error: $e");
       rethrow; // Let the UI layer catch this and show the SnackBar
     }
   }
@@ -87,7 +88,7 @@ class PhotoUploadLogic {
       }
       return null;
     } catch (e) {
-      debugPrint("Mobile Crop Error: $e");
+      AppLogger.error("Mobile Crop Error: $e");
       throw Exception("Failed to crop image.");
     }
   }
@@ -109,7 +110,7 @@ class PhotoUploadLogic {
       await tempFile.writeAsBytes(bytes);
       return tempFile;
     } catch (e) {
-      debugPrint("Bitmap Save Error: $e");
+      AppLogger.error("Bitmap Save Error: $e");
       throw Exception("Failed to process cropped image.");
     }
   }
@@ -121,7 +122,7 @@ class PhotoUploadLogic {
       try {
         FileImage(image).evict();
       } catch (e) {
-        debugPrint("Cache Eviction Error: $e");
+        AppLogger.error("Cache Eviction Error: $e");
       }
     }
   }
@@ -141,7 +142,7 @@ class PhotoUploadLogic {
         }
       }
     } catch (e) {
-      debugPrint("Temp Cleanup Error: $e");
+      AppLogger.error("Temp Cleanup Error: $e");
     }
   }
 }

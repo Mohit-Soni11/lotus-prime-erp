@@ -1,11 +1,11 @@
 import 'package:drift/drift.dart' as drift;
-import 'package:flutter/foundation.dart';
 
 import '../../database/db/app_database.dart';
 import '../../models/finance/bank_book/bank_book_enums.dart';
 import '../../models/finance/cash_book/cash_book_enums.dart';
 import '../../models/purchase/purchase_enums/purchase_enums.dart';
 import '../../models/stock/stock_item_model/stock_enums.dart';
+import '../../core/logging/app_logger.dart';
 
 class PurchaseVoucherPartyDraft {
   final int? customerId;
@@ -169,7 +169,7 @@ class PurchaseEntryRepository {
       final currentMax = row.read<int>('max_no');
       return currentMax + 1;
     } catch (error) {
-      debugPrint('PurchaseEntryRepository.getNextSequence: $error');
+      AppLogger.debug('PurchaseEntryRepository.getNextSequence: $error');
       return 1;
     }
   }
@@ -483,7 +483,7 @@ class PurchaseEntryRepository {
       });
     } catch (error) {
       _lastErrorMessage = error.toString();
-      debugPrint('PurchaseEntryRepository.savePurchase: $error');
+      AppLogger.debug('PurchaseEntryRepository.savePurchase: $error');
       return null;
     }
   }

@@ -10,6 +10,7 @@ import '../../models/setting/billing_setup/girvi_billing_model.dart';
 import '../../repositories/girvi/girvi_invoice_branding_repository.dart';
 import '../../repositories/setting/billing_setup/girvi_billing_repo.dart';
 import 'girvi_invoice_pdf_service.dart';
+import '../../core/logging/app_logger.dart';
 
 enum GirviInvoiceHubState { idle, generating, ready, error }
 
@@ -99,7 +100,7 @@ class GirviInvoiceHubController extends ChangeNotifier {
     } catch (error) {
       state = GirviInvoiceHubState.error;
       errorMessage = 'Invoice preview could not be generated.';
-      debugPrint('GirviInvoiceHubController.generatePreview error: $error');
+      AppLogger.debug('GirviInvoiceHubController.generatePreview error: $error');
     }
     notifyListeners();
   }
@@ -109,7 +110,7 @@ class GirviInvoiceHubController extends ChangeNotifier {
       invoiceBranding = await _brandingLoader();
     } catch (error) {
       invoiceBranding = GirviInvoiceBranding.fallback;
-      debugPrint('Girvi shop profile fallback: $error');
+      AppLogger.debug('Girvi shop profile fallback: $error');
     }
     _brandingLoaded = true;
   }
@@ -119,7 +120,7 @@ class GirviInvoiceHubController extends ChangeNotifier {
       invoiceSettings = await _settingsLoader();
     } catch (error) {
       invoiceSettings = GirviBillingModel.defaults;
-      debugPrint('Girvi invoice setup fallback: $error');
+      AppLogger.debug('Girvi invoice setup fallback: $error');
     }
     activePrintMetal = effectiveActiveMetal;
     _settingsLoaded = true;
@@ -363,7 +364,7 @@ class GirviInvoiceHubController extends ChangeNotifier {
       await generatePreview();
     } catch (error) {
       errorMessage = 'Saved Girvi billing setup could not be loaded.';
-      debugPrint(
+      AppLogger.debug(
         'GirviInvoiceHubController.restoreMetalSavedSetup error: $error',
       );
       notifyListeners();
@@ -384,7 +385,7 @@ class GirviInvoiceHubController extends ChangeNotifier {
       await generatePreview();
     } catch (error) {
       errorMessage = 'Saved Girvi billing setup could not be loaded.';
-      debugPrint(
+      AppLogger.debug(
         'GirviInvoiceHubController.restoreCombinedSavedSetup error: $error',
       );
       notifyListeners();
@@ -422,7 +423,7 @@ class GirviInvoiceHubController extends ChangeNotifier {
       await generatePreview();
     } catch (error) {
       errorMessage = 'Saved Girvi receipt setup could not be loaded.';
-      debugPrint(
+      AppLogger.debug(
         'GirviInvoiceHubController.restoreDocumentSavedSetup error: $error',
       );
       notifyListeners();
@@ -459,7 +460,7 @@ class GirviInvoiceHubController extends ChangeNotifier {
       return isFinalized;
     } catch (error) {
       errorMessage = 'Girvi ticket could not be saved.';
-      debugPrint('GirviInvoiceHubController.finalizeIfNeeded error: $error');
+      AppLogger.debug('GirviInvoiceHubController.finalizeIfNeeded error: $error');
       return false;
     } finally {
       isFinalizing = false;
@@ -515,7 +516,7 @@ class GirviInvoiceHubController extends ChangeNotifier {
       return outputPath;
     } catch (error) {
       errorMessage = 'Invoice PDF could not be exported.';
-      debugPrint('GirviInvoiceHubController.exportPdf error: $error');
+      AppLogger.debug('GirviInvoiceHubController.exportPdf error: $error');
       return null;
     } finally {
       isExporting = false;

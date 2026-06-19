@@ -12,9 +12,10 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../models/booking_advance_/booking_advance/booking_advance_model.dart';
+import '../../models/booking_advance/booking_advance/booking_advance_model.dart';
 import '../../repositories/booking_advance/booking_advance_repository.dart';
-import '../../models/sales%20&%20orders/sales_pos_enums/sales_pos_enums.dart';
+import '../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
+import '../../core/logging/app_logger.dart';
 
 enum BookingType { open, locked }
 
@@ -73,7 +74,7 @@ class BookingAdvanceController extends ChangeNotifier {
       _isNumberLoading = false;
       notifyListeners();
     } catch (e) {
-      debugPrint('🔴 Booking number init error: $e');
+      AppLogger.debug('🔴 Booking number init error: $e');
       _currentFinancialYear = _repo.getCurrentFinancialYear();
       _nextSequence = 1;
       _isNumberLoading = false;
@@ -410,7 +411,7 @@ class BookingAdvanceController extends ChangeNotifier {
     } catch (e) {
       isSaving = false;
       notifyListeners();
-      debugPrint('🔴 Booking save error: $e');
+      AppLogger.debug('🔴 Booking save error: $e');
       return (
         success: false,
         message: 'Failed to save. Please try again.',

@@ -122,6 +122,9 @@ class GirviLoans extends Table with BaseTable {
   /// Penalty (if any overdue charges) at release
   RealColumn get releasePenalty => real().nullable()();
 
+  /// Total approved discount / waiver across release settlement entries.
+  RealColumn get releaseDiscount => real().nullable()();
+
   /// Total amount collected at release
   RealColumn get releaseTotalAmount => real().nullable()();
 

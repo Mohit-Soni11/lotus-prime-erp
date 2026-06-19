@@ -1,20 +1,37 @@
-<<<<<<< HEAD
-# lotus_erp
+# Lotus ERP
 
-A new Flutter project.
+Lotus ERP is a Flutter-based jewellery billing and operations system for sales,
+girvi, stock, customers, suppliers, finance, karigar workflows, billing setup,
+and reporting.
 
-## Getting Started
+## Technology
 
-This project is a starting point for a Flutter application.
+- Flutter and Dart
+- Drift with SQLite for local persistence
+- Firebase for authentication and cloud services
+- GoRouter for declarative navigation
+- Provider and ChangeNotifier in the current UI state layer
 
-A few resources to get you started if this is your first Flutter project:
+## Local Development
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```bash
+flutter pub get
+flutter analyze
+flutter test
+flutter build windows
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-=======
-# louts_erp
->>>>>>> 98be2b2a9785543ef8d18e832f75d22d5a42e7dd
+## Engineering Standards
+
+- Keep business rules out of widgets.
+- Put database work behind repositories or dedicated data sources.
+- Use transactions for billing, stock, payment, and ledger mutations.
+- Prefer typed Drift queries over raw SQL unless raw SQL is clearly justified.
+- Add regression tests for every financial calculation, migration, and posting flow.
+- Keep screens focused and split large operational workflows into reusable sections.
+
+## Current Focus
+
+The application builds successfully on Windows and has an active Girvi module
+under development. Future work should harden financial precision, migration
+safety, test coverage, and module boundaries before large feature expansion.

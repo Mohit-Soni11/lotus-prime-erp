@@ -5,11 +5,11 @@
 //              girvi records into fast UI-ready models.
 // -----------------------------------------------------------------------------
 
-import 'package:flutter/foundation.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 
 import '../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../models/customer/customer_list/customer_list_ui_model.dart';
+import '../../core/logging/app_logger.dart';
 
 class CustomerListRepository {
   final AppDatabase _db;
@@ -46,7 +46,7 @@ class CustomerListRepository {
       _sortCustomers(filtered, sort);
       return filtered;
     } catch (e) {
-      debugPrint("Customer list fetch error: $e");
+      AppLogger.error("Customer list fetch error: $e");
       return [];
     }
   }
@@ -56,7 +56,7 @@ class CustomerListRepository {
       final customers = await getAllCustomers(sort: CustomerSort.newest);
       return CustomerListStatsModel.fromCustomers(customers);
     } catch (e) {
-      debugPrint("Customer list stats error: $e");
+      AppLogger.error("Customer list stats error: $e");
       return CustomerListStatsModel.empty();
     }
   }

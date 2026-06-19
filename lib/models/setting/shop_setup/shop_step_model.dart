@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 // 🚀 UPGRADE: Imported centralized enums instead of duplicating them locally.
 // NOTE: Adjust this import path according to your actual folder structure.
 import '../../../models/setting/shop_setup/enums/basic_info_enums.dart';
+import 'package:flutter/foundation.dart';
 
 @immutable
 class ShopStepModel {

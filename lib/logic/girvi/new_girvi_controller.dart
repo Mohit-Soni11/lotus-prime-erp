@@ -20,6 +20,7 @@ import '../../models/setting/billing_setup/girvi_billing_model.dart';
 import '../../repositories/girvi/girvi_details_repository.dart';
 import '../../repositories/girvi/girvi_repository.dart';
 import '../../repositories/setting/billing_setup/girvi_billing_repo.dart';
+import '../../core/logging/app_logger.dart';
 
 class NewGirviController extends ChangeNotifier {
   final AppDatabase _db;
@@ -253,7 +254,7 @@ class NewGirviController extends ChangeNotifier {
       _durationMonths =
           _durationMonthsFromLabel(_billingSettings.defaultDuration);
       _ticketNo = 'GRV-----';
-      debugPrint('NewGirviController.initialize error: $e');
+      AppLogger.debug('NewGirviController.initialize error: $e');
     }
     notifyListeners();
   }
@@ -321,7 +322,7 @@ class NewGirviController extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      debugPrint('NewGirviController.initializeForEdit error: $e');
+      AppLogger.debug('NewGirviController.initializeForEdit error: $e');
       _errorMessage = 'Girvi ticket could not be loaded for editing.';
       _isLoadingEdit = false;
       notifyListeners();
@@ -555,7 +556,7 @@ class NewGirviController extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      debugPrint('NewGirviController.saveLoan error: $e');
+      AppLogger.debug('NewGirviController.saveLoan error: $e');
       _errorMessage = 'Failed to save girvi. Please try again.';
       _isSaving = false;
       notifyListeners();

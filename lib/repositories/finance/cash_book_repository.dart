@@ -8,13 +8,13 @@
 // =============================================================================
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 import '../../database/db/app_database.dart';
 import '../../models/finance/cash_book/cash_book_enums.dart';
 import '../../models/finance/cash_book/cash_transaction_model.dart';
 import '../../models/finance/cash_book/cash_book_summary_model.dart';
+import '../../core/logging/app_logger.dart';
 
 class CashBookRepository {
   final AppDatabase _db;
@@ -70,7 +70,7 @@ class CashBookRepository {
 
       return models;
     } catch (e) {
-      debugPrint('❌ CashBookRepository.fetchTransactions: $e');
+      AppLogger.debug('❌ CashBookRepository.fetchTransactions: $e');
       return [];
     }
   }
@@ -182,7 +182,7 @@ class CashBookRepository {
         expenseCount: expenseCount,
       );
     } catch (e) {
-      debugPrint('❌ CashBookRepository.computeSummary: $e');
+      AppLogger.debug('❌ CashBookRepository.computeSummary: $e');
       return CashBookSummaryModel.zero();
     }
   }
@@ -231,7 +231,7 @@ class CashBookRepository {
             );
       }
     } catch (e) {
-      debugPrint('❌ CashBookRepository.syncBillsToIncome: $e');
+      AppLogger.debug('❌ CashBookRepository.syncBillsToIncome: $e');
     }
   }
 
@@ -270,7 +270,7 @@ class CashBookRepository {
           );
       return true;
     } catch (e) {
-      debugPrint('❌ CashBookRepository.saveTransaction: $e');
+      AppLogger.debug('❌ CashBookRepository.saveTransaction: $e');
       return false;
     }
   }
@@ -288,7 +288,7 @@ class CashBookRepository {
       ));
       return true;
     } catch (e) {
-      debugPrint('❌ CashBookRepository.voidTransaction: $e');
+      AppLogger.debug('❌ CashBookRepository.voidTransaction: $e');
       return false;
     }
   }
@@ -309,7 +309,7 @@ class CashBookRepository {
       ));
       return true;
     } catch (e) {
-      debugPrint('❌ CashBookRepository.updateOpeningBalance: $e');
+      AppLogger.debug('❌ CashBookRepository.updateOpeningBalance: $e');
       return false;
     }
   }

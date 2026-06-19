@@ -6,8 +6,8 @@
 //              and safe JSON parsing for 60-FPS rendering.
 // -----------------------------------------------------------------------------
 
-import 'package:flutter/foundation.dart';
 import '../enums/banking_enums.dart';
+import 'package:flutter/foundation.dart';
 
 @immutable
 class BankAccountModel {

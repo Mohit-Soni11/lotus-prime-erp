@@ -18,13 +18,13 @@
 // =============================================================================
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 import '../../database/db/app_database.dart';
 import '../../models/finance/bank_book/bank_book_enums.dart';
 import '../../models/finance/bank_book/bank_account_model.dart';
 import '../../models/finance/bank_book/bank_book_summary_model.dart';
+import '../../core/logging/app_logger.dart';
 
 class BankBookRepository {
   final AppDatabase _db;
@@ -69,7 +69,7 @@ class BankBookRepository {
 
       return models;
     } catch (e) {
-      debugPrint('❌ BankBookRepository.fetchAccounts: $e');
+      AppLogger.debug('❌ BankBookRepository.fetchAccounts: $e');
       return [];
     }
   }
@@ -129,7 +129,7 @@ class BankBookRepository {
           );
       return id;
     } catch (e) {
-      debugPrint('❌ BankBookRepository.saveAccount: $e');
+      AppLogger.debug('❌ BankBookRepository.saveAccount: $e');
       return null;
     }
   }
@@ -141,7 +141,7 @@ class BankBookRepository {
           .write(BankAccountsCompanion(openingBalance: Value(amount)));
       return true;
     } catch (e) {
-      debugPrint('❌ BankBookRepository.updateOpeningBalance: $e');
+      AppLogger.debug('❌ BankBookRepository.updateOpeningBalance: $e');
       return false;
     }
   }
@@ -154,7 +154,7 @@ class BankBookRepository {
       await (_db.update(_db.bankAccounts)..where((t) => t.id.equals(accountId)))
           .write(const BankAccountsCompanion(isPrimary: Value(true)));
     } catch (e) {
-      debugPrint('❌ BankBookRepository.setPrimaryAccount: $e');
+      AppLogger.debug('❌ BankBookRepository.setPrimaryAccount: $e');
     }
   }
 
@@ -208,7 +208,7 @@ class BankBookRepository {
 
       return models;
     } catch (e) {
-      debugPrint('❌ BankBookRepository.fetchTransactions: $e');
+      AppLogger.debug('❌ BankBookRepository.fetchTransactions: $e');
       return [];
     }
   }
@@ -348,7 +348,7 @@ class BankBookRepository {
         ),
       );
     } catch (e) {
-      debugPrint('❌ BankBookRepository.computeSummary: $e');
+      AppLogger.debug('❌ BankBookRepository.computeSummary: $e');
       return BankBookSummaryModel.zero();
     }
   }
@@ -404,7 +404,7 @@ class BankBookRepository {
           );
       return true;
     } catch (e) {
-      debugPrint('❌ BankBookRepository.saveTransaction: $e');
+      AppLogger.debug('❌ BankBookRepository.saveTransaction: $e');
       return false;
     }
   }
@@ -464,7 +464,7 @@ class BankBookRepository {
       }
       return synced;
     } catch (e) {
-      debugPrint('❌ BankBookRepository.syncBillsToBank: $e');
+      AppLogger.debug('❌ BankBookRepository.syncBillsToBank: $e');
       return 0;
     }
   }
@@ -484,7 +484,7 @@ class BankBookRepository {
       ));
       return true;
     } catch (e) {
-      debugPrint('❌ BankBookRepository.updateChequeStatus: $e');
+      AppLogger.debug('❌ BankBookRepository.updateChequeStatus: $e');
       return false;
     }
   }
@@ -502,7 +502,7 @@ class BankBookRepository {
       ));
       return true;
     } catch (e) {
-      debugPrint('❌ BankBookRepository.markReconciled: $e');
+      AppLogger.debug('❌ BankBookRepository.markReconciled: $e');
       return false;
     }
   }
@@ -520,7 +520,7 @@ class BankBookRepository {
       ));
       return true;
     } catch (e) {
-      debugPrint('❌ BankBookRepository.voidTransaction: $e');
+      AppLogger.debug('❌ BankBookRepository.voidTransaction: $e');
       return false;
     }
   }

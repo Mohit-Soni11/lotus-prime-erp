@@ -13,6 +13,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart' as native_crop;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import '../../../../../core/logging/app_logger.dart';
+import 'package:flutter/foundation.dart';
 
 class DocumentCropLogic {
   final ImagePicker _picker = ImagePicker();
@@ -38,7 +40,7 @@ class DocumentCropLogic {
       }
       return file;
     } catch (e) {
-      debugPrint("Picker Error: $e");
+      AppLogger.error("Picker Error: $e");
       rethrow; // Passes the error to the UI layer
     }
   }
@@ -68,7 +70,7 @@ class DocumentCropLogic {
       if (croppedFile != null) return File(croppedFile.path);
       return null;
     } catch (e) {
-      debugPrint("Crop Error: $e");
+      AppLogger.error("Crop Error: $e");
       return null;
     }
   }
@@ -92,7 +94,7 @@ class DocumentCropLogic {
         try {
           await image.delete();
         } catch (e) {
-          debugPrint("File Deletion Error: $e");
+          AppLogger.error("File Deletion Error: $e");
         }
       }
     }

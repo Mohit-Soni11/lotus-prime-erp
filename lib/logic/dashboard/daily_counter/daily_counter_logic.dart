@@ -27,11 +27,11 @@
 
 import 'dart:async';
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 import '../../../database/db/app_database.dart';
 import '../../../models/dashboard/daily_counter_model.dart';
+import '../../../core/logging/app_logger.dart';
 
 class DailyCounterLogic {
   final AppDatabase _db;
@@ -60,7 +60,7 @@ class DailyCounterLogic {
     _subs.add(
       (_db.select(_db.billItems)).watch().listen(
             (_) => _refresh(todayStart, todayEnd),
-            onError: (e) => debugPrint('❌ DailyCounter BillItems error: $e'),
+            onError: (e) => AppLogger.debug('❌ DailyCounter BillItems error: $e'),
           ),
     );
 
@@ -68,7 +68,7 @@ class DailyCounterLogic {
     _subs.add(
       (_db.select(_db.stockItems)).watch().listen(
             (_) => _refresh(todayStart, todayEnd),
-            onError: (e) => debugPrint('❌ DailyCounter StockItems error: $e'),
+            onError: (e) => AppLogger.debug('❌ DailyCounter StockItems error: $e'),
           ),
     );
 
@@ -76,7 +76,7 @@ class DailyCounterLogic {
     _subs.add(
       (_db.select(_db.bills)).watch().listen(
             (_) => _refresh(todayStart, todayEnd),
-            onError: (e) => debugPrint('❌ DailyCounter Bills error: $e'),
+            onError: (e) => AppLogger.debug('❌ DailyCounter Bills error: $e'),
           ),
     );
 
@@ -84,7 +84,7 @@ class DailyCounterLogic {
     _subs.add(
       (_db.select(_db.loans)).watch().listen(
             (_) => _refresh(todayStart, todayEnd),
-            onError: (e) => debugPrint('❌ DailyCounter Loans error: $e'),
+            onError: (e) => AppLogger.debug('❌ DailyCounter Loans error: $e'),
           ),
     );
 
@@ -112,7 +112,7 @@ class DailyCounterLogic {
 
       if (!_controller.isClosed) _controller.add(model);
     } catch (e) {
-      debugPrint('❌ DailyCounter refresh error: $e');
+      AppLogger.debug('❌ DailyCounter refresh error: $e');
       if (!_controller.isClosed) {
         _controller.add(DailyCounterModel.empty(
           DateFormat('MMM dd, yyyy').format(DateTime.now()),

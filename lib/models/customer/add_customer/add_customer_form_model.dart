@@ -7,8 +7,8 @@
 // =============================================================================
 
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import '../customer_enums/add_customer_enums.dart';
+import 'package:flutter/foundation.dart';
 
 // =============================================================================
 // FAMILY MEMBER MODEL

@@ -33,6 +33,7 @@ import 'package:drift/drift.dart';
 import '../../../database/db/app_database.dart';
 import '../../../models/dashboard/payment_bill_item.dart';
 import '../../../models/dashboard/payment_status_model.dart';
+import '../../../core/logging/app_logger.dart';
 
 class PaymentStatusLogic extends ChangeNotifier {
   // ── Dependencies ───────────────────────────────────────────────────────────
@@ -138,7 +139,7 @@ class PaymentStatusLogic extends ChangeNotifier {
       _hasError = false;
       notifyListeners();
     } catch (e) {
-      debugPrint('❌ PaymentStatusLogic error: $e');
+      AppLogger.debug('❌ PaymentStatusLogic error: $e');
       _hasError = true;
       notifyListeners();
     }

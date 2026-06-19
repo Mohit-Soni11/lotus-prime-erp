@@ -5,10 +5,10 @@
 // =============================================================================
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../../database/db/app_database.dart';
 import '../../../models/setting/billing_setup/girvi_billing_model.dart';
+import '../../../core/logging/app_logger.dart';
 
 class GirviBillingRepo {
   final AppDatabase _db;
@@ -24,7 +24,7 @@ class GirviBillingRepo {
       if (row == null) return GirviBillingModel.defaults;
       return _rowToModel(row);
     } catch (e) {
-      debugPrint('❌ [GIRVI BILLING REPO] fetch error: $e');
+      AppLogger.debug('❌ [GIRVI BILLING REPO] fetch error: $e');
       return GirviBillingModel.defaults;
     }
   }
@@ -61,10 +61,10 @@ class GirviBillingRepo {
       } else {
         await _db.into(_db.girviBillingSettings).insert(companion);
       }
-      debugPrint('✅ [GIRVI BILLING REPO] Saved.');
+      AppLogger.debug('✅ [GIRVI BILLING REPO] Saved.');
       return true;
     } catch (e) {
-      debugPrint('❌ [GIRVI BILLING REPO] save error: $e');
+      AppLogger.debug('❌ [GIRVI BILLING REPO] save error: $e');
       return false;
     }
   }

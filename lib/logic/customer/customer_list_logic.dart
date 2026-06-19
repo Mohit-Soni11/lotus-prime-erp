@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import '../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../models/customer/customer_list/customer_list_ui_model.dart';
 import '../../repositories/customer/customer_list_repository.dart';
+import '../../core/logging/app_logger.dart';
 
 class CustomerListLogic extends ChangeNotifier {
   final CustomerListRepository _repo;
@@ -64,7 +65,7 @@ class CustomerListLogic extends ChangeNotifier {
           : CustomerListState.loaded;
       _errorMessage = null;
     } catch (e) {
-      debugPrint("CustomerListLogic load error: $e");
+      AppLogger.error("CustomerListLogic load error: $e");
       _errorMessage = "Failed to load clients. Please try again.";
       _state = CustomerListState.error;
     }
@@ -132,7 +133,7 @@ class CustomerListLogic extends ChangeNotifier {
           : CustomerListState.loaded;
       _errorMessage = null;
     } catch (e) {
-      debugPrint("CustomerListLogic refresh error: $e");
+      AppLogger.error("CustomerListLogic refresh error: $e");
       _stats = CustomerListStatsModel.empty();
       _errorMessage = "Failed to refresh clients. Please try again.";
       _state = CustomerListState.error;

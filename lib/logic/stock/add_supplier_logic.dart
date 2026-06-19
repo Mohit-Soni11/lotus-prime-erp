@@ -8,6 +8,7 @@ import '../../models/stock/supplier_model/add_supplier_form_model.dart';
 import '../../models/stock/supplier_model/supplier_enums.dart';
 import '../../models/stock/supplier_model/supplier_model.dart';
 import '../../repositories/supplier/supplier_repository.dart';
+import '../../core/logging/app_logger.dart';
 
 enum AddSupplierFormState {
   idle,
@@ -268,7 +269,7 @@ class AddSupplierLogic extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      debugPrint('AddSupplierLogic.save error: $e');
+      AppLogger.debug('AddSupplierLogic.save error: $e');
       _errorMessage = e.toString().contains('UNIQUE')
           ? 'A supplier with this mobile number already exists.'
           : 'Could not save supplier. Please try again.';

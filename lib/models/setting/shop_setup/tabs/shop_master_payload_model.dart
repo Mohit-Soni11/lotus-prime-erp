@@ -5,11 +5,11 @@
 // DESCRIPTION: 🚀 NEW: Replaces weak Map<String, dynamic> with strict typing.
 // -----------------------------------------------------------------------------
 
-import 'package:flutter/foundation.dart';
 import '../shop_profile_model.dart';
 import '../tabs/tax_gst_model.dart';
 import '../tabs/bank_account_model.dart';
 import '../tabs/shop_branding_model.dart';
+import 'package:flutter/foundation.dart';
 
 @immutable
 class ShopMasterPayloadModel {

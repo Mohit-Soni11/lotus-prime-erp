@@ -13,6 +13,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../database/db/app_database.dart';
 import '../../repositories/karigar/karigar_repository.dart';
+import '../../core/logging/app_logger.dart';
 
 class KarigarMasterController extends ChangeNotifier {
   final KarigarRepository _repo;
@@ -46,7 +47,7 @@ class KarigarMasterController extends ChangeNotifier {
       _allKarigars = await _repo.getAllKarigars(activeOnly: true);
       _applySearch();
     } catch (e) {
-      debugPrint('KarigarMasterController.loadKarigars error: $e');
+      AppLogger.debug('KarigarMasterController.loadKarigars error: $e');
       _errorMessage = 'Failed to load karigar list. Please try again.';
     } finally {
       _isLoading = false;
@@ -117,7 +118,7 @@ class KarigarMasterController extends ChangeNotifier {
       }
       return null;
     } catch (e) {
-      debugPrint('KarigarMasterController.addKarigar error: $e');
+      AppLogger.debug('KarigarMasterController.addKarigar error: $e');
       return null;
     }
   }

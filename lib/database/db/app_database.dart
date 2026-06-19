@@ -90,10 +90,46 @@ class AppDatabase extends _$AppDatabase {
   // ✅ DAO getter — directly use karo: AppDatabase().taxGstDao.fetchConfig()
   TaxGstConfigDao get taxGstDao => TaxGstConfigDao(this);
 
+  /// Handles migration errors safely.
+  ///
+  /// SQLite raises "duplicate column name" when re-adding an existing column.
+  /// This is expected when users upgrade across multiple schema versions.
+  /// Any other error (disk full, permission denied, corruption) is logged
+  /// and re-thrown so it surfaces immediately instead of silently corrupting data.
+  static void _handleMigrationError(Object error, StackTrace stackTrace) {
+    final msg = error.toString().toLowerCase();
+    if (msg.contains('duplicate column') ||
+        msg.contains('already exists') ||
+        msg.contains('duplicate')) {
+      AppLogger.debug('Migration step skipped (already applied): $error');
+      return;
+    }
+    AppLogger.error(
+      'Unexpected migration failure',
+      error: error,
+      stackTrace: stackTrace,
+    );
+    throw error;
+  }
+
+  Future<bool> _tableExists(String tableName) async {
+    final row = await customSelect(
+      '''
+      SELECT 1
+      FROM sqlite_master
+      WHERE type = 'table' AND name = ?
+      LIMIT 1
+      ''',
+      variables: [Variable.withString(tableName)],
+    ).getSingleOrNull();
+    return row != null;
+  }
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (Migrator m) async {
           await m.createAll();
+          await _ensureGirviPaymentReceiptIndex();
         },
         onUpgrade: (Migrator m, int from, int to) async {
           AppLogger.info('Migrating database from v$from to v$to');
@@ -161,13 +197,19 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(suppliers);
             try {
               await m.addColumn(stockItems, stockItems.stoneValue);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(stockItems, stockItems.purchaseRate);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(stockItems, stockItems.supplierId);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
           }
           if (from < 11) {
             await m.createTable(deliveryOrders);
@@ -183,7 +225,9 @@ class AppDatabase extends _$AppDatabase {
           if (from < 14) {
             try {
               await customStatement('DROP TABLE IF EXISTS "billing_settings"');
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             await m.createTable(salesBillingSettings);
             await m.createTable(purchaseBillingSettings);
           }
@@ -216,7 +260,9 @@ class AppDatabase extends _$AppDatabase {
             for (final statement in purchaseVoucherUpgradeSql) {
               try {
                 await customStatement(statement);
-              } catch (_) {}
+              } catch (e, s) {
+                _handleMigrationError(e, s);
+              }
             }
 
             AppLogger.info('v17 purchase voucher migration applied.');
@@ -225,87 +271,141 @@ class AppDatabase extends _$AppDatabase {
           if (from < 18) {
             try {
               await m.addColumn(bills, bills.billingMode);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(bills, bills.billType);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(bills, bills.paymentStatus);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(bills, bills.taxableAmount);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(bills, bills.cgstAmount);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(bills, bills.sgstAmount);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(bills, bills.gstAmount);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(bills, bills.makingTotal);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(bills, bills.cashPaid);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(bills, bills.upiPaid);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(bills, bills.cardPaid);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(bills, bills.advancePaid);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(bills, bills.dueAmount);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(bills, bills.oldGoldDeduction);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(bills, bills.oldGoldMode);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(bills, bills.promiseDate);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
 
             try {
               await m.addColumn(billItems, billItems.lineNo);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(billItems, billItems.metalType);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(billItems, billItems.quantity);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(billItems, billItems.lessWeight);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(billItems, billItems.lessWeightPerPiece);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(billItems, billItems.fineWeight);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(billItems, billItems.makingChargeType);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(billItems, billItems.makingChargeInput);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(billItems, billItems.linkedStockItemId);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
             try {
               await m.addColumn(billItems, billItems.linkedStockSku);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
 
             try {
               await m.createTable(billOldGoldItems);
-            } catch (_) {}
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
 
             AppLogger.info('v18 sales audit migration applied.');
           }
@@ -318,13 +418,23 @@ class AppDatabase extends _$AppDatabase {
           if (from < 20) {
             try {
               await m.addColumn(girviLoans, girviLoans.huidNumber);
-            } catch (_) {}
+            } catch (error) {
+              AppLogger.warning('v20 Girvi HUID migration skipped: $error');
+            }
             try {
               await m.addColumn(girviLoans, girviLoans.itemPhotoPath);
-            } catch (_) {}
+            } catch (error) {
+              AppLogger.warning(
+                'v20 Girvi item photo migration skipped: $error',
+              );
+            }
             try {
               await m.addColumn(girviLoans, girviLoans.invoiceGenerated);
-            } catch (_) {}
+            } catch (error) {
+              AppLogger.warning(
+                'v20 Girvi invoice flag migration skipped: $error',
+              );
+            }
             AppLogger.info(
                 'v20 girvi invoice item metadata migration applied.');
           }
@@ -344,19 +454,31 @@ class AppDatabase extends _$AppDatabase {
                 girviBillingSettings,
                 girviBillingSettings.termsAndConditionsHindi,
               );
-            } catch (_) {}
+            } catch (error) {
+              AppLogger.warning(
+                'v22 Girvi Hindi terms migration skipped: $error',
+              );
+            }
             try {
               await m.addColumn(
                 girviBillingSettings,
                 girviBillingSettings.customerDeclaration,
               );
-            } catch (_) {}
+            } catch (error) {
+              AppLogger.warning(
+                'v22 Girvi customer declaration migration skipped: $error',
+              );
+            }
             try {
               await m.addColumn(
                 girviBillingSettings,
                 girviBillingSettings.customerDeclarationHindi,
               );
-            } catch (_) {}
+            } catch (error) {
+              AppLogger.warning(
+                'v22 Girvi Hindi declaration migration skipped: $error',
+              );
+            }
             AppLogger.info(
                 'v22 bilingual Girvi terms and declaration applied.');
           }
@@ -364,30 +486,64 @@ class AppDatabase extends _$AppDatabase {
           if (from < 23) {
             try {
               await m.addColumn(shopProfiles, shopProfiles.logoPath);
-            } catch (_) {}
+            } catch (error) {
+              AppLogger.warning(
+                'v23 shop logo path migration skipped: $error',
+              );
+            }
             try {
               await m.addColumn(shopProfiles, shopProfiles.logoShape);
-            } catch (_) {}
+            } catch (error) {
+              AppLogger.warning(
+                'v23 shop logo shape migration skipped: $error',
+              );
+            }
             try {
               await m.addColumn(shopProfiles, shopProfiles.signaturePath);
-            } catch (_) {}
+            } catch (error) {
+              AppLogger.warning(
+                'v23 shop signature path migration skipped: $error',
+              );
+            }
             try {
               await m.addColumn(shopProfiles, shopProfiles.signatureShape);
-            } catch (_) {}
+            } catch (error) {
+              AppLogger.warning(
+                'v23 shop signature shape migration skipped: $error',
+              );
+            }
             AppLogger.info(
                 'v23 Shop Profile identity paths and shapes applied.');
           }
 
           if (from < 24) {
-            try {
-              await m.addColumn(bills, bills.sourceAdvanceOrderId);
-            } catch (_) {}
-            try {
-              await m.addColumn(bills, bills.sourceAdvanceOrderNo);
-            } catch (_) {}
-            await _backfillAdvanceBillSources();
-            AppLogger.info(
-                'v24 advance order to sales bill source links applied.');
+            final hasBillsTable = await _tableExists('bills');
+            if (hasBillsTable) {
+              try {
+                await m.addColumn(bills, bills.sourceAdvanceOrderId);
+              } catch (e, s) {
+                _handleMigrationError(e, s);
+              }
+              try {
+                await m.addColumn(bills, bills.sourceAdvanceOrderNo);
+              } catch (e, s) {
+                _handleMigrationError(e, s);
+              }
+
+              if (await _tableExists('sales_orders')) {
+                await _backfillAdvanceBillSources();
+              } else {
+                AppLogger.warning(
+                  'v24 advance bill source backfill skipped: sales_orders table missing.',
+                );
+              }
+              AppLogger.info(
+                  'v24 advance order to sales bill source links applied.');
+            } else {
+              AppLogger.warning(
+                'v24 advance bill source migration skipped: bills table missing.',
+              );
+            }
           }
 
           if (from < 25) {
@@ -396,24 +552,80 @@ class AppDatabase extends _$AppDatabase {
                 girviLoans,
                 girviLoans.expectedDeliveryDate,
               );
-            } catch (_) {}
+            } catch (error) {
+              AppLogger.warning(
+                'v25 expected Girvi delivery date migration skipped: $error',
+              );
+            }
             try {
               await m.addColumn(girviLoans, girviLoans.deliveredAt);
-            } catch (_) {}
+            } catch (error) {
+              AppLogger.warning(
+                'v25 Girvi delivered-at migration skipped: $error',
+              );
+            }
             try {
               await m.addColumn(
                 girviPayments,
                 girviPayments.principalComponent,
               );
-            } catch (_) {}
+            } catch (error) {
+              AppLogger.warning(
+                'v25 Girvi principal component migration skipped: $error',
+              );
+            }
             try {
               await m.addColumn(
                 girviPayments,
                 girviPayments.interestComponent,
               );
-            } catch (_) {}
+            } catch (error) {
+              AppLogger.warning(
+                'v25 Girvi interest component migration skipped: $error',
+              );
+            }
             AppLogger.info(
               'v25 Girvi settlement and delivery workflow applied.',
+            );
+          }
+
+          if (from < 26) {
+            try {
+              await m.addColumn(girviLoans, girviLoans.releaseDiscount);
+            } catch (error) {
+              AppLogger.warning(
+                'v26 Girvi release discount migration skipped: $error',
+              );
+            }
+            try {
+              await m.addColumn(
+                girviPayments,
+                girviPayments.principalDiscountComponent,
+              );
+            } catch (error) {
+              AppLogger.warning(
+                'v26 Girvi principal discount migration skipped: $error',
+              );
+            }
+            try {
+              await m.addColumn(
+                girviPayments,
+                girviPayments.interestDiscountComponent,
+              );
+            } catch (error) {
+              AppLogger.warning(
+                'v26 Girvi interest discount migration skipped: $error',
+              );
+            }
+            AppLogger.info(
+              'v26 Girvi release discount audit fields applied.',
+            );
+          }
+
+          if (from < 27) {
+            await _ensureGirviPaymentReceiptIndex();
+            AppLogger.info(
+              'v27 Girvi payment receipt uniqueness safeguards applied.',
             );
           }
         },
@@ -425,6 +637,8 @@ class AppDatabase extends _$AppDatabase {
           if (EnvConfig.enableVerboseLogs) {
             AppLogger.debug('Database opened at schema v${details.versionNow}');
           }
+
+          await _ensureGirviPaymentReceiptIndex();
 
           await customStatement('''
             CREATE TABLE IF NOT EXISTS "bank_accounts" (
@@ -520,6 +734,31 @@ class AppDatabase extends _$AppDatabase {
           }
         },
       );
+
+  Future<void> _ensureGirviPaymentReceiptIndex() async {
+    try {
+      await customStatement('''
+        UPDATE "girvi_payments"
+        SET "receipt_no" = "receipt_no" || '-DUP-' || "id"
+        WHERE "receipt_no" IS NOT NULL
+          AND "id" NOT IN (
+            SELECT MIN("id")
+            FROM "girvi_payments"
+            WHERE "receipt_no" IS NOT NULL
+            GROUP BY "receipt_no"
+          )
+      ''');
+      await customStatement('''
+        CREATE UNIQUE INDEX IF NOT EXISTS "idx_girvi_pay_receipt_no_unique"
+        ON "girvi_payments" ("receipt_no")
+        WHERE "receipt_no" IS NOT NULL
+      ''');
+    } catch (error) {
+      AppLogger.warning(
+        'Girvi payment receipt uniqueness safeguard skipped: $error',
+      );
+    }
+  }
 
   Future<void> _backfillGirviStructuredDetails() async {
     await customStatement('''
@@ -630,9 +869,8 @@ class AppDatabase extends _$AppDatabase {
     Future<void> runIfNeeded(String statement) async {
       try {
         await customStatement(statement);
-      } catch (_) {
-        // Existing columns raise duplicate-column errors. Ignoring them keeps
-        // the safety net safe for old, partial, and fresh local databases.
+      } catch (e, s) {
+        _handleMigrationError(e, s);
       }
     }
 
@@ -645,9 +883,8 @@ class AppDatabase extends _$AppDatabase {
     Future<void> runIfNeeded(Future<void> Function() action) async {
       try {
         await action();
-      } catch (_) {
-        // Column/table already exists. This migration is intentionally idempotent
-        // because older development databases may have partial billing schemas.
+      } catch (e, s) {
+        _handleMigrationError(e, s);
       }
     }
 

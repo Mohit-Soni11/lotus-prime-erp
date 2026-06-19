@@ -8,11 +8,11 @@
 // =============================================================================
 
 import 'package:drift/drift.dart' as drift;
-import 'package:flutter/foundation.dart';
 
 import '../../database/db/app_database.dart';
 import '../../models/karigar/karigar_enums/karigar_enums.dart';
 import '../../models/karigar/karigar_directory/karigar_directory_ui_model.dart';
+import '../../core/logging/app_logger.dart';
 
 class KarigarDirectoryRepository {
   final AppDatabase _db;
@@ -94,7 +94,7 @@ class KarigarDirectoryRepository {
         );
       }).toList();
     } catch (e) {
-      debugPrint('KarigarDirectoryRepository.getAllKarigars error: $e');
+      AppLogger.debug('KarigarDirectoryRepository.getAllKarigars error: $e');
       return [];
     }
   }
@@ -154,7 +154,7 @@ class KarigarDirectoryRepository {
         totalOutstanding: totalOutstanding,
       );
     } catch (e) {
-      debugPrint('KarigarDirectoryRepository.fetchStats error: $e');
+      AppLogger.debug('KarigarDirectoryRepository.fetchStats error: $e');
       return KarigarDirectoryStatsModel.empty();
     }
   }

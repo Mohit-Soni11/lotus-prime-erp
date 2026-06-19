@@ -4,9 +4,9 @@
 // DESCRIPTION: Immutable view models for the production customer directory.
 // -----------------------------------------------------------------------------
 
-import 'package:flutter/foundation.dart';
 
 import '../customer_enums/customer_list_enums.dart';
+import 'package:flutter/foundation.dart';
 
 @immutable
 class CustomerListItemModel {

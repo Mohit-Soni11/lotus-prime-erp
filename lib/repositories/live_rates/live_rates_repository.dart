@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../database/db/app_database.dart';
 import '../../models/live_rates/live_rates_model.dart';
+import '../../core/logging/app_logger.dart';
 
 class LiveRatesRepository {
   final AppDatabase _db = AppDatabase();
@@ -35,7 +35,7 @@ class LiveRatesRepository {
     _dailyRateSub = query.watchSingleOrNull().listen(
       _emitRate,
       onError: (Object error, StackTrace stackTrace) {
-        debugPrint('LiveRatesRepository error: $error');
+        AppLogger.debug('LiveRatesRepository error: $error');
         if (!_ratesController.isClosed) {
           _ratesController.add(LiveRatesModel.demo);
         }
@@ -152,9 +152,9 @@ class LiveRatesRepository {
         updates: {_db.dailyRates},
       );
       await _fetchTodayRates();
-      debugPrint('Rates saved successfully.');
+      AppLogger.debug('Rates saved successfully.');
     } catch (e) {
-      debugPrint('Error saving rates: $e');
+      AppLogger.debug('Error saving rates: $e');
     }
   }
 

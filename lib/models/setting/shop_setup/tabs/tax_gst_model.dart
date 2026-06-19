@@ -5,8 +5,8 @@
 // 🚀 UPGRADED: Replaced heavy Base64 strings with lightweight File Paths.
 // -----------------------------------------------------------------------------
 
-import 'package:flutter/foundation.dart';
 import '../enums/tax_gst_enums.dart';
+import 'package:flutter/foundation.dart';
 
 @immutable
 class TaxGstModel {

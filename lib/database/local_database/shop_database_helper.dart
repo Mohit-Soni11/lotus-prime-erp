@@ -8,7 +8,7 @@
 
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:flutter/foundation.dart';
+import '../../core/logging/app_logger.dart';
 
 class ShopDatabaseHelper {
   static final ShopDatabaseHelper _instance = ShopDatabaseHelper._internal();
@@ -41,7 +41,7 @@ class ShopDatabaseHelper {
 
   // --- 1. SCHEMA CREATION (Normalized Tables with EXACT Snake_Case Match) ---
   Future<void> _createSchema(Database db, int version) async {
-    debugPrint(
+    AppLogger.debug(
         "🚀 [DB] Creating Enterprise Normalized Schema (v$_dbVersion)...");
 
     // Table 1: Basic Info (Names strictly matched with payload)
@@ -102,12 +102,12 @@ class ShopDatabaseHelper {
       )
     ''');
 
-    debugPrint("✅ [DB] Schema Created Successfully.");
+    AppLogger.debug("✅ [DB] Schema Created Successfully.");
   }
 
   // --- 🚀 AUTO-UPDATE LOGIC (MIGRATIONS) ---
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    debugPrint(
+    AppLogger.debug(
         "🔄 [DB] Upgrading database from v$oldVersion to v$newVersion...");
     if (oldVersion < 3) {
       await db.execute(
@@ -172,12 +172,12 @@ class ShopDatabaseHelper {
         }
       });
 
-      debugPrint(
+      AppLogger.debug(
           "🚀 [DB] Master Payload Saved Successfully for Tenant: $tenantId");
       return true;
     } catch (e, stacktrace) {
-      debugPrint("❌ [DB TRANSACTION ERROR]: $e");
-      debugPrint(stacktrace.toString());
+      AppLogger.error("❌ [DB TRANSACTION ERROR]: $e");
+      AppLogger.debug(stacktrace.toString());
       return false;
     }
   }

@@ -1,11 +1,11 @@
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
 
 import '../../database/local_database/shop_database_helper.dart';
 import '../../database/db/app_database.dart';
 import '../../models/finance/due_collection_entry/due_collection_entry_model.dart';
 import '../setting/shop_setup/shop_session_manager.dart';
+import '../../core/logging/app_logger.dart';
 
 class DueCollectionEntryRepository {
   final AppDatabase _db;
@@ -20,7 +20,7 @@ class DueCollectionEntryRepository {
       final rows = await _baseDueQuery().get();
       return _mapDueRows(rows);
     } catch (e) {
-      debugPrint('DueCollectionEntryRepository.fetchDueBills error: $e');
+      AppLogger.debug('DueCollectionEntryRepository.fetchDueBills error: $e');
       return [];
     }
   }
@@ -55,7 +55,7 @@ class DueCollectionEntryRepository {
           )
           .toList();
     } catch (e) {
-      debugPrint('DueCollectionEntryRepository.fetchBankAccounts error: $e');
+      AppLogger.debug('DueCollectionEntryRepository.fetchBankAccounts error: $e');
       return [];
     }
   }
@@ -127,7 +127,7 @@ class DueCollectionEntryRepository {
       );
       return accountId;
     } catch (e) {
-      debugPrint('DueCollectionEntryRepository.createPaymentAccount error: $e');
+      AppLogger.debug('DueCollectionEntryRepository.createPaymentAccount error: $e');
       return null;
     }
   }
@@ -163,7 +163,7 @@ class DueCollectionEntryRepository {
       );
       return true;
     } catch (e) {
-      debugPrint(
+      AppLogger.debug(
           'DueCollectionEntryRepository.updatePaymentAccountUpi error: $e');
       return false;
     }
@@ -290,7 +290,7 @@ class DueCollectionEntryRepository {
         );
       });
     } catch (e) {
-      debugPrint('DueCollectionEntryRepository.saveCollection error: $e');
+      AppLogger.debug('DueCollectionEntryRepository.saveCollection error: $e');
       return const DueCollectionSaveResult(
         success: false,
         message: 'Could not save due collection.',
@@ -513,7 +513,7 @@ class DueCollectionEntryRepository {
         }
       }
     } catch (e) {
-      debugPrint(
+      AppLogger.debug(
           'DueCollectionEntryRepository._syncPaymentAccountToShopProfile error: $e');
     }
   }
@@ -577,7 +577,7 @@ class DueCollectionEntryRepository {
         }
       }
     } catch (e) {
-      debugPrint(
+      AppLogger.debug(
           'DueCollectionEntryRepository._syncShopProfileBankingToFinanceAccounts error: $e');
     }
   }

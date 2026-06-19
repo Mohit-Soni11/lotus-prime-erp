@@ -15,6 +15,7 @@ import 'package:flutter/services.dart';
 import '../../../../../models/setting/shop_setup/tabs/bank_account_model.dart';
 import '../../../../../models/setting/shop_setup/enums/banking_enums.dart';
 import '../../../../../logic/setting/shop_setup/tabs/tax_gst/document_crop_logic.dart';
+import '../../../../../core/logging/app_logger.dart';
 
 class BankingLogic {
   // 🚀 UPGRADE: Single shared instance of crop logic (Memory Safe)
@@ -56,7 +57,7 @@ class BankingLogic {
         cropLogic.clearCache(File(accountToRemove.qrImagePath!));
       }
     } catch (e) {
-      debugPrint("Account ID not found for deletion: $e");
+      AppLogger.debug("Account ID not found for deletion: $e");
     }
 
     currentList.removeWhere((acc) => acc.id == id);

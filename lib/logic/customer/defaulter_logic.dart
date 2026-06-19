@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 
 import '../../../models/customer/defaulter_model.dart';
 import '../../../repositories/customer/defaulter_repository.dart';
+import '../../core/logging/app_logger.dart';
 
 class DefaulterLogic extends ChangeNotifier {
   // ==========================================
@@ -59,7 +60,7 @@ class DefaulterLogic extends ChangeNotifier {
         _applyAll(freshList);
       },
       onError: (error) {
-        debugPrint('❌ DefaulterLogic stream error: $error');
+        AppLogger.debug('❌ DefaulterLogic stream error: $error');
         _state = _state.copyWith(
           isLoading: false,
           errorMessage: 'Failed to load data. Please refresh.',
@@ -80,7 +81,7 @@ class DefaulterLogic extends ChangeNotifier {
       final freshList = await _repository.fetchAllDefaulters();
       _applyAll(freshList);
     } catch (e) {
-      debugPrint('❌ DefaulterLogic.refresh Error: $e');
+      AppLogger.debug('❌ DefaulterLogic.refresh Error: $e');
       _state = _state.copyWith(
         isLoading: false,
         errorMessage: 'Refresh failed. Check connection.',

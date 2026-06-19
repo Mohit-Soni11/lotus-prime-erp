@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:lotus_erp/database/db/app_database.dart';
 // ✅ FIXED: Ensure this path matches where you kept the model
 import '../../../models/dashboard/pending_stats_model.dart';
+import '../../../core/logging/app_logger.dart';
 
 class PendingOrderLogic {
   final AppDatabase _db;
@@ -48,11 +49,11 @@ class PendingOrderLogic {
           syncTime: "${now.hour}:${now.minute}",
         ));
       }, onError: (e) {
-        print("🔴 PendingLogic Error: $e");
+        AppLogger.error("PendingLogic Error: $e");
         if (!_controller.isClosed) _controller.add(PendingStatsModel.empty());
       });
     } catch (e) {
-      print("🔴 Init Error: $e");
+      AppLogger.error("PendingOrderLogic Init Error: $e");
     }
   }
 

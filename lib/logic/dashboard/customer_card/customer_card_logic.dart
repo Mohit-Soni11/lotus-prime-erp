@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:drift/drift.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../models/dashboard/customer_stats_model.dart';
+import '../../../core/logging/app_logger.dart';
 
 class CustomerCardLogic {
   // Dependency Injection (Testable Code)
@@ -52,10 +53,10 @@ class CustomerCardLogic {
           _controller.add(CustomerStatsModel.empty());
         }
       }, onError: (e) {
-        print("🔴 CustomerLogic Error: $e");
+        AppLogger.error("CustomerLogic Error: $e");
       });
     } catch (e) {
-      print("🔴 Init Error: $e");
+      AppLogger.error("CustomerCardLogic Init Error: $e");
     }
   }
 

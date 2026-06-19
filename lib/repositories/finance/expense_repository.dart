@@ -8,13 +8,13 @@
 // =============================================================================
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 import '../../database/db/app_database.dart';
 import '../../models/finance/cash_book/cash_book_enums.dart';
 import '../../models/finance/expense/expense_model.dart';
 import '../../models/finance/expense/expense_summary_model.dart';
+import '../../core/logging/app_logger.dart';
 
 class ExpenseRepository {
   final AppDatabase _db;
@@ -85,7 +85,7 @@ class ExpenseRepository {
 
       return models;
     } catch (e) {
-      debugPrint('❌ ExpenseRepository.fetchExpenses: $e');
+      AppLogger.debug('❌ ExpenseRepository.fetchExpenses: $e');
       return [];
     }
   }
@@ -184,7 +184,7 @@ class ExpenseRepository {
         paymentBreakdown: modeBreakdown,
       );
     } catch (e) {
-      debugPrint('❌ ExpenseRepository.computeSummary: $e');
+      AppLogger.debug('❌ ExpenseRepository.computeSummary: $e');
       return ExpenseSummaryModel.zero();
     }
   }
@@ -223,7 +223,7 @@ class ExpenseRepository {
           );
       return true;
     } catch (e) {
-      debugPrint('❌ ExpenseRepository.saveExpense: $e');
+      AppLogger.debug('❌ ExpenseRepository.saveExpense: $e');
       return false;
     }
   }
@@ -242,7 +242,7 @@ class ExpenseRepository {
       ));
       return true;
     } catch (e) {
-      debugPrint('❌ ExpenseRepository.voidExpense: $e');
+      AppLogger.debug('❌ ExpenseRepository.voidExpense: $e');
       return false;
     }
   }

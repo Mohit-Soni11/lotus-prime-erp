@@ -12,8 +12,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../../theme/booking_advance/booking_advance_theme.dart';
 import '../../../logic/booking_advance/booking_advance_controller.dart';
-import '../../models/booking_advance_/booking_advance/booking_advance_model.dart';
-import '../../../models/sales%20&%20orders/sales_pos_enums/sales_pos_enums.dart';
+import '../../models/booking_advance/booking_advance/booking_advance_model.dart';
+import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 
 class BookingItemsTable extends StatelessWidget {
   final BookingAdvanceController ctrl;

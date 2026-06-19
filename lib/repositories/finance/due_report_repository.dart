@@ -1,8 +1,8 @@
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../database/db/app_database.dart';
 import '../../models/finance/due_report/due_report_model.dart';
+import '../../core/logging/app_logger.dart';
 
 class DueReportRepository {
   final AppDatabase _db;
@@ -14,7 +14,7 @@ class DueReportRepository {
       final rows = await _baseQuery().get();
       return _mapRows(rows);
     } catch (e) {
-      debugPrint('DueReportRepository.fetchDueBills error: $e');
+      AppLogger.debug('DueReportRepository.fetchDueBills error: $e');
       return [];
     }
   }

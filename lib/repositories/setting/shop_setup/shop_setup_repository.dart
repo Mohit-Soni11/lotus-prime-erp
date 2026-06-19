@@ -6,7 +6,6 @@
 //              Prevents duplicate store creations and ensures Upsert logic.
 // -----------------------------------------------------------------------------
 
-import 'package:flutter/foundation.dart';
 import 'dart:convert';
 
 // --- MODEL IMPORTS ---
@@ -24,6 +23,7 @@ import '../../../database/db/app_database.dart';
 import 'package:drift/drift.dart';
 
 import 'shop_session_manager.dart';
+import '../../../core/logging/app_logger.dart';
 
 class ShopSetupRepository {
   final ShopDatabaseHelper _dbHelper = ShopDatabaseHelper();
@@ -54,9 +54,9 @@ class ShopSetupRepository {
       final masterPayloadMap = masterModel.toJson();
       final String prettyJson =
           const JsonEncoder.withIndent('  ').convert(masterPayloadMap);
-      debugPrint(
+      AppLogger.debug(
           "🚀 [SHOP SETUP] SECURE MASTER PAYLOAD ROUTED TO DB WITH PERMANENT ID: $tenantId");
-      debugPrint(prettyJson);
+      AppLogger.debug(prettyJson);
 
       // 1. Existing local DB mein save karo (unchanged)
       final bool isSaved =
@@ -76,8 +76,8 @@ class ShopSetupRepository {
 
       return isSaved;
     } catch (e, stacktrace) {
-      debugPrint("❌ [SHOP SETUP] REPOSITORY ERROR: $e");
-      debugPrint(stacktrace.toString());
+      AppLogger.error("❌ [SHOP SETUP] REPOSITORY ERROR: $e");
+      AppLogger.debug(stacktrace.toString());
       return false;
     }
   }
@@ -133,7 +133,7 @@ class ShopSetupRepository {
         }
       }
     } catch (e) {
-      debugPrint('⚠️ [BANKING SYNC] Failed (non-critical): $e');
+      AppLogger.debug('⚠️ [BANKING SYNC] Failed (non-critical): $e');
     }
   }
 
@@ -236,15 +236,15 @@ class ShopSetupRepository {
         await (_driftDb.update(_driftDb.shopProfiles)
               ..where((t) => t.id.equals(existing.id)))
             .write(companion);
-        debugPrint('✅ [DRIFT SYNC] ShopProfiles updated (id: ${existing.id})');
+        AppLogger.debug('✅ [DRIFT SYNC] ShopProfiles updated (id: ${existing.id})');
       } else {
         // Insert
         await _driftDb.into(_driftDb.shopProfiles).insert(companion);
-        debugPrint('✅ [DRIFT SYNC] ShopProfiles inserted.');
+        AppLogger.debug('✅ [DRIFT SYNC] ShopProfiles inserted.');
       }
     } catch (e) {
       // Sync fail hone par crash mat karo — sirf log karo
-      debugPrint('⚠️ [DRIFT SYNC] Failed (non-critical): $e');
+      AppLogger.debug('⚠️ [DRIFT SYNC] Failed (non-critical): $e');
     }
   }
 
@@ -252,7 +252,7 @@ class ShopSetupRepository {
     try {
       return await _dbHelper.getMasterPayload(tenantId);
     } catch (e) {
-      debugPrint("❌ [SHOP SETUP] FAILED TO FETCH DATA: $e");
+      AppLogger.error("❌ [SHOP SETUP] FAILED TO FETCH DATA: $e");
       return null;
     }
   }

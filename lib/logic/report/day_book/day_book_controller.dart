@@ -18,6 +18,7 @@ import 'package:intl/intl.dart';
 
 import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../repositories/reports/day_book_repository.dart';
+import '../../../core/logging/app_logger.dart';
 
 class DayBookController extends ChangeNotifier {
   DayBookController() {
@@ -330,7 +331,7 @@ class DayBookController extends ChangeNotifier {
       await loadData(silent: true);
       return true;
     } catch (e) {
-      debugPrint('❌ closeDay: $e');
+      AppLogger.debug('❌ closeDay: $e');
       return false;
     }
   }

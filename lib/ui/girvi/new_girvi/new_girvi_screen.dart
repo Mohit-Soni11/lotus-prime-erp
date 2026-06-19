@@ -25,6 +25,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+import '../../../core/logging/app_logger.dart';
 import '../../../database/db/app_database.dart';
 import '../../../logic/dashboard/date_card/date_card_logic.dart';
 import '../../../logic/girvi/new_girvi_controller.dart';

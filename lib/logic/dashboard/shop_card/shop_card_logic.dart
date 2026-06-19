@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../../../models/dashboard/shop_profile_model.dart';
 import '../../dashboard/dashboard_repository.dart'; // ✅ Import Repository
+import '../../../core/logging/app_logger.dart';
 
 class ShopCardLogic extends ChangeNotifier {
   // Dependencies
@@ -36,7 +37,7 @@ class ShopCardLogic extends ChangeNotifier {
 
       _data = result;
     } catch (e) {
-      debugPrint("🔴 Error in Logic: $e");
+      AppLogger.error("🔴 Error in Logic: $e");
       _errorMessage = "Unable to load profile. Please check connection.";
     } finally {
       _isLoading = false;

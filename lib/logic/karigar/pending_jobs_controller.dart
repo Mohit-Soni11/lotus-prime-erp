@@ -15,6 +15,7 @@ import '../../models/karigar/karigar_enums/karigar_enums.dart';
 import '../../models/karigar/karigar_issue_model.dart';
 import '../../models/karigar/karigar_stats_model.dart';
 import '../../repositories/karigar/karigar_repository.dart';
+import '../../core/logging/app_logger.dart';
 
 class PendingJobsController extends ChangeNotifier {
   final KarigarRepository _repo;
@@ -62,7 +63,7 @@ class PendingJobsController extends ChangeNotifier {
       _stats = results[1] as OverallKarigarStats;
       _applyFilterAndSearch();
     } catch (e) {
-      debugPrint('PendingJobsController.loadData error: $e');
+      AppLogger.debug('PendingJobsController.loadData error: $e');
       _errorMessage = 'Failed to load pending jobs. Please try again.';
     } finally {
       _isLoading = false;
@@ -143,7 +144,7 @@ class PendingJobsController extends ChangeNotifier {
       if (success) await loadData(); // Refresh list
       return success;
     } catch (e) {
-      debugPrint('PendingJobsController._updateStatus error: $e');
+      AppLogger.debug('PendingJobsController._updateStatus error: $e');
       return false;
     }
   }

@@ -20,6 +20,7 @@ import '../../../models/finance/expense/expense_enums.dart';
 import '../../../models/finance/expense/expense_model.dart';
 import '../../../models/finance/expense/expense_summary_model.dart';
 import '../../../repositories/finance/expense_repository.dart';
+import '../../../core/logging/app_logger.dart';
 
 class ExpenseController extends ChangeNotifier {
   ExpenseController() {
@@ -106,7 +107,7 @@ class ExpenseController extends ChangeNotifier {
         _applyFiltersAndGroup();
       },
       onError: (e) {
-        debugPrint('❌ ExpenseController watch error: $e');
+        AppLogger.debug('❌ ExpenseController watch error: $e');
         _errorMessage = 'Failed to load expenses.';
         _isLoading = false;
         notifyListeners();

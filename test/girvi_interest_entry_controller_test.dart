@@ -3,6 +3,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/logic/girvi/girvi_controllers.dart';
+import 'package:lotus_erp/models/girvi/girvi_enums.dart';
 
 void main() {
   late AppDatabase db;
@@ -68,6 +69,40 @@ void main() {
     expect(controller.customerAccounts.single.ticketCount, 1);
     expect(controller.customerAccounts.single.loans.single.loan.ticketNo,
         'GRV-A-002');
+  });
+
+  test('release discount auto-fills the net settlement interest first',
+      () async {
+    final customerId =
+        await _insertCustomer(db, 'Discount Customer', '9000000010');
+    await _insertLoan(
+      db,
+      customerId,
+      'GRV-DISC-001',
+      'Gold ring',
+      50000,
+    );
+
+    await controller.load();
+    final account = controller.customerAccounts.single;
+    await controller.selectLoan(account.loans.single);
+    controller.setPaymentType(GirviPaymentType.fullRelease);
+
+    final grossDue = controller.releaseTotalDueForSelected;
+    final interestDue = controller.netInterestDueForSelected;
+    final discount = interestDue > 1000 ? 1000.0 : interestDue;
+
+    controller.onReleaseDiscountChanged(discount.toStringAsFixed(0));
+
+    expect(controller.releaseDiscount, discount);
+    expect(
+      controller.releaseInterestReceived,
+      interestDue - discount,
+    );
+    expect(
+      controller.releaseSettlementValue,
+      closeTo(grossDue, 0.01),
+    );
   });
 }
 

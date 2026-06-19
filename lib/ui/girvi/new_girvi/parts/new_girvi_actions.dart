@@ -360,7 +360,7 @@ extension NewGirviActions on _NewGirviScreenState {
       if (!mounted) return;
       _setIdProofImagePath(savedPath);
     } catch (e) {
-      debugPrint('NewGirviScreen._saveKycPhoto error: $e');
+      AppLogger.debug('NewGirviScreen._saveKycPhoto error: $e');
       if (mounted) {
         _showError('KYC photo could not be attached. Please try again.');
       }
@@ -475,7 +475,7 @@ extension NewGirviActions on _NewGirviScreenState {
       if (!mounted) return;
       _addPledgedItemPhotoPaths(item, savedPaths);
     } catch (e) {
-      debugPrint('NewGirviScreen._pickPledgedItemPhoto error: $e');
+      AppLogger.debug('NewGirviScreen._pickPledgedItemPhoto error: $e');
       if (mounted) {
         _showError('Item photos could not be attached. Please try again.');
       }
@@ -614,7 +614,7 @@ extension NewGirviActions on _NewGirviScreenState {
       if (!mounted) return;
       _setItemPhotoPath(savedPath);
     } catch (e) {
-      debugPrint('NewGirviScreen._pickItemPhoto error: $e');
+      AppLogger.debug('NewGirviScreen._pickItemPhoto error: $e');
       if (mounted) {
         _showError('Item photo could not be attached. Please try again.');
       }

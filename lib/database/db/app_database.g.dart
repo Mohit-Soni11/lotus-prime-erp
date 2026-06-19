@@ -17311,6 +17311,12 @@ class $GirviLoansTable extends GirviLoans
   late final GeneratedColumn<double> releasePenalty = GeneratedColumn<double>(
       'release_penalty', aliasedName, true,
       type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _releaseDiscountMeta =
+      const VerificationMeta('releaseDiscount');
+  @override
+  late final GeneratedColumn<double> releaseDiscount = GeneratedColumn<double>(
+      'release_discount', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
   static const VerificationMeta _releaseTotalAmountMeta =
       const VerificationMeta('releaseTotalAmount');
   @override
@@ -17383,6 +17389,7 @@ class $GirviLoansTable extends GirviLoans
         releasePrincipal,
         releaseInterest,
         releasePenalty,
+        releaseDiscount,
         releaseTotalAmount,
         releasePaymentMode,
         releaseNotes,
@@ -17589,6 +17596,12 @@ class $GirviLoansTable extends GirviLoans
           releasePenalty.isAcceptableOrUnknown(
               data['release_penalty']!, _releasePenaltyMeta));
     }
+    if (data.containsKey('release_discount')) {
+      context.handle(
+          _releaseDiscountMeta,
+          releaseDiscount.isAcceptableOrUnknown(
+              data['release_discount']!, _releaseDiscountMeta));
+    }
     if (data.containsKey('release_total_amount')) {
       context.handle(
           _releaseTotalAmountMeta,
@@ -17703,6 +17716,8 @@ class $GirviLoansTable extends GirviLoans
           DriftSqlType.double, data['${effectivePrefix}release_interest']),
       releasePenalty: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}release_penalty']),
+      releaseDiscount: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}release_discount']),
       releaseTotalAmount: attachedDatabase.typeMapping.read(
           DriftSqlType.double, data['${effectivePrefix}release_total_amount']),
       releasePaymentMode: attachedDatabase.typeMapping.read(
@@ -17819,6 +17834,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
   /// Penalty (if any overdue charges) at release
   final double? releasePenalty;
 
+  /// Total approved discount / waiver across release settlement entries.
+  final double? releaseDiscount;
+
   /// Total amount collected at release
   final double? releaseTotalAmount;
 
@@ -17871,6 +17889,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       this.releasePrincipal,
       this.releaseInterest,
       this.releasePenalty,
+      this.releaseDiscount,
       this.releaseTotalAmount,
       this.releasePaymentMode,
       this.releaseNotes,
@@ -17939,6 +17958,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
     }
     if (!nullToAbsent || releasePenalty != null) {
       map['release_penalty'] = Variable<double>(releasePenalty);
+    }
+    if (!nullToAbsent || releaseDiscount != null) {
+      map['release_discount'] = Variable<double>(releaseDiscount);
     }
     if (!nullToAbsent || releaseTotalAmount != null) {
       map['release_total_amount'] = Variable<double>(releaseTotalAmount);
@@ -18022,6 +18044,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       releasePenalty: releasePenalty == null && nullToAbsent
           ? const Value.absent()
           : Value(releasePenalty),
+      releaseDiscount: releaseDiscount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(releaseDiscount),
       releaseTotalAmount: releaseTotalAmount == null && nullToAbsent
           ? const Value.absent()
           : Value(releaseTotalAmount),
@@ -18082,6 +18107,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       releasePrincipal: serializer.fromJson<double?>(json['releasePrincipal']),
       releaseInterest: serializer.fromJson<double?>(json['releaseInterest']),
       releasePenalty: serializer.fromJson<double?>(json['releasePenalty']),
+      releaseDiscount: serializer.fromJson<double?>(json['releaseDiscount']),
       releaseTotalAmount:
           serializer.fromJson<double?>(json['releaseTotalAmount']),
       releasePaymentMode:
@@ -18132,6 +18158,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       'releasePrincipal': serializer.toJson<double?>(releasePrincipal),
       'releaseInterest': serializer.toJson<double?>(releaseInterest),
       'releasePenalty': serializer.toJson<double?>(releasePenalty),
+      'releaseDiscount': serializer.toJson<double?>(releaseDiscount),
       'releaseTotalAmount': serializer.toJson<double?>(releaseTotalAmount),
       'releasePaymentMode': serializer.toJson<String?>(releasePaymentMode),
       'releaseNotes': serializer.toJson<String?>(releaseNotes),
@@ -18177,6 +18204,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           Value<double?> releasePrincipal = const Value.absent(),
           Value<double?> releaseInterest = const Value.absent(),
           Value<double?> releasePenalty = const Value.absent(),
+          Value<double?> releaseDiscount = const Value.absent(),
           Value<double?> releaseTotalAmount = const Value.absent(),
           Value<String?> releasePaymentMode = const Value.absent(),
           Value<String?> releaseNotes = const Value.absent(),
@@ -18230,6 +18258,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
             : this.releaseInterest,
         releasePenalty:
             releasePenalty.present ? releasePenalty.value : this.releasePenalty,
+        releaseDiscount: releaseDiscount.present
+            ? releaseDiscount.value
+            : this.releaseDiscount,
         releaseTotalAmount: releaseTotalAmount.present
             ? releaseTotalAmount.value
             : this.releaseTotalAmount,
@@ -18317,6 +18348,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       releasePenalty: data.releasePenalty.present
           ? data.releasePenalty.value
           : this.releasePenalty,
+      releaseDiscount: data.releaseDiscount.present
+          ? data.releaseDiscount.value
+          : this.releaseDiscount,
       releaseTotalAmount: data.releaseTotalAmount.present
           ? data.releaseTotalAmount.value
           : this.releaseTotalAmount,
@@ -18373,6 +18407,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           ..write('releasePrincipal: $releasePrincipal, ')
           ..write('releaseInterest: $releaseInterest, ')
           ..write('releasePenalty: $releasePenalty, ')
+          ..write('releaseDiscount: $releaseDiscount, ')
           ..write('releaseTotalAmount: $releaseTotalAmount, ')
           ..write('releasePaymentMode: $releasePaymentMode, ')
           ..write('releaseNotes: $releaseNotes, ')
@@ -18419,6 +18454,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
         releasePrincipal,
         releaseInterest,
         releasePenalty,
+        releaseDiscount,
         releaseTotalAmount,
         releasePaymentMode,
         releaseNotes,
@@ -18464,6 +18500,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           other.releasePrincipal == this.releasePrincipal &&
           other.releaseInterest == this.releaseInterest &&
           other.releasePenalty == this.releasePenalty &&
+          other.releaseDiscount == this.releaseDiscount &&
           other.releaseTotalAmount == this.releaseTotalAmount &&
           other.releasePaymentMode == this.releasePaymentMode &&
           other.releaseNotes == this.releaseNotes &&
@@ -18507,6 +18544,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
   final Value<double?> releasePrincipal;
   final Value<double?> releaseInterest;
   final Value<double?> releasePenalty;
+  final Value<double?> releaseDiscount;
   final Value<double?> releaseTotalAmount;
   final Value<String?> releasePaymentMode;
   final Value<String?> releaseNotes;
@@ -18548,6 +18586,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     this.releasePrincipal = const Value.absent(),
     this.releaseInterest = const Value.absent(),
     this.releasePenalty = const Value.absent(),
+    this.releaseDiscount = const Value.absent(),
     this.releaseTotalAmount = const Value.absent(),
     this.releasePaymentMode = const Value.absent(),
     this.releaseNotes = const Value.absent(),
@@ -18590,6 +18629,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     this.releasePrincipal = const Value.absent(),
     this.releaseInterest = const Value.absent(),
     this.releasePenalty = const Value.absent(),
+    this.releaseDiscount = const Value.absent(),
     this.releaseTotalAmount = const Value.absent(),
     this.releasePaymentMode = const Value.absent(),
     this.releaseNotes = const Value.absent(),
@@ -18634,6 +18674,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     Expression<double>? releasePrincipal,
     Expression<double>? releaseInterest,
     Expression<double>? releasePenalty,
+    Expression<double>? releaseDiscount,
     Expression<double>? releaseTotalAmount,
     Expression<String>? releasePaymentMode,
     Expression<String>? releaseNotes,
@@ -18677,6 +18718,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       if (releasePrincipal != null) 'release_principal': releasePrincipal,
       if (releaseInterest != null) 'release_interest': releaseInterest,
       if (releasePenalty != null) 'release_penalty': releasePenalty,
+      if (releaseDiscount != null) 'release_discount': releaseDiscount,
       if (releaseTotalAmount != null)
         'release_total_amount': releaseTotalAmount,
       if (releasePaymentMode != null)
@@ -18724,6 +18766,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       Value<double?>? releasePrincipal,
       Value<double?>? releaseInterest,
       Value<double?>? releasePenalty,
+      Value<double?>? releaseDiscount,
       Value<double?>? releaseTotalAmount,
       Value<String?>? releasePaymentMode,
       Value<String?>? releaseNotes,
@@ -18765,6 +18808,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       releasePrincipal: releasePrincipal ?? this.releasePrincipal,
       releaseInterest: releaseInterest ?? this.releaseInterest,
       releasePenalty: releasePenalty ?? this.releasePenalty,
+      releaseDiscount: releaseDiscount ?? this.releaseDiscount,
       releaseTotalAmount: releaseTotalAmount ?? this.releaseTotalAmount,
       releasePaymentMode: releasePaymentMode ?? this.releasePaymentMode,
       releaseNotes: releaseNotes ?? this.releaseNotes,
@@ -18880,6 +18924,9 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     if (releasePenalty.present) {
       map['release_penalty'] = Variable<double>(releasePenalty.value);
     }
+    if (releaseDiscount.present) {
+      map['release_discount'] = Variable<double>(releaseDiscount.value);
+    }
     if (releaseTotalAmount.present) {
       map['release_total_amount'] = Variable<double>(releaseTotalAmount.value);
     }
@@ -18939,6 +18986,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
           ..write('releasePrincipal: $releasePrincipal, ')
           ..write('releaseInterest: $releaseInterest, ')
           ..write('releasePenalty: $releasePenalty, ')
+          ..write('releaseDiscount: $releaseDiscount, ')
           ..write('releaseTotalAmount: $releaseTotalAmount, ')
           ..write('releasePaymentMode: $releasePaymentMode, ')
           ..write('releaseNotes: $releaseNotes, ')
@@ -19059,6 +19107,23 @@ class $GirviPaymentsTable extends GirviPayments
           type: DriftSqlType.double,
           requiredDuringInsert: false,
           defaultValue: const Constant(0.0));
+  static const VerificationMeta _principalDiscountComponentMeta =
+      const VerificationMeta('principalDiscountComponent');
+  @override
+  late final GeneratedColumn<double> principalDiscountComponent =
+      GeneratedColumn<double>(
+          'principal_discount_component', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0.0));
+  static const VerificationMeta _interestDiscountComponentMeta =
+      const VerificationMeta('interestDiscountComponent');
+  @override
+  late final GeneratedColumn<double> interestDiscountComponent =
+      GeneratedColumn<double>('interest_discount_component', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0.0));
   static const VerificationMeta _receiptNoMeta =
       const VerificationMeta('receiptNo');
   @override
@@ -19086,6 +19151,8 @@ class $GirviPaymentsTable extends GirviPayments
         balanceAfter,
         principalComponent,
         interestComponent,
+        principalDiscountComponent,
+        interestDiscountComponent,
         receiptNo,
         notes
       ];
@@ -19176,6 +19243,20 @@ class $GirviPaymentsTable extends GirviPayments
           interestComponent.isAcceptableOrUnknown(
               data['interest_component']!, _interestComponentMeta));
     }
+    if (data.containsKey('principal_discount_component')) {
+      context.handle(
+          _principalDiscountComponentMeta,
+          principalDiscountComponent.isAcceptableOrUnknown(
+              data['principal_discount_component']!,
+              _principalDiscountComponentMeta));
+    }
+    if (data.containsKey('interest_discount_component')) {
+      context.handle(
+          _interestDiscountComponentMeta,
+          interestDiscountComponent.isAcceptableOrUnknown(
+              data['interest_discount_component']!,
+              _interestDiscountComponentMeta));
+    }
     if (data.containsKey('receipt_no')) {
       context.handle(_receiptNoMeta,
           receiptNo.isAcceptableOrUnknown(data['receipt_no']!, _receiptNoMeta));
@@ -19221,6 +19302,12 @@ class $GirviPaymentsTable extends GirviPayments
           DriftSqlType.double, data['${effectivePrefix}principal_component'])!,
       interestComponent: attachedDatabase.typeMapping.read(
           DriftSqlType.double, data['${effectivePrefix}interest_component'])!,
+      principalDiscountComponent: attachedDatabase.typeMapping.read(
+          DriftSqlType.double,
+          data['${effectivePrefix}principal_discount_component'])!,
+      interestDiscountComponent: attachedDatabase.typeMapping.read(
+          DriftSqlType.double,
+          data['${effectivePrefix}interest_discount_component'])!,
       receiptNo: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}receipt_no']),
       notes: attachedDatabase.typeMapping
@@ -19270,6 +19357,12 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
   /// Interest portion of a Girvi release settlement payment.
   final double interestComponent;
 
+  /// Principal waived as part of the final Girvi release settlement.
+  final double principalDiscountComponent;
+
+  /// Interest waived as part of the final Girvi release settlement.
+  final double interestDiscountComponent;
+
   /// Optional receipt/ref number
   final String? receiptNo;
 
@@ -19290,6 +19383,8 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
       required this.balanceAfter,
       required this.principalComponent,
       required this.interestComponent,
+      required this.principalDiscountComponent,
+      required this.interestDiscountComponent,
       this.receiptNo,
       this.notes});
   @override
@@ -19317,6 +19412,10 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
     map['balance_after'] = Variable<double>(balanceAfter);
     map['principal_component'] = Variable<double>(principalComponent);
     map['interest_component'] = Variable<double>(interestComponent);
+    map['principal_discount_component'] =
+        Variable<double>(principalDiscountComponent);
+    map['interest_discount_component'] =
+        Variable<double>(interestDiscountComponent);
     if (!nullToAbsent || receiptNo != null) {
       map['receipt_no'] = Variable<String>(receiptNo);
     }
@@ -19350,6 +19449,8 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
       balanceAfter: Value(balanceAfter),
       principalComponent: Value(principalComponent),
       interestComponent: Value(interestComponent),
+      principalDiscountComponent: Value(principalDiscountComponent),
+      interestDiscountComponent: Value(interestDiscountComponent),
       receiptNo: receiptNo == null && nullToAbsent
           ? const Value.absent()
           : Value(receiptNo),
@@ -19378,6 +19479,10 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
       principalComponent:
           serializer.fromJson<double>(json['principalComponent']),
       interestComponent: serializer.fromJson<double>(json['interestComponent']),
+      principalDiscountComponent:
+          serializer.fromJson<double>(json['principalDiscountComponent']),
+      interestDiscountComponent:
+          serializer.fromJson<double>(json['interestDiscountComponent']),
       receiptNo: serializer.fromJson<String?>(json['receiptNo']),
       notes: serializer.fromJson<String?>(json['notes']),
     );
@@ -19400,6 +19505,10 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
       'balanceAfter': serializer.toJson<double>(balanceAfter),
       'principalComponent': serializer.toJson<double>(principalComponent),
       'interestComponent': serializer.toJson<double>(interestComponent),
+      'principalDiscountComponent':
+          serializer.toJson<double>(principalDiscountComponent),
+      'interestDiscountComponent':
+          serializer.toJson<double>(interestDiscountComponent),
       'receiptNo': serializer.toJson<String?>(receiptNo),
       'notes': serializer.toJson<String?>(notes),
     };
@@ -19420,6 +19529,8 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
           double? balanceAfter,
           double? principalComponent,
           double? interestComponent,
+          double? principalDiscountComponent,
+          double? interestDiscountComponent,
           Value<String?> receiptNo = const Value.absent(),
           Value<String?> notes = const Value.absent()}) =>
       GirviPayment(
@@ -19441,6 +19552,10 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
         balanceAfter: balanceAfter ?? this.balanceAfter,
         principalComponent: principalComponent ?? this.principalComponent,
         interestComponent: interestComponent ?? this.interestComponent,
+        principalDiscountComponent:
+            principalDiscountComponent ?? this.principalDiscountComponent,
+        interestDiscountComponent:
+            interestDiscountComponent ?? this.interestDiscountComponent,
         receiptNo: receiptNo.present ? receiptNo.value : this.receiptNo,
         notes: notes.present ? notes.value : this.notes,
       );
@@ -19475,6 +19590,12 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
       interestComponent: data.interestComponent.present
           ? data.interestComponent.value
           : this.interestComponent,
+      principalDiscountComponent: data.principalDiscountComponent.present
+          ? data.principalDiscountComponent.value
+          : this.principalDiscountComponent,
+      interestDiscountComponent: data.interestDiscountComponent.present
+          ? data.interestDiscountComponent.value
+          : this.interestDiscountComponent,
       receiptNo: data.receiptNo.present ? data.receiptNo.value : this.receiptNo,
       notes: data.notes.present ? data.notes.value : this.notes,
     );
@@ -19497,6 +19618,8 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
           ..write('balanceAfter: $balanceAfter, ')
           ..write('principalComponent: $principalComponent, ')
           ..write('interestComponent: $interestComponent, ')
+          ..write('principalDiscountComponent: $principalDiscountComponent, ')
+          ..write('interestDiscountComponent: $interestDiscountComponent, ')
           ..write('receiptNo: $receiptNo, ')
           ..write('notes: $notes')
           ..write(')'))
@@ -19519,6 +19642,8 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
       balanceAfter,
       principalComponent,
       interestComponent,
+      principalDiscountComponent,
+      interestDiscountComponent,
       receiptNo,
       notes);
   @override
@@ -19539,6 +19664,8 @@ class GirviPayment extends DataClass implements Insertable<GirviPayment> {
           other.balanceAfter == this.balanceAfter &&
           other.principalComponent == this.principalComponent &&
           other.interestComponent == this.interestComponent &&
+          other.principalDiscountComponent == this.principalDiscountComponent &&
+          other.interestDiscountComponent == this.interestDiscountComponent &&
           other.receiptNo == this.receiptNo &&
           other.notes == this.notes);
 }
@@ -19558,6 +19685,8 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
   final Value<double> balanceAfter;
   final Value<double> principalComponent;
   final Value<double> interestComponent;
+  final Value<double> principalDiscountComponent;
+  final Value<double> interestDiscountComponent;
   final Value<String?> receiptNo;
   final Value<String?> notes;
   const GirviPaymentsCompanion({
@@ -19575,6 +19704,8 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
     this.balanceAfter = const Value.absent(),
     this.principalComponent = const Value.absent(),
     this.interestComponent = const Value.absent(),
+    this.principalDiscountComponent = const Value.absent(),
+    this.interestDiscountComponent = const Value.absent(),
     this.receiptNo = const Value.absent(),
     this.notes = const Value.absent(),
   });
@@ -19593,6 +19724,8 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
     this.balanceAfter = const Value.absent(),
     this.principalComponent = const Value.absent(),
     this.interestComponent = const Value.absent(),
+    this.principalDiscountComponent = const Value.absent(),
+    this.interestDiscountComponent = const Value.absent(),
     this.receiptNo = const Value.absent(),
     this.notes = const Value.absent(),
   })  : girviId = Value(girviId),
@@ -19612,6 +19745,8 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
     Expression<double>? balanceAfter,
     Expression<double>? principalComponent,
     Expression<double>? interestComponent,
+    Expression<double>? principalDiscountComponent,
+    Expression<double>? interestDiscountComponent,
     Expression<String>? receiptNo,
     Expression<String>? notes,
   }) {
@@ -19630,6 +19765,10 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
       if (balanceAfter != null) 'balance_after': balanceAfter,
       if (principalComponent != null) 'principal_component': principalComponent,
       if (interestComponent != null) 'interest_component': interestComponent,
+      if (principalDiscountComponent != null)
+        'principal_discount_component': principalDiscountComponent,
+      if (interestDiscountComponent != null)
+        'interest_discount_component': interestDiscountComponent,
       if (receiptNo != null) 'receipt_no': receiptNo,
       if (notes != null) 'notes': notes,
     });
@@ -19650,6 +19789,8 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
       Value<double>? balanceAfter,
       Value<double>? principalComponent,
       Value<double>? interestComponent,
+      Value<double>? principalDiscountComponent,
+      Value<double>? interestDiscountComponent,
       Value<String?>? receiptNo,
       Value<String?>? notes}) {
     return GirviPaymentsCompanion(
@@ -19667,6 +19808,10 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
       balanceAfter: balanceAfter ?? this.balanceAfter,
       principalComponent: principalComponent ?? this.principalComponent,
       interestComponent: interestComponent ?? this.interestComponent,
+      principalDiscountComponent:
+          principalDiscountComponent ?? this.principalDiscountComponent,
+      interestDiscountComponent:
+          interestDiscountComponent ?? this.interestDiscountComponent,
       receiptNo: receiptNo ?? this.receiptNo,
       notes: notes ?? this.notes,
     );
@@ -19717,6 +19862,14 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
     if (interestComponent.present) {
       map['interest_component'] = Variable<double>(interestComponent.value);
     }
+    if (principalDiscountComponent.present) {
+      map['principal_discount_component'] =
+          Variable<double>(principalDiscountComponent.value);
+    }
+    if (interestDiscountComponent.present) {
+      map['interest_discount_component'] =
+          Variable<double>(interestDiscountComponent.value);
+    }
     if (receiptNo.present) {
       map['receipt_no'] = Variable<String>(receiptNo.value);
     }
@@ -19743,6 +19896,8 @@ class GirviPaymentsCompanion extends UpdateCompanion<GirviPayment> {
           ..write('balanceAfter: $balanceAfter, ')
           ..write('principalComponent: $principalComponent, ')
           ..write('interestComponent: $interestComponent, ')
+          ..write('principalDiscountComponent: $principalDiscountComponent, ')
+          ..write('interestDiscountComponent: $interestDiscountComponent, ')
           ..write('receiptNo: $receiptNo, ')
           ..write('notes: $notes')
           ..write(')'))
@@ -39274,6 +39429,7 @@ typedef $$GirviLoansTableCreateCompanionBuilder = GirviLoansCompanion Function({
   Value<double?> releasePrincipal,
   Value<double?> releaseInterest,
   Value<double?> releasePenalty,
+  Value<double?> releaseDiscount,
   Value<double?> releaseTotalAmount,
   Value<String?> releasePaymentMode,
   Value<String?> releaseNotes,
@@ -39316,6 +39472,7 @@ typedef $$GirviLoansTableUpdateCompanionBuilder = GirviLoansCompanion Function({
   Value<double?> releasePrincipal,
   Value<double?> releaseInterest,
   Value<double?> releasePenalty,
+  Value<double?> releaseDiscount,
   Value<double?> releaseTotalAmount,
   Value<String?> releasePaymentMode,
   Value<String?> releaseNotes,
@@ -39505,6 +39662,10 @@ class $$GirviLoansTableFilterComposer
 
   ColumnFilters<double> get releasePenalty => $composableBuilder(
       column: $table.releasePenalty,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get releaseDiscount => $composableBuilder(
+      column: $table.releaseDiscount,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get releaseTotalAmount => $composableBuilder(
@@ -39733,6 +39894,10 @@ class $$GirviLoansTableOrderingComposer
       column: $table.releasePenalty,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<double> get releaseDiscount => $composableBuilder(
+      column: $table.releaseDiscount,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<double> get releaseTotalAmount => $composableBuilder(
       column: $table.releaseTotalAmount,
       builder: (column) => ColumnOrderings(column));
@@ -39883,6 +40048,9 @@ class $$GirviLoansTableAnnotationComposer
 
   GeneratedColumn<double> get releasePenalty => $composableBuilder(
       column: $table.releasePenalty, builder: (column) => column);
+
+  GeneratedColumn<double> get releaseDiscount => $composableBuilder(
+      column: $table.releaseDiscount, builder: (column) => column);
 
   GeneratedColumn<double> get releaseTotalAmount => $composableBuilder(
       column: $table.releaseTotalAmount, builder: (column) => column);
@@ -40048,6 +40216,7 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             Value<double?> releasePrincipal = const Value.absent(),
             Value<double?> releaseInterest = const Value.absent(),
             Value<double?> releasePenalty = const Value.absent(),
+            Value<double?> releaseDiscount = const Value.absent(),
             Value<double?> releaseTotalAmount = const Value.absent(),
             Value<String?> releasePaymentMode = const Value.absent(),
             Value<String?> releaseNotes = const Value.absent(),
@@ -40090,6 +40259,7 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             releasePrincipal: releasePrincipal,
             releaseInterest: releaseInterest,
             releasePenalty: releasePenalty,
+            releaseDiscount: releaseDiscount,
             releaseTotalAmount: releaseTotalAmount,
             releasePaymentMode: releasePaymentMode,
             releaseNotes: releaseNotes,
@@ -40132,6 +40302,7 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             Value<double?> releasePrincipal = const Value.absent(),
             Value<double?> releaseInterest = const Value.absent(),
             Value<double?> releasePenalty = const Value.absent(),
+            Value<double?> releaseDiscount = const Value.absent(),
             Value<double?> releaseTotalAmount = const Value.absent(),
             Value<String?> releasePaymentMode = const Value.absent(),
             Value<String?> releaseNotes = const Value.absent(),
@@ -40174,6 +40345,7 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             releasePrincipal: releasePrincipal,
             releaseInterest: releaseInterest,
             releasePenalty: releasePenalty,
+            releaseDiscount: releaseDiscount,
             releaseTotalAmount: releaseTotalAmount,
             releasePaymentMode: releasePaymentMode,
             releaseNotes: releaseNotes,
@@ -40302,6 +40474,8 @@ typedef $$GirviPaymentsTableCreateCompanionBuilder = GirviPaymentsCompanion
   Value<double> balanceAfter,
   Value<double> principalComponent,
   Value<double> interestComponent,
+  Value<double> principalDiscountComponent,
+  Value<double> interestDiscountComponent,
   Value<String?> receiptNo,
   Value<String?> notes,
 });
@@ -40321,6 +40495,8 @@ typedef $$GirviPaymentsTableUpdateCompanionBuilder = GirviPaymentsCompanion
   Value<double> balanceAfter,
   Value<double> principalComponent,
   Value<double> interestComponent,
+  Value<double> principalDiscountComponent,
+  Value<double> interestDiscountComponent,
   Value<String?> receiptNo,
   Value<String?> notes,
 });
@@ -40395,6 +40571,14 @@ class $$GirviPaymentsTableFilterComposer
 
   ColumnFilters<double> get interestComponent => $composableBuilder(
       column: $table.interestComponent,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get principalDiscountComponent => $composableBuilder(
+      column: $table.principalDiscountComponent,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get interestDiscountComponent => $composableBuilder(
+      column: $table.interestDiscountComponent,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get receiptNo => $composableBuilder(
@@ -40478,6 +40662,14 @@ class $$GirviPaymentsTableOrderingComposer
       column: $table.interestComponent,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<double> get principalDiscountComponent => $composableBuilder(
+      column: $table.principalDiscountComponent,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get interestDiscountComponent => $composableBuilder(
+      column: $table.interestDiscountComponent,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get receiptNo => $composableBuilder(
       column: $table.receiptNo, builder: (column) => ColumnOrderings(column));
 
@@ -40553,6 +40745,12 @@ class $$GirviPaymentsTableAnnotationComposer
   GeneratedColumn<double> get interestComponent => $composableBuilder(
       column: $table.interestComponent, builder: (column) => column);
 
+  GeneratedColumn<double> get principalDiscountComponent => $composableBuilder(
+      column: $table.principalDiscountComponent, builder: (column) => column);
+
+  GeneratedColumn<double> get interestDiscountComponent => $composableBuilder(
+      column: $table.interestDiscountComponent, builder: (column) => column);
+
   GeneratedColumn<String> get receiptNo =>
       $composableBuilder(column: $table.receiptNo, builder: (column) => column);
 
@@ -40617,6 +40815,8 @@ class $$GirviPaymentsTableTableManager extends RootTableManager<
             Value<double> balanceAfter = const Value.absent(),
             Value<double> principalComponent = const Value.absent(),
             Value<double> interestComponent = const Value.absent(),
+            Value<double> principalDiscountComponent = const Value.absent(),
+            Value<double> interestDiscountComponent = const Value.absent(),
             Value<String?> receiptNo = const Value.absent(),
             Value<String?> notes = const Value.absent(),
           }) =>
@@ -40635,6 +40835,8 @@ class $$GirviPaymentsTableTableManager extends RootTableManager<
             balanceAfter: balanceAfter,
             principalComponent: principalComponent,
             interestComponent: interestComponent,
+            principalDiscountComponent: principalDiscountComponent,
+            interestDiscountComponent: interestDiscountComponent,
             receiptNo: receiptNo,
             notes: notes,
           ),
@@ -40653,6 +40855,8 @@ class $$GirviPaymentsTableTableManager extends RootTableManager<
             Value<double> balanceAfter = const Value.absent(),
             Value<double> principalComponent = const Value.absent(),
             Value<double> interestComponent = const Value.absent(),
+            Value<double> principalDiscountComponent = const Value.absent(),
+            Value<double> interestDiscountComponent = const Value.absent(),
             Value<String?> receiptNo = const Value.absent(),
             Value<String?> notes = const Value.absent(),
           }) =>
@@ -40671,6 +40875,8 @@ class $$GirviPaymentsTableTableManager extends RootTableManager<
             balanceAfter: balanceAfter,
             principalComponent: principalComponent,
             interestComponent: interestComponent,
+            principalDiscountComponent: principalDiscountComponent,
+            interestDiscountComponent: interestDiscountComponent,
             receiptNo: receiptNo,
             notes: notes,
           ),

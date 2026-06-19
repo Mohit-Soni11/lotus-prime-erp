@@ -32,6 +32,7 @@ import '../dashboard/payment_status_card.dart';
 import '../dashboard/daily_counter_card.dart';
 import '../dashboard/cash_register_card.dart';
 import '../dashboard/counter_security_card.dart';
+import '../../core/logging/app_logger.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(String routeId) onNavigate;
@@ -68,7 +69,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint('🔴 Error: $e');
+      AppLogger.debug('🔴 Error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }

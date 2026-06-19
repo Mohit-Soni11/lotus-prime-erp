@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'package:intl/intl.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../models/dashboard/bill_stats_model.dart';
+import '../../../core/logging/app_logger.dart';
 
 class BillCardLogic {
   // ❌ Singleton Removed: Har widget ka apna dimag (logic) hona chahiye
@@ -62,11 +63,11 @@ class BillCardLogic {
           _controller.add(BillStatsModel.zero());
         }
       }, onError: (e) {
-        print("❌ DB ERROR (BillLogic): $e");
+        AppLogger.error("DB ERROR (BillLogic): $e");
         if (!_controller.isClosed) _controller.add(BillStatsModel.zero());
       });
     } catch (e) {
-      print("❌ INIT ERROR: $e");
+      AppLogger.error("INIT ERROR (BillLogic): $e");
     }
   }
 

@@ -7,6 +7,7 @@ import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_app_bar.dart';
 import 'day_book_eod_dialog.dart';
 import 'day_book_sections.dart';
+import '../../../core/logging/app_logger.dart';
 
 class DayBookScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -75,7 +76,7 @@ class _DayBookScreenState extends State<DayBookScreen> {
     try {
       await action();
     } catch (error, stackTrace) {
-      debugPrint('Day Book export failed: $error\n$stackTrace');
+      AppLogger.debug('Day Book export failed: $error\n$stackTrace');
       _showNotice(DayBookStrings.exportFailed);
     } finally {
       if (mounted) setState(() => _exporting = false);

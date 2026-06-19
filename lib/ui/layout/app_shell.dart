@@ -5,8 +5,6 @@
 //               NO routing logic. NO if-else. NO screen imports.
 //               The router (go_router) decides WHAT child to show.
 //               This widget decides HOW to show it (layout, animation, responsive).
-//
-//               Replaces: MainLayoutWrapper's layout + build logic.
 // =============================================================================
 
 import 'dart:io';

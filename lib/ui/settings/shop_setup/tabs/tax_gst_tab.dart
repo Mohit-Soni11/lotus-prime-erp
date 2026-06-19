@@ -18,6 +18,7 @@ import '../../../../theme/settings/shop_setup/tabs/tax_gst/tax_gst_theme.dart';
 // --- LOGIC IMPORTS ---
 import '../../../../logic/setting/shop_setup/tabs/tax_gst/tax_gst_logic.dart';
 import '../../../../logic/setting/shop_setup/tabs/tax_gst/document_crop_logic.dart';
+import 'package:flutter/foundation.dart';
 
 class TaxGstTab extends StatefulWidget {
   // ðŸš€ NEW: Receive initial data from parent

@@ -14,6 +14,7 @@ import '../../database/db/app_database.dart';
 import '../../models/karigar/add_karigar/add_karigar_form_model.dart';
 import '../../models/karigar/karigar_enums/karigar_enums.dart';
 import '../../repositories/karigar/karigar_directory_repository.dart';
+import '../../core/logging/app_logger.dart';
 
 enum AddKarigarSaveState { idle, saving, success, error }
 
@@ -165,7 +166,7 @@ class AddKarigarLogic extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      debugPrint('AddKarigarLogic.saveKarigar error: $e');
+      AppLogger.debug('AddKarigarLogic.saveKarigar error: $e');
       _saveState = AddKarigarSaveState.error;
       _errorMessage = 'Failed to save karigar. Please try again.';
       notifyListeners();

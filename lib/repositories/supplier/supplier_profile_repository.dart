@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart';
 
 import '../../database/db/app_database.dart';
 import '../../models/stock/supplier_profile/supplier_profile_model.dart';
 import 'supplier_repository.dart';
+import '../../core/logging/app_logger.dart';
 
 class SupplierProfileRepository {
   final AppDatabase _db;
@@ -74,7 +74,7 @@ class SupplierProfileRepository {
         purchases: purchases,
       );
     } catch (e) {
-      debugPrint('Supplier profile fetch error: $e');
+      AppLogger.debug('Supplier profile fetch error: $e');
       return null;
     }
   }
@@ -83,7 +83,7 @@ class SupplierProfileRepository {
     try {
       return _supplierRepo.updateSupplier(profile.toSupplierModel());
     } catch (e) {
-      debugPrint('Supplier profile update error: $e');
+      AppLogger.debug('Supplier profile update error: $e');
       return false;
     }
   }
@@ -92,7 +92,7 @@ class SupplierProfileRepository {
     try {
       return _supplierRepo.deactivateSupplier(supplierId);
     } catch (e) {
-      debugPrint('Supplier deactivate error: $e');
+      AppLogger.debug('Supplier deactivate error: $e');
       return false;
     }
   }

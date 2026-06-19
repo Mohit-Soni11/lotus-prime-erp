@@ -9,8 +9,8 @@
 // =============================================================================
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import '../../core/logging/app_logger.dart';
 
 class EditableBookingAdvance {
   const EditableBookingAdvance({
@@ -104,7 +104,7 @@ class BookingAdvanceRepository {
             );
       }
 
-      debugPrint('✅ Booking saved: $orderNo | Advance: ₹$totalAdvance');
+      AppLogger.debug('✅ Booking saved: $orderNo | Advance: ₹$totalAdvance');
       return orderId;
     });
   }

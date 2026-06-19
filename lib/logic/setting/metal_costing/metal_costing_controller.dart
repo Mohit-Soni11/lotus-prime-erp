@@ -13,6 +13,7 @@ import '../../../models/setting/metal_rate/metal_rate_model.dart';
 import '../../../models/setting/metal_costing/metal_costing_model.dart';
 import '../../../repositories/setting/metal_costing/metal_costing_repository.dart';
 import '../../../repositories/setting/metal_rate/metal_rate_repository.dart';
+import '../../../core/logging/app_logger.dart';
 
 enum MetalCostingState { idle, loading, loaded, error }
 
@@ -92,7 +93,7 @@ class MetalCostingController extends ChangeNotifier {
 
       _state = MetalCostingState.loaded;
     } catch (e, st) {
-      debugPrint('MetalCostingController error: $e\n$st');
+      AppLogger.debug('MetalCostingController error: $e\n$st');
       _error = e.toString();
       _state = MetalCostingState.error;
     }

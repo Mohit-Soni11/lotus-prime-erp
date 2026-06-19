@@ -7,6 +7,7 @@
 // =============================================================================
 
 import 'stock_enums.dart';
+import 'package:flutter/foundation.dart';
 
 class StockItemModel {
   // ── IDENTIFICATION ─────────────────────────────────────────────

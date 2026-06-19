@@ -43,9 +43,9 @@ class SidebarMenu {
       ],
     ),
 
-    // ── Sales & Orders ──────────────────────────────────────────
+    // ── sales_orders ──────────────────────────────────────────
     SidebarItem(
-      title: 'Sales & Orders',
+      title: 'sales_orders',
       icon: Icons.shopping_cart_outlined,
       subItems: [
         MenuItemData(AppRoutes.newSaleRoute),

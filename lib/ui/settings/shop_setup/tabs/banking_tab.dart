@@ -23,6 +23,8 @@ import '../../../../models/setting/shop_setup/enums/banking_enums.dart';
 import '../../../../logic/setting/shop_setup/tabs/banking/banking_logic.dart';
 import '../../../../logic/setting/shop_setup/tabs/tax_gst/document_crop_logic.dart';
 import '../../../../helpers/banking/banking_validators.dart';
+import '../../../../core/logging/app_logger.dart';
+import 'package:flutter/foundation.dart';
 
 // ==========================================
 // MAIN BANKING TAB
@@ -57,7 +59,7 @@ class _BankingTabState extends State<BankingTab> {
           logic.accountsNotifier.value = loadedAccounts;
         }
       } catch (e) {
-        debugPrint("Error parsing initial banking data: $e");
+        AppLogger.error("Error parsing initial banking data: $e");
       }
     }
   }

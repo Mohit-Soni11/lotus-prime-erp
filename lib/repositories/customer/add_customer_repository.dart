@@ -1,9 +1,9 @@
 import 'package:drift/drift.dart' as drift;
-import 'package:flutter/foundation.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 
 import '../../models/customer/add_customer/add_customer_form_model.dart';
 import '../../models/customer/customer_enums/add_customer_enums.dart';
+import '../../core/logging/app_logger.dart';
 
 class AddCustomerRepository {
   final AppDatabase _db;
@@ -102,7 +102,7 @@ class AddCustomerRepository {
             : NewCustomerType.regular,
       );
     } catch (e) {
-      debugPrint('Customer edit load error: $e');
+      AppLogger.debug('Customer edit load error: $e');
       return null;
     }
   }
@@ -136,7 +136,7 @@ class AddCustomerRepository {
         if (affected == 0) return SaveResult.error;
       }
 
-      debugPrint(
+      AppLogger.debug(
         customerId == null
             ? 'Customer saved: $displayName (${form.mobile})'
             : 'Customer updated: #$customerId $displayName (${form.mobile})',
@@ -147,10 +147,10 @@ class AddCustomerRepository {
       if (message.contains('unique') || message.contains('constraint')) {
         return SaveResult.duplicate;
       }
-      debugPrint('Customer save error: $e');
+      AppLogger.debug('Customer save error: $e');
       return SaveResult.error;
     } catch (e) {
-      debugPrint('Customer save error: $e');
+      AppLogger.debug('Customer save error: $e');
       return SaveResult.error;
     }
   }

@@ -3,9 +3,9 @@
 // MODULE: Customer -> Customer Profile
 // -----------------------------------------------------------------------------
 
-import 'package:flutter/foundation.dart';
 
 import '../../girvi/girvi_loan_model.dart';
+import 'package:flutter/foundation.dart';
 
 enum CustomerGender { male, female }
 

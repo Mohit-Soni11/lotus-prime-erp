@@ -15,6 +15,7 @@ import '../../../models/finance/cash_book/cash_book_enums.dart';
 import '../../../models/finance/cash_book/cash_transaction_model.dart';
 import '../../../models/finance/cash_book/cash_book_summary_model.dart';
 import '../../../repositories/finance/cash_book_repository.dart';
+import '../../../core/logging/app_logger.dart';
 
 class CashBookController extends ChangeNotifier {
   CashBookController() {
@@ -107,7 +108,7 @@ class CashBookController extends ChangeNotifier {
         _applyFiltersAndGroup();
       },
       onError: (e) {
-        debugPrint('❌ CashBookController watch error: $e');
+        AppLogger.debug('❌ CashBookController watch error: $e');
         _errorMessage = 'Failed to load transactions.';
         _isLoading = false;
         notifyListeners();

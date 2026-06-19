@@ -15,6 +15,7 @@ import '../../database/db/app_database.dart';
 import '../../models/karigar/karigar_enums/karigar_enums.dart';
 import '../../models/karigar/karigar_issue_model.dart';
 import '../../repositories/karigar/karigar_repository.dart';
+import '../../core/logging/app_logger.dart';
 
 class ReceiveKarigarController extends ChangeNotifier {
   final KarigarRepository _repo;
@@ -112,7 +113,7 @@ class ReceiveKarigarController extends ChangeNotifier {
     try {
       _pendingIssues = await _repo.getActiveIssuesWithKarigar();
     } catch (e) {
-      debugPrint('ReceiveKarigarController._loadPendingIssues error: $e');
+      AppLogger.debug('ReceiveKarigarController._loadPendingIssues error: $e');
       _pendingIssues = [];
     } finally {
       _isLoadingIssues = false;
@@ -212,7 +213,7 @@ class ReceiveKarigarController extends ChangeNotifier {
           'Receipt #$_receiptNumber saved. Issue #${_selectedIssue!.issueNumber} marked as Completed.';
       return true;
     } catch (e) {
-      debugPrint('ReceiveKarigarController.saveReceipt error: $e');
+      AppLogger.debug('ReceiveKarigarController.saveReceipt error: $e');
       _errorMessage = 'Could not save the receipt. Please try again.';
       return false;
     } finally {

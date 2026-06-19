@@ -7,6 +7,7 @@
 // =============================================================================
 
 import 'supplier_enums.dart';
+import 'package:flutter/foundation.dart';
 
 class SupplierModel {
   final int? id;

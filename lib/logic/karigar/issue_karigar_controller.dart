@@ -14,6 +14,7 @@ import 'package:flutter/foundation.dart';
 import '../../database/db/app_database.dart';
 import '../../models/karigar/karigar_enums/karigar_enums.dart';
 import '../../repositories/karigar/karigar_repository.dart';
+import '../../core/logging/app_logger.dart';
 
 class IssueKarigarController extends ChangeNotifier {
   final KarigarRepository _repo;
@@ -172,7 +173,7 @@ class IssueKarigarController extends ChangeNotifier {
       _successMessage = 'Issue #$_issueNumber saved successfully!';
       return true;
     } catch (e) {
-      debugPrint('IssueKarigarController.saveIssue error: $e');
+      AppLogger.debug('IssueKarigarController.saveIssue error: $e');
       _errorMessage = 'Could not save the issue. Please try again.';
       return false;
     } finally {

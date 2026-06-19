@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import '../../../../../models/setting/shop_setup/enums/tax_gst_enums.dart';
 import '../../../../../models/setting/shop_setup/tabs/tax_gst_model.dart';
 import '../../../../../helpers/tax_gst/tax_gst_validators.dart';
+import 'package:flutter/foundation.dart';
 
 class TaxGstLogic extends ChangeNotifier {
   // --- STATE ENUMS (Replaces confusing booleans) ---

@@ -4,11 +4,11 @@
 // -----------------------------------------------------------------------------
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 
 import '../../models/customer/customer_profile/customer_profile_model.dart';
 import '../../models/girvi/girvi_invoice_draft.dart';
+import '../../core/logging/app_logger.dart';
 
 class CustomerProfileRepository {
   final AppDatabase _db;
@@ -111,7 +111,7 @@ class CustomerProfileRepository {
         initials: CustomerProfileModel.buildInitials(cust.name),
       );
     } catch (e) {
-      debugPrint("Customer profile fetch error: $e");
+      AppLogger.error("Customer profile fetch error: $e");
       return null;
     }
   }
@@ -165,7 +165,7 @@ class CustomerProfileRepository {
         items: items,
       );
     } catch (e) {
-      debugPrint("Customer bill details fetch error: $e");
+      AppLogger.error("Customer bill details fetch error: $e");
       return null;
     }
   }
@@ -286,7 +286,7 @@ class CustomerProfileRepository {
         notes: loan.notes,
       );
     } catch (e) {
-      debugPrint("Customer girvi invoice draft fetch error: $e");
+      AppLogger.error("Customer girvi invoice draft fetch error: $e");
       return null;
     }
   }
@@ -343,7 +343,7 @@ class CustomerProfileRepository {
 
       return result;
     } catch (e) {
-      debugPrint("Customer advance orders fetch error: $e");
+      AppLogger.error("Customer advance orders fetch error: $e");
       return [];
     }
   }
@@ -424,7 +424,7 @@ class CustomerProfileRepository {
       );
       return true;
     } catch (e) {
-      debugPrint("Customer update error: $e");
+      AppLogger.error("Customer update error: $e");
       return false;
     }
   }
@@ -440,7 +440,7 @@ class CustomerProfileRepository {
       );
       return true;
     } catch (e) {
-      debugPrint("Customer credit limit save error: $e");
+      AppLogger.error("Customer credit limit save error: $e");
       return false;
     }
   }
@@ -451,7 +451,7 @@ class CustomerProfileRepository {
           .go();
       return true;
     } catch (e) {
-      debugPrint("Customer delete error: $e");
+      AppLogger.error("Customer delete error: $e");
       return false;
     }
   }

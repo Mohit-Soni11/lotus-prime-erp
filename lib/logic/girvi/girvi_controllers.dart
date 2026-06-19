@@ -12,6 +12,7 @@ import '../../database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../repositories/girvi/girvi_repository.dart';
+import '../../core/logging/app_logger.dart';
 
 class GirviListController extends ChangeNotifier {
   final GirviRepository _repo;
@@ -57,7 +58,7 @@ class GirviListController extends ChangeNotifier {
       _summary = results[1] as GirviSummaryModel;
       _applyFilter();
     } catch (e) {
-      debugPrint('GirviListController.load error: $e');
+      AppLogger.debug('GirviListController.load error: $e');
       _errorMessage = 'Failed to load girvi data. Please try again.';
     } finally {
       _isLoading = false;
@@ -228,7 +229,7 @@ class GirviReleaseController extends ChangeNotifier {
       notifyListeners();
       return ok;
     } catch (e) {
-      debugPrint('GirviReleaseController.processRelease error: $e');
+      AppLogger.debug('GirviReleaseController.processRelease error: $e');
       _errorMessage = 'An error occurred during release.';
       _isProcessing = false;
       notifyListeners();
@@ -267,6 +268,7 @@ class GirviInterestEntryController extends ChangeNotifier {
   String _amountInput = '';
   String _releasePrincipalInput = '';
   String _releaseInterestInput = '';
+  String _releaseDiscountInput = '';
   String _monthsInput = '1';
   String _receiptNo = '';
   String _notes = '';
@@ -291,6 +293,7 @@ class GirviInterestEntryController extends ChangeNotifier {
   String get amountInput => _amountInput;
   String get releasePrincipalInput => _releasePrincipalInput;
   String get releaseInterestInput => _releaseInterestInput;
+  String get releaseDiscountInput => _releaseDiscountInput;
   String get monthsInput => _monthsInput;
   String get receiptNo => _receiptNo;
   String get notes => _notes;
@@ -321,8 +324,10 @@ class GirviInterestEntryController extends ChangeNotifier {
       double.tryParse(_releasePrincipalInput) ?? 0.0;
   double get releaseInterestReceived =>
       double.tryParse(_releaseInterestInput) ?? 0.0;
+  double get releaseDiscount => double.tryParse(_releaseDiscountInput) ?? 0.0;
   double get releaseEntryTotal =>
       releasePrincipalReceived + releaseInterestReceived;
+  double get releaseSettlementValue => releaseEntryTotal + releaseDiscount;
   int get monthsCovered => int.tryParse(_monthsInput) ?? 0;
   bool get isInterestEntry => _paymentType == GirviPaymentType.interest;
   int get interestMonthsCoveredByAmount {
@@ -364,6 +369,23 @@ class GirviInterestEntryController extends ChangeNotifier {
       .where((item) => item.type == GirviPaymentType.fullRelease)
       .fold<double>(0, (sum, item) => sum + item.interestComponent);
 
+  double get releasePrincipalDiscountForSelected => _payments
+      .where((item) => item.type == GirviPaymentType.fullRelease)
+      .fold<double>(
+        0,
+        (sum, item) => sum + item.principalDiscountComponent,
+      );
+
+  double get releaseInterestDiscountForSelected => _payments
+      .where((item) => item.type == GirviPaymentType.fullRelease)
+      .fold<double>(
+        0,
+        (sum, item) => sum + item.interestDiscountComponent,
+      );
+
+  double get releaseDiscountForSelected =>
+      releasePrincipalDiscountForSelected + releaseInterestDiscountForSelected;
+
   double get currentLedgerMonthlyInterestForSelected {
     final selected = _selectedLoan;
     if (selected == null) return 0;
@@ -384,7 +406,9 @@ class GirviInterestEntryController extends ChangeNotifier {
   }
 
   double get netInterestDueForSelected {
-    final due = grossInterestAccruedForSelected - interestCollectedForSelected;
+    final due = grossInterestAccruedForSelected -
+        interestCollectedForSelected -
+        releaseInterestDiscountForSelected;
     return due <= 0 ? 0 : due;
   }
 
@@ -426,7 +450,7 @@ class GirviInterestEntryController extends ChangeNotifier {
       _applySearch();
       _clearSelectedLoan(clearCustomer: true);
     } catch (e) {
-      debugPrint('GirviInterestEntryController.load error: $e');
+      AppLogger.debug('GirviInterestEntryController.load error: $e');
       _errorMessage = 'Unable to load girvi interest entries.';
     } finally {
       _isLoading = false;
@@ -479,6 +503,7 @@ class GirviInterestEntryController extends ChangeNotifier {
       _amountInput = _formatAmountInput(netInterestDueForSelected);
       _syncMonthsFromAmount();
     } else if (value == GirviPaymentType.fullRelease) {
+      _releaseDiscountInput = '';
       _releasePrincipalInput =
           _formatAmountInput(releasePrincipalDueForSelected);
       _releaseInterestInput = _formatAmountInput(netInterestDueForSelected);
@@ -538,6 +563,24 @@ class GirviInterestEntryController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void onReleaseDiscountChanged(String value) {
+    _releaseDiscountInput = value;
+    final discount = releaseDiscount;
+    if (discount >= 0 && discount <= releaseTotalDueForSelected) {
+      _fillReleaseSettlementForDiscount(discount);
+    }
+    _errorMessage = null;
+    _successMessage = null;
+    notifyListeners();
+  }
+
+  void fillFullReleaseSettlement() {
+    final discount =
+        releaseDiscount.clamp(0.0, releaseTotalDueForSelected).toDouble();
+    _fillReleaseSettlementForDiscount(discount);
+    notifyListeners();
+  }
+
   void setExpectedDeliveryDate(DateTime value) {
     _expectedDeliveryDate = value;
     notifyListeners();
@@ -569,7 +612,7 @@ class GirviInterestEntryController extends ChangeNotifier {
       return false;
     }
 
-    final value = isInterestEntry ? amount : releaseEntryTotal;
+    final value = isInterestEntry ? amount : releaseSettlementValue;
     if (!isReadyForDelivery && value <= 0) {
       _errorMessage = 'Enter a valid payment amount.';
       notifyListeners();
@@ -577,6 +620,11 @@ class GirviInterestEntryController extends ChangeNotifier {
     }
 
     if (_paymentType == GirviPaymentType.fullRelease) {
+      if (releaseDiscount < 0) {
+        _errorMessage = 'Discount cannot be negative.';
+        notifyListeners();
+        return false;
+      }
       if (releasePrincipalReceived > releasePrincipalDueForSelected + 0.01) {
         _errorMessage = 'Principal received cannot exceed principal due.';
         notifyListeners();
@@ -584,6 +632,19 @@ class GirviInterestEntryController extends ChangeNotifier {
       }
       if (releaseInterestReceived > netInterestDueForSelected + 0.01) {
         _errorMessage = 'Interest received cannot exceed interest due.';
+        notifyListeners();
+        return false;
+      }
+      if (releaseSettlementValue > releaseTotalDueForSelected + 0.01) {
+        _errorMessage =
+            'Payment plus discount cannot exceed the total settlement due.';
+        notifyListeners();
+        return false;
+      }
+      if (releaseDiscount > 0.01 &&
+          releaseSettlementValue + 0.01 < releaseTotalDueForSelected) {
+        _errorMessage =
+            'Discount can only be approved when the complete Girvi settlement is cleared.';
         notifyListeners();
         return false;
       }
@@ -628,6 +689,7 @@ class GirviInterestEntryController extends ChangeNotifier {
             interestDue: netInterestDueForSelected,
             principalReceived: releasePrincipalReceived,
             interestReceived: releaseInterestReceived,
+            discountAmount: releaseDiscount,
             paymentMode: _paymentMode,
             paymentDate: _paymentDate,
             expectedDeliveryDate: _expectedDeliveryDate,
@@ -636,7 +698,9 @@ class GirviInterestEntryController extends ChangeNotifier {
             processedBy: 'Staff',
           );
           _successMessage = result.fullySettled
-              ? 'Settlement complete. Girvi is ready for delivery.'
+              ? result.discountApplied > 0
+                  ? 'Settlement complete with discount. Girvi is ready for delivery.'
+                  : 'Settlement complete. Girvi is ready for delivery.'
               : 'Partial settlement recorded. Balance remains pending.';
         }
       } else {
@@ -659,7 +723,7 @@ class GirviInterestEntryController extends ChangeNotifier {
       await _reloadAfterMutation(selectedId: selected.loan.id);
       return true;
     } catch (e) {
-      debugPrint('GirviInterestEntryController.recordPayment error: $e');
+      AppLogger.debug('GirviInterestEntryController.recordPayment error: $e');
       _errorMessage = 'Payment entry failed. Please review and try again.';
       return false;
     } finally {
@@ -723,6 +787,7 @@ class GirviInterestEntryController extends ChangeNotifier {
       _releasePrincipalInput =
           _formatAmountInput(releasePrincipalDueForSelected);
       _releaseInterestInput = _formatAmountInput(netInterestDueForSelected);
+      _releaseDiscountInput = '';
       _expectedDeliveryDate = data.loan.expectedDeliveryDate ?? DateTime.now();
     }
     notifyListeners();
@@ -758,6 +823,7 @@ class GirviInterestEntryController extends ChangeNotifier {
         _releasePrincipalInput =
             _formatAmountInput(releasePrincipalDueForSelected);
         _releaseInterestInput = _formatAmountInput(netInterestDueForSelected);
+        _releaseDiscountInput = '';
       }
     }
 
@@ -847,6 +913,7 @@ class GirviInterestEntryController extends ChangeNotifier {
             loan.interestForMonths(suggestedMonths.toDouble()));
     _releasePrincipalInput = '';
     _releaseInterestInput = '';
+    _releaseDiscountInput = '';
     _expectedDeliveryDate = loan.expectedDeliveryDate ?? DateTime.now();
     _notes = '';
     _receiptNo = '';
@@ -862,6 +929,7 @@ class GirviInterestEntryController extends ChangeNotifier {
     _amountInput = '';
     _releasePrincipalInput = '';
     _releaseInterestInput = '';
+    _releaseDiscountInput = '';
     _receiptNo = '';
     _notes = '';
     _expectedDeliveryDate = DateTime.now();
@@ -901,6 +969,18 @@ class GirviInterestEntryController extends ChangeNotifier {
     if (value <= 0) return '';
     if (value == value.roundToDouble()) return value.toStringAsFixed(0);
     return value.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
+  }
+
+  void _fillReleaseSettlementForDiscount(double discount) {
+    final interestDiscount =
+        discount.clamp(0.0, netInterestDueForSelected).toDouble();
+    final principalDiscount = discount - interestDiscount;
+    _releaseInterestInput = _formatAmountInput(
+      netInterestDueForSelected - interestDiscount,
+    );
+    _releasePrincipalInput = _formatAmountInput(
+      releasePrincipalDueForSelected - principalDiscount,
+    );
   }
 }
 

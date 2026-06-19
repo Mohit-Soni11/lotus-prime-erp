@@ -9,16 +9,28 @@
 // =============================================================================
 
 import 'package:drift/drift.dart' as drift;
-import 'package:flutter/foundation.dart';
 
 import '../../database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
+import '../../core/logging/app_logger.dart';
 
 class GirviRepository {
   final AppDatabase _db;
 
   GirviRepository(this._db);
+
+  static const double _moneyTolerance = 0.01;
+
+  double _normalizeMoney(double value) {
+    return (value * 100).roundToDouble() / 100;
+  }
+
+  String? _normalizeReference(String? value) {
+    final trimmed = value?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    return trimmed;
+  }
 
   // ════════════════════════════════════════════════════════════════════════════
   // TICKET NUMBER GENERATION
@@ -137,6 +149,8 @@ class GirviRepository {
         rows.map((row) => row.readTable(_db.girviLoans).id).toList();
     final interestPaidByLoan = <int, double>{};
     final principalPaidByLoan = <int, double>{};
+    final interestDiscountByLoan = <int, double>{};
+    final principalDiscountByLoan = <int, double>{};
     final legacyPrincipalRepaidByLoan = <int, double>{};
     if (loanIds.isNotEmpty) {
       final paymentRows = await (_db.select(_db.girviPayments)
@@ -160,6 +174,18 @@ class GirviRepository {
               (principalPaidByLoan[payment.girviId] ?? 0) +
                   payment.principalComponent;
         }
+        if (type == GirviPaymentType.fullRelease &&
+            payment.interestDiscountComponent > 0) {
+          interestDiscountByLoan[payment.girviId] =
+              (interestDiscountByLoan[payment.girviId] ?? 0) +
+                  payment.interestDiscountComponent;
+        }
+        if (type == GirviPaymentType.fullRelease &&
+            payment.principalDiscountComponent > 0) {
+          principalDiscountByLoan[payment.girviId] =
+              (principalDiscountByLoan[payment.girviId] ?? 0) +
+                  payment.principalDiscountComponent;
+        }
         if (type == GirviPaymentType.partialPrincipal) {
           legacyPrincipalRepaidByLoan[payment.girviId] =
               (legacyPrincipalRepaidByLoan[payment.girviId] ?? 0) +
@@ -178,6 +204,8 @@ class GirviRepository {
         customerCity: customer.city,
         interestPaidTotal: interestPaidByLoan[loan.id] ?? 0,
         principalPaidTotal: principalPaidByLoan[loan.id] ?? 0,
+        interestDiscountTotal: interestDiscountByLoan[loan.id] ?? 0,
+        principalDiscountTotal: principalDiscountByLoan[loan.id] ?? 0,
         legacyPrincipalRepaidTotal: legacyPrincipalRepaidByLoan[loan.id] ?? 0,
       );
     }).toList();
@@ -354,6 +382,7 @@ class GirviRepository {
     required double interestDue,
     required double principalReceived,
     required double interestReceived,
+    double discountAmount = 0,
     required GirviPaymentMode paymentMode,
     required DateTime paymentDate,
     required DateTime expectedDeliveryDate,
@@ -361,18 +390,65 @@ class GirviRepository {
     String? notes,
     String? processedBy,
   }) async {
-    const tolerance = 0.01;
-    if (principalReceived < 0 || interestReceived < 0) {
+    const tolerance = _moneyTolerance;
+    final principalDueValue = _normalizeMoney(principalDue);
+    final interestDueValue = _normalizeMoney(interestDue);
+    final principalReceivedValue = _normalizeMoney(principalReceived);
+    final interestReceivedValue = _normalizeMoney(interestReceived);
+    final discountValue = _normalizeMoney(discountAmount);
+    final normalizedReceiptNo = _normalizeReference(receiptNo);
+    final normalizedNotes = _normalizeReference(notes);
+
+    if (principalReceivedValue < 0 ||
+        interestReceivedValue < 0 ||
+        discountValue < 0) {
       throw ArgumentError('Release amounts cannot be negative');
     }
-    if (principalReceived + interestReceived <= 0) {
-      throw ArgumentError('Enter a principal or interest amount');
+    if (principalReceivedValue + interestReceivedValue + discountValue <= 0) {
+      throw ArgumentError('Enter a payment or discount amount');
     }
-    if (principalReceived > principalDue + tolerance) {
+    if (principalReceivedValue > principalDueValue + tolerance) {
       throw ArgumentError('Principal received exceeds principal due');
     }
-    if (interestReceived > interestDue + tolerance) {
+    if (interestReceivedValue > interestDueValue + tolerance) {
       throw ArgumentError('Interest received exceeds interest due');
+    }
+
+    final grossDue = principalDueValue + interestDueValue;
+    final cashReceived = principalReceivedValue + interestReceivedValue;
+    if (cashReceived + discountValue > grossDue + tolerance) {
+      throw ArgumentError('Payment plus discount exceeds total due');
+    }
+
+    final interestBalanceAfterCash =
+        (interestDueValue - interestReceivedValue).clamp(0.0, double.infinity);
+    final interestDiscount = _normalizeMoney(
+      discountValue.clamp(0.0, interestBalanceAfterCash).toDouble(),
+    );
+    final principalDiscount = _normalizeMoney(discountValue - interestDiscount);
+    final principalBalanceAfterCash =
+        (principalDueValue - principalReceivedValue)
+            .clamp(0.0, double.infinity);
+    if (principalDiscount > principalBalanceAfterCash + tolerance) {
+      throw ArgumentError('Discount exceeds the remaining settlement due');
+    }
+
+    final principalRemaining = _normalizeMoney(
+      (principalDueValue - principalReceivedValue - principalDiscount)
+          .clamp(0.0, double.infinity)
+          .toDouble(),
+    );
+    final interestRemaining = _normalizeMoney(
+      (interestDueValue - interestReceivedValue - interestDiscount)
+          .clamp(0.0, double.infinity)
+          .toDouble(),
+    );
+    final fullySettled =
+        principalRemaining <= tolerance && interestRemaining <= tolerance;
+    if (discountAmount > tolerance && !fullySettled) {
+      throw ArgumentError(
+        'Discount can only be approved with a complete settlement',
+      );
     }
 
     return _db.transaction(() async {
@@ -384,13 +460,8 @@ class GirviRepository {
         throw StateError('Girvi loan is already closed');
       }
 
-      final principalRemaining =
-          (principalDue - principalReceived).clamp(0.0, double.infinity);
-      final interestRemaining =
-          (interestDue - interestReceived).clamp(0.0, double.infinity);
-      final fullySettled =
-          principalRemaining <= tolerance && interestRemaining <= tolerance;
-      final amountReceived = principalReceived + interestReceived;
+      final amountReceived =
+          _normalizeMoney(principalReceivedValue + interestReceivedValue);
 
       final updated = await updateLoan(
         loanId,
@@ -403,15 +474,21 @@ class GirviRepository {
           releaseDate: fullySettled
               ? drift.Value(paymentDate)
               : const drift.Value.absent(),
-          releasePrincipal:
-              drift.Value((loan.releasePrincipal ?? 0) + principalReceived),
-          releaseInterest:
-              drift.Value((loan.releaseInterest ?? 0) + interestReceived),
+          releasePrincipal: drift.Value(_normalizeMoney(
+            (loan.releasePrincipal ?? 0) + principalReceivedValue,
+          )),
+          releaseInterest: drift.Value(_normalizeMoney(
+            (loan.releaseInterest ?? 0) + interestReceivedValue,
+          )),
           releasePenalty: const drift.Value(0),
-          releaseTotalAmount:
-              drift.Value((loan.releaseTotalAmount ?? 0) + amountReceived),
+          releaseDiscount: drift.Value(_normalizeMoney(
+            (loan.releaseDiscount ?? 0) + discountValue,
+          )),
+          releaseTotalAmount: drift.Value(_normalizeMoney(
+            (loan.releaseTotalAmount ?? 0) + amountReceived,
+          )),
           releasePaymentMode: drift.Value(paymentMode.dbValue),
-          releaseNotes: drift.Value(notes),
+          releaseNotes: drift.Value(normalizedNotes),
           releasedBy: drift.Value(processedBy),
           expectedDeliveryDate: drift.Value(expectedDeliveryDate),
           updatedAt: drift.Value(DateTime.now()),
@@ -428,11 +505,15 @@ class GirviRepository {
               paymentDate: drift.Value(paymentDate),
               amount: drift.Value(amountReceived),
               paymentMode: drift.Value(paymentMode.dbValue),
-              balanceAfter: drift.Value(principalRemaining + interestRemaining),
-              principalComponent: drift.Value(principalReceived),
-              interestComponent: drift.Value(interestReceived),
-              receiptNo: drift.Value(receiptNo),
-              notes: drift.Value(notes),
+              balanceAfter: drift.Value(
+                _normalizeMoney(principalRemaining + interestRemaining),
+              ),
+              principalComponent: drift.Value(principalReceivedValue),
+              interestComponent: drift.Value(interestReceivedValue),
+              principalDiscountComponent: drift.Value(principalDiscount),
+              interestDiscountComponent: drift.Value(interestDiscount),
+              receiptNo: drift.Value(normalizedReceiptNo),
+              notes: drift.Value(normalizedNotes),
             ),
           );
 
@@ -440,6 +521,8 @@ class GirviRepository {
         fullySettled: fullySettled,
         principalRemaining: principalRemaining,
         interestRemaining: interestRemaining,
+        principalDiscount: principalDiscount,
+        interestDiscount: interestDiscount,
       );
     });
   }
@@ -478,8 +561,16 @@ class GirviRepository {
     String? receiptNo,
     String? notes,
   }) async {
-    if (amount <= 0) {
-      throw ArgumentError.value(amount, 'amount', 'Payment amount must be > 0');
+    final receivedAmount = _normalizeMoney(amount);
+    final normalizedReceiptNo = _normalizeReference(receiptNo);
+    final normalizedNotes = _normalizeReference(notes);
+
+    if (receivedAmount <= 0) {
+      throw ArgumentError.value(
+        amount,
+        'amount',
+        'Payment amount must be > 0',
+      );
     }
 
     return _db.transaction(() async {
@@ -501,19 +592,22 @@ class GirviRepository {
               girviId: loanId,
               paymentType: GirviPaymentType.interest.dbValue,
               paymentDate: drift.Value(paymentDate),
-              amount: drift.Value(amount),
+              amount: drift.Value(receivedAmount),
               paymentMode: drift.Value(paymentMode.dbValue),
               monthsCovered: drift.Value(monthsCovered),
               interestFromDate: drift.Value(interestFromDate),
               interestToDate: drift.Value(interestToDate),
-              balanceAfter: drift.Value(loan.loanAmount),
-              receiptNo: drift.Value(receiptNo),
-              notes: drift.Value(notes),
+              balanceAfter: drift.Value(_normalizeMoney(loan.loanAmount)),
+              receiptNo: drift.Value(normalizedReceiptNo),
+              notes: drift.Value(normalizedNotes),
             ),
           );
     });
   }
 
+  /// Legacy payment entry path kept for historical data compatibility.
+  /// New Interest Entry UI uses [recordInterestLedgerPayment]; release uses
+  /// [recordReleaseSettlement].
   Future<int> recordPayment({
     required int loanId,
     required GirviPaymentType paymentType,
@@ -526,8 +620,16 @@ class GirviRepository {
     String? receiptNo,
     String? notes,
   }) async {
-    if (amount <= 0) {
-      throw ArgumentError.value(amount, 'amount', 'Payment amount must be > 0');
+    final receivedAmount = _normalizeMoney(amount);
+    final normalizedReceiptNo = _normalizeReference(receiptNo);
+    final normalizedNotes = _normalizeReference(notes);
+
+    if (receivedAmount <= 0) {
+      throw ArgumentError.value(
+        amount,
+        'amount',
+        'Payment amount must be > 0',
+      );
     }
 
     return _db.transaction(() async {
@@ -550,7 +652,7 @@ class GirviRepository {
             interestFromDate ??
             loanModel.startDate;
         final coveredMonths = loanModel.interestMonthsCoveredByPayment(
-          amount: amount,
+          amount: receivedAmount,
           fromDate: interestStart,
           paymentDate: paymentDate,
         );
@@ -572,15 +674,18 @@ class GirviRepository {
       }
 
       if (paymentType == GirviPaymentType.partialPrincipal) {
-        if (amount > loan.loanAmount) {
+        if (receivedAmount > loan.loanAmount + _moneyTolerance) {
           throw ArgumentError.value(
             amount,
             'amount',
             'Principal payment cannot exceed outstanding principal',
           );
         }
-        balanceAfter =
-            (loan.loanAmount - amount).clamp(0.0, double.infinity).toDouble();
+        balanceAfter = _normalizeMoney(
+          (loan.loanAmount - receivedAmount)
+              .clamp(0.0, double.infinity)
+              .toDouble(),
+        );
         loanUpdate = loanUpdate.copyWith(
           loanAmount: drift.Value(balanceAfter),
         );
@@ -596,14 +701,14 @@ class GirviRepository {
               girviId: loanId,
               paymentType: paymentType.dbValue,
               paymentDate: drift.Value(paymentDate),
-              amount: drift.Value(amount),
+              amount: drift.Value(receivedAmount),
               paymentMode: drift.Value(paymentMode.dbValue),
               monthsCovered: drift.Value(resolvedMonthsCovered),
               interestFromDate: drift.Value(resolvedInterestFromDate),
               interestToDate: drift.Value(resolvedInterestToDate),
-              balanceAfter: drift.Value(balanceAfter),
-              receiptNo: drift.Value(receiptNo),
-              notes: drift.Value(notes),
+              balanceAfter: drift.Value(_normalizeMoney(balanceAfter)),
+              receiptNo: drift.Value(normalizedReceiptNo),
+              notes: drift.Value(normalizedNotes),
             ),
           );
     });
@@ -646,7 +751,7 @@ class GirviRepository {
     }
 
     if (updated > 0) {
-      debugPrint('🔄 GirviRepository: $updated loans marked overdue.');
+      AppLogger.debug('🔄 GirviRepository: $updated loans marked overdue.');
     }
     return updated;
   }
@@ -685,6 +790,8 @@ class GirviRepository {
       var legacyPrincipalRepaid = 0.0;
       var releasePrincipalPaid = 0.0;
       var interestPaid = 0.0;
+      var principalDiscount = 0.0;
+      var interestDiscount = 0.0;
       DateTime? latestPaymentDate;
 
       for (final payment in loanPayments) {
@@ -697,6 +804,8 @@ class GirviRepository {
         } else if (type == GirviPaymentType.fullRelease) {
           releasePrincipalPaid += payment.principalComponent;
           interestPaid += payment.interestComponent;
+          principalDiscount += payment.principalDiscountComponent;
+          interestDiscount += payment.interestDiscountComponent;
         }
 
         if (latestPaymentDate == null ||
@@ -707,7 +816,8 @@ class GirviRepository {
 
       final originalPrincipal = loan.loanAmount + legacyPrincipalRepaid;
       final principalDue =
-          (loan.loanAmount - releasePrincipalPaid).clamp(0.0, double.infinity);
+          (loan.loanAmount - releasePrincipalPaid - principalDiscount)
+              .clamp(0.0, double.infinity);
       final interestMonths = GirviLoanModel.chargeableMonthsBetween(
         loan.startDate,
         loan.releaseDate ?? now,
@@ -717,8 +827,8 @@ class GirviRepository {
         monthlyRatePercent: loan.interestRate,
         months: interestMonths,
       );
-      final interestDue =
-          (grossInterest - interestPaid).clamp(0.0, double.infinity);
+      final interestDue = (grossInterest - interestPaid - interestDiscount)
+          .clamp(0.0, double.infinity);
 
       if (principalDue <= tolerance && interestDue <= tolerance) {
         final settlementDate = loan.releaseDate ?? latestPaymentDate ?? now;
@@ -773,6 +883,7 @@ class GirviRepository {
       releasePrincipal: row.releasePrincipal,
       releaseInterest: row.releaseInterest,
       releasePenalty: row.releasePenalty,
+      releaseDiscount: row.releaseDiscount,
       releaseTotalAmount: row.releaseTotalAmount,
       releasePaymentMode: row.releasePaymentMode,
       releaseNotes: row.releaseNotes,
@@ -797,6 +908,8 @@ class GirviRepository {
       balanceAfter: row.balanceAfter,
       principalComponent: row.principalComponent,
       interestComponent: row.interestComponent,
+      principalDiscountComponent: row.principalDiscountComponent,
+      interestDiscountComponent: row.interestDiscountComponent,
       receiptNo: row.receiptNo,
       notes: row.notes,
       createdAt: row.createdAt,

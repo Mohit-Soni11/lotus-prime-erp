@@ -16,11 +16,12 @@ import 'package:printing/printing.dart';
 import '../../../theme/customer/customer_profile/customer_profile_theme.dart';
 import '../../../logic/customer/customer_profile_logic.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
-import '../../../logic/sales & orders/sales pos/pos_billing_controller.dart';
-import '../../../logic/sales & orders/sales pos/pos_invoice_controller.dart';
+import '../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
+import '../../../logic/sales_orders/sales_pos/pos_invoice_controller.dart';
 import '../../../models/customer/customer_profile/customer_profile_model.dart';
 import '../add_customer/add_customer_screen.dart';
 import 'customer_profile_app_bar.dart';
+import 'package:flutter/foundation.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   final int customerId;

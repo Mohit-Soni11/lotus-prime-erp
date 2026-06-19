@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import '../../database/db/app_database.dart';
 import '../../models/dashboard/user_profile.dart';
@@ -10,6 +9,7 @@ import '../../models/dashboard/customer_stats_model.dart';
 import '../../constants/enums.dart';
 import '../../database/local_database/shop_database_helper.dart';
 import '../../repositories/setting/shop_setup/shop_session_manager.dart';
+import '../../core/logging/app_logger.dart';
 
 class DashboardRepository {
   DashboardRepository({
@@ -55,7 +55,7 @@ class DashboardRepository {
         );
       }
     } catch (e) {
-      debugPrint("❌ Error fetching profile: $e");
+      AppLogger.error("❌ Error fetching profile: $e");
       return const UserProfile(name: "Guest", role: "N/A", isOnline: false);
     }
   }
@@ -106,7 +106,7 @@ class DashboardRepository {
       }
       return ShopProfileModel.empty();
     } catch (e) {
-      debugPrint("❌ Error fetching shop details: $e");
+      AppLogger.error("❌ Error fetching shop details: $e");
       throw Exception("Database Error");
     }
   }
@@ -136,7 +136,7 @@ class DashboardRepository {
 
       _notificationController.add(uiList);
     } catch (e) {
-      debugPrint("❌ Error loading notifications: $e");
+      AppLogger.error("❌ Error loading notifications: $e");
       _notificationController.add([]);
     }
   }
@@ -180,7 +180,7 @@ class DashboardRepository {
         syncTime: formattedTime,
       );
     } catch (e) {
-      debugPrint("❌ Error fetching customer stats: $e");
+      AppLogger.error("❌ Error fetching customer stats: $e");
       return CustomerStatsModel.empty();
     }
   }

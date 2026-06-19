@@ -1,8 +1,8 @@
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../database/db/app_database.dart';
 import '../../models/finance/due_receipt_history/due_receipt_history_model.dart';
+import '../../core/logging/app_logger.dart';
 
 class DueReceiptHistoryRepository {
   final AppDatabase _db;
@@ -99,7 +99,7 @@ class DueReceiptHistoryRepository {
 
       return receipts;
     } catch (e) {
-      debugPrint('DueReceiptHistoryRepository.fetchReceipts error: $e');
+      AppLogger.debug('DueReceiptHistoryRepository.fetchReceipts error: $e');
       return [];
     }
   }

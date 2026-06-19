@@ -14,6 +14,7 @@ import '../../database/db/app_database.dart';
 import '../../models/karigar/karigar_issue_model.dart';
 import '../../models/karigar/karigar_stats_model.dart';
 import '../../repositories/karigar/karigar_repository.dart';
+import '../../core/logging/app_logger.dart';
 
 class KarigarHisaabController extends ChangeNotifier {
   final KarigarRepository _repo;
@@ -66,7 +67,7 @@ class KarigarHisaabController extends ChangeNotifier {
         return; // selectKarigar calls notifyListeners
       }
     } catch (e) {
-      debugPrint('KarigarHisaabController.loadKarigars error: $e');
+      AppLogger.debug('KarigarHisaabController.loadKarigars error: $e');
       _errorMessage = 'Failed to load karigar list.';
     } finally {
       _isLoadingKarigars = false;
@@ -92,7 +93,7 @@ class KarigarHisaabController extends ChangeNotifier {
       _ledgerEntries = results[0] as List<KarigarTxnEntry>;
       _stats = results[1] as KarigarStatsModel;
     } catch (e) {
-      debugPrint('KarigarHisaabController.selectKarigar error: $e');
+      AppLogger.debug('KarigarHisaabController.selectKarigar error: $e');
       _errorMessage = 'Failed to load ledger for ${karigar.name}.';
     } finally {
       _isLoadingLedger = false;
