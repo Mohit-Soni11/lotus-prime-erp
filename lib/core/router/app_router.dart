@@ -228,6 +228,28 @@ GoRouter createAppRouter() {
       ),
 
       GoRoute(
+        path: RoutePaths.girviList,
+        builder: (context, state) => GirviListScreen(
+          onBack: () => context.go(RoutePaths.dashboard),
+          onNewGirvi: () => context.go(RoutePaths.girviNew),
+        ),
+      ),
+
+      GoRoute(
+        path: RoutePaths.customerDefaulters,
+        builder: (context, state) => DefaulterListScreen(
+          onBack: () => context.go(RoutePaths.dashboard),
+        ),
+      ),
+
+      GoRoute(
+        path: RoutePaths.girviNotice,
+        builder: (context, state) => NoticeAuctionScreen(
+          onBack: () => context.go(RoutePaths.dashboard),
+        ),
+      ),
+
+      GoRoute(
         path: RoutePaths.salesPos,
         builder: (context, state) {
           final editBillId = int.tryParse(
@@ -389,13 +411,6 @@ GoRouter createAppRouter() {
             },
           ),
 
-          GoRoute(
-            path: RoutePaths.customerDefaulters,
-            builder: (context, state) => DefaulterListScreen(
-              onBack: () => context.go(RoutePaths.dashboard),
-            ),
-          ),
-
           // ── SUPPLIER ──────────────────────────────────────────────────────────
           GoRoute(
             path: RoutePaths.supplierList,
@@ -524,21 +539,6 @@ GoRouter createAppRouter() {
           ),
 
           // ── GIRVI ─────────────────────────────────────────────────────────────
-          GoRoute(
-            path: RoutePaths.girviList,
-            builder: (context, state) => GirviListScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-              onNewGirvi: () => context.go(RoutePaths.girviNew),
-            ),
-          ),
-
-          GoRoute(
-            path: RoutePaths.girviNotice,
-            builder: (context, state) => NoticeAuctionScreen(
-              onBack: () => context.go(RoutePaths.dashboard),
-            ),
-          ),
-
           // ── FINANCE ────────────────────────────────────────────────────────────
           GoRoute(
             path: RoutePaths.financeCashBook,
