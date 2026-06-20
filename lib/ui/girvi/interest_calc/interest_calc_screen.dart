@@ -8,7 +8,7 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
 import '../../../database/db/app_database.dart';
-import '../../../logic/girvi/girvi_controllers.dart';
+import '../../../logic/girvi/interest_entry/girvi_interest_entry_controller.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
