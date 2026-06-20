@@ -21,7 +21,6 @@ import '../../../logic/sales_orders/sales_pos/pos_invoice_controller.dart';
 import '../../../models/customer/customer_profile/customer_profile_model.dart';
 import '../add_customer/add_customer_screen.dart';
 import 'customer_profile_app_bar.dart';
-import 'package:flutter/foundation.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   final int customerId;
@@ -1639,6 +1638,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                 onPressed: _logic.savingEdit
                     ? null
                     : () async {
+                        final dialogNavigator = Navigator.of(ctx);
+                        final messenger = ScaffoldMessenger.of(context);
                         final ok = await _logic.saveEdit(
                           name: _editNameCtrl.text,
                           mobile: _editMobileCtrl.text,
@@ -1651,8 +1652,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                           pincode: _editPincodeCtrl.text,
                         );
                         if (ok && mounted) {
-                          Navigator.pop(ctx);
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          dialogNavigator.pop();
+                          messenger.showSnackBar(
                             const SnackBar(
                               content: Text(CustomerProfileStrings.editSuccess),
                               backgroundColor: Color(0xFF10B981),
@@ -2998,7 +2999,8 @@ class _CustomerDocumentPreviewState extends State<_CustomerDocumentPreview>
         (currentScale * factor).clamp(_minZoom, _maxZoom).toDouble();
     if ((nextScale - currentScale).abs() < 0.01) return;
     final scaleDelta = nextScale / currentScale;
-    _viewController.value = _viewController.value.clone()..scale(scaleDelta);
+    _viewController.value = _viewController.value.clone()
+      ..scaleByDouble(scaleDelta, scaleDelta, scaleDelta, 1.0);
   }
 
   void _resetZoom() {

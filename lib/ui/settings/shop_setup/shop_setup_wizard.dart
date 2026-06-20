@@ -386,10 +386,11 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
     final updatedSteps = _allSteps.map((step) {
       if (step.id < _currentStep) {
         return step.copyWith(status: StepStatus.completed);
-      } else if (step.id == _currentStep)
+      } else if (step.id == _currentStep) {
         return step.copyWith(status: StepStatus.active);
-      else
+      } else {
         return step.copyWith(status: StepStatus.locked);
+      }
     }).toList();
 
     return ShopSetupLayout(

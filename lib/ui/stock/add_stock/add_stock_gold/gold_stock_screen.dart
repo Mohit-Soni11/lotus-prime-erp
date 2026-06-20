@@ -33,8 +33,14 @@ class _GoldStockScreenState extends State<GoldStockScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _handleExitAttempt,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) {
+          return;
+        }
+        await _handleBackPressed();
+      },
       child: ListenableBuilder(
         listenable: _ctrl,
         builder: (context, _) {
@@ -357,8 +363,7 @@ class _GoldConfirmDialog extends StatelessWidget {
                     onPressed: onPrimary,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: GoldStockColors.textBody,
-                      side:
-                          const BorderSide(color: GoldStockColors.cardBorder),
+                      side: const BorderSide(color: GoldStockColors.cardBorder),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),

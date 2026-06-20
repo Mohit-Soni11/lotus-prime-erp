@@ -42,7 +42,9 @@ class AddKarigarLogic extends ChangeNotifier {
     String? err;
     if (v.trim().isEmpty) {
       err = 'Name is required';
-    } else if (v.trim().length < 2) err = 'Name is too short';
+    } else if (v.trim().length < 2) {
+      err = 'Name is too short';
+    }
     _form = _form.copyWith(
       firstName: v,
       firstNameError: err,
@@ -61,7 +63,9 @@ class AddKarigarLogic extends ChangeNotifier {
     final digits = v.replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) {
       err = 'Phone is required';
-    } else if (digits.length < 10) err = 'Enter a valid 10-digit number';
+    } else if (digits.length < 10) {
+      err = 'Enter a valid 10-digit number';
+    }
     _form = _form.copyWith(
       phone: v,
       phoneError: err,

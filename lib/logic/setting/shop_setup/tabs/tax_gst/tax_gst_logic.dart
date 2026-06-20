@@ -14,7 +14,6 @@ import 'package:flutter/material.dart';
 import '../../../../../models/setting/shop_setup/enums/tax_gst_enums.dart';
 import '../../../../../models/setting/shop_setup/tabs/tax_gst_model.dart';
 import '../../../../../helpers/tax_gst/tax_gst_validators.dart';
-import 'package:flutter/foundation.dart';
 
 class TaxGstLogic extends ChangeNotifier {
   // --- STATE ENUMS (Replaces confusing booleans) ---
@@ -138,10 +137,12 @@ class TaxGstLogic extends ChangeNotifier {
     if (TaxGstValidators.validateBisLicense(bisLicCtrl.text) != null) {
       errors.add(bisLicFocus);
     }
-    if (TaxGstValidators.validateDate(validFromCtrl.text, "Valid From") != null) {
+    if (TaxGstValidators.validateDate(validFromCtrl.text, "Valid From") !=
+        null) {
       errors.add(validFromFocus);
     }
-    if (TaxGstValidators.validateDate(validUptoCtrl.text, "Valid Upto") != null) {
+    if (TaxGstValidators.validateDate(validUptoCtrl.text, "Valid Upto") !=
+        null) {
       errors.add(validUptoFocus);
     }
     return errors;
@@ -175,7 +176,9 @@ class TaxGstLogic extends ChangeNotifier {
 
     if (sectionId == 'gst') {
       gstSectionState = SectionEditState.locked;
-    } else if (sectionId == 'bis') bisSectionState = SectionEditState.locked;
+    } else if (sectionId == 'bis') {
+      bisSectionState = SectionEditState.locked;
+    }
 
     notifyListeners();
     return true;

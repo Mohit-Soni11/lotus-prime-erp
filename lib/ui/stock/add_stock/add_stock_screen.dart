@@ -38,8 +38,14 @@ class _AddStockScreenState extends State<AddStockScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _handleExitAttempt,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) {
+          return;
+        }
+        await _handleBackPressed();
+      },
       child: ListenableBuilder(
         listenable: _ctrl,
         builder: (context, _) {

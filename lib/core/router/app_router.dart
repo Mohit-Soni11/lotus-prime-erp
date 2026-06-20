@@ -304,72 +304,97 @@ class RouteMapper {
 
     if (cleanPath == RoutePaths.dashboard) return AppRoutes.dashboardRoute;
     if (cleanPath == RoutePaths.settings) return AppRoutes.settingsRoute;
-    if (cleanPath == RoutePaths.billingSetup)
+    if (cleanPath == RoutePaths.billingSetup) {
       return AppRoutes.billingSetupRoute;
+    }
     if (cleanPath == RoutePaths.customerList ||
-        cleanPath.startsWith('/app/customer/profile'))
+        cleanPath.startsWith('/app/customer/profile')) {
       return AppRoutes.customerListRoute;
+    }
     if (cleanPath == RoutePaths.customerAdd) return AppRoutes.addCustomerRoute;
-    if (cleanPath == RoutePaths.customerDefaulters)
+    if (cleanPath == RoutePaths.customerDefaulters) {
       return AppRoutes.defaulterListRoute;
-    if (cleanPath == RoutePaths.supplierList)
+    }
+    if (cleanPath == RoutePaths.supplierList) {
       return AppRoutes.supplierListRoute;
+    }
     if (cleanPath == RoutePaths.supplierAdd) return AppRoutes.addSupplierRoute;
     if (cleanPath == RoutePaths.salesPos) return AppRoutes.newSaleRoute;
-    if (cleanPath == RoutePaths.salesBooking)
+    if (cleanPath == RoutePaths.salesBooking) {
       return AppRoutes.bookingAdvanceRoute;
-    if (cleanPath == RoutePaths.salesDelivery)
+    }
+    if (cleanPath == RoutePaths.salesDelivery) {
       return AppRoutes.deliveryManagementRoute;
-    if (cleanPath == RoutePaths.purchaseEntry)
+    }
+    if (cleanPath == RoutePaths.purchaseEntry) {
       return AppRoutes.purchaseEntryRoute;
-    if (cleanPath == RoutePaths.purchaseOldGold)
+    }
+    if (cleanPath == RoutePaths.purchaseOldGold) {
       return AppRoutes.oldGoldBuyRoute;
-    if (cleanPath == RoutePaths.purchaseReturn)
+    }
+    if (cleanPath == RoutePaths.purchaseReturn) {
       return AppRoutes.purchaseReturnRoute;
+    }
     if (cleanPath == RoutePaths.stockInventory) return AppRoutes.inventoryRoute;
     if (cleanPath == RoutePaths.stockAdd) return AppRoutes.addStockRoute;
-    if (cleanPath == RoutePaths.stockBarcode)
+    if (cleanPath == RoutePaths.stockBarcode) {
       return AppRoutes.barcodePrintRoute;
-    if (cleanPath == RoutePaths.stockTransfer)
+    }
+    if (cleanPath == RoutePaths.stockTransfer) {
       return AppRoutes.stockTransferRoute;
-    if (cleanPath == RoutePaths.stockLowAlert)
+    }
+    if (cleanPath == RoutePaths.stockLowAlert) {
       return AppRoutes.lowStockAlertRoute;
-    if (cleanPath == RoutePaths.karigarIssue)
+    }
+    if (cleanPath == RoutePaths.karigarIssue) {
       return AppRoutes.issueToKarigarRoute;
-    if (cleanPath == RoutePaths.karigarReceive)
+    }
+    if (cleanPath == RoutePaths.karigarReceive) {
       return AppRoutes.receiveFromKarigarRoute;
-    if (cleanPath == RoutePaths.karigarPending)
+    }
+    if (cleanPath == RoutePaths.karigarPending) {
       return AppRoutes.pendingJobsRoute;
-    if (cleanPath == RoutePaths.karigarLedger)
+    }
+    if (cleanPath == RoutePaths.karigarLedger) {
       return AppRoutes.karigarLedgerRoute;
+    }
     if (cleanPath == RoutePaths.girviNew) return AppRoutes.newGirviRoute;
     if (cleanPath == RoutePaths.girviList) return AppRoutes.girviReleaseRoute;
-    if (cleanPath == RoutePaths.girviInterest)
+    if (cleanPath == RoutePaths.girviInterest) {
       return AppRoutes.interestCalcRoute;
-    if (cleanPath == RoutePaths.girviNotice)
+    }
+    if (cleanPath == RoutePaths.girviNotice) {
       return AppRoutes.noticeAuctionRoute;
+    }
     if (cleanPath == RoutePaths.financeCashBook) return AppRoutes.cashBookRoute;
     if (cleanPath == RoutePaths.financeBankBook) return AppRoutes.bankBookRoute;
-    if (cleanPath == RoutePaths.financeExpense)
+    if (cleanPath == RoutePaths.financeExpense) {
       return AppRoutes.expenseEntryRoute;
-    if (cleanPath == RoutePaths.financeJournal)
+    }
+    if (cleanPath == RoutePaths.financeJournal) {
       return AppRoutes.journalEntryRoute;
-    if (cleanPath == RoutePaths.financeDueReport)
+    }
+    if (cleanPath == RoutePaths.financeDueReport) {
       return AppRoutes.dueReportRoute;
-    if (cleanPath == RoutePaths.financeDueCollection)
+    }
+    if (cleanPath == RoutePaths.financeDueCollection) {
       return AppRoutes.dueCollectionRoute;
-    if (cleanPath == RoutePaths.financeDueReceipts)
+    }
+    if (cleanPath == RoutePaths.financeDueReceipts) {
       return AppRoutes.dueReceiptHistoryRoute;
+    }
     if (cleanPath == RoutePaths.reportDayBook) return AppRoutes.dayBookRoute;
     if (cleanPath == RoutePaths.reportSales) return AppRoutes.salesReportRoute;
-    if (cleanPath == RoutePaths.reportPurchase)
+    if (cleanPath == RoutePaths.reportPurchase) {
       return AppRoutes.purchaseReportRoute;
+    }
     if (cleanPath == RoutePaths.reportStock) return AppRoutes.stockSummaryRoute;
     if (cleanPath == RoutePaths.reportPnl) return AppRoutes.profitLossRoute;
     if (cleanPath == RoutePaths.reportGst) return AppRoutes.gstReportRoute;
     if (cleanPath == RoutePaths.schemesNew) return AppRoutes.newSchemeRoute;
-    if (cleanPath == RoutePaths.schemesCollection)
+    if (cleanPath == RoutePaths.schemesCollection) {
       return AppRoutes.monthlyCollectionRoute;
+    }
 
     return AppRoutes.dashboardRoute;
   }

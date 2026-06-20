@@ -4,8 +4,6 @@
 // DESCRIPTION: Generates invoice snapshots, PDF output, printing, sharing, and persistence workflows.
 // ==========================================
 
-import 'dart:typed_data';
-import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -493,7 +491,8 @@ class PosInvoiceController extends ChangeNotifier {
         AppLogger.debug(
             " [INVOICE] Shop data loaded: $_realShopName | $_realShopPhone | $_realShopAddress");
       } else {
-        AppLogger.debug(" [INVOICE] No shop profile found in DB. Using defaults.");
+        AppLogger.debug(
+            " [INVOICE] No shop profile found in DB. Using defaults.");
         _realShopName = "Shop Name Not Set";
         _realShopAddress = "Please complete Shop Setup";
         _realShopPhone = "Phone not set";

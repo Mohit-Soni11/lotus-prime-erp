@@ -9,7 +9,6 @@
 
 import 'package:intl/intl.dart';
 import 'bank_book_enums.dart';
-import 'package:flutter/foundation.dart';
 
 // =============================================================================
 // BANK ACCOUNT MODEL

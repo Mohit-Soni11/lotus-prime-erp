@@ -176,13 +176,15 @@ class AddressTabState extends State<AddressTab> {
   void _routeFocusToError(String errorKey) {
     if (errorKey == 'keyAddr1') {
       addr1Focus.requestFocus();
-    } else if (errorKey == 'keyAddr2')
+    } else if (errorKey == 'keyAddr2') {
       addr2Focus.requestFocus();
-    else if (errorKey == 'keyCity')
+    } else if (errorKey == 'keyCity') {
       cityFocus.requestFocus();
-    else if (errorKey == 'keyState')
+    } else if (errorKey == 'keyState') {
       stateFocus.requestFocus();
-    else if (errorKey == 'keyPin') pinFocus.requestFocus();
+    } else if (errorKey == 'keyPin') {
+      pinFocus.requestFocus();
+    }
   }
 
   // --- SMART MAP HANDLING ---

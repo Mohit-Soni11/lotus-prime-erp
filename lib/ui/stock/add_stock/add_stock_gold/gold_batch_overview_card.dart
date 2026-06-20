@@ -118,7 +118,7 @@ class GoldBatchOverviewCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: ui.accent.withOpacity(0.22),
+                      color: ui.accent.withValues(alpha: 0.22),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -181,7 +181,7 @@ class GoldBatchOverviewCard extends StatelessWidget {
       width: width,
       height: 3,
       decoration: BoxDecoration(
-        color: color.withOpacity(opacity),
+        color: color.withValues(alpha: opacity),
         borderRadius: BorderRadius.circular(2),
       ),
     );
@@ -191,9 +191,9 @@ class GoldBatchOverviewCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Text(
         label,
@@ -232,9 +232,9 @@ class _GstStatusPill extends StatelessWidget {
         duration: const Duration(milliseconds: 220),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: activeColor.withOpacity(0.08),
+          color: activeColor.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: activeColor.withOpacity(0.28)),
+          border: Border.all(color: activeColor.withValues(alpha: 0.28)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -297,7 +297,7 @@ class _StatTile extends StatelessWidget {
                 width: 20,
                 height: 20,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.12),
+                  color: iconColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Icon(icon, size: 12, color: iconColor),

@@ -870,7 +870,7 @@ class _PreviousDueAdjustmentPanel extends StatelessWidget {
               ),
               Switch(
                 value: payment.adjustPreviousDue,
-                activeColor: GoldStockColors.paymentDue,
+                activeThumbColor: GoldStockColors.paymentDue,
                 onChanged: payment.setAdjustPreviousDue,
               ),
             ],

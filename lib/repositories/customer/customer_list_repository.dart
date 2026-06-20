@@ -229,8 +229,9 @@ class CustomerListRepository {
 
   static String _formatMoney(double value) {
     final amount = value.abs();
-    if (amount >= 10000000)
+    if (amount >= 10000000) {
       return "Rs ${(value / 10000000).toStringAsFixed(1)}Cr";
+    }
     if (amount >= 100000) return "Rs ${(value / 100000).toStringAsFixed(1)}L";
     if (amount >= 1000) return "Rs ${(value / 1000).toStringAsFixed(1)}K";
     return "Rs ${value.toStringAsFixed(0)}";

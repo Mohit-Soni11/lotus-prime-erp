@@ -1173,8 +1173,9 @@ class _GirviReceiptFlipPreviewState extends State<_GirviReceiptFlipPreview>
     final nextScale =
         (currentScale * factor).clamp(_minZoom, _maxZoom).toDouble();
     if ((nextScale - currentScale).abs() < 0.01) return;
+    final scaleDelta = nextScale / currentScale;
     _viewController.value = _viewController.value.clone()
-      ..scale(nextScale / currentScale);
+      ..scaleByDouble(scaleDelta, scaleDelta, scaleDelta, 1.0);
   }
 
   void _resetZoom() {

@@ -913,7 +913,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
                           SizedBox(
                             width: 414,
                             child: DropdownButtonFormField<String>(
-                              value: _editType,
+                              initialValue: _editType,
                               decoration: _dialogDecoration('Supplier Type'),
                               items: SupplierType.labels
                                   .map(
@@ -1053,6 +1053,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
                   onPressed: saving
                       ? null
                       : () async {
+                          final dialogNavigator = Navigator.of(dialogContext);
                           setDialogState(() => saving = true);
                           final ok = await _logic.saveEdit(
                             businessName: _businessNameCtrl.text,
@@ -1077,7 +1078,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
                           );
                           if (!mounted) return;
                           if (ok) {
-                            Navigator.of(dialogContext).pop();
+                            dialogNavigator.pop();
                             _showSnack(SupplierProfileStrings.editSuccess);
                           } else {
                             setDialogState(() => saving = false);

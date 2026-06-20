@@ -293,8 +293,9 @@ class _BookingScrapRowState extends State<BookingScrapRow> {
     });
     if (m == MetalType.silver) {
       widget.item.purityCtrl.clear();
-    } else if (widget.item.purityCtrl.text.isEmpty)
+    } else if (widget.item.purityCtrl.text.isEmpty) {
       widget.item.purityCtrl.text = '100';
+    }
   }
 
   Color _mc(MetalType m) {

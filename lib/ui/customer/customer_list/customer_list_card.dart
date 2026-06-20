@@ -483,8 +483,9 @@ class _CustomerListCardState extends State<CustomerListCard> {
 
   static String _formatMoney(double value) {
     if (value <= 0.01) return "Rs 0";
-    if (value >= 10000000)
+    if (value >= 10000000) {
       return "Rs ${(value / 10000000).toStringAsFixed(1)}Cr";
+    }
     if (value >= 100000) return "Rs ${(value / 100000).toStringAsFixed(1)}L";
     if (value >= 1000) return "Rs ${(value / 1000).toStringAsFixed(1)}K";
     return "Rs ${value.toStringAsFixed(0)}";

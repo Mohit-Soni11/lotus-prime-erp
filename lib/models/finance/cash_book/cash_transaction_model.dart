@@ -8,7 +8,6 @@
 
 import 'package:intl/intl.dart';
 import 'cash_book_enums.dart';
-import 'package:flutter/foundation.dart';
 
 class CashTransactionModel {
   final int id;

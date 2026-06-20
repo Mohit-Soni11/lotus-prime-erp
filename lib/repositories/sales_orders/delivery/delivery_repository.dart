@@ -224,15 +224,21 @@ class DeliveryRepository {
 
       int overdue = 0, todayCount = 0;
       for (final o in allActive) {
-        if (o.expectedDeliveryDate == null) continue;
-        final d = DateTime(o.expectedDeliveryDate!.year,
-            o.expectedDeliveryDate!.month, o.expectedDeliveryDate!.day);
+        if (o.expectedDeliveryDate == null) {
+          continue;
+        }
+        final d = DateTime(
+          o.expectedDeliveryDate!.year,
+          o.expectedDeliveryDate!.month,
+          o.expectedDeliveryDate!.day,
+        );
         if (d.isBefore(today)) {
           overdue++;
-        } else if (d.isAtSameMomentAs(today))
+        } else if (d.isAtSameMomentAs(today)) {
           todayCount++;
-        else if (d.isAtSameMomentAs(
-            tomorrow)) {} // tomorrow ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â counted in actionRequired
+        } else if (d.isAtSameMomentAs(tomorrow)) {
+          // Tomorrow is counted in actionRequired.
+        }
       }
 
       final dueLedger = await (_db.select(_db.deliveryOrders)

@@ -605,11 +605,12 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                     onPressed: widget.ctrl.isSaving
                         ? null
                         : () async {
+                            final messenger = ScaffoldMessenger.of(context);
                             final saved = await widget.ctrl.savePurchase();
-                            if (!context.mounted) {
+                            if (!mounted) {
                               return;
                             }
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messenger.showSnackBar(
                               SnackBar(
                                 content: Text(
                                   saved
