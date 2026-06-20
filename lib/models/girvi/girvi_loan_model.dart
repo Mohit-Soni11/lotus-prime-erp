@@ -1,20 +1,7 @@
-// =============================================================================
-// FILE        : girvi_loan_model.dart
-// MODULE      : Girvi / Pawn
-// LAYER       : Models / Domain
-// DESCRIPTION : Rich domain model wrapping the raw GirviLoan DB row.
-//               Adds computed properties: daysElapsed, monthsElapsed,
-//               accruedInterest, totalDue, isOverdue, statusColor, etc.
-//               Used in list screens, detail screens, and release flow.
-// =============================================================================
-
 import 'package:flutter/material.dart';
 import 'girvi_enums.dart';
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// GIRVI LOAN WITH CUSTOMER â€” JOIN MODEL
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
+/// Joined Girvi loan projection with customer and payment aggregates.
 class GirviLoanWithCustomer {
   final GirviLoanModel loan;
   final String customerName;
@@ -65,10 +52,7 @@ class GirviLoanWithCustomer {
   double get totalPayable => principalDue + netInterestDue;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// GIRVI LOAN MODEL â€” MAIN DOMAIN OBJECT
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
+/// One row in the compound interest calculation breakdown.
 class GirviInterestBreakdownLine {
   final int cycleNumber;
   final int months;
@@ -89,6 +73,7 @@ class GirviInterestBreakdownLine {
   double get monthlyInterest => principalBase * (monthlyRatePercent / 100);
 }
 
+/// Human-readable elapsed period between two dates.
 class GirviElapsedPeriod {
   final int years;
   final int months;
@@ -112,6 +97,7 @@ class GirviElapsedPeriod {
   }
 }
 
+/// Domain model for a Girvi loan with computed settlement values.
 class GirviLoanModel {
   static const int compoundCycleMonths = 12;
 
@@ -144,8 +130,7 @@ class GirviLoanModel {
   final String? idProofImagePath;
   final String status;
   final String? notes;
-
-  // Release data
+  // Release settlement fields
   final double? releasePrincipal;
   final double? releaseInterest;
   final double? releasePenalty;
@@ -203,8 +188,6 @@ class GirviLoanModel {
     this.deliveredAt,
     this.updatedAt,
   });
-
-  // â”€â”€ COMPUTED PROPERTIES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   /// Days since loan started
   int get daysElapsed {
@@ -508,10 +491,9 @@ class GirviLoanModel {
       '$itemCount item${itemCount > 1 ? 's' : ''} - ${metalTypeEnum.displayName} $metalPurity - ${netWeight.toStringAsFixed(2)}g';
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // GIRVI PAYMENT MODEL
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
+/// Domain model for a Girvi payment ledger row.
 class GirviPaymentModel {
   final int id;
   final int girviId;
@@ -557,10 +539,7 @@ class GirviPaymentModel {
       principalDiscountComponent + interestDiscountComponent;
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// GIRVI SUMMARY MODEL â€” for dashboard/overview
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-
+/// Result returned after recording a release settlement.
 class GirviSettlementResult {
   final bool fullySettled;
   final double principalRemaining;
@@ -580,6 +559,7 @@ class GirviSettlementResult {
   double get discountApplied => principalDiscount + interestDiscount;
 }
 
+/// Aggregated Girvi dashboard summary.
 class GirviSummaryModel {
   final int totalActive;
   final int totalOverdue;
