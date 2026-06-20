@@ -1,13 +1,20 @@
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
 
 import '../../../constants/app_routes.dart';
 import '../../../database/db/app_database.dart';
 import '../../../logic/girvi/girvi_controllers.dart';
+import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
+import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import 'girvi_list_app_bar.dart';
 
@@ -46,6 +53,8 @@ class _GirviListScreenState extends State<GirviListScreen>
   final DateFormat _dateFormat = DateFormat('dd MMM yyyy');
 
   int? _selectedLoanId;
+  bool _openingInvoicePdf = false;
+  bool _ticketAccountDialogOpen = false;
 
   @override
   void initState() {
@@ -61,7 +70,7 @@ class _GirviListScreenState extends State<GirviListScreen>
     );
 
     _searchController.addListener(
-      () => _controller.onSearchChanged(_searchController.text),
+      _handleSearchChanged,
     );
     _loadLedger();
   }
@@ -78,6 +87,7 @@ class _GirviListScreenState extends State<GirviListScreen>
     _fadeController.reset();
     await _controller.load();
     if (!mounted) return;
+    _syncSelectionWithVisibleTickets();
     _fadeController.forward();
   }
 
@@ -85,7 +95,13 @@ class _GirviListScreenState extends State<GirviListScreen>
     _fadeController.reset();
     await _controller.reload();
     if (!mounted) return;
+    _syncSelectionWithVisibleTickets();
     _fadeController.forward();
+  }
+
+  void _handleSearchChanged() {
+    _controller.onSearchChanged(_searchController.text);
+    _syncSelectionWithVisibleTickets();
   }
 
   GirviLoanWithCustomer? get _selectedLoan {
@@ -108,10 +124,69 @@ class _GirviListScreenState extends State<GirviListScreen>
 
   void _selectLoan(GirviLoanWithCustomer item) {
     setState(() => _selectedLoanId = item.loan.id);
+    unawaited(_controller.loadPaymentsForLoan(item.loan.id));
+  }
+
+  Future<void> _openTicketAccount(GirviLoanWithCustomer item) async {
+    if (_ticketAccountDialogOpen) return;
+    _selectLoan(item);
+    if (!mounted) return;
+
+    _ticketAccountDialogOpen = true;
+    try {
+      await showDialog<void>(
+        context: context,
+        barrierColor: Colors.black.withValues(alpha: 0.46),
+        builder: (dialogContext) {
+          return Dialog(
+            insetPadding:
+                const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+            backgroundColor: Colors.transparent,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1040, maxHeight: 780),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Material(
+                  color: GirviColors.bodyBg,
+                  child: Column(
+                    children: [
+                      _TicketAccountDialogHeader(
+                        ticketNo: item.loan.ticketNo,
+                        customerName: item.customerName,
+                        customerMeta: _compactCustomerLocation(item),
+                        onClose: () => Navigator.of(dialogContext).pop(),
+                      ),
+                      Expanded(
+                        child: ListenableBuilder(
+                          listenable: _controller,
+                          builder: (context, _) {
+                            return SingleChildScrollView(
+                              padding: const EdgeInsets.all(16),
+                              physics: const BouncingScrollPhysics(),
+                              child: _buildLedgerDetailPanel(
+                                item: item,
+                                compact: true,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    } finally {
+      _ticketAccountDialogOpen = false;
+    }
   }
 
   void _setFilter(GirviFilter filter) {
     _controller.setFilter(filter);
+    _syncSelectionWithVisibleTickets();
   }
 
   void _clearSearch() {
@@ -123,6 +198,11 @@ class _GirviListScreenState extends State<GirviListScreen>
   }
 
   void _openInterestEntry(GirviLoanWithCustomer item) {
+    if (_ticketAccountDialogOpen) {
+      _ticketAccountDialogOpen = false;
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+
     final route = RouteMapper.toPath(AppRoutes.interestCalcRoute);
     final uri = Uri(
       path: route,
@@ -132,6 +212,183 @@ class _GirviListScreenState extends State<GirviListScreen>
       },
     );
     context.go(uri.toString());
+  }
+
+  Future<void> _previewGirviInvoicePdf(GirviLoanWithCustomer item) async {
+    if (_openingInvoicePdf) return;
+    setState(() => _openingInvoicePdf = true);
+    try {
+      final draft =
+          await CustomerProfileRepository(db: _db).fetchGirviInvoiceDraft(
+        customerId: item.loan.customerId,
+        loanId: item.loan.id,
+      );
+      if (!mounted) return;
+      if (draft == null) {
+        _showLedgerMessage('Girvi invoice details could not be loaded.');
+        return;
+      }
+
+      final controller = GirviInvoiceHubController(
+        draft: draft,
+        onFinalize: () async => true,
+      );
+      try {
+        await controller.generatePreview();
+        if (!mounted) return;
+
+        final bytes = controller.pdfBytes;
+        if (bytes == null) {
+          _showLedgerMessage('Girvi invoice PDF could not be generated.');
+          return;
+        }
+
+        await _showInvoicePdfPreview(
+          ticketNo: item.loan.ticketNo,
+          customerName: item.customerName,
+          pdfBytes: bytes,
+        );
+      } finally {
+        controller.dispose();
+      }
+    } catch (_) {
+      if (mounted) {
+        _showLedgerMessage('Girvi invoice preview could not be opened.');
+      }
+    } finally {
+      if (mounted) setState(() => _openingInvoicePdf = false);
+    }
+  }
+
+  Future<void> _showInvoicePdfPreview({
+    required String ticketNo,
+    required String customerName,
+    required Uint8List pdfBytes,
+  }) {
+    return showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.78),
+      useSafeArea: false,
+      builder: (dialogContext) => Dialog.fullscreen(
+        backgroundColor: const Color(0xFF111827),
+        child: Column(
+          children: [
+            Container(
+              height: 68,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.24),
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.10),
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: GirviColors.brandGold.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: GirviColors.brandGold.withValues(alpha: 0.28),
+                      ),
+                    ),
+                    child: const Icon(
+                      GirviIcons.print,
+                      color: GirviColors.brandGold,
+                      size: 19,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Girvi Invoice PDF',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.manrope(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$ticketNo | $customerName',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            color: Colors.white.withValues(alpha: 0.72),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Close preview',
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: PdfPreview(
+                build: (_) async => pdfBytes,
+                initialPageFormat: PdfPageFormat.a4,
+                allowPrinting: true,
+                allowSharing: true,
+                canChangeOrientation: false,
+                canChangePageFormat: false,
+                canDebug: false,
+                maxPageWidth: 860,
+                pdfFileName: 'girvi_$ticketNo.pdf',
+                scrollViewDecoration: const BoxDecoration(
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLedgerMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: GirviColors.shellBg,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _syncSelectionWithVisibleTickets() {
+    final visibleLoans = _controller.loans;
+    if (visibleLoans.isEmpty) {
+      if (_selectedLoanId != null) setState(() => _selectedLoanId = null);
+      return;
+    }
+
+    final selectedStillVisible = visibleLoans.any(
+      (item) => item.loan.id == _selectedLoanId,
+    );
+    final nextSelection =
+        selectedStillVisible ? _selectedLoanId! : visibleLoans.first.loan.id;
+
+    if (_selectedLoanId != nextSelection) {
+      setState(() => _selectedLoanId = nextSelection);
+    }
+    unawaited(_controller.loadPaymentsForLoan(nextSelection));
   }
 
   @override

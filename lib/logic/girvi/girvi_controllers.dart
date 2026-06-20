@@ -15,16 +15,22 @@ class GirviListController extends ChangeNotifier {
 
   List<GirviLoanWithCustomer> _allLoans = [];
   List<GirviLoanWithCustomer> _filteredLoans = [];
+  List<GirviPaymentModel> _selectedPayments = [];
   GirviSummaryModel _summary = GirviSummaryModel.empty();
   GirviFilter _filter = GirviFilter.all;
   String _searchQuery = '';
+  int? _selectedPaymentLoanId;
   bool _isLoading = true;
+  bool _isLoadingSelectedPayments = false;
   String? _errorMessage;
 
   List<GirviLoanWithCustomer> get loans => _filteredLoans;
+  List<GirviPaymentModel> get selectedPayments => _selectedPayments;
   GirviSummaryModel get summary => _summary;
   GirviFilter get filter => _filter;
+  int? get selectedPaymentLoanId => _selectedPaymentLoanId;
   bool get isLoading => _isLoading;
+  bool get isLoadingSelectedPayments => _isLoadingSelectedPayments;
   String? get errorMessage => _errorMessage;
   bool get hasLoans => _allLoans.isNotEmpty;
   int countForFilter(GirviFilter filter) =>
@@ -46,6 +52,7 @@ class GirviListController extends ChangeNotifier {
       _allLoans = results[0] as List<GirviLoanWithCustomer>;
       _summary = results[1] as GirviSummaryModel;
       _applyFilter();
+      _syncSelectedPaymentsWithVisibleLoans();
     } catch (e) {
       AppLogger.debug('GirviListController.load error: $e');
       _errorMessage = 'Failed to load girvi data. Please try again.';
@@ -103,6 +110,36 @@ class GirviListController extends ChangeNotifier {
       case GirviFilter.auctioned:
         return loan.girviStatus == GirviStatus.auctioned;
     }
+  }
+
+  Future<void> loadPaymentsForLoan(int loanId) async {
+    if (_selectedPaymentLoanId == loanId && _selectedPayments.isNotEmpty) {
+      return;
+    }
+
+    _selectedPaymentLoanId = loanId;
+    _selectedPayments = [];
+    _isLoadingSelectedPayments = true;
+    notifyListeners();
+
+    try {
+      _selectedPayments = await _repo.getPaymentModelsForLoan(loanId);
+    } catch (e) {
+      AppLogger.debug('GirviListController.loadPaymentsForLoan error: $e');
+      _selectedPayments = [];
+    } finally {
+      _isLoadingSelectedPayments = false;
+      notifyListeners();
+    }
+  }
+
+  void _syncSelectedPaymentsWithVisibleLoans() {
+    if (_filteredLoans.any((item) => item.loan.id == _selectedPaymentLoanId)) {
+      return;
+    }
+    _selectedPaymentLoanId = null;
+    _selectedPayments = [];
+    _isLoadingSelectedPayments = false;
   }
 
   Future<void> reload() => load();

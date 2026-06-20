@@ -30,7 +30,7 @@ extension _GirviLedgerFormatters on _GirviListScreenState {
   Color _filterColor(GirviFilter filter) {
     switch (filter) {
       case GirviFilter.all:
-        return GirviColors.textBody;
+        return GirviColors.brandGold;
       case GirviFilter.active:
         return GirviColors.success;
       case GirviFilter.overdue:

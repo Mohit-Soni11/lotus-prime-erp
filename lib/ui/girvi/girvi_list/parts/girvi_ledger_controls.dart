@@ -151,7 +151,11 @@ class _LedgerFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = selected ? GirviColors.shellBg : color;
+    final foreground = selected ? color : GirviColors.textDark;
+    final background = selected
+        ? color.withValues(alpha: 0.14)
+        : color.withValues(alpha: 0.07);
+    final borderColor = selected ? color : color.withValues(alpha: 0.22);
     return InkWell(
       borderRadius: BorderRadius.circular(999),
       onTap: onTap,
@@ -159,16 +163,15 @@ class _LedgerFilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? color : color.withValues(alpha: 0.08),
+          color: background,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: selected ? color : color.withValues(alpha: 0.18),
-          ),
+          border: Border.all(color: borderColor, width: selected ? 1.6 : 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: foreground, size: 14),
+            Icon(selected ? Icons.check_rounded : icon,
+                color: foreground, size: 15),
             const SizedBox(width: 7),
             Text(
               label,
@@ -184,10 +187,9 @@ class _LedgerFilterChip extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: selected
-                    ? GirviColors.shellBg.withValues(alpha: 0.12)
-                    : color.withValues(alpha: 0.10),
+                color: GirviColors.cardBg.withValues(alpha: 0.72),
                 borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: color.withValues(alpha: 0.18)),
               ),
               child: Text(
                 '$count',

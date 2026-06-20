@@ -30,7 +30,7 @@ extension _GirviLedgerTicketList on _GirviListScreenState {
           principalDue: _money(item.principalDue),
           interestDue: _money(item.netInterestDue),
           totalPayable: _money(item.totalPayable),
-          onTap: () => _selectLoan(item),
+          onTap: () => _openTicketAccount(item),
         );
       },
     );
@@ -184,12 +184,8 @@ class _LedgerTicketRow extends StatelessWidget {
           width: 130,
           child: _TicketMaturityBlock(label: maturityLabel),
         ),
-        const SizedBox(width: 8),
-        const Icon(
-          Icons.chevron_right_rounded,
-          color: GirviColors.textMuted,
-          size: 22,
-        ),
+        const SizedBox(width: 12),
+        _TicketOpenIndicator(selected: selected),
       ],
     );
   }
@@ -249,7 +245,50 @@ class _LedgerTicketRow extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerRight,
+          child: _TicketOpenIndicator(selected: selected),
+        ),
       ],
+    );
+  }
+}
+
+class _TicketOpenIndicator extends StatelessWidget {
+  final bool selected;
+
+  const _TicketOpenIndicator({required this.selected});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? GirviColors.brandGold : GirviColors.info;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: selected ? 0.16 : 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            selected ? Icons.check_circle_rounded : Icons.open_in_new_rounded,
+            color: color,
+            size: 15,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            selected ? 'Account Open' : 'Open Account',
+            style: GoogleFonts.inter(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -79,21 +79,34 @@ extension _GirviLedgerDetailPanel on _GirviListScreenState {
         ),
         const SizedBox(height: 12),
         _DetailSection(
-          title: 'Collateral',
+          title: 'Pledged Item Details',
           children: [
-            _DetailInfoRow(label: 'Item', value: loan.itemDescription),
+            _DetailInfoRow(label: 'Item Name', value: loan.itemDescription),
+            _DetailInfoRow(label: 'Item Count', value: '${loan.itemCount}'),
             _DetailInfoRow(
-              label: 'Metal',
+              label: 'Metal / Purity',
               value: '${loan.metalTypeEnum.displayName} | ${loan.metalPurity}',
+            ),
+            _DetailInfoRow(
+              label: 'Gross Weight',
+              value: '${loan.grossWeight.toStringAsFixed(2)} g',
+            ),
+            _DetailInfoRow(
+              label: 'Less Weight',
+              value: '${loan.stoneWeight.toStringAsFixed(2)} g',
             ),
             _DetailInfoRow(
               label: 'Net Weight',
               value: '${loan.netWeight.toStringAsFixed(2)} g',
             ),
             _DetailInfoRow(
-              label: 'Item Value',
-              value: _money(loan.totalValue),
+              label: 'Rate Per Gram',
+              value: _money(loan.ratePerGram, precise: true),
             ),
+            _DetailInfoRow(
+                label: 'Pledged Value', value: _money(loan.totalValue)),
+            if ((loan.huidNumber ?? '').trim().isNotEmpty)
+              _DetailInfoRow(label: 'HUID', value: loan.huidNumber!.trim()),
           ],
         ),
         const SizedBox(height: 12),
@@ -113,20 +126,102 @@ extension _GirviLedgerDetailPanel on _GirviListScreenState {
           ],
         ),
         const SizedBox(height: 16),
-        if (canOpenPayment)
-          _LedgerCommandButton(
-            icon: GirviIcons.cash,
-            label: 'Collect / Settle',
-            color: GirviColors.success,
-            onTap: () => _openInterestEntry(item),
-          )
-        else
-          _ClosedTicketNotice(statusLabel: loan.statusLabel),
+        _PaymentHistoryPanel(
+          payments: _controller.selectedPaymentLoanId == loan.id
+              ? _controller.selectedPayments
+              : const [],
+          loading: _controller.selectedPaymentLoanId == loan.id &&
+              _controller.isLoadingSelectedPayments,
+          money: _money,
+          date: _date,
+        ),
+        const SizedBox(height: 16),
+        _LedgerDetailActions(
+          canCollect: canOpenPayment,
+          openingPdf: _openingInvoicePdf,
+          statusLabel: loan.statusLabel,
+          onPreviewPdf: () => _previewGirviInvoicePdf(item),
+          onCollect: () => _openInterestEntry(item),
+        ),
       ],
     );
 
     return _LedgerSurface(
       child: compact ? content : SingleChildScrollView(child: content),
+    );
+  }
+}
+
+class _TicketAccountDialogHeader extends StatelessWidget {
+  final String ticketNo;
+  final String customerName;
+  final String customerMeta;
+  final VoidCallback onClose;
+
+  const _TicketAccountDialogHeader({
+    required this.ticketNo,
+    required this.customerName,
+    required this.customerMeta,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      decoration: const BoxDecoration(
+        color: GirviColors.cardBg,
+        border: Border(
+          bottom: BorderSide(color: GirviColors.cardBorder),
+        ),
+      ),
+      child: Row(
+        children: [
+          const _LedgerIconBox(
+            icon: GirviIcons.ticket,
+            color: GirviColors.brandGold,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Girvi Account Details',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.manrope(
+                    color: GirviColors.textDark,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '$ticketNo | $customerName | $customerMeta',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: GirviColors.textBody,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Close details',
+            onPressed: onClose,
+            icon: const Icon(
+              Icons.close_rounded,
+              color: GirviColors.textDark,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -402,11 +497,82 @@ class _DetailInfoRow extends StatelessWidget {
   }
 }
 
+class _LedgerDetailActions extends StatelessWidget {
+  final bool canCollect;
+  final bool openingPdf;
+  final String statusLabel;
+  final VoidCallback onPreviewPdf;
+  final VoidCallback onCollect;
+
+  const _LedgerDetailActions({
+    required this.canCollect,
+    required this.openingPdf,
+    required this.statusLabel,
+    required this.onPreviewPdf,
+    required this.onCollect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pdfButton = _LedgerCommandButton(
+      icon: GirviIcons.print,
+      label: openingPdf ? 'Opening PDF...' : 'View Invoice PDF',
+      color: GirviColors.info,
+      onTap: openingPdf ? null : onPreviewPdf,
+    );
+
+    if (!canCollect) {
+      return Column(
+        children: [
+          pdfButton,
+          const SizedBox(height: 10),
+          _ClosedTicketNotice(statusLabel: statusLabel),
+        ],
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stacked = constraints.maxWidth < 520;
+        if (stacked) {
+          return Column(
+            children: [
+              pdfButton,
+              const SizedBox(height: 10),
+              _LedgerCommandButton(
+                icon: GirviIcons.cash,
+                label: 'Collect / Settle',
+                color: GirviColors.success,
+                onTap: onCollect,
+              ),
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: pdfButton),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _LedgerCommandButton(
+                icon: GirviIcons.cash,
+                label: 'Collect / Settle',
+                color: GirviColors.success,
+                onTap: onCollect,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _LedgerCommandButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _LedgerCommandButton({
     required this.icon,
@@ -474,5 +640,236 @@ class _ClosedTicketNotice extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _PaymentHistoryPanel extends StatelessWidget {
+  final List<GirviPaymentModel> payments;
+  final bool loading;
+  final String Function(double value, {bool precise}) money;
+  final String Function(DateTime? value) date;
+
+  const _PaymentHistoryPanel({
+    required this.payments,
+    required this.loading,
+    required this.money,
+    required this.date,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final visiblePayments = payments.take(6).toList();
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: GirviColors.inputBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: GirviColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Payment Ledger',
+                style: GoogleFonts.manrope(
+                  color: GirviColors.textDark,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const Spacer(),
+              if (payments.length > visiblePayments.length)
+                Text(
+                  '+${payments.length - visiblePayments.length} more',
+                  style: GoogleFonts.inter(
+                    color: GirviColors.textDark,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 14),
+              child: Center(
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    color: GirviColors.brandGold,
+                  ),
+                ),
+              ),
+            )
+          else if (visiblePayments.isEmpty)
+            Text(
+              'No payment has been recorded for this ticket yet.',
+              style: GoogleFonts.inter(
+                color: GirviColors.textDark,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            )
+          else
+            ...visiblePayments.map(
+              (payment) => _PaymentHistoryRow(
+                payment: payment,
+                money: money,
+                date: date,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaymentHistoryRow extends StatelessWidget {
+  final GirviPaymentModel payment;
+  final String Function(double value, {bool precise}) money;
+  final String Function(DateTime? value) date;
+
+  const _PaymentHistoryRow({
+    required this.payment,
+    required this.money,
+    required this.date,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final principal = payment.principalComponent;
+    final interest = payment.interestComponent;
+    final discount = payment.discountAmount;
+    final coverage = _coverageLabel(payment, date);
+    final parts = <String>[
+      if (coverage != null) coverage,
+      if (principal > 0) 'Principal ${money(principal)}',
+      if (interest > 0) 'Interest ${money(interest)}',
+      if (discount > 0) 'Discount ${money(discount)}',
+      payment.mode.displayName,
+    ];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: GirviColors.cardBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: GirviColors.cardBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _LedgerIconBox(
+            icon: _paymentIcon(payment.type),
+            color: _paymentColor(payment.type),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        payment.type.displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          color: GirviColors.textDark,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      money(payment.amount),
+                      style: GoogleFonts.manrope(
+                        color: GirviColors.success,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Paid on ${date(payment.paymentDate)}',
+                  style: GoogleFonts.inter(
+                    color: GirviColors.textDark,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  parts.join(' | '),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: GirviColors.textBody,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String? _coverageLabel(
+    GirviPaymentModel payment,
+    String Function(DateTime? value) date,
+  ) {
+    final from = payment.interestFromDate;
+    final to = payment.interestToDate;
+    if (from != null && to != null) {
+      return 'Period ${date(from)} to ${date(to)}';
+    }
+
+    final monthsCovered = payment.monthsCovered ?? 0;
+    if (monthsCovered > 0) {
+      return '$monthsCovered month${monthsCovered == 1 ? '' : 's'} covered';
+    }
+
+    return null;
+  }
+
+  static IconData _paymentIcon(GirviPaymentType type) {
+    switch (type) {
+      case GirviPaymentType.interest:
+      case GirviPaymentType.partialInterest:
+        return GirviIcons.interestRate;
+      case GirviPaymentType.partialPrincipal:
+        return GirviIcons.loanTerms;
+      case GirviPaymentType.fullRelease:
+        return GirviIcons.release;
+      case GirviPaymentType.penalty:
+        return GirviIcons.warning;
+    }
+  }
+
+  static Color _paymentColor(GirviPaymentType type) {
+    switch (type) {
+      case GirviPaymentType.interest:
+      case GirviPaymentType.partialInterest:
+        return GirviColors.warning;
+      case GirviPaymentType.partialPrincipal:
+        return GirviColors.info;
+      case GirviPaymentType.fullRelease:
+        return GirviColors.success;
+      case GirviPaymentType.penalty:
+        return GirviColors.danger;
+    }
   }
 }
