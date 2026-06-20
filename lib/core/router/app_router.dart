@@ -84,323 +84,7 @@ import '../../ui/report/day_book/day_book_screen.dart';
 import '../../ui/layout/app_shell.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 1. ROUTE PATH CONSTANTS
-// ═══════════════════════════════════════════════════════════════════════════════
 
-class RoutePaths {
-  RoutePaths._();
-
-  static const String login = '/login';
-  static const String app = '/app';
-
-  // Core
-  static const String dashboard = '/app/dashboard';
-  static const String settings = '/app/settings';
-  static const String accountProfile = '/app/account/profile';
-
-  // Settings sub-routes
-  static const String billingSetup = '/app/settings/billing-setup';
-
-  // Customer
-  static const String customerList = '/app/customer/list';
-  static const String customerAdd = '/app/customer/add';
-  static const String customerProfile = '/app/customer/profile/:id';
-  static const String customerCreditLimit = '/app/customer/credit-limit';
-  static const String customerDefaulters = '/app/customer/defaulters';
-
-  // Supplier
-  static const String supplierList = '/app/supplier/list';
-  static const String supplierAdd = '/app/supplier/add';
-  static const String supplierProfile = '/app/supplier/profile/:id';
-
-  // sales_orders
-  static const String salesPos = '/app/sales/pos';
-  static const String salesBooking = '/app/sales/booking';
-  static const String salesDelivery = '/app/sales/delivery';
-
-  // Purchase
-  static const String purchaseEntry = '/app/purchase/entry';
-  static const String purchaseOldGold = '/app/purchase/old-gold';
-  static const String purchaseReturn = '/app/purchase/return';
-
-  // Stock
-  static const String stockInventory = '/app/stock/inventory';
-  static const String stockAdd = '/app/stock/add';
-  static const String stockBarcode = '/app/stock/barcode';
-  static const String stockTransfer = '/app/stock/transfer';
-  static const String stockLowAlert = '/app/stock/low-alert';
-
-  // Karigar
-  static const String karigarIssue = '/app/karigar/issue';
-  static const String karigarReceive = '/app/karigar/receive';
-  static const String karigarPending = '/app/karigar/pending';
-  static const String karigarLedger = '/app/karigar/ledger';
-
-  // Girvi
-  static const String girviNew = '/app/girvi/new';
-  static const String girviList = '/app/girvi/list';
-  static const String girviInterest = '/app/girvi/interest';
-  static const String girviNotice = '/app/girvi/notice';
-
-  // Finance
-  static const String financeCashBook = '/app/finance/cashbook';
-  static const String financeBankBook = '/app/finance/bankbook';
-  static const String financeExpense = '/app/finance/expense';
-  static const String financeJournal = '/app/finance/journal';
-  static const String financeDueReport = '/app/finance/due-report';
-  static const String financeDueCollection = '/app/finance/due-collection';
-  static const String financeDueReceipts = '/app/finance/due-receipts';
-
-  // Reports
-  static const String reportDayBook = '/app/reports/daybook';
-  static const String reportSales = '/app/reports/sales';
-  static const String reportPurchase = '/app/reports/purchase';
-  static const String reportStock = '/app/reports/stock';
-  static const String reportPnl = '/app/reports/pnl';
-  static const String reportGst = '/app/reports/gst';
-
-  // Schemes
-  static const String schemesNew = '/app/schemes/new';
-  static const String schemesCollection = '/app/schemes/collection';
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 2. ROUTE MAPPER — AppRoutes ID ↔ go_router path
-// ═══════════════════════════════════════════════════════════════════════════════
-
-class RouteMapper {
-  RouteMapper._();
-
-  /// Converts an AppRoutes route ID to a go_router path.
-  /// Use [entityId] for routes that need a path parameter (e.g., customer profile).
-  static String toPath(String routeId, {int? entityId}) {
-    switch (routeId) {
-      // Core
-      case AppRoutes.dashboardRoute:
-        return RoutePaths.dashboard;
-      case AppRoutes.settingsRoute:
-        return RoutePaths.settings;
-      case AppRoutes.accountProfileRoute:
-        return RoutePaths.accountProfile;
-
-      // Settings
-      case AppRoutes.billingSetupRoute:
-        return RoutePaths.billingSetup;
-
-      // Customer
-      case AppRoutes.customerListRoute:
-        return RoutePaths.customerList;
-      case AppRoutes.addCustomerRoute:
-        return RoutePaths.customerAdd;
-      case AppRoutes.customerProfileRoute:
-        return entityId != null
-            ? '/app/customer/profile/$entityId'
-            : RoutePaths.customerList;
-      case AppRoutes.creditLimitRoute:
-        return RoutePaths.customerCreditLimit;
-      case AppRoutes.defaulterListRoute:
-        return RoutePaths.customerDefaulters;
-
-      // Supplier
-      case AppRoutes.supplierListRoute:
-        return RoutePaths.supplierList;
-      case AppRoutes.addSupplierRoute:
-        return RoutePaths.supplierAdd;
-
-      // Sales
-      case AppRoutes.newSaleRoute:
-        return RoutePaths.salesPos;
-      case AppRoutes.bookingAdvanceRoute:
-        return RoutePaths.salesBooking;
-      case AppRoutes.deliveryManagementRoute:
-        return RoutePaths.salesDelivery;
-
-      // Purchase
-      case AppRoutes.purchaseEntryRoute:
-        return RoutePaths.purchaseEntry;
-      case AppRoutes.oldGoldBuyRoute:
-        return RoutePaths.purchaseOldGold;
-      case AppRoutes.purchaseReturnRoute:
-        return RoutePaths.purchaseReturn;
-
-      // Stock
-      case AppRoutes.inventoryRoute:
-        return RoutePaths.stockInventory;
-      case AppRoutes.addStockRoute:
-        return RoutePaths.stockAdd;
-      case AppRoutes.barcodePrintRoute:
-        return RoutePaths.stockBarcode;
-      case AppRoutes.stockTransferRoute:
-        return RoutePaths.stockTransfer;
-      case AppRoutes.lowStockAlertRoute:
-        return RoutePaths.stockLowAlert;
-
-      // Karigar
-      case AppRoutes.issueToKarigarRoute:
-        return RoutePaths.karigarIssue;
-      case AppRoutes.receiveFromKarigarRoute:
-        return RoutePaths.karigarReceive;
-      case AppRoutes.pendingJobsRoute:
-        return RoutePaths.karigarPending;
-      case AppRoutes.karigarLedgerRoute:
-        return RoutePaths.karigarLedger;
-
-      // Girvi
-      case AppRoutes.newGirviRoute:
-        return RoutePaths.girviNew;
-      case AppRoutes.girviReleaseRoute:
-        return RoutePaths.girviList;
-      case AppRoutes.interestCalcRoute:
-        return RoutePaths.girviInterest;
-      case AppRoutes.noticeAuctionRoute:
-        return RoutePaths.girviNotice;
-
-      // Finance
-      case AppRoutes.cashBookRoute:
-        return RoutePaths.financeCashBook;
-      case AppRoutes.bankBookRoute:
-        return RoutePaths.financeBankBook;
-      case AppRoutes.expenseEntryRoute:
-        return RoutePaths.financeExpense;
-      case AppRoutes.journalEntryRoute:
-        return RoutePaths.financeJournal;
-      case AppRoutes.dueReportRoute:
-        return RoutePaths.financeDueReport;
-      case AppRoutes.dueCollectionRoute:
-        return RoutePaths.financeDueCollection;
-      case AppRoutes.dueReceiptHistoryRoute:
-        return RoutePaths.financeDueReceipts;
-
-      // Reports
-      case AppRoutes.dayBookRoute:
-        return RoutePaths.reportDayBook;
-      case AppRoutes.salesReportRoute:
-        return RoutePaths.reportSales;
-      case AppRoutes.purchaseReportRoute:
-        return RoutePaths.reportPurchase;
-      case AppRoutes.stockSummaryRoute:
-        return RoutePaths.reportStock;
-      case AppRoutes.profitLossRoute:
-        return RoutePaths.reportPnl;
-      case AppRoutes.gstReportRoute:
-        return RoutePaths.reportGst;
-
-      // Schemes
-      case AppRoutes.newSchemeRoute:
-        return RoutePaths.schemesNew;
-      case AppRoutes.monthlyCollectionRoute:
-        return RoutePaths.schemesCollection;
-
-      default:
-        return RoutePaths.dashboard;
-    }
-  }
-
-  /// Converts a go_router path back to an AppRoutes ID.
-  /// Used by the sidebar to highlight the active menu item.
-  static String toRouteId(String path) {
-    // Remove path parameters for matching
-    final cleanPath = path.replaceAll(RegExp(r'/\d+$'), '');
-
-    if (cleanPath == RoutePaths.dashboard) return AppRoutes.dashboardRoute;
-    if (cleanPath == RoutePaths.settings) return AppRoutes.settingsRoute;
-    if (cleanPath == RoutePaths.billingSetup) {
-      return AppRoutes.billingSetupRoute;
-    }
-    if (cleanPath == RoutePaths.customerList ||
-        cleanPath.startsWith('/app/customer/profile')) {
-      return AppRoutes.customerListRoute;
-    }
-    if (cleanPath == RoutePaths.customerAdd) return AppRoutes.addCustomerRoute;
-    if (cleanPath == RoutePaths.customerDefaulters) {
-      return AppRoutes.defaulterListRoute;
-    }
-    if (cleanPath == RoutePaths.supplierList) {
-      return AppRoutes.supplierListRoute;
-    }
-    if (cleanPath == RoutePaths.supplierAdd) return AppRoutes.addSupplierRoute;
-    if (cleanPath == RoutePaths.salesPos) return AppRoutes.newSaleRoute;
-    if (cleanPath == RoutePaths.salesBooking) {
-      return AppRoutes.bookingAdvanceRoute;
-    }
-    if (cleanPath == RoutePaths.salesDelivery) {
-      return AppRoutes.deliveryManagementRoute;
-    }
-    if (cleanPath == RoutePaths.purchaseEntry) {
-      return AppRoutes.purchaseEntryRoute;
-    }
-    if (cleanPath == RoutePaths.purchaseOldGold) {
-      return AppRoutes.oldGoldBuyRoute;
-    }
-    if (cleanPath == RoutePaths.purchaseReturn) {
-      return AppRoutes.purchaseReturnRoute;
-    }
-    if (cleanPath == RoutePaths.stockInventory) return AppRoutes.inventoryRoute;
-    if (cleanPath == RoutePaths.stockAdd) return AppRoutes.addStockRoute;
-    if (cleanPath == RoutePaths.stockBarcode) {
-      return AppRoutes.barcodePrintRoute;
-    }
-    if (cleanPath == RoutePaths.stockTransfer) {
-      return AppRoutes.stockTransferRoute;
-    }
-    if (cleanPath == RoutePaths.stockLowAlert) {
-      return AppRoutes.lowStockAlertRoute;
-    }
-    if (cleanPath == RoutePaths.karigarIssue) {
-      return AppRoutes.issueToKarigarRoute;
-    }
-    if (cleanPath == RoutePaths.karigarReceive) {
-      return AppRoutes.receiveFromKarigarRoute;
-    }
-    if (cleanPath == RoutePaths.karigarPending) {
-      return AppRoutes.pendingJobsRoute;
-    }
-    if (cleanPath == RoutePaths.karigarLedger) {
-      return AppRoutes.karigarLedgerRoute;
-    }
-    if (cleanPath == RoutePaths.girviNew) return AppRoutes.newGirviRoute;
-    if (cleanPath == RoutePaths.girviList) return AppRoutes.girviReleaseRoute;
-    if (cleanPath == RoutePaths.girviInterest) {
-      return AppRoutes.interestCalcRoute;
-    }
-    if (cleanPath == RoutePaths.girviNotice) {
-      return AppRoutes.noticeAuctionRoute;
-    }
-    if (cleanPath == RoutePaths.financeCashBook) return AppRoutes.cashBookRoute;
-    if (cleanPath == RoutePaths.financeBankBook) return AppRoutes.bankBookRoute;
-    if (cleanPath == RoutePaths.financeExpense) {
-      return AppRoutes.expenseEntryRoute;
-    }
-    if (cleanPath == RoutePaths.financeJournal) {
-      return AppRoutes.journalEntryRoute;
-    }
-    if (cleanPath == RoutePaths.financeDueReport) {
-      return AppRoutes.dueReportRoute;
-    }
-    if (cleanPath == RoutePaths.financeDueCollection) {
-      return AppRoutes.dueCollectionRoute;
-    }
-    if (cleanPath == RoutePaths.financeDueReceipts) {
-      return AppRoutes.dueReceiptHistoryRoute;
-    }
-    if (cleanPath == RoutePaths.reportDayBook) return AppRoutes.dayBookRoute;
-    if (cleanPath == RoutePaths.reportSales) return AppRoutes.salesReportRoute;
-    if (cleanPath == RoutePaths.reportPurchase) {
-      return AppRoutes.purchaseReportRoute;
-    }
-    if (cleanPath == RoutePaths.reportStock) return AppRoutes.stockSummaryRoute;
-    if (cleanPath == RoutePaths.reportPnl) return AppRoutes.profitLossRoute;
-    if (cleanPath == RoutePaths.reportGst) return AppRoutes.gstReportRoute;
-    if (cleanPath == RoutePaths.schemesNew) return AppRoutes.newSchemeRoute;
-    if (cleanPath == RoutePaths.schemesCollection) {
-      return AppRoutes.monthlyCollectionRoute;
-    }
-
-    return AppRoutes.dashboardRoute;
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // 3. AUTH NOTIFIER — Drives router redirect on login/logout
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -517,7 +201,7 @@ GoRouter createAppRouter() {
             editLoanId: editLoanId,
             onBack: () {
               if (returnCustomerId != null) {
-                context.go('/app/customer/profile/$returnCustomerId');
+                context.go(RoutePaths.customerProfileFor(returnCustomerId));
                 return;
               }
               context.go(RoutePaths.dashboard);
@@ -551,7 +235,7 @@ GoRouter createAppRouter() {
             convertAdvanceId: convertAdvanceId,
             onBack: () {
               if (returnCustomerId != null) {
-                context.go('/app/customer/profile/$returnCustomerId');
+                context.go(RoutePaths.customerProfileFor(returnCustomerId));
                 return;
               }
               if (context.canPop()) {
@@ -578,7 +262,7 @@ GoRouter createAppRouter() {
             editOrderId: editAdvanceId,
             onBack: () {
               if (returnCustomerId != null) {
-                context.go('/app/customer/profile/$returnCustomerId');
+                context.go(RoutePaths.customerProfileFor(returnCustomerId));
                 return;
               }
               if (context.canPop()) {
@@ -602,7 +286,7 @@ GoRouter createAppRouter() {
               onNavigateWithId: (routeId, {customerId}) {
                 if (routeId == AppRoutes.customerProfileRoute &&
                     customerId != null) {
-                  context.go('/app/customer/profile/$customerId');
+                  context.go(RoutePaths.customerProfileFor(customerId));
                 } else {
                   context.go(RouteMapper.toPath(routeId));
                 }
@@ -624,7 +308,7 @@ GoRouter createAppRouter() {
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
               onAddCustomer: () => context.go(RoutePaths.customerAdd),
               onCustomerTap: (customerId) =>
-                  context.go('/app/customer/profile/$customerId'),
+                  context.go(RoutePaths.customerProfileFor(customerId)),
             ),
           ),
 
@@ -709,7 +393,7 @@ GoRouter createAppRouter() {
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
               onAddSupplier: () => context.go(RoutePaths.supplierAdd),
               onSupplierTap: (supplierId) =>
-                  context.go('/app/supplier/profile/$supplierId'),
+                  context.go(RoutePaths.supplierProfileFor(supplierId)),
             ),
           ),
 
@@ -893,7 +577,7 @@ GoRouter createAppRouter() {
                 initialBillNo: initialBillNo,
                 onBack: () {
                   if (returnCustomerId != null) {
-                    context.go('/app/customer/profile/$returnCustomerId');
+                    context.go(RoutePaths.customerProfileFor(returnCustomerId));
                     return;
                   }
                   _goBackOr(context, RoutePaths.dashboard);

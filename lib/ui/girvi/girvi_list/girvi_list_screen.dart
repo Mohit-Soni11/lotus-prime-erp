@@ -95,7 +95,7 @@ class _GirviListScreenState extends State<GirviListScreen>
   }
 
   void _openCalculator() {
-    context.go('/app${AppRoutes.interestCalcRoute}');
+    context.go(RouteMapper.toPath(AppRoutes.interestCalcRoute));
   }
 
   @override

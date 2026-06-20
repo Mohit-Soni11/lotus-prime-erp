@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../constants/app_routes.dart';
-import '../../../core/router/app_router.dart';
-// ✅ Manager Import
 import '../../../theme/sidebar/sidebar_theme.dart';
 
 class CustomSidebar extends StatefulWidget {
