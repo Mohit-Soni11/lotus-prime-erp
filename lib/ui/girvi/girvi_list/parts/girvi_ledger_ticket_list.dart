@@ -283,7 +283,7 @@ class _TicketIdentityBlock extends StatelessWidget {
                 ticketNo,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: GirviStyles.ticketNumber.copyWith(fontSize: 13),
+                style: GirviStyles.ticketNumber,
               ),
             ),
             const SizedBox(width: 8),
@@ -314,8 +314,8 @@ class _TicketIdentityBlock extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.inter(
             color: GirviColors.textMuted,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w800,
           ),
         ),
         const SizedBox(height: 4),
@@ -325,8 +325,8 @@ class _TicketIdentityBlock extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.inter(
             color: GirviColors.textBody,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ],
@@ -355,8 +355,8 @@ class _TicketAmountBlock extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.inter(
-            color: GirviColors.textMuted,
-            fontSize: 10,
+            color: GirviColors.textDark,
+            fontSize: 12,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -368,7 +368,7 @@ class _TicketAmountBlock extends StatelessWidget {
             value,
             style: GoogleFonts.manrope(
               color: color,
-              fontSize: 15,
+              fontSize: 16,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -391,8 +391,8 @@ class _TicketMaturityBlock extends StatelessWidget {
         Text(
           'Maturity',
           style: GoogleFonts.inter(
-            color: GirviColors.textMuted,
-            fontSize: 10,
+            color: GirviColors.textDark,
+            fontSize: 12,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -403,7 +403,7 @@ class _TicketMaturityBlock extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.inter(
             color: GirviColors.textDark,
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: FontWeight.w900,
           ),
         ),

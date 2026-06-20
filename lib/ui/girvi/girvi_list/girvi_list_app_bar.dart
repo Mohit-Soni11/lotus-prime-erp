@@ -69,15 +69,26 @@ class _GirviListAppBarState extends State<GirviListAppBar>
               height: 34,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: GirviColors.brandGold.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: GirviColors.brandGold.withValues(alpha: 0.32),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    GirviColors.goldGradientStart,
+                    GirviColors.brandGold,
+                  ],
                 ),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: GirviColors.brandGold.withValues(alpha: 0.5),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
               child: const Icon(
                 GirviIcons.list,
-                color: GirviColors.brandGold,
+                color: Colors.white,
                 size: 18,
               ),
             ),

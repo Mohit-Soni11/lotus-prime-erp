@@ -157,8 +157,8 @@ class _GirviLedgerErrorState extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
-                color: GirviColors.textBody,
-                fontSize: 13,
+                color: GirviColors.textDark,
+                fontSize: 14,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -243,8 +243,8 @@ class _LedgerSectionHeader extends StatelessWidget {
                 subtitle,
                 style: GoogleFonts.inter(
                   color: GirviColors.textMuted,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
@@ -310,7 +310,7 @@ class _LedgerStatusBadge extends StatelessWidget {
             label,
             style: GoogleFonts.inter(
               color: color,
-              fontSize: 11,
+              fontSize: 12.5,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -357,8 +357,8 @@ class _LedgerEmptyState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 color: GirviColors.textMuted,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w800,
               ),
             ),
             if (action != null) ...[

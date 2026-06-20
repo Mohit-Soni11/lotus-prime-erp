@@ -108,61 +108,65 @@ class _OverviewMetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 92,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: metric.color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: metric.color.withValues(alpha: 0.16)),
-      ),
-      child: Row(
-        children: [
-          _LedgerIconBox(icon: metric.icon, color: metric.color),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  metric.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: GirviColors.textMuted,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    metric.value,
-                    style: GoogleFonts.manrope(
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 114),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: metric.color.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: metric.color.withValues(alpha: 0.18)),
+        ),
+        child: Row(
+          children: [
+            _LedgerIconBox(icon: metric.icon, color: metric.color),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    metric.label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
                       color: GirviColors.textDark,
-                      fontSize: 21,
+                      fontSize: 13,
                       fontWeight: FontWeight.w900,
+                      height: 1.15,
                     ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  metric.caption,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: GirviColors.textBody,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
+                  const SizedBox(height: 6),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      metric.value,
+                      style: GoogleFonts.manrope(
+                        color: GirviColors.textDark,
+                        fontSize: 23,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    metric.caption,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      color: GirviColors.textBody,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      height: 1.15,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

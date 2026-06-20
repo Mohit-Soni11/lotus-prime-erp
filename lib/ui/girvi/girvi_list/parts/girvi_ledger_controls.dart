@@ -78,7 +78,7 @@ class _LedgerSearchField extends StatelessWidget {
         controller: controller,
         style: GoogleFonts.manrope(
           color: GirviColors.textDark,
-          fontSize: 14,
+          fontSize: 15,
           fontWeight: FontWeight.w800,
         ),
         decoration: InputDecoration(
@@ -87,7 +87,7 @@ class _LedgerSearchField extends StatelessWidget {
           hintText: 'Search ticket, customer, mobile or item',
           hintStyle: GoogleFonts.inter(
             color: GirviColors.textMuted,
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: FontWeight.w700,
           ),
           prefixIcon: const Icon(
@@ -174,7 +174,7 @@ class _LedgerFilterChip extends StatelessWidget {
               label,
               style: GoogleFonts.inter(
                 color: foreground,
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -193,7 +193,7 @@ class _LedgerFilterChip extends StatelessWidget {
                 '$count',
                 style: GoogleFonts.manrope(
                   color: foreground,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -230,7 +230,7 @@ class _LedgerPrimaryButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 18),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           textStyle: GoogleFonts.manrope(
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: FontWeight.w900,
           ),
         ),

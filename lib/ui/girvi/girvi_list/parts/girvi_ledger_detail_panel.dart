@@ -166,7 +166,7 @@ class _DetailTicketHeader extends StatelessWidget {
                   ticketNo,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GirviStyles.ticketNumber.copyWith(fontSize: 13),
+                  style: GirviStyles.ticketNumber,
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -186,8 +186,8 @@ class _DetailTicketHeader extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textMuted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],
@@ -225,9 +225,9 @@ class _SettlementFocusBlock extends StatelessWidget {
           Text(
             'Net Payable',
             style: GoogleFonts.inter(
-              color: GirviColors.textMuted,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
+              color: GirviColors.textDark,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 4),
@@ -295,8 +295,8 @@ class _MiniSettlementValue extends StatelessWidget {
           Text(
             label,
             style: GoogleFonts.inter(
-              color: GirviColors.textMuted,
-              fontSize: 10,
+              color: GirviColors.textDark,
+              fontSize: 12,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -344,7 +344,7 @@ class _DetailSection extends StatelessWidget {
             title,
             style: GoogleFonts.manrope(
               color: GirviColors.textDark,
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -378,8 +378,8 @@ class _DetailInfoRow extends StatelessWidget {
             child: Text(
               label,
               style: GoogleFonts.inter(
-                color: GirviColors.textMuted,
-                fontSize: 11,
+                color: GirviColors.textDark,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -391,7 +391,7 @@ class _DetailInfoRow extends StatelessWidget {
               textAlign: TextAlign.right,
               style: GoogleFonts.inter(
                 color: valueColor ?? GirviColors.textDark,
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -429,7 +429,7 @@ class _LedgerCommandButton extends StatelessWidget {
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           textStyle: GoogleFonts.manrope(
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -466,7 +466,7 @@ class _ClosedTicketNotice extends StatelessWidget {
               'Collection is closed for $statusLabel tickets.',
               style: GoogleFonts.inter(
                 color: GirviColors.textBody,
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.w800,
               ),
             ),

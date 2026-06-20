@@ -38,7 +38,7 @@ class GirviColors {
   static const Color shellPanelBg = Color(0xFF1F2937);
   static const Color shellBorder = Color(0xFF374151);
   static const Color shellTextTitle = Color(0xFFF9FAFB);
-  static const Color shellTextMuted = Color(0xFF9CA3AF);
+  static const Color shellTextMuted = Color(0xFFD1D5DB);
 
   // ── LIGHT BODY (Main Content) ─────────────────────────────────────────────
   static const Color bodyBg = Color(0xFFF9F6F0);
@@ -50,9 +50,9 @@ class GirviColors {
 
   // ── TYPOGRAPHY ────────────────────────────────────────────────────────────
   static const Color textDark = Color(0xFF111827);
-  static const Color textBody = Color(0xFF374151);
-  static const Color textMuted = Color(0xFF6B7280);
-  static const Color textHint = Color(0xFF9CA3AF);
+  static const Color textBody = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF1F2937);
+  static const Color textHint = Color(0xFF374151);
 
   // ── MODULE BADGE ─────────────────────────────────────────────────────────
   static const Color moduleBadgeBg = Color(0xFF1A2332);
@@ -67,7 +67,7 @@ class GirviColors {
   static const Color accentInterest = Color(0xFFF59E0B); // Amber
   static const Color accentDates = Color(0xFF06B6D4); // Cyan
   static const Color accentKyc = Color(0xFFEF4444); // Red
-  static const Color accentNotes = Color(0xFF6B7280); // Gray
+  static const Color accentNotes = Color(0xFF374151); // Slate
 
   // ── STATUS TAGS ──────────────────────────────────────────────────────────
   static const Color statusActive = Color(0xFF10B981);
@@ -76,7 +76,7 @@ class GirviColors {
   static const Color statusOverdueBg = Color(0x1AEF4444);
   static const Color statusReleased = Color(0xFF3B82F6);
   static const Color statusReleasedBg = Color(0x1A3B82F6);
-  static const Color statusAuctioned = Color(0xFF6B7280);
+  static const Color statusAuctioned = Color(0xFF374151);
   static const Color statusAucBg = Color(0x1A6B7280);
 
   // ── EFFECTS ──────────────────────────────────────────────────────────────
