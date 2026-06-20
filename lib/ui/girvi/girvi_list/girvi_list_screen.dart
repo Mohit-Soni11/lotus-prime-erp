@@ -1,13 +1,3 @@
-// =============================================================================
-// FILE        : girvi_list_screen.dart
-// MODULE      : Girvi / Pawn
-// LAYER       : UI / Screen
-// DESCRIPTION : Full Girvi Ledger screen.
-//               Shows summary stats dashboard, filter chips, search,
-//               and scrollable list of GirviTicketCards.
-//               - App Bar extracted to girvi_list_app_bar.dart
-// =============================================================================
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,9 +9,14 @@ import '../../../logic/girvi/girvi_controllers.dart';
 import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../theme/girvi/girvi_theme.dart';
-import 'girvi_list_app_bar.dart'; // NAYA IMPORT
-import '../shared/girvi_shared_widgets.dart';
-import '../girvi_release/girvi_release_screen.dart';
+import 'girvi_list_app_bar.dart';
+
+part 'parts/girvi_ledger_controls.dart';
+part 'parts/girvi_ledger_detail_panel.dart';
+part 'parts/girvi_ledger_layout.dart';
+part 'parts/girvi_ledger_overview.dart';
+part 'parts/girvi_ledger_shared.dart';
+part 'parts/girvi_ledger_ticket_list.dart';
 
 class GirviListScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -39,450 +34,130 @@ class GirviListScreen extends StatefulWidget {
 
 class _GirviListScreenState extends State<GirviListScreen>
     with SingleTickerProviderStateMixin {
-  late final GirviListController _ctrl;
   final AppDatabase _db = AppDatabase();
-  final _searchCtrl = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
-  late final AnimationController _fadeAnim;
-  late final Animation<double> _fade;
+  late final GirviListController _controller;
+  late final AnimationController _fadeController;
+  late final Animation<double> _fadeAnimation;
 
-  final _fmtShort = NumberFormat('#,##,##0', 'en_IN');
+  final NumberFormat _moneyFormat = NumberFormat('#,##,##0', 'en_IN');
+  final NumberFormat _preciseMoneyFormat = NumberFormat('#,##,##0.00', 'en_IN');
+  final DateFormat _dateFormat = DateFormat('dd MMM yyyy');
+
+  int? _selectedLoanId;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = GirviListController(_db);
+    _controller = GirviListController(_db);
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 360),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOutCubic,
+    );
 
-    _fadeAnim = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 400));
-    _fade = CurvedAnimation(parent: _fadeAnim, curve: Curves.easeOut);
-
-    _searchCtrl.addListener(() => _ctrl.onSearchChanged(_searchCtrl.text));
-
-    _ctrl.load().then((_) {
-      if (mounted) _fadeAnim.forward();
-    });
+    _searchController.addListener(
+      () => _controller.onSearchChanged(_searchController.text),
+    );
+    _loadLedger();
   }
 
   @override
   void dispose() {
-    _ctrl.dispose();
-    _searchCtrl.dispose();
-    _fadeAnim.dispose();
+    _controller.dispose();
+    _searchController.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
-  void _openRelease(GirviLoanWithCustomer data) {
-    if (data.loan.girviStatus == GirviStatus.partialRelease ||
-        data.loan.girviStatus == GirviStatus.readyForDelivery) {
-      _openCalculator();
-      return;
-    }
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => GirviReleaseScreen(
-          loan: data.loan,
-          customerName: data.customerName,
-          db: _db,
-          onReleased: () {
-            Navigator.pop(context);
-            _ctrl.reload();
-          },
-        ),
-      ),
-    );
+  Future<void> _loadLedger() async {
+    _fadeController.reset();
+    await _controller.load();
+    if (!mounted) return;
+    _fadeController.forward();
   }
 
-  void _openCalculator() {
-    context.go(RouteMapper.toPath(AppRoutes.interestCalcRoute));
+  Future<void> _reloadLedger() async {
+    _fadeController.reset();
+    await _controller.reload();
+    if (!mounted) return;
+    _fadeController.forward();
+  }
+
+  GirviLoanWithCustomer? get _selectedLoan {
+    final loans = _controller.loans;
+    if (loans.isEmpty) return null;
+
+    final selectedId = _selectedLoanId;
+    if (selectedId != null) {
+      for (final item in loans) {
+        if (item.loan.id == selectedId) return item;
+      }
+    }
+
+    return loans.first;
+  }
+
+  bool _isSelected(GirviLoanWithCustomer item) {
+    return _selectedLoan?.loan.id == item.loan.id;
+  }
+
+  void _selectLoan(GirviLoanWithCustomer item) {
+    setState(() => _selectedLoanId = item.loan.id);
+  }
+
+  void _setFilter(GirviFilter filter) {
+    _controller.setFilter(filter);
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+  }
+
+  void _openNewGirvi() {
+    widget.onNewGirvi?.call();
+  }
+
+  void _openInterestEntry(GirviLoanWithCustomer item) {
+    final route = RouteMapper.toPath(AppRoutes.interestCalcRoute);
+    final uri = Uri(
+      path: route,
+      queryParameters: {
+        'ticketNo': item.loan.ticketNo,
+        'returnTo': 'girviLedger',
+      },
+    );
+    context.go(uri.toString());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: GirviColors.bodyBg,
-      // NAYA PREMIUM APP BAR
       appBar: GirviListAppBar(
-        onBack: widget.onBack ?? () => Navigator.pop(context),
-        onCalculatorTap: _openCalculator,
-        onRefreshTap: () => _ctrl.reload(),
+        onBack: widget.onBack ?? () => Navigator.maybePop(context),
       ),
       body: ListenableBuilder(
-        listenable: _ctrl,
+        listenable: _controller,
         builder: (context, _) {
-          if (_ctrl.isLoading) {
-            return const Center(
-                child: CircularProgressIndicator(color: GirviColors.brandGold));
-          }
-          if (_ctrl.errorMessage != null) {
-            return _ErrorState(
-                message: _ctrl.errorMessage!, onRetry: _ctrl.reload);
+          if (_controller.isLoading) {
+            return const _GirviLedgerLoadingState();
           }
 
-          return FadeTransition(
-            opacity: _fade,
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                // Ã¢â€â‚¬Ã¢â€â‚¬ Stats Dashboard Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-                SliverToBoxAdapter(
-                  child: _buildStatsDashboard(_ctrl.summary),
-                ),
+          if (_controller.errorMessage != null) {
+            return _GirviLedgerErrorState(
+              message: _controller.errorMessage!,
+              onRetry: _reloadLedger,
+            );
+          }
 
-                // Ã¢â€â‚¬Ã¢â€â‚¬ Search Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-                SliverToBoxAdapter(
-                  child: _buildSearchBar(),
-                ),
-
-                // Ã¢â€â‚¬Ã¢â€â‚¬ Filter Chips Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-                SliverToBoxAdapter(
-                  child: _buildFilterChips(),
-                ),
-
-                // Ã¢â€â‚¬Ã¢â€â‚¬ List Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-                _ctrl.loans.isEmpty
-                    ? SliverFillRemaining(
-                        child: _EmptyState(
-                          filter: _ctrl.filter,
-                          onNewGirvi: widget.onNewGirvi,
-                        ),
-                      )
-                    : SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (_, i) {
-                              final item = _ctrl.loans[i];
-                              return GirviTicketCard(
-                                data: item,
-                                onTap: () => _openRelease(item),
-                                onRelease:
-                                    item.loan.isActive || item.loan.isOverdue
-                                        ? () => _openRelease(item)
-                                        : null,
-                              );
-                            },
-                            childCount: _ctrl.loans.length,
-                          ),
-                        ),
-                      ),
-              ],
-            ),
-          );
+          return _buildLedgerBody();
         },
       ),
-
-      // FAB: New Girvi
-      floatingActionButton: widget.onNewGirvi != null
-          ? FloatingActionButton.extended(
-              onPressed: widget.onNewGirvi,
-              backgroundColor: GirviColors.brandGold,
-              foregroundColor: GirviColors.shellBg,
-              icon: const Icon(GirviIcons.moduleIcon),
-              label: Text('New Girvi',
-                  style: GoogleFonts.manrope(fontWeight: FontWeight.w800)),
-            )
-          : null,
     );
   }
-
-  // Ã¢â€â‚¬Ã¢â€â‚¬ STATS DASHBOARD Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-
-  Widget _buildStatsDashboard(GirviSummaryModel s) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: GirviColors.shellBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: GirviColors.brandGold.withValues(alpha: 0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: GirviColors.brandGold.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top row: Portfolio value + collection
-          Row(children: [
-            Expanded(
-                child: _DashboardStat(
-              label: 'Active Portfolio',
-              value: 'Ã¢â€šÂ¹${_fmtShort.format(s.totalPrincipalActive)}',
-              subValue: '${s.totalActive + s.totalOverdue} loans',
-              color: GirviColors.brandGold,
-              icon: GirviIcons.loanTerms,
-            )),
-            Container(width: 1, height: 60, color: GirviColors.shellBorder),
-            Expanded(
-                child: _DashboardStat(
-              label: 'Interest Due',
-              value: 'Ã¢â€šÂ¹${_fmtShort.format(s.totalInterestDue)}',
-              subValue: 'Accrued total',
-              color: GirviColors.warning,
-              icon: GirviIcons.interestRate,
-            )),
-          ]),
-          const SizedBox(height: 12),
-          Container(height: 1, color: GirviColors.shellBorder),
-          const SizedBox(height: 12),
-          // Bottom row: status breakdown
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _StatusPill('Active', s.totalActive, GirviColors.statusActive),
-              _StatusPill('Overdue', s.totalOverdue, GirviColors.statusOverdue),
-              _StatusPill(
-                  'Released', s.totalReleased, GirviColors.statusReleased),
-              _StatusPill(
-                  'Auctioned', s.totalAuctioned, GirviColors.statusAuctioned),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: GirviColors.successBg,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: GirviColors.successBorder),
-            ),
-            child: Row(children: [
-              const Icon(GirviIcons.cash, color: GirviColors.success, size: 14),
-              const SizedBox(width: 8),
-              Text('This Month Collected: ',
-                  style: GoogleFonts.inter(
-                      color: GirviColors.shellTextMuted, fontSize: 12)),
-              Text('Ã¢â€šÂ¹${_fmtShort.format(s.totalCollectedThisMonth)}',
-                  style: GoogleFonts.manrope(
-                      color: GirviColors.success,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800)),
-            ]),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Ã¢â€â‚¬Ã¢â€â‚¬ SEARCH BAR Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        decoration: GirviStyles.inputNormal,
-        child: TextField(
-          controller: _searchCtrl,
-          style: GirviStyles.fieldInput,
-          decoration: InputDecoration(
-            hintText: 'Search by ticket, name, mobile or item...',
-            hintStyle: GirviStyles.fieldHint,
-            prefixIcon: const Icon(GirviIcons.search,
-                color: GirviColors.brandGold, size: 18),
-            suffixIcon: _searchCtrl.text.isNotEmpty
-                ? GestureDetector(
-                    onTap: () {
-                      _searchCtrl.clear();
-                    },
-                    child: const Icon(Icons.close_rounded,
-                        color: GirviColors.textMuted, size: 18))
-                : null,
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 14),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Ã¢â€â‚¬Ã¢â€â‚¬ FILTER CHIPS Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-
-  Widget _buildFilterChips() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      child: Row(
-        children: GirviFilter.values.map((f) {
-          final isSelected = f == _ctrl.filter;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () => _ctrl.setFilter(f),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color:
-                      isSelected ? GirviColors.brandGold : GirviColors.cardBg,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected
-                        ? GirviColors.brandGold
-                        : GirviColors.cardBorder,
-                  ),
-                ),
-                child: Text(f.displayName,
-                    style: GoogleFonts.inter(
-                      color: isSelected
-                          ? GirviColors.shellBg
-                          : GirviColors.textBody,
-                      fontSize: 12,
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.w500,
-                    )),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-// Ã¢â€â‚¬Ã¢â€â‚¬ Dashboard sub-widgets Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-
-class _DashboardStat extends StatelessWidget {
-  final String label;
-  final String value;
-  final String subValue;
-  final Color color;
-  final IconData icon;
-
-  const _DashboardStat({
-    required this.label,
-    required this.value,
-    required this.subValue,
-    required this.color,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: color, size: 16),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label,
-                  style: GoogleFonts.inter(
-                      color: GirviColors.shellTextMuted, fontSize: 10)),
-              Text(value,
-                  style: GoogleFonts.manrope(
-                      color: color, fontSize: 16, fontWeight: FontWeight.w900)),
-              Text(subValue,
-                  style: GoogleFonts.inter(
-                      color: GirviColors.shellTextMuted, fontSize: 10)),
-            ],
-          ),
-        ]),
-      );
-}
-
-class _StatusPill extends StatelessWidget {
-  final String label;
-  final int count;
-  final Color color;
-
-  const _StatusPill(this.label, this.count, this.color);
-
-  @override
-  Widget build(BuildContext context) => Column(children: [
-        Text('$count',
-            style: GoogleFonts.manrope(
-                color: color, fontSize: 18, fontWeight: FontWeight.w900)),
-        Text(label,
-            style: GoogleFonts.inter(
-                color: GirviColors.shellTextMuted, fontSize: 10)),
-      ]);
-}
-
-class _ErrorState extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-  const _ErrorState({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) => Center(
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          const Icon(Icons.error_outline_rounded,
-              color: GirviColors.danger, size: 48),
-          const SizedBox(height: 16),
-          Text(message,
-              style: GirviStyles.caption.copyWith(fontSize: 14),
-              textAlign: TextAlign.center),
-          const SizedBox(height: 16),
-          GestureDetector(
-            onTap: onRetry,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(
-                color: GirviColors.brandGold,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text('Retry', style: GirviStyles.saveButtonText),
-            ),
-          ),
-        ]),
-      );
-}
-
-class _EmptyState extends StatelessWidget {
-  final GirviFilter filter;
-  final VoidCallback? onNewGirvi;
-  const _EmptyState({required this.filter, this.onNewGirvi});
-
-  @override
-  Widget build(BuildContext context) => Center(
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(GirviIcons.moduleIcon,
-              color: GirviColors.textHint.withValues(alpha: 0.4), size: 64),
-          const SizedBox(height: 16),
-          Text(
-            filter == GirviFilter.all
-                ? 'No Girvi loans yet'
-                : 'No ${filter.displayName.toLowerCase()} loans',
-            style: GoogleFonts.manrope(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: GirviColors.textMuted),
-          ),
-          const SizedBox(height: 8),
-          Text('Start by creating a new girvi ticket',
-              style: GirviStyles.caption.copyWith(fontSize: 13)),
-          if (onNewGirvi != null) ...[
-            const SizedBox(height: 20),
-            GestureDetector(
-              onTap: onNewGirvi,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  color: GirviColors.brandGold,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.add_rounded, color: GirviColors.shellBg),
-                  const SizedBox(width: 8),
-                  Text('New Girvi', style: GirviStyles.saveButtonText),
-                ]),
-              ),
-            ),
-          ],
-        ]),
-      );
 }

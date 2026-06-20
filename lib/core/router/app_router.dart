@@ -212,9 +212,19 @@ GoRouter createAppRouter() {
 
       GoRoute(
         path: RoutePaths.girviInterest,
-        builder: (context, state) => InterestCalcScreen(
-          onBack: () => context.go(RoutePaths.dashboard),
-        ),
+        builder: (context, state) {
+          final returnTo = state.uri.queryParameters['returnTo'];
+          return InterestCalcScreen(
+            initialTicketNo: state.uri.queryParameters['ticketNo'],
+            onBack: () {
+              if (returnTo == 'girviLedger') {
+                context.go(RoutePaths.girviList);
+                return;
+              }
+              context.go(RoutePaths.dashboard);
+            },
+          );
+        },
       ),
 
       GoRoute(

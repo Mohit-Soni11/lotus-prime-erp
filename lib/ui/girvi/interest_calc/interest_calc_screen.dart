@@ -28,10 +28,12 @@ part 'parts/interest_shared_atoms.dart';
 
 class InterestCalcScreen extends StatefulWidget {
   final VoidCallback? onBack;
+  final String? initialTicketNo;
 
   const InterestCalcScreen({
     super.key,
     this.onBack,
+    this.initialTicketNo,
   });
 
   @override
@@ -96,9 +98,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
       if (!_syncingText) _ctrl.onNotesChanged(_notesCtrl.text);
     });
 
-    _ctrl.load().then((_) {
-      if (mounted) _fadeCtrl.forward();
-    });
+    _loadInitialState();
   }
 
   @override
@@ -114,6 +114,20 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
     _notesCtrl.dispose();
     _fadeCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadInitialState() async {
+    await _ctrl.load();
+    if (!mounted) return;
+
+    final ticketNo = widget.initialTicketNo?.trim();
+    if (ticketNo != null && ticketNo.isNotEmpty) {
+      _searchCtrl.text = ticketNo;
+      await _ctrl.selectLoanByTicketNo(ticketNo);
+      if (!mounted) return;
+    }
+
+    _fadeCtrl.forward();
   }
 
   void _syncFields() {

@@ -85,6 +85,14 @@ class GirviRepository {
         case GirviFilter.overdue:
           query
               .where(_db.girviLoans.status.equals(GirviStatus.overdue.dbValue));
+        case GirviFilter.settlementPending:
+          query.where(
+            _db.girviLoans.status.equals(GirviStatus.partialRelease.dbValue),
+          );
+        case GirviFilter.readyForDelivery:
+          query.where(
+            _db.girviLoans.status.equals(GirviStatus.readyForDelivery.dbValue),
+          );
         case GirviFilter.released:
           query.where(
               _db.girviLoans.status.equals(GirviStatus.released.dbValue));

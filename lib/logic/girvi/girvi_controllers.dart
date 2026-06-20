@@ -27,6 +27,8 @@ class GirviListController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get hasLoans => _allLoans.isNotEmpty;
+  int countForFilter(GirviFilter filter) =>
+      _allLoans.where((item) => _matchesFilter(item, filter)).length;
 
   Future<void> load() async {
     _isLoading = true;
@@ -68,21 +70,7 @@ class GirviListController extends ChangeNotifier {
   void _applyFilter() {
     var list = List<GirviLoanWithCustomer>.from(_allLoans);
     if (_filter != GirviFilter.all) {
-      list = list.where((g) {
-        switch (_filter) {
-          case GirviFilter.active:
-            return g.loan.isActive && !g.loan.isOverdue;
-          case GirviFilter.overdue:
-            return g.loan.isOverdue ||
-                g.loan.girviStatus == GirviStatus.overdue;
-          case GirviFilter.released:
-            return g.loan.girviStatus == GirviStatus.released;
-          case GirviFilter.auctioned:
-            return g.loan.girviStatus == GirviStatus.auctioned;
-          default:
-            return true;
-        }
-      }).toList();
+      list = list.where((item) => _matchesFilter(item, _filter)).toList();
     }
     if (_searchQuery.isNotEmpty) {
       list = list
@@ -95,6 +83,26 @@ class GirviListController extends ChangeNotifier {
     }
 
     _filteredLoans = list;
+  }
+
+  bool _matchesFilter(GirviLoanWithCustomer item, GirviFilter filter) {
+    final loan = item.loan;
+    switch (filter) {
+      case GirviFilter.all:
+        return true;
+      case GirviFilter.active:
+        return loan.isActive && !loan.isOverdue;
+      case GirviFilter.overdue:
+        return loan.isOverdue || loan.girviStatus == GirviStatus.overdue;
+      case GirviFilter.settlementPending:
+        return loan.girviStatus == GirviStatus.partialRelease;
+      case GirviFilter.readyForDelivery:
+        return loan.girviStatus == GirviStatus.readyForDelivery;
+      case GirviFilter.released:
+        return loan.girviStatus == GirviStatus.released;
+      case GirviFilter.auctioned:
+        return loan.girviStatus == GirviStatus.auctioned;
+    }
   }
 
   Future<void> reload() => load();

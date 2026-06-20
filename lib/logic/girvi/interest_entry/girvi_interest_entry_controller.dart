@@ -242,6 +242,31 @@ class GirviInterestEntryController extends ChangeNotifier {
     await _setSelectedLoan(data);
   }
 
+  Future<bool> selectLoanByTicketNo(String ticketNo) async {
+    final normalizedTicketNo = ticketNo.trim().toLowerCase();
+    if (normalizedTicketNo.isEmpty) return false;
+
+    GirviLoanWithCustomer? match;
+    for (final item in _allLoans) {
+      if (item.loan.ticketNo.toLowerCase() == normalizedTicketNo) {
+        match = item;
+        break;
+      }
+    }
+
+    _searchQuery = normalizedTicketNo;
+    _applySearch();
+
+    if (match == null) {
+      _errorMessage = 'Selected girvi ticket is not available for payment.';
+      notifyListeners();
+      return false;
+    }
+
+    await _setSelectedLoan(match);
+    return true;
+  }
+
   void showBillSelectionForSelectedCustomer() {
     if (_selectedCustomerId == null) return;
     _clearSelectedLoan(clearCustomer: false);

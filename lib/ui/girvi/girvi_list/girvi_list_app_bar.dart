@@ -1,29 +1,18 @@
-// =============================================================================
-// FILE        : girvi_list_app_bar.dart
-// MODULE      : Girvi / Pawn
-// LAYER       : UI / Component
-// DESCRIPTION : Premium Dark shell AppBar for the Girvi List screen.
-//               Zero hardcoded colors, styles, icons or strings.
-// =============================================================================
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../../theme/girvi/girvi_theme.dart';
 
 class GirviListAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
-  final VoidCallback onCalculatorTap;
-  final VoidCallback onRefreshTap;
 
   const GirviListAppBar({
     super.key,
     required this.onBack,
-    required this.onCalculatorTap,
-    required this.onRefreshTap,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(70.0);
+  Size get preferredSize => const Size.fromHeight(70);
 
   @override
   State<GirviListAppBar> createState() => _GirviListAppBarState();
@@ -31,12 +20,12 @@ class GirviListAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _GirviListAppBarState extends State<GirviListAppBar>
     with SingleTickerProviderStateMixin {
-  late AnimationController _blinkCtrl;
+  late final AnimationController _pulseController;
 
   @override
   void initState() {
     super.initState();
-    _blinkCtrl = AnimationController(
+    _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
@@ -44,7 +33,7 @@ class _GirviListAppBarState extends State<GirviListAppBar>
 
   @override
   void dispose() {
-    _blinkCtrl.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
@@ -52,12 +41,12 @@ class _GirviListAppBarState extends State<GirviListAppBar>
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 70.0,
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      height: widget.preferredSize.height,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: const BoxDecoration(
         color: GirviColors.shellPanelBg,
         border: Border(
-          bottom: BorderSide(color: GirviColors.shellBorder, width: 1.0),
+          bottom: BorderSide(color: GirviColors.shellBorder, width: 1),
         ),
         boxShadow: [
           BoxShadow(
@@ -70,96 +59,46 @@ class _GirviListAppBarState extends State<GirviListAppBar>
       child: SafeArea(
         bottom: false,
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // â”€â”€ 1. Animated Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            _HoverBackButton(onTap: widget.onBack),
+            _LedgerBackButton(onTap: widget.onBack),
             const SizedBox(width: 18),
-
-            // â”€â”€ 2. Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            _buildVerticalDivider(),
+            const _AppBarDivider(),
             const SizedBox(width: 18),
-
-            // â”€â”€ 3. Premium Gradient Module Icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Container(
               width: 34,
               height: 34,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    GirviColors.goldGradientStart,
-                    GirviColors.brandGold,
-                  ],
+                color: GirviColors.brandGold.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: GirviColors.brandGold.withValues(alpha: 0.32),
                 ),
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: GirviColors.brandGold.withValues(alpha: 0.5),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  )
-                ],
               ),
               child: const Icon(
-                GirviIcons.list, // List icon for Ledger
-                color: GirviColors.cardBg,
+                GirviIcons.list,
+                color: GirviColors.brandGold,
                 size: 18,
               ),
             ),
             const SizedBox(width: 14),
-
-            // â”€â”€ 4. Main Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            Text(
-              GirviStrings.listTitle.toUpperCase(),
-              style: GirviStyles.shellTitle.copyWith(
-                fontSize: 18,
-                letterSpacing: 1.2,
-              ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  GirviStrings.listTitle,
+                  style: GirviStyles.shellTitle.copyWith(fontSize: 18),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Loan control register',
+                  style: GirviStyles.shellMuted,
+                ),
+              ],
             ),
-
-            // Spacer pushes everything else to the right
             const Spacer(),
-
-            // â”€â”€ 5. Action Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            _HoverActionButton(
-              icon: GirviIcons.calculator,
-              onTap: widget.onCalculatorTap,
-              tooltip: GirviStrings.calcTitle,
-              iconColor: GirviColors.brandGold,
-            ),
-            const SizedBox(width: 10),
-            _HoverActionButton(
-              icon: GirviIcons.refresh,
-              onTap: widget.onRefreshTap,
-              tooltip: 'Refresh Ledger',
-              iconColor: GirviColors.shellTextMuted,
-            ),
-            const SizedBox(width: 16),
-            _buildVerticalDivider(),
-            const SizedBox(width: 16),
-
-            // â”€â”€ 6. Premium Radar Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            _RadarWidget(blinkCtrl: _blinkCtrl),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVerticalDivider() {
-    return Container(
-      width: 1.5,
-      height: 32,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.transparent,
-            GirviColors.shellBorder,
-            Colors.transparent,
+            _SystemStatusBadge(controller: _pulseController),
           ],
         ),
       ),
@@ -167,66 +106,45 @@ class _GirviListAppBarState extends State<GirviListAppBar>
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// REUSABLE APP BAR COMPONENTS
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-class _HoverBackButton extends StatefulWidget {
+class _LedgerBackButton extends StatefulWidget {
   final VoidCallback onTap;
-  const _HoverBackButton({required this.onTap});
+
+  const _LedgerBackButton({required this.onTap});
 
   @override
-  State<_HoverBackButton> createState() => _HoverBackButtonState();
+  State<_LedgerBackButton> createState() => _LedgerBackButtonState();
 }
 
-class _HoverBackButtonState extends State<_HoverBackButton> {
-  bool _isHovered = false;
+class _LedgerBackButtonState extends State<_LedgerBackButton> {
+  bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedScale(
-          scale: _isHovered ? 1.05 : 1.0,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutBack,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            width: 42,
-            height: 42,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: _isHovered
-                  ? GirviColors.shellBg
-                  : GirviColors.shellBorder.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: _isHovered
-                    ? GirviColors.brandGold
-                    : GirviColors.shellBorder,
-                width: _isHovered ? 1.5 : 1.0,
-              ),
-              boxShadow: _isHovered
-                  ? [
-                      BoxShadow(
-                        color: GirviColors.brandGold.withValues(alpha: 0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 3),
-                      ),
-                    ]
-                  : [],
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 42,
+          height: 42,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: _hovered
+                ? GirviColors.shellBg
+                : GirviColors.shellBorder.withValues(alpha: 0.32),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: _hovered ? GirviColors.brandGold : GirviColors.shellBorder,
             ),
-            child: Icon(
-              GirviIcons.backArrow,
-              color: _isHovered
-                  ? GirviColors.brandGold
-                  : GirviColors.shellTextTitle,
-              size: 18,
-            ),
+          ),
+          child: Icon(
+            GirviIcons.backArrow,
+            color:
+                _hovered ? GirviColors.brandGold : GirviColors.shellTextTitle,
+            size: 18,
           ),
         ),
       ),
@@ -234,74 +152,33 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-class _HoverActionButton extends StatefulWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final String tooltip;
-  final Color iconColor;
-
-  const _HoverActionButton({
-    required this.icon,
-    required this.onTap,
-    required this.tooltip,
-    required this.iconColor,
-  });
-
-  @override
-  State<_HoverActionButton> createState() => _HoverActionButtonState();
-}
-
-class _HoverActionButtonState extends State<_HoverActionButton> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: widget.tooltip,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color:
-                  _isHovered ? GirviColors.shellBg : GirviColors.shellPanelBg,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: _isHovered
-                    ? GirviColors.brandGold
-                    : GirviColors.shellBorder,
-              ),
-            ),
-            child: Icon(
-              widget.icon,
-              color: _isHovered ? GirviColors.brandGold : widget.iconColor,
-              size: 18,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RadarWidget extends StatelessWidget {
-  final AnimationController blinkCtrl;
-  const _RadarWidget({required this.blinkCtrl});
+class _AppBarDivider extends StatelessWidget {
+  const _AppBarDivider();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      width: 1,
+      height: 32,
+      color: GirviColors.shellBorder.withValues(alpha: 0.75),
+    );
+  }
+}
+
+class _SystemStatusBadge extends StatelessWidget {
+  final AnimationController controller;
+
+  const _SystemStatusBadge({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: GirviColors.onlineGreen.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(30),
         border: Border.all(
-          color: GirviColors.onlineGreen.withValues(alpha: 0.3),
+          color: GirviColors.onlineGreen.withValues(alpha: 0.24),
         ),
       ),
       child: Row(
@@ -313,21 +190,14 @@ class _RadarWidget extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                _buildWave(blinkCtrl, 0.0),
-                _buildWave(blinkCtrl, 0.5),
+                _PulseRing(controller: controller, delay: 0),
+                _PulseRing(controller: controller, delay: 0.5),
                 Container(
                   width: 6,
                   height: 6,
                   decoration: const BoxDecoration(
                     color: GirviColors.onlineGreen,
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: GirviColors.onlineGreen,
-                        blurRadius: 6,
-                        spreadRadius: 1,
-                      ),
-                    ],
                   ),
                 ),
               ],
@@ -338,33 +208,44 @@ class _RadarWidget extends StatelessWidget {
             GirviStrings.systemOnline,
             style: GoogleFonts.inter(
               color: GirviColors.onlineGreen,
-              fontSize: 12.0,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.4,
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildWave(AnimationController ctrl, double delay) {
+class _PulseRing extends StatelessWidget {
+  final AnimationController controller;
+  final double delay;
+
+  const _PulseRing({
+    required this.controller,
+    required this.delay,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: ctrl,
+      animation: controller,
       builder: (_, __) {
-        final val = (ctrl.value + delay) % 1.0;
+        final value = (controller.value + delay) % 1.0;
         return Opacity(
-          opacity: 1.0 - val,
+          opacity: 1 - value,
           child: Transform.scale(
-            scale: 1.0 + (val * 1.5),
+            scale: 1 + (value * 1.45),
             child: Container(
               width: 14,
               height: 14,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: GirviColors.onlineGreen.withValues(alpha: 0.5),
-                  width: 1.5,
+                  color: GirviColors.onlineGreen.withValues(alpha: 0.46),
+                  width: 1.4,
                 ),
               ),
             ),

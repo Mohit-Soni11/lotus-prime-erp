@@ -592,5 +592,6 @@ class GirviSummaryModel {
         totalCollectedThisMonth: 0,
       );
 
-  int get totalLoans => totalActive + totalReleased + totalAuctioned;
+  int get totalLoans =>
+      totalActive + totalOverdue + totalReleased + totalAuctioned;
 }
