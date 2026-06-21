@@ -69,6 +69,7 @@ class GirviRepository {
     GirviFilter filter = GirviFilter.all,
     String searchQuery = '',
     int? customerId,
+    int? loanId,
   }) async {
     final query = _db.select(_db.girviLoans).join([
       drift.innerJoin(
@@ -107,6 +108,10 @@ class GirviRepository {
     // Customer filter
     if (customerId != null) {
       query.where(_db.girviLoans.customerId.equals(customerId));
+    }
+
+    if (loanId != null) {
+      query.where(_db.girviLoans.id.equals(loanId));
     }
 
     query.orderBy([drift.OrderingTerm.desc(_db.girviLoans.startDate)]);
@@ -170,6 +175,7 @@ class GirviRepository {
         customerName: customer.name,
         customerMobile: customer.mobile,
         customerCity: customer.city,
+        customerAddress: _formatCustomerAddress(customer),
         interestPaidTotal: interestPaidByLoan[loan.id] ?? 0,
         principalPaidTotal: principalPaidByLoan[loan.id] ?? 0,
         interestDiscountTotal: interestDiscountByLoan[loan.id] ?? 0,
@@ -191,6 +197,19 @@ class GirviRepository {
     }
 
     return result;
+  }
+
+  String _formatCustomerAddress(Customer customer) {
+    final parts = <String>[
+      customer.addressLine1 ?? '',
+      customer.addressLine2 ?? '',
+      customer.city ?? '',
+      customer.state ?? '',
+      customer.pincode ?? '',
+    ].map((part) => part.trim()).where((part) => part.isNotEmpty).toList();
+
+    if (parts.isEmpty) return '';
+    return parts.join(', ');
   }
 
   Future<GirviSummaryModel> getSummary() async {

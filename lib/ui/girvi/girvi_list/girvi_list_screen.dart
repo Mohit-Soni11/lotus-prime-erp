@@ -54,7 +54,6 @@ class _GirviListScreenState extends State<GirviListScreen>
 
   int? _selectedLoanId;
   bool _openingInvoicePdf = false;
-  bool _ticketAccountDialogOpen = false;
 
   @override
   void initState() {
@@ -128,60 +127,9 @@ class _GirviListScreenState extends State<GirviListScreen>
   }
 
   Future<void> _openTicketAccount(GirviLoanWithCustomer item) async {
-    if (_ticketAccountDialogOpen) return;
     _selectLoan(item);
     if (!mounted) return;
-
-    _ticketAccountDialogOpen = true;
-    try {
-      await showDialog<void>(
-        context: context,
-        barrierColor: Colors.black.withValues(alpha: 0.46),
-        builder: (dialogContext) {
-          return Dialog(
-            insetPadding:
-                const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-            backgroundColor: Colors.transparent,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1040, maxHeight: 780),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Material(
-                  color: GirviColors.bodyBg,
-                  child: Column(
-                    children: [
-                      _TicketAccountDialogHeader(
-                        ticketNo: item.loan.ticketNo,
-                        customerName: item.customerName,
-                        customerMeta: _compactCustomerLocation(item),
-                        onClose: () => Navigator.of(dialogContext).pop(),
-                      ),
-                      Expanded(
-                        child: ListenableBuilder(
-                          listenable: _controller,
-                          builder: (context, _) {
-                            return SingleChildScrollView(
-                              padding: const EdgeInsets.all(16),
-                              physics: const BouncingScrollPhysics(),
-                              child: _buildLedgerDetailPanel(
-                                item: item,
-                                compact: true,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      );
-    } finally {
-      _ticketAccountDialogOpen = false;
-    }
+    context.go(RoutePaths.girviAccountFor(item.loan.id));
   }
 
   void _setFilter(GirviFilter filter) {
@@ -198,11 +146,6 @@ class _GirviListScreenState extends State<GirviListScreen>
   }
 
   void _openInterestEntry(GirviLoanWithCustomer item) {
-    if (_ticketAccountDialogOpen) {
-      _ticketAccountDialogOpen = false;
-      Navigator.of(context, rootNavigator: true).pop();
-    }
-
     final route = RouteMapper.toPath(AppRoutes.interestCalcRoute);
     final uri = Uri(
       path: route,

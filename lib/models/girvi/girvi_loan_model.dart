@@ -7,6 +7,7 @@ class GirviLoanWithCustomer {
   final String customerName;
   final String customerMobile;
   final String? customerCity;
+  final String customerAddress;
   final double interestPaidTotal;
   final double principalPaidTotal;
   final double interestDiscountTotal;
@@ -18,6 +19,7 @@ class GirviLoanWithCustomer {
     required this.customerName,
     required this.customerMobile,
     this.customerCity,
+    this.customerAddress = '',
     this.interestPaidTotal = 0,
     this.principalPaidTotal = 0,
     this.interestDiscountTotal = 0,

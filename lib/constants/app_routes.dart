@@ -184,6 +184,8 @@ class RoutePaths {
   // Girvi
   static const String girviNew = '/app/girvi/new';
   static const String girviList = '/app/girvi/list';
+  static const String girviAccountBase = '/app/girvi/account';
+  static const String girviAccountDetail = '$girviAccountBase/:loanId';
   static const String girviInterest = '/app/girvi/interest';
   static const String girviNotice = '/app/girvi/notice';
 
@@ -214,6 +216,10 @@ class RoutePaths {
 
   static String supplierProfileFor(int supplierId) {
     return '$supplierProfileBase/$supplierId';
+  }
+
+  static String girviAccountFor(int loanId) {
+    return '$girviAccountBase/$loanId';
   }
 }
 

@@ -73,6 +73,7 @@ import '../../ui/karigar/karigar_hisaab/karigar_hisaab_screen.dart';
 
 // ── GIRVI ───────────────────────────────────────────────────────────────────────
 import '../../ui/girvi/new_girvi/new_girvi_screen.dart';
+import '../../ui/girvi/girvi_account/girvi_account_detail_screen.dart';
 import '../../ui/girvi/girvi_list/girvi_list_screen.dart';
 import '../../ui/girvi/interest_calc/interest_calc_screen.dart';
 import '../../ui/girvi/notice_auction/notice_auction_screen.dart';
@@ -233,6 +234,18 @@ GoRouter createAppRouter() {
           onBack: () => context.go(RoutePaths.dashboard),
           onNewGirvi: () => context.go(RoutePaths.girviNew),
         ),
+      ),
+
+      GoRoute(
+        path: RoutePaths.girviAccountDetail,
+        builder: (context, state) {
+          final loanId =
+              int.tryParse(state.pathParameters['loanId'] ?? '') ?? 0;
+          return GirviAccountDetailScreen(
+            loanId: loanId,
+            onBack: () => context.go(RoutePaths.girviList),
+          );
+        },
       ),
 
       GoRoute(
