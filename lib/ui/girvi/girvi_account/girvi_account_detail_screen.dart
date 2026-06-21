@@ -15,6 +15,7 @@ import '../../../logic/girvi/girvi_settlement_statement_pdf_service.dart';
 import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../repositories/customer/customer_profile_repository.dart';
+import '../../../repositories/girvi/girvi_details_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import '../shared/girvi_shared_widgets.dart';
 
@@ -47,8 +48,7 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
   final DateFormat _dateFormat = DateFormat('dd MMM yyyy');
   final DateFormat _dateTimeFormat = DateFormat('dd MMM yyyy, hh:mm a');
 
-  bool _openingOriginalInvoice = false;
-  bool _openingSettlementStatement = false;
+  bool _openingGirviReceipt = false;
 
   @override
   void initState() {
@@ -79,115 +79,88 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
     );
   }
 
-  Future<void> _previewOriginalInvoice() async {
+  Future<void> _previewGirviReceipt() async {
     final account = _controller.account;
-    if (account == null || _openingOriginalInvoice) return;
+    if (account == null || _openingGirviReceipt) return;
 
-    setState(() => _openingOriginalInvoice = true);
+    setState(() => _openingGirviReceipt = true);
     try {
-      final draft =
-          await CustomerProfileRepository(db: _db).fetchGirviInvoiceDraft(
-        customerId: account.loan.customerId,
-        loanId: account.loan.id,
-      );
-      if (!mounted) return;
-      if (draft == null) {
-        _showMessage('Original Girvi invoice details could not be loaded.');
-        return;
-      }
-
-      final invoiceController = GirviInvoiceHubController(
-        draft: draft,
-        onFinalize: () async => true,
-      );
-      try {
-        await invoiceController.generatePreview();
-        if (!mounted) return;
-
-        final bytes = invoiceController.pdfBytes;
-        if (bytes == null) {
-          _showMessage('Original Girvi invoice PDF could not be generated.');
-          return;
-        }
-
-        await _showPdfPreview(
-          title: 'Original Girvi Invoice',
-          subtitle: '${account.loan.ticketNo} | ${account.customerName}',
-          fileName: 'girvi_original_${account.loan.ticketNo}.pdf',
-          pdfBytes: bytes,
-        );
-      } finally {
-        invoiceController.dispose();
-      }
-    } catch (_) {
-      if (mounted) _showMessage('Original Girvi invoice could not be opened.');
-    } finally {
-      if (mounted) setState(() => _openingOriginalInvoice = false);
-    }
-  }
-
-  Future<void> _previewSettlementStatement() async {
-    final account = _controller.account;
-    if (account == null || _openingSettlementStatement) return;
-
-    setState(() => _openingSettlementStatement = true);
-    try {
-      final bytes = await GirviSettlementStatementPdfService().build(
+      final frontBytes = await _buildOriginalReceiptPdf(account);
+      final backBytes = await GirviSettlementStatementPdfService().build(
         account: account,
         payments: _controller.payments,
       );
       if (!mounted) return;
 
-      await _showPdfPreview(
-        title: 'Settlement Statement',
-        subtitle: '${account.loan.ticketNo} | ${_accountStatusLabel(account)}',
-        fileName: 'girvi_statement_${account.loan.ticketNo}.pdf',
-        pdfBytes: bytes,
+      await _showFlippableReceiptPreview(
+        title: 'Girvi Receipt',
+        subtitle: '${account.loan.ticketNo} | ${account.customerName}',
+        frontTitle: 'Front Side - Original Girvi Receipt',
+        backTitle: 'Back Side - Payment Ledger and Status',
+        frontFileName: 'girvi_receipt_${account.loan.ticketNo}.pdf',
+        backFileName: 'girvi_receipt_ledger_${account.loan.ticketNo}.pdf',
+        frontBytes: frontBytes,
+        backBytes: backBytes,
       );
     } catch (_) {
-      if (mounted) _showMessage('Settlement statement could not be generated.');
+      if (mounted) _showMessage('Girvi receipt could not be opened.');
     } finally {
-      if (mounted) setState(() => _openingSettlementStatement = false);
+      if (mounted) setState(() => _openingGirviReceipt = false);
     }
   }
 
-  Future<void> _showPdfPreview({
+  Future<Uint8List> _buildOriginalReceiptPdf(
+    GirviLoanWithCustomer account,
+  ) async {
+    final draft =
+        await CustomerProfileRepository(db: _db).fetchGirviInvoiceDraft(
+      customerId: account.loan.customerId,
+      loanId: account.loan.id,
+    );
+    if (draft == null) {
+      throw StateError('Girvi invoice draft could not be loaded.');
+    }
+
+    final invoiceController = GirviInvoiceHubController(
+      draft: draft,
+      onFinalize: () async => true,
+    );
+    try {
+      await invoiceController.generatePreview();
+      final bytes = invoiceController.pdfBytes;
+      if (bytes == null) {
+        throw StateError('Girvi invoice PDF could not be generated.');
+      }
+      return bytes;
+    } finally {
+      invoiceController.dispose();
+    }
+  }
+
+  Future<void> _showFlippableReceiptPreview({
     required String title,
     required String subtitle,
-    required String fileName,
-    required Uint8List pdfBytes,
+    required String frontTitle,
+    required String backTitle,
+    required String frontFileName,
+    required String backFileName,
+    required Uint8List frontBytes,
+    required Uint8List backBytes,
   }) {
     return showDialog<void>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.78),
       useSafeArea: false,
-      builder: (dialogContext) => Dialog.fullscreen(
-        backgroundColor: const Color(0xFF111827),
-        child: Column(
-          children: [
-            _PdfPreviewHeader(
-              title: title,
-              subtitle: subtitle,
-              onClose: () => Navigator.of(dialogContext).pop(),
-            ),
-            Expanded(
-              child: PdfPreview(
-                build: (_) async => pdfBytes,
-                initialPageFormat: PdfPageFormat.a4,
-                allowPrinting: true,
-                allowSharing: true,
-                canChangeOrientation: false,
-                canChangePageFormat: false,
-                canDebug: false,
-                maxPageWidth: 860,
-                pdfFileName: fileName,
-                scrollViewDecoration: const BoxDecoration(
-                  color: Color(0xFF111827),
-                ),
-              ),
-            ),
-          ],
-        ),
+      builder: (dialogContext) => _FlippablePdfPreviewDialog(
+        title: title,
+        subtitle: subtitle,
+        frontTitle: frontTitle,
+        backTitle: backTitle,
+        frontFileName: frontFileName,
+        backFileName: backFileName,
+        frontBytes: frontBytes,
+        backBytes: backBytes,
+        onClose: () => Navigator.of(dialogContext).pop(),
       ),
     );
   }

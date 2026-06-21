@@ -62,17 +62,17 @@ class _AccountMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 118,
-      padding: const EdgeInsets.all(13),
+      height: 126,
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: GirviColors.cardBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: data.color.withValues(alpha: 0.20)),
+        border: Border.all(color: data.color.withValues(alpha: 0.18)),
         boxShadow: const [
           BoxShadow(
             color: GirviColors.shadowLight,
-            blurRadius: 8,
-            offset: Offset(0, 2),
+            blurRadius: 10,
+            offset: Offset(0, 3),
           ),
         ],
       ),
@@ -92,7 +92,7 @@ class _AccountMetricCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               color: GirviColors.textDark,
-              fontSize: 12.5,
+              fontSize: 13,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -104,7 +104,7 @@ class _AccountMetricCard extends StatelessWidget {
               data.value,
               style: GoogleFonts.manrope(
                 color: data.color,
-                fontSize: 20,
+                fontSize: 21,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -117,7 +117,7 @@ class _AccountMetricCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 color: GirviColors.textBody,
-                fontSize: 11.5,
+                fontSize: 12,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -221,53 +221,43 @@ class _AccountCustomerAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 82,
-          height: 82,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: GirviColors.brandGold.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: GirviColors.brandGold, width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: GirviColors.brandGold.withValues(alpha: 0.22),
-                blurRadius: 18,
-                offset: const Offset(0, 7),
-              ),
-            ],
+    return Container(
+      width: 82,
+      height: 82,
+      decoration: BoxDecoration(
+        color: GirviColors.brandGold.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: GirviColors.brandGold, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: GirviColors.brandGold.withValues(alpha: 0.20),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
-          child: Text(
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
             initials,
             style: GoogleFonts.manrope(
               color: GirviColors.brandGold,
-              fontSize: 26,
+              fontSize: 25,
               fontWeight: FontWeight.w900,
             ),
           ),
-        ),
-        Positioned(
-          right: -4,
-          bottom: -4,
-          child: Container(
-            width: 28,
-            height: 28,
+          const SizedBox(height: 3),
+          Container(
+            width: 24,
+            height: 3,
             decoration: BoxDecoration(
               color: statusColor,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 3),
-            ),
-            child: const Icon(
-              GirviIcons.moduleIcon,
-              color: Colors.white,
-              size: 14,
+              borderRadius: BorderRadius.circular(999),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -401,6 +391,317 @@ class _AccountStatusBadge extends StatelessWidget {
           fontWeight: FontWeight.w900,
         ),
       ),
+    );
+  }
+}
+
+class _PledgedMetalSummaryCard extends StatelessWidget {
+  final String metal;
+  final int itemCount;
+  final int pieces;
+  final String grossWeight;
+  final String netWeight;
+  final String value;
+  final Color color;
+
+  const _PledgedMetalSummaryCard({
+    required this.metal,
+    required this.itemCount,
+    required this.pieces,
+    required this.grossWeight,
+    required this.netWeight,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final countLabel = itemCount == 1 ? '1 item' : '$itemCount items';
+    final pieceLabel = pieces == 1 ? '1 piece' : '$pieces pieces';
+
+    return SizedBox(
+      width: 236,
+      child: Container(
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.075),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withValues(alpha: 0.20)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _AccountIconBox(
+                  icon: Icons.workspace_premium_rounded,
+                  color: color,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        metal,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.manrope(
+                          color: GirviColors.textDark,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$countLabel | $pieceLabel',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          color: GirviColors.textBody,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _PledgedSpecLine(label: 'Gross Weight', value: grossWeight),
+            const SizedBox(height: 6),
+            _PledgedSpecLine(label: 'Net Weight', value: netWeight),
+            const SizedBox(height: 6),
+            _PledgedSpecLine(label: 'Valuation', value: value, color: color),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PledgedItemDetailRow extends StatelessWidget {
+  final int serialNo;
+  final String itemName;
+  final String metal;
+  final String purity;
+  final int pieces;
+  final String grossWeight;
+  final String lessWeight;
+  final String netWeight;
+  final String rate;
+  final String value;
+  final String? huid;
+  final int photoCount;
+  final Color color;
+
+  const _PledgedItemDetailRow({
+    required this.serialNo,
+    required this.itemName,
+    required this.metal,
+    required this.purity,
+    required this.pieces,
+    required this.grossWeight,
+    required this.lessWeight,
+    required this.netWeight,
+    required this.rate,
+    required this.value,
+    required this.huid,
+    required this.photoCount,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final huidText = huid?.trim();
+    final hasHuid = huidText != null && huidText.isNotEmpty;
+    final pieceLabel = pieces == 1 ? '1 piece' : '$pieces pieces';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: GirviColors.inputBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: color.withValues(alpha: 0.20)),
+            ),
+            child: Text(
+              serialNo.toString().padLeft(2, '0'),
+              style: GoogleFonts.manrope(
+                color: color,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 320),
+                      child: Text(
+                        itemName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.manrope(
+                          color: GirviColors.textDark,
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    _AccountStatusBadge(label: metal, color: color),
+                    _AccountStatusBadge(
+                      label: purity.trim().isEmpty ? 'Purity not set' : purity,
+                      color: GirviColors.info,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _PledgedSpecTile(label: 'Pieces', value: pieceLabel),
+                    _PledgedSpecTile(label: 'Gross', value: grossWeight),
+                    _PledgedSpecTile(label: 'Less', value: lessWeight),
+                    _PledgedSpecTile(label: 'Net', value: netWeight),
+                    _PledgedSpecTile(label: 'Rate / Gram', value: rate),
+                    _PledgedSpecTile(
+                      label: 'Valuation',
+                      value: value,
+                      color: color,
+                    ),
+                    if (hasHuid)
+                      _PledgedSpecTile(label: 'HUID', value: huidText),
+                    _PledgedSpecTile(
+                      label: 'Photos',
+                      value: photoCount == 1 ? '1 photo' : '$photoCount photos',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PledgedSpecTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? color;
+
+  const _PledgedSpecTile({
+    required this.label,
+    required this.value,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final valueColor = color ?? GirviColors.textDark;
+    return SizedBox(
+      width: 142,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: GirviColors.cardBg,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: GirviColors.cardBorder),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                color: GirviColors.textBody,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                color: valueColor,
+                fontSize: 12.7,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PledgedSpecLine extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? color;
+
+  const _PledgedSpecLine({
+    required this.label,
+    required this.value,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              color: GirviColors.textBody,
+              fontSize: 11.8,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(
+            color: color ?? GirviColors.textDark,
+            fontSize: 12.6,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -585,16 +886,19 @@ class _AccountClosureHero extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            color.withValues(alpha: 0.10),
+            color.withValues(alpha: 0.12),
             GirviColors.cardBg,
           ],
         ),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Row(
         children: [
@@ -610,7 +914,7 @@ class _AccountClosureHero extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.manrope(
                     color: GirviColors.textDark,
-                    fontSize: 17,
+                    fontSize: 18,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -988,21 +1292,114 @@ class _AccountErrorState extends StatelessWidget {
   }
 }
 
-class _PdfPreviewHeader extends StatelessWidget {
+class _FlippablePdfPreviewDialog extends StatefulWidget {
   final String title;
   final String subtitle;
+  final String frontTitle;
+  final String backTitle;
+  final String frontFileName;
+  final String backFileName;
+  final Uint8List frontBytes;
+  final Uint8List backBytes;
   final VoidCallback onClose;
 
-  const _PdfPreviewHeader({
+  const _FlippablePdfPreviewDialog({
     required this.title,
     required this.subtitle,
+    required this.frontTitle,
+    required this.backTitle,
+    required this.frontFileName,
+    required this.backFileName,
+    required this.frontBytes,
+    required this.backBytes,
+    required this.onClose,
+  });
+
+  @override
+  State<_FlippablePdfPreviewDialog> createState() =>
+      _FlippablePdfPreviewDialogState();
+}
+
+class _FlippablePdfPreviewDialogState
+    extends State<_FlippablePdfPreviewDialog> {
+  bool _showBack = false;
+
+  void _flipReceiptSide() {
+    setState(() => _showBack = !_showBack);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final activeTitle = _showBack ? widget.backTitle : widget.frontTitle;
+    final activeBytes = _showBack ? widget.backBytes : widget.frontBytes;
+    final activeFileName =
+        _showBack ? widget.backFileName : widget.frontFileName;
+
+    return Dialog.fullscreen(
+      backgroundColor: const Color(0xFF111827),
+      child: Column(
+        children: [
+          _FlippablePdfPreviewHeader(
+            title: widget.title,
+            subtitle: widget.subtitle,
+            activeTitle: activeTitle,
+            isBackSide: _showBack,
+            onFlip: _flipReceiptSide,
+            onClose: widget.onClose,
+          ),
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onDoubleTap: _flipReceiptSide,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                child: PdfPreview(
+                  key: ValueKey<bool>(_showBack),
+                  build: (_) async => activeBytes,
+                  initialPageFormat: PdfPageFormat.a4,
+                  allowPrinting: true,
+                  allowSharing: true,
+                  canChangeOrientation: false,
+                  canChangePageFormat: false,
+                  canDebug: false,
+                  maxPageWidth: 860,
+                  pdfFileName: activeFileName,
+                  scrollViewDecoration: const BoxDecoration(
+                    color: Color(0xFF111827),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FlippablePdfPreviewHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String activeTitle;
+  final bool isBackSide;
+  final VoidCallback onFlip;
+  final VoidCallback onClose;
+
+  const _FlippablePdfPreviewHeader({
+    required this.title,
+    required this.subtitle,
+    required this.activeTitle,
+    required this.isBackSide,
+    required this.onFlip,
     required this.onClose,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 68,
+      constraints: const BoxConstraints(minHeight: 78),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.24),
@@ -1046,7 +1443,7 @@ class _PdfPreviewHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  subtitle,
+                  '$subtitle | $activeTitle',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
@@ -1055,9 +1452,43 @@ class _PdfPreviewHeader extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
+                const SizedBox(height: 3),
+                Text(
+                  'Double-click preview to flip side',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: Colors.white.withValues(alpha: 0.60),
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
           ),
+          const SizedBox(width: 12),
+          FilledButton.icon(
+            onPressed: onFlip,
+            icon: Icon(
+              isBackSide
+                  ? Icons.flip_to_front_rounded
+                  : Icons.flip_to_back_rounded,
+              size: 18,
+            ),
+            label: Text(isBackSide ? 'Show Front' : 'Show Ledger'),
+            style: FilledButton.styleFrom(
+              backgroundColor: GirviColors.brandGold,
+              foregroundColor: GirviColors.shellBg,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              textStyle: GoogleFonts.manrope(
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           IconButton(
             tooltip: 'Close preview',
             onPressed: onClose,

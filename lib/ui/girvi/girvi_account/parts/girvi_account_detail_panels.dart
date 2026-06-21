@@ -9,9 +9,10 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: GirviColors.cardBg,
+        color: const Color(0xFFFFFCF5),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: GirviColors.cardBorder),
+        border:
+            Border.all(color: GirviColors.brandGold.withValues(alpha: 0.22)),
         boxShadow: const [
           BoxShadow(
             color: GirviColors.shadowLight,
@@ -44,7 +45,7 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
               Container(
                 width: 1,
                 constraints: const BoxConstraints(minHeight: 240),
-                color: GirviColors.cardBorder,
+                color: GirviColors.brandGold.withValues(alpha: 0.18),
               ),
               SizedBox(width: 430, child: documents),
             ],
@@ -68,8 +69,8 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            GirviColors.brandGold.withValues(alpha: 0.075),
-            GirviColors.cardBg,
+            GirviColors.brandGold.withValues(alpha: 0.10),
+            const Color(0xFFFFFCF5),
           ],
         ),
       ),
@@ -90,8 +91,9 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
                   runSpacing: 8,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    const _AccountStatusBadge(
-                      label: 'Girvi Invoice / Ticket',
+                    _AccountMetaChip(
+                      icon: Icons.confirmation_number_rounded,
+                      label: 'Ticket ${loan.ticketNo}',
                       color: GirviColors.brandGold,
                     ),
                     _AccountStatusBadge(
@@ -100,25 +102,14 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  loan.ticketNo,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.manrope(
-                    color: GirviColors.textDark,
-                    fontSize: 29,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 12),
                 Text(
                   account.customerName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.manrope(
                     color: GirviColors.textDark,
-                    fontSize: 18,
+                    fontSize: 25,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -144,6 +135,12 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
                   spacing: 10,
                   runSpacing: 10,
                   children: [
+                    _AccountQuickFact(
+                      label: 'Principal Amount',
+                      value: _money(account.originalPrincipal),
+                      icon: Icons.account_balance_wallet_rounded,
+                      color: GirviColors.textDark,
+                    ),
                     _AccountQuickFact(
                       label: 'Start Date',
                       value: _date(loan.startDate),
@@ -192,7 +189,7 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
           ),
           const SizedBox(height: 4),
           Text(
-            'Print the original invoice or the complete settlement statement.',
+            'Open one receipt preview. Double-click the preview to switch between receipt and ledger side.',
             style: GoogleFonts.inter(
               color: GirviColors.textBody,
               fontSize: 12.5,
@@ -201,25 +198,13 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
           ),
           const SizedBox(height: 14),
           _AccountDocumentButton(
-            icon: GirviIcons.print,
-            title: 'Original Invoice',
-            subtitle: _openingOriginalInvoice
-                ? 'Opening invoice preview'
-                : 'Girvi creation time PDF',
-            color: GirviColors.info,
-            onTap: _openingOriginalInvoice ? null : _previewOriginalInvoice,
-          ),
-          const SizedBox(height: 10),
-          _AccountDocumentButton(
             icon: Icons.receipt_long_rounded,
-            title: 'Settlement Statement',
-            subtitle: _openingSettlementStatement
-                ? 'Preparing statement'
-                : 'Full payment and delivery ledger',
+            title: 'Girvi Receipt',
+            subtitle: _openingGirviReceipt
+                ? 'Preparing receipt preview'
+                : 'Front receipt, double-click to flip ledger side',
             color: GirviColors.brandGold,
-            onTap: _openingSettlementStatement
-                ? null
-                : _previewSettlementStatement,
+            onTap: _openingGirviReceipt ? null : _previewGirviReceipt,
           ),
           if (actionEnabled) ...[
             const SizedBox(height: 14),
@@ -242,6 +227,12 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
     final totalReceived = account.principalPaidTotal +
         account.legacyPrincipalRepaidTotal +
         account.interestPaidTotal;
+    final interestRate = account.loan.interestRate;
+    final interestRateLabel = interestRate == interestRate.roundToDouble()
+        ? interestRate.toStringAsFixed(0)
+        : interestRate.toStringAsFixed(2);
+    final principalDueVisible = account.principalDue > 0.01;
+    final interestDueVisible = account.netInterestDue > 0.01;
 
     final metrics = [
       _AccountMetricData(
@@ -249,34 +240,37 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
         value: _money(account.originalPrincipal),
         icon: GirviIcons.loanTerms,
         color: GirviColors.textDark,
+        helper: 'Loan amount',
       ),
       _AccountMetricData(
         label: 'Total Interest',
         value: _money(account.grossInterestAccrued),
         icon: GirviIcons.interestRate,
         color: GirviColors.warning,
+        helper: 'Interest rate $interestRateLabel%',
       ),
-      _AccountMetricData(
-        label: 'Principal Due',
-        value: _money(account.principalDue),
-        icon: Icons.account_balance_rounded,
-        color: account.principalDue <= 0.01
-            ? GirviColors.success
-            : GirviColors.textDark,
-      ),
-      _AccountMetricData(
-        label: 'Interest Due',
-        value: _money(account.netInterestDue),
-        icon: Icons.percent_rounded,
-        color: account.netInterestDue <= 0.01
-            ? GirviColors.success
-            : GirviColors.warning,
-      ),
+      if (principalDueVisible)
+        _AccountMetricData(
+          label: 'Principal Due',
+          value: _money(account.principalDue),
+          icon: Icons.account_balance_rounded,
+          color: GirviColors.danger,
+          helper: 'Outstanding principal',
+        ),
+      if (interestDueVisible)
+        _AccountMetricData(
+          label: 'Interest Due',
+          value: _money(account.netInterestDue),
+          icon: Icons.percent_rounded,
+          color: GirviColors.warning,
+          helper: 'Unpaid interest',
+        ),
       _AccountMetricData(
         label: 'Total Received',
         value: _money(totalReceived),
         icon: GirviIcons.cash,
         color: GirviColors.success,
+        helper: 'Principal and interest',
       ),
       _AccountMetricData(
         label: 'Net Payable',
@@ -295,11 +289,13 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width;
         final safeWidth = maxWidth <= 0 ? 320.0 : maxWidth;
-        final columns = safeWidth >= 1180
+        final maxColumns = safeWidth >= 1180
             ? 6
             : safeWidth >= 760
                 ? 3
                 : 2;
+        final columns =
+            metrics.length < maxColumns ? metrics.length : maxColumns;
         const spacing = 12.0;
         final cardWidth = (safeWidth - (columns - 1) * spacing) / columns;
 
@@ -321,39 +317,110 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
 
   Widget _buildPledgedItemPanel(GirviLoanWithCustomer account) {
     final loan = account.loan;
+    final detailedItems =
+        _controller.details?.items ?? const <GirviLoanItemDetails>[];
     return _AccountSurface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _AccountSectionHeader(
+          _AccountSectionHeader(
             icon: GirviIcons.itemDetails,
             color: GirviColors.brandGold,
             title: 'Pledged Item Details',
-            subtitle: 'Item and valuation captured at ticket creation',
+            subtitle: detailedItems.isEmpty
+                ? 'Summary captured at ticket creation'
+                : '${detailedItems.length} item${detailedItems.length == 1 ? '' : 's'} grouped by metal',
+            trailing: _AccountStatusBadge(
+              label: 'Principal ${_money(account.originalPrincipal)}',
+              color: GirviColors.textDark,
+            ),
           ),
           const SizedBox(height: 14),
-          _AccountInfoGrid(
-            rows: [
-              _AccountInfoRowData('Item Name', loan.itemDescription),
-              _AccountInfoRowData('Item Count', loan.itemCount.toString()),
-              _AccountInfoRowData(
-                'Metal / Purity',
-                '${loan.metalTypeEnum.displayName} / ${loan.metalPurity}',
-              ),
-              _AccountInfoRowData('Gross Weight', _weight(loan.grossWeight)),
-              _AccountInfoRowData('Less Weight', _weight(loan.stoneWeight)),
-              _AccountInfoRowData('Net Weight', _weight(loan.netWeight)),
-              _AccountInfoRowData(
-                'Rate Per Gram',
-                _money(loan.ratePerGram, precise: true),
-              ),
-              _AccountInfoRowData('Pledged Value', _money(loan.totalValue)),
-              if ((loan.huidNumber ?? '').trim().isNotEmpty)
-                _AccountInfoRowData('HUID', loan.huidNumber!.trim()),
-            ],
-          ),
+          if (detailedItems.isNotEmpty) ...[
+            _buildPledgedMetalSummary(detailedItems),
+            const SizedBox(height: 14),
+            Column(
+              children: [
+                for (final itemDetails in detailedItems) ...[
+                  _PledgedItemDetailRow(
+                    serialNo: itemDetails.item.serialNo,
+                    itemName: itemDetails.item.itemName,
+                    metal: itemDetails.item.metalType,
+                    purity: itemDetails.item.purity,
+                    pieces: itemDetails.item.pieces,
+                    grossWeight: _weight(itemDetails.item.grossWeight),
+                    lessWeight: _weight(itemDetails.item.lessWeight),
+                    netWeight: _weight(itemDetails.item.netWeight),
+                    rate: _money(itemDetails.item.ratePerGram, precise: true),
+                    value: _money(itemDetails.item.valuationAmount),
+                    huid: itemDetails.item.huidNumber,
+                    photoCount: itemDetails.photos.length,
+                    color: _metalColor(itemDetails.item.metalType),
+                  ),
+                  if (itemDetails != detailedItems.last)
+                    const SizedBox(height: 10),
+                ],
+              ],
+            ),
+          ] else
+            _AccountInfoGrid(
+              rows: [
+                _AccountInfoRowData('Item Name', loan.itemDescription),
+                _AccountInfoRowData('Item Count', loan.itemCount.toString()),
+                _AccountInfoRowData(
+                  'Metal / Purity',
+                  '${loan.metalTypeEnum.displayName} / ${loan.metalPurity}',
+                ),
+                _AccountInfoRowData(
+                    'Principal Amount', _money(account.originalPrincipal)),
+                _AccountInfoRowData('Gross Weight', _weight(loan.grossWeight)),
+                _AccountInfoRowData('Less Weight', _weight(loan.stoneWeight)),
+                _AccountInfoRowData('Net Weight', _weight(loan.netWeight)),
+                _AccountInfoRowData(
+                  'Rate Per Gram',
+                  _money(loan.ratePerGram, precise: true),
+                ),
+                _AccountInfoRowData('Pledged Value', _money(loan.totalValue)),
+                if ((loan.huidNumber ?? '').trim().isNotEmpty)
+                  _AccountInfoRowData('HUID', loan.huidNumber!.trim()),
+              ],
+            ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPledgedMetalSummary(List<GirviLoanItemDetails> items) {
+    final summaries = <String, _PledgedMetalSummary>{};
+    for (final itemDetails in items) {
+      final item = itemDetails.item;
+      final key =
+          item.metalType.trim().isEmpty ? 'Other' : item.metalType.trim();
+      final existing = summaries[key] ?? _PledgedMetalSummary(metal: key);
+      summaries[key] = existing.add(
+        pieces: item.pieces,
+        grossWeight: item.grossWeight,
+        netWeight: item.netWeight,
+        value: item.valuationAmount,
+      );
+    }
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: summaries.values
+          .map(
+            (summary) => _PledgedMetalSummaryCard(
+              metal: summary.metal,
+              itemCount: summary.itemCount,
+              pieces: summary.pieces,
+              grossWeight: _weight(summary.grossWeight),
+              netWeight: _weight(summary.netWeight),
+              value: _money(summary.value),
+              color: _metalColor(summary.metal),
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -422,6 +489,10 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
               color: statusColor,
               title: 'Delivery and Closure',
               subtitle: _accountStatusLabel(account),
+              trailing: _AccountStatusBadge(
+                label: delivered ? 'Closed' : 'Live Status',
+                color: statusColor,
+              ),
             ),
           ),
           const Divider(height: 1, color: GirviColors.cardBorder),
@@ -524,9 +595,58 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
         .toUpperCase();
   }
 
+  Color _metalColor(String metal) {
+    switch (metal.trim().toLowerCase()) {
+      case 'gold':
+        return GirviColors.brandGold;
+      case 'silver':
+        return const Color(0xFF64748B);
+      case 'diamond':
+        return GirviColors.info;
+      case 'platinum':
+        return const Color(0xFF0F766E);
+      default:
+        return GirviColors.textDark;
+    }
+  }
+
   String _emptyText(String? value) {
     final trimmed = value?.trim();
     if (trimmed == null || trimmed.isEmpty) return 'Not set';
     return trimmed;
+  }
+}
+
+class _PledgedMetalSummary {
+  final String metal;
+  final int itemCount;
+  final int pieces;
+  final double grossWeight;
+  final double netWeight;
+  final double value;
+
+  const _PledgedMetalSummary({
+    required this.metal,
+    this.itemCount = 0,
+    this.pieces = 0,
+    this.grossWeight = 0,
+    this.netWeight = 0,
+    this.value = 0,
+  });
+
+  _PledgedMetalSummary add({
+    required int pieces,
+    required double grossWeight,
+    required double netWeight,
+    required double value,
+  }) {
+    return _PledgedMetalSummary(
+      metal: metal,
+      itemCount: itemCount + 1,
+      pieces: this.pieces + pieces,
+      grossWeight: this.grossWeight + grossWeight,
+      netWeight: this.netWeight + netWeight,
+      value: this.value + value,
+    );
   }
 }
