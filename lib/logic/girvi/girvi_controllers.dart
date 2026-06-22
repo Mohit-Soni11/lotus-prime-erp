@@ -89,7 +89,17 @@ class GirviListController extends ChangeNotifier {
           .toList();
     }
 
+    list.sort((a, b) {
+      final byActivity = _latestActivityFor(b).compareTo(_latestActivityFor(a));
+      if (byActivity != 0) return byActivity;
+      return b.loan.id.compareTo(a.loan.id);
+    });
+
     _filteredLoans = list;
+  }
+
+  DateTime _latestActivityFor(GirviLoanWithCustomer item) {
+    return item.loan.updatedAt ?? item.loan.createdAt;
   }
 
   bool _matchesFilter(GirviLoanWithCustomer item, GirviFilter filter) {

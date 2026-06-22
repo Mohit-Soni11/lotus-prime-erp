@@ -1,6 +1,8 @@
-import 'dart:typed_data';
+import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -11,11 +13,13 @@ import '../../../constants/app_routes.dart';
 import '../../../database/db/app_database.dart';
 import '../../../logic/girvi/girvi_account_detail_controller.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
-import '../../../logic/girvi/girvi_settlement_statement_pdf_service.dart';
+import '../../../logic/girvi/girvi_payment_record_pdf_service.dart';
+import '../../../models/girvi/girvi_account_lifecycle_summary.dart';
 import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../repositories/girvi/girvi_details_repository.dart';
+import '../../../repositories/girvi/girvi_invoice_branding_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import '../shared/girvi_shared_widgets.dart';
 
@@ -48,7 +52,9 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
   final DateFormat _dateFormat = DateFormat('dd MMM yyyy');
   final DateFormat _dateTimeFormat = DateFormat('dd MMM yyyy, hh:mm a');
 
-  bool _openingGirviReceipt = false;
+  bool _openingGirviInvoice = false;
+  bool _viewingPaymentRecord = false;
+  bool _printingPaymentRecord = false;
 
   @override
   void initState() {
@@ -79,37 +85,24 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
     );
   }
 
-  Future<void> _previewGirviReceipt() async {
+  Future<void> _previewGirviInvoice() async {
     final account = _controller.account;
-    if (account == null || _openingGirviReceipt) return;
+    if (account == null || _openingGirviInvoice) return;
 
-    setState(() => _openingGirviReceipt = true);
+    setState(() => _openingGirviInvoice = true);
     try {
-      final frontBytes = await _buildOriginalReceiptPdf(account);
-      final backBytes = await GirviSettlementStatementPdfService().build(
-        account: account,
-        payments: _controller.payments,
-      );
+      final bytes = await _buildGirviInvoicePdf(account);
       if (!mounted) return;
 
-      await _showFlippableReceiptPreview(
-        title: 'Girvi Receipt',
-        subtitle: '${account.loan.ticketNo} | ${account.customerName}',
-        frontTitle: 'Front Side - Original Girvi Receipt',
-        backTitle: 'Back Side - Payment Ledger and Status',
-        frontFileName: 'girvi_receipt_${account.loan.ticketNo}.pdf',
-        backFileName: 'girvi_receipt_ledger_${account.loan.ticketNo}.pdf',
-        frontBytes: frontBytes,
-        backBytes: backBytes,
-      );
+      await _showGirviInvoicePreview(pdfBytes: bytes);
     } catch (_) {
-      if (mounted) _showMessage('Girvi receipt could not be opened.');
+      if (mounted) _showMessage('Girvi invoice could not be opened.');
     } finally {
-      if (mounted) setState(() => _openingGirviReceipt = false);
+      if (mounted) setState(() => _openingGirviInvoice = false);
     }
   }
 
-  Future<Uint8List> _buildOriginalReceiptPdf(
+  Future<Uint8List> _buildGirviInvoicePdf(
     GirviLoanWithCustomer account,
   ) async {
     final draft =
@@ -137,32 +130,187 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
     }
   }
 
-  Future<void> _showFlippableReceiptPreview({
-    required String title,
-    required String subtitle,
-    required String frontTitle,
-    required String backTitle,
-    required String frontFileName,
-    required String backFileName,
-    required Uint8List frontBytes,
-    required Uint8List backBytes,
-  }) {
+  Future<void> _showGirviInvoicePreview({required Uint8List pdfBytes}) async {
+    final sides = await _rasterGirviInvoiceSides(pdfBytes);
+    if (!mounted) return;
+    if (sides.isEmpty) {
+      return _showCleanGirviInvoicePreview(pdfBytes: pdfBytes);
+    }
+
     return showDialog<void>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.78),
       useSafeArea: false,
-      builder: (dialogContext) => _FlippablePdfPreviewDialog(
-        title: title,
-        subtitle: subtitle,
-        frontTitle: frontTitle,
-        backTitle: backTitle,
-        frontFileName: frontFileName,
-        backFileName: backFileName,
-        frontBytes: frontBytes,
-        backBytes: backBytes,
-        onClose: () => Navigator.of(dialogContext).pop(),
+      builder: (dialogContext) => Material(
+        type: MaterialType.transparency,
+        child: _GirviInvoiceFlipPreview(
+          sides: sides,
+          onClose: () => Navigator.of(dialogContext).pop(),
+        ),
       ),
     );
+  }
+
+  Future<List<PdfRaster>> _rasterGirviInvoiceSides(Uint8List pdfBytes) async {
+    try {
+      final info = await Printing.info();
+      if (!info.canRaster) return const [];
+
+      final sides = <PdfRaster>[];
+      await for (final page in Printing.raster(pdfBytes, dpi: 144)) {
+        sides.add(page);
+        if (sides.length == 2) break;
+      }
+      return List.unmodifiable(sides);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<void> _showCleanGirviInvoicePreview({required Uint8List pdfBytes}) {
+    return showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.74),
+      useSafeArea: false,
+      builder: (dialogContext) => Dialog.fullscreen(
+        backgroundColor: const Color(0xFF111827),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: PdfPreview(
+                build: (_) async => pdfBytes,
+                initialPageFormat: PdfPageFormat.a4,
+                allowPrinting: false,
+                allowSharing: false,
+                canChangeOrientation: false,
+                canChangePageFormat: false,
+                canDebug: false,
+                useActions: false,
+                maxPageWidth: 860,
+                scrollViewDecoration: const BoxDecoration(
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 18,
+              right: 18,
+              child: Material(
+                color: Colors.black.withValues(alpha: 0.62),
+                shape: const CircleBorder(),
+                child: IconButton(
+                  tooltip: 'Close preview',
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _printPaymentRecord() async {
+    final account = _controller.account;
+    if (account == null || _printingPaymentRecord) return;
+
+    setState(() => _printingPaymentRecord = true);
+    try {
+      final bytes = await _buildPaymentRecordPdf(account);
+      if (!mounted) return;
+
+      await Printing.layoutPdf(
+        name: 'girvi_payment_record_${_safePdfName(account.loan.ticketNo)}.pdf',
+        onLayout: (_) async => bytes,
+      );
+    } catch (_) {
+      if (mounted) _showMessage('Payment record could not be printed.');
+    } finally {
+      if (mounted) setState(() => _printingPaymentRecord = false);
+    }
+  }
+
+  Future<void> _previewPaymentRecord() async {
+    final account = _controller.account;
+    if (account == null || _viewingPaymentRecord) return;
+
+    setState(() => _viewingPaymentRecord = true);
+    try {
+      final bytes = await _buildPaymentRecordPdf(account);
+      if (!mounted) return;
+
+      await _showPaymentRecordPreview(
+        pdfBytes: bytes,
+        fileName:
+            'girvi_payment_record_${_safePdfName(account.loan.ticketNo)}.pdf',
+      );
+    } catch (_) {
+      if (mounted) _showMessage('Payment record could not be opened.');
+    } finally {
+      if (mounted) setState(() => _viewingPaymentRecord = false);
+    }
+  }
+
+  Future<Uint8List> _buildPaymentRecordPdf(
+      GirviLoanWithCustomer account) async {
+    final branding = await GirviInvoiceBrandingRepository(db: _db).fetch();
+    return GirviPaymentRecordPdfService().build(
+      account: account,
+      payments: _controller.payments,
+      branding: branding,
+    );
+  }
+
+  Future<void> _showPaymentRecordPreview({
+    required Uint8List pdfBytes,
+    required String fileName,
+  }) {
+    return showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.74),
+      useSafeArea: false,
+      builder: (dialogContext) => Dialog.fullscreen(
+        backgroundColor: const Color(0xFF111827),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: PdfPreview(
+                build: (_) async => pdfBytes,
+                initialPageFormat: PdfPageFormat.a4,
+                allowPrinting: true,
+                allowSharing: false,
+                canChangeOrientation: false,
+                canChangePageFormat: false,
+                canDebug: false,
+                pdfFileName: fileName,
+                maxPageWidth: 860,
+                scrollViewDecoration: const BoxDecoration(
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 18,
+              right: 18,
+              child: Material(
+                color: Colors.black.withValues(alpha: 0.62),
+                shape: const CircleBorder(),
+                child: IconButton(
+                  tooltip: 'Close preview',
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _safePdfName(String value) {
+    return value.trim().replaceAll(RegExp(r'[^A-Za-z0-9_-]+'), '_');
   }
 
   void _showMessage(String message) {

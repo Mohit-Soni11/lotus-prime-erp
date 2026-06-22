@@ -25,18 +25,14 @@ class _AccountInfoRowData {
 
 class _AccountSurface extends StatelessWidget {
   final Widget child;
-  final EdgeInsetsGeometry padding;
 
-  const _AccountSurface({
-    required this.child,
-    this.padding = const EdgeInsets.all(16),
-  });
+  const _AccountSurface({required this.child});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: padding,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: GirviColors.cardBg,
         borderRadius: BorderRadius.circular(8),
@@ -62,7 +58,7 @@ class _AccountMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 126,
+      constraints: const BoxConstraints(minHeight: 158),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: GirviColors.cardBg,
@@ -77,6 +73,7 @@ class _AccountMetricCard extends StatelessWidget {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -85,7 +82,7 @@ class _AccountMetricCard extends StatelessWidget {
               const Spacer(),
             ],
           ),
-          const Spacer(),
+          const SizedBox(height: 12),
           Text(
             data.label,
             maxLines: 1,
@@ -97,15 +94,22 @@ class _AccountMetricCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              data.value,
-              style: GoogleFonts.manrope(
-                color: data.color,
-                fontSize: 21,
-                fontWeight: FontWeight.w900,
+          SizedBox(
+            height: 30,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  data.value,
+                  maxLines: 1,
+                  style: GoogleFonts.manrope(
+                    color: data.color,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
             ),
           ),
@@ -221,39 +225,63 @@ class _AccountCustomerAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 82,
-      height: 82,
-      decoration: BoxDecoration(
-        color: GirviColors.brandGold.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: GirviColors.brandGold, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: GirviColors.brandGold.withValues(alpha: 0.20),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    return SizedBox(
+      width: 86,
+      height: 86,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Text(
-            initials,
-            style: GoogleFonts.manrope(
-              color: GirviColors.brandGold,
-              fontSize: 25,
-              fontWeight: FontWeight.w900,
+          Container(
+            width: 80,
+            height: 80,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAF6EC),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: GirviColors.brandGold.withValues(alpha: 0.72),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: GirviColors.brandGold.withValues(alpha: 0.20),
+                  blurRadius: 18,
+                  offset: const Offset(0, 7),
+                ),
+              ],
+            ),
+            child: Text(
+              initials,
+              style: GoogleFonts.manrope(
+                color: GirviColors.brandGold,
+                fontSize: 26,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
-          const SizedBox(height: 3),
-          Container(
-            width: 24,
-            height: 3,
-            decoration: BoxDecoration(
-              color: statusColor,
-              borderRadius: BorderRadius.circular(999),
+          Positioned(
+            right: 0,
+            bottom: 2,
+            child: Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                color: statusColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: GirviColors.cardBg, width: 2),
+                boxShadow: const [
+                  BoxShadow(
+                    color: GirviColors.shadowMedium,
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.person_rounded,
+                color: Colors.white,
+                size: 14,
+              ),
             ),
           ),
         ],
@@ -278,10 +306,10 @@ class _AccountMetaChip extends StatelessWidget {
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 460),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.075),
-          borderRadius: BorderRadius.circular(8),
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(999),
           border: Border.all(color: color.withValues(alpha: 0.16)),
         ),
         child: Row(
@@ -296,7 +324,7 @@ class _AccountMetaChip extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   color: GirviColors.textDark,
-                  fontSize: 12.8,
+                  fontSize: 12.6,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -324,34 +352,188 @@ class _AccountQuickFact extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 190,
+      width: 180,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 66),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+        decoration: BoxDecoration(
+          color: GirviColors.inputBg,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withValues(alpha: 0.14)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.09),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 17),
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      color: GirviColors.textBody,
+                      fontSize: 11.2,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      color: GirviColors.textDark,
+                      fontSize: 12.7,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AccountLifecycleItem {
+  final IconData icon;
+  final String title;
+  final String value;
+  final String subtitle;
+  final Color color;
+
+  const _AccountLifecycleItem({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.subtitle,
+    required this.color,
+  });
+}
+
+class _AccountLifecycleRail extends StatelessWidget {
+  final List<_AccountLifecycleItem> items;
+
+  const _AccountLifecycleRail({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stacked = constraints.maxWidth < 720;
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFCFBF8),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: GirviColors.cardBorder),
+          ),
+          child: stacked
+              ? Column(
+                  children: [
+                    for (var index = 0; index < items.length; index++) ...[
+                      _AccountLifecycleCell(item: items[index]),
+                      if (index != items.length - 1)
+                        const Divider(
+                          height: 1,
+                          color: GirviColors.cardBorder,
+                        ),
+                    ],
+                  ],
+                )
+              : Row(
+                  children: [
+                    for (var index = 0; index < items.length; index++) ...[
+                      Expanded(
+                        child: _AccountLifecycleCell(item: items[index]),
+                      ),
+                      if (index != items.length - 1)
+                        Container(
+                          width: 1,
+                          height: 58,
+                          color: GirviColors.cardBorder,
+                        ),
+                    ],
+                  ],
+                ),
+        );
+      },
+    );
+  }
+}
+
+class _AccountLifecycleCell extends StatelessWidget {
+  final _AccountLifecycleItem item;
+
+  const _AccountLifecycleCell({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       child: Row(
         children: [
-          _AccountIconBox(icon: icon, color: color),
-          const SizedBox(width: 9),
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: item.color.withValues(alpha: 0.09),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: item.color.withValues(alpha: 0.16)),
+            ),
+            child: Icon(item.icon, color: item.color, size: 17),
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  label,
+                  item.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textBody,
-                    fontSize: 11.5,
+                    fontSize: 11.6,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  value,
+                  item.value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.manrope(
+                    color: item.color,
+                    fontSize: 14.4,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item.subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: GirviColors.textDark,
-                    fontSize: 12.8,
-                    fontWeight: FontWeight.w900,
+                    color: GirviColors.textBody,
+                    fontSize: 11.1,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -374,108 +556,221 @@ class _AccountStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: GoogleFonts.inter(
-          color: color,
-          fontSize: 12.2,
-          fontWeight: FontWeight.w900,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 280),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: color.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 7),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: color,
+                  fontSize: 12.2,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _PledgedMetalSummaryCard extends StatelessWidget {
-  final String metal;
-  final int itemCount;
-  final int pieces;
-  final String grossWeight;
+class _PledgedFinancialSummary extends StatelessWidget {
+  final String principal;
+  final String interest;
+  final String totalAmount;
+  final String itemCount;
   final String netWeight;
-  final String value;
-  final Color color;
 
-  const _PledgedMetalSummaryCard({
-    required this.metal,
+  const _PledgedFinancialSummary({
+    required this.principal,
+    required this.interest,
+    required this.totalAmount,
     required this.itemCount,
-    required this.pieces,
-    required this.grossWeight,
     required this.netWeight,
-    required this.value,
-    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    final countLabel = itemCount == 1 ? '1 item' : '$itemCount items';
-    final pieceLabel = pieces == 1 ? '1 piece' : '$pieces pieces';
+    final metrics = [
+      _PledgedSummaryMetric(
+        label: 'Total Principal',
+        value: principal,
+        icon: Icons.account_balance_wallet_rounded,
+        color: GirviColors.textDark,
+      ),
+      _PledgedSummaryMetric(
+        label: 'Total Interest',
+        value: interest,
+        icon: Icons.percent_rounded,
+        color: GirviColors.warning,
+      ),
+      _PledgedSummaryMetric(
+        label: 'Total Amount',
+        value: totalAmount,
+        icon: Icons.summarize_rounded,
+        color: GirviColors.success,
+      ),
+    ];
 
-    return SizedBox(
-      width: 236,
-      child: Container(
-        padding: const EdgeInsets.all(13),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.075),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withValues(alpha: 0.20)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _AccountIconBox(
-                  icon: Icons.workspace_premium_rounded,
-                  color: color,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: GirviColors.inputBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: GirviColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const _AccountIconBox(
+                icon: Icons.inventory_2_rounded,
+                color: GirviColors.brandGold,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Pledged Value Snapshot',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.manrope(
+                    color: GirviColors.textDark,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        metal,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.manrope(
-                          color: GirviColors.textDark,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                        ),
+              ),
+              const SizedBox(width: 10),
+              _AccountStatusBadge(
+                label: '$itemCount | $netWeight',
+                color: GirviColors.textHint,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final safeWidth = constraints.maxWidth <= 0
+                  ? MediaQuery.sizeOf(context).width
+                  : constraints.maxWidth;
+              final columns = safeWidth >= 760
+                  ? 3
+                  : safeWidth >= 460
+                      ? 2
+                      : 1;
+              const spacing = 10.0;
+              final width = (safeWidth - ((columns - 1) * spacing)) / columns;
+
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: metrics
+                    .map(
+                      (metric) => SizedBox(
+                        width: width,
+                        child: _PledgedSummaryMetricTile(metric: metric),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '$countLabel | $pieceLabel',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
-                          color: GirviColors.textBody,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
+                    )
+                    .toList(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PledgedSummaryMetric {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _PledgedSummaryMetric({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+}
+
+class _PledgedSummaryMetricTile extends StatelessWidget {
+  final _PledgedSummaryMetric metric;
+
+  const _PledgedSummaryMetricTile({required this.metric});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 68),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: GirviColors.cardBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: metric.color.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        children: [
+          _AccountIconBox(icon: metric.icon, color: metric.color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  metric.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: GirviColors.textBody,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    metric.value,
+                    maxLines: 1,
+                    style: GoogleFonts.manrope(
+                      color: metric.color,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            _PledgedSpecLine(label: 'Gross Weight', value: grossWeight),
-            const SizedBox(height: 6),
-            _PledgedSpecLine(label: 'Net Weight', value: netWeight),
-            const SizedBox(height: 6),
-            _PledgedSpecLine(label: 'Valuation', value: value, color: color),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -488,12 +783,12 @@ class _PledgedItemDetailRow extends StatelessWidget {
   final String purity;
   final int pieces;
   final String grossWeight;
-  final String lessWeight;
+  final String? lessWeight;
   final String netWeight;
   final String rate;
   final String value;
   final String? huid;
-  final int photoCount;
+  final List<String> photoPaths;
   final Color color;
 
   const _PledgedItemDetailRow({
@@ -508,7 +803,7 @@ class _PledgedItemDetailRow extends StatelessWidget {
     required this.rate,
     required this.value,
     required this.huid,
-    required this.photoCount,
+    required this.photoPaths,
     required this.color,
   });
 
@@ -517,93 +812,485 @@ class _PledgedItemDetailRow extends StatelessWidget {
     final huidText = huid?.trim();
     final hasHuid = huidText != null && huidText.isNotEmpty;
     final pieceLabel = pieces == 1 ? '1 piece' : '$pieces pieces';
+    final metalLabel = metal.trim().isEmpty ? 'Metal not set' : metal.trim();
+    final purityLabel =
+        purity.trim().isEmpty ? 'Purity not set' : purity.trim();
+    final hasPhotos = photoPaths.any((path) => path.trim().isNotEmpty);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: GirviColors.inputBg,
+        color: GirviColors.cardBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+        boxShadow: const [
+          BoxShadow(
+            color: GirviColors.shadowLight,
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 50,
-            height: 50,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: color.withValues(alpha: 0.20)),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: color.withValues(alpha: 0.20)),
+                ),
+                child: Text(
+                  serialNo.toString().padLeft(2, '0'),
+                  style: GoogleFonts.manrope(
+                    color: color,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Item ${serialNo.toString().padLeft(2, '0')}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: color,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 360),
+                          child: Text(
+                            itemName.trim().isEmpty ? 'Unnamed item' : itemName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.manrope(
+                              color: GirviColors.textDark,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        _AccountStatusBadge(label: metalLabel, color: color),
+                        _AccountStatusBadge(
+                          label: purityLabel,
+                          color: GirviColors.info,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              _PledgedValuePill(value: value, color: color),
+            ],
+          ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = hasPhotos && constraints.maxWidth >= 700;
+              final specs = _PledgedItemSpecs(
+                pieceLabel: pieceLabel,
+                grossWeight: grossWeight,
+                lessWeight: lessWeight,
+                netWeight: netWeight,
+                rate: rate,
+                huid: hasHuid ? huidText : null,
+                color: color,
+              );
+              final photos = _PledgedPhotoStrip(
+                photoPaths: photoPaths,
+                color: color,
+              );
+
+              if (!wide) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    specs,
+                    photos,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: specs),
+                  const SizedBox(width: 14),
+                  SizedBox(width: 266, child: photos),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PledgedValuePill extends StatelessWidget {
+  final String value;
+  final Color color;
+
+  const _PledgedValuePill({
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 118),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            'Valuation',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              color: GirviColors.textBody,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
             ),
+          ),
+          const SizedBox(height: 3),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
             child: Text(
-              serialNo.toString().padLeft(2, '0'),
+              value,
               style: GoogleFonts.manrope(
                 color: color,
-                fontSize: 17,
+                fontSize: 15,
                 fontWeight: FontWeight.w900,
               ),
             ),
           ),
-          const SizedBox(width: 13),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 320),
-                      child: Text(
-                        itemName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.manrope(
-                          color: GirviColors.textDark,
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                    _AccountStatusBadge(label: metal, color: color),
-                    _AccountStatusBadge(
-                      label: purity.trim().isEmpty ? 'Purity not set' : purity,
-                      color: GirviColors.info,
-                    ),
-                  ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PledgedItemSpecs extends StatelessWidget {
+  final String pieceLabel;
+  final String grossWeight;
+  final String? lessWeight;
+  final String netWeight;
+  final String rate;
+  final String? huid;
+  final Color color;
+
+  const _PledgedItemSpecs({
+    required this.pieceLabel,
+    required this.grossWeight,
+    required this.lessWeight,
+    required this.netWeight,
+    required this.rate,
+    required this.huid,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final safeWidth =
+            constraints.maxWidth <= 0 ? 300.0 : constraints.maxWidth;
+        final columns = safeWidth >= 560
+            ? 3
+            : safeWidth >= 360
+                ? 2
+                : 1;
+        const spacing = 10.0;
+        final tileWidth = (safeWidth - ((columns - 1) * spacing)) / columns;
+        final rows = [
+          _PledgedSpecData('Pieces', pieceLabel),
+          _PledgedSpecData('Gross Weight', grossWeight),
+          if (lessWeight != null) _PledgedSpecData('Less Weight', lessWeight!),
+          _PledgedSpecData('Net Weight', netWeight, color: color),
+          _PledgedSpecData('Rate / Gram', rate),
+          if (huid != null) _PledgedSpecData('HUID', huid!),
+        ];
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: rows
+              .map(
+                (row) => SizedBox(
+                  width: tileWidth,
+                  child: _PledgedSpecTile(
+                    label: row.label,
+                    value: row.value,
+                    color: row.color,
+                  ),
                 ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    _PledgedSpecTile(label: 'Pieces', value: pieceLabel),
-                    _PledgedSpecTile(label: 'Gross', value: grossWeight),
-                    _PledgedSpecTile(label: 'Less', value: lessWeight),
-                    _PledgedSpecTile(label: 'Net', value: netWeight),
-                    _PledgedSpecTile(label: 'Rate / Gram', value: rate),
-                    _PledgedSpecTile(
-                      label: 'Valuation',
-                      value: value,
-                      color: color,
-                    ),
-                    if (hasHuid)
-                      _PledgedSpecTile(label: 'HUID', value: huidText),
-                    _PledgedSpecTile(
-                      label: 'Photos',
-                      value: photoCount == 1 ? '1 photo' : '$photoCount photos',
-                    ),
-                  ],
-                ),
-              ],
+              )
+              .toList(),
+        );
+      },
+    );
+  }
+}
+
+class _PledgedSpecData {
+  final String label;
+  final String value;
+  final Color? color;
+
+  const _PledgedSpecData(this.label, this.value, {this.color});
+}
+
+class _PledgedPhotoStrip extends StatelessWidget {
+  final List<String> photoPaths;
+  final Color color;
+
+  const _PledgedPhotoStrip({
+    required this.photoPaths,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final paths = photoPaths
+        .map((path) => path.trim())
+        .where((path) => path.isNotEmpty)
+        .toList(growable: false);
+    if (paths.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 14),
+        Text(
+          paths.length == 1 ? 'Photo' : 'Photos',
+          style: GoogleFonts.inter(
+            color: GirviColors.textDark,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 112,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: paths.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, index) => _PledgedPhotoThumb(
+              path: paths[index],
+              index: index + 1,
+              color: color,
             ),
           ),
-        ],
+        ),
+      ],
+    );
+  }
+}
+
+class _PledgedPhotoThumb extends StatelessWidget {
+  final String path;
+  final int index;
+  final Color color;
+
+  const _PledgedPhotoThumb({
+    required this.path,
+    required this.index,
+    required this.color,
+  });
+
+  void _openPreview(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.88),
+      useSafeArea: false,
+      builder: (dialogContext) => Dialog.fullscreen(
+        backgroundColor: const Color(0xFF111827),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: InteractiveViewer(
+                minScale: 0.6,
+                maxScale: 5,
+                boundaryMargin: const EdgeInsets.all(260),
+                child: Center(
+                  child: Image.file(
+                    File(path),
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
+                    errorBuilder: (context, error, stackTrace) => Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.image_not_supported_rounded,
+                          color: Colors.white.withValues(alpha: 0.72),
+                          size: 52,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Image could not be opened',
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 18,
+              right: 18,
+              child: Material(
+                color: Colors.black.withValues(alpha: 0.62),
+                shape: const CircleBorder(),
+                child: IconButton(
+                  tooltip: 'Close image',
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 18,
+              bottom: 18,
+              child: Material(
+                color: Colors.black.withValues(alpha: 0.58),
+                borderRadius: BorderRadius.circular(999),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.zoom_in_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Scroll or pinch to zoom',
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => _openPreview(context),
+        child: Container(
+          width: 122,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: GirviColors.cardBg,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: color.withValues(alpha: 0.20)),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.file(
+                File(path),
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.medium,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: color.withValues(alpha: 0.07),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.image_not_supported_rounded,
+                    color: color,
+                    size: 28,
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 7,
+                left: 7,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.58),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    index.toString().padLeft(2, '0'),
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 7,
+                bottom: 7,
+                child: Container(
+                  width: 26,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.58),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.open_in_full_rounded,
+                    color: Colors.white,
+                    size: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -624,8 +1311,9 @@ class _PledgedSpecTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final valueColor = color ?? GirviColors.textDark;
     return SizedBox(
-      width: 142,
+      width: double.infinity,
       child: Container(
+        constraints: const BoxConstraints(minHeight: 62),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: GirviColors.cardBg,
@@ -659,49 +1347,6 @@ class _PledgedSpecTile extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _PledgedSpecLine extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color? color;
-
-  const _PledgedSpecLine({
-    required this.label,
-    required this.value,
-    this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-              color: GirviColors.textBody,
-              fontSize: 11.8,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.inter(
-            color: color ?? GirviColors.textDark,
-            fontSize: 12.6,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -863,138 +1508,6 @@ class _AccountActionButton extends StatelessWidget {
             fontWeight: FontWeight.w900,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 14),
-        ),
-      ),
-    );
-  }
-}
-
-class _AccountClosureHero extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String title;
-  final String subtitle;
-
-  const _AccountClosureHero({
-    required this.icon,
-    required this.color,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            color.withValues(alpha: 0.12),
-            GirviColors.cardBg,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
-      ),
-      child: Row(
-        children: [
-          _AccountIconBox(icon: icon, color: color, large: true),
-          const SizedBox(width: 13),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.manrope(
-                    color: GirviColors.textDark,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: GirviColors.textBody,
-                    fontSize: 12.8,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AccountClosureStep extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-
-  const _AccountClosureStep({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 164,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.07),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withValues(alpha: 0.16)),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 17),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      color: GirviColors.textBody,
-                      fontSize: 11.2,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      color: GirviColors.textDark,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -1292,85 +1805,191 @@ class _AccountErrorState extends StatelessWidget {
   }
 }
 
-class _FlippablePdfPreviewDialog extends StatefulWidget {
-  final String title;
-  final String subtitle;
-  final String frontTitle;
-  final String backTitle;
-  final String frontFileName;
-  final String backFileName;
-  final Uint8List frontBytes;
-  final Uint8List backBytes;
-  final VoidCallback onClose;
-
-  const _FlippablePdfPreviewDialog({
-    required this.title,
-    required this.subtitle,
-    required this.frontTitle,
-    required this.backTitle,
-    required this.frontFileName,
-    required this.backFileName,
-    required this.frontBytes,
-    required this.backBytes,
+class _GirviInvoiceFlipPreview extends StatefulWidget {
+  const _GirviInvoiceFlipPreview({
+    required this.sides,
     required this.onClose,
   });
 
+  final List<PdfRaster> sides;
+  final VoidCallback onClose;
+
   @override
-  State<_FlippablePdfPreviewDialog> createState() =>
-      _FlippablePdfPreviewDialogState();
+  State<_GirviInvoiceFlipPreview> createState() =>
+      _GirviInvoiceFlipPreviewState();
 }
 
-class _FlippablePdfPreviewDialogState
-    extends State<_FlippablePdfPreviewDialog> {
-  bool _showBack = false;
+class _GirviInvoiceFlipPreviewState extends State<_GirviInvoiceFlipPreview>
+    with SingleTickerProviderStateMixin {
+  static const double _minZoom = 0.70;
+  static const double _maxZoom = 4.0;
 
-  void _flipReceiptSide() {
-    setState(() => _showBack = !_showBack);
+  late final AnimationController _flipController;
+  late final TransformationController _viewController;
+  DateTime? _lastPointerDownAt;
+  Offset? _lastPointerDownPosition;
+
+  @override
+  void initState() {
+    super.initState();
+    _flipController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 620),
+    );
+    _viewController = TransformationController();
+  }
+
+  @override
+  void dispose() {
+    _flipController.dispose();
+    _viewController.dispose();
+    super.dispose();
+  }
+
+  void _toggleSide() {
+    if (widget.sides.length < 2 || _flipController.isAnimating) return;
+    if (_flipController.value < 0.5) {
+      _flipController.forward();
+    } else {
+      _flipController.reverse();
+    }
+  }
+
+  void _handlePointerDown(PointerDownEvent event) {
+    final now = DateTime.now();
+    final lastAt = _lastPointerDownAt;
+    final lastPosition = _lastPointerDownPosition;
+    final isDoubleClick = lastAt != null &&
+        now.difference(lastAt) <= const Duration(milliseconds: 360) &&
+        lastPosition != null &&
+        (event.position - lastPosition).distance <= 16;
+
+    _lastPointerDownAt = now;
+    _lastPointerDownPosition = event.position;
+
+    if (isDoubleClick) {
+      _lastPointerDownAt = null;
+      _lastPointerDownPosition = null;
+      _toggleSide();
+    }
+  }
+
+  void _zoomBy(double factor) {
+    final currentScale = _viewController.value.getMaxScaleOnAxis();
+    if (currentScale <= 0) return;
+    final nextScale =
+        (currentScale * factor).clamp(_minZoom, _maxZoom).toDouble();
+    if ((nextScale - currentScale).abs() < 0.01) return;
+    final scaleDelta = nextScale / currentScale;
+    _viewController.value = _viewController.value.clone()
+      ..scaleByDouble(scaleDelta, scaleDelta, scaleDelta, 1.0);
+  }
+
+  void _resetZoom() {
+    _viewController.value = Matrix4.identity();
   }
 
   @override
   Widget build(BuildContext context) {
-    final activeTitle = _showBack ? widget.backTitle : widget.frontTitle;
-    final activeBytes = _showBack ? widget.backBytes : widget.frontBytes;
-    final activeFileName =
-        _showBack ? widget.backFileName : widget.frontFileName;
-
-    return Dialog.fullscreen(
-      backgroundColor: const Color(0xFF111827),
-      child: Column(
+    return SizedBox.expand(
+      child: Stack(
         children: [
-          _FlippablePdfPreviewHeader(
-            title: widget.title,
-            subtitle: widget.subtitle,
-            activeTitle: activeTitle,
-            isBackSide: _showBack,
-            onFlip: _flipReceiptSide,
-            onClose: widget.onClose,
+          const Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(color: Color(0xFF111827)),
+            ),
           ),
-          Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onDoubleTap: _flipReceiptSide,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                child: PdfPreview(
-                  key: ValueKey<bool>(_showBack),
-                  build: (_) async => activeBytes,
-                  initialPageFormat: PdfPageFormat.a4,
-                  allowPrinting: true,
-                  allowSharing: true,
-                  canChangeOrientation: false,
-                  canChangePageFormat: false,
-                  canDebug: false,
-                  maxPageWidth: 860,
-                  pdfFileName: activeFileName,
-                  scrollViewDecoration: const BoxDecoration(
-                    color: Color(0xFF111827),
+          Positioned.fill(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final firstSide = widget.sides.first;
+                final aspectRatio = firstSide.width / firstSide.height;
+                return Listener(
+                  onPointerDown: _handlePointerDown,
+                  child: InteractiveViewer(
+                    transformationController: _viewController,
+                    minScale: _minZoom,
+                    maxScale: _maxZoom,
+                    scaleFactor: 160,
+                    trackpadScrollCausesScale: true,
+                    boundaryMargin: const EdgeInsets.all(320),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth:
+                              math.min(constraints.maxWidth * 0.94, 1180.0),
+                          maxHeight: constraints.maxHeight * 0.94,
+                        ),
+                        child: AspectRatio(
+                          aspectRatio: aspectRatio,
+                          child: MouseRegion(
+                            cursor: widget.sides.length > 1
+                                ? SystemMouseCursors.click
+                                : MouseCursor.defer,
+                            child: AnimatedBuilder(
+                              animation: _flipController,
+                              builder: (context, _) {
+                                final angle = _flipController.value * math.pi;
+                                final showingBack = angle > math.pi / 2 &&
+                                    widget.sides.length > 1;
+                                final side = showingBack
+                                    ? widget.sides[1]
+                                    : widget.sides.first;
+
+                                return Transform(
+                                  alignment: Alignment.center,
+                                  transform: Matrix4.identity()
+                                    ..setEntry(3, 2, 0.0012)
+                                    ..rotateY(angle),
+                                  child: showingBack
+                                      ? Transform(
+                                          alignment: Alignment.center,
+                                          transform: Matrix4.identity()
+                                            ..rotateY(math.pi),
+                                          child: _GirviInvoiceFlipSide(
+                                            raster: side,
+                                          ),
+                                        )
+                                      : _GirviInvoiceFlipSide(raster: side),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                );
+              },
+            ),
+          ),
+          Positioned(
+            top: 18,
+            right: 18,
+            child: Material(
+              color: Colors.black.withValues(alpha: 0.62),
+              shape: const CircleBorder(),
+              child: IconButton(
+                tooltip: 'Close preview',
+                onPressed: widget.onClose,
+                icon: const Icon(Icons.close_rounded, color: Colors.white),
               ),
+            ),
+          ),
+          Positioned(
+            left: 18,
+            bottom: 18,
+            child: _InvoiceFlipHint(canFlip: widget.sides.length > 1),
+          ),
+          Positioned(
+            right: 18,
+            bottom: 18,
+            child: _InvoiceFlipPreviewToolbar(
+              canFlip: widget.sides.length > 1,
+              onFlip: _toggleSide,
+              onZoomIn: () => _zoomBy(1.18),
+              onZoomOut: () => _zoomBy(0.84),
+              onReset: _resetZoom,
             ),
           ),
         ],
@@ -1379,122 +1998,148 @@ class _FlippablePdfPreviewDialogState
   }
 }
 
-class _FlippablePdfPreviewHeader extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String activeTitle;
-  final bool isBackSide;
-  final VoidCallback onFlip;
-  final VoidCallback onClose;
+class _InvoiceFlipHint extends StatelessWidget {
+  const _InvoiceFlipHint({required this.canFlip});
 
-  const _FlippablePdfPreviewHeader({
-    required this.title,
-    required this.subtitle,
-    required this.activeTitle,
-    required this.isBackSide,
-    required this.onFlip,
-    required this.onClose,
-  });
+  final bool canFlip;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 78),
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.24),
-        border: Border(
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.10)),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: GirviColors.brandGold.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: GirviColors.brandGold.withValues(alpha: 0.28),
-              ),
-            ),
-            child: const Icon(
-              GirviIcons.print,
-              color: GirviColors.brandGold,
-              size: 19,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.manrope(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '$subtitle | $activeTitle',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: Colors.white.withValues(alpha: 0.72),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  'Double-click preview to flip side',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: Colors.white.withValues(alpha: 0.60),
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          FilledButton.icon(
-            onPressed: onFlip,
-            icon: Icon(
-              isBackSide
-                  ? Icons.flip_to_front_rounded
-                  : Icons.flip_to_back_rounded,
+    return Material(
+      color: Colors.black.withValues(alpha: 0.58),
+      borderRadius: BorderRadius.circular(999),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              canFlip ? Icons.touch_app_rounded : Icons.receipt_long_rounded,
+              color: Colors.white,
               size: 18,
             ),
-            label: Text(isBackSide ? 'Show Front' : 'Show Ledger'),
-            style: FilledButton.styleFrom(
-              backgroundColor: GirviColors.brandGold,
-              foregroundColor: GirviColors.shellBg,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              textStyle: GoogleFonts.manrope(
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
+            const SizedBox(width: 8),
+            Text(
+              canFlip ? 'Double click to flip front/back' : 'Invoice preview',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            tooltip: 'Close preview',
-            onPressed: onClose,
-            icon: const Icon(Icons.close_rounded, color: Colors.white),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InvoiceFlipPreviewToolbar extends StatelessWidget {
+  const _InvoiceFlipPreviewToolbar({
+    required this.canFlip,
+    required this.onFlip,
+    required this.onZoomIn,
+    required this.onZoomOut,
+    required this.onReset,
+  });
+
+  final bool canFlip;
+  final VoidCallback onFlip;
+  final VoidCallback onZoomIn;
+  final VoidCallback onZoomOut;
+  final VoidCallback onReset;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.62),
+      borderRadius: BorderRadius.circular(18),
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _InvoiceFlipPreviewToolButton(
+              tooltip: 'Zoom out',
+              icon: Icons.remove_rounded,
+              onPressed: onZoomOut,
+            ),
+            _InvoiceFlipPreviewToolButton(
+              tooltip: 'Reset zoom',
+              icon: Icons.center_focus_strong_rounded,
+              onPressed: onReset,
+            ),
+            _InvoiceFlipPreviewToolButton(
+              tooltip: 'Zoom in',
+              icon: Icons.add_rounded,
+              onPressed: onZoomIn,
+            ),
+            if (canFlip)
+              _InvoiceFlipPreviewToolButton(
+                tooltip: 'Flip page',
+                icon: Icons.flip_rounded,
+                onPressed: onFlip,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InvoiceFlipPreviewToolButton extends StatelessWidget {
+  const _InvoiceFlipPreviewToolButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      constraints: const BoxConstraints.tightFor(width: 42, height: 42),
+      padding: EdgeInsets.zero,
+      style: IconButton.styleFrom(
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20),
+    );
+  }
+}
+
+class _GirviInvoiceFlipSide extends StatelessWidget {
+  const _GirviInvoiceFlipSide({required this.raster});
+
+  final PdfRaster raster;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.34),
+            blurRadius: 36,
+            offset: const Offset(0, 22),
           ),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Image(
+          image: PdfRasterImage(raster),
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
+        ),
       ),
     );
   }

@@ -9,48 +9,52 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFCF5),
+        color: GirviColors.cardBg,
         borderRadius: BorderRadius.circular(8),
-        border:
-            Border.all(color: GirviColors.brandGold.withValues(alpha: 0.22)),
+        border: Border.all(color: const Color(0xFFE8E3DA)),
         boxShadow: const [
           BoxShadow(
             color: GirviColors.shadowLight,
-            blurRadius: 12,
+            blurRadius: 14,
             offset: Offset(0, 4),
           ),
         ],
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 980;
-          final identity = _buildAccountIdentity(account, statusColor);
-          final documents = _buildAccountDocuments(account, actionEnabled);
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 980;
+              final identity = _buildAccountIdentity(account, statusColor);
+              final documents = _buildAccountDocuments(account, actionEnabled);
 
-          if (compact) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                identity,
-                const Divider(height: 1, color: GirviColors.cardBorder),
-                documents,
-              ],
-            );
-          }
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    identity,
+                    const Divider(height: 1, color: GirviColors.cardBorder),
+                    documents,
+                  ],
+                );
+              }
 
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: identity),
-              Container(
-                width: 1,
-                constraints: const BoxConstraints(minHeight: 240),
-                color: GirviColors.brandGold.withValues(alpha: 0.18),
-              ),
-              SizedBox(width: 430, child: documents),
-            ],
-          );
-        },
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: identity),
+                  Container(
+                    width: 1,
+                    constraints: const BoxConstraints(minHeight: 246),
+                    color: const Color(0xFFE8E3DA),
+                  ),
+                  SizedBox(width: 390, child: documents),
+                ],
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -61,150 +65,271 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
   ) {
     final loan = account.loan;
     final address = _customerAddress(account);
+    final principalLabel = _money(account.originalPrincipal);
+    final itemLabel =
+        '${loan.itemCount} item${loan.itemCount == 1 ? '' : 's'} | ${_weight(loan.netWeight)}';
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            GirviColors.brandGold.withValues(alpha: 0.10),
-            const Color(0xFFFFFCF5),
-          ],
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _AccountCustomerAvatar(
-            initials: _customerInitials(account.customerName),
-            statusColor: statusColor,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _AccountCustomerAvatar(
+                initials: _customerInitials(account.customerName),
+                statusColor: statusColor,
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      account.customerName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.manrope(
+                        color: GirviColors.textDark,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        _AccountMetaChip(
+                          icon: Icons.phone_rounded,
+                          label: account.customerMobile,
+                          color: GirviColors.info,
+                        ),
+                        _AccountMetaChip(
+                          icon: Icons.location_on_rounded,
+                          label: address,
+                          color: GirviColors.textHint,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        _AccountMetaChip(
+                          icon: Icons.confirmation_number_rounded,
+                          label: 'Ticket ${loan.ticketNo}',
+                          color: GirviColors.brandGold,
+                        ),
+                        _AccountStatusBadge(
+                          label: _accountStatusLabel(account),
+                          color: statusColor,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    _AccountMetaChip(
-                      icon: Icons.confirmation_number_rounded,
-                      label: 'Ticket ${loan.ticketNo}',
-                      color: GirviColors.brandGold,
-                    ),
-                    _AccountStatusBadge(
-                      label: _accountStatusLabel(account),
-                      color: statusColor,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  account.customerName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.manrope(
-                    color: GirviColors.textDark,
-                    fontSize: 25,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 8,
-                  children: [
-                    _AccountMetaChip(
-                      icon: Icons.phone_rounded,
-                      label: account.customerMobile,
-                      color: GirviColors.info,
-                    ),
-                    _AccountMetaChip(
-                      icon: Icons.location_on_rounded,
-                      label: address,
-                      color: GirviColors.success,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    _AccountQuickFact(
-                      label: 'Principal Amount',
-                      value: _money(account.originalPrincipal),
-                      icon: Icons.account_balance_wallet_rounded,
-                      color: GirviColors.textDark,
-                    ),
-                    _AccountQuickFact(
-                      label: 'Start Date',
-                      value: _date(loan.startDate),
-                      icon: GirviIcons.dates,
-                      color: GirviColors.info,
-                    ),
-                    _AccountQuickFact(
-                      label: 'Pledged Item',
-                      value:
-                          '${loan.itemCount} item${loan.itemCount == 1 ? '' : 's'} | ${_weight(loan.netWeight)}',
-                      icon: GirviIcons.itemDetails,
-                      color: GirviColors.brandGold,
-                    ),
-                    _AccountQuickFact(
-                      label: 'Interest Rate',
-                      value: '${loan.interestRate.toStringAsFixed(2)}% monthly',
-                      icon: GirviIcons.interestRate,
-                      color: GirviColors.warning,
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          const SizedBox(height: 18),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _AccountQuickFact(
+                label: 'Principal Amount',
+                value: principalLabel,
+                icon: Icons.account_balance_wallet_rounded,
+                color: GirviColors.textDark,
+              ),
+              _AccountQuickFact(
+                label: 'Start Date',
+                value: _date(loan.startDate),
+                icon: GirviIcons.dates,
+                color: GirviColors.info,
+              ),
+              _AccountQuickFact(
+                label: 'Pledged Item',
+                value: itemLabel,
+                icon: GirviIcons.itemDetails,
+                color: GirviColors.brandGold,
+              ),
+              _AccountQuickFact(
+                label: 'Interest Rate',
+                value: '${loan.interestRate.toStringAsFixed(2)}% monthly',
+                icon: GirviIcons.interestRate,
+                color: GirviColors.warning,
+              ),
+            ],
           ),
+          const SizedBox(height: 14),
+          _buildAccountLifecycleOverview(account),
         ],
       ),
     );
+  }
+
+  Widget _buildAccountLifecycleOverview(GirviLoanWithCustomer account) {
+    final summary = GirviAccountLifecycleSummary.fromAccount(
+      account,
+      dateLabel: _date,
+      dateTimeLabel: _dateTime,
+      moneyLabel: _money,
+    );
+
+    return _AccountLifecycleRail(
+      items: [
+        _lifecycleItem(summary.period),
+        _lifecycleItem(summary.settlement),
+        _lifecycleItem(summary.delivery),
+      ],
+    );
+  }
+
+  _AccountLifecycleItem _lifecycleItem(GirviLifecycleTile tile) {
+    return _AccountLifecycleItem(
+      icon: _lifecycleIcon(tile.kind),
+      title: tile.title,
+      value: tile.value,
+      subtitle: tile.subtitle,
+      color: _lifecycleColor(tile.kind),
+    );
+  }
+
+  IconData _lifecycleIcon(GirviLifecycleTileKind kind) {
+    switch (kind) {
+      case GirviLifecycleTileKind.runningPeriod:
+      case GirviLifecycleTileKind.closedPeriod:
+        return Icons.schedule_rounded;
+      case GirviLifecycleTileKind.settlementComplete:
+        return Icons.verified_rounded;
+      case GirviLifecycleTileKind.settlementPending:
+        return Icons.pending_actions_rounded;
+      case GirviLifecycleTileKind.deliveryDelivered:
+        return Icons.inventory_2_rounded;
+      case GirviLifecycleTileKind.deliveryReady:
+        return Icons.event_available_rounded;
+      case GirviLifecycleTileKind.deliveryPending:
+        return Icons.lock_clock_rounded;
+    }
+  }
+
+  Color _lifecycleColor(GirviLifecycleTileKind kind) {
+    switch (kind) {
+      case GirviLifecycleTileKind.runningPeriod:
+      case GirviLifecycleTileKind.closedPeriod:
+      case GirviLifecycleTileKind.deliveryReady:
+        return GirviColors.info;
+      case GirviLifecycleTileKind.settlementComplete:
+      case GirviLifecycleTileKind.deliveryDelivered:
+        return GirviColors.success;
+      case GirviLifecycleTileKind.settlementPending:
+        return GirviColors.warning;
+      case GirviLifecycleTileKind.deliveryPending:
+        return GirviColors.textBody;
+    }
   }
 
   Widget _buildAccountDocuments(
     GirviLoanWithCustomer account,
     bool actionEnabled,
   ) {
+    final balanceCleared =
+        GirviAccountLifecycleSummary.isSettlementComplete(account);
+    final balanceColor =
+        balanceCleared ? GirviColors.success : GirviColors.danger;
+
     return Padding(
       padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Account Documents',
-            style: GoogleFonts.manrope(
-              color: GirviColors.textDark,
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-            ),
+          Row(
+            children: [
+              const _AccountIconBox(
+                icon: Icons.folder_copy_rounded,
+                color: GirviColors.brandGold,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Account Actions',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.manrope(
+                        color: GirviColors.textDark,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Invoice, ledger side and settlement workflow',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: GirviColors.textBody,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Open one receipt preview. Double-click the preview to switch between receipt and ledger side.',
-            style: GoogleFonts.inter(
-              color: GirviColors.textBody,
-              fontSize: 12.5,
-              fontWeight: FontWeight.w800,
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: balanceColor.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: balanceColor.withValues(alpha: 0.16)),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  balanceCleared
+                      ? Icons.verified_rounded
+                      : Icons.pending_actions_rounded,
+                  color: balanceColor,
+                  size: 18,
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    balanceCleared
+                        ? 'No payable balance on this account'
+                        : 'Net payable ${_money(account.totalPayable)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      color: GirviColors.textDark,
+                      fontSize: 12.8,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 14),
           _AccountDocumentButton(
-            icon: Icons.receipt_long_rounded,
-            title: 'Girvi Receipt',
-            subtitle: _openingGirviReceipt
-                ? 'Preparing receipt preview'
-                : 'Front receipt, double-click to flip ledger side',
+            icon: Icons.visibility_rounded,
+            title: 'View Girvi Invoice',
+            subtitle: _openingGirviInvoice
+                ? 'Opening...'
+                : 'Invoice preview with ledger flip side',
             color: GirviColors.brandGold,
-            onTap: _openingGirviReceipt ? null : _previewGirviReceipt,
+            onTap: _openingGirviInvoice ? null : _previewGirviInvoice,
           ),
           if (actionEnabled) ...[
             const SizedBox(height: 14),
@@ -319,6 +444,8 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
     final loan = account.loan;
     final detailedItems =
         _controller.details?.items ?? const <GirviLoanItemDetails>[];
+    final totalAmount =
+        account.originalPrincipal + account.grossInterestAccrued;
     return _AccountSurface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -329,40 +456,25 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
             title: 'Pledged Item Details',
             subtitle: detailedItems.isEmpty
                 ? 'Summary captured at ticket creation'
-                : '${detailedItems.length} item${detailedItems.length == 1 ? '' : 's'} grouped by metal',
+                : '${detailedItems.length} pledged item${detailedItems.length == 1 ? '' : 's'} with smart details',
             trailing: _AccountStatusBadge(
               label: 'Principal ${_money(account.originalPrincipal)}',
               color: GirviColors.textDark,
             ),
           ),
           const SizedBox(height: 14),
-          if (detailedItems.isNotEmpty) ...[
-            _buildPledgedMetalSummary(detailedItems),
-            const SizedBox(height: 14),
-            Column(
-              children: [
-                for (final itemDetails in detailedItems) ...[
-                  _PledgedItemDetailRow(
-                    serialNo: itemDetails.item.serialNo,
-                    itemName: itemDetails.item.itemName,
-                    metal: itemDetails.item.metalType,
-                    purity: itemDetails.item.purity,
-                    pieces: itemDetails.item.pieces,
-                    grossWeight: _weight(itemDetails.item.grossWeight),
-                    lessWeight: _weight(itemDetails.item.lessWeight),
-                    netWeight: _weight(itemDetails.item.netWeight),
-                    rate: _money(itemDetails.item.ratePerGram, precise: true),
-                    value: _money(itemDetails.item.valuationAmount),
-                    huid: itemDetails.item.huidNumber,
-                    photoCount: itemDetails.photos.length,
-                    color: _metalColor(itemDetails.item.metalType),
-                  ),
-                  if (itemDetails != detailedItems.last)
-                    const SizedBox(height: 10),
-                ],
-              ],
-            ),
-          ] else
+          _PledgedFinancialSummary(
+            principal: _money(account.originalPrincipal),
+            interest: _money(account.grossInterestAccrued),
+            totalAmount: _money(totalAmount),
+            itemCount:
+                '${loan.itemCount} item${loan.itemCount == 1 ? '' : 's'}',
+            netWeight: _weight(loan.netWeight),
+          ),
+          const SizedBox(height: 14),
+          if (detailedItems.isNotEmpty)
+            _buildStructuredPledgedItemCards(detailedItems)
+          else
             _AccountInfoGrid(
               rows: [
                 _AccountInfoRowData('Item Name', loan.itemDescription),
@@ -390,37 +502,46 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
     );
   }
 
-  Widget _buildPledgedMetalSummary(List<GirviLoanItemDetails> items) {
-    final summaries = <String, _PledgedMetalSummary>{};
-    for (final itemDetails in items) {
-      final item = itemDetails.item;
-      final key =
-          item.metalType.trim().isEmpty ? 'Other' : item.metalType.trim();
-      final existing = summaries[key] ?? _PledgedMetalSummary(metal: key);
-      summaries[key] = existing.add(
-        pieces: item.pieces,
-        grossWeight: item.grossWeight,
-        netWeight: item.netWeight,
-        value: item.valuationAmount,
-      );
-    }
+  Widget _buildStructuredPledgedItemCards(List<GirviLoanItemDetails> items) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final safeWidth = constraints.maxWidth <= 0
+            ? MediaQuery.sizeOf(context).width
+            : constraints.maxWidth;
+        final useTwoColumns = items.length > 1 && safeWidth >= 940;
+        const spacing = 12.0;
+        final cardWidth = useTwoColumns ? (safeWidth - spacing) / 2 : safeWidth;
 
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: summaries.values
-          .map(
-            (summary) => _PledgedMetalSummaryCard(
-              metal: summary.metal,
-              itemCount: summary.itemCount,
-              pieces: summary.pieces,
-              grossWeight: _weight(summary.grossWeight),
-              netWeight: _weight(summary.netWeight),
-              value: _money(summary.value),
-              color: _metalColor(summary.metal),
-            ),
-          )
-          .toList(),
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final itemDetails in items)
+              SizedBox(
+                width: cardWidth,
+                child: _PledgedItemDetailRow(
+                  serialNo: itemDetails.item.serialNo,
+                  itemName: itemDetails.item.itemName,
+                  metal: itemDetails.item.metalType,
+                  purity: itemDetails.item.purity,
+                  pieces: itemDetails.item.pieces,
+                  grossWeight: _weight(itemDetails.item.grossWeight),
+                  lessWeight: itemDetails.item.lessWeight > 0.001
+                      ? _weight(itemDetails.item.lessWeight)
+                      : null,
+                  netWeight: _weight(itemDetails.item.netWeight),
+                  rate: _money(itemDetails.item.ratePerGram, precise: true),
+                  value: _money(itemDetails.item.valuationAmount),
+                  huid: itemDetails.item.huidNumber,
+                  photoPaths: itemDetails.photos
+                      .map((photo) => photo.filePath)
+                      .toList(growable: false),
+                  color: _metalColor(itemDetails.item.metalType),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -469,112 +590,6 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
     );
   }
 
-  Widget _buildDeliveryPanel(GirviLoanWithCustomer account) {
-    final loan = account.loan;
-    final settlementComplete = account.totalPayable <= 0.01 ||
-        loan.girviStatus == GirviStatus.readyForDelivery ||
-        loan.deliveredAt != null;
-    final delivered = loan.deliveredAt != null;
-    final statusColor = _accountStatusColor(account);
-
-    return _AccountSurface(
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: _AccountSectionHeader(
-              icon: GirviIcons.release,
-              color: statusColor,
-              title: 'Delivery and Closure',
-              subtitle: _accountStatusLabel(account),
-              trailing: _AccountStatusBadge(
-                label: delivered ? 'Closed' : 'Live Status',
-                color: statusColor,
-              ),
-            ),
-          ),
-          const Divider(height: 1, color: GirviColors.cardBorder),
-          _AccountClosureHero(
-            color: statusColor,
-            icon: delivered
-                ? Icons.inventory_2_rounded
-                : settlementComplete
-                    ? Icons.inventory_rounded
-                    : Icons.pending_actions_rounded,
-            title: delivered
-                ? 'Delivered and Closed'
-                : settlementComplete
-                    ? 'Settlement Complete'
-                    : 'Settlement Pending',
-            subtitle: delivered
-                ? 'Customer item delivery is completed.'
-                : settlementComplete
-                    ? 'Item is ready for customer pickup.'
-                    : 'Principal and interest must be cleared before delivery.',
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-            child: Column(
-              children: [
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    _AccountClosureStep(
-                      icon: Icons.verified_rounded,
-                      label: 'Settlement',
-                      value: settlementComplete ? 'Complete' : 'Pending',
-                      color: settlementComplete
-                          ? GirviColors.success
-                          : GirviColors.warning,
-                    ),
-                    _AccountClosureStep(
-                      icon: Icons.event_available_rounded,
-                      label: 'Expected Pickup',
-                      value: _date(loan.expectedDeliveryDate),
-                      color: GirviColors.info,
-                    ),
-                    _AccountClosureStep(
-                      icon: Icons.handshake_rounded,
-                      label: 'Delivery',
-                      value: delivered ? 'Delivered' : 'Not Delivered',
-                      color: delivered
-                          ? GirviColors.success
-                          : GirviColors.textBody,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                _AccountInfoGrid(
-                  rows: [
-                    _AccountInfoRowData(
-                        'Release Date', _date(loan.releaseDate)),
-                    _AccountInfoRowData(
-                        'Delivered At', _dateTime(loan.deliveredAt)),
-                    _AccountInfoRowData(
-                      'Processed By',
-                      _emptyText(loan.releasedBy),
-                    ),
-                    _AccountInfoRowData(
-                      'Payment Mode',
-                      _emptyText(loan.releasePaymentMode),
-                    ),
-                    _AccountInfoRowData(
-                      'Release Notes',
-                      _emptyText(loan.releaseNotes),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   String _customerAddress(GirviLoanWithCustomer account) {
     final address = account.customerAddress.trim();
     if (address.isNotEmpty) return address;
@@ -614,39 +629,5 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
     final trimmed = value?.trim();
     if (trimmed == null || trimmed.isEmpty) return 'Not set';
     return trimmed;
-  }
-}
-
-class _PledgedMetalSummary {
-  final String metal;
-  final int itemCount;
-  final int pieces;
-  final double grossWeight;
-  final double netWeight;
-  final double value;
-
-  const _PledgedMetalSummary({
-    required this.metal,
-    this.itemCount = 0,
-    this.pieces = 0,
-    this.grossWeight = 0,
-    this.netWeight = 0,
-    this.value = 0,
-  });
-
-  _PledgedMetalSummary add({
-    required int pieces,
-    required double grossWeight,
-    required double netWeight,
-    required double value,
-  }) {
-    return _PledgedMetalSummary(
-      metal: metal,
-      itemCount: itemCount + 1,
-      pieces: this.pieces + pieces,
-      grossWeight: this.grossWeight + grossWeight,
-      netWeight: this.netWeight + netWeight,
-      value: this.value + value,
-    );
   }
 }

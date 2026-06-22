@@ -21,10 +21,13 @@ extension _GirviAccountPaymentHistory on _GirviAccountDetailScreenState {
             color: GirviColors.success,
             title: 'Payment Ledger',
             subtitle:
-                '${payments.length} payment record${payments.length == 1 ? '' : 's'}',
-            trailing: _AccountStatusBadge(
-              label: 'Received ${_money(totalReceived)}',
-              color: GirviColors.success,
+                '${payments.length} date-wise payment record${payments.length == 1 ? '' : 's'}',
+            trailing: _PaymentLedgerHeaderActions(
+              receivedLabel: 'Received ${_money(totalReceived)}',
+              viewing: _viewingPaymentRecord,
+              printing: _printingPaymentRecord,
+              onView: _viewingPaymentRecord ? null : _previewPaymentRecord,
+              onPrint: _printingPaymentRecord ? null : _printPaymentRecord,
             ),
           ),
           if (totalDiscount > 0) ...[
@@ -73,6 +76,101 @@ extension _GirviAccountPaymentHistory on _GirviAccountDetailScreenState {
   }
 }
 
+class _PaymentLedgerHeaderActions extends StatelessWidget {
+  final String receivedLabel;
+  final bool viewing;
+  final bool printing;
+  final VoidCallback? onView;
+  final VoidCallback? onPrint;
+
+  const _PaymentLedgerHeaderActions({
+    required this.receivedLabel,
+    required this.viewing,
+    required this.printing,
+    required this.onView,
+    required this.onPrint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _AccountStatusBadge(
+          label: receivedLabel,
+          color: GirviColors.success,
+        ),
+        const SizedBox(width: 8),
+        _PaymentLedgerToolButton(
+          tooltip: viewing ? 'Opening preview' : 'View payment record',
+          loading: viewing,
+          icon: Icons.visibility_rounded,
+          onPressed: onView,
+          color: GirviColors.info,
+        ),
+        const SizedBox(width: 6),
+        _PaymentLedgerToolButton(
+          tooltip: printing ? 'Preparing print' : 'Print payment record',
+          loading: printing,
+          icon: Icons.print_rounded,
+          onPressed: onPrint,
+          color: GirviColors.shellBg,
+        ),
+      ],
+    );
+  }
+}
+
+class _PaymentLedgerToolButton extends StatelessWidget {
+  final String tooltip;
+  final bool loading;
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final Color color;
+
+  const _PaymentLedgerToolButton({
+    required this.tooltip,
+    required this.loading,
+    required this.icon,
+    required this.onPressed,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: SizedBox(
+        width: 36,
+        height: 36,
+        child: IconButton(
+          onPressed: onPressed,
+          padding: EdgeInsets.zero,
+          style: IconButton.styleFrom(
+            backgroundColor: color,
+            disabledBackgroundColor: color.withValues(alpha: 0.45),
+            foregroundColor: Colors.white,
+            disabledForegroundColor: Colors.white.withValues(alpha: 0.76),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          icon: loading
+              ? const SizedBox(
+                  width: 15,
+                  height: 15,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Icon(icon, size: 18),
+        ),
+      ),
+    );
+  }
+}
+
 class _PaymentTimelineRow extends StatelessWidget {
   final GirviPaymentModel payment;
   final bool isLast;
@@ -91,6 +189,8 @@ class _PaymentTimelineRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _paymentColor(payment.type);
+    final receiptNo = payment.receiptNo?.trim();
+    final hasReceiptNo = receiptNo != null && receiptNo.isNotEmpty;
     final split = <_AccountInfoRowData>[
       _AccountInfoRowData('Principal', money(payment.principalComponent)),
       _AccountInfoRowData('Interest', money(payment.interestComponent)),
@@ -103,14 +203,17 @@ class _PaymentTimelineRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: 34,
+          width: 78,
           child: Column(
             children: [
-              _AccountIconBox(icon: _paymentIcon(payment.type), color: color),
+              _PaymentDateBadge(
+                date: date(payment.paymentDate),
+                color: color,
+              ),
               if (!isLast)
                 Container(
                   width: 1,
-                  height: 96,
+                  height: 112,
                   margin: const EdgeInsets.symmetric(vertical: 6),
                   color: GirviColors.cardBorder,
                 ),
@@ -123,9 +226,9 @@ class _PaymentTimelineRow extends StatelessWidget {
             margin: EdgeInsets.only(bottom: isLast ? 0 : 10),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.055),
+              color: GirviColors.cardBg,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: color.withValues(alpha: 0.18)),
+              border: Border.all(color: color.withValues(alpha: 0.16)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,35 +251,57 @@ class _PaymentTimelineRow extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            'Paid on ${date(payment.paymentDate)} | ${payment.mode.displayName}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.inter(
-                              color: GirviColors.textBody,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w800,
-                            ),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: [
+                              _PaymentMetaChip(
+                                icon: _paymentModeIcon(payment.mode),
+                                label: payment.mode.displayName,
+                                color: color,
+                              ),
+                              if (hasReceiptNo)
+                                _PaymentMetaChip(
+                                  icon: Icons.receipt_long_rounded,
+                                  label: receiptNo,
+                                  color: GirviColors.info,
+                                ),
+                            ],
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Flexible(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            money(payment.amount),
-                            style: GoogleFonts.manrope(
-                              color: GirviColors.success,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w900,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Received',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            color: GirviColors.textBody,
+                            fontSize: 11.2,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 132),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              money(payment.amount),
+                              style: GoogleFonts.manrope(
+                                color: GirviColors.success,
+                                fontSize: 15.5,
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -209,20 +334,6 @@ class _PaymentTimelineRow extends StatelessWidget {
     );
   }
 
-  static IconData _paymentIcon(GirviPaymentType type) {
-    switch (type) {
-      case GirviPaymentType.interest:
-      case GirviPaymentType.partialInterest:
-        return GirviIcons.interestRate;
-      case GirviPaymentType.partialPrincipal:
-        return GirviIcons.loanTerms;
-      case GirviPaymentType.fullRelease:
-        return GirviIcons.release;
-      case GirviPaymentType.penalty:
-        return GirviIcons.warning;
-    }
-  }
-
   static Color _paymentColor(GirviPaymentType type) {
     switch (type) {
       case GirviPaymentType.interest:
@@ -235,5 +346,129 @@ class _PaymentTimelineRow extends StatelessWidget {
       case GirviPaymentType.penalty:
         return GirviColors.danger;
     }
+  }
+
+  static IconData _paymentModeIcon(GirviPaymentMode mode) {
+    switch (mode) {
+      case GirviPaymentMode.cash:
+        return GirviIcons.cash;
+      case GirviPaymentMode.upi:
+        return GirviIcons.upi;
+      case GirviPaymentMode.neft:
+      case GirviPaymentMode.bankTransfer:
+        return GirviIcons.bank;
+      case GirviPaymentMode.cheque:
+        return Icons.receipt_rounded;
+    }
+  }
+}
+
+class _PaymentDateBadge extends StatelessWidget {
+  final String date;
+  final Color color;
+
+  const _PaymentDateBadge({
+    required this.date,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = date.split(' ');
+    final day = parts.isNotEmpty ? parts.first : date;
+    final month = parts.length >= 2 ? parts[1].toUpperCase() : 'DATE';
+    final year = parts.length >= 3 ? parts[2] : '';
+
+    return Container(
+      width: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            day,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.manrope(
+              color: color,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            month,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              color: GirviColors.textDark,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          if (year.isNotEmpty) ...[
+            const SizedBox(height: 1),
+            Text(
+              year,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                color: GirviColors.textBody,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PaymentMetaChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _PaymentMetaChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 13),
+          const SizedBox(width: 5),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 150),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                color: GirviColors.textDark,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

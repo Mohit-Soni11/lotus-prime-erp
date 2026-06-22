@@ -44,8 +44,6 @@ extension _GirviAccountDetailLayout on _GirviAccountDetailScreenState {
                             flex: 5,
                             child: Column(
                               children: [
-                                _buildDeliveryPanel(account),
-                                const SizedBox(height: 14),
                                 _buildPaymentLedger(
                                   account,
                                   _controller.payments,
@@ -59,8 +57,6 @@ extension _GirviAccountDetailLayout on _GirviAccountDetailScreenState {
                       _buildPledgedItemPanel(account),
                       const SizedBox(height: 14),
                       _buildLoanTermsPanel(account),
-                      const SizedBox(height: 14),
-                      _buildDeliveryPanel(account),
                       const SizedBox(height: 14),
                       _buildPaymentLedger(account, _controller.payments),
                     ],
