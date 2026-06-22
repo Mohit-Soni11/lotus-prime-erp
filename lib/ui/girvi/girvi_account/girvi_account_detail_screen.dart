@@ -258,6 +258,7 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
     return GirviPaymentRecordPdfService().build(
       account: account,
       payments: _controller.payments,
+      details: _controller.details,
       branding: branding,
     );
   }
