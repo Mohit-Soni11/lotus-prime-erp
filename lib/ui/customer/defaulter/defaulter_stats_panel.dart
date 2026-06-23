@@ -265,7 +265,7 @@ class _RiskPills extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 11.5,
           fontWeight: FontWeight.w800,
           color: color,
         ),

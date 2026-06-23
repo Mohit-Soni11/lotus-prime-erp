@@ -45,6 +45,13 @@ class DefaulterModel {
   final DefaulterType defaulterType;
   final String referenceNo;
   final String itemSummary;
+  final int pledgedItemCount;
+  final String itemName;
+  final String metalType;
+  final String purity;
+  final int pieces;
+  final double grossWeight;
+  final double lessWeight;
   final String statusLabel;
   final String statusValue;
   final double principalAmount;
@@ -62,7 +69,13 @@ class DefaulterModel {
   final DateTime lastActivityAt;
   final int daysOverdue;
   final double monthsOverdue;
+  final int unpaidInterestMonths;
+  final int maturityOverdueDays;
+  final bool isInterestOverdue;
+  final bool isMaturityOverdue;
   final DefaulterRiskLevel riskLevel;
+  final String collectionStage;
+  final String nextActionLabel;
 
   const DefaulterModel({
     required this.loanId,
@@ -75,6 +88,13 @@ class DefaulterModel {
     required this.defaulterType,
     required this.referenceNo,
     required this.itemSummary,
+    required this.pledgedItemCount,
+    required this.itemName,
+    required this.metalType,
+    required this.purity,
+    required this.pieces,
+    required this.grossWeight,
+    required this.lessWeight,
     required this.statusLabel,
     required this.statusValue,
     required this.principalAmount,
@@ -92,46 +112,25 @@ class DefaulterModel {
     required this.lastActivityAt,
     required this.daysOverdue,
     required this.monthsOverdue,
+    required this.unpaidInterestMonths,
+    required this.maturityOverdueDays,
+    required this.isInterestOverdue,
+    required this.isMaturityOverdue,
     required this.riskLevel,
+    required this.collectionStage,
+    required this.nextActionLabel,
   });
 
-  bool get isOverdue => daysOverdue > 0;
+  bool get isOverdue => isInterestOverdue || isMaturityOverdue;
   bool get isSettlementPending => statusValue == 'PARTIAL_RELEASE';
   bool get hasPaymentHistory => totalReceived > 0 || lastPaymentDate != null;
 
-  String get collectionStage {
-    if (isSettlementPending) return 'Settlement Pending';
-    switch (riskLevel) {
-      case DefaulterRiskLevel.critical:
-        return 'Auction Review';
-      case DefaulterRiskLevel.high:
-        return 'Final Notice';
-      case DefaulterRiskLevel.medium:
-        return 'Payment Follow-up';
-      case DefaulterRiskLevel.low:
-        return 'Early Reminder';
+  String get riskAgeLabel {
+    if (unpaidInterestMonths > 0) {
+      return '$unpaidInterestMonths mo unpaid';
     }
-  }
-
-  String get nextActionLabel {
-    if (isSettlementPending) return 'Close settlement workflow';
-    switch (riskLevel) {
-      case DefaulterRiskLevel.critical:
-        return 'Review for notice or auction';
-      case DefaulterRiskLevel.high:
-        return 'Call customer and collect interest';
-      case DefaulterRiskLevel.medium:
-        return 'Schedule payment follow-up';
-      case DefaulterRiskLevel.low:
-        return 'Send reminder';
-    }
-  }
-
-  static DefaulterRiskLevel riskFromDays(int days) {
-    if (days >= 90) return DefaulterRiskLevel.critical;
-    if (days >= 60) return DefaulterRiskLevel.high;
-    if (days >= 30) return DefaulterRiskLevel.medium;
-    return DefaulterRiskLevel.low;
+    if (maturityOverdueDays > 0) return '$maturityOverdueDays days overdue';
+    return 'Current';
   }
 
   @override

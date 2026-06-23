@@ -205,8 +205,8 @@ class _ResultCountBar extends StatelessWidget {
           Text(
             countText,
             style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
               color: DefaulterColors.bodyTextMuted,
             ),
           ),
@@ -214,8 +214,8 @@ class _ResultCountBar extends StatelessWidget {
           Text(
             'Last updated: ${_timeNow()}',
             style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w400,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
               color: DefaulterColors.bodyTextHint,
             ),
           ),

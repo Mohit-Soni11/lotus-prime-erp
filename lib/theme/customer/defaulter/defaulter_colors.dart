@@ -26,9 +26,9 @@ class DefaulterColors {
   static const Color bodyPanelBg = Color(0xFFFFFFFF);
   static const Color bodyBorder = Color(0xFFE5E0D8);
   static const Color bodyBorderLight = Color(0xFFF0EDE6);
-  static const Color bodyTextMain = Color(0xFF1E293B);
-  static const Color bodyTextMuted = Color(0xFF475569);
-  static const Color bodyTextHint = Color(0xFF94A3B8);
+  static const Color bodyTextMain = Color(0xFF0F172A);
+  static const Color bodyTextMuted = Color(0xFF111827);
+  static const Color bodyTextHint = Color(0xFF1F2937);
 
   // --- BRAND (Gold Accents) ---
   static const Color brandGold = Color(0xFFD4AF37);

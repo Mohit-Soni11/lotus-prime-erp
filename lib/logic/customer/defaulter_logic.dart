@@ -112,6 +112,9 @@ class DefaulterLogic extends ChangeNotifier {
             d.city.toLowerCase().contains(query) ||
             d.address.toLowerCase().contains(query) ||
             d.itemSummary.toLowerCase().contains(query) ||
+            d.itemName.toLowerCase().contains(query) ||
+            d.metalType.toLowerCase().contains(query) ||
+            d.purity.toLowerCase().contains(query) ||
             d.statusLabel.toLowerCase().contains(query) ||
             d.collectionStage.toLowerCase().contains(query);
       }).toList();

@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../logic/customer/defaulter_logic.dart';
 import '../../../models/customer/defaulter_model.dart';
@@ -162,6 +161,7 @@ class _QueueBody extends StatelessWidget {
       itemBuilder: (context, index) {
         final account = defaulters[index];
         return _RiskAccountCard(
+          key: ValueKey(account.loanId),
           account: account,
           onOpenAccount: () => onOpenAccount(account),
           onOpenInterestEntry: () => onOpenInterestEntry(account),
@@ -177,6 +177,7 @@ class _RiskAccountCard extends StatefulWidget {
   final VoidCallback onOpenInterestEntry;
 
   const _RiskAccountCard({
+    super.key,
     required this.account,
     required this.onOpenAccount,
     required this.onOpenInterestEntry,
@@ -188,6 +189,7 @@ class _RiskAccountCard extends StatefulWidget {
 
 class _RiskAccountCardState extends State<_RiskAccountCard> {
   bool _hovered = false;
+  bool _mobileVisible = false;
 
   static final DateFormat _dateFmt = DateFormat('dd MMM yyyy');
 
@@ -228,7 +230,12 @@ class _RiskAccountCardState extends State<_RiskAccountCard> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _AccountIdentity(account: account, dateFmt: _dateFmt),
+                  _AccountIdentity(
+                    account: account,
+                    dateFmt: _dateFmt,
+                    mobileVisible: _mobileVisible,
+                    onRevealMobile: _revealMobile,
+                  ),
                   const SizedBox(height: 12),
                   _AccountMetrics(account: account),
                   const SizedBox(height: 12),
@@ -238,6 +245,7 @@ class _RiskAccountCardState extends State<_RiskAccountCard> {
                       account: account,
                       onOpenAccount: widget.onOpenAccount,
                       onOpenInterestEntry: widget.onOpenInterestEntry,
+                      onRevealMobile: _revealMobile,
                     ),
                   ),
                 ],
@@ -249,7 +257,12 @@ class _RiskAccountCardState extends State<_RiskAccountCard> {
               children: [
                 Expanded(
                   flex: 6,
-                  child: _AccountIdentity(account: account, dateFmt: _dateFmt),
+                  child: _AccountIdentity(
+                    account: account,
+                    dateFmt: _dateFmt,
+                    mobileVisible: _mobileVisible,
+                    onRevealMobile: _revealMobile,
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -261,6 +274,7 @@ class _RiskAccountCardState extends State<_RiskAccountCard> {
                   account: account,
                   onOpenAccount: widget.onOpenAccount,
                   onOpenInterestEntry: widget.onOpenInterestEntry,
+                  onRevealMobile: _revealMobile,
                 ),
               ],
             );
@@ -282,15 +296,24 @@ class _RiskAccountCardState extends State<_RiskAccountCard> {
         return DefaulterColors.riskLowBorder;
     }
   }
+
+  void _revealMobile() {
+    if (_mobileVisible) return;
+    setState(() => _mobileVisible = true);
+  }
 }
 
 class _AccountIdentity extends StatelessWidget {
   final DefaulterModel account;
   final DateFormat dateFmt;
+  final bool mobileVisible;
+  final VoidCallback onRevealMobile;
 
   const _AccountIdentity({
     required this.account,
     required this.dateFmt,
+    required this.mobileVisible,
+    required this.onRevealMobile,
   });
 
   @override
@@ -329,7 +352,11 @@ class _AccountIdentity extends StatelessWidget {
                   ),
                   _InfoChip(
                     icon: DefaulterIcons.phoneCall,
-                    label: account.mobile,
+                    label: mobileVisible ? account.mobile : 'Show mobile',
+                    onTap: onRevealMobile,
+                    tooltip: mobileVisible
+                        ? 'Mobile number'
+                        : 'Click to show mobile number',
                   ),
                   _InfoChip(
                     icon: DefaulterIcons.cityPin,
@@ -338,12 +365,7 @@ class _AccountIdentity extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              Text(
-                account.itemSummary,
-                style: DefaulterStyles.refNumber,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              _PledgedItemStrip(account: account),
               const SizedBox(height: 5),
               Text(
                 account.address,
@@ -373,6 +395,104 @@ class _AccountIdentity extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PledgedItemStrip extends StatelessWidget {
+  final DefaulterModel account;
+
+  const _PledgedItemStrip({required this.account});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = <Widget>[
+      _ItemDetailToken(label: 'Item', value: account.itemName, prominent: true),
+      if (account.pledgedItemCount > 1)
+        _ItemDetailToken(label: 'Items', value: '${account.pledgedItemCount}'),
+      _ItemDetailToken(label: 'Metal', value: account.metalType),
+      _ItemDetailToken(label: 'Purity', value: account.purity),
+      _ItemDetailToken(label: 'Pieces', value: '${account.pieces} pcs'),
+      _ItemDetailToken(label: 'Gross Wt', value: _weight(account.grossWeight)),
+      if (account.lessWeight > 0.001)
+        _ItemDetailToken(label: 'Less Wt', value: _weight(account.lessWeight)),
+      _ItemDetailToken(
+        label: 'Net Wt',
+        value: _weight(account.netWeight),
+        prominent: true,
+      ),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
+      decoration: BoxDecoration(
+        color: DefaulterColors.bodyBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: DefaulterColors.bodyBorder),
+      ),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: tokens,
+      ),
+    );
+  }
+
+  String _weight(double value) => '${value.toStringAsFixed(3)} g';
+}
+
+class _ItemDetailToken extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool prominent;
+
+  const _ItemDetailToken({
+    required this.label,
+    required this.value,
+    this.prominent = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 150),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: prominent
+            ? DefaulterColors.brandGoldLight
+            : DefaulterColors.bodyPanelBg,
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(
+          color: prominent
+              ? DefaulterColors.brandGold.withValues(alpha: 0.45)
+              : DefaulterColors.bodyBorder,
+        ),
+      ),
+      child: RichText(
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: '$label ',
+              style: DefaulterStyles.customerCity.copyWith(
+                fontSize: 10.8,
+                fontWeight: FontWeight.w800,
+                color: DefaulterColors.bodyTextHint,
+              ),
+            ),
+            TextSpan(
+              text: value,
+              style: DefaulterStyles.refNumber.copyWith(
+                fontSize: 12.2,
+                color: prominent
+                    ? DefaulterColors.brandGoldDark
+                    : DefaulterColors.bodyTextMain,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -455,7 +575,7 @@ class _AccountMetrics extends StatelessWidget {
         ),
         _MetricTile(
           label: 'Risk Age',
-          value: '${account.daysOverdue} days',
+          value: account.riskAgeLabel,
           color: _riskConfig(account.riskLevel).text,
           subLabel: account.collectionStage,
         ),
@@ -531,19 +651,31 @@ class _MetricTile extends StatelessWidget {
   }
 }
 
-class _AccountActions extends StatelessWidget {
+class _AccountActions extends StatefulWidget {
   final DefaulterModel account;
   final VoidCallback onOpenAccount;
   final VoidCallback onOpenInterestEntry;
+  final VoidCallback onRevealMobile;
 
   const _AccountActions({
     required this.account,
     required this.onOpenAccount,
     required this.onOpenInterestEntry,
+    required this.onRevealMobile,
   });
 
   @override
+  State<_AccountActions> createState() => _AccountActionsState();
+}
+
+class _AccountActionsState extends State<_AccountActions> {
+  String? _inlineFeedback;
+  Color _feedbackColor = DefaulterColors.statReceivedText;
+
+  @override
   Widget build(BuildContext context) {
+    final account = widget.account;
+
     return SizedBox(
       width: 182,
       child: Column(
@@ -553,14 +685,14 @@ class _AccountActions extends StatelessWidget {
             icon: DefaulterIcons.openAccount,
             label: DefaulterStrings.btnView,
             color: DefaulterColors.shellBg,
-            onTap: onOpenAccount,
+            onTap: widget.onOpenAccount,
           ),
           const SizedBox(height: 8),
           _ActionButton(
             icon: DefaulterIcons.collectInterest,
             label: DefaulterStrings.btnInterest,
             color: DefaulterColors.brandGoldDark,
-            onTap: onOpenInterestEntry,
+            onTap: widget.onOpenInterestEntry,
           ),
           const SizedBox(height: 8),
           Row(
@@ -570,7 +702,7 @@ class _AccountActions extends StatelessWidget {
                   icon: DefaulterIcons.phoneCall,
                   tooltip: DefaulterStrings.btnCall,
                   color: DefaulterColors.callBtnBg,
-                  onTap: () => _makeCall(context, account.mobile),
+                  onTap: _showMobile,
                 ),
               ),
               const SizedBox(width: 8),
@@ -579,12 +711,25 @@ class _AccountActions extends StatelessWidget {
                   icon: DefaulterIcons.notify,
                   tooltip: DefaulterStrings.btnNotify,
                   color: DefaulterColors.notifyBtnBg,
-                  onTap: () => _copyNumber(context, account.mobile),
+                  onTap: _copyNotice,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 160),
+            child: _inlineFeedback == null
+                ? const SizedBox(height: 10)
+                : Padding(
+                    key: ValueKey(_inlineFeedback),
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _InlineActionFeedback(
+                      label: _inlineFeedback!,
+                      color: _feedbackColor,
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 8),
           Text(
             account.nextActionLabel,
             style: DefaulterStyles.customerCity.copyWith(
@@ -599,24 +744,79 @@ class _AccountActions extends StatelessWidget {
     );
   }
 
-  Future<void> _makeCall(BuildContext context, String number) async {
-    final uri = Uri(scheme: 'tel', path: number);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-      return;
-    }
-    if (!context.mounted) return;
-    await _copyNumber(context, number);
+  void _showMobile() {
+    widget.onRevealMobile();
+    setState(() {
+      _feedbackColor = DefaulterColors.callBtnBg;
+      _inlineFeedback = 'Mobile number shown above.';
+    });
   }
 
-  Future<void> _copyNumber(BuildContext context, String number) async {
-    await Clipboard.setData(ClipboardData(text: number));
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(DefaulterStrings.copySuccess),
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 2),
+  Future<void> _copyNotice() async {
+    final account = widget.account;
+    final notice = _buildNoticeMessage(account);
+    await Clipboard.setData(ClipboardData(text: notice));
+    if (!mounted) return;
+    setState(() {
+      _feedbackColor = DefaulterColors.notifyBtnBg;
+      _inlineFeedback = 'Payment reminder copied. Paste in WhatsApp/SMS.';
+    });
+  }
+
+  String _buildNoticeMessage(DefaulterModel account) {
+    final due = DefaulterLogic.formatAmountCompact(account.totalDue);
+    final principal =
+        DefaulterLogic.formatAmountCompact(account.principalOutstanding);
+    final interest =
+        DefaulterLogic.formatAmountCompact(account.interestOutstanding);
+
+    return [
+      'Dear ${account.customerName},',
+      'This is a payment reminder for Girvi ticket ${account.referenceNo}.',
+      'Total payable: $due.',
+      'Principal due: $principal. Interest due: $interest.',
+      'Pledged item: ${account.itemName}, ${account.metalType}, ${account.purity}, net weight ${account.netWeight.toStringAsFixed(3)} g.',
+      'Current status: ${account.collectionStage} (${account.riskAgeLabel}).',
+      'Please visit the store or contact us to update this account.',
+    ].join('\n');
+  }
+}
+
+class _InlineActionFeedback extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _InlineActionFeedback({
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle_rounded, size: 14, color: color),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              label,
+              style: DefaulterStyles.customerCity.copyWith(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                color: DefaulterColors.bodyTextMain,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -657,7 +857,7 @@ class _ActionButton extends StatelessWidget {
                 label,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: FontWeight.w800,
                 ),
                 maxLines: 1,
@@ -707,15 +907,19 @@ class _IconActionButton extends StatelessWidget {
 class _InfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
+  final String? tooltip;
 
   const _InfoChip({
     required this.icon,
     required this.label,
+    this.onTap,
+    this.tooltip,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final chip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: DefaulterColors.bodyBg,
@@ -731,7 +935,7 @@ class _InfoChip extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 170),
             child: Text(
               label,
-              style: DefaulterStyles.customerMobile.copyWith(fontSize: 11),
+              style: DefaulterStyles.customerMobile.copyWith(fontSize: 12.5),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -739,6 +943,15 @@ class _InfoChip extends StatelessWidget {
         ],
       ),
     );
+
+    if (onTap == null) return chip;
+    final clickable = InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: chip,
+    );
+    if (tooltip == null) return clickable;
+    return Tooltip(message: tooltip!, child: clickable);
   }
 }
 
@@ -761,7 +974,7 @@ class _TinyMeta extends StatelessWidget {
         Text(
           label,
           style: DefaulterStyles.customerCity.copyWith(
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ],

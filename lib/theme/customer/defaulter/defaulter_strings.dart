@@ -49,9 +49,9 @@ class DefaulterStrings {
 
   // --- RISK LABELS ---
   static const String riskCritical = 'CRITICAL';
-  static const String riskHigh = 'HIGH';
-  static const String riskMedium = 'MEDIUM';
-  static const String riskLow = 'LOW';
+  static const String riskHigh = 'HIGH RISK';
+  static const String riskMedium = 'WATCHLIST';
+  static const String riskLow = 'EARLY RISK';
 
   // --- DAYS OVERDUE LABELS ---
   static const String daysUnit = 'days';
@@ -63,8 +63,8 @@ class DefaulterStrings {
   static const String interestRateUnit = '% monthly';
 
   // --- ACTION BUTTONS ---
-  static const String btnCall = 'Call';
-  static const String btnNotify = 'Notify';
+  static const String btnCall = 'Show Mobile';
+  static const String btnNotify = 'Copy WhatsApp/SMS Reminder';
   static const String btnView = 'Open Account';
   static const String btnInterest = 'Collect Interest';
 
@@ -88,6 +88,7 @@ class DefaulterStrings {
   // --- SNACKBARS ---
   static const String callInitiated = 'Opening phone dialer...';
   static const String copySuccess = 'Mobile number copied!';
+  static const String noticeCopySuccess = 'Collection notice copied.';
   static const String exportSuccess = 'Report exported successfully.';
 
   // --- INTEREST CALCULATION INFO ---

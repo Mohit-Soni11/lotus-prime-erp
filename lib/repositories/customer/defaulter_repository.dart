@@ -11,6 +11,7 @@ import 'package:drift/drift.dart';
 
 import '../../core/logging/app_logger.dart';
 import '../../database/db/app_database.dart';
+import '../../logic/girvi/girvi_risk_policy.dart';
 import '../../models/customer/defaulter_model.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
@@ -50,16 +51,20 @@ class DefaulterRepository {
       final loanIds =
           rows.map((row) => row.readTable(_db.girviLoans).id).toList();
       final paymentSummary = await _loadPaymentSummary(loanIds);
+      final itemSnapshots = await _loadItemSnapshots(loanIds);
 
       final accounts = <DefaulterModel>[];
       for (final row in rows) {
         final loan = row.readTable(_db.girviLoans);
         final customer = row.readTable(_db.customers);
         final summary = paymentSummary[loan.id] ?? _PaymentSummary.empty();
+        final itemSnapshot =
+            itemSnapshots[loan.id] ?? _PledgedItemSnapshot.fromLoan(loan);
         final account = _mapRiskAccount(
           loan: loan,
           customer: customer,
           summary: summary,
+          itemSnapshot: itemSnapshot,
           now: now,
         );
         if (account != null) accounts.add(account);
@@ -122,10 +127,37 @@ class DefaulterRepository {
     return byLoan;
   }
 
+  Future<Map<int, _PledgedItemSnapshot>> _loadItemSnapshots(
+    List<int> loanIds,
+  ) async {
+    if (loanIds.isEmpty) return const {};
+
+    final items = await (_db.select(_db.girviLoanItems)
+          ..where((item) => item.girviId.isIn(loanIds))
+          ..orderBy([
+            (item) => OrderingTerm.asc(item.girviId),
+            (item) => OrderingTerm.asc(item.serialNo),
+          ]))
+        .get();
+
+    final grouped = <int, List<GirviLoanItem>>{};
+    for (final item in items) {
+      grouped.putIfAbsent(item.girviId, () => <GirviLoanItem>[]).add(item);
+    }
+
+    return grouped.map(
+      (loanId, items) => MapEntry(
+        loanId,
+        _PledgedItemSnapshot.fromItems(items),
+      ),
+    );
+  }
+
   DefaulterModel? _mapRiskAccount({
     required GirviLoan loan,
     required Customer customer,
     required _PaymentSummary summary,
+    required _PledgedItemSnapshot itemSnapshot,
     required DateTime now,
   }) {
     final status = GirviStatus.fromDb(loan.status);
@@ -134,13 +166,6 @@ class DefaulterRepository {
           loan.startDate,
           loan.durationMonths,
         );
-    final overdueDays = _daysAfter(maturityDate, now);
-    final isMatured = overdueDays > 0;
-    final isTrackedStatus = status == GirviStatus.overdue ||
-        status == GirviStatus.partialRelease ||
-        (status == GirviStatus.active && isMatured);
-
-    if (!isTrackedStatus) return null;
 
     final interestMonths =
         GirviLoanModel.chargeableMonthsBetween(loan.startDate, now);
@@ -159,17 +184,23 @@ class DefaulterRepository {
       loan.loanAmount - summary.principalPaid - summary.principalDiscount,
     );
     final totalDue = principalOutstanding + interestOutstanding;
+    final assessment = GirviRiskPolicy.assess(
+      status: status,
+      startDate: loan.startDate,
+      maturityDate: maturityDate,
+      lastInterestPaidDate: loan.lastInterestPaidDate,
+      principalDue: principalOutstanding,
+      interestDue: interestOutstanding,
+      now: now,
+    );
 
-    if (totalDue <= 0.01 && status != GirviStatus.partialRelease) {
-      return null;
-    }
+    if (!assessment.isRiskAccount) return null;
 
     final lastActivityAt = _latestDate(
       loan.updatedAt,
       summary.lastPaymentDate,
       loan.createdAt,
     );
-    final effectiveOverdueDays = math.max(overdueDays, 0);
 
     return DefaulterModel(
       loanId: loan.id,
@@ -181,10 +212,15 @@ class DefaulterRepository {
       customerType: customer.customerTier,
       defaulterType: DefaulterType.loan,
       referenceNo: loan.ticketNo,
-      itemSummary: _itemSummary(loan),
-      statusLabel: status == GirviStatus.partialRelease
-          ? 'Settlement Pending'
-          : (isMatured ? 'Overdue' : status.displayName),
+      itemSummary: itemSnapshot.summary,
+      pledgedItemCount: itemSnapshot.itemCount,
+      itemName: itemSnapshot.itemName,
+      metalType: itemSnapshot.metalType,
+      purity: itemSnapshot.purity,
+      pieces: itemSnapshot.pieces,
+      grossWeight: itemSnapshot.grossWeight,
+      lessWeight: itemSnapshot.lessWeight,
+      statusLabel: assessment.statusLabel,
       statusValue: status.dbValue,
       principalAmount: originalPrincipal,
       principalOutstanding: principalOutstanding,
@@ -193,27 +229,39 @@ class DefaulterRepository {
       interestOutstanding: interestOutstanding,
       totalDue: totalDue,
       totalReceived: summary.totalReceived,
-      totalItemValue: loan.totalValue,
-      netWeight: loan.netWeight,
+      totalItemValue: itemSnapshot.totalValue > 0
+          ? itemSnapshot.totalValue
+          : loan.totalValue,
+      netWeight:
+          itemSnapshot.netWeight > 0 ? itemSnapshot.netWeight : loan.netWeight,
       startDate: loan.startDate,
       maturityDate: maturityDate,
       lastPaymentDate: summary.lastPaymentDate,
       lastActivityAt: lastActivityAt,
-      daysOverdue: effectiveOverdueDays,
-      monthsOverdue: effectiveOverdueDays / 30.0,
-      riskLevel: status == GirviStatus.partialRelease
-          ? DefaulterRiskLevel.low
-          : DefaulterModel.riskFromDays(effectiveOverdueDays),
+      daysOverdue: assessment.riskAgeDays,
+      monthsOverdue: assessment.riskAgeDays / 30.0,
+      unpaidInterestMonths: assessment.unpaidInterestMonths,
+      maturityOverdueDays: assessment.maturityOverdueDays,
+      isInterestOverdue: assessment.isInterestOverdue,
+      isMaturityOverdue: assessment.isMaturityOverdue,
+      riskLevel: _mapSeverity(assessment.severity),
+      collectionStage: assessment.stageLabel,
+      nextActionLabel: assessment.nextActionLabel,
     );
   }
 
-  String _itemSummary(GirviLoan loan) {
-    final pieces = loan.itemCount <= 0 ? 1 : loan.itemCount;
-    final weight = loan.netWeight.toStringAsFixed(2);
-    final itemName = loan.itemDescription.trim().isEmpty
-        ? loan.metalType
-        : loan.itemDescription.trim();
-    return '$itemName | $pieces item${pieces == 1 ? '' : 's'} | $weight g';
+  DefaulterRiskLevel _mapSeverity(GirviRiskSeverity severity) {
+    switch (severity) {
+      case GirviRiskSeverity.critical:
+        return DefaulterRiskLevel.critical;
+      case GirviRiskSeverity.high:
+        return DefaulterRiskLevel.high;
+      case GirviRiskSeverity.medium:
+        return DefaulterRiskLevel.medium;
+      case GirviRiskSeverity.low:
+      case GirviRiskSeverity.none:
+        return DefaulterRiskLevel.low;
+    }
   }
 
   String _formatCustomerAddress(Customer customer) {
@@ -233,18 +281,132 @@ class DefaulterRepository {
     return trimmed;
   }
 
-  int _daysAfter(DateTime from, DateTime to) {
-    final fromDate = DateTime(from.year, from.month, from.day);
-    final toDate = DateTime(to.year, to.month, to.day);
-    return toDate.difference(fromDate).inDays;
-  }
-
   DateTime _latestDate(DateTime? a, DateTime? b, DateTime fallback) {
     var latest = fallback;
     for (final value in [a, b]) {
       if (value != null && value.isAfter(latest)) latest = value;
     }
     return latest;
+  }
+}
+
+class _PledgedItemSnapshot {
+  final int itemCount;
+  final String itemName;
+  final String metalType;
+  final String purity;
+  final int pieces;
+  final double grossWeight;
+  final double lessWeight;
+  final double netWeight;
+  final double totalValue;
+
+  const _PledgedItemSnapshot({
+    required this.itemCount,
+    required this.itemName,
+    required this.metalType,
+    required this.purity,
+    required this.pieces,
+    required this.grossWeight,
+    required this.lessWeight,
+    required this.netWeight,
+    required this.totalValue,
+  });
+
+  factory _PledgedItemSnapshot.fromItems(List<GirviLoanItem> items) {
+    if (items.isEmpty) {
+      return const _PledgedItemSnapshot(
+        itemCount: 0,
+        itemName: 'Pledged item',
+        metalType: 'Not specified',
+        purity: 'Not specified',
+        pieces: 0,
+        grossWeight: 0,
+        lessWeight: 0,
+        netWeight: 0,
+        totalValue: 0,
+      );
+    }
+
+    final sorted = List<GirviLoanItem>.from(items)
+      ..sort((a, b) => a.serialNo.compareTo(b.serialNo));
+    final first = sorted.first;
+    final itemName = _itemDisplayName(first.itemName, fallback: 'Pledged item');
+    final suffix = sorted.length > 1 ? ' + ${sorted.length - 1} more' : '';
+
+    return _PledgedItemSnapshot(
+      itemCount: sorted.length,
+      itemName: '$itemName$suffix',
+      metalType: _singleOrMixed(sorted.map((item) => item.metalType)),
+      purity: _singleOrMixed(sorted.map((item) => item.purity)),
+      pieces: sorted.fold(0, (sum, item) => sum + item.pieces),
+      grossWeight: sorted.fold(0.0, (sum, item) => sum + item.grossWeight),
+      lessWeight: sorted.fold(0.0, (sum, item) => sum + item.lessWeight),
+      netWeight: sorted.fold(0.0, (sum, item) => sum + item.netWeight),
+      totalValue: sorted.fold(0.0, (sum, item) => sum + item.valuationAmount),
+    );
+  }
+
+  factory _PledgedItemSnapshot.fromLoan(GirviLoan loan) {
+    final itemName = _fallbackItemName(loan);
+    final pieces = loan.itemCount <= 0 ? 1 : loan.itemCount;
+
+    return _PledgedItemSnapshot(
+      itemCount: pieces,
+      itemName: itemName,
+      metalType: _readableText(loan.metalType, fallback: 'Not specified'),
+      purity: _readableText(loan.metalPurity, fallback: 'Not specified'),
+      pieces: pieces,
+      grossWeight: loan.grossWeight,
+      lessWeight: loan.stoneWeight,
+      netWeight: loan.netWeight,
+      totalValue: loan.totalValue,
+    );
+  }
+
+  String get summary {
+    final parts = <String>[
+      itemName,
+      metalType,
+      purity,
+      '$pieces pc${pieces == 1 ? '' : 's'}',
+      'Net ${netWeight.toStringAsFixed(3)} g',
+    ];
+    return parts.join(' | ');
+  }
+
+  static String _fallbackItemName(GirviLoan loan) {
+    final raw = loan.itemDescription.trim();
+    if (raw.isEmpty) return _readableText(loan.metalType, fallback: 'Item');
+    final firstLine = raw.split(RegExp(r'\r?\n')).first.trim();
+    final firstSegment = firstLine.split('|').first.trim();
+    final withoutSerial = firstSegment
+        .replaceFirst(RegExp(r'^#?\d+\s*'), '')
+        .replaceFirst(RegExp(r'^-\s*'), '')
+        .trim();
+    return _itemDisplayName(withoutSerial, fallback: 'Pledged item');
+  }
+
+  static String _singleOrMixed(Iterable<String> values) {
+    final cleanValues = values
+        .map((value) => _readableText(value, fallback: ''))
+        .where((value) => value.isNotEmpty)
+        .toSet();
+    if (cleanValues.isEmpty) return 'Not specified';
+    if (cleanValues.length == 1) return cleanValues.first;
+    return 'Mixed';
+  }
+
+  static String _itemDisplayName(String value, {required String fallback}) {
+    final text = _readableText(value, fallback: fallback);
+    if (text.length <= 36) return text;
+    return '${text.substring(0, 33).trimRight()}...';
+  }
+
+  static String _readableText(String? value, {required String fallback}) {
+    final trimmed = value?.trim();
+    if (trimmed == null || trimmed.isEmpty) return fallback;
+    return trimmed;
   }
 }
 

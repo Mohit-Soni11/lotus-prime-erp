@@ -42,34 +42,34 @@ class DefaulterStyles {
   // ==========================================
 
   static const TextStyle statLabel = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w600,
+    fontSize: 12.5,
+    fontWeight: FontWeight.w800,
     color: DefaulterColors.bodyTextMuted,
     letterSpacing: 0.3,
   );
 
   static const TextStyle statValue = TextStyle(
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: FontWeight.w900,
     color: DefaulterColors.bodyTextMain,
     height: 1.0,
   );
 
   static const TextStyle statSuffix = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w600,
+    fontSize: 12.5,
+    fontWeight: FontWeight.w700,
     color: DefaulterColors.bodyTextMuted,
   );
 
   static const TextStyle statAmountValue = TextStyle(
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: FontWeight.w900,
     color: DefaulterColors.statAmountText,
     height: 1.0,
   );
 
   static const TextStyle statCriticalValue = TextStyle(
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: FontWeight.w900,
     color: DefaulterColors.riskCriticalText,
     height: 1.0,
@@ -80,7 +80,7 @@ class DefaulterStyles {
   // ==========================================
 
   static const TextStyle tableHeader = TextStyle(
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: FontWeight.w800,
     color: DefaulterColors.bodyTextMain,
     letterSpacing: 0.8,
@@ -91,58 +91,58 @@ class DefaulterStyles {
   // ==========================================
 
   static const TextStyle customerName = TextStyle(
-    fontSize: 14,
+    fontSize: 15.5,
     fontWeight: FontWeight.w800,
     color: DefaulterColors.bodyTextMain,
   );
 
   static const TextStyle customerMobile = TextStyle(
-    fontSize: 12,
-    fontWeight: FontWeight.w600,
+    fontSize: 13,
+    fontWeight: FontWeight.w700,
     color: DefaulterColors.bodyTextMuted,
     letterSpacing: 0.3,
   );
 
   static const TextStyle customerCity = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w500,
+    fontSize: 12.5,
+    fontWeight: FontWeight.w700,
     color: DefaulterColors.bodyTextHint,
   );
 
   static const TextStyle refNumber = TextStyle(
-    fontSize: 12.5,
-    fontWeight: FontWeight.w700,
+    fontSize: 13.5,
+    fontWeight: FontWeight.w800,
     color: DefaulterColors.bodyTextMain,
     letterSpacing: 0.5,
   );
 
   static const TextStyle amountText = TextStyle(
-    fontSize: 14,
+    fontSize: 15.5,
     fontWeight: FontWeight.w900,
     color: DefaulterColors.bodyTextMain,
   );
 
   static const TextStyle amountTotalDue = TextStyle(
-    fontSize: 15,
+    fontSize: 16.5,
     fontWeight: FontWeight.w900,
     color: DefaulterColors.riskCriticalText,
   );
 
   static const TextStyle daysText = TextStyle(
-    fontSize: 13,
+    fontSize: 14.5,
     fontWeight: FontWeight.w800,
     color: DefaulterColors.bodyTextMain,
   );
 
   static const TextStyle daysUnit = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w500,
+    fontSize: 12,
+    fontWeight: FontWeight.w700,
     color: DefaulterColors.bodyTextMuted,
   );
 
   static const TextStyle interestRate = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w600,
+    fontSize: 12,
+    fontWeight: FontWeight.w700,
     color: DefaulterColors.bodyTextHint,
   );
 
@@ -151,7 +151,7 @@ class DefaulterStyles {
   // ==========================================
 
   static const TextStyle riskBadgeText = TextStyle(
-    fontSize: 9.5,
+    fontSize: 10.5,
     fontWeight: FontWeight.w900,
     letterSpacing: 0.8,
   );
@@ -161,14 +161,14 @@ class DefaulterStyles {
   // ==========================================
 
   static const TextStyle searchInputText = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
+    fontSize: 14.5,
+    fontWeight: FontWeight.w700,
     color: DefaulterColors.bodyTextMain,
   );
 
   static const TextStyle filterChipText = TextStyle(
-    fontSize: 12,
-    fontWeight: FontWeight.w700,
+    fontSize: 13,
+    fontWeight: FontWeight.w800,
     letterSpacing: 0.3,
   );
 
@@ -179,13 +179,13 @@ class DefaulterStyles {
   static const TextStyle emptyTitle = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.w700,
-    color: DefaulterColors.bodyTextMuted,
+    color: DefaulterColors.bodyTextMain,
   );
 
   static const TextStyle emptySubtitle = TextStyle(
-    fontSize: 13,
-    fontWeight: FontWeight.w500,
-    color: DefaulterColors.bodyTextHint,
+    fontSize: 14,
+    fontWeight: FontWeight.w700,
+    color: DefaulterColors.bodyTextMain,
     height: 1.6,
   );
 
