@@ -218,6 +218,10 @@ GoRouter createAppRouter() {
           return InterestCalcScreen(
             initialTicketNo: state.uri.queryParameters['ticketNo'],
             onBack: () {
+              if (returnTo == 'riskCollections') {
+                context.go(RoutePaths.customerDefaulters);
+                return;
+              }
               if (returnTo == 'girviLedger') {
                 context.go(RoutePaths.girviList);
                 return;
@@ -241,9 +245,17 @@ GoRouter createAppRouter() {
         builder: (context, state) {
           final loanId =
               int.tryParse(state.pathParameters['loanId'] ?? '') ?? 0;
+          final returnTo = state.uri.queryParameters['returnTo'];
           return GirviAccountDetailScreen(
             loanId: loanId,
-            onBack: () => context.go(RoutePaths.girviList),
+            returnTo: returnTo,
+            onBack: () {
+              if (returnTo == 'riskCollections') {
+                context.go(RoutePaths.customerDefaulters);
+                return;
+              }
+              context.go(RoutePaths.girviList);
+            },
           );
         },
       ),

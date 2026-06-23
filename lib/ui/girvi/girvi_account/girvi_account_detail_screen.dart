@@ -31,11 +31,13 @@ part 'parts/girvi_account_detail_shared.dart';
 class GirviAccountDetailScreen extends StatefulWidget {
   final int loanId;
   final VoidCallback onBack;
+  final String? returnTo;
 
   const GirviAccountDetailScreen({
     super.key,
     required this.loanId,
     required this.onBack,
+    this.returnTo,
   });
 
   @override
@@ -79,7 +81,9 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
         path: RoutePaths.girviInterest,
         queryParameters: {
           'ticketNo': account.loan.ticketNo,
-          'returnTo': 'girviLedger',
+          'returnTo': widget.returnTo == 'riskCollections'
+              ? 'riskCollections'
+              : 'girviLedger',
         },
       ).toString(),
     );

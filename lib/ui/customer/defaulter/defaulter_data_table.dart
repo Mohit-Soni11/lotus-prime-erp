@@ -205,12 +205,12 @@ class _RiskAccountCardState extends State<_RiskAccountCard> {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: _hovered
-              ? DefaulterColors.tableHoverBg
-              : DefaulterColors.bodyPanelBg,
+              ? DefaulterColors.riskCardHoverBg
+              : DefaulterColors.riskCardBg,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: _riskBorder(account.riskLevel).withValues(
-              alpha: _hovered ? 0.65 : 0.28,
+              alpha: _hovered ? 0.70 : 0.38,
             ),
           ),
           boxShadow: [
@@ -220,6 +220,11 @@ class _RiskAccountCardState extends State<_RiskAccountCard> {
                   : DefaulterColors.shadowLight,
               blurRadius: _hovered ? 12 : 6,
               offset: const Offset(0, 3),
+            ),
+            BoxShadow(
+              color: _riskBorder(account.riskLevel).withValues(alpha: 0.06),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -297,7 +302,9 @@ class _RiskAccountCardState extends State<_RiskAccountCard> {
     }
   }
 
-  void _revealMobile() {
+  void _revealMobile() async {
+    await Clipboard.setData(ClipboardData(text: widget.account.mobile));
+    if (!mounted) return;
     if (_mobileVisible) return;
     setState(() => _mobileVisible = true);
   }
@@ -607,16 +614,24 @@ class _MetricTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 148,
-      constraints: const BoxConstraints(minHeight: 72),
+      width: 150,
+      height: 86,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: DefaulterColors.bodyBg,
+        color: DefaulterColors.riskMetricBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: DefaulterColors.bodyBorder),
+        border: Border.all(color: DefaulterColors.riskMetricBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: DefaulterColors.shadowLight,
+            blurRadius: 7,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
@@ -626,7 +641,6 @@ class _MetricTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 6),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
@@ -636,15 +650,12 @@ class _MetricTile extends StatelessWidget {
               maxLines: 1,
             ),
           ),
-          if (subLabel != null) ...[
-            const SizedBox(height: 3),
-            Text(
-              subLabel!,
-              style: DefaulterStyles.interestRate,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+          Text(
+            subLabel ?? '',
+            style: DefaulterStyles.interestRate,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
@@ -669,6 +680,8 @@ class _AccountActions extends StatefulWidget {
 }
 
 class _AccountActionsState extends State<_AccountActions> {
+  static final DateFormat _noticeDateFmt = DateFormat('dd MMMM yyyy');
+
   String? _inlineFeedback;
   Color _feedbackColor = DefaulterColors.statReceivedText;
 
@@ -748,7 +761,7 @@ class _AccountActionsState extends State<_AccountActions> {
     widget.onRevealMobile();
     setState(() {
       _feedbackColor = DefaulterColors.callBtnBg;
-      _inlineFeedback = 'Mobile number shown above.';
+      _inlineFeedback = 'Mobile number shown above and copied.';
     });
   }
 
@@ -759,7 +772,7 @@ class _AccountActionsState extends State<_AccountActions> {
     if (!mounted) return;
     setState(() {
       _feedbackColor = DefaulterColors.notifyBtnBg;
-      _inlineFeedback = 'Payment reminder copied. Paste in WhatsApp/SMS.';
+      _inlineFeedback = 'Professional payment reminder copied.';
     });
   }
 
@@ -769,15 +782,34 @@ class _AccountActionsState extends State<_AccountActions> {
         DefaulterLogic.formatAmountCompact(account.principalOutstanding);
     final interest =
         DefaulterLogic.formatAmountCompact(account.interestOutstanding);
+    final pieceLabel = account.pieces == 1 ? 'piece' : 'pieces';
 
     return [
+      'Subject: Girvi Payment Reminder',
+      '',
       'Dear ${account.customerName},',
-      'This is a payment reminder for Girvi ticket ${account.referenceNo}.',
-      'Total payable: $due.',
-      'Principal due: $principal. Interest due: $interest.',
-      'Pledged item: ${account.itemName}, ${account.metalType}, ${account.purity}, net weight ${account.netWeight.toStringAsFixed(3)} g.',
-      'Current status: ${account.collectionStage} (${account.riskAgeLabel}).',
-      'Please visit the store or contact us to update this account.',
+      '',
+      'This is a formal payment reminder for your Girvi account. Please review the account details below and clear the pending amount at the earliest.',
+      '',
+      'Ticket Number: ${account.referenceNo}',
+      'Pledged Item: ${account.itemName}',
+      'Metal Type: ${account.metalType}',
+      'Purity: ${account.purity}',
+      'Pieces: ${account.pieces} $pieceLabel',
+      'Net Weight: ${account.netWeight.toStringAsFixed(3)} grams',
+      '',
+      'Total Payable: $due',
+      'Principal Outstanding: $principal',
+      'Interest Outstanding: $interest',
+      'Monthly Interest Rate: ${account.interestRate.toStringAsFixed(2)} percent per month',
+      '',
+      'Collection Status: ${account.collectionStage}',
+      'Risk Age: ${account.riskAgeFullLabel}',
+      'Last Activity Date: ${_noticeDateFmt.format(account.lastActivityAt)}',
+      '',
+      'Please visit the store or contact us to regularise this account.',
+      '',
+      'Thank you.',
     ].join('\n');
   }
 }

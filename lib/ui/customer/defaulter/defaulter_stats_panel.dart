@@ -103,7 +103,7 @@ class DefaulterStatsPanel extends StatelessWidget {
                   valueStyle: DefaulterStyles.statAmountValue.copyWith(
                     color: DefaulterColors.statReceivedText,
                   ),
-                  footerText: 'Updated ${stats.lastRefreshedAt}',
+                  footerText: 'Updated at ${stats.lastRefreshedAt}',
                 ),
               ),
             ],

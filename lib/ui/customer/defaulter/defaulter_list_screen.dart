@@ -91,7 +91,11 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
   }
 
   void _openGirviAccount(DefaulterModel account) {
-    context.go(RoutePaths.girviAccountFor(account.loanId));
+    final uri = Uri(
+      path: RoutePaths.girviAccountFor(account.loanId),
+      queryParameters: {'returnTo': 'riskCollections'},
+    );
+    context.push(uri.toString());
   }
 
   void _openInterestEntry(DefaulterModel account) {
@@ -103,7 +107,7 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
         'returnTo': 'riskCollections',
       },
     );
-    context.go(uri.toString());
+    context.push(uri.toString());
   }
 
   // ==========================================
@@ -153,6 +157,7 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
                 totalCount: state.allDefaulters.length,
                 activeFilter: state.activeFilter,
                 isLoading: state.isLoading,
+                lastUpdatedAt: state.stats.lastRefreshedAt,
               ),
 
               // 4. Data Table (Expanded — fills remaining space)
@@ -182,12 +187,14 @@ class _ResultCountBar extends StatelessWidget {
   final int totalCount;
   final DefaulterFilterBy activeFilter;
   final bool isLoading;
+  final String lastUpdatedAt;
 
   const _ResultCountBar({
     required this.displayedCount,
     required this.totalCount,
     required this.activeFilter,
     required this.isLoading,
+    required this.lastUpdatedAt,
   });
 
   @override
@@ -212,7 +219,7 @@ class _ResultCountBar extends StatelessWidget {
           ),
           const Spacer(),
           Text(
-            'Last updated: ${_timeNow()}',
+            'Last updated at $lastUpdatedAt',
             style: const TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w700,
@@ -222,10 +229,5 @@ class _ResultCountBar extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _timeNow() {
-    final now = DateTime.now();
-    return '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
   }
 }

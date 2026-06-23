@@ -5,6 +5,8 @@
 // DESCRIPTION : Screen models for the Girvi risk and collection command center.
 // =============================================================================
 
+import 'package:intl/intl.dart';
+
 enum DefaulterRiskLevel {
   critical,
   high,
@@ -127,10 +129,24 @@ class DefaulterModel {
 
   String get riskAgeLabel {
     if (unpaidInterestMonths > 0) {
-      return '$unpaidInterestMonths mo unpaid';
+      return '$unpaidInterestMonths '
+          'month${unpaidInterestMonths == 1 ? '' : 's'} unpaid';
     }
     if (maturityOverdueDays > 0) return '$maturityOverdueDays days overdue';
     return 'Current';
+  }
+
+  String get riskAgeFullLabel {
+    if (unpaidInterestMonths > 0) {
+      return '$unpaidInterestMonths '
+          'month${unpaidInterestMonths == 1 ? '' : 's'} of interest '
+          '${unpaidInterestMonths == 1 ? 'is' : 'are'} unpaid';
+    }
+    if (maturityOverdueDays > 0) {
+      return '$maturityOverdueDays '
+          'day${maturityOverdueDays == 1 ? '' : 's'} past maturity';
+    }
+    return 'No overdue collection age';
   }
 
   @override
@@ -187,14 +203,13 @@ class DefaulterStatsModel {
       mediumCount: 0,
       lowCount: 0,
       highestRiskDays: 0,
-      lastRefreshedAt: '--:--',
+      lastRefreshedAt: 'Not updated yet',
     );
   }
 
   factory DefaulterStatsModel.fromList(List<DefaulterModel> list) {
     final now = DateTime.now();
-    final time =
-        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    final time = DateFormat('hh:mm a').format(now);
 
     return DefaulterStatsModel(
       totalRiskAccounts: list.length,

@@ -29,6 +29,10 @@ class DefaulterColors {
   static const Color bodyTextMain = Color(0xFF0F172A);
   static const Color bodyTextMuted = Color(0xFF111827);
   static const Color bodyTextHint = Color(0xFF1F2937);
+  static const Color riskCardBg = Color(0xFFFFFBF2);
+  static const Color riskCardHoverBg = Color(0xFFFFF6E4);
+  static const Color riskMetricBg = Color(0xFFFFFFFF);
+  static const Color riskMetricBorder = Color(0xFFD8D2C5);
 
   // --- BRAND (Gold Accents) ---
   static const Color brandGold = Color(0xFFD4AF37);
