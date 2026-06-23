@@ -1,78 +1,57 @@
-// ==========================================
-// FILE: defaulter_logic.dart
-// MODULE: Customer → Defaulter List
-// DESCRIPTION: Business logic controller (ChangeNotifier pattern).
-//              Handles: data loading, filtering, sorting, search.
-//              UI widgets listen via ChangeNotifierProvider or setState.
-// ==========================================
+// =============================================================================
+// FILE        : defaulter_logic.dart
+// MODULE      : Risk & Collections
+// LAYER       : Controller
+// DESCRIPTION : Live data loading, search, filter and sorting orchestration.
+// =============================================================================
 
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
-import '../../../models/customer/defaulter_model.dart';
-import '../../../repositories/customer/defaulter_repository.dart';
 import '../../core/logging/app_logger.dart';
+import '../../models/customer/defaulter_model.dart';
+import '../../repositories/customer/defaulter_repository.dart';
 
 class DefaulterLogic extends ChangeNotifier {
-  // ==========================================
-  // DEPENDENCIES
-  // ==========================================
   final DefaulterRepository _repository;
 
   DefaulterLogic({DefaulterRepository? repository})
       : _repository = repository ?? DefaulterRepository();
 
-  // ==========================================
-  // STATE
-  // ==========================================
   DefaulterScreenState _state = DefaulterScreenState.initial();
   DefaulterScreenState get state => _state;
 
   StreamSubscription<List<DefaulterModel>>? _liveSubscription;
 
-  // ==========================================
-  // FORMATTERS
-  // ==========================================
   static final _currencyFmt = NumberFormat('#,##,##0.00', 'en_IN');
   static final _compactFmt = NumberFormat('#,##,##0', 'en_IN');
 
   static String formatAmount(double amount) =>
-      '₹${_currencyFmt.format(amount)}';
+      'Rs ${_currencyFmt.format(amount)}';
   static String formatAmountCompact(double amount) =>
-      '₹${_compactFmt.format(amount)}';
+      'Rs ${_compactFmt.format(amount)}';
 
-  // ==========================================
-  // LIFECYCLE: init (call from State.initState)
-  // ==========================================
   void init() {
     _startLiveWatch();
   }
 
-  // ==========================================
-  // LIVE WATCH (real-time DB stream)
-  // ==========================================
   void _startLiveWatch() {
     _liveSubscription?.cancel();
-
     _liveSubscription = _repository.watchAllDefaulters().listen(
-      (freshList) {
-        _applyAll(freshList);
-      },
+      _applyAll,
       onError: (error) {
-        AppLogger.debug('❌ DefaulterLogic stream error: $error');
+        AppLogger.debug('Risk & Collections stream error: $error');
         _state = _state.copyWith(
           isLoading: false,
-          errorMessage: 'Failed to load data. Please refresh.',
+          errorMessage: 'Collection data could not be loaded. Please refresh.',
         );
         notifyListeners();
       },
     );
   }
 
-  // ==========================================
-  // MANUAL REFRESH
-  // ==========================================
   Future<void> refresh() async {
     _state = _state.copyWith(isLoading: true, errorMessage: null);
     notifyListeners();
@@ -81,18 +60,15 @@ class DefaulterLogic extends ChangeNotifier {
       final freshList = await _repository.fetchAllDefaulters();
       _applyAll(freshList);
     } catch (e) {
-      AppLogger.debug('❌ DefaulterLogic.refresh Error: $e');
+      AppLogger.debug('Risk & Collections refresh failed: $e');
       _state = _state.copyWith(
         isLoading: false,
-        errorMessage: 'Refresh failed. Check connection.',
+        errorMessage: 'Refresh failed. Please check the database connection.',
       );
       notifyListeners();
     }
   }
 
-  // ==========================================
-  // SEARCH
-  // ==========================================
   void onSearch(String query) {
     _state = _state.copyWith(searchQuery: query);
     _applyFiltersAndSort(_state.allDefaulters);
@@ -103,31 +79,20 @@ class DefaulterLogic extends ChangeNotifier {
     _applyFiltersAndSort(_state.allDefaulters);
   }
 
-  // ==========================================
-  // FILTER
-  // ==========================================
   void setFilter(DefaulterFilterBy filter) {
     _state = _state.copyWith(activeFilter: filter);
     _applyFiltersAndSort(_state.allDefaulters);
   }
 
-  // ==========================================
-  // SORT
-  // ==========================================
   void setSort(DefaulterSortBy sort) {
     _state = _state.copyWith(activeSort: sort);
     _applyFiltersAndSort(_state.allDefaulters);
   }
 
-  // ==========================================
-  // INTERNAL: Apply all filters + sort + search
-  // ==========================================
   void _applyAll(List<DefaulterModel> freshList) {
-    final stats = DefaulterStatsModel.fromList(freshList);
-
     _state = _state.copyWith(
       allDefaulters: freshList,
-      stats: stats,
+      stats: DefaulterStatsModel.fromList(freshList),
       isLoading: false,
       errorMessage: null,
     );
@@ -136,20 +101,22 @@ class DefaulterLogic extends ChangeNotifier {
   }
 
   void _applyFiltersAndSort(List<DefaulterModel> source) {
-    List<DefaulterModel> result = List.from(source);
+    var result = List<DefaulterModel>.from(source);
 
-    // 1. Apply search
     final query = _state.searchQuery.trim().toLowerCase();
     if (query.isNotEmpty) {
       result = result.where((d) {
         return d.customerName.toLowerCase().contains(query) ||
             d.mobile.contains(query) ||
             d.referenceNo.toLowerCase().contains(query) ||
-            d.city.toLowerCase().contains(query);
+            d.city.toLowerCase().contains(query) ||
+            d.address.toLowerCase().contains(query) ||
+            d.itemSummary.toLowerCase().contains(query) ||
+            d.statusLabel.toLowerCase().contains(query) ||
+            d.collectionStage.toLowerCase().contains(query);
       }).toList();
     }
 
-    // 2. Apply filter
     switch (_state.activeFilter) {
       case DefaulterFilterBy.critical:
         result = result
@@ -170,15 +137,16 @@ class DefaulterLogic extends ChangeNotifier {
         result =
             result.where((d) => d.riskLevel == DefaulterRiskLevel.low).toList();
         break;
-      case DefaulterFilterBy.loanOnly:
-        result =
-            result.where((d) => d.defaulterType == DefaulterType.loan).toList();
+      case DefaulterFilterBy.overdue:
+        result = result.where((d) => d.isOverdue).toList();
+        break;
+      case DefaulterFilterBy.settlementPending:
+        result = result.where((d) => d.isSettlementPending).toList();
         break;
       case DefaulterFilterBy.all:
         break;
     }
 
-    // 3. Apply sort
     switch (_state.activeSort) {
       case DefaulterSortBy.daysOverdue:
         result.sort((a, b) => b.daysOverdue.compareTo(a.daysOverdue));
@@ -189,6 +157,9 @@ class DefaulterLogic extends ChangeNotifier {
       case DefaulterSortBy.customerName:
         result.sort((a, b) => a.customerName.compareTo(b.customerName));
         break;
+      case DefaulterSortBy.lastActivity:
+        result.sort((a, b) => b.lastActivityAt.compareTo(a.lastActivityAt));
+        break;
     }
 
     _state = _state.copyWith(
@@ -198,9 +169,6 @@ class DefaulterLogic extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ==========================================
-  // LIFECYCLE: dispose
-  // ==========================================
   @override
   void dispose() {
     _liveSubscription?.cancel();

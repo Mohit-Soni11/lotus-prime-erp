@@ -9,37 +9,42 @@ class DefaulterStrings {
 
   // --- SYSTEM SHELL ---
   static const String systemOnline = 'SYSTEM ONLINE';
-  static const String moduleTitle = 'LOAN DEFAULTERS';
+  static const String moduleTitle = 'RISK & COLLECTIONS';
   static const String moduleSubtitle =
-      'Active Girvi loans with accrued interest';
+      'Girvi exposure, collection priority and settlement control';
 
   // --- STATS PANEL ---
-  static const String statTotal = 'Total Defaulters';
-  static const String statTotalDue = 'Total Amount Due';
+  static const String statTotal = 'Risk Accounts';
+  static const String statTotalDue = 'Collection Due';
   static const String statCritical = 'Critical Cases';
-  static const String statSuffix = 'Accounts';
+  static const String statPrincipal = 'Principal at Risk';
+  static const String statReceived = 'Collected';
+  static const String statSuffix = 'Open';
 
   // --- FILTER BAR ---
-  static const String searchHint = 'Search by name or mobile...';
-  static const String filterAll = 'All';
+  static const String searchHint =
+      'Search customer, mobile, ticket, item or city';
+  static const String filterAll = 'All Accounts';
   static const String filterCritical = 'Critical';
   static const String filterHigh = 'High Risk';
-  static const String filterMedium = 'Medium';
-  static const String filterLow = 'Low';
-  static const String filterLoan = 'Loan Dues';
+  static const String filterMedium = 'Watchlist';
+  static const String filterLow = 'Early Risk';
+  static const String filterOverdue = 'Overdue';
+  static const String filterSettlement = 'Settlement Pending';
   static const String sortBy = 'Sort:';
-  static const String sortOverdue = 'Days Overdue';
-  static const String sortAmount = 'Amount';
-  static const String sortName = 'Name';
+  static const String sortOverdue = 'Risk Age';
+  static const String sortAmount = 'Exposure';
+  static const String sortName = 'Customer';
+  static const String sortRecent = 'Recent Activity';
 
   // --- TABLE HEADERS ---
   static const String colCustomer = 'CUSTOMER';
   static const String colRisk = 'RISK';
-  static const String colReference = 'REF NO.';
+  static const String colReference = 'TICKET';
   static const String colPrincipal = 'PRINCIPAL';
   static const String colInterest = 'INTEREST';
   static const String colTotalDue = 'TOTAL DUE';
-  static const String colDays = 'DAYS OVERDUE';
+  static const String colDays = 'AGE';
   static const String colActions = 'ACTIONS';
 
   // --- RISK LABELS ---
@@ -55,22 +60,23 @@ class DefaulterStrings {
 
   // --- AMOUNT FORMAT ---
   static const String rupeeSymbol = '₹';
-  static const String interestRateUnit = '% / mo';
+  static const String interestRateUnit = '% monthly';
 
   // --- ACTION BUTTONS ---
   static const String btnCall = 'Call';
   static const String btnNotify = 'Notify';
-  static const String btnView = 'View';
+  static const String btnView = 'Open Account';
+  static const String btnInterest = 'Collect Interest';
 
   // --- EMPTY STATE ---
-  static const String emptyTitle = 'No Defaulters Found';
+  static const String emptyTitle = 'No Risk Accounts Found';
   static const String emptySubtitle =
-      'All Girvi loan accounts are up to date.\nNo active loan dues found.';
+      'All Girvi accounts are currently under control.\nNo overdue collection risk found.';
   static const String emptySearch = 'No results match your search.';
-  static const String emptyFilter = 'No defaulters in this category.';
+  static const String emptyFilter = 'No risk accounts in this category.';
 
   // --- LOADING ---
-  static const String loadingData = 'Loading defaulter data...';
+  static const String loadingData = 'Loading collection risk data...';
   static const String refreshing = 'Refreshing...';
 
   // --- TOOLTIPS ---

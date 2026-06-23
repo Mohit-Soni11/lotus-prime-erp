@@ -1,16 +1,15 @@
-// ==========================================
-// FILE: defaulter_stats_panel.dart
-// MODULE: Customer → Defaulter List
-// DESCRIPTION: Three animated summary stat cards at the top of the screen.
-//              Shows: Total Defaulters | Total Amount Due | Critical Cases
-// ==========================================
+// =============================================================================
+// FILE        : defaulter_stats_panel.dart
+// MODULE      : Risk & Collections
+// DESCRIPTION : Responsive executive summary cards for Girvi collection risk.
+// =============================================================================
 
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../logic/customer/defaulter_logic.dart';
 import '../../../models/customer/defaulter_model.dart';
 import '../../../theme/customer/defaulter/defaulter_theme.dart';
-import '../../../logic/customer/defaulter_logic.dart';
 
 class DefaulterStatsPanel extends StatelessWidget {
   final DefaulterStatsModel stats;
@@ -26,82 +25,94 @@ class DefaulterStatsPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: Row(
-        children: [
-          // --- Card 1: Total Defaulters ---
-          Expanded(
-            child: _StatCard(
-              isLoading: isLoading,
-              iconData: DefaulterIcons.totalCount,
-              iconBg: DefaulterColors.statTotalBg,
-              iconColor: DefaulterColors.statTotalIcon,
-              label: DefaulterStrings.statTotal,
-              valueWidget: _AnimatedCountText(
-                value: stats.totalDefaulters.toString(),
-                style: DefaulterStyles.statValue,
-              ),
-              suffixText: DefaulterStrings.statSuffix,
-              bottomRow: _RiskPills(
-                critical: stats.criticalCount,
-                high: stats.highCount,
-              ),
-            ),
-          ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = constraints.maxWidth >= 1180
+              ? 4
+              : constraints.maxWidth >= 760
+                  ? 2
+                  : 1;
+          final spacing = columns == 1 ? 10.0 : 14.0;
+          final cardWidth =
+              (constraints.maxWidth - (spacing * (columns - 1))) / columns;
 
-          const SizedBox(width: 14),
-
-          // --- Card 2: Total Amount Due ---
-          Expanded(
-            child: _StatCard(
-              isLoading: isLoading,
-              iconData: DefaulterIcons.totalAmount,
-              iconBg: DefaulterColors.statAmountBg,
-              iconColor: DefaulterColors.statAmountIcon,
-              label: DefaulterStrings.statTotalDue,
-              valueWidget: _AnimatedCountText(
-                value: DefaulterLogic.formatAmountCompact(stats.totalAmountDue),
-                style: DefaulterStyles.statAmountValue,
-              ),
-              suffixText: null,
-              bottomRow: const Text(
-                'Principal + Interest',
-                style: DefaulterStyles.statSuffix,
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 14),
-
-          // --- Card 3: Critical Cases ---
-          Expanded(
-            child: _StatCard(
-              isLoading: isLoading,
-              iconData: DefaulterIcons.criticalCount,
-              iconBg: DefaulterColors.statCriticalBg,
-              iconColor: DefaulterColors.statCriticalIcon,
-              label: DefaulterStrings.statCritical,
-              valueWidget: _AnimatedCountText(
-                value: stats.criticalCount.toString(),
-                style: DefaulterStyles.statCriticalValue,
-              ),
-              suffixText: '> 90 days',
-              bottomRow: Text(
-                'Need immediate action',
-                style: DefaulterStyles.statSuffix.copyWith(
-                  color: DefaulterColors.riskCriticalText,
+          return Wrap(
+            spacing: spacing,
+            runSpacing: 12,
+            children: [
+              SizedBox(
+                width: cardWidth,
+                child: _StatCard(
+                  isLoading: isLoading,
+                  iconData: DefaulterIcons.totalCount,
+                  iconBg: DefaulterColors.statTotalBg,
+                  iconColor: DefaulterColors.statTotalIcon,
+                  label: DefaulterStrings.statTotal,
+                  value: stats.totalRiskAccounts.toString(),
+                  valueStyle: DefaulterStyles.statValue,
+                  footer: _RiskPills(
+                    overdue: stats.overdueCount,
+                    settlement: stats.settlementPendingCount,
+                  ),
                 ),
               ),
-            ),
-          ),
-        ],
+              SizedBox(
+                width: cardWidth,
+                child: _StatCard(
+                  isLoading: isLoading,
+                  iconData: DefaulterIcons.totalAmount,
+                  iconBg: DefaulterColors.statAmountBg,
+                  iconColor: DefaulterColors.statAmountIcon,
+                  label: DefaulterStrings.statTotalDue,
+                  value: DefaulterLogic.formatAmountCompact(
+                    stats.totalAmountDue,
+                  ),
+                  valueStyle: DefaulterStyles.statAmountValue,
+                  footerText:
+                      'Interest due ${DefaulterLogic.formatAmountCompact(stats.totalInterestDue)}',
+                ),
+              ),
+              SizedBox(
+                width: cardWidth,
+                child: _StatCard(
+                  isLoading: isLoading,
+                  iconData: DefaulterIcons.principal,
+                  iconBg: DefaulterColors.statPrincipalBg,
+                  iconColor: DefaulterColors.statPrincipalIcon,
+                  label: DefaulterStrings.statPrincipal,
+                  value: DefaulterLogic.formatAmountCompact(
+                    stats.totalPrincipalDue,
+                  ),
+                  valueStyle: DefaulterStyles.statAmountValue.copyWith(
+                    color: DefaulterColors.statPrincipalText,
+                  ),
+                  footerText: '${stats.criticalCount} critical accounts',
+                ),
+              ),
+              SizedBox(
+                width: cardWidth,
+                child: _StatCard(
+                  isLoading: isLoading,
+                  iconData: DefaulterIcons.collected,
+                  iconBg: DefaulterColors.statReceivedBg,
+                  iconColor: DefaulterColors.statReceivedIcon,
+                  label: DefaulterStrings.statReceived,
+                  value: DefaulterLogic.formatAmountCompact(
+                    stats.totalReceived,
+                  ),
+                  valueStyle: DefaulterStyles.statAmountValue.copyWith(
+                    color: DefaulterColors.statReceivedText,
+                  ),
+                  footerText: 'Updated ${stats.lastRefreshedAt}',
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
-
-// ─────────────────────────────────────────
-// STAT CARD
-// ─────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
   final bool isLoading;
@@ -109,9 +120,10 @@ class _StatCard extends StatelessWidget {
   final Color iconBg;
   final Color iconColor;
   final String label;
-  final Widget valueWidget;
-  final String? suffixText;
-  final Widget bottomRow;
+  final String value;
+  final TextStyle valueStyle;
+  final Widget? footer;
+  final String? footerText;
 
   const _StatCard({
     required this.isLoading,
@@ -119,15 +131,17 @@ class _StatCard extends StatelessWidget {
     required this.iconBg,
     required this.iconColor,
     required this.label,
-    required this.valueWidget,
-    required this.suffixText,
-    required this.bottomRow,
+    required this.value,
+    required this.valueStyle,
+    this.footer,
+    this.footerText,
   });
 
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 250),
+      constraints: const BoxConstraints(minHeight: 118),
       padding: const EdgeInsets.all(16),
       decoration: DefaulterStyles.statCardDecoration,
       child: isLoading ? _buildShimmer() : _buildContent(),
@@ -138,7 +152,6 @@ class _StatCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Icon + Label row
         Row(
           children: [
             Container(
@@ -161,28 +174,28 @@ class _StatCard extends StatelessWidget {
             ),
           ],
         ),
-
         const SizedBox(height: 12),
-
-        // Value
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            valueWidget,
-            if (suffixText != null) ...[
-              const SizedBox(width: 4),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 2),
-                child: Text(suffixText!, style: DefaulterStyles.statSuffix),
-              ),
-            ],
-          ],
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 350),
+            child: Text(
+              value,
+              key: ValueKey(value),
+              style: valueStyle,
+              maxLines: 1,
+            ),
+          ),
         ),
-
         const SizedBox(height: 8),
-
-        // Bottom row (risk pills or note)
-        bottomRow,
+        footer ??
+            Text(
+              footerText ?? '',
+              style: DefaulterStyles.statSuffix,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
       ],
     );
   }
@@ -194,11 +207,11 @@ class _StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(width: 80, height: 14, decoration: _shimmerBox),
+          Container(width: 110, height: 14, decoration: _shimmerBox),
+          const SizedBox(height: 16),
+          Container(width: 140, height: 26, decoration: _shimmerBox),
           const SizedBox(height: 12),
-          Container(width: 60, height: 28, decoration: _shimmerBox),
-          const SizedBox(height: 8),
-          Container(width: 100, height: 12, decoration: _shimmerBox),
+          Container(width: 120, height: 12, decoration: _shimmerBox),
         ],
       ),
     );
@@ -210,73 +223,41 @@ class _StatCard extends StatelessWidget {
       );
 }
 
-// ─────────────────────────────────────────
-// ANIMATED COUNT TEXT
-// ─────────────────────────────────────────
-
-class _AnimatedCountText extends StatelessWidget {
-  final String value;
-  final TextStyle style;
-
-  const _AnimatedCountText({required this.value, required this.style});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 500),
-      switchInCurve: Curves.elasticOut,
-      switchOutCurve: Curves.easeIn,
-      transitionBuilder: (child, anim) =>
-          ScaleTransition(scale: anim, child: child),
-      child: Text(
-        value,
-        key: ValueKey<String>(value),
-        style: style,
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────
-// RISK PILLS (inside total card)
-// ─────────────────────────────────────────
-
 class _RiskPills extends StatelessWidget {
-  final int critical;
-  final int high;
+  final int overdue;
+  final int settlement;
 
-  const _RiskPills({required this.critical, required this.high});
+  const _RiskPills({
+    required this.overdue,
+    required this.settlement,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
       children: [
-        if (critical > 0)
+        _pill(
+          '$overdue overdue',
+          DefaulterColors.riskCriticalText,
+          DefaulterColors.riskCriticalBg,
+        ),
+        if (settlement > 0)
           _pill(
-            label: '$critical Critical',
-            color: DefaulterColors.riskCriticalText,
-            bg: DefaulterColors.riskCriticalBg,
+            '$settlement settlement',
+            DefaulterColors.riskHighText,
+            DefaulterColors.riskHighBg,
           ),
-        if (critical > 0 && high > 0) const SizedBox(width: 6),
-        if (high > 0)
-          _pill(
-            label: '$high High',
-            color: DefaulterColors.riskHighText,
-            bg: DefaulterColors.riskHighBg,
-          ),
-        if (critical == 0 && high == 0)
-          const Text('All manageable', style: DefaulterStyles.statSuffix),
+        if (overdue == 0 && settlement == 0)
+          const Text('Portfolio controlled', style: DefaulterStyles.statSuffix),
       ],
     );
   }
 
-  Widget _pill({
-    required String label,
-    required Color color,
-    required Color bg,
-  }) {
+  Widget _pill(String label, Color color, Color bg) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),
@@ -285,7 +266,7 @@ class _RiskPills extends StatelessWidget {
         label,
         style: TextStyle(
           fontSize: 10,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           color: color,
         ),
       ),

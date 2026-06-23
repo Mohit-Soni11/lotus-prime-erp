@@ -39,12 +39,18 @@ class _DefaulterFilterBarState extends State<DefaulterFilterBar> {
   void initState() {
     super.initState();
     _searchCtrl = TextEditingController(text: widget.searchQuery);
+    _searchCtrl.addListener(_handleSearchTextChanged);
   }
 
   @override
   void dispose() {
+    _searchCtrl.removeListener(_handleSearchTextChanged);
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  void _handleSearchTextChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -178,6 +184,8 @@ class _SortDropdown extends StatelessWidget {
                 DefaulterSortBy.daysOverdue, DefaulterStrings.sortOverdue),
             _sortItem(DefaulterSortBy.amountDue, DefaulterStrings.sortAmount),
             _sortItem(DefaulterSortBy.customerName, DefaulterStrings.sortName),
+            _sortItem(
+                DefaulterSortBy.lastActivity, DefaulterStrings.sortRecent),
           ],
           onChanged: (val) {
             if (val != null) onSortChanged(val);
@@ -216,6 +224,11 @@ class _FilterChips extends StatelessWidget {
     final chips = [
       (DefaulterFilterBy.all, DefaulterStrings.filterAll, null),
       (
+        DefaulterFilterBy.overdue,
+        DefaulterStrings.filterOverdue,
+        DefaulterColors.riskCriticalText
+      ),
+      (
         DefaulterFilterBy.critical,
         DefaulterStrings.filterCritical,
         DefaulterColors.riskCriticalText
@@ -235,7 +248,11 @@ class _FilterChips extends StatelessWidget {
         DefaulterStrings.filterLow,
         DefaulterColors.riskLowText
       ),
-      (DefaulterFilterBy.loanOnly, DefaulterStrings.filterLoan, null),
+      (
+        DefaulterFilterBy.settlementPending,
+        DefaulterStrings.filterSettlement,
+        DefaulterColors.riskHighText
+      ),
     ];
 
     return SizedBox(

@@ -196,106 +196,136 @@ extension InterestEntryLayout on _InterestCalcScreenState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: GirviColors.brandGold.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: GirviColors.brandGold.withValues(alpha: 0.30),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compactHeader = constraints.maxWidth < 720;
+              final identity = Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 54,
+                    height: 54,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: GirviColors.brandGold.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: GirviColors.brandGold.withValues(alpha: 0.30),
+                      ),
+                    ),
+                    child: const Icon(
+                      GirviIcons.ticket,
+                      color: GirviColors.brandGold,
+                      size: 24,
+                    ),
                   ),
-                ),
-                child: const Icon(
-                  GirviIcons.ticket,
-                  color: GirviColors.brandGold,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Loan Overview',
-                      style: GoogleFonts.inter(
-                        color: GirviColors.textDark,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.8,
-                      ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Loan Overview',
+                          style: GoogleFonts.inter(
+                            color: GirviColors.textDark,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          loan.ticketNo,
+                          style: GoogleFonts.robotoMono(
+                            color: GirviColors.brandGold,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${data.customerName}  |  ${data.customerMobile}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            color: GirviColors.textDark,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          [
+                            loan.itemSummary,
+                            if ((data.customerCity ?? '').trim().isNotEmpty)
+                              data.customerCity!.trim(),
+                          ].join('  |  '),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            color: GirviColors.textDark,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 5),
-                    Text(
-                      loan.ticketNo,
-                      style: GoogleFonts.robotoMono(
-                        color: GirviColors.brandGold,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${data.customerName}  |  ${data.customerMobile}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        color: GirviColors.textDark,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      [
-                        loan.itemSummary,
-                        if ((data.customerCity ?? '').trim().isNotEmpty)
-                          data.customerCity!.trim(),
-                      ].join('  |  '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        color: GirviColors.textDark,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              SizedBox(
-                width: 150,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    _StatusPill(
-                        label: loan.statusLabel, color: loan.statusColor),
-                    const SizedBox(height: 8),
-                    _OverviewActionButton(
+                  ),
+                ],
+              );
+              final actions = Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment:
+                    compactHeader ? WrapAlignment.start : WrapAlignment.end,
+                children: [
+                  _StatusPill(label: loan.statusLabel, color: loan.statusColor),
+                  SizedBox(
+                    width: 132,
+                    child: _OverviewActionButton(
                       label: 'Change Bill',
                       icon: Icons.swap_horiz_rounded,
                       busy: false,
                       onTap: _ctrl.showBillSelectionForSelectedCustomer,
                     ),
-                    const SizedBox(height: 8),
-                    _OverviewActionButton(
+                  ),
+                  SizedBox(
+                    width: 160,
+                    child: _OverviewActionButton(
                       label:
                           _openingReceipt ? 'Opening...' : 'View Girvi Invoice',
                       icon: Icons.visibility_rounded,
                       busy: _openingReceipt,
                       onTap: () => _previewGirviReceipt(data),
                     ),
+                  ),
+                ],
+              );
+
+              if (compactHeader) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    identity,
+                    const SizedBox(height: 12),
+                    actions,
                   ],
-                ),
-              ),
-            ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: identity),
+                  const SizedBox(width: 12),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 330),
+                    child: actions,
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 16),
           _CollectionFocusStrip(

@@ -58,6 +58,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
 
   final _moneyFmt = NumberFormat('#,##,##0', 'en_IN');
   final _dateFmt = DateFormat('dd MMM yyyy');
+  final _dateTimeFmt = DateFormat('dd MMM yyyy, hh:mm a');
   bool _syncingText = false;
   bool _openingReceipt = false;
 
@@ -185,6 +186,11 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
   }
 
   Future<void> _recordPayment() async {
+    if (_ctrl.isReadyForDelivery) {
+      final confirmed = await _confirmReadyDelivery();
+      if (!confirmed) return;
+    }
+
     final ok = await _ctrl.recordPayment();
     if (!mounted || !ok) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -194,6 +200,155 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  Future<bool> _confirmReadyDelivery() async {
+    final selected = _ctrl.selectedLoan;
+    if (selected == null) return false;
+    final loan = selected.loan;
+    final expectedDate = loan.expectedDeliveryDate == null
+        ? 'Not set'
+        : _dateFmt.format(loan.expectedDeliveryDate!);
+    final nowLabel = _dateTimeFmt.format(DateTime.now());
+
+    return await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) {
+            return AlertDialog(
+              backgroundColor: GirviColors.cardBg,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+              contentPadding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+              actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 18),
+              title: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: GirviColors.success.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: const Icon(
+                      Icons.inventory_2_rounded,
+                      color: GirviColors.success,
+                      size: 19,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Confirm Item Delivery',
+                      style: GoogleFonts.manrope(
+                        color: GirviColors.textDark,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: 430,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'This will mark ticket ${loan.ticketNo} as delivered and closed.',
+                      style: GoogleFonts.inter(
+                        color: GirviColors.textBody,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _DeliveryConfirmLine(
+                      label: 'Customer',
+                      value: selected.customerName,
+                    ),
+                    _DeliveryConfirmLine(
+                      label: 'Expected Pickup',
+                      value: expectedDate,
+                    ),
+                    _DeliveryConfirmLine(
+                      label: 'Delivery Time',
+                      value: nowLabel,
+                    ),
+                    const _DeliveryConfirmLine(
+                      label: 'Settlement Status',
+                      value: 'Balance cleared',
+                      valueColor: GirviColors.success,
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: GirviColors.warning.withValues(alpha: 0.09),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: GirviColors.warning.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.verified_user_rounded,
+                            color: GirviColors.warning,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 9),
+                          Expanded(
+                            child: Text(
+                              'Verify pledged item, customer identity and receipt before handover.',
+                              style: GoogleFonts.inter(
+                                color: GirviColors.textDark,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.inter(
+                      color: GirviColors.textMuted,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: GirviColors.success,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  icon: const Icon(Icons.inventory_2_rounded, size: 18),
+                  label: Text(
+                    'Confirm Delivery',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
   }
 
   void _setPaymentAmount(double value) {
@@ -419,6 +574,52 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _DeliveryConfirmLine extends StatelessWidget {
+  const _DeliveryConfirmLine({
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 128,
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                color: GirviColors.textMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: GoogleFonts.inter(
+                color: valueColor ?? GirviColors.textDark,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

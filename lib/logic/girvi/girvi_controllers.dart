@@ -155,7 +155,7 @@ class GirviListController extends ChangeNotifier {
   Future<void> reload() => load();
 }
 
-/// Handles the legacy direct Girvi release workflow.
+/// Handles legacy release-screen delivery without bypassing settlement.
 class GirviReleaseController extends ChangeNotifier {
   final GirviRepository _repo;
   final GirviLoanModel loan;
@@ -218,8 +218,14 @@ class GirviReleaseController extends ChangeNotifier {
   String? get successMessage => _successMessage;
 
   Future<bool> processRelease({String? notes, String? releasedBy}) async {
-    if (_total <= 0) {
-      _errorMessage = 'Total release amount must be greater than zero';
+    if (loan.girviStatus == GirviStatus.released) {
+      _errorMessage = 'Girvi is already delivered and closed.';
+      notifyListeners();
+      return false;
+    }
+    if (loan.girviStatus != GirviStatus.readyForDelivery) {
+      _errorMessage =
+          'Complete the settlement in Interest Entry before delivery.';
       notifyListeners();
       return false;
     }
@@ -229,21 +235,16 @@ class GirviReleaseController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final ok = await _repo.releaseLoan(
+      final ok = await _repo.markGirviDelivered(
         loanId: loan.id,
-        principal: _principal,
-        interest: _interest,
-        penalty: _penalty,
-        totalAmount: _total,
-        paymentMode: _paymentMode.dbValue,
-        notes: notes,
-        releasedBy: releasedBy,
+        deliveredAt: DateTime.now(),
+        deliveredBy: releasedBy,
       );
 
       if (ok) {
-        _successMessage = 'Girvi ${loan.ticketNo} released successfully!';
+        _successMessage = 'Girvi ${loan.ticketNo} delivered successfully!';
       } else {
-        _errorMessage = 'Release failed. Please try again.';
+        _errorMessage = 'Delivery failed. Please try again.';
       }
 
       _isProcessing = false;

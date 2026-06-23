@@ -1809,10 +1809,12 @@ class _GirviInvoiceFlipPreview extends StatefulWidget {
   const _GirviInvoiceFlipPreview({
     required this.sides,
     required this.onClose,
+    this.singleSideLabel = 'Invoice preview',
   });
 
   final List<PdfRaster> sides;
   final VoidCallback onClose;
+  final String singleSideLabel;
 
   @override
   State<_GirviInvoiceFlipPreview> createState() =>
@@ -1979,7 +1981,10 @@ class _GirviInvoiceFlipPreviewState extends State<_GirviInvoiceFlipPreview>
           Positioned(
             left: 18,
             bottom: 18,
-            child: _InvoiceFlipHint(canFlip: widget.sides.length > 1),
+            child: _InvoiceFlipHint(
+              canFlip: widget.sides.length > 1,
+              singleSideLabel: widget.singleSideLabel,
+            ),
           ),
           Positioned(
             right: 18,
@@ -1999,9 +2004,13 @@ class _GirviInvoiceFlipPreviewState extends State<_GirviInvoiceFlipPreview>
 }
 
 class _InvoiceFlipHint extends StatelessWidget {
-  const _InvoiceFlipHint({required this.canFlip});
+  const _InvoiceFlipHint({
+    required this.canFlip,
+    required this.singleSideLabel,
+  });
 
   final bool canFlip;
+  final String singleSideLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -2020,7 +2029,7 @@ class _InvoiceFlipHint extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              canFlip ? 'Double click to flip front/back' : 'Invoice preview',
+              canFlip ? 'Double click to flip front/back' : singleSideLabel,
               style: GoogleFonts.inter(
                 color: Colors.white,
                 fontSize: 12,

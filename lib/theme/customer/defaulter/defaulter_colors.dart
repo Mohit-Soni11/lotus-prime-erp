@@ -79,6 +79,14 @@ class DefaulterColors {
   static const Color statCriticalIcon = Color(0xFFE53935);
   static const Color statCriticalText = Color(0xFFB71C1C);
 
+  static const Color statPrincipalBg = Color(0xFFEFF6FF);
+  static const Color statPrincipalIcon = Color(0xFF2563EB);
+  static const Color statPrincipalText = Color(0xFF1D4ED8);
+
+  static const Color statReceivedBg = Color(0xFFECFDF5);
+  static const Color statReceivedIcon = Color(0xFF059669);
+  static const Color statReceivedText = Color(0xFF047857);
+
   // --- ACTION BUTTONS ---
   static const Color callBtnBg = Color(0xFF1B5E20);
   static const Color callBtnText = Color(0xFFFFFFFF);

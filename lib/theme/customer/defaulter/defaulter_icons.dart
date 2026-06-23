@@ -22,6 +22,8 @@ class DefaulterIcons {
   static const IconData totalCount = Icons.people_alt_outlined;
   static const IconData totalAmount = Icons.currency_rupee_rounded;
   static const IconData criticalCount = Icons.local_fire_department_rounded;
+  static const IconData principal = Icons.account_balance_wallet_outlined;
+  static const IconData collected = Icons.payments_outlined;
 
   // --- RISK LEVELS ---
   static const IconData riskCritical = Icons.crisis_alert_rounded;
@@ -37,6 +39,8 @@ class DefaulterIcons {
   static const IconData viewProfile = Icons.open_in_new_rounded;
   static const IconData cityPin = Icons.location_on_outlined;
   static const IconData loanTag = Icons.sell_outlined;
+  static const IconData openAccount = Icons.receipt_long_outlined;
+  static const IconData collectInterest = Icons.percent_rounded;
 
   // --- FILTER & SEARCH ---
   static const IconData search = Icons.search_rounded;

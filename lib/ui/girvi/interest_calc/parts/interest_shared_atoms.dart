@@ -106,12 +106,16 @@ class _OverviewActionButton extends StatelessWidget {
             else
               Icon(icon, color: GirviColors.brandGold, size: 15),
             const SizedBox(width: 7),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                color: GirviColors.shellTextTitle,
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: GirviColors.shellTextTitle,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
           ],

@@ -1,31 +1,27 @@
-// ==========================================
-// FILE: defaulter_model.dart
-// MODULE: Customer → Defaulter List
-// DESCRIPTION: Data models for defaulter list screen.
-//              Defines DefaulterModel, DefaulterRiskLevel, DefaulterType,
-//              and DefaulterStatsModel used across logic and UI.
-// ==========================================
-
-// ==========================================
-// ENUMS
-// ==========================================
+// =============================================================================
+// FILE        : defaulter_model.dart
+// MODULE      : Risk & Collections
+// LAYER       : Presentation Model
+// DESCRIPTION : Screen models for the Girvi risk and collection command center.
+// =============================================================================
 
 enum DefaulterRiskLevel {
-  critical, // > 90 days overdue
-  high, // 60–90 days
-  medium, // 30–60 days
-  low, // < 30 days (newly flagged)
+  critical,
+  high,
+  medium,
+  low,
 }
 
 enum DefaulterType {
-  loan, // Overdue girvi / loan
-  bill, // Unpaid bill balance
+  loan,
+  bill,
 }
 
 enum DefaulterSortBy {
   daysOverdue,
   amountDue,
   customerName,
+  lastActivity,
 }
 
 enum DefaulterFilterBy {
@@ -34,143 +30,164 @@ enum DefaulterFilterBy {
   high,
   medium,
   low,
-  loanOnly,
+  overdue,
+  settlementPending,
 }
 
-// ==========================================
-// DEFAULTER MODEL (Single Row)
-// ==========================================
-
 class DefaulterModel {
+  final int loanId;
   final int customerId;
   final String customerName;
   final String mobile;
   final String city;
-  final String customerType; // 'Regular' | 'VIP'
+  final String address;
+  final String customerType;
   final DefaulterType defaulterType;
-  final String referenceNo; // e.g. "LN-205" or "INV-26-1012"
+  final String referenceNo;
+  final String itemSummary;
+  final String statusLabel;
+  final String statusValue;
   final double principalAmount;
-  final double interestRate; // % per month
-  final double interestAccrued; // Calculated: P × R × months
-  final double totalDue; // principal + interest
+  final double principalOutstanding;
+  final double interestRate;
+  final double interestAccrued;
+  final double interestOutstanding;
+  final double totalDue;
+  final double totalReceived;
+  final double totalItemValue;
+  final double netWeight;
   final DateTime startDate;
+  final DateTime? maturityDate;
+  final DateTime? lastPaymentDate;
+  final DateTime lastActivityAt;
   final int daysOverdue;
+  final double monthsOverdue;
   final DefaulterRiskLevel riskLevel;
 
   const DefaulterModel({
+    required this.loanId,
     required this.customerId,
     required this.customerName,
     required this.mobile,
     required this.city,
+    required this.address,
     required this.customerType,
     required this.defaulterType,
     required this.referenceNo,
+    required this.itemSummary,
+    required this.statusLabel,
+    required this.statusValue,
     required this.principalAmount,
+    required this.principalOutstanding,
     required this.interestRate,
     required this.interestAccrued,
+    required this.interestOutstanding,
     required this.totalDue,
+    required this.totalReceived,
+    required this.totalItemValue,
+    required this.netWeight,
     required this.startDate,
+    required this.maturityDate,
+    required this.lastPaymentDate,
+    required this.lastActivityAt,
     required this.daysOverdue,
+    required this.monthsOverdue,
     required this.riskLevel,
   });
 
-  // ==========================================
-  // FACTORY: Risk Level from days
-  // ==========================================
+  bool get isOverdue => daysOverdue > 0;
+  bool get isSettlementPending => statusValue == 'PARTIAL_RELEASE';
+  bool get hasPaymentHistory => totalReceived > 0 || lastPaymentDate != null;
+
+  String get collectionStage {
+    if (isSettlementPending) return 'Settlement Pending';
+    switch (riskLevel) {
+      case DefaulterRiskLevel.critical:
+        return 'Auction Review';
+      case DefaulterRiskLevel.high:
+        return 'Final Notice';
+      case DefaulterRiskLevel.medium:
+        return 'Payment Follow-up';
+      case DefaulterRiskLevel.low:
+        return 'Early Reminder';
+    }
+  }
+
+  String get nextActionLabel {
+    if (isSettlementPending) return 'Close settlement workflow';
+    switch (riskLevel) {
+      case DefaulterRiskLevel.critical:
+        return 'Review for notice or auction';
+      case DefaulterRiskLevel.high:
+        return 'Call customer and collect interest';
+      case DefaulterRiskLevel.medium:
+        return 'Schedule payment follow-up';
+      case DefaulterRiskLevel.low:
+        return 'Send reminder';
+    }
+  }
+
   static DefaulterRiskLevel riskFromDays(int days) {
-    if (days > 90) return DefaulterRiskLevel.critical;
-    if (days > 60) return DefaulterRiskLevel.high;
-    if (days > 30) return DefaulterRiskLevel.medium;
+    if (days >= 90) return DefaulterRiskLevel.critical;
+    if (days >= 60) return DefaulterRiskLevel.high;
+    if (days >= 30) return DefaulterRiskLevel.medium;
     return DefaulterRiskLevel.low;
-  }
-
-  // ==========================================
-  // FACTORY: Simple Interest calculation
-  // ==========================================
-  static double calculateInterest({
-    required double principal,
-    required double ratePerMonth,
-    required int daysElapsed,
-  }) {
-    final double months = daysElapsed / 30.0;
-    return (principal * ratePerMonth * months) / 100.0;
-  }
-
-  // ==========================================
-  // COPY WITH (for state updates)
-  // ==========================================
-  DefaulterModel copyWith({
-    int? customerId,
-    String? customerName,
-    String? mobile,
-    String? city,
-    String? customerType,
-    DefaulterType? defaulterType,
-    String? referenceNo,
-    double? principalAmount,
-    double? interestRate,
-    double? interestAccrued,
-    double? totalDue,
-    DateTime? startDate,
-    int? daysOverdue,
-    DefaulterRiskLevel? riskLevel,
-  }) {
-    return DefaulterModel(
-      customerId: customerId ?? this.customerId,
-      customerName: customerName ?? this.customerName,
-      mobile: mobile ?? this.mobile,
-      city: city ?? this.city,
-      customerType: customerType ?? this.customerType,
-      defaulterType: defaulterType ?? this.defaulterType,
-      referenceNo: referenceNo ?? this.referenceNo,
-      principalAmount: principalAmount ?? this.principalAmount,
-      interestRate: interestRate ?? this.interestRate,
-      interestAccrued: interestAccrued ?? this.interestAccrued,
-      totalDue: totalDue ?? this.totalDue,
-      startDate: startDate ?? this.startDate,
-      daysOverdue: daysOverdue ?? this.daysOverdue,
-      riskLevel: riskLevel ?? this.riskLevel,
-    );
   }
 
   @override
   String toString() {
-    return 'DefaulterModel(id: $customerId, name: $customerName, '
-        'days: $daysOverdue, due: $totalDue, risk: $riskLevel)';
+    return 'DefaulterModel(loanId: $loanId, ticket: $referenceNo, '
+        'customer: $customerName, due: $totalDue, risk: $riskLevel)';
   }
 }
 
-// ==========================================
-// STATS MODEL (Summary Panel)
-// ==========================================
-
 class DefaulterStatsModel {
-  final int totalDefaulters;
+  final int totalRiskAccounts;
+  final int overdueCount;
+  final int settlementPendingCount;
   final double totalAmountDue;
+  final double totalPrincipalDue;
+  final double totalInterestDue;
+  final double totalReceived;
   final int criticalCount;
   final int highCount;
   final int mediumCount;
   final int lowCount;
+  final int highestRiskDays;
   final String lastRefreshedAt;
 
   const DefaulterStatsModel({
-    required this.totalDefaulters,
+    required this.totalRiskAccounts,
+    required this.overdueCount,
+    required this.settlementPendingCount,
     required this.totalAmountDue,
+    required this.totalPrincipalDue,
+    required this.totalInterestDue,
+    required this.totalReceived,
     required this.criticalCount,
     required this.highCount,
     required this.mediumCount,
     required this.lowCount,
+    required this.highestRiskDays,
     required this.lastRefreshedAt,
   });
 
+  int get totalDefaulters => totalRiskAccounts;
+
   factory DefaulterStatsModel.empty() {
     return const DefaulterStatsModel(
-      totalDefaulters: 0,
-      totalAmountDue: 0.0,
+      totalRiskAccounts: 0,
+      overdueCount: 0,
+      settlementPendingCount: 0,
+      totalAmountDue: 0,
+      totalPrincipalDue: 0,
+      totalInterestDue: 0,
+      totalReceived: 0,
       criticalCount: 0,
       highCount: 0,
       mediumCount: 0,
       lowCount: 0,
+      highestRiskDays: 0,
       lastRefreshedAt: '--:--',
     );
   }
@@ -181,8 +198,14 @@ class DefaulterStatsModel {
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
 
     return DefaulterStatsModel(
-      totalDefaulters: list.length,
+      totalRiskAccounts: list.length,
+      overdueCount: list.where((d) => d.isOverdue).length,
+      settlementPendingCount: list.where((d) => d.isSettlementPending).length,
       totalAmountDue: list.fold(0.0, (sum, d) => sum + d.totalDue),
+      totalPrincipalDue:
+          list.fold(0.0, (sum, d) => sum + d.principalOutstanding),
+      totalInterestDue: list.fold(0.0, (sum, d) => sum + d.interestOutstanding),
+      totalReceived: list.fold(0.0, (sum, d) => sum + d.totalReceived),
       criticalCount:
           list.where((d) => d.riskLevel == DefaulterRiskLevel.critical).length,
       highCount:
@@ -190,14 +213,14 @@ class DefaulterStatsModel {
       mediumCount:
           list.where((d) => d.riskLevel == DefaulterRiskLevel.medium).length,
       lowCount: list.where((d) => d.riskLevel == DefaulterRiskLevel.low).length,
+      highestRiskDays: list.fold<int>(
+        0,
+        (max, d) => d.daysOverdue > max ? d.daysOverdue : max,
+      ),
       lastRefreshedAt: time,
     );
   }
 }
-
-// ==========================================
-// UI STATE MODEL (for logic layer)
-// ==========================================
 
 class DefaulterScreenState {
   final List<DefaulterModel> allDefaulters;
@@ -222,8 +245,8 @@ class DefaulterScreenState {
 
   factory DefaulterScreenState.initial() {
     return DefaulterScreenState(
-      allDefaulters: [],
-      displayedDefaulters: [],
+      allDefaulters: const [],
+      displayedDefaulters: const [],
       stats: DefaulterStatsModel.empty(),
       activeFilter: DefaulterFilterBy.all,
       activeSort: DefaulterSortBy.daysOverdue,

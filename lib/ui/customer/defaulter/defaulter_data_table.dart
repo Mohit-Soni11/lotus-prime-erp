@@ -1,30 +1,32 @@
-// ==========================================
-// FILE: defaulter_data_table.dart
-// MODULE: Customer â†’ Defaulter List
-// DESCRIPTION: Main data table widget.
-//              Shows defaulter rows with risk badges, amounts, actions.
-//              Handles: loading shimmer, empty state, hover effects.
-// ==========================================
+// =============================================================================
+// FILE        : defaulter_data_table.dart
+// MODULE      : Risk & Collections
+// DESCRIPTION : Premium collection queue for live Girvi risk accounts.
+// =============================================================================
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../logic/customer/defaulter_logic.dart';
 import '../../../models/customer/defaulter_model.dart';
 import '../../../theme/customer/defaulter/defaulter_theme.dart';
-import '../../../logic/customer/defaulter_logic.dart';
 
 class DefaulterDataTable extends StatelessWidget {
   final List<DefaulterModel> defaulters;
   final bool isLoading;
   final String? errorMessage;
+  final ValueChanged<DefaulterModel> onOpenAccount;
+  final ValueChanged<DefaulterModel> onOpenInterestEntry;
 
   const DefaulterDataTable({
     super.key,
     required this.defaulters,
     required this.isLoading,
+    required this.onOpenAccount,
+    required this.onOpenInterestEntry,
     this.errorMessage,
   });
 
@@ -36,16 +38,16 @@ class DefaulterDataTable extends StatelessWidget {
         decoration: DefaulterStyles.tableContainerDecoration,
         child: Column(
           children: [
-            // Table Header
-            _TableHeader(),
-
-            // Table Body
+            _QueueHeader(count: defaulters.length),
             Expanded(
-                child: _TableBody(
-              defaulters: defaulters,
-              isLoading: isLoading,
-              errorMessage: errorMessage,
-            )),
+              child: _QueueBody(
+                defaulters: defaulters,
+                isLoading: isLoading,
+                errorMessage: errorMessage,
+                onOpenAccount: onOpenAccount,
+                onOpenInterestEntry: onOpenInterestEntry,
+              ),
+            ),
           ],
         ),
       ),
@@ -53,317 +55,319 @@ class DefaulterDataTable extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// TABLE HEADER
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+class _QueueHeader extends StatelessWidget {
+  final int count;
 
-class _TableHeader extends StatelessWidget {
+  const _QueueHeader({required this.count});
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 44,
+      height: 58,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
       decoration: DefaulterStyles.tableHeaderDecoration,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          _headerCell(DefaulterStrings.colCustomer, flex: 4),
-          _headerCell(DefaulterStrings.colRisk, flex: 2, center: true),
-          _headerCell(DefaulterStrings.colReference, flex: 2),
-          _headerCell(DefaulterStrings.colPrincipal, flex: 2, center: true),
-          _headerCell(DefaulterStrings.colInterest, flex: 2, center: true),
-          _headerCell(DefaulterStrings.colTotalDue, flex: 2, center: true),
-          _headerCell(DefaulterStrings.colDays, flex: 2, center: true),
-          _headerCell(DefaulterStrings.colActions, flex: 2, center: true),
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: DefaulterColors.brandGoldLight,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: DefaulterColors.brandGold.withValues(alpha: 0.35),
+              ),
+            ),
+            child: const Icon(
+              DefaulterIcons.defaulterShield,
+              size: 18,
+              color: DefaulterColors.brandGoldDark,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Collection Queue',
+                  style: DefaulterStyles.customerName.copyWith(fontSize: 15),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$count live Girvi account${count == 1 ? '' : 's'} requiring control',
+                  style: DefaulterStyles.customerCity,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const _HeaderBadge(label: 'Live Risk View'),
         ],
-      ),
-    );
-  }
-
-  Widget _headerCell(String label, {int flex = 1, bool center = false}) {
-    return Expanded(
-      flex: flex,
-      child: Text(
-        label,
-        textAlign: center ? TextAlign.center : TextAlign.left,
-        style: DefaulterStyles.tableHeader,
       ),
     );
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// TABLE BODY
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+class _HeaderBadge extends StatelessWidget {
+  final String label;
 
-class _TableBody extends StatelessWidget {
+  const _HeaderBadge({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: DefaulterColors.shellBg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: DefaulterStyles.riskBadgeText.copyWith(
+          color: DefaulterColors.shellTextTitle,
+        ),
+      ),
+    );
+  }
+}
+
+class _QueueBody extends StatelessWidget {
   final List<DefaulterModel> defaulters;
   final bool isLoading;
   final String? errorMessage;
+  final ValueChanged<DefaulterModel> onOpenAccount;
+  final ValueChanged<DefaulterModel> onOpenInterestEntry;
 
-  const _TableBody({
+  const _QueueBody({
     required this.defaulters,
     required this.isLoading,
+    required this.onOpenAccount,
+    required this.onOpenInterestEntry,
     this.errorMessage,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return _ShimmerRows();
-    }
+    if (isLoading) return const _ShimmerRows();
+    if (errorMessage != null) return _ErrorState(message: errorMessage!);
+    if (defaulters.isEmpty) return const _EmptyState();
 
-    if (errorMessage != null) {
-      return _ErrorState(message: errorMessage!);
-    }
-
-    if (defaulters.isEmpty) {
-      return const _EmptyState();
-    }
-
-    return ListView.builder(
+    return ListView.separated(
+      padding: const EdgeInsets.all(14),
       itemCount: defaulters.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final defaulter = defaulters[index];
-        return _DefaulterRow(
-          defaulter: defaulter,
-          isAlternate: index.isOdd,
+        final account = defaulters[index];
+        return _RiskAccountCard(
+          account: account,
+          onOpenAccount: () => onOpenAccount(account),
+          onOpenInterestEntry: () => onOpenInterestEntry(account),
         );
       },
     );
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// DEFAULTER ROW
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+class _RiskAccountCard extends StatefulWidget {
+  final DefaulterModel account;
+  final VoidCallback onOpenAccount;
+  final VoidCallback onOpenInterestEntry;
 
-class _DefaulterRow extends StatefulWidget {
-  final DefaulterModel defaulter;
-  final bool isAlternate;
-
-  const _DefaulterRow({
-    required this.defaulter,
-    required this.isAlternate,
+  const _RiskAccountCard({
+    required this.account,
+    required this.onOpenAccount,
+    required this.onOpenInterestEntry,
   });
 
   @override
-  State<_DefaulterRow> createState() => _DefaulterRowState();
+  State<_RiskAccountCard> createState() => _RiskAccountCardState();
 }
 
-class _DefaulterRowState extends State<_DefaulterRow> {
-  bool _isHovered = false;
+class _RiskAccountCardState extends State<_RiskAccountCard> {
+  bool _hovered = false;
 
-  static final _dateFmt = DateFormat('dd MMM yyyy');
+  static final DateFormat _dateFmt = DateFormat('dd MMM yyyy');
 
   @override
   Widget build(BuildContext context) {
-    final d = widget.defaulter;
+    final account = widget.account;
 
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        height: 58,
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: _isHovered
+          color: _hovered
               ? DefaulterColors.tableHoverBg
-              : (widget.isAlternate
-                  ? DefaulterColors.tableRowAlt
-                  : DefaulterColors.bodyPanelBg),
-          border: const Border(
-            bottom: BorderSide(color: DefaulterColors.tableDivider, width: 0.8),
+              : DefaulterColors.bodyPanelBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: _riskBorder(account.riskLevel).withValues(
+              alpha: _hovered ? 0.65 : 0.28,
+            ),
           ),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          children: [
-            // --- Customer Info ---
-            Expanded(
-              flex: 4,
-              child: _CustomerCell(
-                name: d.customerName,
-                mobile: d.mobile,
-                city: d.city,
-                type: d.customerType,
-              ),
-            ),
-
-            // --- Risk Badge ---
-            Expanded(
-              flex: 2,
-              child: Center(child: _RiskBadge(level: d.riskLevel)),
-            ),
-
-            // --- Reference No ---
-            Expanded(
-              flex: 2,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(d.referenceNo, style: DefaulterStyles.refNumber),
-                  Text(
-                    _dateFmt.format(d.startDate),
-                    style: DefaulterStyles.customerCity,
-                  ),
-                ],
-              ),
-            ),
-
-            // --- Principal Amount ---
-            Expanded(
-              flex: 2,
-              child: Center(
-                child: Text(
-                  DefaulterLogic.formatAmountCompact(d.principalAmount),
-                  style: DefaulterStyles.amountText,
-                ),
-              ),
-            ),
-
-            // --- Interest Accrued ---
-            Expanded(
-              flex: 2,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      DefaulterLogic.formatAmountCompact(d.interestAccrued),
-                      style: DefaulterStyles.amountText.copyWith(
-                        color: DefaulterColors.riskHighText,
-                        fontSize: 13,
-                      ),
-                    ),
-                    Text(
-                      '${d.interestRate.toStringAsFixed(1)}${DefaulterStrings.interestRateUnit}',
-                      style: DefaulterStyles.interestRate,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // --- Total Due ---
-            Expanded(
-              flex: 2,
-              child: Center(
-                child: Text(
-                  DefaulterLogic.formatAmountCompact(d.totalDue),
-                  style: DefaulterStyles.amountTotalDue,
-                ),
-              ),
-            ),
-
-            // --- Days Overdue ---
-            Expanded(
-              flex: 2,
-              child: Center(
-                  child: _DaysOverdueCell(
-                      days: d.daysOverdue, level: d.riskLevel)),
-            ),
-
-            // --- Action Buttons ---
-            Expanded(
-              flex: 2,
-              child: Center(child: _ActionButtons(mobile: d.mobile)),
+          boxShadow: [
+            BoxShadow(
+              color: _hovered
+                  ? DefaulterColors.shadowMedium
+                  : DefaulterColors.shadowLight,
+              blurRadius: _hovered ? 12 : 6,
+              offset: const Offset(0, 3),
             ),
           ],
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 980;
+            if (compact) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _AccountIdentity(account: account, dateFmt: _dateFmt),
+                  const SizedBox(height: 12),
+                  _AccountMetrics(account: account),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: _AccountActions(
+                      account: account,
+                      onOpenAccount: widget.onOpenAccount,
+                      onOpenInterestEntry: widget.onOpenInterestEntry,
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 6,
+                  child: _AccountIdentity(account: account, dateFmt: _dateFmt),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  flex: 7,
+                  child: _AccountMetrics(account: account),
+                ),
+                const SizedBox(width: 14),
+                _AccountActions(
+                  account: account,
+                  onOpenAccount: widget.onOpenAccount,
+                  onOpenInterestEntry: widget.onOpenInterestEntry,
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
+
+  Color _riskBorder(DefaulterRiskLevel level) {
+    switch (level) {
+      case DefaulterRiskLevel.critical:
+        return DefaulterColors.riskCriticalBorder;
+      case DefaulterRiskLevel.high:
+        return DefaulterColors.riskHighBorder;
+      case DefaulterRiskLevel.medium:
+        return DefaulterColors.riskMediumBorder;
+      case DefaulterRiskLevel.low:
+        return DefaulterColors.riskLowBorder;
+    }
+  }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// CUSTOMER CELL
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+class _AccountIdentity extends StatelessWidget {
+  final DefaulterModel account;
+  final DateFormat dateFmt;
 
-class _CustomerCell extends StatelessWidget {
-  final String name;
-  final String mobile;
-  final String city;
-  final String type;
-
-  const _CustomerCell({
-    required this.name,
-    required this.mobile,
-    required this.city,
-    required this.type,
+  const _AccountIdentity({
+    required this.account,
+    required this.dateFmt,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Avatar
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: DefaulterColors.riskCriticalBg,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: DefaulterColors.riskCriticalBorder.withValues(alpha: 0.3),
-            ),
-          ),
-          child: Center(
-            child: Text(
-              name.isNotEmpty ? name[0].toUpperCase() : '?',
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: DefaulterColors.riskCriticalText,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-
-        // Name + Mobile + City
+        _Avatar(name: account.customerName, level: account.riskLevel),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Flexible(
+                  Expanded(
                     child: Text(
-                      name,
+                      account.customerName,
                       style: DefaulterStyles.customerName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (type == 'VIP') ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 5, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: DefaulterColors.brandGoldLight,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'VIP',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                          color: DefaulterColors.brandGoldDark,
-                        ),
-                      ),
-                    ),
-                  ],
+                  const SizedBox(width: 8),
+                  _RiskBadge(level: account.riskLevel),
                 ],
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 5),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  _InfoChip(
+                    icon: DefaulterIcons.loanTag,
+                    label: account.referenceNo,
+                  ),
+                  _InfoChip(
+                    icon: DefaulterIcons.phoneCall,
+                    label: account.mobile,
+                  ),
+                  _InfoChip(
+                    icon: DefaulterIcons.cityPin,
+                    label: account.city,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
               Text(
-                '$mobile  â€¢  $city',
-                style: DefaulterStyles.customerMobile,
+                account.itemSummary,
+                style: DefaulterStyles.refNumber,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 5),
+              Text(
+                account.address,
+                style: DefaulterStyles.customerCity,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  _StatusPill(label: account.statusLabel),
+                  _TinyMeta(
+                    icon: DefaulterIcons.calendar,
+                    label:
+                        'Maturity ${account.maturityDate == null ? 'Not set' : dateFmt.format(account.maturityDate!)}',
+                  ),
+                  _TinyMeta(
+                    icon: DefaulterIcons.trending,
+                    label:
+                        'Last activity ${dateFmt.format(account.lastActivityAt)}',
+                  ),
+                ],
               ),
             ],
           ),
@@ -373,24 +377,445 @@ class _CustomerCell extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// RISK BADGE
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+class _Avatar extends StatelessWidget {
+  final String name;
+  final DefaulterRiskLevel level;
+
+  const _Avatar({
+    required this.name,
+    required this.level,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final config = _riskConfig(level);
+    return Container(
+      width: 46,
+      height: 46,
+      decoration: BoxDecoration(
+        color: config.bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: config.border.withValues(alpha: 0.55)),
+      ),
+      child: Center(
+        child: Text(
+          _initials(name),
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w900,
+            color: config.text,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _initials(String value) {
+    final parts = value
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+}
+
+class _AccountMetrics extends StatelessWidget {
+  final DefaulterModel account;
+
+  const _AccountMetrics({required this.account});
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _MetricTile(
+          label: 'Principal Due',
+          value: DefaulterLogic.formatAmountCompact(
+            account.principalOutstanding,
+          ),
+          color: DefaulterColors.statPrincipalText,
+        ),
+        _MetricTile(
+          label: 'Interest Due',
+          value: DefaulterLogic.formatAmountCompact(
+            account.interestOutstanding,
+          ),
+          color: DefaulterColors.riskHighText,
+          subLabel: '${account.interestRate.toStringAsFixed(2)}% monthly',
+        ),
+        _MetricTile(
+          label: 'Total Payable',
+          value: DefaulterLogic.formatAmountCompact(account.totalDue),
+          color: DefaulterColors.riskCriticalText,
+        ),
+        _MetricTile(
+          label: 'Risk Age',
+          value: '${account.daysOverdue} days',
+          color: _riskConfig(account.riskLevel).text,
+          subLabel: account.collectionStage,
+        ),
+        _MetricTile(
+          label: 'Collected',
+          value: DefaulterLogic.formatAmountCompact(account.totalReceived),
+          color: DefaulterColors.statReceivedText,
+          subLabel:
+              account.hasPaymentHistory ? 'Payment history' : 'No payment',
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final String? subLabel;
+  final Color color;
+
+  const _MetricTile({
+    required this.label,
+    required this.value,
+    required this.color,
+    this.subLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 148,
+      constraints: const BoxConstraints(minHeight: 72),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: DefaulterColors.bodyBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: DefaulterColors.bodyBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: DefaulterStyles.customerCity.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 6),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: DefaulterStyles.amountText.copyWith(color: color),
+              maxLines: 1,
+            ),
+          ),
+          if (subLabel != null) ...[
+            const SizedBox(height: 3),
+            Text(
+              subLabel!,
+              style: DefaulterStyles.interestRate,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _AccountActions extends StatelessWidget {
+  final DefaulterModel account;
+  final VoidCallback onOpenAccount;
+  final VoidCallback onOpenInterestEntry;
+
+  const _AccountActions({
+    required this.account,
+    required this.onOpenAccount,
+    required this.onOpenInterestEntry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 182,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _ActionButton(
+            icon: DefaulterIcons.openAccount,
+            label: DefaulterStrings.btnView,
+            color: DefaulterColors.shellBg,
+            onTap: onOpenAccount,
+          ),
+          const SizedBox(height: 8),
+          _ActionButton(
+            icon: DefaulterIcons.collectInterest,
+            label: DefaulterStrings.btnInterest,
+            color: DefaulterColors.brandGoldDark,
+            onTap: onOpenInterestEntry,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _IconActionButton(
+                  icon: DefaulterIcons.phoneCall,
+                  tooltip: DefaulterStrings.btnCall,
+                  color: DefaulterColors.callBtnBg,
+                  onTap: () => _makeCall(context, account.mobile),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _IconActionButton(
+                  icon: DefaulterIcons.notify,
+                  tooltip: DefaulterStrings.btnNotify,
+                  color: DefaulterColors.notifyBtnBg,
+                  onTap: () => _copyNumber(context, account.mobile),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            account.nextActionLabel,
+            style: DefaulterStyles.customerCity.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _makeCall(BuildContext context, String number) async {
+    final uri = Uri(scheme: 'tel', path: number);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+      return;
+    }
+    if (!context.mounted) return;
+    await _copyNumber(context, number);
+  }
+
+  Future<void> _copyNumber(BuildContext context, String number) async {
+    await Clipboard.setData(ClipboardData(text: number));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(DefaulterStrings.copySuccess),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        height: 38,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 16),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _IconActionButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _IconActionButton({
+    required this.icon,
+    required this.tooltip,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          height: 34,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: Colors.white, size: 15),
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: DefaulterColors.bodyBg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: DefaulterColors.bodyBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: DefaulterColors.bodyTextMuted),
+          const SizedBox(width: 5),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 170),
+            child: Text(
+              label,
+              style: DefaulterStyles.customerMobile.copyWith(fontSize: 11),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TinyMeta extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _TinyMeta({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: DefaulterColors.bodyTextHint),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: DefaulterStyles.customerCity.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String label;
+
+  const _StatusPill({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final isPending = label.toLowerCase().contains('settlement');
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: isPending
+            ? DefaulterColors.riskHighBg
+            : DefaulterColors.riskCriticalBg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: isPending
+              ? DefaulterColors.riskHighBorder
+              : DefaulterColors.riskCriticalBorder,
+        ),
+      ),
+      child: Text(
+        label,
+        style: DefaulterStyles.riskBadgeText.copyWith(
+          color: isPending
+              ? DefaulterColors.riskHighText
+              : DefaulterColors.riskCriticalText,
+        ),
+      ),
+    );
+  }
+}
 
 class _RiskBadge extends StatelessWidget {
   final DefaulterRiskLevel level;
+
   const _RiskBadge({required this.level});
 
   @override
   Widget build(BuildContext context) {
     final config = _riskConfig(level);
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
         color: config.bg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: config.border, width: 1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: config.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -412,48 +837,52 @@ class _RiskBadge extends StatelessWidget {
       ),
     );
   }
+}
 
-  _RiskConfig _riskConfig(DefaulterRiskLevel level) {
-    switch (level) {
-      case DefaulterRiskLevel.critical:
-        return const _RiskConfig(
-          label: DefaulterStrings.riskCritical,
-          bg: DefaulterColors.riskCriticalBg,
-          border: DefaulterColors.riskCriticalBorder,
-          text: DefaulterColors.riskCriticalText,
-          dot: DefaulterColors.riskCriticalDot,
-        );
-      case DefaulterRiskLevel.high:
-        return const _RiskConfig(
-          label: DefaulterStrings.riskHigh,
-          bg: DefaulterColors.riskHighBg,
-          border: DefaulterColors.riskHighBorder,
-          text: DefaulterColors.riskHighText,
-          dot: DefaulterColors.riskHighDot,
-        );
-      case DefaulterRiskLevel.medium:
-        return const _RiskConfig(
-          label: DefaulterStrings.riskMedium,
-          bg: DefaulterColors.riskMediumBg,
-          border: DefaulterColors.riskMediumBorder,
-          text: DefaulterColors.riskMediumText,
-          dot: DefaulterColors.riskMediumDot,
-        );
-      case DefaulterRiskLevel.low:
-        return const _RiskConfig(
-          label: DefaulterStrings.riskLow,
-          bg: DefaulterColors.riskLowBg,
-          border: DefaulterColors.riskLowBorder,
-          text: DefaulterColors.riskLowText,
-          dot: DefaulterColors.riskLowDot,
-        );
-    }
+_RiskConfig _riskConfig(DefaulterRiskLevel level) {
+  switch (level) {
+    case DefaulterRiskLevel.critical:
+      return const _RiskConfig(
+        label: DefaulterStrings.riskCritical,
+        bg: DefaulterColors.riskCriticalBg,
+        border: DefaulterColors.riskCriticalBorder,
+        text: DefaulterColors.riskCriticalText,
+        dot: DefaulterColors.riskCriticalDot,
+      );
+    case DefaulterRiskLevel.high:
+      return const _RiskConfig(
+        label: DefaulterStrings.riskHigh,
+        bg: DefaulterColors.riskHighBg,
+        border: DefaulterColors.riskHighBorder,
+        text: DefaulterColors.riskHighText,
+        dot: DefaulterColors.riskHighDot,
+      );
+    case DefaulterRiskLevel.medium:
+      return const _RiskConfig(
+        label: DefaulterStrings.riskMedium,
+        bg: DefaulterColors.riskMediumBg,
+        border: DefaulterColors.riskMediumBorder,
+        text: DefaulterColors.riskMediumText,
+        dot: DefaulterColors.riskMediumDot,
+      );
+    case DefaulterRiskLevel.low:
+      return const _RiskConfig(
+        label: DefaulterStrings.riskLow,
+        bg: DefaulterColors.riskLowBg,
+        border: DefaulterColors.riskLowBorder,
+        text: DefaulterColors.riskLowText,
+        dot: DefaulterColors.riskLowDot,
+      );
   }
 }
 
 class _RiskConfig {
   final String label;
-  final Color bg, border, text, dot;
+  final Color bg;
+  final Color border;
+  final Color text;
+  final Color dot;
+
   const _RiskConfig({
     required this.label,
     required this.bg,
@@ -463,218 +892,30 @@ class _RiskConfig {
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// DAYS OVERDUE CELL
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-class _DaysOverdueCell extends StatelessWidget {
-  final int days;
-  final DefaulterRiskLevel level;
-
-  const _DaysOverdueCell({required this.days, required this.level});
-
-  @override
-  Widget build(BuildContext context) {
-    final Color textColor = _colorForLevel(level);
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          days.toString(),
-          style: DefaulterStyles.daysText.copyWith(color: textColor),
-        ),
-        const Text(
-          DefaulterStrings.daysOverdueLabel,
-          style: DefaulterStyles.daysUnit,
-        ),
-      ],
-    );
-  }
-
-  Color _colorForLevel(DefaulterRiskLevel level) {
-    switch (level) {
-      case DefaulterRiskLevel.critical:
-        return DefaulterColors.riskCriticalText;
-      case DefaulterRiskLevel.high:
-        return DefaulterColors.riskHighText;
-      case DefaulterRiskLevel.medium:
-        return DefaulterColors.riskMediumText;
-      case DefaulterRiskLevel.low:
-        return DefaulterColors.riskLowText;
-    }
-  }
-}
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// ACTION BUTTONS
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-class _ActionButtons extends StatelessWidget {
-  final String mobile;
-  const _ActionButtons({required this.mobile});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Call button
-        _ActionBtn(
-          icon: DefaulterIcons.phoneCall,
-          color: DefaulterColors.callBtnBg,
-          tooltip: DefaulterStrings.btnCall,
-          onTap: () => _makeCall(context, mobile),
-        ),
-
-        const SizedBox(width: 6),
-
-        // Copy mobile number
-        _ActionBtn(
-          icon: DefaulterIcons.notify,
-          color: DefaulterColors.notifyBtnBg,
-          tooltip: DefaulterStrings.btnNotify,
-          onTap: () => _copyNumber(context, mobile),
-        ),
-      ],
-    );
-  }
-
-  void _makeCall(BuildContext context, String number) async {
-    final uri = Uri(scheme: 'tel', path: number);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
-      // Fallback: copy number
-      await Clipboard.setData(ClipboardData(text: number));
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(DefaulterStrings.copySuccess),
-            behavior: SnackBarBehavior.floating,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    }
-  }
-
-  void _copyNumber(BuildContext context, String number) async {
-    await Clipboard.setData(ClipboardData(text: number));
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(DefaulterStrings.copySuccess),
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-}
-
-class _ActionBtn extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  const _ActionBtn({
-    required this.icon,
-    required this.color,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          width: 30,
-          height: 30,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Icon(icon, color: Colors.white, size: 14),
-        ),
-      ),
-    );
-  }
-}
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// SHIMMER ROWS (Loading State)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
 class _ShimmerRows extends StatelessWidget {
+  const _ShimmerRows();
+
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
       baseColor: Colors.grey.shade200,
       highlightColor: Colors.grey.shade100,
       period: const Duration(milliseconds: 1200),
-      child: ListView.builder(
-        itemCount: 8,
-        itemBuilder: (_, i) => Container(
-          height: 58,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: const BoxDecoration(
-            border: Border(
-              bottom:
-                  BorderSide(color: DefaulterColors.tableDivider, width: 0.8),
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(width: 140, height: 13, color: Colors.white),
-                    const SizedBox(height: 5),
-                    Container(width: 100, height: 10, color: Colors.white),
-                  ],
-                ),
-              ),
-              Container(width: 60, height: 22, color: Colors.white),
-              const SizedBox(width: 16),
-              Container(width: 70, height: 13, color: Colors.white),
-              const SizedBox(width: 16),
-              Container(width: 70, height: 13, color: Colors.white),
-              const SizedBox(width: 16),
-              Container(width: 70, height: 13, color: Colors.white),
-              const SizedBox(width: 16),
-              Container(width: 70, height: 13, color: Colors.white),
-              const SizedBox(width: 16),
-              Container(width: 40, height: 13, color: Colors.white),
-              const SizedBox(width: 16),
-              Container(width: 60, height: 28, color: Colors.white),
-            ],
+      child: ListView.separated(
+        padding: const EdgeInsets.all(14),
+        itemCount: 6,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (_, __) => Container(
+          height: 134,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
           ),
         ),
       ),
     );
   }
 }
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// EMPTY STATE
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
@@ -686,8 +927,8 @@ class _EmptyState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 80,
-            height: 80,
+            width: 82,
+            height: 82,
             decoration: const BoxDecoration(
               color: DefaulterColors.riskLowBg,
               shape: BoxShape.circle,
@@ -715,12 +956,9 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// ERROR STATE
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
 class _ErrorState extends StatelessWidget {
   final String message;
+
   const _ErrorState({required this.message});
 
   @override

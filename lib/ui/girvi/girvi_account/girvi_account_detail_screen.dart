@@ -266,6 +266,50 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
   Future<void> _showPaymentRecordPreview({
     required Uint8List pdfBytes,
     required String fileName,
+  }) async {
+    final sides = await _rasterPaymentRecordSides(pdfBytes);
+    if (!mounted) return;
+    if (sides.isNotEmpty) {
+      return showDialog<void>(
+        context: context,
+        barrierColor: Colors.black.withValues(alpha: 0.78),
+        useSafeArea: false,
+        builder: (dialogContext) => Material(
+          type: MaterialType.transparency,
+          child: _GirviInvoiceFlipPreview(
+            sides: sides,
+            singleSideLabel: 'Payment record preview',
+            onClose: () => Navigator.of(dialogContext).pop(),
+          ),
+        ),
+      );
+    }
+
+    return _showCleanPaymentRecordPreview(
+      pdfBytes: pdfBytes,
+      fileName: fileName,
+    );
+  }
+
+  Future<List<PdfRaster>> _rasterPaymentRecordSides(Uint8List pdfBytes) async {
+    try {
+      final info = await Printing.info();
+      if (!info.canRaster) return const [];
+
+      final sides = <PdfRaster>[];
+      await for (final page in Printing.raster(pdfBytes, dpi: 144)) {
+        sides.add(page);
+        if (sides.length == 2) break;
+      }
+      return List.unmodifiable(sides);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<void> _showCleanPaymentRecordPreview({
+    required Uint8List pdfBytes,
+    required String fileName,
   }) {
     return showDialog<void>(
       context: context,

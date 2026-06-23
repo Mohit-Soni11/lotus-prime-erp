@@ -9,7 +9,9 @@
 // ==========================================
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../constants/app_routes.dart';
 import '../../../logic/customer/defaulter_logic.dart';
 import '../../../models/customer/defaulter_model.dart';
 import '../../../theme/customer/defaulter/defaulter_theme.dart';
@@ -88,6 +90,22 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
     super.dispose();
   }
 
+  void _openGirviAccount(DefaulterModel account) {
+    context.go(RoutePaths.girviAccountFor(account.loanId));
+  }
+
+  void _openInterestEntry(DefaulterModel account) {
+    final route = RouteMapper.toPath(AppRoutes.interestCalcRoute);
+    final uri = Uri(
+      path: route,
+      queryParameters: {
+        'ticketNo': account.referenceNo,
+        'returnTo': 'riskCollections',
+      },
+    );
+    context.go(uri.toString());
+  }
+
   // ==========================================
   // BUILD
   // ==========================================
@@ -143,6 +161,8 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
                   defaulters: state.displayedDefaulters,
                   isLoading: state.isLoading,
                   errorMessage: state.errorMessage,
+                  onOpenAccount: _openGirviAccount,
+                  onOpenInterestEntry: _openInterestEntry,
                 ),
               ),
             ],
@@ -175,8 +195,8 @@ class _ResultCountBar extends StatelessWidget {
     if (isLoading) return const SizedBox(height: 10);
 
     final String countText = displayedCount == totalCount
-        ? 'Showing all $totalCount defaulters'
-        : 'Showing $displayedCount of $totalCount defaulters';
+        ? 'Showing all $totalCount risk accounts'
+        : 'Showing $displayedCount of $totalCount risk accounts';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 2),
