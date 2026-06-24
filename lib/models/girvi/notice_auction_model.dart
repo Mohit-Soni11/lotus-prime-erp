@@ -83,6 +83,43 @@ class NoticeAuctionCase {
             .inDays);
   }
 
+  GirviElapsedPeriod get loanAgePeriod =>
+      GirviLoanModel.elapsedPeriodBetween(loan.startDate, now);
+
+  String get loanAgeLabel => loanAgePeriod.displayLabel;
+
+  String get loanAgeMonthsDaysLabel => _monthsDaysLabel(loanAgePeriod);
+
+  GirviElapsedPeriod get overdueAgePeriod {
+    final maturity = loan.maturityDate;
+    if (maturity == null) {
+      return const GirviElapsedPeriod(years: 0, months: 0, days: 0);
+    }
+    return GirviLoanModel.elapsedPeriodBetween(maturity, now);
+  }
+
+  String get overdueAgeLabel => overdueAgePeriod.displayLabel;
+
+  String get overdueAgeMonthsDaysLabel => _monthsDaysLabel(overdueAgePeriod);
+
+  int get currentNoticeStageNumber =>
+      nextNoticeType?.stage ?? preparedNoticeCount.clamp(0, 3).toInt();
+
+  String get noticeProgressLabel {
+    if (stage == NoticeAuctionStage.settled) return 'Closed';
+    return '$currentNoticeStageNumber/3';
+  }
+
+  String _monthsDaysLabel(GirviElapsedPeriod period) {
+    final months = (period.years * 12) + period.months;
+    final parts = <String>[
+      if (months > 0) '$months month${months == 1 ? '' : 's'}',
+      if (period.days > 0 || months == 0)
+        '${period.days} day${period.days == 1 ? '' : 's'}',
+    ];
+    return parts.join(' ');
+  }
+
   int get daysUntilAuctionReview => math.max(0, noticePeriodDays - overdueDays);
 
   int get daysPastNoticePeriod => math.max(0, overdueDays - noticePeriodDays);

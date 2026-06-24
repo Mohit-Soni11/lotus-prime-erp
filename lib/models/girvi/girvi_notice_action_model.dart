@@ -40,6 +40,17 @@ enum GirviNoticeType {
   }
 }
 
+enum GirviNoticeLanguage {
+  hindi('Hindi', 'Hindi Notice', 'hindi'),
+  english('English', 'English Notice', 'english');
+
+  const GirviNoticeLanguage(this.label, this.actionLabel, this.fileLabel);
+
+  final String label;
+  final String actionLabel;
+  final String fileLabel;
+}
+
 class GirviNoticeAction {
   final int id;
   final int girviId;

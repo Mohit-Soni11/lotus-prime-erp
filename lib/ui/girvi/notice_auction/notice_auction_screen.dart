@@ -113,17 +113,32 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
       return;
     }
 
-    final initialText = _buildNoticeText(item, noticeType);
+    final initialTexts = {
+      GirviNoticeLanguage.hindi: _buildNoticeText(
+        item,
+        noticeType,
+        GirviNoticeLanguage.hindi,
+      ),
+      GirviNoticeLanguage.english: _buildNoticeText(
+        item,
+        noticeType,
+        GirviNoticeLanguage.english,
+      ),
+    };
     await showDialog<void>(
       context: context,
       builder: (context) => _NoticeEditorDialog(
         item: item,
         noticeType: noticeType,
-        initialText: initialText,
-        onCopy: (text) => _copyNoticeText(item, noticeType, text),
-        onPrint: (text) => _printNotice(item, noticeType, text),
-        onShare: (text) => _shareNotice(item, noticeType, text),
-        onSave: (text) => _controller.recordNoticePrepared(
+        initialTexts: initialTexts,
+        initialLanguage: GirviNoticeLanguage.hindi,
+        onCopy: (language, text) =>
+            _copyNoticeText(item, noticeType, language, text),
+        onPrint: (language, text) =>
+            _printNotice(item, noticeType, language, text),
+        onShare: (language, text) =>
+            _shareNotice(item, noticeType, language, text),
+        onSave: (language, text) => _controller.recordNoticePrepared(
           item,
           noticeType,
           text,
@@ -135,6 +150,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
   Future<void> _copyNoticeText(
     NoticeAuctionCase item,
     GirviNoticeType noticeType,
+    GirviNoticeLanguage language,
     String noticeText,
   ) async {
     await Clipboard.setData(ClipboardData(text: noticeText));
@@ -144,15 +160,17 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
   Future<void> _printNotice(
     NoticeAuctionCase item,
     GirviNoticeType noticeType,
+    GirviNoticeLanguage language,
     String noticeText,
   ) async {
     final bytes = await _noticePdfService.build(
       item: item,
       noticeType: noticeType,
+      noticeLanguage: language,
       noticeText: noticeText,
     );
     final printed = await Printing.layoutPdf(
-      name: _noticePdfName(item, noticeType),
+      name: _noticePdfName(item, noticeType, language),
       onLayout: (_) async => bytes,
     );
     if (printed) {
@@ -163,16 +181,18 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
   Future<void> _shareNotice(
     NoticeAuctionCase item,
     GirviNoticeType noticeType,
+    GirviNoticeLanguage language,
     String noticeText,
   ) async {
     final bytes = await _noticePdfService.build(
       item: item,
       noticeType: noticeType,
+      noticeLanguage: language,
       noticeText: noticeText,
     );
     final shared = await Printing.sharePdf(
       bytes: bytes,
-      filename: _noticePdfName(item, noticeType),
+      filename: _noticePdfName(item, noticeType, language),
     );
     if (shared) {
       await _controller.recordNoticePrepared(item, noticeType, noticeText);
@@ -198,10 +218,13 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
   String _buildNoticeText(
     NoticeAuctionCase item,
     GirviNoticeType noticeType,
+    GirviNoticeLanguage language,
   ) {
     final account = item.account;
     final loan = item.loan;
     final dateFmt = DateFormat('dd MMMM yyyy');
+    final noticeDate = dateFmt.format(DateTime.now());
+    final startDate = dateFmt.format(loan.startDate);
     final maturity = loan.maturityDate == null
         ? 'Not set'
         : dateFmt.format(loan.maturityDate!);
@@ -211,26 +234,95 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
     final itemSummary = loan.itemDescription.trim().isEmpty
         ? loan.itemSummary
         : loan.itemDescription.trim();
+    final cleanItemSummary = _noticeItemSummary(itemSummary, language);
+    final address = account.customerAddress.isEmpty
+        ? language == GirviNoticeLanguage.hindi
+            ? 'उपलब्ध नहीं'
+            : 'Not available'
+        : account.customerAddress;
+    final deadline = dateFmt.format(settlementDeadline);
+    final noticeProgress = '${noticeType.stage}/3';
+    final overdueAge = item.overdueAgeMonthsDaysLabel;
+    final loanAge = item.loanAgeMonthsDaysLabel;
+
+    if (language == GirviNoticeLanguage.hindi) {
+      final subject = switch (noticeType) {
+        GirviNoticeType.first => 'पहली गिरवी निपटान सूचना',
+        GirviNoticeType.second => 'दूसरी गिरवी भुगतान चेतावनी',
+        GirviNoticeType.finalNotice => 'अंतिम भुगतान और वसूली सूचना',
+      };
+      final opening = switch (noticeType) {
+        GirviNoticeType.first =>
+          'यह सूचना है कि नीचे दिया गया गिरवी खाता देय तारीख के बाद भी लंबित है। कृपया सूचना अवधि में पूरी बकाया राशि जमा कर गिरवी वस्तु छुड़ाएं।',
+        GirviNoticeType.second =>
+          'पहली सूचना के बाद भी खाता लंबित है। यह दूसरी लिखित चेतावनी है। कृपया अंतिम कार्रवाई से बचने के लिए बकाया राशि तुरंत जमा करें।',
+        GirviNoticeType.finalNotice =>
+          'यह अंतिम सूचना है। यदि अंतिम तारीख तक पूरा भुगतान नहीं होता है, तो गिरवी वस्तु को न छुड़ाया गया मानकर लागू कानून, सहमत Girvi terms और business policy के अनुसार वैध वसूली या disposal प्रक्रिया शुरू की जा सकती है।',
+      };
+      final closing = switch (noticeType) {
+        GirviNoticeType.first =>
+          'कृपया इस सूचना के साथ दुकान पर आएं और अंतिम तारीख से पहले पूरा भुगतान करें।',
+        GirviNoticeType.second =>
+          'इस चेतावनी के बाद भी भुगतान नहीं होने पर अंतिम भुगतान और वसूली सूचना जारी की जा सकती है।',
+        GirviNoticeType.finalNotice =>
+          'अंतिम तारीख के बाद वसूली राशि को मूलधन, ब्याज, दंड, custody charges और legal recovery cost में adjust किया जा सकता है। कोई balance customer से payable रह सकता है; surplus amount policy और law के अनुसार handle होगा।',
+      };
+
+      return [
+        'विषय: $subject',
+        '',
+        'प्रिय ${account.customerName},',
+        '',
+        opening,
+        '',
+        'सूचना दिनांक: $noticeDate',
+        'टिकट नंबर: ${loan.ticketNo}',
+        'ग्राहक मोबाइल: ${account.customerMobile}',
+        'ग्राहक पता: $address',
+        'गिरवी रखने की तारीख: $startDate',
+        'देय तारीख: $maturity',
+        'खाता अवधि: $loanAge',
+        'बकाया अवधि: $overdueAge',
+        'सूचना चरण: $noticeProgress',
+        '',
+        'गिरवी वस्तु: $cleanItemSummary',
+        'गिरवी मूल्यांकन: ${_money(loan.totalValue)}',
+        '',
+        'मूलधन बकाया: ${_money(account.principalDue)}',
+        'ब्याज बकाया: ${_money(account.netInterestDue)}',
+        'कुल देय राशि: ${_money(account.totalPayable)}',
+        '',
+        'सूचना अवधि: ${item.noticePeriodDays} दिन',
+        'अंतिम तारीख: $deadline',
+        '',
+        closing,
+        '',
+        'यह notice लागू कानून, सहमत Girvi terms और business policy के अनुसार जारी है। दुकान के सभी rights और remedies reserved रहेंगे।',
+        '',
+        'दुकान साइन',
+      ].join('\n');
+    }
+
     final subject = switch (noticeType) {
       GirviNoticeType.first => 'First Girvi Settlement Notice',
       GirviNoticeType.second => 'Second Girvi Settlement Warning',
-      GirviNoticeType.finalNotice => 'Final Redemption and Disposal Notice',
+      GirviNoticeType.finalNotice => 'Final Redemption and Recovery Notice',
     };
-    final body = switch (noticeType) {
+    final opening = switch (noticeType) {
       GirviNoticeType.first =>
-        'This is the first formal reminder to clear the overdue Girvi account and redeem the pledged article within the notice period.',
+        'This is a formal notice that the Girvi account listed below remains overdue after maturity. Please clear the outstanding dues and redeem the pledged article within the notice period.',
       GirviNoticeType.second =>
-        'This is the second formal warning. Please clear the overdue amount immediately to avoid final forfeiture and disposal review.',
+        'The account remains overdue after the first notice. This is the second formal warning to clear the dues immediately and avoid final recovery review.',
       GirviNoticeType.finalNotice =>
-        'This is the final notice. If the account is not settled within the stated period, the pledged article may be treated as unredeemed and processed for lawful disposal to recover outstanding dues, subject to applicable law and business policy.',
+        'This is the final notice. If the account is not fully settled by the deadline, the pledged article may be treated as unredeemed and processed for lawful recovery or disposal in accordance with applicable law, agreed Girvi terms and business policy.',
     };
     final closing = switch (noticeType) {
       GirviNoticeType.first =>
         'Please visit the shop with this notice and complete the settlement before the deadline.',
       GirviNoticeType.second =>
-        'Failure to settle after this warning may lead to a final disposal notice.',
+        'Failure to settle after this warning may result in a final redemption and recovery notice.',
       GirviNoticeType.finalNotice =>
-        'After the final deadline, any recovery proceeds may be adjusted against principal, interest, penalty, handling and lawful recovery costs. Any balance due may remain payable by the customer, and any surplus may be handled as per applicable policy and law.',
+        'After the final deadline, recovery proceeds may be adjusted against principal, interest, penalty, custody charges and lawful recovery costs. Any remaining shortfall may continue to be payable by the customer, and any surplus may be handled as per applicable policy and law.',
     };
 
     return [
@@ -238,36 +330,56 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
       '',
       'Dear ${account.customerName},',
       '',
-      body,
+      opening,
       '',
+      'Notice Date: $noticeDate',
       'Ticket Number: ${loan.ticketNo}',
       'Customer Mobile: ${account.customerMobile}',
-      'Customer Address: ${account.customerAddress.isEmpty ? 'Not available' : account.customerAddress}',
-      'Pledged Item: $itemSummary',
-      'Pledged Valuation: ${_money(loan.totalValue)}',
+      'Customer Address: $address',
+      'Girvi Date: $startDate',
       'Maturity Date: $maturity',
-      'Overdue Period: ${item.overdueDays} days',
-      'Notice Stage: ${noticeType.stage} of 3',
+      'Account Age: $loanAge',
+      'Overdue Age: $overdueAge',
+      'Notice Stage: $noticeProgress',
+      '',
+      'Pledged Item: $cleanItemSummary',
+      'Pledged Valuation: ${_money(loan.totalValue)}',
       '',
       'Principal Outstanding: ${_money(account.principalDue)}',
       'Interest Outstanding: ${_money(account.netInterestDue)}',
       'Total Payable: ${_money(account.totalPayable)}',
       '',
       'Notice Period: ${item.noticePeriodDays} days',
-      'Settlement Deadline: ${dateFmt.format(settlementDeadline)}',
+      'Settlement Deadline: $deadline',
       '',
       closing,
       '',
-      'This notice is issued without prejudice to the rights and remedies available to the shop under applicable law, contract terms and business policy.',
+      'This notice is issued without prejudice to all rights and remedies available to the shop under applicable law, agreed Girvi terms and business policy.',
       '',
       'Authorised Signatory',
     ].join('\n');
   }
 
-  String _noticePdfName(NoticeAuctionCase item, GirviNoticeType noticeType) {
+  String _noticeItemSummary(String value, GirviNoticeLanguage language) {
+    final serialLabel =
+        language == GirviNoticeLanguage.hindi ? 'क्रमांक' : 'Serial Number';
+    return value
+        .replaceAllMapped(
+          RegExp(r'#\s*(\d+)'),
+          (match) => '$serialLabel ${match.group(1)}',
+        )
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  String _noticePdfName(
+    NoticeAuctionCase item,
+    GirviNoticeType noticeType,
+    GirviNoticeLanguage language,
+  ) {
     final safeTicket =
         item.loan.ticketNo.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_');
-    return 'girvi_${safeTicket}_notice_${noticeType.stage}.pdf';
+    return 'girvi_${safeTicket}_notice_${noticeType.stage}_${language.fileLabel}.pdf';
   }
 
   String _money(double value) =>
@@ -827,14 +939,12 @@ class _CaseAmounts extends StatelessWidget {
         ),
         _AmountTile(
           label: 'Overdue Age',
-          value: '${item.overdueDays} days',
+          value: item.overdueAgeMonthsDaysLabel,
           accent: item.accentColor,
         ),
         _AmountTile(
           label: 'Notice Stage',
-          value: item.stage == NoticeAuctionStage.settled
-              ? 'Closed'
-              : '${item.preparedNoticeCount}/3',
+          value: item.noticeProgressLabel,
           accent: GirviColors.brandGold,
         ),
       ],
@@ -1062,16 +1172,20 @@ class _ActionButton extends StatelessWidget {
 class _NoticeEditorDialog extends StatefulWidget {
   final NoticeAuctionCase item;
   final GirviNoticeType noticeType;
-  final String initialText;
-  final Future<void> Function(String text) onCopy;
-  final Future<void> Function(String text) onPrint;
-  final Future<void> Function(String text) onShare;
-  final Future<bool> Function(String text) onSave;
+  final Map<GirviNoticeLanguage, String> initialTexts;
+  final GirviNoticeLanguage initialLanguage;
+  final Future<void> Function(GirviNoticeLanguage language, String text) onCopy;
+  final Future<void> Function(GirviNoticeLanguage language, String text)
+      onPrint;
+  final Future<void> Function(GirviNoticeLanguage language, String text)
+      onShare;
+  final Future<bool> Function(GirviNoticeLanguage language, String text) onSave;
 
   const _NoticeEditorDialog({
     required this.item,
     required this.noticeType,
-    required this.initialText,
+    required this.initialTexts,
+    required this.initialLanguage,
     required this.onCopy,
     required this.onPrint,
     required this.onShare,
@@ -1084,12 +1198,16 @@ class _NoticeEditorDialog extends StatefulWidget {
 
 class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
   late final TextEditingController _textController;
+  late GirviNoticeLanguage _language;
+  late final Map<GirviNoticeLanguage, String> _texts;
   bool _busy = false;
 
   @override
   void initState() {
     super.initState();
-    _textController = TextEditingController(text: widget.initialText);
+    _language = widget.initialLanguage;
+    _texts = Map<GirviNoticeLanguage, String>.from(widget.initialTexts);
+    _textController = TextEditingController(text: _texts[_language] ?? '');
   }
 
   @override
@@ -1098,11 +1216,14 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
     super.dispose();
   }
 
-  Future<void> _run(Future<void> Function(String text) action) async {
+  Future<void> _run(
+    Future<void> Function(GirviNoticeLanguage language, String text) action,
+  ) async {
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      await action(_textController.text.trim());
+      _syncCurrentLanguageText();
+      await action(_language, _textController.text.trim());
       if (mounted) Navigator.of(context).pop();
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -1113,11 +1234,25 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      final saved = await widget.onSave(_textController.text.trim());
+      _syncCurrentLanguageText();
+      final saved = await widget.onSave(_language, _textController.text.trim());
       if (saved && mounted) Navigator.of(context).pop();
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  void _setLanguage(GirviNoticeLanguage value) {
+    if (_busy || value == _language) return;
+    _syncCurrentLanguageText();
+    setState(() {
+      _language = value;
+      _textController.text = _texts[value] ?? '';
+    });
+  }
+
+  void _syncCurrentLanguageText() {
+    _texts[_language] = _textController.text;
   }
 
   @override
@@ -1142,6 +1277,26 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
                 fontSize: 12.8,
                 fontWeight: FontWeight.w800,
               ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _NoticeLanguageButton(
+                    label: 'Hindi',
+                    selected: _language == GirviNoticeLanguage.hindi,
+                    onTap: () => _setLanguage(GirviNoticeLanguage.hindi),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _NoticeLanguageButton(
+                    label: 'English',
+                    selected: _language == GirviNoticeLanguage.english,
+                    onTap: () => _setLanguage(GirviNoticeLanguage.english),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             TextField(
@@ -1228,6 +1383,49 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
   }
 }
 
+class _NoticeLanguageButton extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _NoticeLanguageButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? GirviColors.shellBg : GirviColors.bodyBg,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          height: 42,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: selected ? GirviColors.shellBg : GirviColors.cardBorder,
+              width: 1.2,
+            ),
+          ),
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              color: selected ? Colors.white : GirviColors.textDark,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _DisposalSettlementResult {
   final double pledgedValuation;
   final double recoveredAmount;
@@ -1292,148 +1490,648 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
     final surplus =
         recovered > settlementTotal ? recovered - settlementTotal : 0.0;
 
-    return AlertDialog(
-      backgroundColor: GirviColors.cardBg,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      title: Text(
-        'Close Disposal Settlement',
-        style: GirviStyles.sectionTitle.copyWith(fontSize: 17),
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 820,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.88,
+        ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: GirviColors.cardBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: GirviColors.cardBorder),
+            boxShadow: const [
+              BoxShadow(
+                color: GirviColors.shadowMedium,
+                blurRadius: 26,
+                offset: Offset(0, 18),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _dialogHeader(),
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final compact = constraints.maxWidth < 720;
+                        final casePanel = _caseSnapshot(payable);
+                        final recoveryPanel = _recoveryPanel(
+                          payable: payable,
+                          penalty: penalty,
+                          recovered: recovered,
+                          settlementTotal: settlementTotal,
+                          balanceDue: balanceDue,
+                          surplus: surplus,
+                        );
+
+                        if (compact) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              casePanel,
+                              const SizedBox(height: 14),
+                              recoveryPanel,
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(width: 284, child: casePanel),
+                            const SizedBox(width: 16),
+                            Expanded(child: recoveryPanel),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                _actionBar(),
+              ],
+            ),
+          ),
+        ),
       ),
-      content: SizedBox(
-        width: 620,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Close only after all three notices are prepared and the account is approved for lawful recovery/disposal.',
+    );
+  }
+
+  Widget _dialogHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 18, 16, 18),
+      decoration: const BoxDecoration(
+        color: GirviColors.shellBg,
+        border: Border(
+          bottom: BorderSide(color: GirviColors.shellBorder),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: GirviColors.danger.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: GirviColors.danger.withValues(alpha: 0.34),
+              ),
+            ),
+            child: const Icon(
+              GirviIcons.auctioned,
+              color: GirviColors.danger,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Close Disposal Settlement',
+                  style: GoogleFonts.manrope(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Final recovery closure after all three notices are prepared.',
+                  style: GirviStyles.caption.copyWith(
+                    color: GirviColors.shellTextMuted,
+                    fontSize: 12.8,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+            ),
+            child: Text(
+              widget.item.loan.ticketNo,
+              style: GirviStyles.ticketNumber.copyWith(fontSize: 12.8),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            tooltip: 'Close',
+            icon: const Icon(Icons.close_rounded, color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _caseSnapshot(double payable) {
+    final account = widget.item.account;
+    final loan = widget.item.loan;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: GirviColors.bodyBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: GirviColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _sectionTitle('Case Snapshot', GirviIcons.ticket),
+          const SizedBox(height: 12),
+          Text(
+            account.customerName,
+            style: GoogleFonts.manrope(
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+              color: GirviColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _snapshotChip('Stage ${widget.item.noticeProgressLabel}'),
+              _snapshotChip(widget.item.stageLabel),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _snapshotLine('Mobile', account.customerMobile),
+          _snapshotLine('Maturity', _date(loan.maturityDate)),
+          _snapshotLine('Overdue Age', widget.item.overdueAgeMonthsDaysLabel),
+          _snapshotLine('Pledged Value', _money(loan.totalValue)),
+          _snapshotLine(
+            'Total Payable',
+            _money(payable),
+            valueColor: GirviColors.danger,
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: GirviColors.cardBg,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: GirviColors.cardBorder),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Pledged Item',
+                  style: GirviStyles.caption.copyWith(
+                    fontSize: 11.5,
+                    color: GirviColors.textHint,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _itemSummary(),
+                  style: GirviStyles.caption.copyWith(
+                    fontSize: 12.5,
+                    height: 1.35,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _recoveryPanel({
+    required double payable,
+    required double penalty,
+    required double recovered,
+    required double settlementTotal,
+    required double balanceDue,
+    required double surplus,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: GirviColors.cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: GirviColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _sectionTitle('Recovery Details', GirviIcons.calculator),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 12,
+            children: [
+              _settlementField(
+                controller: _valuationController,
+                label: 'Pledged Valuation',
+                helper: 'Current article value',
+              ),
+              _settlementField(
+                controller: _recoveredController,
+                label: 'Recovered Amount',
+                helper: 'Cash or sale proceeds',
+              ),
+              _settlementField(
+                controller: _penaltyController,
+                label: 'Penalty / Handling',
+                helper: 'Lawful extra charges',
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _settlementOutcome(
+            payable: payable,
+            penalty: penalty,
+            recovered: recovered,
+            settlementTotal: settlementTotal,
+            balanceDue: balanceDue,
+            surplus: surplus,
+          ),
+          const SizedBox(height: 14),
+          _legalNotice(),
+          const SizedBox(height: 14),
+          Text(
+            'Settlement Note',
+            style: GirviStyles.caption.copyWith(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _noteController,
+            minLines: 3,
+            maxLines: 5,
+            style: GirviStyles.caption.copyWith(
+              fontSize: 13,
+              height: 1.35,
+              fontWeight: FontWeight.w800,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Write the disposal recovery note for audit.',
+              hintStyle: GirviStyles.caption.copyWith(
+                color: GirviColors.textHint,
+                fontSize: 12.5,
+              ),
+              filled: true,
+              fillColor: GirviColors.bodyBg,
+              contentPadding: const EdgeInsets.all(12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: GirviColors.cardBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: GirviColors.cardBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(
+                  color: GirviColors.brandGold,
+                  width: 1.5,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _settlementOutcome({
+    required double payable,
+    required double penalty,
+    required double recovered,
+    required double settlementTotal,
+    required double balanceDue,
+    required double surplus,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: GirviColors.bodyBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: GirviColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _sectionTitle('Settlement Outcome', GirviIcons.valuation),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _settlementMetric('Total Payable', _money(payable)),
+              _settlementMetric('Penalty', _money(penalty)),
+              _settlementMetric(
+                'Settlement Total',
+                _money(settlementTotal),
+                accent: GirviColors.brandGold,
+              ),
+              _settlementMetric('Recovered', _money(recovered)),
+              _settlementMetric(
+                'Balance Due',
+                _money(balanceDue),
+                accent:
+                    balanceDue > 0 ? GirviColors.danger : GirviColors.success,
+              ),
+              _settlementMetric(
+                'Surplus',
+                _money(surplus),
+                accent:
+                    surplus > 0 ? GirviColors.success : GirviColors.textDark,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _legalNotice() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: GirviColors.dangerBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: GirviColors.dangerBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            GirviIcons.warning,
+            color: GirviColors.danger,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Close only after three notices are complete, supporting records are verified, and lawful disposal approval is available.',
               style: GirviStyles.caption.copyWith(
-                height: 1.45,
-                fontWeight: FontWeight.w700,
+                fontSize: 12.4,
+                height: 1.4,
+                fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: _settlementField(
-                    controller: _valuationController,
-                    label: 'Pledged Valuation',
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _settlementField(
-                    controller: _recoveredController,
-                    label: 'Recovered Amount',
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _settlementField(
-                    controller: _penaltyController,
-                    label: 'Penalty / Handling',
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _settlementMetric('Total Payable', _money(payable)),
-                _settlementMetric('Settlement Total', _money(settlementTotal)),
-                _settlementMetric('Customer Balance Due', _money(balanceDue)),
-                _settlementMetric('Customer Surplus', _money(surplus)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _noteController,
-              minLines: 3,
-              maxLines: 5,
-              style: GirviStyles.caption.copyWith(fontSize: 12.8),
-              decoration: InputDecoration(
-                labelText: 'Settlement Note',
-                filled: true,
-                fillColor: GirviColors.bodyBg,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: GirviColors.cardBorder),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(
-            'Cancel',
-            style: GirviStyles.caption.copyWith(color: GirviColors.textMuted),
-          ),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.of(context).pop(
-              _DisposalSettlementResult(
-                pledgedValuation: _number(_valuationController.text),
-                recoveredAmount: _number(_recoveredController.text),
-                penaltyAmount: _number(_penaltyController.text),
-                note: _noteController.text.trim(),
+    );
+  }
+
+  Widget _actionBar() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
+      decoration: const BoxDecoration(
+        color: GirviColors.cardBg,
+        border: Border(top: BorderSide(color: GirviColors.cardBorder)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              'This action closes the notice and disposal workflow for this ticket.',
+              style: GirviStyles.caption.copyWith(
+                color: GirviColors.textHint,
+                fontSize: 12.2,
+                height: 1.25,
               ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: GirviColors.danger,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
             ),
           ),
+          const SizedBox(width: 14),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              foregroundColor: GirviColors.textDark,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            ),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w900),
+            ),
+          ),
+          const SizedBox(width: 10),
+          ElevatedButton.icon(
+            onPressed: _closeSettlement,
+            icon: const Icon(Icons.lock_rounded, size: 18),
+            label: Text(
+              'Close Settlement',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w900),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: GirviColors.danger,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: GirviColors.brandGoldLight,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: GirviColors.warningBorder),
+          ),
+          child: Icon(icon, size: 17, color: GirviColors.brandDeep),
+        ),
+        const SizedBox(width: 9),
+        Expanded(
           child: Text(
-            'Close Settlement',
-            style: GoogleFonts.inter(fontWeight: FontWeight.w800),
+            title,
+            style: GirviStyles.sectionTitle.copyWith(fontSize: 15.5),
           ),
         ),
       ],
     );
   }
 
-  Widget _settlementField({
-    required TextEditingController controller,
-    required String label,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: TextInputType.number,
-      onChanged: (_) => setState(() {}),
-      style: GirviStyles.caption.copyWith(
-        fontSize: 13,
-        fontWeight: FontWeight.w900,
+  Widget _snapshotChip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: GirviColors.cardBg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: GirviColors.cardBorder),
       ),
-      decoration: InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: GirviColors.bodyBg,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(9),
-          borderSide: const BorderSide(color: GirviColors.cardBorder),
+      child: Text(
+        label,
+        style: GirviStyles.statusBadge.copyWith(
+          color: GirviColors.textDark,
+          fontSize: 11,
         ),
       ),
     );
   }
 
-  Widget _settlementMetric(String label, String value) {
+  Widget _snapshotLine(
+    String label,
+    String value, {
+    Color valueColor = GirviColors.textDark,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: GirviStyles.caption.copyWith(
+                fontSize: 12,
+                color: GirviColors.textHint,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: GirviStyles.caption.copyWith(
+                fontSize: 12.5,
+                color: valueColor,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _closeSettlement() {
+    Navigator.of(context).pop(
+      _DisposalSettlementResult(
+        pledgedValuation: _number(_valuationController.text),
+        recoveredAmount: _number(_recoveredController.text),
+        penaltyAmount: _number(_penaltyController.text),
+        note: _noteController.text.trim(),
+      ),
+    );
+  }
+
+  Widget _settlementField({
+    required TextEditingController controller,
+    required String label,
+    required String helper,
+  }) {
+    return SizedBox(
+      width: 142,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GirviStyles.caption.copyWith(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
+            ],
+            onChanged: (_) => setState(() {}),
+            style: GoogleFonts.manrope(
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              color: GirviColors.textDark,
+            ),
+            decoration: InputDecoration(
+              prefixText: 'Rs ',
+              prefixStyle: GoogleFonts.manrope(
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+                color: GirviColors.textHint,
+              ),
+              filled: true,
+              fillColor: GirviColors.bodyBg,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: GirviColors.cardBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: GirviColors.cardBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(
+                  color: GirviColors.brandGold,
+                  width: 1.5,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            helper,
+            style: GirviStyles.caption.copyWith(
+              fontSize: 10.8,
+              color: GirviColors.textHint,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _settlementMetric(
+    String label,
+    String value, {
+    Color accent = GirviColors.textDark,
+  }) {
     return Container(
       width: 142,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: GirviColors.bodyBg,
+        color: GirviColors.cardBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: GirviColors.cardBorder),
+        border: Border.all(color: accent.withValues(alpha: 0.28)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1445,7 +2143,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
             style: GoogleFonts.manrope(
               fontSize: 15,
               fontWeight: FontWeight.w900,
-              color: GirviColors.textDark,
+              color: accent,
             ),
           ),
         ],
@@ -1455,6 +2153,23 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
 
   double _number(String value) {
     return double.tryParse(value.replaceAll(',', '').trim()) ?? 0;
+  }
+
+  String _date(DateTime? value) =>
+      value == null ? 'Not set' : DateFormat('dd MMM yyyy').format(value);
+
+  String _itemSummary() {
+    final loan = widget.item.loan;
+    final value = loan.itemDescription.trim().isEmpty
+        ? loan.itemSummary
+        : loan.itemDescription;
+    return value
+        .replaceAllMapped(
+          RegExp(r'#\s*(\d+)'),
+          (match) => 'Serial Number ${match.group(1)}',
+        )
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 
   String _money(double value) =>
