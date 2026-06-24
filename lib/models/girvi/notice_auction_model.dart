@@ -8,16 +8,20 @@ import 'girvi_loan_model.dart';
 import 'girvi_notice_action_model.dart';
 
 enum NoticeAuctionStage {
-  noticeDue,
-  auctionReview,
-  auctioned,
+  firstNoticeDue,
+  secondNoticeDue,
+  finalNoticeDue,
+  disposalReady,
+  settled,
 }
 
 enum NoticeAuctionFilter {
   all,
-  noticeDue,
-  auctionReview,
-  auctioned,
+  firstNotice,
+  secondNotice,
+  finalNotice,
+  disposalReady,
+  settled,
 }
 
 class NoticeAuctionCase {
@@ -25,12 +29,14 @@ class NoticeAuctionCase {
   final int noticePeriodDays;
   final DateTime now;
   final GirviNoticeAction? latestAction;
+  final List<GirviNoticeAction> actionHistory;
 
   const NoticeAuctionCase({
     required this.account,
     required this.noticePeriodDays,
     required this.now,
     this.latestAction,
+    this.actionHistory = const [],
   });
 
   GirviLoanModel get loan => account.loan;
@@ -38,6 +44,32 @@ class NoticeAuctionCase {
   bool get isAuctioned => loan.girviStatus == GirviStatus.auctioned;
 
   bool get hasNoticeActivity => latestAction != null;
+
+  List<GirviNoticeAction> get noticeActions =>
+      actionHistory.where((action) => action.isNotice).toList();
+
+  bool get hasDisposalSettlement =>
+      actionHistory.any((action) => action.isDisposalSettlement);
+
+  int get preparedNoticeCount {
+    final stages = <int>{};
+    for (final action in noticeActions) {
+      final stage = action.noticeStage;
+      if (stage != null && stage >= 1 && stage <= 3) stages.add(stage);
+    }
+    return stages.length;
+  }
+
+  GirviNoticeType? get nextNoticeType {
+    if (hasDisposalSettlement || isAuctioned) return null;
+    if (preparedNoticeCount <= 0) return GirviNoticeType.first;
+    if (preparedNoticeCount == 1) return GirviNoticeType.second;
+    if (preparedNoticeCount == 2) return GirviNoticeType.finalNotice;
+    return null;
+  }
+
+  bool get canCloseDisposal =>
+      !hasDisposalSettlement && !isAuctioned && preparedNoticeCount >= 3;
 
   int get overdueDays {
     final maturity = loan.maturityDate;
@@ -56,65 +88,85 @@ class NoticeAuctionCase {
   int get daysPastNoticePeriod => math.max(0, overdueDays - noticePeriodDays);
 
   NoticeAuctionStage get stage {
-    if (isAuctioned) return NoticeAuctionStage.auctioned;
-    if (overdueDays >= noticePeriodDays) {
-      return NoticeAuctionStage.auctionReview;
-    }
-    return NoticeAuctionStage.noticeDue;
+    if (isAuctioned || hasDisposalSettlement) return NoticeAuctionStage.settled;
+    if (preparedNoticeCount >= 3) return NoticeAuctionStage.disposalReady;
+    if (preparedNoticeCount == 2) return NoticeAuctionStage.finalNoticeDue;
+    if (preparedNoticeCount == 1) return NoticeAuctionStage.secondNoticeDue;
+    return NoticeAuctionStage.firstNoticeDue;
   }
 
   String get stageLabel {
     switch (stage) {
-      case NoticeAuctionStage.noticeDue:
-        return 'Notice Due';
-      case NoticeAuctionStage.auctionReview:
-        return 'Auction Review';
-      case NoticeAuctionStage.auctioned:
-        return 'Auctioned';
+      case NoticeAuctionStage.firstNoticeDue:
+        return 'First Notice';
+      case NoticeAuctionStage.secondNoticeDue:
+        return 'Second Notice';
+      case NoticeAuctionStage.finalNoticeDue:
+        return 'Final Notice';
+      case NoticeAuctionStage.disposalReady:
+        return 'Disposal Ready';
+      case NoticeAuctionStage.settled:
+        return 'Closed';
     }
   }
 
   String get stageDescription {
     switch (stage) {
-      case NoticeAuctionStage.noticeDue:
-        return '$daysUntilAuctionReview day${daysUntilAuctionReview == 1 ? '' : 's'} before auction review.';
-      case NoticeAuctionStage.auctionReview:
-        return '$daysPastNoticePeriod day${daysPastNoticePeriod == 1 ? '' : 's'} past notice period.';
-      case NoticeAuctionStage.auctioned:
-        return 'Account has been marked as auctioned.';
+      case NoticeAuctionStage.firstNoticeDue:
+        return 'Prepare the first settlement warning.';
+      case NoticeAuctionStage.secondNoticeDue:
+        return 'Second warning is required before final notice.';
+      case NoticeAuctionStage.finalNoticeDue:
+        return 'Final redemption notice is pending.';
+      case NoticeAuctionStage.disposalReady:
+        return 'All three notices are prepared. Review disposal settlement.';
+      case NoticeAuctionStage.settled:
+        return 'Notice and disposal workflow is closed.';
     }
   }
 
   String get primaryActionLabel {
     switch (stage) {
-      case NoticeAuctionStage.noticeDue:
-        return 'Prepare Notice';
-      case NoticeAuctionStage.auctionReview:
-        return 'Review Auction';
-      case NoticeAuctionStage.auctioned:
+      case NoticeAuctionStage.firstNoticeDue:
+        return 'Prepare First Notice';
+      case NoticeAuctionStage.secondNoticeDue:
+        return 'Prepare Second Notice';
+      case NoticeAuctionStage.finalNoticeDue:
+        return 'Prepare Final Notice';
+      case NoticeAuctionStage.disposalReady:
+        return 'Close Disposal';
+      case NoticeAuctionStage.settled:
         return 'Closed';
     }
   }
 
   Color get accentColor {
     switch (stage) {
-      case NoticeAuctionStage.noticeDue:
+      case NoticeAuctionStage.firstNoticeDue:
         return GirviColors.warning;
-      case NoticeAuctionStage.auctionReview:
+      case NoticeAuctionStage.secondNoticeDue:
         return GirviColors.danger;
-      case NoticeAuctionStage.auctioned:
+      case NoticeAuctionStage.finalNoticeDue:
+        return GirviColors.danger;
+      case NoticeAuctionStage.disposalReady:
         return GirviColors.statusAuctioned;
+      case NoticeAuctionStage.settled:
+        return GirviColors.success;
     }
   }
 
   Color get accentBg {
     switch (stage) {
-      case NoticeAuctionStage.noticeDue:
+      case NoticeAuctionStage.firstNoticeDue:
         return GirviColors.warningBg;
-      case NoticeAuctionStage.auctionReview:
+      case NoticeAuctionStage.secondNoticeDue:
         return GirviColors.dangerBg;
-      case NoticeAuctionStage.auctioned:
+      case NoticeAuctionStage.finalNoticeDue:
+        return GirviColors.dangerBg;
+      case NoticeAuctionStage.disposalReady:
         return GirviColors.statusAucBg;
+      case NoticeAuctionStage.settled:
+        return GirviColors.successBg;
     }
   }
 }
@@ -122,8 +174,9 @@ class NoticeAuctionCase {
 class NoticeAuctionStats {
   final int totalCases;
   final int noticeDueCount;
-  final int auctionReviewCount;
-  final int auctionedCount;
+  final int finalNoticeCount;
+  final int disposalReadyCount;
+  final int settledCount;
   final double principalExposure;
   final double interestExposure;
   final double totalExposure;
@@ -132,8 +185,9 @@ class NoticeAuctionStats {
   const NoticeAuctionStats({
     required this.totalCases,
     required this.noticeDueCount,
-    required this.auctionReviewCount,
-    required this.auctionedCount,
+    required this.finalNoticeCount,
+    required this.disposalReadyCount,
+    required this.settledCount,
     required this.principalExposure,
     required this.interestExposure,
     required this.totalExposure,
@@ -144,8 +198,9 @@ class NoticeAuctionStats {
     return const NoticeAuctionStats(
       totalCases: 0,
       noticeDueCount: 0,
-      auctionReviewCount: 0,
-      auctionedCount: 0,
+      finalNoticeCount: 0,
+      disposalReadyCount: 0,
+      settledCount: 0,
       principalExposure: 0,
       interestExposure: 0,
       totalExposure: 0,

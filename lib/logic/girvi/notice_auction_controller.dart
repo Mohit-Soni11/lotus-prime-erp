@@ -1,11 +1,10 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/logging/app_logger.dart';
 import '../../database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
+import '../../models/girvi/girvi_notice_action_model.dart';
 import '../../models/girvi/notice_auction_model.dart';
 import '../../repositories/girvi/girvi_notice_action_repository.dart';
 import '../../repositories/girvi/girvi_repository.dart';
@@ -19,14 +18,12 @@ class NoticeAuctionController extends ChangeNotifier {
     GirviNoticeActionRepository? noticeActionRepository,
   }) {
     final resolvedDb = db ?? AppDatabase();
-    _db = resolvedDb;
     _repository = repository ?? GirviRepository(resolvedDb);
     _billingRepo = billingRepo ?? GirviBillingRepo(db: resolvedDb);
     _noticeActionRepository =
         noticeActionRepository ?? GirviNoticeActionRepository(resolvedDb);
   }
 
-  late final AppDatabase _db;
   late final GirviRepository _repository;
   late final GirviBillingRepo _billingRepo;
   late final GirviNoticeActionRepository _noticeActionRepository;
@@ -61,7 +58,7 @@ class NoticeAuctionController extends ChangeNotifier {
         return entry.loan.maturityDate != null &&
             now.isAfter(entry.loan.maturityDate!);
       }).toList();
-      final latestActions = await _noticeActionRepository.latestByGirviIds(
+      final actionHistory = await _noticeActionRepository.actionsByGirviIds(
         candidateAccounts.map((entry) => entry.loan.id).toList(),
       );
 
@@ -71,7 +68,10 @@ class NoticeAuctionController extends ChangeNotifier {
               account: entry,
               noticePeriodDays: noticeDays,
               now: now,
-              latestAction: latestActions[entry.loan.id],
+              latestAction: (actionHistory[entry.loan.id] ?? const []).isEmpty
+                  ? null
+                  : actionHistory[entry.loan.id]!.first,
+              actionHistory: actionHistory[entry.loan.id] ?? const [],
             ),
           )
           .toList()
@@ -163,6 +163,90 @@ class NoticeAuctionController extends ChangeNotifier {
     }
   }
 
+  Future<bool> recordNoticePrepared(
+    NoticeAuctionCase item,
+    GirviNoticeType noticeType,
+    String noticeText,
+  ) async {
+    try {
+      await _noticeActionRepository.recordNoticePrepared(
+        girviId: item.loan.id,
+        noticeType: noticeType,
+        noticeText: noticeText,
+      );
+      _state = _state.copyWith(
+        inlineMessage:
+            '${noticeType.label} saved for ticket ${item.loan.ticketNo}.',
+      );
+      notifyListeners();
+      await load(keepInlineMessage: true);
+      return true;
+    } catch (error) {
+      AppLogger.debug('Notice & Auction notice stage audit failed: $error');
+      _state = _state.copyWith(
+        inlineMessage: '${noticeType.label} could not be saved.',
+      );
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> closeDisposalSettlement({
+    required NoticeAuctionCase item,
+    required double pledgedValuation,
+    required double recoveredAmount,
+    required double penaltyAmount,
+    required String note,
+  }) async {
+    try {
+      final settlementTotal = item.account.totalPayable + penaltyAmount;
+      final balanceDue = recoveredAmount >= settlementTotal
+          ? 0.0
+          : settlementTotal - recoveredAmount;
+      final surplus = recoveredAmount > settlementTotal
+          ? recoveredAmount - settlementTotal
+          : 0.0;
+
+      final updated = await _repository.updateStatus(
+        item.loan.id,
+        GirviStatus.auctioned,
+      );
+      if (!updated) {
+        _state = _state.copyWith(
+          inlineMessage: 'Disposal settlement could not be closed.',
+        );
+        notifyListeners();
+        return false;
+      }
+
+      await _noticeActionRepository.recordDisposalSettlement(
+        girviId: item.loan.id,
+        pledgedValuation: pledgedValuation,
+        recoveredAmount: recoveredAmount,
+        penaltyAmount: penaltyAmount,
+        settlementTotal: settlementTotal,
+        customerBalanceDue: balanceDue,
+        customerSurplus: surplus,
+        note: note,
+      );
+
+      _state = _state.copyWith(
+        inlineMessage:
+            'Disposal settlement closed for ticket ${item.loan.ticketNo}.',
+      );
+      notifyListeners();
+      await load(keepInlineMessage: true);
+      return true;
+    } catch (error) {
+      AppLogger.debug('Notice & Auction disposal settlement failed: $error');
+      _state = _state.copyWith(
+        inlineMessage: 'Disposal settlement could not be closed.',
+      );
+      notifyListeners();
+      return false;
+    }
+  }
+
   void showInlineMessage(String message) {
     _state = _state.copyWith(inlineMessage: message);
     notifyListeners();
@@ -177,22 +261,35 @@ class NoticeAuctionController extends ChangeNotifier {
     var result = List<NoticeAuctionCase>.from(_state.allCases);
 
     switch (_state.filter) {
-      case NoticeAuctionFilter.noticeDue:
+      case NoticeAuctionFilter.firstNotice:
         result = result
-            .where((item) => item.stage == NoticeAuctionStage.noticeDue)
+            .where((item) => item.stage == NoticeAuctionStage.firstNoticeDue)
             .toList();
         break;
-      case NoticeAuctionFilter.auctionReview:
+      case NoticeAuctionFilter.secondNotice:
         result = result
-            .where((item) => item.stage == NoticeAuctionStage.auctionReview)
+            .where((item) => item.stage == NoticeAuctionStage.secondNoticeDue)
             .toList();
         break;
-      case NoticeAuctionFilter.auctioned:
+      case NoticeAuctionFilter.finalNotice:
         result = result
-            .where((item) => item.stage == NoticeAuctionStage.auctioned)
+            .where((item) => item.stage == NoticeAuctionStage.finalNoticeDue)
+            .toList();
+        break;
+      case NoticeAuctionFilter.disposalReady:
+        result = result
+            .where((item) => item.stage == NoticeAuctionStage.disposalReady)
+            .toList();
+        break;
+      case NoticeAuctionFilter.settled:
+        result = result
+            .where((item) => item.stage == NoticeAuctionStage.settled)
             .toList();
         break;
       case NoticeAuctionFilter.all:
+        result = result
+            .where((item) => item.stage != NoticeAuctionStage.settled)
+            .toList();
         break;
     }
 
@@ -221,26 +318,31 @@ class NoticeAuctionController extends ChangeNotifier {
     List<NoticeAuctionCase> cases,
     DateTime now,
   ) {
+    final activeCases = cases
+        .where((item) => item.stage != NoticeAuctionStage.settled)
+        .toList();
+
     return NoticeAuctionStats(
-      totalCases: cases.length,
-      noticeDueCount: cases
-          .where((item) => item.stage == NoticeAuctionStage.noticeDue)
+      totalCases: activeCases.length,
+      noticeDueCount: activeCases.length,
+      finalNoticeCount: activeCases
+          .where((item) => item.stage == NoticeAuctionStage.finalNoticeDue)
           .length,
-      auctionReviewCount: cases
-          .where((item) => item.stage == NoticeAuctionStage.auctionReview)
+      disposalReadyCount: activeCases
+          .where((item) => item.stage == NoticeAuctionStage.disposalReady)
           .length,
-      auctionedCount: cases
-          .where((item) => item.stage == NoticeAuctionStage.auctioned)
+      settledCount: cases
+          .where((item) => item.stage == NoticeAuctionStage.settled)
           .length,
-      principalExposure: cases.fold(
+      principalExposure: activeCases.fold(
         0,
         (sum, item) => sum + item.account.principalDue,
       ),
-      interestExposure: cases.fold(
+      interestExposure: activeCases.fold(
         0,
         (sum, item) => sum + item.account.netInterestDue,
       ),
-      totalExposure: cases.fold(
+      totalExposure: activeCases.fold(
         0,
         (sum, item) => sum + item.account.totalPayable,
       ),
@@ -258,18 +360,16 @@ class NoticeAuctionController extends ChangeNotifier {
 
   int _stageRank(NoticeAuctionStage stage) {
     switch (stage) {
-      case NoticeAuctionStage.auctionReview:
+      case NoticeAuctionStage.disposalReady:
+        return 5;
+      case NoticeAuctionStage.finalNoticeDue:
+        return 4;
+      case NoticeAuctionStage.secondNoticeDue:
         return 3;
-      case NoticeAuctionStage.noticeDue:
+      case NoticeAuctionStage.firstNoticeDue:
         return 2;
-      case NoticeAuctionStage.auctioned:
+      case NoticeAuctionStage.settled:
         return 1;
     }
-  }
-
-  @override
-  void dispose() {
-    unawaited(_db.close());
-    super.dispose();
   }
 }

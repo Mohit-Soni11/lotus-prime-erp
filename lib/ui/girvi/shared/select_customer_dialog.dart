@@ -10,6 +10,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/logging/app_logger.dart';
 import '../../../database/db/app_database.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import '../../customer/add_customer/add_customer_screen.dart';
@@ -33,6 +34,7 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
   List<Customer> _all = [];
   List<Customer> _filtered = [];
   bool _loading = true;
+  String? _loadError;
 
   @override
   void initState() {
@@ -49,29 +51,59 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
   }
 
   Future<void> _loadCustomers() async {
-    final list = await (widget.db.select(widget.db.customers)
-          ..orderBy([(c) => drift.OrderingTerm.asc(c.name)]))
-        .get();
-    if (mounted) {
+    if (mounted && !_loading) {
+      setState(() {
+        _loading = true;
+        _loadError = null;
+      });
+    }
+
+    try {
+      final list = await _fetchCustomers();
+      if (!mounted) return;
       setState(() {
         _all = list;
-        _filtered = list;
+        _filtered = _filterCustomers(list);
         _loading = false;
+        _loadError = null;
+      });
+    } catch (error, stackTrace) {
+      AppLogger.debug(
+        'SelectCustomerDialog customer load failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      if (!mounted) return;
+      setState(() {
+        _all = [];
+        _filtered = [];
+        _loading = false;
+        _loadError = 'Customer list could not be loaded. Please try again.';
       });
     }
   }
 
-  void _onSearch() {
+  Future<List<Customer>> _fetchCustomers() {
+    return (widget.db.select(widget.db.customers)
+          ..orderBy([(c) => drift.OrderingTerm.asc(c.name)]))
+        .get();
+  }
+
+  List<Customer> _filterCustomers(List<Customer> customers) {
     final q = _searchCtrl.text.toLowerCase().trim();
+    return q.isEmpty
+        ? customers
+        : customers
+            .where((c) =>
+                c.name.toLowerCase().contains(q) ||
+                c.mobile.contains(q) ||
+                (c.city?.toLowerCase().contains(q) ?? false))
+            .toList();
+  }
+
+  void _onSearch() {
     setState(() {
-      _filtered = q.isEmpty
-          ? _all
-          : _all
-              .where((c) =>
-                  c.name.toLowerCase().contains(q) ||
-                  c.mobile.contains(q) ||
-                  (c.city?.toLowerCase().contains(q) ?? false))
-              .toList();
+      _filtered = _filterCustomers(_all);
     });
   }
 
@@ -105,24 +137,39 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
     );
     if (created != true || !mounted) return;
 
-    final customers = await (widget.db.select(widget.db.customers)
-          ..orderBy([(c) => drift.OrderingTerm.asc(c.name)]))
-        .get();
-    if (!mounted) return;
+    try {
+      setState(() {
+        _loading = true;
+        _loadError = null;
+      });
+      final customers = await _fetchCustomers();
+      if (!mounted) return;
 
-    final newlyCreated = customers
-        .where((customer) => customer.id > lastCustomerId)
-        .toList()
-      ..sort((a, b) => b.id.compareTo(a.id));
+      final newlyCreated = customers
+          .where((customer) => customer.id > lastCustomerId)
+          .toList()
+        ..sort((a, b) => b.id.compareTo(a.id));
 
-    setState(() {
-      _all = customers;
-      _filtered = customers;
-      _loading = false;
-    });
+      setState(() {
+        _all = customers;
+        _filtered = _filterCustomers(customers);
+        _loading = false;
+      });
 
-    if (newlyCreated.isNotEmpty) {
-      widget.onSelected(newlyCreated.first);
+      if (newlyCreated.isNotEmpty) {
+        widget.onSelected(newlyCreated.first);
+      }
+    } catch (error, stackTrace) {
+      AppLogger.debug(
+        'SelectCustomerDialog customer refresh failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = 'Customer list could not be refreshed. Please try again.';
+      });
     }
   }
 
@@ -209,47 +256,57 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
                   ? const Center(
                       child: CircularProgressIndicator(
                           color: GirviColors.brandGold))
-                  : _filtered.isEmpty
+                  : _loadError != null
                       ? Center(
-                          child: _NoCustomerFoundCard(
-                            query: _query,
-                            onAdd: _openAddCustomerScreen,
+                          child: _CustomerLoadErrorCard(
+                            message: _loadError!,
+                            onRetry: _loadCustomers,
                           ),
                         )
-                      : ListView.separated(
-                          controller: scrollCtrl,
-                          itemCount: _filtered.length,
-                          separatorBuilder: (_, __) => const Divider(
-                              height: 1, color: GirviColors.divider),
-                          itemBuilder: (_, i) {
-                            final c = _filtered[i];
-                            return ListTile(
-                              onTap: () => widget.onSelected(c),
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 4),
-                              leading: CircleAvatar(
-                                backgroundColor: GirviColors.brandGoldLight,
-                                child: Text(c.name[0].toUpperCase(),
-                                    style: GoogleFonts.manrope(
-                                      color: GirviColors.brandDeep,
-                                      fontWeight: FontWeight.w800,
-                                    )),
+                      : _filtered.isEmpty
+                          ? Center(
+                              child: _NoCustomerFoundCard(
+                                query: _query,
+                                onAdd: _openAddCustomerScreen,
                               ),
-                              title: Text(c.name,
-                                  style: GoogleFonts.inter(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: GirviColors.textDark)),
-                              subtitle:
-                                  Text(c.mobile, style: GirviStyles.caption),
-                              trailing: c.city != null
-                                  ? Text(c.city!,
-                                      style: GirviStyles.caption
-                                          .copyWith(fontSize: 11))
-                                  : null,
-                            );
-                          },
-                        ),
+                            )
+                          : ListView.separated(
+                              controller: scrollCtrl,
+                              itemCount: _filtered.length,
+                              separatorBuilder: (_, __) => const Divider(
+                                  height: 1, color: GirviColors.divider),
+                              itemBuilder: (_, i) {
+                                final c = _filtered[i];
+                                final initial = c.name.trim().isEmpty
+                                    ? '?'
+                                    : c.name.trim()[0].toUpperCase();
+                                return ListTile(
+                                  onTap: () => widget.onSelected(c),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 4),
+                                  leading: CircleAvatar(
+                                    backgroundColor: GirviColors.brandGoldLight,
+                                    child: Text(initial,
+                                        style: GoogleFonts.manrope(
+                                          color: GirviColors.brandDeep,
+                                          fontWeight: FontWeight.w800,
+                                        )),
+                                  ),
+                                  title: Text(c.name,
+                                      style: GoogleFonts.inter(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: GirviColors.textDark)),
+                                  subtitle: Text(c.mobile,
+                                      style: GirviStyles.caption),
+                                  trailing: c.city != null
+                                      ? Text(c.city!,
+                                          style: GirviStyles.caption
+                                              .copyWith(fontSize: 11))
+                                      : null,
+                                );
+                              },
+                            ),
             ),
           ],
         ),
@@ -327,6 +384,91 @@ class _NoCustomerFoundCard extends StatelessWidget {
                   backgroundColor: GirviColors.brandGold,
                   foregroundColor: GirviColors.shellBg,
                   elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  textStyle: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CustomerLoadErrorCard extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _CustomerLoadErrorCard({
+    required this.message,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Container(
+        width: 420,
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: GirviColors.bodyBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: GirviColors.danger.withValues(alpha: 0.22)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: GirviColors.danger.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: GirviColors.danger.withValues(alpha: 0.18),
+                ),
+              ),
+              child: const Icon(
+                Icons.sync_problem_rounded,
+                color: GirviColors.danger,
+                size: 26,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Customer List Unavailable',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.manrope(
+                color: GirviColors.textDark,
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: GirviStyles.caption.copyWith(fontSize: 12),
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              height: 42,
+              child: OutlinedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded, size: 17),
+                label: const Text('Retry'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: GirviColors.textDark,
+                  side: BorderSide(
+                    color: GirviColors.danger.withValues(alpha: 0.28),
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
