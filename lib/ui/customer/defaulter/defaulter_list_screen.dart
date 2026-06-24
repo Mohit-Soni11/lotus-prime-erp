@@ -110,6 +110,14 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
     context.push(uri.toString());
   }
 
+  void _openNoticeAuction(DefaulterModel account) {
+    final uri = Uri(
+      path: RoutePaths.girviNotice,
+      queryParameters: {'ticketNo': account.referenceNo},
+    );
+    context.push(uri.toString());
+  }
+
   // ==========================================
   // BUILD
   // ==========================================
@@ -168,6 +176,7 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
                   errorMessage: state.errorMessage,
                   onOpenAccount: _openGirviAccount,
                   onOpenInterestEntry: _openInterestEntry,
+                  onOpenNoticeAuction: _openNoticeAuction,
                 ),
               ),
             ],

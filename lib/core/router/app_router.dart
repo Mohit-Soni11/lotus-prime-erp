@@ -222,6 +222,10 @@ GoRouter createAppRouter() {
                 context.go(RoutePaths.customerDefaulters);
                 return;
               }
+              if (returnTo == 'girviNotice') {
+                context.go(RoutePaths.girviNotice);
+                return;
+              }
               if (returnTo == 'girviLedger') {
                 context.go(RoutePaths.girviList);
                 return;
@@ -254,6 +258,10 @@ GoRouter createAppRouter() {
                 context.go(RoutePaths.customerDefaulters);
                 return;
               }
+              if (returnTo == 'girviNotice') {
+                context.go(RoutePaths.girviNotice);
+                return;
+              }
               context.go(RoutePaths.girviList);
             },
           );
@@ -270,6 +278,7 @@ GoRouter createAppRouter() {
       GoRoute(
         path: RoutePaths.girviNotice,
         builder: (context, state) => NoticeAuctionScreen(
+          initialTicketNo: state.uri.queryParameters['ticketNo'],
           onBack: () => context.go(RoutePaths.dashboard),
         ),
       ),

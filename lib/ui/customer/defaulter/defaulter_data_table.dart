@@ -19,6 +19,7 @@ class DefaulterDataTable extends StatelessWidget {
   final String? errorMessage;
   final ValueChanged<DefaulterModel> onOpenAccount;
   final ValueChanged<DefaulterModel> onOpenInterestEntry;
+  final ValueChanged<DefaulterModel> onOpenNoticeAuction;
 
   const DefaulterDataTable({
     super.key,
@@ -26,6 +27,7 @@ class DefaulterDataTable extends StatelessWidget {
     required this.isLoading,
     required this.onOpenAccount,
     required this.onOpenInterestEntry,
+    required this.onOpenNoticeAuction,
     this.errorMessage,
   });
 
@@ -45,6 +47,7 @@ class DefaulterDataTable extends StatelessWidget {
                 errorMessage: errorMessage,
                 onOpenAccount: onOpenAccount,
                 onOpenInterestEntry: onOpenInterestEntry,
+                onOpenNoticeAuction: onOpenNoticeAuction,
               ),
             ),
           ],
@@ -139,12 +142,14 @@ class _QueueBody extends StatelessWidget {
   final String? errorMessage;
   final ValueChanged<DefaulterModel> onOpenAccount;
   final ValueChanged<DefaulterModel> onOpenInterestEntry;
+  final ValueChanged<DefaulterModel> onOpenNoticeAuction;
 
   const _QueueBody({
     required this.defaulters,
     required this.isLoading,
     required this.onOpenAccount,
     required this.onOpenInterestEntry,
+    required this.onOpenNoticeAuction,
     this.errorMessage,
   });
 
@@ -165,6 +170,7 @@ class _QueueBody extends StatelessWidget {
           account: account,
           onOpenAccount: () => onOpenAccount(account),
           onOpenInterestEntry: () => onOpenInterestEntry(account),
+          onOpenNoticeAuction: () => onOpenNoticeAuction(account),
         );
       },
     );
@@ -175,12 +181,14 @@ class _RiskAccountCard extends StatefulWidget {
   final DefaulterModel account;
   final VoidCallback onOpenAccount;
   final VoidCallback onOpenInterestEntry;
+  final VoidCallback onOpenNoticeAuction;
 
   const _RiskAccountCard({
     super.key,
     required this.account,
     required this.onOpenAccount,
     required this.onOpenInterestEntry,
+    required this.onOpenNoticeAuction,
   });
 
   @override
@@ -250,6 +258,7 @@ class _RiskAccountCardState extends State<_RiskAccountCard> {
                       account: account,
                       onOpenAccount: widget.onOpenAccount,
                       onOpenInterestEntry: widget.onOpenInterestEntry,
+                      onOpenNoticeAuction: widget.onOpenNoticeAuction,
                       onRevealMobile: _revealMobile,
                     ),
                   ),
@@ -279,6 +288,7 @@ class _RiskAccountCardState extends State<_RiskAccountCard> {
                   account: account,
                   onOpenAccount: widget.onOpenAccount,
                   onOpenInterestEntry: widget.onOpenInterestEntry,
+                  onOpenNoticeAuction: widget.onOpenNoticeAuction,
                   onRevealMobile: _revealMobile,
                 ),
               ],
@@ -666,12 +676,14 @@ class _AccountActions extends StatefulWidget {
   final DefaulterModel account;
   final VoidCallback onOpenAccount;
   final VoidCallback onOpenInterestEntry;
+  final VoidCallback onOpenNoticeAuction;
   final VoidCallback onRevealMobile;
 
   const _AccountActions({
     required this.account,
     required this.onOpenAccount,
     required this.onOpenInterestEntry,
+    required this.onOpenNoticeAuction,
     required this.onRevealMobile,
   });
 
@@ -707,6 +719,15 @@ class _AccountActionsState extends State<_AccountActions> {
             color: DefaulterColors.brandGoldDark,
             onTap: widget.onOpenInterestEntry,
           ),
+          if (account.riskLevel == DefaulterRiskLevel.critical) ...[
+            const SizedBox(height: 8),
+            _ActionButton(
+              icon: DefaulterIcons.defaulterAlert,
+              label: 'Notice Review',
+              color: DefaulterColors.riskCriticalText,
+              onTap: widget.onOpenNoticeAuction,
+            ),
+          ],
           const SizedBox(height: 8),
           Row(
             children: [

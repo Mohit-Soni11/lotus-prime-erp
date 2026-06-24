@@ -81,8 +81,9 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
         path: RoutePaths.girviInterest,
         queryParameters: {
           'ticketNo': account.loan.ticketNo,
-          'returnTo': widget.returnTo == 'riskCollections'
-              ? 'riskCollections'
+          'returnTo': widget.returnTo == 'riskCollections' ||
+                  widget.returnTo == 'girviNotice'
+              ? widget.returnTo!
               : 'girviLedger',
         },
       ).toString(),
