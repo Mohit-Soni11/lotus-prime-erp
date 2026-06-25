@@ -283,7 +283,7 @@ class _TicketOpenIndicator extends StatelessWidget {
             selected ? 'Account Open' : 'Open Account',
             style: GoogleFonts.inter(
               color: color,
-              fontSize: 12,
+              fontSize: 12.5,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -395,7 +395,7 @@ class _TicketAmountBlock extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.inter(
             color: GirviColors.textDark,
-            fontSize: 12,
+            fontSize: 12.5,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -431,7 +431,7 @@ class _TicketMaturityBlock extends StatelessWidget {
           'Maturity',
           style: GoogleFonts.inter(
             color: GirviColors.textDark,
-            fontSize: 12,
+            fontSize: 12.5,
             fontWeight: FontWeight.w800,
           ),
         ),

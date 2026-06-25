@@ -87,7 +87,7 @@ class _KycPhotoCard extends StatelessWidget {
                               : 'Camera or gallery',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GirviStyles.caption.copyWith(fontSize: 10.5),
+                      style: GirviStyles.caption.copyWith(fontSize: 12.5),
                     ),
                   ],
                 ),
@@ -159,7 +159,7 @@ class _KycPhotoCard extends StatelessWidget {
                               ? 'Attach a clear photo of the card'
                               : 'Select an identity document first',
                           style: GirviStyles.caption.copyWith(
-                            fontSize: 10.5,
+                            fontSize: 12.5,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -232,7 +232,7 @@ class _KycPhotoButton extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.inter(
-            fontSize: 11,
+            fontSize: 12.5,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -314,7 +314,7 @@ class _PledgedItemHeader extends StatelessWidget {
                 hasPhoto
                     ? 'Photo attached for this ticket audit trail.'
                     : 'Attach a clear image of the pledged item.',
-                style: GirviStyles.caption.copyWith(fontSize: 11),
+                style: GirviStyles.caption.copyWith(fontSize: 12.5),
               ),
               if (hasPhoto) ...[
                 const SizedBox(height: 4),
@@ -323,7 +323,7 @@ class _PledgedItemHeader extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GirviStyles.caption.copyWith(
-                    fontSize: 10,
+                    fontSize: 12.5,
                     color: GirviColors.textHint,
                   ),
                 ),
@@ -421,7 +421,7 @@ class _PhotoActionButton extends StatelessWidget {
               label,
               style: GoogleFonts.inter(
                 color: color,
-                fontSize: 11,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -473,7 +473,8 @@ class _DeskMetric extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: GirviStyles.caption.copyWith(fontSize: 10)),
+                Text(label,
+                    style: GirviStyles.caption.copyWith(fontSize: 12.5)),
                 const SizedBox(height: 3),
                 Text(
                   value,
@@ -513,7 +514,7 @@ class _StatusPill extends StatelessWidget {
         label,
         style: GoogleFonts.inter(
           color: color,
-          fontSize: 10,
+          fontSize: 12.5,
           fontWeight: FontWeight.w900,
           letterSpacing: 0.6,
         ),
@@ -587,7 +588,7 @@ class _InvoiceCustomerCard extends StatelessWidget {
                   ready ? 'BORROWER' : 'BORROWER REQUIRED',
                   style: GoogleFonts.inter(
                     color: GirviColors.textMuted,
-                    fontSize: 8.5,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0.8,
                   ),
@@ -608,7 +609,7 @@ class _InvoiceCustomerCard extends StatelessWidget {
                   mobile,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GirviStyles.caption.copyWith(fontSize: 10.5),
+                  style: GirviStyles.caption.copyWith(fontSize: 12.5),
                 ),
               ],
             ),
@@ -690,16 +691,20 @@ class _InvoiceAmountHero extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 9),
-              Text(
-                'LOAN TO DISBURSE',
-                style: GoogleFonts.inter(
-                  color: GirviColors.brandDeep,
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.8,
+              Expanded(
+                child: Text(
+                  'LOAN TO DISBURSE',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: GirviColors.brandDeep,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                  ),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -713,7 +718,7 @@ class _InvoiceAmountHero extends StatelessWidget {
                   duration,
                   style: GoogleFonts.inter(
                     color: GirviColors.textDark,
-                    fontSize: 9.5,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -737,16 +742,20 @@ class _InvoiceAmountHero extends StatelessWidget {
           const SizedBox(height: 9),
           Row(
             children: [
-              Text(
-                'TOTAL AT MATURITY',
-                style: GoogleFonts.inter(
-                  color: GirviColors.textMuted,
-                  fontSize: 8.5,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.7,
+              Expanded(
+                child: Text(
+                  'TOTAL AT MATURITY',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: GirviColors.textMuted,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.7,
+                  ),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Flexible(
                 child: Text(
                   maturityAmount,
@@ -801,7 +810,7 @@ class _InvoiceMetricTile extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: GirviStyles.caption.copyWith(
-              fontSize: 8.5,
+              fontSize: 12.5,
               height: 1.15,
               fontWeight: FontWeight.w800,
             ),
@@ -813,7 +822,7 @@ class _InvoiceMetricTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.manrope(
               color: GirviColors.textDark,
-              fontSize: 11.5,
+              fontSize: 12.5,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -854,7 +863,7 @@ class _InvoiceDetailSection extends StatelessWidget {
                   title,
                   style: GoogleFonts.inter(
                     color: GirviColors.textMuted,
-                    fontSize: 9,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0.75,
                   ),
@@ -903,7 +912,7 @@ class _InvoiceDetailRow extends StatelessWidget {
             child: Text(
               label,
               style: GirviStyles.caption.copyWith(
-                fontSize: 10,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -918,7 +927,7 @@ class _InvoiceDetailRow extends StatelessWidget {
               textAlign: TextAlign.right,
               style: GoogleFonts.manrope(
                 color: valueColor ?? GirviColors.textDark,
-                fontSize: 10.5,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w900,
                 height: 1.25,
               ),
@@ -1001,7 +1010,7 @@ class _InvoicePaymentBreakdown extends StatelessWidget {
                       mixed ? 'MIXED PAYMENT' : 'PAYMENT BREAKDOWN',
                       style: GoogleFonts.inter(
                         color: GirviColors.textDark,
-                        fontSize: 9.5,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 0.65,
                       ),
@@ -1009,7 +1018,7 @@ class _InvoicePaymentBreakdown extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       'Automatically detected from entered amounts',
-                      style: GirviStyles.caption.copyWith(fontSize: 9.5),
+                      style: GirviStyles.caption.copyWith(fontSize: 12.5),
                     ),
                   ],
                 ),
@@ -1027,7 +1036,7 @@ class _InvoicePaymentBreakdown extends StatelessWidget {
                   'AUTO',
                   style: GoogleFonts.inter(
                     color: GirviColors.info,
-                    fontSize: 8,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0.45,
                   ),
@@ -1049,7 +1058,7 @@ class _InvoicePaymentBreakdown extends StatelessWidget {
                 'Enter Cash, UPI, Bank or Cheque amount above.',
                 textAlign: TextAlign.center,
                 style: GirviStyles.caption.copyWith(
-                  fontSize: 10,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -1117,7 +1126,7 @@ class _InvoicePaymentBreakdown extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       color: ready ? GirviColors.success : GirviColors.warning,
-                      fontSize: 9.5,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -1157,7 +1166,7 @@ class _InvoicePaymentChip extends StatelessWidget {
                 part.label,
                 style: GoogleFonts.inter(
                   color: GirviColors.textMuted,
-                  fontSize: 8,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -1166,7 +1175,7 @@ class _InvoicePaymentChip extends StatelessWidget {
                 part.value,
                 style: GoogleFonts.manrope(
                   color: GirviColors.textDark,
-                  fontSize: 10.5,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -1194,7 +1203,7 @@ class _InvoicePaymentTotal extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GirviStyles.caption.copyWith(fontSize: 8.5)),
+        Text(label, style: GirviStyles.caption.copyWith(fontSize: 12.5)),
         const SizedBox(height: 3),
         Text(
           value,
@@ -1202,7 +1211,7 @@ class _InvoicePaymentTotal extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.manrope(
             color: color,
-            fontSize: 11.5,
+            fontSize: 12.5,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -1258,7 +1267,7 @@ class _InvoiceReadinessCard extends StatelessWidget {
                   allReady ? 'READY TO CREATE INVOICE' : 'INVOICE CHECKLIST',
                   style: GoogleFonts.inter(
                     color: GirviColors.textDark,
-                    fontSize: 9.5,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0.55,
                   ),
@@ -1323,7 +1332,7 @@ class _InvoiceCheckChip extends StatelessWidget {
             label,
             style: GoogleFonts.inter(
               color: complete ? GirviColors.textDark : GirviColors.textMuted,
-              fontSize: 9,
+              fontSize: 12.5,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -1356,7 +1365,7 @@ class _InvoiceOptionalBadge extends StatelessWidget {
         label,
         style: GoogleFonts.inter(
           color: color,
-          fontSize: 7.8,
+          fontSize: 12.5,
           fontWeight: FontWeight.w900,
           letterSpacing: 0.35,
         ),
@@ -1601,7 +1610,7 @@ class _LoanTermsGroupHeader extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GirviStyles.caption.copyWith(
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w700,
                   color: GirviColors.textBody,
                 ),
@@ -1622,7 +1631,7 @@ class _LoanTermsGroupHeader extends StatelessWidget {
               trailing!,
               style: GoogleFonts.inter(
                 color: GirviColors.textDark,
-                fontSize: 11.5,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -1651,7 +1660,7 @@ class _LtvSuggestionRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Quick LTV Suggestions:',
-            style: GirviStyles.caption.copyWith(fontSize: 11)),
+            style: GirviStyles.caption.copyWith(fontSize: 12.5)),
         const SizedBox(height: 6),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -1675,12 +1684,12 @@ class _LtvSuggestionRow extends StatelessWidget {
                       Text('${ltv.toInt()}% LTV',
                           style: GoogleFonts.inter(
                               color: GirviColors.brandDeep,
-                              fontSize: 10,
+                              fontSize: 12.5,
                               fontWeight: FontWeight.w700)),
                       Text('Rs ${fmt.format(amt)}',
                           style: GoogleFonts.manrope(
                               color: GirviColors.textDark,
-                              fontSize: 11,
+                              fontSize: 12.5,
                               fontWeight: FontWeight.w800)),
                     ]),
                   ),
@@ -1845,7 +1854,7 @@ class _InterestPreviewCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GirviStyles.caption.copyWith(
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w700,
                     color: GirviColors.textBody,
                   ),
@@ -1864,7 +1873,7 @@ class _InterestPreviewCard extends StatelessWidget {
             child: Text('${annualRate.toStringAsFixed(0)}% p.a.',
                 style: GoogleFonts.inter(
                     color: GirviColors.textBody,
-                    fontSize: 10,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w800)),
           ),
         ]),
@@ -1963,7 +1972,7 @@ class _PreviewStat extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       color: GirviColors.textDark,
-                      fontSize: 12,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -2143,7 +2152,7 @@ class _DisbursementAmountTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.manrope(
                     color: GirviColors.textDark,
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -2169,7 +2178,7 @@ class _DisbursementAmountTile extends StatelessWidget {
                   'Rs',
                   style: GoogleFonts.inter(
                     color: color,
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -2297,7 +2306,7 @@ class _MiniAmountPanel extends StatelessWidget {
             label,
             style: GoogleFonts.inter(
               color: GirviColors.textDark,
-              fontSize: 12,
+              fontSize: 12.5,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -2361,7 +2370,7 @@ class _PaymentModeSelector extends StatelessWidget {
                     color: isSelected
                         ? GirviColors.brandGold
                         : GirviColors.textBody,
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   )),
             ]),

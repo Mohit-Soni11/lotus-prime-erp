@@ -181,6 +181,14 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
     );
     if (printed) {
       await _controller.recordNoticePrepared(item, noticeType, noticeText);
+      await _controller.recordNoticeDeliveryProof(
+        item: item,
+        noticeType: noticeType,
+        noticeText: noticeText,
+        actionType: GirviNoticeActionTypes.noticePdfPrinted,
+        deliveryChannel: 'Printer',
+        deliveryStatus: 'Printed',
+      );
     }
   }
 
@@ -202,6 +210,14 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
     );
     if (shared) {
       await _controller.recordNoticePrepared(item, noticeType, noticeText);
+      await _controller.recordNoticeDeliveryProof(
+        item: item,
+        noticeType: noticeType,
+        noticeText: noticeText,
+        actionType: GirviNoticeActionTypes.noticePdfShared,
+        deliveryChannel: 'Share Sheet',
+        deliveryStatus: 'Shared',
+      );
     }
   }
 
@@ -244,6 +260,15 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
         noticeText: draft.noticeText,
       );
       await File(normalizedPath).writeAsBytes(bytes, flush: true);
+      await _controller.recordNoticeDeliveryProof(
+        item: item,
+        noticeType: draft.noticeType,
+        noticeText: draft.noticeText,
+        actionType: GirviNoticeActionTypes.noticePdfSaved,
+        deliveryChannel: 'PDF File',
+        deliveryStatus: 'Saved',
+        deliveryReference: normalizedPath,
+      );
       _controller.showInlineMessage(
         '${draft.noticeType.label} PDF saved for ticket ${item.loan.ticketNo}.',
       );
@@ -271,6 +296,14 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
         onLayout: (_) async => bytes,
       );
       if (printed) {
+        await _controller.recordNoticeDeliveryProof(
+          item: item,
+          noticeType: draft.noticeType,
+          noticeText: draft.noticeText,
+          actionType: GirviNoticeActionTypes.noticePdfPrinted,
+          deliveryChannel: 'Printer',
+          deliveryStatus: 'Printed',
+        );
         _controller.showInlineMessage(
           '${draft.noticeType.label} PDF sent to printer for ticket ${item.loan.ticketNo}.',
         );
@@ -663,7 +696,7 @@ class _SummaryTile extends StatelessWidget {
           ),
           Text(
             footer,
-            style: GirviStyles.caption.copyWith(fontSize: 12),
+            style: GirviStyles.caption.copyWith(fontSize: 12.5),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -813,7 +846,7 @@ class _FilterChip extends StatelessWidget {
               child: Text(
                 count.toString(),
                 style: GirviStyles.caption.copyWith(
-                  fontSize: 11.2,
+                  fontSize: 12.5,
                   color: active ? Colors.white : GirviColors.textDark,
                   fontWeight: FontWeight.w900,
                 ),
@@ -1119,7 +1152,7 @@ class _NoticeActivityLine extends StatelessWidget {
         '${action.displayLabel} on $timestamp',
         style: GirviStyles.caption.copyWith(
           color: GirviColors.textDark,
-          fontSize: 12.2,
+          fontSize: 12.5,
           fontWeight: FontWeight.w800,
         ),
         maxLines: 1,
@@ -1245,7 +1278,7 @@ class _ItemAttributeChip extends StatelessWidget {
               text: '${attribute.label}: ',
               style: GirviStyles.caption.copyWith(
                 color: GirviColors.textDark,
-                fontSize: 11.5,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -1253,7 +1286,7 @@ class _ItemAttributeChip extends StatelessWidget {
               text: attribute.value,
               style: GirviStyles.caption.copyWith(
                 color: GirviColors.textDark,
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -1344,16 +1377,18 @@ class _NoticeDocumentStrip extends StatelessWidget {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: actions
-                  .map(
-                    (action) => _NoticeDocumentCard(
-                      action: action,
-                      onView: () => onViewNotice(action),
-                      onDownload: () => onDownloadNotice(action),
-                      onPrint: () => onPrintNotice(action),
-                    ),
-                  )
-                  .toList(),
+              children: actions.map(
+                (action) {
+                  final stage = _noticeStageFromAction(action) ?? 1;
+                  return _NoticeDocumentCard(
+                    action: action,
+                    latestProof: item.latestDeliveryProofForStage(stage),
+                    onView: () => onViewNotice(action),
+                    onDownload: () => onDownloadNotice(action),
+                    onPrint: () => onPrintNotice(action),
+                  );
+                },
+              ).toList(),
             ),
         ],
       ),
@@ -1380,7 +1415,7 @@ class _NoticeCountBadge extends StatelessWidget {
         label,
         style: GirviStyles.caption.copyWith(
           color: GirviColors.brandGold,
-          fontSize: 11.5,
+          fontSize: 12.5,
           fontWeight: FontWeight.w900,
         ),
       ),
@@ -1406,7 +1441,7 @@ class _NoNoticeDocuments extends StatelessWidget {
         'No notice document has been prepared yet.',
         style: GirviStyles.caption.copyWith(
           color: GirviColors.textDark,
-          fontSize: 12.2,
+          fontSize: 12.5,
           fontWeight: FontWeight.w800,
         ),
       ),
@@ -1416,12 +1451,14 @@ class _NoNoticeDocuments extends StatelessWidget {
 
 class _NoticeDocumentCard extends StatelessWidget {
   final GirviNoticeAction action;
+  final GirviNoticeAction? latestProof;
   final VoidCallback onView;
   final VoidCallback onDownload;
   final VoidCallback onPrint;
 
   const _NoticeDocumentCard({
     required this.action,
+    required this.latestProof,
     required this.onView,
     required this.onDownload,
     required this.onPrint,
@@ -1432,6 +1469,11 @@ class _NoticeDocumentCard extends StatelessWidget {
     final noticeType = _noticeTypeFromAction(action);
     final timestamp =
         DateFormat('dd MMM yyyy, hh:mm a').format(action.actionAt);
+    final proof = latestProof;
+    final proofTimestamp = proof == null
+        ? null
+        : DateFormat('dd MMM yyyy, hh:mm a')
+            .format(proof.deliveredAt ?? proof.actionAt);
     final color = _noticeStageColor(noticeType);
 
     return InkWell(
@@ -1470,7 +1512,7 @@ class _NoticeDocumentCard extends StatelessWidget {
                     '0${noticeType.stage}',
                     style: GoogleFonts.inter(
                       color: color,
-                      fontSize: 11.5,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -1492,14 +1534,42 @@ class _NoticeDocumentCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              timestamp,
+              'Prepared $timestamp',
               style: GirviStyles.caption.copyWith(
                 color: GirviColors.textDark,
-                fontSize: 11.4,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w700,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 6),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: proof == null
+                    ? GirviColors.warningBg.withValues(alpha: 0.45)
+                    : GirviColors.successBg.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: proof == null
+                      ? GirviColors.warning.withValues(alpha: 0.24)
+                      : GirviColors.success.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Text(
+                proof == null
+                    ? 'Proof pending'
+                    : '${proof.deliveryProofLabel} - $proofTimestamp',
+                style: GirviStyles.caption.copyWith(
+                  color: GirviColors.textDark,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w900,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             const SizedBox(height: 10),
             Row(
@@ -1584,7 +1654,7 @@ class _MiniNoticeAction extends StatelessWidget {
                   label,
                   style: GirviStyles.caption.copyWith(
                     color: GirviColors.textDark,
-                    fontSize: 10.8,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w900,
                   ),
                   maxLines: 1,
@@ -1644,7 +1714,7 @@ class _CaseActions extends StatelessWidget {
         Text(
           item.stageDescription,
           style: GirviStyles.caption.copyWith(
-            fontSize: 12.2,
+            fontSize: 12.5,
             fontWeight: FontWeight.w800,
           ),
           textAlign: TextAlign.center,
@@ -1702,7 +1772,7 @@ class _InfoPill extends StatelessWidget {
             TextSpan(
               text: '$label ',
               style: GirviStyles.caption.copyWith(
-                fontSize: 11.5,
+                fontSize: 12.5,
                 color: GirviColors.textHint,
               ),
             ),
@@ -1748,7 +1818,7 @@ class _AmountTile extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GirviStyles.caption.copyWith(fontSize: 11.8),
+            style: GirviStyles.caption.copyWith(fontSize: 12.5),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -1892,7 +1962,7 @@ class _SavedNoticePreviewDialogState extends State<_SavedNoticePreviewDialog> {
                   '${draft.item.loan.ticketNo} | ${draft.item.account.customerName} | ${draft.language.label} | $actionDate',
                   style: GirviStyles.caption.copyWith(
                     color: GirviColors.textDark,
-                    fontSize: 12.2,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w800,
                   ),
                   maxLines: 1,
@@ -2508,7 +2578,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
                 Text(
                   'Pledged Item',
                   style: GirviStyles.caption.copyWith(
-                    fontSize: 11.5,
+                    fontSize: 12.5,
                     color: GirviColors.textHint,
                   ),
                 ),
@@ -2702,7 +2772,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
             child: Text(
               'Close only after three notices are complete, supporting records are verified, and lawful disposal approval is available.',
               style: GirviStyles.caption.copyWith(
-                fontSize: 12.4,
+                fontSize: 12.5,
                 height: 1.4,
                 fontWeight: FontWeight.w900,
               ),
@@ -2727,7 +2797,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
               'This action closes the notice and disposal workflow for this ticket.',
               style: GirviStyles.caption.copyWith(
                 color: GirviColors.textHint,
-                fontSize: 12.2,
+                fontSize: 12.5,
                 height: 1.25,
               ),
             ),
@@ -2804,7 +2874,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
         label,
         style: GirviStyles.statusBadge.copyWith(
           color: GirviColors.textDark,
-          fontSize: 11,
+          fontSize: 12.5,
         ),
       ),
     );
@@ -2824,7 +2894,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
             child: Text(
               label,
               style: GirviStyles.caption.copyWith(
-                fontSize: 12,
+                fontSize: 12.5,
                 color: GirviColors.textHint,
               ),
             ),
@@ -2870,7 +2940,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
           Text(
             label,
             style: GirviStyles.caption.copyWith(
-              fontSize: 12,
+              fontSize: 12.5,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -2919,7 +2989,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
           Text(
             helper,
             style: GirviStyles.caption.copyWith(
-              fontSize: 10.8,
+              fontSize: 12.5,
               color: GirviColors.textHint,
             ),
           ),
@@ -2944,7 +3014,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: GirviStyles.caption.copyWith(fontSize: 11.5)),
+          Text(label, style: GirviStyles.caption.copyWith(fontSize: 12.5)),
           const SizedBox(height: 4),
           Text(
             value,

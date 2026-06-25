@@ -271,7 +271,7 @@ class _CustomerGirviCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
                           color: GirviColors.textDark,
-                          fontSize: 12,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -327,7 +327,7 @@ class _CustomerGirviCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      fontSize: 12,
+                      fontSize: 12.5,
                       color: account.hasOverdueTickets
                           ? GirviColors.danger
                           : GirviColors.textDark,
@@ -477,7 +477,7 @@ class _TicketStackRowState extends State<_TicketStackRow> {
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
                           color: GirviColors.textDark,
-                          fontSize: 12,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -490,7 +490,7 @@ class _TicketStackRowState extends State<_TicketStackRow> {
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
                           color: GirviColors.textDark,
-                          fontSize: 12,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -518,7 +518,7 @@ class _TicketStackRowState extends State<_TicketStackRow> {
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         color: GirviColors.textDark,
-                        fontSize: 12,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -593,7 +593,7 @@ class _SelectablePill extends StatelessWidget {
               label,
               style: GoogleFonts.inter(
                 color: selected ? GirviColors.textDark : GirviColors.textBody,
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w800,
               ),
             ),

@@ -46,7 +46,10 @@ class NoticeAuctionCase {
   bool get hasNoticeActivity => latestAction != null;
 
   List<GirviNoticeAction> get noticeActions =>
-      actionHistory.where((action) => action.isNotice).toList();
+      actionHistory.where((action) => action.isNoticePreparation).toList();
+
+  List<GirviNoticeAction> get noticeDeliveryProofActions =>
+      actionHistory.where((action) => action.isNoticeDeliveryProof).toList();
 
   List<GirviNoticeAction> get preparedNoticeActions {
     final stageMap = <int, GirviNoticeAction>{};
@@ -58,6 +61,17 @@ class NoticeAuctionCase {
     }
     final stages = stageMap.keys.toList()..sort();
     return [for (final stage in stages) stageMap[stage]!];
+  }
+
+  List<GirviNoticeAction> deliveryProofsForStage(int stage) {
+    return noticeDeliveryProofActions
+        .where((action) => _noticeStageFor(action) == stage)
+        .toList();
+  }
+
+  GirviNoticeAction? latestDeliveryProofForStage(int stage) {
+    final proofs = deliveryProofsForStage(stage);
+    return proofs.isEmpty ? null : proofs.first;
   }
 
   Set<int> get preparedNoticeStages {

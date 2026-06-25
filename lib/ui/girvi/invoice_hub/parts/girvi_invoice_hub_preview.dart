@@ -51,7 +51,7 @@ extension GirviInvoiceHubPreview on _GirviInvoiceHubScreenState {
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
                           color: GirviColors.textMuted,
-                          fontSize: 10.5,
+                          fontSize: 12.5,
                         ),
                       ),
                     ],
@@ -82,7 +82,7 @@ extension GirviInvoiceHubPreview on _GirviInvoiceHubScreenState {
         ready ? 'PREVIEW READY' : 'GENERATING',
         style: GoogleFonts.inter(
           color: ready ? GirviColors.success : GirviColors.warning,
-          fontSize: 9,
+          fontSize: 12.5,
           fontWeight: FontWeight.w900,
           letterSpacing: 0.6,
         ),
@@ -112,7 +112,7 @@ extension GirviInvoiceHubPreview on _GirviInvoiceHubScreenState {
                 _controller.errorMessage ?? 'Preview could not be generated.',
                 style: GoogleFonts.inter(
                   color: GirviColors.danger,
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w700,
                 ),
               ),

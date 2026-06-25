@@ -184,7 +184,7 @@ extension NewGirviLayout on _NewGirviScreenState {
                             'LOAN INVOICE SUMMARY',
                             style: GoogleFonts.inter(
                               color: GirviColors.textMuted,
-                              fontSize: 9.5,
+                              fontSize: 12.5,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1.1,
                             ),
@@ -237,7 +237,7 @@ extension NewGirviLayout on _NewGirviScreenState {
                       '$completedSteps / 4 complete',
                       style: GoogleFonts.inter(
                         color: GirviColors.textMuted,
-                        fontSize: 10,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -344,7 +344,7 @@ extension NewGirviLayout on _NewGirviScreenState {
                       icon: GirviIcons.weight,
                       label: 'Items / Net Weight',
                       value:
-                          '${_ctrl.itemCount} pcs  |  ${_ctrl.netWeight.toStringAsFixed(3)} g',
+                          '${_ctrl.itemCount == 1 ? '1 piece' : '${_ctrl.itemCount} pieces'}  |  ${_ctrl.netWeight.toStringAsFixed(3)} g',
                     ),
                     _InvoiceDetailRow(
                       icon: GirviIcons.gold,
@@ -405,7 +405,7 @@ extension NewGirviLayout on _NewGirviScreenState {
                     label: Text(
                       'Reset this entry',
                       style: GoogleFonts.inter(
-                        fontSize: 11.5,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -492,7 +492,7 @@ extension NewGirviLayout on _NewGirviScreenState {
                       'CUSTOMER DETAILS',
                       style: GoogleFonts.inter(
                         color: GirviColors.textDark,
-                        fontSize: 11,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -503,7 +503,7 @@ extension NewGirviLayout on _NewGirviScreenState {
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         color: GirviColors.textMuted,
-                        fontSize: 12,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -591,7 +591,7 @@ extension NewGirviLayout on _NewGirviScreenState {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textMuted,
-                    fontSize: 11,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -658,7 +658,7 @@ extension NewGirviLayout on _NewGirviScreenState {
                         'INVOICE NUMBER',
                         style: GoogleFonts.inter(
                           color: GirviColors.textDark,
-                          fontSize: 11,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -667,7 +667,7 @@ extension NewGirviLayout on _NewGirviScreenState {
                         'Girvi Loan Invoice',
                         style: GoogleFonts.inter(
                           color: GirviColors.brandGold,
-                          fontSize: 12,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -701,7 +701,7 @@ extension NewGirviLayout on _NewGirviScreenState {
                       'DRAFT',
                       style: GoogleFonts.inter(
                         color: GirviColors.textDark,
-                        fontSize: 11,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -806,7 +806,7 @@ extension NewGirviLayout on _NewGirviScreenState {
           'INVOICE NO :',
           style: GoogleFonts.inter(
             color: GirviColors.textDark,
-            fontSize: 10,
+            fontSize: 12.5,
             fontWeight: FontWeight.w900,
             letterSpacing: 1.4,
             height: 1,
@@ -949,7 +949,7 @@ extension NewGirviLayout on _NewGirviScreenState {
                 subLabel,
                 style: GoogleFonts.inter(
                   color: iconColor.withValues(alpha: 0.8),
-                  fontSize: 9,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                 ),
               ),

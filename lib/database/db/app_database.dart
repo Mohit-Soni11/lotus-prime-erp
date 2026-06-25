@@ -23,6 +23,7 @@ import '../tables/girvi/girvi_payments.dart';
 import '../tables/girvi/girvi_loan_items.dart';
 import '../tables/girvi/girvi_item_photos.dart';
 import '../tables/girvi/girvi_disbursements.dart';
+import '../tables/girvi/girvi_notice_actions.dart';
 import '../tables/karigar/karigar_issues.dart';
 import '../tables/karigar/karigar_masters.dart';
 import '../tables/karigar/karigar_receipts.dart';
@@ -67,6 +68,7 @@ part 'app_database.g.dart';
     GirviLoanItems,
     GirviItemPhotos,
     GirviDisbursements,
+    GirviNoticeActions,
     DeliveryOrders,
     DeliveryItems,
     SalesBillingSettings,
@@ -130,6 +132,7 @@ class AppDatabase extends _$AppDatabase {
         onCreate: (Migrator m) async {
           await m.createAll();
           await _ensureGirviPaymentReceiptIndex();
+          await ensureGirviNoticeActionSchema();
         },
         onUpgrade: (Migrator m, int from, int to) async {
           AppLogger.info('Migrating database from v$from to v$to');
@@ -628,6 +631,13 @@ class AppDatabase extends _$AppDatabase {
               'v27 Girvi payment receipt uniqueness safeguards applied.',
             );
           }
+
+          if (from < 28) {
+            await ensureGirviNoticeActionSchema();
+            AppLogger.info(
+              'v28 Girvi notice action audit schema applied.',
+            );
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -639,6 +649,7 @@ class AppDatabase extends _$AppDatabase {
           }
 
           await _ensureGirviPaymentReceiptIndex();
+          await ensureGirviNoticeActionSchema();
 
           await customStatement('''
             CREATE TABLE IF NOT EXISTS "bank_accounts" (
@@ -734,6 +745,20 @@ class AppDatabase extends _$AppDatabase {
           }
         },
       );
+
+  Future<void> ensureGirviNoticeActionSchema() async {
+    await customStatement(_createGirviNoticeActionsTableSql);
+    for (final statement in _girviNoticeActionColumnSafetySql) {
+      try {
+        await customStatement(statement);
+      } catch (error, stackTrace) {
+        _handleMigrationError(error, stackTrace);
+      }
+    }
+    for (final statement in _girviNoticeActionIndexSql) {
+      await customStatement(statement);
+    }
+  }
 
   Future<void> _ensureGirviPaymentReceiptIndex() async {
     try {
@@ -1358,4 +1383,50 @@ const List<String> _purchaseVoucherIndexSql = [
   'CREATE INDEX IF NOT EXISTS "idx_purchase_vouchers_customer_id" ON "purchase_vouchers" ("customer_id")',
   'CREATE INDEX IF NOT EXISTS "idx_purchase_vouchers_supplier_id" ON "purchase_vouchers" ("supplier_id")',
   'CREATE INDEX IF NOT EXISTS "idx_purchase_voucher_items_voucher_id" ON "purchase_voucher_items" ("purchase_voucher_id")',
+];
+
+const String _createGirviNoticeActionsTableSql = '''
+CREATE TABLE IF NOT EXISTS "girvi_notice_actions" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "created_at" INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+  "updated_at" INTEGER,
+  "girvi_id" INTEGER NOT NULL,
+  "action_type" TEXT NOT NULL,
+  "notice_stage" INTEGER,
+  "notice_text" TEXT,
+  "action_note" TEXT,
+  "pledged_valuation" REAL NOT NULL DEFAULT 0.0,
+  "recovered_amount" REAL NOT NULL DEFAULT 0.0,
+  "penalty_amount" REAL NOT NULL DEFAULT 0.0,
+  "settlement_total" REAL NOT NULL DEFAULT 0.0,
+  "customer_balance_due" REAL NOT NULL DEFAULT 0.0,
+  "customer_surplus" REAL NOT NULL DEFAULT 0.0,
+  "action_at" INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+  "delivery_channel" TEXT,
+  "delivery_status" TEXT,
+  "delivery_reference" TEXT,
+  "delivered_at" INTEGER,
+  FOREIGN KEY ("girvi_id") REFERENCES "girvi_loans" ("id") ON DELETE CASCADE
+)
+''';
+
+const List<String> _girviNoticeActionColumnSafetySql = [
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "notice_stage" INTEGER',
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "pledged_valuation" REAL NOT NULL DEFAULT 0.0',
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "recovered_amount" REAL NOT NULL DEFAULT 0.0',
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "penalty_amount" REAL NOT NULL DEFAULT 0.0',
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "settlement_total" REAL NOT NULL DEFAULT 0.0',
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "customer_balance_due" REAL NOT NULL DEFAULT 0.0',
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "customer_surplus" REAL NOT NULL DEFAULT 0.0',
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "delivery_channel" TEXT',
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "delivery_status" TEXT',
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "delivery_reference" TEXT',
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "delivered_at" INTEGER',
+];
+
+const List<String> _girviNoticeActionIndexSql = [
+  'CREATE INDEX IF NOT EXISTS "idx_girvi_notice_action_loan" ON "girvi_notice_actions" ("girvi_id", "action_at" DESC)',
+  'CREATE INDEX IF NOT EXISTS "idx_girvi_notice_action_stage" ON "girvi_notice_actions" ("girvi_id", "notice_stage")',
+  'CREATE INDEX IF NOT EXISTS "idx_girvi_notice_action_type" ON "girvi_notice_actions" ("action_type")',
+  'CREATE INDEX IF NOT EXISTS "idx_girvi_notice_action_delivery" ON "girvi_notice_actions" ("girvi_id", "delivery_status", "delivered_at" DESC)',
 ];

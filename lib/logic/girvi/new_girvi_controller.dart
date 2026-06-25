@@ -217,6 +217,7 @@ class NewGirviController extends ChangeNotifier {
   bool _isLoadingEdit = false;
   bool _isEditMode = false;
   int? _editingLoanId;
+  int? _lastSavedLoanId;
   GirviLoanDetails? _editingDetails;
   String? _errorMessage;
   String? _successMessage;
@@ -226,6 +227,7 @@ class NewGirviController extends ChangeNotifier {
   bool get isLoadingEdit => _isLoadingEdit;
   bool get isEditMode => _isEditMode;
   int? get editingLoanId => _editingLoanId;
+  int? get lastSavedLoanId => _lastSavedLoanId;
   GirviLoanDetails? get editingDetails => _editingDetails;
   String? get errorMessage => _errorMessage;
   String? get successMessage => _successMessage;
@@ -268,6 +270,7 @@ class NewGirviController extends ChangeNotifier {
     _isLoadingEdit = true;
     _isEditMode = true;
     _editingLoanId = loanId;
+    _lastSavedLoanId = loanId;
     _errorMessage = null;
     _successMessage = null;
     notifyListeners();
@@ -447,6 +450,7 @@ class NewGirviController extends ChangeNotifier {
 
     _isSaving = true;
     _errorMessage = null;
+    _lastSavedLoanId = _isEditMode ? _editingLoanId : null;
     notifyListeners();
 
     try {
@@ -460,13 +464,13 @@ class NewGirviController extends ChangeNotifier {
       final weightedRate = totalNet > 0 ? totalItemValue / totalNet : 0.0;
       final metalTypes = items.map((item) => item.metalType).toSet();
       final purities = items.map((item) => item.purity).toSet();
-      final combinedDescription = items
-          .map(
-            (item) => '#${item.serialNo} ${item.itemName.trim()} | '
-                '${item.metalType} | ${item.purity} | ${item.pieces} pcs | '
-                'Net ${item.netWeight.toStringAsFixed(3)} g',
-          )
-          .join('\n');
+      final combinedDescription = items.map((item) {
+        final pieceLabel =
+            item.pieces == 1 ? '1 piece' : '${item.pieces} pieces';
+        return 'Serial Number ${item.serialNo} - ${item.itemName.trim()} | '
+            '${item.metalType} | ${item.purity} | $pieceLabel | '
+            'Net Weight ${item.netWeight.toStringAsFixed(3)} g';
+      }).join('\n');
       final combinedHuid = items
           .map((item) => item.huidNumber?.trim() ?? '')
           .where((value) => value.isNotEmpty)
@@ -541,14 +545,16 @@ class NewGirviController extends ChangeNotifier {
           throw StateError('No Girvi ticket was updated.');
         }
         _editingDetails = await _detailsRepo.getLoanDetails(_editingLoanId!);
+        _lastSavedLoanId = _editingLoanId;
         _successMessage = 'Girvi ticket $_ticketNo updated successfully!';
       } else {
-        await _detailsRepo.createLoanWithDetails(
+        final loanId = await _detailsRepo.createLoanWithDetails(
           loan: companion,
           items: items,
           disbursements: disbursements,
           expectedLoanAmount: _loanAmount,
         );
+        _lastSavedLoanId = loanId;
         _successMessage = 'Girvi ticket $_ticketNo created successfully!';
       }
 
@@ -577,6 +583,7 @@ class NewGirviController extends ChangeNotifier {
     _ltvPercent = 50.0;
     _loanAmount = 0.0;
     _editingLoanId = null;
+    _lastSavedLoanId = null;
     _editingDetails = null;
     _isEditMode = false;
     _isLoadingEdit = false;

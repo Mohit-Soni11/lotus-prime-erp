@@ -152,7 +152,7 @@ extension NewGirviSections on _NewGirviScreenState {
                 '(${(_ctrl.stoneWeight / _ctrl.grossWeight * 100).toStringAsFixed(1)}% of gross)',
                 style: GoogleFonts.inter(
                     color: GirviColors.info,
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w500),
               ),
             ]),
@@ -366,7 +366,7 @@ extension NewGirviSections on _NewGirviScreenState {
       accent: GirviColors.accentInterest,
       child: Column(children: [
         Text('How will the loan amount be paid to the customer?',
-            style: GirviStyles.caption.copyWith(fontSize: 12)),
+            style: GirviStyles.caption.copyWith(fontSize: 12.5)),
         const SizedBox(height: 12),
         _PaymentModeSelector(
           selected: _ctrl.disbursementMode,
@@ -416,7 +416,7 @@ extension NewGirviSections on _NewGirviScreenState {
                 '(${_ctrl.durationMonths} months from start date)',
                 style: GoogleFonts.inter(
                     color: GirviColors.warning,
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w500),
               ),
             ),
@@ -462,7 +462,7 @@ extension NewGirviSections on _NewGirviScreenState {
                         'Select an ID, enter its number and attach a clear card photo.',
                         style: GoogleFonts.inter(
                           color: GirviColors.textBody,
-                          fontSize: 11.5,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -481,7 +481,7 @@ extension NewGirviSections on _NewGirviScreenState {
                         'OPTIONAL',
                         style: GoogleFonts.inter(
                           color: GirviColors.textMuted,
-                          fontSize: 9,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.5,
                         ),

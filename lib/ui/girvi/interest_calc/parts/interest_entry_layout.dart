@@ -228,7 +228,7 @@ extension InterestEntryLayout on _InterestCalcScreenState {
                           'Loan Overview',
                           style: GoogleFonts.inter(
                             color: GirviColors.textDark,
-                            fontSize: 12,
+                            fontSize: 12.5,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 0.8,
                           ),

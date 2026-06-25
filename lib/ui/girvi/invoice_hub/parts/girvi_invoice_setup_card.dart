@@ -252,7 +252,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
               'Add pledged items to load metal-specific invoice settings.',
               style: GoogleFonts.inter(
                 color: GirviColors.shellTextMuted,
-                fontSize: 11,
+                fontSize: 12.5,
               ),
             ),
           )
@@ -320,7 +320,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
                         ' | Items: $metalNames',
                         style: GoogleFonts.inter(
                           color: GirviColors.shellTextMuted,
-                          fontSize: 9.5,
+                          fontSize: 12.5,
                         ),
                       ),
                     ],
@@ -389,7 +389,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
                         'of ${_documentOptions.length} fields visible',
                         style: GoogleFonts.inter(
                           color: GirviColors.shellTextMuted,
-                          fontSize: 9.5,
+                          fontSize: 12.5,
                         ),
                       ),
                     ],
@@ -444,7 +444,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
                   title,
                   style: GoogleFonts.inter(
                     color: GirviColors.shellTextTitle,
-                    fontSize: 11.5,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -452,7 +452,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
                   subtitle,
                   style: GoogleFonts.inter(
                     color: GirviColors.shellTextMuted,
-                    fontSize: 9,
+                    fontSize: 12.5,
                   ),
                 ),
               ],
@@ -470,7 +470,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
             child: Text(
               action,
               style: GoogleFonts.inter(
-                fontSize: 10,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -492,7 +492,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
         label,
         style: GoogleFonts.inter(
           color: color,
-          fontSize: 8,
+          fontSize: 12.5,
           fontWeight: FontWeight.w900,
         ),
       ),
@@ -556,7 +556,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
                                       'Changes apply to this preview only',
                                       style: GoogleFonts.inter(
                                         color: GirviColors.shellTextMuted,
-                                        fontSize: 9.5,
+                                        fontSize: 12.5,
                                       ),
                                     ),
                                   ],
@@ -691,7 +691,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
                                       'Changes apply to this preview only',
                                       style: GoogleFonts.inter(
                                         color: GirviColors.shellTextMuted,
-                                        fontSize: 9.5,
+                                        fontSize: 12.5,
                                       ),
                                     ),
                                   ],
@@ -803,7 +803,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
                     group,
                     style: GoogleFonts.inter(
                       color: GirviColors.shellTextTitle,
-                      fontSize: 11.5,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -825,7 +825,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
                 option.title,
                 style: GoogleFonts.inter(
                   color: GirviColors.shellTextTitle,
-                  fontSize: 11.5,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -833,7 +833,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
                 option.subtitle,
                 style: GoogleFonts.inter(
                   color: GirviColors.shellTextMuted,
-                  fontSize: 9,
+                  fontSize: 12.5,
                 ),
               ),
             ),
@@ -876,7 +876,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
                     group,
                     style: GoogleFonts.inter(
                       color: GirviColors.shellTextTitle,
-                      fontSize: 11.5,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -901,7 +901,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
                 option.title,
                 style: GoogleFonts.inter(
                   color: GirviColors.shellTextTitle,
-                  fontSize: 11.5,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -909,7 +909,7 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
                 option.subtitle,
                 style: GoogleFonts.inter(
                   color: GirviColors.shellTextMuted,
-                  fontSize: 9,
+                  fontSize: 12.5,
                 ),
               ),
             ),

@@ -121,7 +121,7 @@ class _AccountMetricCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 color: GirviColors.textBody,
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -385,7 +385,7 @@ class _AccountQuickFact extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       color: GirviColors.textBody,
-                      fontSize: 11.2,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -510,7 +510,7 @@ class _AccountLifecycleCell extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textBody,
-                    fontSize: 11.6,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -532,7 +532,7 @@ class _AccountLifecycleCell extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textBody,
-                    fontSize: 11.1,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -584,7 +584,7 @@ class _AccountStatusBadge extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   color: color,
-                  fontSize: 12.2,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -749,7 +749,7 @@ class _PledgedSummaryMetricTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textBody,
-                    fontSize: 11.5,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -867,7 +867,7 @@ class _PledgedItemDetailRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         color: color,
-                        fontSize: 11.5,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -976,7 +976,7 @@ class _PledgedValuePill extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               color: GirviColors.textBody,
-              fontSize: 11,
+              fontSize: 12.5,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -1205,7 +1205,7 @@ class _PledgedPhotoThumb extends StatelessWidget {
                         'Scroll or pinch to zoom',
                         style: GoogleFonts.inter(
                           color: Colors.white,
-                          fontSize: 12,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -1265,7 +1265,7 @@ class _PledgedPhotoThumb extends StatelessWidget {
                     index.toString().padLeft(2, '0'),
                     style: GoogleFonts.inter(
                       color: Colors.white,
-                      fontSize: 10.5,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -1329,7 +1329,7 @@ class _PledgedSpecTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 color: GirviColors.textBody,
-                fontSize: 11.5,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -1411,7 +1411,7 @@ class _AccountDocumentButton extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
                           color: GirviColors.textBody,
-                          fontSize: 12,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -1619,7 +1619,7 @@ class _AccountInfoTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               color: GirviColors.textBody,
-              fontSize: 12,
+              fontSize: 12.5,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -2032,7 +2032,7 @@ class _InvoiceFlipHint extends StatelessWidget {
               canFlip ? 'Double click to flip front/back' : singleSideLabel,
               style: GoogleFonts.inter(
                 color: Colors.white,
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w800,
               ),
             ),

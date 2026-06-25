@@ -54,7 +54,7 @@ extension GirviInvoiceHubControls on _GirviInvoiceHubScreenState {
                             color: selected
                                 ? GirviColors.brandGold
                                 : GirviColors.shellTextTitle,
-                            fontSize: 10.5,
+                            fontSize: 12.5,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -65,7 +65,7 @@ extension GirviInvoiceHubControls on _GirviInvoiceHubScreenState {
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
                             color: GirviColors.shellTextMuted,
-                            fontSize: 8.5,
+                            fontSize: 12.5,
                           ),
                         ),
                       ],
@@ -156,7 +156,7 @@ extension GirviInvoiceHubControls on _GirviInvoiceHubScreenState {
                           'Use when issuing a replacement receipt',
                           style: GoogleFonts.inter(
                             color: GirviColors.shellTextMuted,
-                            fontSize: 9.5,
+                            fontSize: 12.5,
                           ),
                         ),
                       ],
@@ -201,7 +201,7 @@ extension GirviInvoiceHubControls on _GirviInvoiceHubScreenState {
               message,
               style: GoogleFonts.inter(
                 color: GirviColors.danger,
-                fontSize: 10.5,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -216,7 +216,7 @@ extension GirviInvoiceHubControls on _GirviInvoiceHubScreenState {
       label,
       style: GoogleFonts.inter(
         color: GirviColors.shellTextMuted,
-        fontSize: 10.5,
+        fontSize: 12.5,
         fontWeight: FontWeight.w900,
         letterSpacing: 1.1,
       ),

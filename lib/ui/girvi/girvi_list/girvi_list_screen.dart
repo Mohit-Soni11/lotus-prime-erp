@@ -268,7 +268,7 @@ class _GirviListScreenState extends State<GirviListScreen>
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
                             color: Colors.white.withValues(alpha: 0.72),
-                            fontSize: 12,
+                            fontSize: 12.5,
                             fontWeight: FontWeight.w700,
                           ),
                         ),

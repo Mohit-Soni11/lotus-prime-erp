@@ -195,7 +195,7 @@ class _LedgerFilterChip extends StatelessWidget {
                 '$count',
                 style: GoogleFonts.manrope(
                   color: foreground,
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                 ),
               ),

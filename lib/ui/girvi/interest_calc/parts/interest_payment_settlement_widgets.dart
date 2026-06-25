@@ -107,7 +107,7 @@ class _EntryReviewBar extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   color: GirviColors.textDark,
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -512,7 +512,7 @@ class _SettlementHeader extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   color: GirviColors.textDark,
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -536,7 +536,7 @@ class _SettlementHeader extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   color: GirviColors.textMuted,
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -583,7 +583,7 @@ class _SettlementBreakdownRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 color: GirviColors.textBody,
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: strong ? FontWeight.w900 : FontWeight.w800,
               ),
             ),
@@ -646,7 +646,7 @@ class _PriorSettlementNote extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 color: GirviColors.textBody,
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -715,7 +715,7 @@ class _ReadyForDeliveryPanel extends StatelessWidget {
                       'Payment is complete. Item remains in shop custody until handover.',
                       style: GoogleFonts.inter(
                         color: GirviColors.textDark,
-                        fontSize: 12,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w800,
                       ),
                     ),

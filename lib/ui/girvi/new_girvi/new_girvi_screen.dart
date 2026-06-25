@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -26,6 +27,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../../../core/logging/app_logger.dart';
+import '../../../constants/app_routes.dart';
 import '../../../database/db/app_database.dart';
 import '../../../logic/dashboard/date_card/date_card_logic.dart';
 import '../../../logic/girvi/new_girvi_controller.dart';
@@ -245,7 +247,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     } else {
       draft.purity = matchedPurity;
       _setControllerTextIfChanged(
-          draft.customPurityCtrl, matchedPurity.dbValue);
+          draft.customPurityCtrl, matchedPurity.shortLabel);
     }
 
     _setControllerTextIfChanged(draft.descriptionCtrl, item.itemName);
@@ -407,10 +409,12 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     for (final item in _pledgedItems) {
       final description = item.descriptionCtrl.text.trim();
       final title = description.isEmpty ? 'Pledged item' : description;
+      final pieceLabel =
+          item.itemCount == 1 ? '1 piece' : '${item.itemCount} pieces';
       lines.add(
-        '#${item.serialNo} $title | ${item.metalType.displayName} | '
-        '${item.purityLabel} | ${item.itemCount} pcs | '
-        'Net ${item.netWeight.toStringAsFixed(3)} g | '
+        'Serial Number ${item.serialNo} - $title | '
+        '${item.metalType.displayName} | ${item.purityLabel} | '
+        '$pieceLabel | Net Weight ${item.netWeight.toStringAsFixed(3)} g | '
         'Valuation ${item.valuationPurityLabel} | '
         'Value Rs ${_fmt.format(item.itemValue)}',
       );

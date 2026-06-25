@@ -75,15 +75,26 @@ class _NoticeAuctionAppBarState extends State<NoticeAuctionAppBar>
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                color: GirviColors.brandGoldLight,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: GirviColors.brandGold.withValues(alpha: 0.45),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    GirviColors.goldGradientStart,
+                    GirviColors.brandGold,
+                  ],
                 ),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: GirviColors.brandGold.withValues(alpha: 0.5),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
               child: const Icon(
                 GirviIcons.warning,
-                color: GirviColors.brandGold,
+                color: Colors.white,
                 size: 18,
               ),
             ),
@@ -147,13 +158,24 @@ class _HeaderIconButtonState extends State<_HeaderIconButton> {
             height: 42,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: _hovered ? GirviColors.shellBg : GirviColors.shellPanelBg,
+              color: _hovered
+                  ? GirviColors.shellBg
+                  : GirviColors.shellBorder.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color:
                     _hovered ? GirviColors.brandGold : GirviColors.shellBorder,
                 width: _hovered ? 1.4 : 1,
               ),
+              boxShadow: _hovered
+                  ? [
+                      BoxShadow(
+                        color: GirviColors.brandGold.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                  : [],
             ),
             child: Icon(
               widget.icon,
@@ -172,9 +194,19 @@ class _HeaderDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 1,
+      width: 1.5,
       height: 32,
-      color: GirviColors.shellBorder,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent,
+            GirviColors.shellBorder,
+            Colors.transparent,
+          ],
+        ),
+      ),
     );
   }
 }
@@ -222,7 +254,7 @@ class _OnlineBadge extends StatelessWidget {
             GirviStrings.systemOnline,
             style: GoogleFonts.inter(
               color: GirviColors.onlineGreen,
-              fontSize: 12,
+              fontSize: 12.5,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
             ),

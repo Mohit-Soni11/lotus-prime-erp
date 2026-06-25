@@ -49,7 +49,7 @@ class _StatusPill extends StatelessWidget {
         label.toUpperCase(),
         style: GoogleFonts.inter(
           color: GirviColors.textDark,
-          fontSize: 12,
+          fontSize: 12.5,
           fontWeight: FontWeight.w900,
         ),
       ),
@@ -113,7 +113,7 @@ class _OverviewActionButton extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   color: GirviColors.shellTextTitle,
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -179,7 +179,7 @@ class _TinyTag extends StatelessWidget {
           color: color == GirviColors.brandGold
               ? GirviColors.brandDeep
               : GirviColors.textDark,
-          fontSize: 12,
+          fontSize: 12.5,
           fontWeight: FontWeight.w900,
         ),
       ),
@@ -207,7 +207,7 @@ class _ReviewMetric extends StatelessWidget {
         Text(
           label,
           style: GirviStyles.caption.copyWith(
-            fontSize: 12,
+            fontSize: 12.5,
             color: GirviColors.textDark,
             fontWeight: FontWeight.w900,
           ),

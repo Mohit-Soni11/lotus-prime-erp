@@ -219,7 +219,7 @@ class _SystemStatusBadge extends StatelessWidget {
             GirviStrings.systemOnline,
             style: GoogleFonts.inter(
               color: GirviColors.onlineGreen,
-              fontSize: 11,
+              fontSize: 12.5,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.4,
             ),

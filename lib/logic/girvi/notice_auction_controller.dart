@@ -191,6 +191,42 @@ class NoticeAuctionController extends ChangeNotifier {
     }
   }
 
+  Future<bool> recordNoticeDeliveryProof({
+    required NoticeAuctionCase item,
+    required GirviNoticeType noticeType,
+    required String noticeText,
+    required String actionType,
+    required String deliveryChannel,
+    required String deliveryStatus,
+    String? deliveryReference,
+  }) async {
+    try {
+      await _noticeActionRepository.recordNoticeDeliveryProof(
+        girviId: item.loan.id,
+        noticeType: noticeType,
+        noticeText: noticeText,
+        actionType: actionType,
+        deliveryChannel: deliveryChannel,
+        deliveryStatus: deliveryStatus,
+        deliveryReference: deliveryReference,
+      );
+      _state = _state.copyWith(
+        inlineMessage:
+            '${noticeType.label} $deliveryStatus for ticket ${item.loan.ticketNo}.',
+      );
+      notifyListeners();
+      await load(keepInlineMessage: true);
+      return true;
+    } catch (error) {
+      AppLogger.debug('Notice & Auction delivery proof failed: $error');
+      _state = _state.copyWith(
+        inlineMessage: '${noticeType.label} proof could not be recorded.',
+      );
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<bool> closeDisposalSettlement({
     required NoticeAuctionCase item,
     required double pledgedValuation,

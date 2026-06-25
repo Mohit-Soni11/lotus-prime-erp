@@ -281,7 +281,7 @@ class _PaymentTimelineRow extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
                             color: GirviColors.textBody,
-                            fontSize: 11.2,
+                            fontSize: 12.5,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -406,7 +406,7 @@ class _PaymentDateBadge extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               color: GirviColors.textDark,
-              fontSize: 10.5,
+              fontSize: 12.5,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -418,7 +418,7 @@ class _PaymentDateBadge extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 color: GirviColors.textBody,
-                fontSize: 10.5,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -462,7 +462,7 @@ class _PaymentMetaChip extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 color: GirviColors.textDark,
-                fontSize: 11.5,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w800,
               ),
             ),

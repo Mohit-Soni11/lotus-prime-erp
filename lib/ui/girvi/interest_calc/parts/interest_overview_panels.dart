@@ -288,7 +288,7 @@ class _OverviewMiniValue extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               color: GirviColors.textDark,
-              fontSize: 12,
+              fontSize: 12.5,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -348,7 +348,7 @@ class _OverviewInfoTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textDark,
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -401,7 +401,7 @@ class _ProgressTrack extends StatelessWidget {
           '${(safeValue * 100).toStringAsFixed(0)}% principal recovered',
           style: GoogleFonts.inter(
             color: GirviColors.textDark,
-            fontSize: 12,
+            fontSize: 12.5,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -437,7 +437,7 @@ class _MiniMoney extends StatelessWidget {
             Text(
               label,
               style: GirviStyles.caption.copyWith(
-                fontSize: 12,
+                fontSize: 12.5,
                 color: GirviColors.textDark,
                 fontWeight: FontWeight.w900,
               ),

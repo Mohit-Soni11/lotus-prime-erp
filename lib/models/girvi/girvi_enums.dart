@@ -49,24 +49,39 @@ enum MetalType {
 
 /// Supported purity options and fineness factors.
 enum MetalPurity {
-  k24('24K', '24K (99.9% Pure)', 0.999),
-  k22('22K', '22K (91.6% Pure)', 0.916),
-  k18('18K', '18K (75.0% Pure)', 0.750),
-  k14('14K', '14K (58.5% Pure)', 0.585),
+  k24('24KT', '24KT (99.9% Pure)', 0.999, legacyValues: ['24K']),
+  k22('22KT', '22KT (91.6% Pure)', 0.916, legacyValues: ['22K']),
+  k20('20KT', '20KT (83.3% Pure)', 0.833, legacyValues: ['20K']),
+  k18('18KT', '18KT (75.0% Pure)', 0.750, legacyValues: ['18K']),
+  k14('14KT', '14KT (58.5% Pure)', 0.585, legacyValues: ['14K']),
   s999('999', 'Silver 999 (Fine)', 0.999),
   s925('925', 'Silver 925 (Sterling)', 0.925),
   s800('800', 'Silver 800', 0.800),
   other('Other', 'Other / Custom', 1.000);
 
-  const MetalPurity(this.dbValue, this.displayName, this.fineness);
+  const MetalPurity(
+    this.dbValue,
+    this.displayName,
+    this.fineness, {
+    this.legacyValues = const [],
+  });
 
   final String dbValue;
   final String displayName;
   final double fineness;
+  final List<String> legacyValues;
+
+  String get shortLabel => dbValue;
 
   static MetalPurity fromDb(String value) {
+    final normalized = value.trim().toUpperCase();
     return MetalPurity.values.firstWhere(
-      (purity) => purity.dbValue == value,
+      (purity) {
+        if (purity.dbValue.toUpperCase() == normalized) return true;
+        if (purity.displayName.toUpperCase() == normalized) return true;
+        return purity.legacyValues
+            .any((legacy) => legacy.toUpperCase() == normalized);
+      },
       orElse: () => MetalPurity.k22,
     );
   }

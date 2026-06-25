@@ -1,5 +1,7 @@
 part of '../new_girvi_screen.dart';
 
+enum _SavedTicketAction { newTicket, openAccount, stay }
+
 extension NewGirviActions on _NewGirviScreenState {
   // â”€â”€ ACTIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -15,12 +17,7 @@ extension NewGirviActions on _NewGirviScreenState {
     final ok = await _saveCurrentGirvi(invoiceGenerated: false);
     if (!ok || !mounted) return;
 
-    _showSuccess(_ctrl.successMessage ?? GirviStrings.successGirviSaved);
-    await Future.delayed(const Duration(milliseconds: 400));
-    if (!mounted) return;
-    if (!_ctrl.isEditMode) {
-      await _resetAll();
-    }
+    await _handleSavedTicket(invoiceGenerated: false);
   }
 
   bool _validateGirviEntry() {
@@ -118,13 +115,219 @@ extension NewGirviActions on _NewGirviScreenState {
       onFinalize: () => _saveCurrentGirvi(invoiceGenerated: true),
     );
     if (finalized == true && mounted) {
-      _showSuccess(_ctrl.successMessage ?? GirviStrings.successGirviSaved);
-      await Future.delayed(const Duration(milliseconds: 400));
-      if (!mounted) return;
-      if (!_ctrl.isEditMode) {
-        await _resetAll();
-      }
+      await _handleSavedTicket(invoiceGenerated: true);
     }
+  }
+
+  Future<void> _handleSavedTicket({required bool invoiceGenerated}) async {
+    final loanId = _ctrl.lastSavedLoanId;
+    final action = await _showSavedTicketDialog(
+      invoiceGenerated: invoiceGenerated,
+      canOpenAccount: loanId != null,
+    );
+    if (!mounted) return;
+
+    switch (action) {
+      case _SavedTicketAction.openAccount:
+        if (loanId != null) {
+          context.go(RoutePaths.girviAccountFor(loanId));
+        }
+        return;
+      case _SavedTicketAction.newTicket:
+        if (!_ctrl.isEditMode) {
+          await _resetAll();
+        }
+        return;
+      case _SavedTicketAction.stay:
+      case null:
+        return;
+    }
+  }
+
+  Future<_SavedTicketAction?> _showSavedTicketDialog({
+    required bool invoiceGenerated,
+    required bool canOpenAccount,
+  }) {
+    final isEditMode = _ctrl.isEditMode;
+    final title = invoiceGenerated
+        ? 'Girvi Invoice Finalized'
+        : isEditMode
+            ? 'Girvi Ticket Updated'
+            : 'Girvi Ticket Saved';
+    final subtitle = invoiceGenerated
+        ? 'Invoice, pledged item details and disbursement records are saved.'
+        : 'The Girvi ticket is saved in the ledger with structured item records.';
+
+    return showDialog<_SavedTicketAction>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+        child: Container(
+          width: 520,
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: GirviColors.cardBg,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: GirviColors.cardBorder),
+            boxShadow: const [
+              BoxShadow(
+                color: GirviColors.shadowMedium,
+                blurRadius: 28,
+                offset: Offset(0, 14),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: GirviColors.success.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: GirviColors.success.withValues(alpha: 0.22),
+                      ),
+                    ),
+                    child: const Icon(
+                      GirviIcons.markDone,
+                      color: GirviColors.success,
+                      size: 23,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: GoogleFonts.manrope(
+                            color: GirviColors.textDark,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          subtitle,
+                          style: GoogleFonts.inter(
+                            color: GirviColors.textMuted,
+                            fontSize: 12.5,
+                            height: 1.35,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: GirviColors.inputBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: GirviColors.cardBorder),
+                ),
+                child: Column(
+                  children: [
+                    _SavedTicketSummaryRow(
+                      label: 'Ticket Number',
+                      value: _ctrl.ticketNo,
+                    ),
+                    const SizedBox(height: 10),
+                    _SavedTicketSummaryRow(
+                      label: 'Customer',
+                      value:
+                          _ctrl.selectedCustomer?.name ?? 'Selected customer',
+                    ),
+                    const SizedBox(height: 10),
+                    _SavedTicketSummaryRow(
+                      label: 'Loan Amount',
+                      value: 'Rs ${_fmt.format(_ctrl.loanAmount)}',
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                canOpenAccount
+                    ? 'Open the account to review the ledger, payment history, notice status and delivery workflow.'
+                    : 'Ticket saved. Account link will be available after the ledger refreshes.',
+                style: GoogleFonts.inter(
+                  color: GirviColors.textDark,
+                  fontSize: 12.5,
+                  height: 1.35,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(
+                      isEditMode
+                          ? _SavedTicketAction.stay
+                          : _SavedTicketAction.newTicket,
+                    ),
+                    style: TextButton.styleFrom(
+                      foregroundColor: GirviColors.textDark,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 13,
+                      ),
+                      textStyle: GoogleFonts.inter(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    child: Text(isEditMode ? 'Stay Here' : 'New Ticket'),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton.icon(
+                    onPressed: canOpenAccount
+                        ? () => Navigator.of(dialogContext)
+                            .pop(_SavedTicketAction.openAccount)
+                        : null,
+                    icon: const Icon(Icons.open_in_new_rounded, size: 17),
+                    label: const Text('Open Account'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: GirviColors.shellBg,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: GirviColors.inputBgLocked,
+                      disabledForegroundColor: GirviColors.textMuted,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 13,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      textStyle: GoogleFonts.inter(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   GirviInvoiceDraft _buildGirviInvoiceDraft() {
@@ -231,22 +434,6 @@ extension NewGirviActions on _NewGirviScreenState {
     _interestCtrl.text = _ctrl.interestRate.toStringAsFixed(2);
     _durationCtrl.text = _ctrl.durationMonths.toString();
     _resetPledgedItems();
-  }
-
-  void _showSuccess(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [
-        const Icon(GirviIcons.markDone, color: Colors.white, size: 18),
-        const SizedBox(width: 10),
-        Expanded(
-            child: Text(msg,
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 13))),
-      ]),
-      backgroundColor: GirviColors.success,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      duration: const Duration(seconds: 3),
-    ));
   }
 
   void _showError(String msg) {
@@ -889,4 +1076,47 @@ extension NewGirviActions on _NewGirviScreenState {
         opacity: _sectionFade[i],
         child: SlideTransition(position: _sectionSlide[i], child: child),
       );
+}
+
+class _SavedTicketSummaryRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _SavedTicketSummaryRow({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 118,
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              color: GirviColors.textMuted,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.manrope(
+              color: GirviColors.textDark,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }

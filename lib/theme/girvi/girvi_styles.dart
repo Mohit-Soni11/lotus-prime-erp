@@ -14,28 +14,28 @@ class GirviStyles {
       );
 
   static TextStyle get shellTitle => GoogleFonts.inter(
-        fontSize: 17,
+        fontSize: 18,
         fontWeight: FontWeight.w700,
         color: GirviColors.shellTextTitle,
         letterSpacing: 0.8,
       );
 
   static TextStyle get shellMuted => GoogleFonts.inter(
-        fontSize: 12.5,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: GirviColors.shellTextMuted,
         letterSpacing: 0.3,
       );
 
   static TextStyle get sectionTitle => GoogleFonts.manrope(
-        fontSize: 17,
+        fontSize: 18,
         fontWeight: FontWeight.w900,
         color: GirviColors.textDark,
         letterSpacing: 0.2,
       );
 
   static TextStyle get fieldLabel => GoogleFonts.inter(
-        fontSize: 14.5,
+        fontSize: 15,
         fontWeight: FontWeight.w800,
         color: GirviColors.textDark,
         letterSpacing: 0.1,
@@ -48,7 +48,7 @@ class GirviStyles {
       );
 
   static TextStyle get fieldHint => GoogleFonts.inter(
-        fontSize: 14,
+        fontSize: 14.5,
         fontWeight: FontWeight.w700,
         color: GirviColors.textMuted,
       );
@@ -60,27 +60,27 @@ class GirviStyles {
       );
 
   static TextStyle get readOnlyLabel => GoogleFonts.inter(
-        fontSize: 13.5,
+        fontSize: 14,
         fontWeight: FontWeight.w800,
         color: GirviColors.textDark,
       );
 
   static TextStyle get ticketNumber => GoogleFonts.robotoMono(
-        fontSize: 14.5,
+        fontSize: 15,
         fontWeight: FontWeight.w800,
         color: GirviColors.brandGold,
         letterSpacing: 1.0,
       );
 
   static TextStyle get saveButtonText => GoogleFonts.manrope(
-        fontSize: 15.5,
+        fontSize: 16,
         fontWeight: FontWeight.w800,
         color: GirviColors.shellBg,
         letterSpacing: 0.3,
       );
 
   static TextStyle get caption => GoogleFonts.inter(
-        fontSize: 13.5,
+        fontSize: 14,
         fontWeight: FontWeight.w700,
         color: GirviColors.textDark,
       );
@@ -92,7 +92,7 @@ class GirviStyles {
       );
 
   static TextStyle get statusBadge => GoogleFonts.inter(
-        fontSize: 12.5,
+        fontSize: 13,
         fontWeight: FontWeight.w800,
         letterSpacing: 0.5,
       );

@@ -45,7 +45,7 @@ extension GirviInvoiceHubActions on _GirviInvoiceHubScreenState {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     textStyle: GoogleFonts.inter(
-                      fontSize: 11.5,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w800,
                     ),
                     shape: RoundedRectangleBorder(
@@ -65,7 +65,7 @@ extension GirviInvoiceHubActions on _GirviInvoiceHubScreenState {
                     side: const BorderSide(color: GirviColors.success),
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     textStyle: GoogleFonts.inter(
-                      fontSize: 11.5,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w900,
                     ),
                     shape: RoundedRectangleBorder(

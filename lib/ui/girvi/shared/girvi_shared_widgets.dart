@@ -255,7 +255,7 @@ class _RadarBadgeState extends State<_RadarBadge>
           child: Text(GirviStrings.systemOnline,
               style: GoogleFonts.inter(
                   color: GirviColors.onlineGreen,
-                  fontSize: 9.5,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8)),
         ),
@@ -292,13 +292,13 @@ class _ModuleBadge extends StatelessWidget {
               Text(GirviStrings.moduleBadge,
                   style: GoogleFonts.inter(
                       color: GirviColors.shellTextTitle,
-                      fontSize: 12,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.3)),
               Text(subtitle,
                   style: GoogleFonts.inter(
                       color: GirviColors.shellTextMuted,
-                      fontSize: 10,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w400)),
             ],
           ),
@@ -367,7 +367,7 @@ class GirviSectionCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: GirviStyles.caption.copyWith(
-                        fontSize: 12,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w700,
                         color: GirviColors.textBody,
                       ),
@@ -909,7 +909,7 @@ class GirviTicketCard extends StatelessWidget {
                         Text('Release',
                             style: GoogleFonts.inter(
                                 color: Colors.white,
-                                fontSize: 11,
+                                fontSize: 12.5,
                                 fontWeight: FontWeight.w700)),
                       ]),
                     ),
@@ -945,10 +945,10 @@ class _MiniStat extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: GirviStyles.caption.copyWith(fontSize: 10)),
+              Text(label, style: GirviStyles.caption.copyWith(fontSize: 12.5)),
               Text(value,
                   style: GoogleFonts.inter(
-                      fontSize: 11,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w600,
                       color: GirviColors.textDark)),
             ],

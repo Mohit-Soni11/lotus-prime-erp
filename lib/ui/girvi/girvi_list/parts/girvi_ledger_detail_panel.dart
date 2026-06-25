@@ -317,7 +317,7 @@ class _MiniSettlementValue extends StatelessWidget {
             label,
             style: GoogleFonts.inter(
               color: GirviColors.textDark,
-              fontSize: 12,
+              fontSize: 12.5,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -611,7 +611,7 @@ class _PaymentHistoryPanel extends StatelessWidget {
                   '+${payments.length - visiblePayments.length} more',
                   style: GoogleFonts.inter(
                     color: GirviColors.textDark,
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -729,7 +729,7 @@ class _PaymentHistoryRow extends StatelessWidget {
                   'Paid on ${date(payment.paymentDate)}',
                   style: GoogleFonts.inter(
                     color: GirviColors.textDark,
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -740,7 +740,7 @@ class _PaymentHistoryRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textBody,
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w800,
                     height: 1.2,
                   ),

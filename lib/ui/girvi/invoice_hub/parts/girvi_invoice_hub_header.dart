@@ -37,7 +37,7 @@ extension GirviInvoiceHubHeader on _GirviInvoiceHubScreenState {
                   'Review, export and finalize',
                   style: GoogleFonts.inter(
                     color: GirviColors.shellTextMuted,
-                    fontSize: 11,
+                    fontSize: 12.5,
                   ),
                 ),
               ],
@@ -62,7 +62,7 @@ extension GirviInvoiceHubHeader on _GirviInvoiceHubScreenState {
                 color: _controller.isFinalized
                     ? GirviColors.success
                     : GirviColors.brandGold,
-                fontSize: 9,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 0.7,
               ),

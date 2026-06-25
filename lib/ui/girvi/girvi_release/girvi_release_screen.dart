@@ -11,6 +11,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -107,7 +108,7 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
 
     final ok = await _ctrl.processRelease(
       notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
-      releasedBy: 'Staff', // In real app: inject logged-in user name
+      releasedBy: _currentOperatorName(),
     );
 
     if (ok && mounted) {
@@ -117,6 +118,17 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
     } else if (mounted && _ctrl.errorMessage != null) {
       _showError(_ctrl.errorMessage!);
     }
+  }
+
+  String _currentOperatorName() {
+    final user = FirebaseAuth.instance.currentUser;
+    final displayName = user?.displayName?.trim();
+    if (displayName != null && displayName.isNotEmpty) return displayName;
+    final email = user?.email?.trim();
+    if (email != null && email.isNotEmpty) return email;
+    final phone = user?.phoneNumber?.trim();
+    if (phone != null && phone.isNotEmpty) return phone;
+    return 'Authenticated User';
   }
 
   Future<bool> _showConfirmDialog() async {
@@ -420,7 +432,7 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
                   child: Text('OVERDUE',
                       style: GoogleFonts.inter(
                           color: GirviColors.danger,
-                          fontSize: 9,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w800)),
                 ),
             ]),
@@ -690,7 +702,7 @@ class _PaymentModeSelector extends StatelessWidget {
                       color: isSelected
                           ? GirviColors.brandGold
                           : GirviColors.textBody,
-                      fontSize: 12,
+                      fontSize: 12.5,
                       fontWeight:
                           isSelected ? FontWeight.w700 : FontWeight.w500,
                     )),

@@ -236,7 +236,7 @@ class _AmountShortcutButtonState extends State<_AmountShortcutButton> {
                 widget.label,
                 style: GoogleFonts.inter(
                   color: GirviColors.textDark,
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -245,7 +245,7 @@ class _AmountShortcutButtonState extends State<_AmountShortcutButton> {
                 widget.value,
                 style: GoogleFonts.manrope(
                   color: GirviColors.textDark,
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -318,7 +318,7 @@ class _PaymentHistoryRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textDark,
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -343,7 +343,7 @@ class _PaymentHistoryRow extends StatelessWidget {
                 Text(
                   'Discount Rs ${moneyFmt.format(payment.discountAmount)}',
                   style: GoogleFonts.inter(
-                    fontSize: 12,
+                    fontSize: 12.5,
                     color: GirviColors.info,
                     fontWeight: FontWeight.w900,
                   ),
@@ -353,7 +353,7 @@ class _PaymentHistoryRow extends StatelessWidget {
                     ? 'Settlement Balance Rs ${moneyFmt.format(payment.balanceAfter)}'
                     : 'Balance Rs ${moneyFmt.format(payment.balanceAfter)}',
                 style: GoogleFonts.inter(
-                  fontSize: 12,
+                  fontSize: 12.5,
                   color: GirviColors.textDark,
                   fontWeight: FontWeight.w900,
                 ),

@@ -231,7 +231,7 @@ class _FocusMetric extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               color: GirviColors.textDark,
-              fontSize: 12,
+              fontSize: 12.5,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -495,7 +495,7 @@ class _BreakdownPeriodChip extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 color: GirviColors.textDark,
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -532,7 +532,7 @@ class _BreakdownTotalPill extends StatelessWidget {
             label,
             style: GoogleFonts.inter(
               color: GirviColors.textDark,
-              fontSize: 12,
+              fontSize: 12.5,
               fontWeight: FontWeight.w900,
             ),
           ),

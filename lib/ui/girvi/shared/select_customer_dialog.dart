@@ -6,6 +6,8 @@
 //               Queries the Customers table, supports live search.
 // =============================================================================
 
+import 'dart:async';
+
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -30,7 +32,10 @@ class SelectCustomerDialog extends StatefulWidget {
 }
 
 class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
+  static const Duration _customerLoadTimeout = Duration(seconds: 8);
+
   final _searchCtrl = TextEditingController();
+  final Set<Timer> _loadTimeoutTimers = <Timer>{};
   List<Customer> _all = [];
   List<Customer> _filtered = [];
   bool _loading = true;
@@ -47,6 +52,10 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
   void dispose() {
     _searchCtrl.removeListener(_onSearch);
     _searchCtrl.dispose();
+    for (final timer in _loadTimeoutTimers) {
+      timer.cancel();
+    }
+    _loadTimeoutTimers.clear();
     super.dispose();
   }
 
@@ -67,6 +76,20 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
         _loading = false;
         _loadError = null;
       });
+    } on TimeoutException catch (error, stackTrace) {
+      AppLogger.debug(
+        'SelectCustomerDialog customer load timed out',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      if (!mounted) return;
+      setState(() {
+        _all = [];
+        _filtered = [];
+        _loading = false;
+        _loadError =
+            'Customer list is taking longer than expected. Check the database connection and retry.';
+      });
     } catch (error, stackTrace) {
       AppLogger.debug(
         'SelectCustomerDialog customer load failed',
@@ -84,9 +107,40 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
   }
 
   Future<List<Customer>> _fetchCustomers() {
-    return (widget.db.select(widget.db.customers)
+    final query = (widget.db.select(widget.db.customers)
           ..orderBy([(c) => drift.OrderingTerm.asc(c.name)]))
         .get();
+    final completer = Completer<List<Customer>>();
+    var completed = false;
+
+    late final Timer timeoutTimer;
+    void completeOnce(void Function() complete) {
+      if (completed) return;
+      completed = true;
+      timeoutTimer.cancel();
+      _loadTimeoutTimers.remove(timeoutTimer);
+      complete();
+    }
+
+    timeoutTimer = Timer(_customerLoadTimeout, () {
+      completeOnce(
+        () => completer.completeError(
+          TimeoutException(
+            'Customer list load timed out.',
+            _customerLoadTimeout,
+          ),
+        ),
+      );
+    });
+    _loadTimeoutTimers.add(timeoutTimer);
+
+    query.then(
+      (customers) => completeOnce(() => completer.complete(customers)),
+      onError: (Object error, StackTrace stackTrace) => completeOnce(
+        () => completer.completeError(error, stackTrace),
+      ),
+    );
+    return completer.future;
   }
 
   List<Customer> _filterCustomers(List<Customer> customers) {
@@ -102,6 +156,7 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
   }
 
   void _onSearch() {
+    if (!mounted) return;
     setState(() {
       _filtered = _filterCustomers(_all);
     });
@@ -159,6 +214,18 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
       if (newlyCreated.isNotEmpty) {
         widget.onSelected(newlyCreated.first);
       }
+    } on TimeoutException catch (error, stackTrace) {
+      AppLogger.debug(
+        'SelectCustomerDialog customer refresh timed out',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError =
+            'Customer list is taking longer than expected. Check the database connection and retry.';
+      });
     } catch (error, stackTrace) {
       AppLogger.debug(
         'SelectCustomerDialog customer refresh failed',
@@ -216,7 +283,7 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
                   style: TextButton.styleFrom(
                     foregroundColor: GirviColors.brandGold,
                     textStyle: GoogleFonts.inter(
-                      fontSize: 12,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -253,9 +320,7 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
             // List
             Expanded(
               child: _loading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                          color: GirviColors.brandGold))
+                  ? const Center(child: _CustomerLoadingCard())
                   : _loadError != null
                       ? Center(
                           child: _CustomerLoadErrorCard(
@@ -302,11 +367,59 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
                                   trailing: c.city != null
                                       ? Text(c.city!,
                                           style: GirviStyles.caption
-                                              .copyWith(fontSize: 11))
+                                              .copyWith(fontSize: 12.5))
                                       : null,
                                 );
                               },
                             ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CustomerLoadingCard extends StatelessWidget {
+  const _CustomerLoadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Container(
+        width: 380,
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: GirviColors.bodyBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: GirviColors.cardBorder),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 34,
+              height: 34,
+              child: CircularProgressIndicator(
+                color: GirviColors.brandGold,
+                strokeWidth: 3,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Loading Customers',
+              style: GoogleFonts.manrope(
+                color: GirviColors.textDark,
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Please wait while the customer register is being prepared.',
+              textAlign: TextAlign.center,
+              style: GirviStyles.caption.copyWith(fontSize: 12.5),
             ),
           ],
         ),
@@ -371,7 +484,7 @@ class _NoCustomerFoundCard extends StatelessWidget {
                   ? 'No registered profile matched "$query". Create the customer profile before starting this Girvi loan.'
                   : 'Search by name or mobile, or create a new customer profile.',
               textAlign: TextAlign.center,
-              style: GirviStyles.caption.copyWith(fontSize: 12),
+              style: GirviStyles.caption.copyWith(fontSize: 12.5),
             ),
             const SizedBox(height: 18),
             SizedBox(
@@ -388,7 +501,7 @@ class _NoCustomerFoundCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   textStyle: GoogleFonts.inter(
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -455,7 +568,7 @@ class _CustomerLoadErrorCard extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: GirviStyles.caption.copyWith(fontSize: 12),
+              style: GirviStyles.caption.copyWith(fontSize: 12.5),
             ),
             const SizedBox(height: 18),
             SizedBox(
@@ -473,7 +586,7 @@ class _CustomerLoadErrorCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   textStyle: GoogleFonts.inter(
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w900,
                   ),
                 ),

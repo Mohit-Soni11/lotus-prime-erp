@@ -218,7 +218,7 @@ class _FlipHint extends StatelessWidget {
               canFlip ? 'Double click to flip front/back' : 'Invoice preview',
               style: GoogleFonts.inter(
                 color: Colors.white,
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w800,
               ),
             ),

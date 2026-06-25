@@ -306,7 +306,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                               'Verify pledged item, customer identity and receipt before handover.',
                               style: GoogleFonts.inter(
                                 color: GirviColors.textDark,
-                                fontSize: 12,
+                                fontSize: 12.5,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -603,7 +603,7 @@ class _DeliveryConfirmLine extends StatelessWidget {
               label,
               style: GoogleFonts.inter(
                 color: GirviColors.textMuted,
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w800,
               ),
             ),

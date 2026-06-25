@@ -192,12 +192,17 @@ void main() {
 
       expect(saved, isTrue);
       expect(details, isNotNull);
-      expect(details!.loan.metalType, 'Mixed');
-      expect(details.loan.metalPurity, 'Mixed');
-      expect(details.loan.itemCount, 3);
-      expect(details.loan.itemPhotoPath, '/photos/ring-front.jpg');
-      expect(details.items, hasLength(2));
-      expect(details.disbursements, hasLength(2));
+      final savedDetails = details!;
+      expect(controller.lastSavedLoanId, savedDetails.loan.id);
+      expect(savedDetails.loan.itemDescription,
+          contains('Serial Number 1 - Gold ring'));
+      expect(savedDetails.loan.itemDescription, isNot(contains('#1')));
+      expect(savedDetails.loan.metalType, 'Mixed');
+      expect(savedDetails.loan.metalPurity, 'Mixed');
+      expect(savedDetails.loan.itemCount, 3);
+      expect(savedDetails.loan.itemPhotoPath, '/photos/ring-front.jpg');
+      expect(savedDetails.items, hasLength(2));
+      expect(savedDetails.disbursements, hasLength(2));
     });
 
     test('New Girvi controller loads and updates an existing ticket', () async {
@@ -268,19 +273,23 @@ void main() {
       expect(controller.ticketNo, 'GRV-EDIT-1');
       expect(controller.selectedCustomer?.id, customerId);
       expect(saved, isTrue);
+      expect(controller.lastSavedLoanId, loanId);
       expect(loans, hasLength(1));
-      expect(details!.loan.ticketNo, 'GRV-EDIT-1');
-      expect(details.loan.loanAmount, 25000);
-      expect(details.loan.invoiceGenerated, isTrue);
-      expect(details.loan.idProofNumber, 'AAD-EDIT');
-      expect(details.loan.notes, 'Edited note');
-      expect(details.items, hasLength(1));
-      expect(details.items.single.item.itemName, 'Edited gold chain');
+      final updatedDetails = details!;
+      expect(updatedDetails.loan.ticketNo, 'GRV-EDIT-1');
+      expect(updatedDetails.loan.itemDescription,
+          contains('Serial Number 1 - Edited gold chain'));
+      expect(updatedDetails.loan.loanAmount, 25000);
+      expect(updatedDetails.loan.invoiceGenerated, isTrue);
+      expect(updatedDetails.loan.idProofNumber, 'AAD-EDIT');
+      expect(updatedDetails.loan.notes, 'Edited note');
+      expect(updatedDetails.items, hasLength(1));
+      expect(updatedDetails.items.single.item.itemName, 'Edited gold chain');
       expect(
-        details.items.single.photos.single.filePath,
+        updatedDetails.items.single.photos.single.filePath,
         '/photos/edited-chain.jpg',
       );
-      expect(details.disbursements.single.referenceNo, 'EDIT-CHQ-1');
+      expect(updatedDetails.disbursements.single.referenceNo, 'EDIT-CHQ-1');
     });
   });
 

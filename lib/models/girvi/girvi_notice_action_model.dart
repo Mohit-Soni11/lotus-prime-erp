@@ -5,6 +5,10 @@ class GirviNoticeActionTypes {
   static const firstNoticePrepared = 'FIRST_NOTICE_PREPARED';
   static const secondNoticePrepared = 'SECOND_NOTICE_PREPARED';
   static const finalNoticePrepared = 'FINAL_NOTICE_PREPARED';
+  static const noticePdfSaved = 'NOTICE_PDF_SAVED';
+  static const noticePdfPrinted = 'NOTICE_PDF_PRINTED';
+  static const noticePdfShared = 'NOTICE_PDF_SHARED';
+  static const noticeDeliveryRecorded = 'NOTICE_DELIVERY_RECORDED';
   static const disposalSettled = 'DISPOSAL_SETTLED';
   static const auctionMarked = 'AUCTION_MARKED';
 }
@@ -64,6 +68,10 @@ class GirviNoticeAction {
   final double settlementTotal;
   final double customerBalanceDue;
   final double customerSurplus;
+  final String? deliveryChannel;
+  final String? deliveryStatus;
+  final String? deliveryReference;
+  final DateTime? deliveredAt;
   final DateTime actionAt;
   final DateTime createdAt;
   final DateTime? updatedAt;
@@ -83,15 +91,27 @@ class GirviNoticeAction {
     this.settlementTotal = 0,
     this.customerBalanceDue = 0,
     this.customerSurplus = 0,
+    this.deliveryChannel,
+    this.deliveryStatus,
+    this.deliveryReference,
+    this.deliveredAt,
     this.updatedAt,
   });
 
-  bool get isNotice =>
-      noticeStage != null ||
-      actionType == GirviNoticeActionTypes.firstNoticePrepared ||
+  bool get isNoticePreparation =>
       actionType == GirviNoticeActionTypes.secondNoticePrepared ||
       actionType == GirviNoticeActionTypes.finalNoticePrepared ||
+      actionType == GirviNoticeActionTypes.firstNoticePrepared ||
       actionType == GirviNoticeActionTypes.noticeDraftCopied;
+
+  bool get isNoticeDeliveryProof =>
+      actionType == GirviNoticeActionTypes.noticePdfSaved ||
+      actionType == GirviNoticeActionTypes.noticePdfPrinted ||
+      actionType == GirviNoticeActionTypes.noticePdfShared ||
+      actionType == GirviNoticeActionTypes.noticeDeliveryRecorded ||
+      deliveryStatus != null;
+
+  bool get isNotice => isNoticePreparation || isNoticeDeliveryProof;
 
   bool get isDisposalSettlement =>
       actionType == GirviNoticeActionTypes.disposalSettled;
@@ -104,6 +124,14 @@ class GirviNoticeAction {
         return 'Second notice prepared';
       case GirviNoticeActionTypes.finalNoticePrepared:
         return 'Final disposal notice prepared';
+      case GirviNoticeActionTypes.noticePdfSaved:
+        return 'Notice PDF saved';
+      case GirviNoticeActionTypes.noticePdfPrinted:
+        return 'Notice PDF printed';
+      case GirviNoticeActionTypes.noticePdfShared:
+        return 'Notice PDF shared';
+      case GirviNoticeActionTypes.noticeDeliveryRecorded:
+        return 'Notice delivery recorded';
       case GirviNoticeActionTypes.disposalSettled:
         return 'Disposal settlement closed';
       case GirviNoticeActionTypes.noticeDraftCopied:
@@ -113,5 +141,15 @@ class GirviNoticeAction {
       default:
         return 'Notice activity recorded';
     }
+  }
+
+  String get deliveryProofLabel {
+    final status = deliveryStatus?.trim();
+    final channel = deliveryChannel?.trim();
+    if (status != null && status.isNotEmpty) {
+      if (channel != null && channel.isNotEmpty) return '$status via $channel';
+      return status;
+    }
+    return displayLabel;
   }
 }

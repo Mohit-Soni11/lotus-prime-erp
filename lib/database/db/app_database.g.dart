@@ -21941,6 +21941,926 @@ class GirviDisbursementsCompanion extends UpdateCompanion<GirviDisbursement> {
   }
 }
 
+class $GirviNoticeActionsTable extends GirviNoticeActions
+    with TableInfo<$GirviNoticeActionsTable, GirviNoticeActionData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GirviNoticeActionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _girviIdMeta =
+      const VerificationMeta('girviId');
+  @override
+  late final GeneratedColumn<int> girviId = GeneratedColumn<int>(
+      'girvi_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES girvi_loans (id) ON DELETE CASCADE'));
+  static const VerificationMeta _actionTypeMeta =
+      const VerificationMeta('actionType');
+  @override
+  late final GeneratedColumn<String> actionType = GeneratedColumn<String>(
+      'action_type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _noticeStageMeta =
+      const VerificationMeta('noticeStage');
+  @override
+  late final GeneratedColumn<int> noticeStage = GeneratedColumn<int>(
+      'notice_stage', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _noticeTextMeta =
+      const VerificationMeta('noticeText');
+  @override
+  late final GeneratedColumn<String> noticeText = GeneratedColumn<String>(
+      'notice_text', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _actionNoteMeta =
+      const VerificationMeta('actionNote');
+  @override
+  late final GeneratedColumn<String> actionNote = GeneratedColumn<String>(
+      'action_note', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _pledgedValuationMeta =
+      const VerificationMeta('pledgedValuation');
+  @override
+  late final GeneratedColumn<double> pledgedValuation = GeneratedColumn<double>(
+      'pledged_valuation', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _recoveredAmountMeta =
+      const VerificationMeta('recoveredAmount');
+  @override
+  late final GeneratedColumn<double> recoveredAmount = GeneratedColumn<double>(
+      'recovered_amount', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _penaltyAmountMeta =
+      const VerificationMeta('penaltyAmount');
+  @override
+  late final GeneratedColumn<double> penaltyAmount = GeneratedColumn<double>(
+      'penalty_amount', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _settlementTotalMeta =
+      const VerificationMeta('settlementTotal');
+  @override
+  late final GeneratedColumn<double> settlementTotal = GeneratedColumn<double>(
+      'settlement_total', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _customerBalanceDueMeta =
+      const VerificationMeta('customerBalanceDue');
+  @override
+  late final GeneratedColumn<double> customerBalanceDue =
+      GeneratedColumn<double>('customer_balance_due', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0.0));
+  static const VerificationMeta _customerSurplusMeta =
+      const VerificationMeta('customerSurplus');
+  @override
+  late final GeneratedColumn<double> customerSurplus = GeneratedColumn<double>(
+      'customer_surplus', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _actionAtMeta =
+      const VerificationMeta('actionAt');
+  @override
+  late final GeneratedColumn<DateTime> actionAt = GeneratedColumn<DateTime>(
+      'action_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _deliveryChannelMeta =
+      const VerificationMeta('deliveryChannel');
+  @override
+  late final GeneratedColumn<String> deliveryChannel = GeneratedColumn<String>(
+      'delivery_channel', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _deliveryStatusMeta =
+      const VerificationMeta('deliveryStatus');
+  @override
+  late final GeneratedColumn<String> deliveryStatus = GeneratedColumn<String>(
+      'delivery_status', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _deliveryReferenceMeta =
+      const VerificationMeta('deliveryReference');
+  @override
+  late final GeneratedColumn<String> deliveryReference =
+      GeneratedColumn<String>('delivery_reference', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _deliveredAtMeta =
+      const VerificationMeta('deliveredAt');
+  @override
+  late final GeneratedColumn<DateTime> deliveredAt = GeneratedColumn<DateTime>(
+      'delivered_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        girviId,
+        actionType,
+        noticeStage,
+        noticeText,
+        actionNote,
+        pledgedValuation,
+        recoveredAmount,
+        penaltyAmount,
+        settlementTotal,
+        customerBalanceDue,
+        customerSurplus,
+        actionAt,
+        deliveryChannel,
+        deliveryStatus,
+        deliveryReference,
+        deliveredAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'girvi_notice_actions';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<GirviNoticeActionData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('girvi_id')) {
+      context.handle(_girviIdMeta,
+          girviId.isAcceptableOrUnknown(data['girvi_id']!, _girviIdMeta));
+    } else if (isInserting) {
+      context.missing(_girviIdMeta);
+    }
+    if (data.containsKey('action_type')) {
+      context.handle(
+          _actionTypeMeta,
+          actionType.isAcceptableOrUnknown(
+              data['action_type']!, _actionTypeMeta));
+    } else if (isInserting) {
+      context.missing(_actionTypeMeta);
+    }
+    if (data.containsKey('notice_stage')) {
+      context.handle(
+          _noticeStageMeta,
+          noticeStage.isAcceptableOrUnknown(
+              data['notice_stage']!, _noticeStageMeta));
+    }
+    if (data.containsKey('notice_text')) {
+      context.handle(
+          _noticeTextMeta,
+          noticeText.isAcceptableOrUnknown(
+              data['notice_text']!, _noticeTextMeta));
+    }
+    if (data.containsKey('action_note')) {
+      context.handle(
+          _actionNoteMeta,
+          actionNote.isAcceptableOrUnknown(
+              data['action_note']!, _actionNoteMeta));
+    }
+    if (data.containsKey('pledged_valuation')) {
+      context.handle(
+          _pledgedValuationMeta,
+          pledgedValuation.isAcceptableOrUnknown(
+              data['pledged_valuation']!, _pledgedValuationMeta));
+    }
+    if (data.containsKey('recovered_amount')) {
+      context.handle(
+          _recoveredAmountMeta,
+          recoveredAmount.isAcceptableOrUnknown(
+              data['recovered_amount']!, _recoveredAmountMeta));
+    }
+    if (data.containsKey('penalty_amount')) {
+      context.handle(
+          _penaltyAmountMeta,
+          penaltyAmount.isAcceptableOrUnknown(
+              data['penalty_amount']!, _penaltyAmountMeta));
+    }
+    if (data.containsKey('settlement_total')) {
+      context.handle(
+          _settlementTotalMeta,
+          settlementTotal.isAcceptableOrUnknown(
+              data['settlement_total']!, _settlementTotalMeta));
+    }
+    if (data.containsKey('customer_balance_due')) {
+      context.handle(
+          _customerBalanceDueMeta,
+          customerBalanceDue.isAcceptableOrUnknown(
+              data['customer_balance_due']!, _customerBalanceDueMeta));
+    }
+    if (data.containsKey('customer_surplus')) {
+      context.handle(
+          _customerSurplusMeta,
+          customerSurplus.isAcceptableOrUnknown(
+              data['customer_surplus']!, _customerSurplusMeta));
+    }
+    if (data.containsKey('action_at')) {
+      context.handle(_actionAtMeta,
+          actionAt.isAcceptableOrUnknown(data['action_at']!, _actionAtMeta));
+    }
+    if (data.containsKey('delivery_channel')) {
+      context.handle(
+          _deliveryChannelMeta,
+          deliveryChannel.isAcceptableOrUnknown(
+              data['delivery_channel']!, _deliveryChannelMeta));
+    }
+    if (data.containsKey('delivery_status')) {
+      context.handle(
+          _deliveryStatusMeta,
+          deliveryStatus.isAcceptableOrUnknown(
+              data['delivery_status']!, _deliveryStatusMeta));
+    }
+    if (data.containsKey('delivery_reference')) {
+      context.handle(
+          _deliveryReferenceMeta,
+          deliveryReference.isAcceptableOrUnknown(
+              data['delivery_reference']!, _deliveryReferenceMeta));
+    }
+    if (data.containsKey('delivered_at')) {
+      context.handle(
+          _deliveredAtMeta,
+          deliveredAt.isAcceptableOrUnknown(
+              data['delivered_at']!, _deliveredAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GirviNoticeActionData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GirviNoticeActionData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      girviId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}girvi_id'])!,
+      actionType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}action_type'])!,
+      noticeStage: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}notice_stage']),
+      noticeText: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}notice_text']),
+      actionNote: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}action_note']),
+      pledgedValuation: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}pledged_valuation'])!,
+      recoveredAmount: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}recovered_amount'])!,
+      penaltyAmount: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}penalty_amount'])!,
+      settlementTotal: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}settlement_total'])!,
+      customerBalanceDue: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}customer_balance_due'])!,
+      customerSurplus: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}customer_surplus'])!,
+      actionAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}action_at'])!,
+      deliveryChannel: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}delivery_channel']),
+      deliveryStatus: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}delivery_status']),
+      deliveryReference: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}delivery_reference']),
+      deliveredAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}delivered_at']),
+    );
+  }
+
+  @override
+  $GirviNoticeActionsTable createAlias(String alias) {
+    return $GirviNoticeActionsTable(attachedDatabase, alias);
+  }
+}
+
+class GirviNoticeActionData extends DataClass
+    implements Insertable<GirviNoticeActionData> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final int girviId;
+  final String actionType;
+  final int? noticeStage;
+  final String? noticeText;
+  final String? actionNote;
+  final double pledgedValuation;
+  final double recoveredAmount;
+  final double penaltyAmount;
+  final double settlementTotal;
+  final double customerBalanceDue;
+  final double customerSurplus;
+  final DateTime actionAt;
+  final String? deliveryChannel;
+  final String? deliveryStatus;
+  final String? deliveryReference;
+  final DateTime? deliveredAt;
+  const GirviNoticeActionData(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.girviId,
+      required this.actionType,
+      this.noticeStage,
+      this.noticeText,
+      this.actionNote,
+      required this.pledgedValuation,
+      required this.recoveredAmount,
+      required this.penaltyAmount,
+      required this.settlementTotal,
+      required this.customerBalanceDue,
+      required this.customerSurplus,
+      required this.actionAt,
+      this.deliveryChannel,
+      this.deliveryStatus,
+      this.deliveryReference,
+      this.deliveredAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['girvi_id'] = Variable<int>(girviId);
+    map['action_type'] = Variable<String>(actionType);
+    if (!nullToAbsent || noticeStage != null) {
+      map['notice_stage'] = Variable<int>(noticeStage);
+    }
+    if (!nullToAbsent || noticeText != null) {
+      map['notice_text'] = Variable<String>(noticeText);
+    }
+    if (!nullToAbsent || actionNote != null) {
+      map['action_note'] = Variable<String>(actionNote);
+    }
+    map['pledged_valuation'] = Variable<double>(pledgedValuation);
+    map['recovered_amount'] = Variable<double>(recoveredAmount);
+    map['penalty_amount'] = Variable<double>(penaltyAmount);
+    map['settlement_total'] = Variable<double>(settlementTotal);
+    map['customer_balance_due'] = Variable<double>(customerBalanceDue);
+    map['customer_surplus'] = Variable<double>(customerSurplus);
+    map['action_at'] = Variable<DateTime>(actionAt);
+    if (!nullToAbsent || deliveryChannel != null) {
+      map['delivery_channel'] = Variable<String>(deliveryChannel);
+    }
+    if (!nullToAbsent || deliveryStatus != null) {
+      map['delivery_status'] = Variable<String>(deliveryStatus);
+    }
+    if (!nullToAbsent || deliveryReference != null) {
+      map['delivery_reference'] = Variable<String>(deliveryReference);
+    }
+    if (!nullToAbsent || deliveredAt != null) {
+      map['delivered_at'] = Variable<DateTime>(deliveredAt);
+    }
+    return map;
+  }
+
+  GirviNoticeActionsCompanion toCompanion(bool nullToAbsent) {
+    return GirviNoticeActionsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      girviId: Value(girviId),
+      actionType: Value(actionType),
+      noticeStage: noticeStage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(noticeStage),
+      noticeText: noticeText == null && nullToAbsent
+          ? const Value.absent()
+          : Value(noticeText),
+      actionNote: actionNote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(actionNote),
+      pledgedValuation: Value(pledgedValuation),
+      recoveredAmount: Value(recoveredAmount),
+      penaltyAmount: Value(penaltyAmount),
+      settlementTotal: Value(settlementTotal),
+      customerBalanceDue: Value(customerBalanceDue),
+      customerSurplus: Value(customerSurplus),
+      actionAt: Value(actionAt),
+      deliveryChannel: deliveryChannel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deliveryChannel),
+      deliveryStatus: deliveryStatus == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deliveryStatus),
+      deliveryReference: deliveryReference == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deliveryReference),
+      deliveredAt: deliveredAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deliveredAt),
+    );
+  }
+
+  factory GirviNoticeActionData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GirviNoticeActionData(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      girviId: serializer.fromJson<int>(json['girviId']),
+      actionType: serializer.fromJson<String>(json['actionType']),
+      noticeStage: serializer.fromJson<int?>(json['noticeStage']),
+      noticeText: serializer.fromJson<String?>(json['noticeText']),
+      actionNote: serializer.fromJson<String?>(json['actionNote']),
+      pledgedValuation: serializer.fromJson<double>(json['pledgedValuation']),
+      recoveredAmount: serializer.fromJson<double>(json['recoveredAmount']),
+      penaltyAmount: serializer.fromJson<double>(json['penaltyAmount']),
+      settlementTotal: serializer.fromJson<double>(json['settlementTotal']),
+      customerBalanceDue:
+          serializer.fromJson<double>(json['customerBalanceDue']),
+      customerSurplus: serializer.fromJson<double>(json['customerSurplus']),
+      actionAt: serializer.fromJson<DateTime>(json['actionAt']),
+      deliveryChannel: serializer.fromJson<String?>(json['deliveryChannel']),
+      deliveryStatus: serializer.fromJson<String?>(json['deliveryStatus']),
+      deliveryReference:
+          serializer.fromJson<String?>(json['deliveryReference']),
+      deliveredAt: serializer.fromJson<DateTime?>(json['deliveredAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'girviId': serializer.toJson<int>(girviId),
+      'actionType': serializer.toJson<String>(actionType),
+      'noticeStage': serializer.toJson<int?>(noticeStage),
+      'noticeText': serializer.toJson<String?>(noticeText),
+      'actionNote': serializer.toJson<String?>(actionNote),
+      'pledgedValuation': serializer.toJson<double>(pledgedValuation),
+      'recoveredAmount': serializer.toJson<double>(recoveredAmount),
+      'penaltyAmount': serializer.toJson<double>(penaltyAmount),
+      'settlementTotal': serializer.toJson<double>(settlementTotal),
+      'customerBalanceDue': serializer.toJson<double>(customerBalanceDue),
+      'customerSurplus': serializer.toJson<double>(customerSurplus),
+      'actionAt': serializer.toJson<DateTime>(actionAt),
+      'deliveryChannel': serializer.toJson<String?>(deliveryChannel),
+      'deliveryStatus': serializer.toJson<String?>(deliveryStatus),
+      'deliveryReference': serializer.toJson<String?>(deliveryReference),
+      'deliveredAt': serializer.toJson<DateTime?>(deliveredAt),
+    };
+  }
+
+  GirviNoticeActionData copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          int? girviId,
+          String? actionType,
+          Value<int?> noticeStage = const Value.absent(),
+          Value<String?> noticeText = const Value.absent(),
+          Value<String?> actionNote = const Value.absent(),
+          double? pledgedValuation,
+          double? recoveredAmount,
+          double? penaltyAmount,
+          double? settlementTotal,
+          double? customerBalanceDue,
+          double? customerSurplus,
+          DateTime? actionAt,
+          Value<String?> deliveryChannel = const Value.absent(),
+          Value<String?> deliveryStatus = const Value.absent(),
+          Value<String?> deliveryReference = const Value.absent(),
+          Value<DateTime?> deliveredAt = const Value.absent()}) =>
+      GirviNoticeActionData(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        girviId: girviId ?? this.girviId,
+        actionType: actionType ?? this.actionType,
+        noticeStage: noticeStage.present ? noticeStage.value : this.noticeStage,
+        noticeText: noticeText.present ? noticeText.value : this.noticeText,
+        actionNote: actionNote.present ? actionNote.value : this.actionNote,
+        pledgedValuation: pledgedValuation ?? this.pledgedValuation,
+        recoveredAmount: recoveredAmount ?? this.recoveredAmount,
+        penaltyAmount: penaltyAmount ?? this.penaltyAmount,
+        settlementTotal: settlementTotal ?? this.settlementTotal,
+        customerBalanceDue: customerBalanceDue ?? this.customerBalanceDue,
+        customerSurplus: customerSurplus ?? this.customerSurplus,
+        actionAt: actionAt ?? this.actionAt,
+        deliveryChannel: deliveryChannel.present
+            ? deliveryChannel.value
+            : this.deliveryChannel,
+        deliveryStatus:
+            deliveryStatus.present ? deliveryStatus.value : this.deliveryStatus,
+        deliveryReference: deliveryReference.present
+            ? deliveryReference.value
+            : this.deliveryReference,
+        deliveredAt: deliveredAt.present ? deliveredAt.value : this.deliveredAt,
+      );
+  GirviNoticeActionData copyWithCompanion(GirviNoticeActionsCompanion data) {
+    return GirviNoticeActionData(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      girviId: data.girviId.present ? data.girviId.value : this.girviId,
+      actionType:
+          data.actionType.present ? data.actionType.value : this.actionType,
+      noticeStage:
+          data.noticeStage.present ? data.noticeStage.value : this.noticeStage,
+      noticeText:
+          data.noticeText.present ? data.noticeText.value : this.noticeText,
+      actionNote:
+          data.actionNote.present ? data.actionNote.value : this.actionNote,
+      pledgedValuation: data.pledgedValuation.present
+          ? data.pledgedValuation.value
+          : this.pledgedValuation,
+      recoveredAmount: data.recoveredAmount.present
+          ? data.recoveredAmount.value
+          : this.recoveredAmount,
+      penaltyAmount: data.penaltyAmount.present
+          ? data.penaltyAmount.value
+          : this.penaltyAmount,
+      settlementTotal: data.settlementTotal.present
+          ? data.settlementTotal.value
+          : this.settlementTotal,
+      customerBalanceDue: data.customerBalanceDue.present
+          ? data.customerBalanceDue.value
+          : this.customerBalanceDue,
+      customerSurplus: data.customerSurplus.present
+          ? data.customerSurplus.value
+          : this.customerSurplus,
+      actionAt: data.actionAt.present ? data.actionAt.value : this.actionAt,
+      deliveryChannel: data.deliveryChannel.present
+          ? data.deliveryChannel.value
+          : this.deliveryChannel,
+      deliveryStatus: data.deliveryStatus.present
+          ? data.deliveryStatus.value
+          : this.deliveryStatus,
+      deliveryReference: data.deliveryReference.present
+          ? data.deliveryReference.value
+          : this.deliveryReference,
+      deliveredAt:
+          data.deliveredAt.present ? data.deliveredAt.value : this.deliveredAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GirviNoticeActionData(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('girviId: $girviId, ')
+          ..write('actionType: $actionType, ')
+          ..write('noticeStage: $noticeStage, ')
+          ..write('noticeText: $noticeText, ')
+          ..write('actionNote: $actionNote, ')
+          ..write('pledgedValuation: $pledgedValuation, ')
+          ..write('recoveredAmount: $recoveredAmount, ')
+          ..write('penaltyAmount: $penaltyAmount, ')
+          ..write('settlementTotal: $settlementTotal, ')
+          ..write('customerBalanceDue: $customerBalanceDue, ')
+          ..write('customerSurplus: $customerSurplus, ')
+          ..write('actionAt: $actionAt, ')
+          ..write('deliveryChannel: $deliveryChannel, ')
+          ..write('deliveryStatus: $deliveryStatus, ')
+          ..write('deliveryReference: $deliveryReference, ')
+          ..write('deliveredAt: $deliveredAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      createdAt,
+      updatedAt,
+      girviId,
+      actionType,
+      noticeStage,
+      noticeText,
+      actionNote,
+      pledgedValuation,
+      recoveredAmount,
+      penaltyAmount,
+      settlementTotal,
+      customerBalanceDue,
+      customerSurplus,
+      actionAt,
+      deliveryChannel,
+      deliveryStatus,
+      deliveryReference,
+      deliveredAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GirviNoticeActionData &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.girviId == this.girviId &&
+          other.actionType == this.actionType &&
+          other.noticeStage == this.noticeStage &&
+          other.noticeText == this.noticeText &&
+          other.actionNote == this.actionNote &&
+          other.pledgedValuation == this.pledgedValuation &&
+          other.recoveredAmount == this.recoveredAmount &&
+          other.penaltyAmount == this.penaltyAmount &&
+          other.settlementTotal == this.settlementTotal &&
+          other.customerBalanceDue == this.customerBalanceDue &&
+          other.customerSurplus == this.customerSurplus &&
+          other.actionAt == this.actionAt &&
+          other.deliveryChannel == this.deliveryChannel &&
+          other.deliveryStatus == this.deliveryStatus &&
+          other.deliveryReference == this.deliveryReference &&
+          other.deliveredAt == this.deliveredAt);
+}
+
+class GirviNoticeActionsCompanion
+    extends UpdateCompanion<GirviNoticeActionData> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<int> girviId;
+  final Value<String> actionType;
+  final Value<int?> noticeStage;
+  final Value<String?> noticeText;
+  final Value<String?> actionNote;
+  final Value<double> pledgedValuation;
+  final Value<double> recoveredAmount;
+  final Value<double> penaltyAmount;
+  final Value<double> settlementTotal;
+  final Value<double> customerBalanceDue;
+  final Value<double> customerSurplus;
+  final Value<DateTime> actionAt;
+  final Value<String?> deliveryChannel;
+  final Value<String?> deliveryStatus;
+  final Value<String?> deliveryReference;
+  final Value<DateTime?> deliveredAt;
+  const GirviNoticeActionsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.girviId = const Value.absent(),
+    this.actionType = const Value.absent(),
+    this.noticeStage = const Value.absent(),
+    this.noticeText = const Value.absent(),
+    this.actionNote = const Value.absent(),
+    this.pledgedValuation = const Value.absent(),
+    this.recoveredAmount = const Value.absent(),
+    this.penaltyAmount = const Value.absent(),
+    this.settlementTotal = const Value.absent(),
+    this.customerBalanceDue = const Value.absent(),
+    this.customerSurplus = const Value.absent(),
+    this.actionAt = const Value.absent(),
+    this.deliveryChannel = const Value.absent(),
+    this.deliveryStatus = const Value.absent(),
+    this.deliveryReference = const Value.absent(),
+    this.deliveredAt = const Value.absent(),
+  });
+  GirviNoticeActionsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required int girviId,
+    required String actionType,
+    this.noticeStage = const Value.absent(),
+    this.noticeText = const Value.absent(),
+    this.actionNote = const Value.absent(),
+    this.pledgedValuation = const Value.absent(),
+    this.recoveredAmount = const Value.absent(),
+    this.penaltyAmount = const Value.absent(),
+    this.settlementTotal = const Value.absent(),
+    this.customerBalanceDue = const Value.absent(),
+    this.customerSurplus = const Value.absent(),
+    this.actionAt = const Value.absent(),
+    this.deliveryChannel = const Value.absent(),
+    this.deliveryStatus = const Value.absent(),
+    this.deliveryReference = const Value.absent(),
+    this.deliveredAt = const Value.absent(),
+  })  : girviId = Value(girviId),
+        actionType = Value(actionType);
+  static Insertable<GirviNoticeActionData> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? girviId,
+    Expression<String>? actionType,
+    Expression<int>? noticeStage,
+    Expression<String>? noticeText,
+    Expression<String>? actionNote,
+    Expression<double>? pledgedValuation,
+    Expression<double>? recoveredAmount,
+    Expression<double>? penaltyAmount,
+    Expression<double>? settlementTotal,
+    Expression<double>? customerBalanceDue,
+    Expression<double>? customerSurplus,
+    Expression<DateTime>? actionAt,
+    Expression<String>? deliveryChannel,
+    Expression<String>? deliveryStatus,
+    Expression<String>? deliveryReference,
+    Expression<DateTime>? deliveredAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (girviId != null) 'girvi_id': girviId,
+      if (actionType != null) 'action_type': actionType,
+      if (noticeStage != null) 'notice_stage': noticeStage,
+      if (noticeText != null) 'notice_text': noticeText,
+      if (actionNote != null) 'action_note': actionNote,
+      if (pledgedValuation != null) 'pledged_valuation': pledgedValuation,
+      if (recoveredAmount != null) 'recovered_amount': recoveredAmount,
+      if (penaltyAmount != null) 'penalty_amount': penaltyAmount,
+      if (settlementTotal != null) 'settlement_total': settlementTotal,
+      if (customerBalanceDue != null)
+        'customer_balance_due': customerBalanceDue,
+      if (customerSurplus != null) 'customer_surplus': customerSurplus,
+      if (actionAt != null) 'action_at': actionAt,
+      if (deliveryChannel != null) 'delivery_channel': deliveryChannel,
+      if (deliveryStatus != null) 'delivery_status': deliveryStatus,
+      if (deliveryReference != null) 'delivery_reference': deliveryReference,
+      if (deliveredAt != null) 'delivered_at': deliveredAt,
+    });
+  }
+
+  GirviNoticeActionsCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<int>? girviId,
+      Value<String>? actionType,
+      Value<int?>? noticeStage,
+      Value<String?>? noticeText,
+      Value<String?>? actionNote,
+      Value<double>? pledgedValuation,
+      Value<double>? recoveredAmount,
+      Value<double>? penaltyAmount,
+      Value<double>? settlementTotal,
+      Value<double>? customerBalanceDue,
+      Value<double>? customerSurplus,
+      Value<DateTime>? actionAt,
+      Value<String?>? deliveryChannel,
+      Value<String?>? deliveryStatus,
+      Value<String?>? deliveryReference,
+      Value<DateTime?>? deliveredAt}) {
+    return GirviNoticeActionsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      girviId: girviId ?? this.girviId,
+      actionType: actionType ?? this.actionType,
+      noticeStage: noticeStage ?? this.noticeStage,
+      noticeText: noticeText ?? this.noticeText,
+      actionNote: actionNote ?? this.actionNote,
+      pledgedValuation: pledgedValuation ?? this.pledgedValuation,
+      recoveredAmount: recoveredAmount ?? this.recoveredAmount,
+      penaltyAmount: penaltyAmount ?? this.penaltyAmount,
+      settlementTotal: settlementTotal ?? this.settlementTotal,
+      customerBalanceDue: customerBalanceDue ?? this.customerBalanceDue,
+      customerSurplus: customerSurplus ?? this.customerSurplus,
+      actionAt: actionAt ?? this.actionAt,
+      deliveryChannel: deliveryChannel ?? this.deliveryChannel,
+      deliveryStatus: deliveryStatus ?? this.deliveryStatus,
+      deliveryReference: deliveryReference ?? this.deliveryReference,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (girviId.present) {
+      map['girvi_id'] = Variable<int>(girviId.value);
+    }
+    if (actionType.present) {
+      map['action_type'] = Variable<String>(actionType.value);
+    }
+    if (noticeStage.present) {
+      map['notice_stage'] = Variable<int>(noticeStage.value);
+    }
+    if (noticeText.present) {
+      map['notice_text'] = Variable<String>(noticeText.value);
+    }
+    if (actionNote.present) {
+      map['action_note'] = Variable<String>(actionNote.value);
+    }
+    if (pledgedValuation.present) {
+      map['pledged_valuation'] = Variable<double>(pledgedValuation.value);
+    }
+    if (recoveredAmount.present) {
+      map['recovered_amount'] = Variable<double>(recoveredAmount.value);
+    }
+    if (penaltyAmount.present) {
+      map['penalty_amount'] = Variable<double>(penaltyAmount.value);
+    }
+    if (settlementTotal.present) {
+      map['settlement_total'] = Variable<double>(settlementTotal.value);
+    }
+    if (customerBalanceDue.present) {
+      map['customer_balance_due'] = Variable<double>(customerBalanceDue.value);
+    }
+    if (customerSurplus.present) {
+      map['customer_surplus'] = Variable<double>(customerSurplus.value);
+    }
+    if (actionAt.present) {
+      map['action_at'] = Variable<DateTime>(actionAt.value);
+    }
+    if (deliveryChannel.present) {
+      map['delivery_channel'] = Variable<String>(deliveryChannel.value);
+    }
+    if (deliveryStatus.present) {
+      map['delivery_status'] = Variable<String>(deliveryStatus.value);
+    }
+    if (deliveryReference.present) {
+      map['delivery_reference'] = Variable<String>(deliveryReference.value);
+    }
+    if (deliveredAt.present) {
+      map['delivered_at'] = Variable<DateTime>(deliveredAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GirviNoticeActionsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('girviId: $girviId, ')
+          ..write('actionType: $actionType, ')
+          ..write('noticeStage: $noticeStage, ')
+          ..write('noticeText: $noticeText, ')
+          ..write('actionNote: $actionNote, ')
+          ..write('pledgedValuation: $pledgedValuation, ')
+          ..write('recoveredAmount: $recoveredAmount, ')
+          ..write('penaltyAmount: $penaltyAmount, ')
+          ..write('settlementTotal: $settlementTotal, ')
+          ..write('customerBalanceDue: $customerBalanceDue, ')
+          ..write('customerSurplus: $customerSurplus, ')
+          ..write('actionAt: $actionAt, ')
+          ..write('deliveryChannel: $deliveryChannel, ')
+          ..write('deliveryStatus: $deliveryStatus, ')
+          ..write('deliveryReference: $deliveryReference, ')
+          ..write('deliveredAt: $deliveredAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $DeliveryOrdersTable extends DeliveryOrders
     with TableInfo<$DeliveryOrdersTable, DeliveryOrder> {
   @override
@@ -29479,6 +30399,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $GirviItemPhotosTable(this);
   late final $GirviDisbursementsTable girviDisbursements =
       $GirviDisbursementsTable(this);
+  late final $GirviNoticeActionsTable girviNoticeActions =
+      $GirviNoticeActionsTable(this);
   late final $DeliveryOrdersTable deliveryOrders = $DeliveryOrdersTable(this);
   late final $DeliveryItemsTable deliveryItems = $DeliveryItemsTable(this);
   late final $SalesBillingSettingsTable salesBillingSettings =
@@ -29602,6 +30524,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final Index idxGirviDisbursementOrder = Index(
       'idx_girvi_disbursement_order',
       'CREATE UNIQUE INDEX idx_girvi_disbursement_order ON girvi_disbursements (girvi_id, sequence_no)');
+  late final Index idxGirviNoticeActionLoan = Index(
+      'idx_girvi_notice_action_loan',
+      'CREATE INDEX idx_girvi_notice_action_loan ON girvi_notice_actions (girvi_id, action_at)');
+  late final Index idxGirviNoticeActionStage = Index(
+      'idx_girvi_notice_action_stage',
+      'CREATE INDEX idx_girvi_notice_action_stage ON girvi_notice_actions (girvi_id, notice_stage)');
+  late final Index idxGirviNoticeActionType = Index(
+      'idx_girvi_notice_action_type',
+      'CREATE INDEX idx_girvi_notice_action_type ON girvi_notice_actions (action_type)');
   late final Index idxDeliveryStatus = Index('idx_delivery_status',
       'CREATE INDEX idx_delivery_status ON delivery_orders (status)');
   late final Index idxDeliveryCustomer = Index('idx_delivery_customer',
@@ -29644,6 +30575,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         girviLoanItems,
         girviItemPhotos,
         girviDisbursements,
+        girviNoticeActions,
         deliveryOrders,
         deliveryItems,
         salesBillingSettings,
@@ -29706,6 +30638,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         idxGirviPhotoItemOrder,
         idxGirviDisbursementLoan,
         idxGirviDisbursementOrder,
+        idxGirviNoticeActionLoan,
+        idxGirviNoticeActionStage,
+        idxGirviNoticeActionType,
         idxDeliveryStatus,
         idxDeliveryCustomer,
         idxDeliveryDate,
@@ -29792,6 +30727,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
                 limitUpdateKind: UpdateKind.delete),
             result: [
               TableUpdate('girvi_disbursements', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('girvi_loans',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('girvi_notice_actions', kind: UpdateKind.delete),
             ],
           ),
           WritePropagation(
@@ -39545,6 +40487,24 @@ final class $$GirviLoansTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$GirviNoticeActionsTable,
+      List<GirviNoticeActionData>> _girviNoticeActionsRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.girviNoticeActions,
+          aliasName: $_aliasNameGenerator(
+              db.girviLoans.id, db.girviNoticeActions.girviId));
+
+  $$GirviNoticeActionsTableProcessedTableManager get girviNoticeActionsRefs {
+    final manager =
+        $$GirviNoticeActionsTableTableManager($_db, $_db.girviNoticeActions)
+            .filter((f) => f.girviId.id($_item.id));
+
+    final cache =
+        $_typedResult.readTableOrNull(_girviNoticeActionsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$GirviLoansTableFilterComposer
@@ -39764,6 +40724,27 @@ class $$GirviLoansTableFilterComposer
             $$GirviDisbursementsTableFilterComposer(
               $db: $db,
               $table: $db.girviDisbursements,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> girviNoticeActionsRefs(
+      Expression<bool> Function($$GirviNoticeActionsTableFilterComposer f) f) {
+    final $$GirviNoticeActionsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.girviNoticeActions,
+        getReferencedColumn: (t) => t.girviId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviNoticeActionsTableFilterComposer(
+              $db: $db,
+              $table: $db.girviNoticeActions,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -40153,6 +41134,28 @@ class $$GirviLoansTableAnnotationComposer
                 ));
     return f(composer);
   }
+
+  Expression<T> girviNoticeActionsRefs<T extends Object>(
+      Expression<T> Function($$GirviNoticeActionsTableAnnotationComposer a) f) {
+    final $$GirviNoticeActionsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.girviNoticeActions,
+            getReferencedColumn: (t) => t.girviId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GirviNoticeActionsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.girviNoticeActions,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
 }
 
 class $$GirviLoansTableTableManager extends RootTableManager<
@@ -40170,7 +41173,8 @@ class $$GirviLoansTableTableManager extends RootTableManager<
         {bool customerId,
         bool girviPaymentsRefs,
         bool girviLoanItemsRefs,
-        bool girviDisbursementsRefs})> {
+        bool girviDisbursementsRefs,
+        bool girviNoticeActionsRefs})> {
   $$GirviLoansTableTableManager(_$AppDatabase db, $GirviLoansTable table)
       : super(TableManagerState(
           db: db,
@@ -40363,13 +41367,15 @@ class $$GirviLoansTableTableManager extends RootTableManager<
               {customerId = false,
               girviPaymentsRefs = false,
               girviLoanItemsRefs = false,
-              girviDisbursementsRefs = false}) {
+              girviDisbursementsRefs = false,
+              girviNoticeActionsRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
                 if (girviPaymentsRefs) db.girviPayments,
                 if (girviLoanItemsRefs) db.girviLoanItems,
-                if (girviDisbursementsRefs) db.girviDisbursements
+                if (girviDisbursementsRefs) db.girviDisbursements,
+                if (girviNoticeActionsRefs) db.girviNoticeActions
               ],
               addJoins: <
                   T extends TableManagerState<
@@ -40434,6 +41440,18 @@ class $$GirviLoansTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem: (item,
                                 referencedItems) =>
                             referencedItems.where((e) => e.girviId == item.id),
+                        typedResults: items),
+                  if (girviNoticeActionsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$GirviLoansTableReferences
+                            ._girviNoticeActionsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$GirviLoansTableReferences(db, table, p0)
+                                .girviNoticeActionsRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.girviId == item.id),
                         typedResults: items)
                 ];
               },
@@ -40457,7 +41475,8 @@ typedef $$GirviLoansTableProcessedTableManager = ProcessedTableManager<
         {bool customerId,
         bool girviPaymentsRefs,
         bool girviLoanItemsRefs,
-        bool girviDisbursementsRefs})>;
+        bool girviDisbursementsRefs,
+        bool girviNoticeActionsRefs})>;
 typedef $$GirviPaymentsTableCreateCompanionBuilder = GirviPaymentsCompanion
     Function({
   Value<int> id,
@@ -42236,6 +43255,505 @@ typedef $$GirviDisbursementsTableProcessedTableManager = ProcessedTableManager<
     $$GirviDisbursementsTableUpdateCompanionBuilder,
     (GirviDisbursement, $$GirviDisbursementsTableReferences),
     GirviDisbursement,
+    PrefetchHooks Function({bool girviId})>;
+typedef $$GirviNoticeActionsTableCreateCompanionBuilder
+    = GirviNoticeActionsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required int girviId,
+  required String actionType,
+  Value<int?> noticeStage,
+  Value<String?> noticeText,
+  Value<String?> actionNote,
+  Value<double> pledgedValuation,
+  Value<double> recoveredAmount,
+  Value<double> penaltyAmount,
+  Value<double> settlementTotal,
+  Value<double> customerBalanceDue,
+  Value<double> customerSurplus,
+  Value<DateTime> actionAt,
+  Value<String?> deliveryChannel,
+  Value<String?> deliveryStatus,
+  Value<String?> deliveryReference,
+  Value<DateTime?> deliveredAt,
+});
+typedef $$GirviNoticeActionsTableUpdateCompanionBuilder
+    = GirviNoticeActionsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<int> girviId,
+  Value<String> actionType,
+  Value<int?> noticeStage,
+  Value<String?> noticeText,
+  Value<String?> actionNote,
+  Value<double> pledgedValuation,
+  Value<double> recoveredAmount,
+  Value<double> penaltyAmount,
+  Value<double> settlementTotal,
+  Value<double> customerBalanceDue,
+  Value<double> customerSurplus,
+  Value<DateTime> actionAt,
+  Value<String?> deliveryChannel,
+  Value<String?> deliveryStatus,
+  Value<String?> deliveryReference,
+  Value<DateTime?> deliveredAt,
+});
+
+final class $$GirviNoticeActionsTableReferences extends BaseReferences<
+    _$AppDatabase, $GirviNoticeActionsTable, GirviNoticeActionData> {
+  $$GirviNoticeActionsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $GirviLoansTable _girviIdTable(_$AppDatabase db) =>
+      db.girviLoans.createAlias($_aliasNameGenerator(
+          db.girviNoticeActions.girviId, db.girviLoans.id));
+
+  $$GirviLoansTableProcessedTableManager? get girviId {
+    if ($_item.girviId == null) return null;
+    final manager = $$GirviLoansTableTableManager($_db, $_db.girviLoans)
+        .filter((f) => f.id($_item.girviId!));
+    final item = $_typedResult.readTableOrNull(_girviIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$GirviNoticeActionsTableFilterComposer
+    extends Composer<_$AppDatabase, $GirviNoticeActionsTable> {
+  $$GirviNoticeActionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get actionType => $composableBuilder(
+      column: $table.actionType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get noticeStage => $composableBuilder(
+      column: $table.noticeStage, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get noticeText => $composableBuilder(
+      column: $table.noticeText, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get actionNote => $composableBuilder(
+      column: $table.actionNote, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get pledgedValuation => $composableBuilder(
+      column: $table.pledgedValuation,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get recoveredAmount => $composableBuilder(
+      column: $table.recoveredAmount,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get penaltyAmount => $composableBuilder(
+      column: $table.penaltyAmount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get settlementTotal => $composableBuilder(
+      column: $table.settlementTotal,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get customerBalanceDue => $composableBuilder(
+      column: $table.customerBalanceDue,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get customerSurplus => $composableBuilder(
+      column: $table.customerSurplus,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get actionAt => $composableBuilder(
+      column: $table.actionAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get deliveryChannel => $composableBuilder(
+      column: $table.deliveryChannel,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get deliveryStatus => $composableBuilder(
+      column: $table.deliveryStatus,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get deliveryReference => $composableBuilder(
+      column: $table.deliveryReference,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get deliveredAt => $composableBuilder(
+      column: $table.deliveredAt, builder: (column) => ColumnFilters(column));
+
+  $$GirviLoansTableFilterComposer get girviId {
+    final $$GirviLoansTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.girviId,
+        referencedTable: $db.girviLoans,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoansTableFilterComposer(
+              $db: $db,
+              $table: $db.girviLoans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GirviNoticeActionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GirviNoticeActionsTable> {
+  $$GirviNoticeActionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get actionType => $composableBuilder(
+      column: $table.actionType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get noticeStage => $composableBuilder(
+      column: $table.noticeStage, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get noticeText => $composableBuilder(
+      column: $table.noticeText, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get actionNote => $composableBuilder(
+      column: $table.actionNote, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get pledgedValuation => $composableBuilder(
+      column: $table.pledgedValuation,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get recoveredAmount => $composableBuilder(
+      column: $table.recoveredAmount,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get penaltyAmount => $composableBuilder(
+      column: $table.penaltyAmount,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get settlementTotal => $composableBuilder(
+      column: $table.settlementTotal,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get customerBalanceDue => $composableBuilder(
+      column: $table.customerBalanceDue,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get customerSurplus => $composableBuilder(
+      column: $table.customerSurplus,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get actionAt => $composableBuilder(
+      column: $table.actionAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get deliveryChannel => $composableBuilder(
+      column: $table.deliveryChannel,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get deliveryStatus => $composableBuilder(
+      column: $table.deliveryStatus,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get deliveryReference => $composableBuilder(
+      column: $table.deliveryReference,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get deliveredAt => $composableBuilder(
+      column: $table.deliveredAt, builder: (column) => ColumnOrderings(column));
+
+  $$GirviLoansTableOrderingComposer get girviId {
+    final $$GirviLoansTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.girviId,
+        referencedTable: $db.girviLoans,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoansTableOrderingComposer(
+              $db: $db,
+              $table: $db.girviLoans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GirviNoticeActionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GirviNoticeActionsTable> {
+  $$GirviNoticeActionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get actionType => $composableBuilder(
+      column: $table.actionType, builder: (column) => column);
+
+  GeneratedColumn<int> get noticeStage => $composableBuilder(
+      column: $table.noticeStage, builder: (column) => column);
+
+  GeneratedColumn<String> get noticeText => $composableBuilder(
+      column: $table.noticeText, builder: (column) => column);
+
+  GeneratedColumn<String> get actionNote => $composableBuilder(
+      column: $table.actionNote, builder: (column) => column);
+
+  GeneratedColumn<double> get pledgedValuation => $composableBuilder(
+      column: $table.pledgedValuation, builder: (column) => column);
+
+  GeneratedColumn<double> get recoveredAmount => $composableBuilder(
+      column: $table.recoveredAmount, builder: (column) => column);
+
+  GeneratedColumn<double> get penaltyAmount => $composableBuilder(
+      column: $table.penaltyAmount, builder: (column) => column);
+
+  GeneratedColumn<double> get settlementTotal => $composableBuilder(
+      column: $table.settlementTotal, builder: (column) => column);
+
+  GeneratedColumn<double> get customerBalanceDue => $composableBuilder(
+      column: $table.customerBalanceDue, builder: (column) => column);
+
+  GeneratedColumn<double> get customerSurplus => $composableBuilder(
+      column: $table.customerSurplus, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get actionAt =>
+      $composableBuilder(column: $table.actionAt, builder: (column) => column);
+
+  GeneratedColumn<String> get deliveryChannel => $composableBuilder(
+      column: $table.deliveryChannel, builder: (column) => column);
+
+  GeneratedColumn<String> get deliveryStatus => $composableBuilder(
+      column: $table.deliveryStatus, builder: (column) => column);
+
+  GeneratedColumn<String> get deliveryReference => $composableBuilder(
+      column: $table.deliveryReference, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deliveredAt => $composableBuilder(
+      column: $table.deliveredAt, builder: (column) => column);
+
+  $$GirviLoansTableAnnotationComposer get girviId {
+    final $$GirviLoansTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.girviId,
+        referencedTable: $db.girviLoans,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoansTableAnnotationComposer(
+              $db: $db,
+              $table: $db.girviLoans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GirviNoticeActionsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $GirviNoticeActionsTable,
+    GirviNoticeActionData,
+    $$GirviNoticeActionsTableFilterComposer,
+    $$GirviNoticeActionsTableOrderingComposer,
+    $$GirviNoticeActionsTableAnnotationComposer,
+    $$GirviNoticeActionsTableCreateCompanionBuilder,
+    $$GirviNoticeActionsTableUpdateCompanionBuilder,
+    (GirviNoticeActionData, $$GirviNoticeActionsTableReferences),
+    GirviNoticeActionData,
+    PrefetchHooks Function({bool girviId})> {
+  $$GirviNoticeActionsTableTableManager(
+      _$AppDatabase db, $GirviNoticeActionsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GirviNoticeActionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GirviNoticeActionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GirviNoticeActionsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<int> girviId = const Value.absent(),
+            Value<String> actionType = const Value.absent(),
+            Value<int?> noticeStage = const Value.absent(),
+            Value<String?> noticeText = const Value.absent(),
+            Value<String?> actionNote = const Value.absent(),
+            Value<double> pledgedValuation = const Value.absent(),
+            Value<double> recoveredAmount = const Value.absent(),
+            Value<double> penaltyAmount = const Value.absent(),
+            Value<double> settlementTotal = const Value.absent(),
+            Value<double> customerBalanceDue = const Value.absent(),
+            Value<double> customerSurplus = const Value.absent(),
+            Value<DateTime> actionAt = const Value.absent(),
+            Value<String?> deliveryChannel = const Value.absent(),
+            Value<String?> deliveryStatus = const Value.absent(),
+            Value<String?> deliveryReference = const Value.absent(),
+            Value<DateTime?> deliveredAt = const Value.absent(),
+          }) =>
+              GirviNoticeActionsCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            girviId: girviId,
+            actionType: actionType,
+            noticeStage: noticeStage,
+            noticeText: noticeText,
+            actionNote: actionNote,
+            pledgedValuation: pledgedValuation,
+            recoveredAmount: recoveredAmount,
+            penaltyAmount: penaltyAmount,
+            settlementTotal: settlementTotal,
+            customerBalanceDue: customerBalanceDue,
+            customerSurplus: customerSurplus,
+            actionAt: actionAt,
+            deliveryChannel: deliveryChannel,
+            deliveryStatus: deliveryStatus,
+            deliveryReference: deliveryReference,
+            deliveredAt: deliveredAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required int girviId,
+            required String actionType,
+            Value<int?> noticeStage = const Value.absent(),
+            Value<String?> noticeText = const Value.absent(),
+            Value<String?> actionNote = const Value.absent(),
+            Value<double> pledgedValuation = const Value.absent(),
+            Value<double> recoveredAmount = const Value.absent(),
+            Value<double> penaltyAmount = const Value.absent(),
+            Value<double> settlementTotal = const Value.absent(),
+            Value<double> customerBalanceDue = const Value.absent(),
+            Value<double> customerSurplus = const Value.absent(),
+            Value<DateTime> actionAt = const Value.absent(),
+            Value<String?> deliveryChannel = const Value.absent(),
+            Value<String?> deliveryStatus = const Value.absent(),
+            Value<String?> deliveryReference = const Value.absent(),
+            Value<DateTime?> deliveredAt = const Value.absent(),
+          }) =>
+              GirviNoticeActionsCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            girviId: girviId,
+            actionType: actionType,
+            noticeStage: noticeStage,
+            noticeText: noticeText,
+            actionNote: actionNote,
+            pledgedValuation: pledgedValuation,
+            recoveredAmount: recoveredAmount,
+            penaltyAmount: penaltyAmount,
+            settlementTotal: settlementTotal,
+            customerBalanceDue: customerBalanceDue,
+            customerSurplus: customerSurplus,
+            actionAt: actionAt,
+            deliveryChannel: deliveryChannel,
+            deliveryStatus: deliveryStatus,
+            deliveryReference: deliveryReference,
+            deliveredAt: deliveredAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$GirviNoticeActionsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({girviId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (girviId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.girviId,
+                    referencedTable:
+                        $$GirviNoticeActionsTableReferences._girviIdTable(db),
+                    referencedColumn: $$GirviNoticeActionsTableReferences
+                        ._girviIdTable(db)
+                        .id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$GirviNoticeActionsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $GirviNoticeActionsTable,
+    GirviNoticeActionData,
+    $$GirviNoticeActionsTableFilterComposer,
+    $$GirviNoticeActionsTableOrderingComposer,
+    $$GirviNoticeActionsTableAnnotationComposer,
+    $$GirviNoticeActionsTableCreateCompanionBuilder,
+    $$GirviNoticeActionsTableUpdateCompanionBuilder,
+    (GirviNoticeActionData, $$GirviNoticeActionsTableReferences),
+    GirviNoticeActionData,
     PrefetchHooks Function({bool girviId})>;
 typedef $$DeliveryOrdersTableCreateCompanionBuilder = DeliveryOrdersCompanion
     Function({
@@ -45757,6 +47275,8 @@ class $AppDatabaseManager {
       $$GirviItemPhotosTableTableManager(_db, _db.girviItemPhotos);
   $$GirviDisbursementsTableTableManager get girviDisbursements =>
       $$GirviDisbursementsTableTableManager(_db, _db.girviDisbursements);
+  $$GirviNoticeActionsTableTableManager get girviNoticeActions =>
+      $$GirviNoticeActionsTableTableManager(_db, _db.girviNoticeActions);
   $$DeliveryOrdersTableTableManager get deliveryOrders =>
       $$DeliveryOrdersTableTableManager(_db, _db.deliveryOrders);
   $$DeliveryItemsTableTableManager get deliveryItems =>

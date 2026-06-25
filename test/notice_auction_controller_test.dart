@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
@@ -5,6 +6,7 @@ import 'package:lotus_erp/logic/girvi/notice_auction_controller.dart';
 import 'package:lotus_erp/models/girvi/girvi_loan_model.dart';
 import 'package:lotus_erp/models/girvi/girvi_notice_action_model.dart';
 import 'package:lotus_erp/models/girvi/notice_auction_model.dart';
+import 'package:lotus_erp/repositories/girvi/girvi_notice_action_repository.dart';
 
 void main() {
   group('NoticeAuctionController', () {
@@ -228,6 +230,135 @@ void main() {
       expect(state.countForFilter(NoticeAuctionFilter.finalNotice), 1);
       expect(state.countForFilter(NoticeAuctionFilter.disposalReady), 1);
       expect(state.countForFilter(NoticeAuctionFilter.settled), 1);
+    });
+
+    test('notice delivery proof persists without changing notice stage count',
+        () async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(db.close);
+
+      final customerId = await db.into(db.customers).insert(
+            CustomersCompanion.insert(
+              name: 'Notice Customer',
+              mobile: '9000000002',
+            ),
+          );
+      final loanId = await db.into(db.girviLoans).insert(
+            GirviLoansCompanion.insert(
+              ticketNo: 'GRV-NOT-001',
+              customerId: customerId,
+              itemDescription: 'Gold ring',
+              grossWeight: const drift.Value(6),
+              netWeight: const drift.Value(6),
+              ratePerGram: const drift.Value(7000),
+              totalValue: const drift.Value(42000),
+              loanAmount: const drift.Value(20000),
+              interestRate: const drift.Value(5),
+              startDate: drift.Value(DateTime(2025, 9, 9)),
+              maturityDate: drift.Value(DateTime(2026, 3, 9)),
+              status: const drift.Value('OVERDUE'),
+            ),
+          );
+
+      final repository = GirviNoticeActionRepository(db);
+      await repository.recordNoticePrepared(
+        girviId: loanId,
+        noticeType: GirviNoticeType.first,
+        noticeText: 'First notice text',
+      );
+      await repository.recordNoticeDeliveryProof(
+        girviId: loanId,
+        noticeType: GirviNoticeType.first,
+        noticeText: 'First notice text',
+        actionType: GirviNoticeActionTypes.noticePdfSaved,
+        deliveryChannel: 'PDF File',
+        deliveryStatus: 'Saved',
+        deliveryReference: r'C:\notice\GRV-NOT-001.pdf',
+      );
+
+      final history = (await repository.actionsByGirviIds([loanId]))[loanId]!;
+      final proof =
+          history.firstWhere((action) => action.isNoticeDeliveryProof);
+      expect(proof.deliveryStatus, 'Saved');
+      expect(proof.deliveryChannel, 'PDF File');
+      expect(proof.deliveryReference, r'C:\notice\GRV-NOT-001.pdf');
+
+      final account = GirviLoanWithCustomer(
+        loan: GirviLoanModel(
+          id: loanId,
+          ticketNo: 'GRV-NOT-001',
+          customerId: customerId,
+          itemDescription: 'Gold ring',
+          itemCount: 1,
+          metalType: 'Gold',
+          metalPurity: '18KT',
+          grossWeight: 6,
+          stoneWeight: 0,
+          netWeight: 6,
+          ratePerGram: 7000,
+          totalValue: 42000,
+          ltvPercent: 47.61,
+          loanAmount: 20000,
+          interestRate: 5,
+          durationMonths: 6,
+          disbursementMode: 'Cash',
+          startDate: DateTime(2025, 9, 9),
+          maturityDate: DateTime(2026, 3, 9),
+          createdAt: DateTime(2025, 9, 9),
+          status: 'OVERDUE',
+        ),
+        customerName: 'Notice Customer',
+        customerMobile: '9000000002',
+      );
+      final noticeCase = NoticeAuctionCase(
+        account: account,
+        noticePeriodDays: 30,
+        now: DateTime(2026, 6, 24),
+        actionHistory: history,
+      );
+
+      expect(noticeCase.noticesSentLabel, '1/3 Sent');
+      expect(noticeCase.preparedNoticeActions, hasLength(1));
+      expect(noticeCase.noticeDeliveryProofActions, hasLength(1));
+      expect(
+        noticeCase.latestDeliveryProofForStage(1)?.deliveryProofLabel,
+        'Saved via PDF File',
+      );
+    });
+
+    test('notice schema safety upgrades a legacy action table', () async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(db.close);
+
+      await db.customStatement('DROP TABLE IF EXISTS girvi_notice_actions');
+      await db.customStatement('''
+        CREATE TABLE girvi_notice_actions (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          girvi_id INTEGER NOT NULL,
+          action_type TEXT NOT NULL,
+          notice_text TEXT,
+          action_note TEXT,
+          action_at INTEGER NOT NULL,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER
+        )
+      ''');
+
+      await db.ensureGirviNoticeActionSchema();
+
+      final columns = await db
+          .customSelect(
+            "PRAGMA table_info('girvi_notice_actions')",
+          )
+          .get();
+      final names = columns.map((row) => row.data['name']).toSet();
+
+      expect(names, contains('notice_stage'));
+      expect(names, contains('pledged_valuation'));
+      expect(names, contains('delivery_channel'));
+      expect(names, contains('delivery_status'));
+      expect(names, contains('delivery_reference'));
+      expect(names, contains('delivered_at'));
     });
   });
 }

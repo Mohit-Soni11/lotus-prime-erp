@@ -5,7 +5,7 @@ class _PledgedItemDraft {
     required this.serialNo,
     required this.onChanged,
   }) {
-    customPurityCtrl.text = purity.dbValue;
+    customPurityCtrl.text = purity.shortLabel;
     for (final controller in [
       descriptionCtrl,
       piecesCtrl,
@@ -73,7 +73,7 @@ class _PledgedItemDraft {
   String get purityLabel {
     final custom = customPurityCtrl.text.trim();
     if (purity == MetalPurity.other && custom.isNotEmpty) return custom;
-    return purity.dbValue;
+    return purity.shortLabel;
   }
 
   String get valuationPurityLabel {
@@ -118,7 +118,7 @@ class _PledgedItemDraft {
       }
       return;
     }
-    customPurityCtrl.text = purity.dbValue;
+    customPurityCtrl.text = purity.shortLabel;
     customPurityCtrl.selection = TextSelection.collapsed(
       offset: customPurityCtrl.text.length,
     );
@@ -159,6 +159,7 @@ List<MetalPurity> _purityOptionsForMetal(MetalType metalType) {
       return const [
         MetalPurity.k24,
         MetalPurity.k22,
+        MetalPurity.k20,
         MetalPurity.k18,
         MetalPurity.k14,
         MetalPurity.other,
@@ -198,7 +199,9 @@ MetalPurity? _matchPurityText(MetalType metalType, String value) {
   for (final purity in _purityOptionsForMetal(metalType)) {
     if (purity == MetalPurity.other) continue;
     if (purity.displayName.toUpperCase() == normalized ||
-        purity.dbValue.toUpperCase() == normalized) {
+        purity.shortLabel.toUpperCase() == normalized ||
+        purity.legacyValues
+            .any((legacy) => legacy.toUpperCase() == normalized)) {
       return purity;
     }
   }
@@ -212,7 +215,9 @@ bool _isKnownPurityText(String value) {
     (purity) =>
         purity != MetalPurity.other &&
         (purity.displayName.toUpperCase() == normalized ||
-            purity.dbValue.toUpperCase() == normalized),
+            purity.shortLabel.toUpperCase() == normalized ||
+            purity.legacyValues
+                .any((legacy) => legacy.toUpperCase() == normalized)),
   );
 }
 
@@ -752,7 +757,7 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
               'Photos are optional. Attach one or more photos from the Photo column after item entry.',
               style: GoogleFonts.inter(
                 color: GirviColors.brandDeep,
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -822,7 +827,7 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
                 '${entries.length} photos',
                 style: GoogleFonts.manrope(
                   color: GirviColors.brandGold,
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -928,7 +933,7 @@ class _TotalItemValueHighlight extends StatelessWidget {
                   'Total Item Value',
                   style: GirviStyles.caption.copyWith(
                     color: GirviColors.textBody,
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w800,
                     height: 1.0,
                   ),
@@ -963,7 +968,7 @@ class _TotalItemValueHighlight extends StatelessWidget {
                 'READY',
                 style: GoogleFonts.inter(
                   color: GirviColors.success,
-                  fontSize: 11,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                   height: 1.0,
                 ),
@@ -1039,7 +1044,7 @@ class _LedgerSectionCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: GirviStyles.caption.copyWith(fontSize: 11),
+                      style: GirviStyles.caption.copyWith(fontSize: 12.5),
                     ),
                   ],
                 ),
@@ -1144,7 +1149,7 @@ class _LedgerAddButton extends StatelessWidget {
                 'F2',
                 style: GoogleFonts.inter(
                   color: GirviColors.success,
-                  fontSize: 11,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -1411,8 +1416,9 @@ class _LedgerPurityCell extends StatelessWidget {
                 },
                 itemBuilder: (context) => options.map(
                   (purity) {
-                    final label =
-                        purity == MetalPurity.other ? 'Custom' : purity.dbValue;
+                    final label = purity == MetalPurity.other
+                        ? 'Custom'
+                        : purity.shortLabel;
                     return PopupMenuItem<MetalPurity>(
                       value: purity,
                       height: 36,
@@ -1523,7 +1529,7 @@ class _LedgerItemNameCell extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GirviStyles.caption.copyWith(
-                fontSize: 10.5,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w700,
                 height: 1.0,
               ),
@@ -1699,7 +1705,7 @@ class _PledgedPhotoThumbnail extends StatelessWidget {
                       serialNo.toString().padLeft(2, '0'),
                       style: GoogleFonts.manrope(
                         color: GirviColors.brandDeep,
-                        fontSize: 11,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w900,
                         height: 1.0,
                       ),
@@ -1713,7 +1719,7 @@ class _PledgedPhotoThumbnail extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         color: GirviColors.textDark,
-                        fontSize: 11,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w800,
                         height: 1.0,
                       ),
@@ -1936,7 +1942,7 @@ class _PledgedLedgerMetric extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textDark,
-                    fontSize: 11,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w900,
                     height: 1.0,
                   ),
@@ -1946,7 +1952,7 @@ class _PledgedLedgerMetric extends StatelessWidget {
                 value,
                 style: GoogleFonts.manrope(
                   color: color,
-                  fontSize: 11,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                   height: 1.0,
                 ),
@@ -2021,16 +2027,16 @@ class _MetalWeightSummaryChip extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: GirviColors.textDark,
-                    fontSize: 11,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
               Text(
-                '${summary.pieces} pcs',
+                summary.pieces == 1 ? '1 piece' : '${summary.pieces} pieces',
                 style: GoogleFonts.manrope(
                   color: accent,
-                  fontSize: 11,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -2088,7 +2094,7 @@ class _WeightMiniText extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: GirviStyles.caption.copyWith(
-            fontSize: 9.5,
+            fontSize: 12.5,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -2099,7 +2105,7 @@ class _WeightMiniText extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.manrope(
             color: color ?? GirviColors.textDark,
-            fontSize: 11,
+            fontSize: 12.5,
             fontWeight: FontWeight.w900,
           ),
         ),

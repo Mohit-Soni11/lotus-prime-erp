@@ -277,7 +277,7 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         color: GirviColors.textBody,
-                        fontSize: 12,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w800,
                       ),
                     ),

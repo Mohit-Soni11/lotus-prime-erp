@@ -11,15 +11,7 @@ class GirviNoticeActionRepository {
 
   Future<void> ensureSchema() async {
     if (_schemaReady) return;
-    await _db.customStatement(_createTableSql);
-    for (final statement in _columnSafetySql) {
-      try {
-        await _db.customStatement(statement);
-      } catch (_) {}
-    }
-    for (final statement in _indexSql) {
-      await _db.customStatement(statement);
-    }
+    await _db.ensureGirviNoticeActionSchema();
     _schemaReady = true;
   }
 
@@ -80,6 +72,30 @@ class GirviNoticeActionRepository {
     );
   }
 
+  Future<void> recordNoticeDeliveryProof({
+    required int girviId,
+    required GirviNoticeType noticeType,
+    required String noticeText,
+    required String actionType,
+    required String deliveryChannel,
+    required String deliveryStatus,
+    String? deliveryReference,
+    DateTime? deliveredAt,
+  }) {
+    return recordAction(
+      girviId: girviId,
+      actionType: actionType,
+      noticeStage: noticeType.stage,
+      noticeText: noticeText,
+      actionNote:
+          '${noticeType.label} $deliveryStatus through $deliveryChannel.',
+      deliveryChannel: deliveryChannel,
+      deliveryStatus: deliveryStatus,
+      deliveryReference: deliveryReference,
+      deliveredAt: deliveredAt ?? DateTime.now(),
+    );
+  }
+
   Future<void> recordAction({
     required int girviId,
     required String actionType,
@@ -92,46 +108,34 @@ class GirviNoticeActionRepository {
     double settlementTotal = 0,
     double customerBalanceDue = 0,
     double customerSurplus = 0,
+    String? deliveryChannel,
+    String? deliveryStatus,
+    String? deliveryReference,
+    DateTime? deliveredAt,
   }) async {
     await ensureSchema();
-    final now = DateTime.now().millisecondsSinceEpoch;
-    await _db.customInsert(
-      '''
-      INSERT INTO girvi_notice_actions (
-        girvi_id,
-        action_type,
-        notice_stage,
-        notice_text,
-        action_note,
-        pledged_valuation,
-        recovered_amount,
-        penalty_amount,
-        settlement_total,
-        customer_balance_due,
-        customer_surplus,
-        action_at,
-        created_at
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ''',
-      variables: [
-        Variable.withInt(girviId),
-        Variable.withString(actionType),
-        noticeStage == null
-            ? const Variable<int>(null)
-            : Variable.withInt(noticeStage),
-        Variable.withString(noticeText ?? ''),
-        Variable.withString(actionNote ?? ''),
-        Variable.withReal(pledgedValuation),
-        Variable.withReal(recoveredAmount),
-        Variable.withReal(penaltyAmount),
-        Variable.withReal(settlementTotal),
-        Variable.withReal(customerBalanceDue),
-        Variable.withReal(customerSurplus),
-        Variable.withInt(now),
-        Variable.withInt(now),
-      ],
-    );
+    final now = DateTime.now();
+    await _db.into(_db.girviNoticeActions).insert(
+          GirviNoticeActionsCompanion.insert(
+            girviId: girviId,
+            actionType: actionType,
+            createdAt: Value(now),
+            actionAt: Value(now),
+            noticeStage: Value(noticeStage),
+            noticeText: Value(_normalizeText(noticeText)),
+            actionNote: Value(_normalizeText(actionNote)),
+            pledgedValuation: Value(pledgedValuation),
+            recoveredAmount: Value(recoveredAmount),
+            penaltyAmount: Value(penaltyAmount),
+            settlementTotal: Value(settlementTotal),
+            customerBalanceDue: Value(customerBalanceDue),
+            customerSurplus: Value(customerSurplus),
+            deliveryChannel: Value(_normalizeText(deliveryChannel)),
+            deliveryStatus: Value(_normalizeText(deliveryStatus)),
+            deliveryReference: Value(_normalizeText(deliveryReference)),
+            deliveredAt: Value(deliveredAt),
+          ),
+        );
   }
 
   Future<Map<int, GirviNoticeAction>> latestByGirviIds(
@@ -140,27 +144,17 @@ class GirviNoticeActionRepository {
     await ensureSchema();
     if (girviIds.isEmpty) return {};
 
-    final placeholders = List.filled(girviIds.length, '?').join(', ');
-    final rows = await _db.customSelect(
-      '''
-      SELECT action.*
-      FROM girvi_notice_actions AS action
-      INNER JOIN (
-        SELECT girvi_id, MAX(action_at) AS latest_action_at
-        FROM girvi_notice_actions
-        WHERE girvi_id IN ($placeholders)
-        GROUP BY girvi_id
-      ) AS latest
-        ON latest.girvi_id = action.girvi_id
-       AND latest.latest_action_at = action.action_at
-      ORDER BY action.action_at DESC, action.id DESC
-      ''',
-      variables: girviIds.map(Variable.withInt).toList(),
-    ).get();
+    final rows = await (_db.select(_db.girviNoticeActions)
+          ..where((row) => row.girviId.isIn(girviIds))
+          ..orderBy([
+            (row) => OrderingTerm.desc(row.actionAt),
+            (row) => OrderingTerm.desc(row.id),
+          ]))
+        .get();
 
     final result = <int, GirviNoticeAction>{};
     for (final row in rows) {
-      final action = _mapRow(row.data);
+      final action = _mapData(row);
       result[action.girviId] ??= action;
     }
     return result;
@@ -172,112 +166,49 @@ class GirviNoticeActionRepository {
     await ensureSchema();
     if (girviIds.isEmpty) return {};
 
-    final placeholders = List.filled(girviIds.length, '?').join(', ');
-    final rows = await _db.customSelect(
-      '''
-      SELECT *
-      FROM girvi_notice_actions
-      WHERE girvi_id IN ($placeholders)
-      ORDER BY action_at DESC, id DESC
-      ''',
-      variables: girviIds.map(Variable.withInt).toList(),
-    ).get();
+    final rows = await (_db.select(_db.girviNoticeActions)
+          ..where((row) => row.girviId.isIn(girviIds))
+          ..orderBy([
+            (row) => OrderingTerm.desc(row.actionAt),
+            (row) => OrderingTerm.desc(row.id),
+          ]))
+        .get();
 
     final result = <int, List<GirviNoticeAction>>{};
     for (final row in rows) {
-      final action = _mapRow(row.data);
+      final action = _mapData(row);
       result.putIfAbsent(action.girviId, () => []).add(action);
     }
     return result;
   }
 
-  GirviNoticeAction _mapRow(Map<String, dynamic> row) {
+  GirviNoticeAction _mapData(GirviNoticeActionData row) {
     return GirviNoticeAction(
-      id: row['id'] as int,
-      girviId: row['girvi_id'] as int,
-      actionType: row['action_type'] as String,
-      noticeStage: _nullableInt(row['notice_stage']),
-      noticeText: _nullableText(row['notice_text']),
-      actionNote: _nullableText(row['action_note']),
-      pledgedValuation: _doubleValue(row['pledged_valuation']),
-      recoveredAmount: _doubleValue(row['recovered_amount']),
-      penaltyAmount: _doubleValue(row['penalty_amount']),
-      settlementTotal: _doubleValue(row['settlement_total']),
-      customerBalanceDue: _doubleValue(row['customer_balance_due']),
-      customerSurplus: _doubleValue(row['customer_surplus']),
-      actionAt: _dateFromMillis(row['action_at']),
-      createdAt: _dateFromMillis(row['created_at']),
-      updatedAt:
-          row['updated_at'] == null ? null : _dateFromMillis(row['updated_at']),
+      id: row.id,
+      girviId: row.girviId,
+      actionType: row.actionType,
+      noticeStage: row.noticeStage,
+      noticeText: _normalizeText(row.noticeText),
+      actionNote: _normalizeText(row.actionNote),
+      pledgedValuation: row.pledgedValuation,
+      recoveredAmount: row.recoveredAmount,
+      penaltyAmount: row.penaltyAmount,
+      settlementTotal: row.settlementTotal,
+      customerBalanceDue: row.customerBalanceDue,
+      customerSurplus: row.customerSurplus,
+      deliveryChannel: _normalizeText(row.deliveryChannel),
+      deliveryStatus: _normalizeText(row.deliveryStatus),
+      deliveryReference: _normalizeText(row.deliveryReference),
+      deliveredAt: row.deliveredAt,
+      actionAt: row.actionAt,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
     );
   }
 
-  DateTime _dateFromMillis(Object value) {
-    final millis = value is int ? value : int.tryParse('$value') ?? 0;
-    return DateTime.fromMillisecondsSinceEpoch(millis);
-  }
-
-  int? _nullableInt(Object? value) {
-    if (value == null) return null;
-    if (value is int) return value;
-    return int.tryParse('$value');
-  }
-
-  double _doubleValue(Object? value) {
-    if (value == null) return 0;
-    if (value is num) return value.toDouble();
-    return double.tryParse('$value') ?? 0;
-  }
-
-  String? _nullableText(Object? value) {
+  String? _normalizeText(Object? value) {
     final text = value?.toString().trim();
     if (text == null || text.isEmpty) return null;
     return text;
   }
 }
-
-const String _createTableSql = '''
-CREATE TABLE IF NOT EXISTS girvi_notice_actions (
-  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-  girvi_id INTEGER NOT NULL,
-  action_type TEXT NOT NULL,
-  notice_stage INTEGER,
-  notice_text TEXT,
-  action_note TEXT,
-  pledged_valuation REAL NOT NULL DEFAULT 0.0,
-  recovered_amount REAL NOT NULL DEFAULT 0.0,
-  penalty_amount REAL NOT NULL DEFAULT 0.0,
-  settlement_total REAL NOT NULL DEFAULT 0.0,
-  customer_balance_due REAL NOT NULL DEFAULT 0.0,
-  customer_surplus REAL NOT NULL DEFAULT 0.0,
-  action_at INTEGER NOT NULL,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER,
-  FOREIGN KEY (girvi_id) REFERENCES girvi_loans (id) ON DELETE CASCADE
-)
-''';
-
-const List<String> _columnSafetySql = [
-  'ALTER TABLE girvi_notice_actions ADD COLUMN notice_stage INTEGER',
-  'ALTER TABLE girvi_notice_actions ADD COLUMN pledged_valuation REAL NOT NULL DEFAULT 0.0',
-  'ALTER TABLE girvi_notice_actions ADD COLUMN recovered_amount REAL NOT NULL DEFAULT 0.0',
-  'ALTER TABLE girvi_notice_actions ADD COLUMN penalty_amount REAL NOT NULL DEFAULT 0.0',
-  'ALTER TABLE girvi_notice_actions ADD COLUMN settlement_total REAL NOT NULL DEFAULT 0.0',
-  'ALTER TABLE girvi_notice_actions ADD COLUMN customer_balance_due REAL NOT NULL DEFAULT 0.0',
-  'ALTER TABLE girvi_notice_actions ADD COLUMN customer_surplus REAL NOT NULL DEFAULT 0.0',
-];
-
-const List<String> _indexSql = [
-  '''
-  CREATE INDEX IF NOT EXISTS idx_girvi_notice_action_loan
-  ON girvi_notice_actions (girvi_id, action_at DESC)
-  ''',
-  '''
-  CREATE INDEX IF NOT EXISTS idx_girvi_notice_action_stage
-  ON girvi_notice_actions (girvi_id, notice_stage)
-  ''',
-  '''
-  CREATE INDEX IF NOT EXISTS idx_girvi_notice_action_type
-  ON girvi_notice_actions (action_type)
-  ''',
-];

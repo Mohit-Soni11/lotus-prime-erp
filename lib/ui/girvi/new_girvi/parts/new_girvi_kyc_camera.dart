@@ -150,7 +150,7 @@ class _KycCameraDialogState extends State<_KycCameraDialog> {
                         ),
                         Text(
                           'Keep the full card visible and text readable.',
-                          style: GirviStyles.caption.copyWith(fontSize: 11.5),
+                          style: GirviStyles.caption.copyWith(fontSize: 12.5),
                         ),
                       ],
                     ),
