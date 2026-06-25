@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -88,6 +91,9 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
               state: state,
               onOpenAccount: _openAccount,
               onPrepareNotice: _prepareNotice,
+              onViewNotice: _viewSavedNotice,
+              onDownloadNotice: _downloadSavedNotice,
+              onPrintNotice: _printSavedNotice,
               onCloseDisposal: _closeDisposalSettlement,
             ),
           ),
@@ -196,6 +202,83 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
     );
     if (shared) {
       await _controller.recordNoticePrepared(item, noticeType, noticeText);
+    }
+  }
+
+  Future<void> _viewSavedNotice(
+    NoticeAuctionCase item,
+    GirviNoticeAction action,
+  ) async {
+    final draft = _savedNoticeDraft(item, action);
+    await showDialog<void>(
+      context: context,
+      builder: (context) => _SavedNoticePreviewDialog(
+        draft: draft,
+        onDownload: () => _downloadSavedNotice(item, action),
+        onPrint: () => _printSavedNotice(item, action),
+      ),
+    );
+  }
+
+  Future<void> _downloadSavedNotice(
+    NoticeAuctionCase item,
+    GirviNoticeAction action,
+  ) async {
+    final draft = _savedNoticeDraft(item, action);
+    try {
+      final outputPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'Save ${draft.noticeType.label}',
+        fileName: draft.fileName,
+        type: FileType.custom,
+        allowedExtensions: const ['pdf'],
+      );
+      if (outputPath == null) return;
+
+      final normalizedPath = outputPath.toLowerCase().endsWith('.pdf')
+          ? outputPath
+          : '$outputPath.pdf';
+      final bytes = await _noticePdfService.build(
+        item: item,
+        noticeType: draft.noticeType,
+        noticeLanguage: draft.language,
+        noticeText: draft.noticeText,
+      );
+      await File(normalizedPath).writeAsBytes(bytes, flush: true);
+      _controller.showInlineMessage(
+        '${draft.noticeType.label} PDF saved for ticket ${item.loan.ticketNo}.',
+      );
+    } catch (_) {
+      _controller.showInlineMessage(
+        '${draft.noticeType.label} PDF could not be saved.',
+      );
+    }
+  }
+
+  Future<void> _printSavedNotice(
+    NoticeAuctionCase item,
+    GirviNoticeAction action,
+  ) async {
+    final draft = _savedNoticeDraft(item, action);
+    try {
+      final bytes = await _noticePdfService.build(
+        item: item,
+        noticeType: draft.noticeType,
+        noticeLanguage: draft.language,
+        noticeText: draft.noticeText,
+      );
+      final printed = await Printing.layoutPdf(
+        name: draft.fileName,
+        onLayout: (_) async => bytes,
+      );
+      if (printed) {
+        _controller.showInlineMessage(
+          '${draft.noticeType.label} PDF sent to printer for ticket ${item.loan.ticketNo}.',
+        );
+      }
+    } catch (_) {
+      _controller.showInlineMessage(
+        '${draft.noticeType.label} PDF could not be printed.',
+      );
     }
   }
 
@@ -382,8 +465,74 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
     return 'girvi_${safeTicket}_notice_${noticeType.stage}_${language.fileLabel}.pdf';
   }
 
+  _SavedNoticeDraft _savedNoticeDraft(
+    NoticeAuctionCase item,
+    GirviNoticeAction action,
+  ) {
+    final noticeType = _noticeTypeFromAction(action);
+    final storedText = action.noticeText?.trim() ?? '';
+    final language = _noticeLanguageForText(storedText);
+    final noticeText = storedText.isEmpty
+        ? _buildNoticeText(item, noticeType, language)
+        : storedText;
+    return _SavedNoticeDraft(
+      item: item,
+      action: action,
+      noticeType: noticeType,
+      language: language,
+      noticeText: noticeText,
+      fileName: _noticePdfName(item, noticeType, language),
+    );
+  }
+
+  GirviNoticeLanguage _noticeLanguageForText(String value) {
+    if (RegExp(r'[\u0900-\u097F]').hasMatch(value)) {
+      return GirviNoticeLanguage.hindi;
+    }
+    return GirviNoticeLanguage.english;
+  }
+
   String _money(double value) =>
       'Rs ${NumberFormat('#,##,##0', 'en_IN').format(value)}';
+}
+
+class _SavedNoticeDraft {
+  final NoticeAuctionCase item;
+  final GirviNoticeAction action;
+  final GirviNoticeType noticeType;
+  final GirviNoticeLanguage language;
+  final String noticeText;
+  final String fileName;
+
+  const _SavedNoticeDraft({
+    required this.item,
+    required this.action,
+    required this.noticeType,
+    required this.language,
+    required this.noticeText,
+    required this.fileName,
+  });
+}
+
+GirviNoticeType _noticeTypeFromAction(GirviNoticeAction action) {
+  final stage = _noticeStageFromAction(action) ?? 1;
+  return GirviNoticeType.fromStage(stage.clamp(1, 3).toInt());
+}
+
+int? _noticeStageFromAction(GirviNoticeAction action) {
+  final stage = action.noticeStage;
+  if (stage != null) return stage;
+  switch (action.actionType) {
+    case GirviNoticeActionTypes.firstNoticePrepared:
+    case GirviNoticeActionTypes.noticeDraftCopied:
+      return 1;
+    case GirviNoticeActionTypes.secondNoticePrepared:
+      return 2;
+    case GirviNoticeActionTypes.finalNoticePrepared:
+      return 3;
+    default:
+      return null;
+  }
 }
 
 class _NoticeAuctionOverview extends StatelessWidget {
@@ -576,6 +725,7 @@ class _NoticeAuctionControls extends StatelessWidget {
                   .map(
                     (filter) => _FilterChip(
                       label: _labelFor(filter),
+                      count: state.countForFilter(filter),
                       active: state.filter == filter,
                       onTap: () => onFilterChanged(filter),
                     ),
@@ -591,7 +741,7 @@ class _NoticeAuctionControls extends StatelessWidget {
   String _labelFor(NoticeAuctionFilter filter) {
     switch (filter) {
       case NoticeAuctionFilter.all:
-        return 'All Cases';
+        return 'Active Cases';
       case NoticeAuctionFilter.firstNotice:
         return 'First Notice';
       case NoticeAuctionFilter.secondNotice:
@@ -608,11 +758,13 @@ class _NoticeAuctionControls extends StatelessWidget {
 
 class _FilterChip extends StatelessWidget {
   final String label;
+  final int count;
   final bool active;
   final VoidCallback onTap;
 
   const _FilterChip({
     required this.label,
+    required this.count,
     required this.active,
     required this.onTap,
   });
@@ -631,13 +783,43 @@ class _FilterChip extends StatelessWidget {
             color: active ? GirviColors.shellBg : GirviColors.cardBorder,
           ),
         ),
-        child: Text(
-          label,
-          style: GirviStyles.caption.copyWith(
-            fontSize: 12.5,
-            color: active ? Colors.white : GirviColors.textDark,
-            fontWeight: FontWeight.w800,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: GirviStyles.caption.copyWith(
+                fontSize: 12.5,
+                color: active ? Colors.white : GirviColors.textDark,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(width: 7),
+            Container(
+              constraints: const BoxConstraints(minWidth: 22),
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: active
+                    ? Colors.white.withValues(alpha: 0.16)
+                    : GirviColors.bodyBg,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: active
+                      ? Colors.white.withValues(alpha: 0.22)
+                      : GirviColors.cardBorder,
+                ),
+              ),
+              child: Text(
+                count.toString(),
+                style: GirviStyles.caption.copyWith(
+                  fontSize: 11.2,
+                  color: active ? Colors.white : GirviColors.textDark,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -693,12 +875,21 @@ class _NoticeAuctionBody extends StatelessWidget {
   final NoticeAuctionState state;
   final ValueChanged<NoticeAuctionCase> onOpenAccount;
   final ValueChanged<NoticeAuctionCase> onPrepareNotice;
+  final void Function(NoticeAuctionCase item, GirviNoticeAction action)
+      onViewNotice;
+  final void Function(NoticeAuctionCase item, GirviNoticeAction action)
+      onDownloadNotice;
+  final void Function(NoticeAuctionCase item, GirviNoticeAction action)
+      onPrintNotice;
   final ValueChanged<NoticeAuctionCase> onCloseDisposal;
 
   const _NoticeAuctionBody({
     required this.state,
     required this.onOpenAccount,
     required this.onPrepareNotice,
+    required this.onViewNotice,
+    required this.onDownloadNotice,
+    required this.onPrintNotice,
     required this.onCloseDisposal,
   });
 
@@ -734,6 +925,9 @@ class _NoticeAuctionBody extends StatelessWidget {
           onOpenAccount: () => onOpenAccount(item),
           onPrepareNotice:
               item.nextNoticeType == null ? null : () => onPrepareNotice(item),
+          onViewNotice: (action) => onViewNotice(item, action),
+          onDownloadNotice: (action) => onDownloadNotice(item, action),
+          onPrintNotice: (action) => onPrintNotice(item, action),
           onCloseDisposal:
               item.canCloseDisposal ? () => onCloseDisposal(item) : null,
         );
@@ -746,12 +940,18 @@ class _NoticeAuctionCard extends StatelessWidget {
   final NoticeAuctionCase item;
   final VoidCallback onOpenAccount;
   final VoidCallback? onPrepareNotice;
+  final ValueChanged<GirviNoticeAction> onViewNotice;
+  final ValueChanged<GirviNoticeAction> onDownloadNotice;
+  final ValueChanged<GirviNoticeAction> onPrintNotice;
   final VoidCallback? onCloseDisposal;
 
   const _NoticeAuctionCard({
     required this.item,
     required this.onOpenAccount,
     required this.onPrepareNotice,
+    required this.onViewNotice,
+    required this.onDownloadNotice,
+    required this.onPrintNotice,
     required this.onCloseDisposal,
   });
 
@@ -782,6 +982,12 @@ class _NoticeAuctionCard extends StatelessWidget {
           final compact = constraints.maxWidth < 980;
           final identity = _CaseIdentity(item: item, maturityLabel: maturity);
           final amounts = _CaseAmounts(item: item);
+          final notices = _NoticeDocumentStrip(
+            item: item,
+            onViewNotice: onViewNotice,
+            onDownloadNotice: onDownloadNotice,
+            onPrintNotice: onPrintNotice,
+          );
           final actions = _CaseActions(
             item: item,
             onOpenAccount: onOpenAccount,
@@ -797,6 +1003,8 @@ class _NoticeAuctionCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 amounts,
                 const SizedBox(height: 12),
+                notices,
+                const SizedBox(height: 12),
                 actions,
               ],
             );
@@ -807,7 +1015,17 @@ class _NoticeAuctionCard extends StatelessWidget {
             children: [
               Expanded(flex: 6, child: identity),
               const SizedBox(width: 14),
-              Expanded(flex: 5, child: amounts),
+              Expanded(
+                flex: 7,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    amounts,
+                    const SizedBox(height: 10),
+                    notices,
+                  ],
+                ),
+              ),
               const SizedBox(width: 14),
               SizedBox(width: 190, child: actions),
             ],
@@ -859,14 +1077,7 @@ class _CaseIdentity extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        Text(
-          loan.itemDescription.trim().isEmpty
-              ? loan.itemSummary
-              : loan.itemDescription.trim(),
-          style: GirviStyles.caption.copyWith(fontWeight: FontWeight.w800),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
+        _PledgedItemSummary(item: item),
         const SizedBox(height: 8),
         Text(
           account.customerAddress.isEmpty
@@ -918,6 +1129,141 @@ class _NoticeActivityLine extends StatelessWidget {
   }
 }
 
+class _PledgedItemSummary extends StatelessWidget {
+  final NoticeAuctionCase item;
+
+  const _PledgedItemSummary({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final loan = item.loan;
+    final attributes = <_ItemAttribute>[
+      _ItemAttribute('Metal Type', loan.metalTypeEnum.displayName),
+      if (loan.metalPurity.trim().isNotEmpty)
+        _ItemAttribute('Purity', loan.metalPurity.trim()),
+      _ItemAttribute('Pieces', _pieces(loan.itemCount)),
+      _ItemAttribute('Gross Weight', _weight(loan.grossWeight)),
+      if (loan.stoneWeight > 0)
+        _ItemAttribute('Less Weight', _weight(loan.stoneWeight)),
+      _ItemAttribute('Net Weight', _weight(loan.netWeight)),
+      _ItemAttribute('Valuation', _money(loan.totalValue)),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: GirviColors.brandGold.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(10),
+        border:
+            Border.all(color: GirviColors.brandGold.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _itemTitle(),
+            style: GirviStyles.caption.copyWith(
+              color: GirviColors.textDark,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 7,
+            runSpacing: 7,
+            children: attributes
+                .map((attribute) => _ItemAttributeChip(attribute: attribute))
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _itemTitle() {
+    final raw = item.loan.itemDescription.trim();
+    if (raw.isEmpty) return _titleCase(item.loan.itemSummary);
+    final firstPart = raw.split('|').first.trim();
+    final serialMatch = RegExp(r'^#\s*(\d+)\s*(.*)$').firstMatch(firstPart);
+    if (serialMatch != null) {
+      final serial = serialMatch.group(1) ?? '';
+      final name = _titleCase(serialMatch.group(2)?.trim() ?? '');
+      if (name.isEmpty) return 'Serial Number $serial';
+      return 'Serial Number $serial - $name';
+    }
+    return _titleCase(firstPart);
+  }
+
+  String _titleCase(String value) {
+    final cleaned = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (cleaned.isEmpty) return cleaned;
+    return cleaned.split(' ').map((part) {
+      if (part.isEmpty || RegExp(r'\d').hasMatch(part)) return part;
+      if (part == part.toUpperCase()) return part;
+      return '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}';
+    }).join(' ');
+  }
+
+  String _pieces(int count) => '$count piece${count == 1 ? '' : 's'}';
+
+  String _weight(double value) => '${value.toStringAsFixed(3)} g';
+
+  String _money(double value) =>
+      'Rs ${NumberFormat('#,##,##0', 'en_IN').format(value)}';
+}
+
+class _ItemAttribute {
+  final String label;
+  final String value;
+
+  const _ItemAttribute(this.label, this.value);
+}
+
+class _ItemAttributeChip extends StatelessWidget {
+  final _ItemAttribute attribute;
+
+  const _ItemAttributeChip({required this.attribute});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: GirviColors.cardBorder),
+      ),
+      child: RichText(
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: '${attribute.label}: ',
+              style: GirviStyles.caption.copyWith(
+                color: GirviColors.textDark,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            TextSpan(
+              text: attribute.value,
+              style: GirviStyles.caption.copyWith(
+                color: GirviColors.textDark,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _CaseAmounts extends StatelessWidget {
   final NoticeAuctionCase item;
 
@@ -942,17 +1288,315 @@ class _CaseAmounts extends StatelessWidget {
           value: item.overdueAgeMonthsDaysLabel,
           accent: item.accentColor,
         ),
-        _AmountTile(
-          label: 'Notice Stage',
-          value: item.noticeProgressLabel,
-          accent: GirviColors.brandGold,
-        ),
       ],
     );
   }
 
   String _money(double value) =>
       'Rs ${NumberFormat('#,##,##0', 'en_IN').format(value)}';
+}
+
+class _NoticeDocumentStrip extends StatelessWidget {
+  final NoticeAuctionCase item;
+  final ValueChanged<GirviNoticeAction> onViewNotice;
+  final ValueChanged<GirviNoticeAction> onDownloadNotice;
+  final ValueChanged<GirviNoticeAction> onPrintNotice;
+
+  const _NoticeDocumentStrip({
+    required this.item,
+    required this.onViewNotice,
+    required this.onDownloadNotice,
+    required this.onPrintNotice,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final actions = item.preparedNoticeActions;
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: GirviColors.bodyBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: GirviColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Notice Documents',
+                  style: GirviStyles.caption.copyWith(
+                    color: GirviColors.textDark,
+                    fontSize: 12.8,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              _NoticeCountBadge(label: item.noticesSentLabel),
+            ],
+          ),
+          const SizedBox(height: 9),
+          if (actions.isEmpty)
+            const _NoNoticeDocuments()
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: actions
+                  .map(
+                    (action) => _NoticeDocumentCard(
+                      action: action,
+                      onView: () => onViewNotice(action),
+                      onDownload: () => onDownloadNotice(action),
+                      onPrint: () => onPrintNotice(action),
+                    ),
+                  )
+                  .toList(),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NoticeCountBadge extends StatelessWidget {
+  final String label;
+
+  const _NoticeCountBadge({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: GirviColors.brandGold.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border:
+            Border.all(color: GirviColors.brandGold.withValues(alpha: 0.28)),
+      ),
+      child: Text(
+        label,
+        style: GirviStyles.caption.copyWith(
+          color: GirviColors.brandGold,
+          fontSize: 11.5,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _NoNoticeDocuments extends StatelessWidget {
+  const _NoNoticeDocuments();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 42,
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: GirviColors.cardBorder),
+      ),
+      child: Text(
+        'No notice document has been prepared yet.',
+        style: GirviStyles.caption.copyWith(
+          color: GirviColors.textDark,
+          fontSize: 12.2,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _NoticeDocumentCard extends StatelessWidget {
+  final GirviNoticeAction action;
+  final VoidCallback onView;
+  final VoidCallback onDownload;
+  final VoidCallback onPrint;
+
+  const _NoticeDocumentCard({
+    required this.action,
+    required this.onView,
+    required this.onDownload,
+    required this.onPrint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final noticeType = _noticeTypeFromAction(action);
+    final timestamp =
+        DateFormat('dd MMM yyyy, hh:mm a').format(action.actionAt);
+    final color = _noticeStageColor(noticeType);
+
+    return InkWell(
+      onTap: onView,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 196,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.28)),
+          boxShadow: const [
+            BoxShadow(
+              color: GirviColors.shadowLight,
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: color.withValues(alpha: 0.24)),
+                  ),
+                  child: Text(
+                    '0${noticeType.stage}',
+                    style: GoogleFonts.inter(
+                      color: color,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    noticeType.label,
+                    style: GirviStyles.caption.copyWith(
+                      color: GirviColors.textDark,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              timestamp,
+              style: GirviStyles.caption.copyWith(
+                color: GirviColors.textDark,
+                fontSize: 11.4,
+                fontWeight: FontWeight.w700,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _MiniNoticeAction(
+                    label: 'View',
+                    icon: Icons.visibility_outlined,
+                    onTap: onView,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: _MiniNoticeAction(
+                    label: 'Save',
+                    icon: Icons.download_rounded,
+                    onTap: onDownload,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: _MiniNoticeAction(
+                    label: 'Print',
+                    icon: Icons.print_rounded,
+                    onTap: onPrint,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _noticeStageColor(GirviNoticeType noticeType) {
+    switch (noticeType) {
+      case GirviNoticeType.first:
+        return GirviColors.warning;
+      case GirviNoticeType.second:
+        return GirviColors.danger;
+      case GirviNoticeType.finalNotice:
+        return GirviColors.statusAuctioned;
+    }
+  }
+}
+
+class _MiniNoticeAction extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _MiniNoticeAction({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: label == 'Save' ? 'Download PDF' : '$label notice',
+      waitDuration: const Duration(milliseconds: 450),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(7),
+        child: Container(
+          height: 30,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: GirviColors.bodyBg,
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(color: GirviColors.cardBorder),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 13, color: GirviColors.textDark),
+              const SizedBox(width: 3),
+              Flexible(
+                child: Text(
+                  label,
+                  style: GirviStyles.caption.copyWith(
+                    color: GirviColors.textDark,
+                    fontSize: 10.8,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _CaseActions extends StatelessWidget {
@@ -1165,6 +1809,170 @@ class _ActionButton extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
       ),
+    );
+  }
+}
+
+class _SavedNoticePreviewDialog extends StatefulWidget {
+  final _SavedNoticeDraft draft;
+  final Future<void> Function() onDownload;
+  final Future<void> Function() onPrint;
+
+  const _SavedNoticePreviewDialog({
+    required this.draft,
+    required this.onDownload,
+    required this.onPrint,
+  });
+
+  @override
+  State<_SavedNoticePreviewDialog> createState() =>
+      _SavedNoticePreviewDialogState();
+}
+
+class _SavedNoticePreviewDialogState extends State<_SavedNoticePreviewDialog> {
+  bool _busy = false;
+
+  Future<void> _run(Future<void> Function() action) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await action();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final draft = widget.draft;
+    final actionDate = DateFormat('dd MMM yyyy, hh:mm a').format(
+      draft.action.actionAt,
+    );
+
+    return AlertDialog(
+      backgroundColor: GirviColors.cardBg,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      insetPadding: const EdgeInsets.all(24),
+      titlePadding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
+      contentPadding: const EdgeInsets.fromLTRB(22, 14, 22, 6),
+      actionsPadding: const EdgeInsets.fromLTRB(18, 8, 18, 16),
+      title: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: GirviColors.brandGold.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: GirviColors.brandGold.withValues(alpha: 0.28),
+              ),
+            ),
+            child: Text(
+              '0${draft.noticeType.stage}',
+              style: GoogleFonts.inter(
+                color: GirviColors.brandGold,
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  draft.noticeType.label,
+                  style: GirviStyles.sectionTitle.copyWith(fontSize: 17),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '${draft.item.loan.ticketNo} | ${draft.item.account.customerName} | ${draft.language.label} | $actionDate',
+                  style: GirviStyles.caption.copyWith(
+                    color: GirviColors.textDark,
+                    fontSize: 12.2,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      content: SizedBox(
+        width: 780,
+        child: Container(
+          constraints: const BoxConstraints(maxHeight: 560),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: GirviColors.bodyBg,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: GirviColors.cardBorder),
+          ),
+          child: SingleChildScrollView(
+            child: SelectableText(
+              draft.noticeText,
+              style: GoogleFonts.inter(
+                color: GirviColors.textDark,
+                fontSize: 13.6,
+                height: 1.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.of(context).pop(),
+          child: Text(
+            'Close',
+            style: GirviStyles.caption.copyWith(
+              color: GirviColors.textDark,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        TextButton.icon(
+          onPressed: _busy ? null : () => _run(widget.onDownload),
+          icon: const Icon(Icons.download_rounded, size: 17),
+          label: const Text('Save PDF'),
+          style: TextButton.styleFrom(
+            foregroundColor: GirviColors.textDark,
+            textStyle: GoogleFonts.inter(fontWeight: FontWeight.w900),
+          ),
+        ),
+        ElevatedButton.icon(
+          onPressed: _busy ? null : () => _run(widget.onPrint),
+          icon: _busy
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Icon(Icons.print_rounded, size: 17),
+          label: Text(
+            _busy ? 'Working' : 'Print PDF',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w900),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: GirviColors.shellBg,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(9),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1672,7 +2480,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
             spacing: 6,
             runSpacing: 6,
             children: [
-              _snapshotChip('Stage ${widget.item.noticeProgressLabel}'),
+              _snapshotChip('Notices ${widget.item.noticesSentLabel}'),
               _snapshotChip(widget.item.stageLabel),
             ],
           ),

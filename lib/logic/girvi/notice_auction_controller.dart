@@ -303,7 +303,17 @@ class NoticeAuctionController extends ChangeNotifier {
             account.customerMobile.contains(query) ||
             account.customerAddress.toLowerCase().contains(query) ||
             loan.itemDescription.toLowerCase().contains(query) ||
+            loan.itemSummary.toLowerCase().contains(query) ||
+            loan.metalType.toLowerCase().contains(query) ||
+            loan.metalPurity.toLowerCase().contains(query) ||
             item.stageLabel.toLowerCase().contains(query) ||
+            item.stageDescription.toLowerCase().contains(query) ||
+            item.noticesSentLabel.toLowerCase().contains(query) ||
+            item.preparedNoticeActions.any(
+              (action) =>
+                  action.displayLabel.toLowerCase().contains(query) ||
+                  (action.noticeText?.toLowerCase().contains(query) ?? false),
+            ) ||
             (item.latestAction?.displayLabel.toLowerCase().contains(query) ??
                 false);
       }).toList();

@@ -48,28 +48,58 @@ class NoticeAuctionCase {
   List<GirviNoticeAction> get noticeActions =>
       actionHistory.where((action) => action.isNotice).toList();
 
+  List<GirviNoticeAction> get preparedNoticeActions {
+    final stageMap = <int, GirviNoticeAction>{};
+    for (final action in noticeActions) {
+      final stage = _noticeStageFor(action);
+      if (stage != null && stage >= 1 && stage <= 3) {
+        stageMap.putIfAbsent(stage, () => action);
+      }
+    }
+    final stages = stageMap.keys.toList()..sort();
+    return [for (final stage in stages) stageMap[stage]!];
+  }
+
+  Set<int> get preparedNoticeStages {
+    return {
+      for (final action in noticeActions)
+        if (_noticeStageFor(action) case final stage?)
+          if (stage >= 1 && stage <= 3) stage,
+    };
+  }
+
+  int get highestPreparedNoticeStage {
+    final stages = preparedNoticeStages;
+    if (stages.contains(3)) return 3;
+    if (stages.contains(2)) return 2;
+    if (stages.contains(1)) return 1;
+    return 0;
+  }
+
+  GirviNoticeAction? get finalNoticeAction {
+    for (final action in preparedNoticeActions) {
+      if (_noticeStageFor(action) == 3) return action;
+    }
+    return null;
+  }
+
   bool get hasDisposalSettlement =>
       actionHistory.any((action) => action.isDisposalSettlement);
 
-  int get preparedNoticeCount {
-    final stages = <int>{};
-    for (final action in noticeActions) {
-      final stage = action.noticeStage;
-      if (stage != null && stage >= 1 && stage <= 3) stages.add(stage);
-    }
-    return stages.length;
-  }
+  int get preparedNoticeCount => preparedNoticeStages.length;
 
   GirviNoticeType? get nextNoticeType {
     if (hasDisposalSettlement || isAuctioned) return null;
-    if (preparedNoticeCount <= 0) return GirviNoticeType.first;
-    if (preparedNoticeCount == 1) return GirviNoticeType.second;
-    if (preparedNoticeCount == 2) return GirviNoticeType.finalNotice;
+    if (highestPreparedNoticeStage <= 0) return GirviNoticeType.first;
+    if (highestPreparedNoticeStage == 1) return GirviNoticeType.second;
+    if (highestPreparedNoticeStage == 2) return GirviNoticeType.finalNotice;
     return null;
   }
 
   bool get canCloseDisposal =>
-      !hasDisposalSettlement && !isAuctioned && preparedNoticeCount >= 3;
+      !hasDisposalSettlement &&
+      !isAuctioned &&
+      stage == NoticeAuctionStage.disposalReady;
 
   int get overdueDays {
     final maturity = loan.maturityDate;
@@ -103,11 +133,29 @@ class NoticeAuctionCase {
   String get overdueAgeMonthsDaysLabel => _monthsDaysLabel(overdueAgePeriod);
 
   int get currentNoticeStageNumber =>
-      nextNoticeType?.stage ?? preparedNoticeCount.clamp(0, 3).toInt();
+      nextNoticeType?.stage ?? highestPreparedNoticeStage.clamp(0, 3).toInt();
+
+  String get noticesSentLabel => '$preparedNoticeCount/3 Sent';
 
   String get noticeProgressLabel {
     if (stage == NoticeAuctionStage.settled) return 'Closed';
     return '$currentNoticeStageNumber/3';
+  }
+
+  int? _noticeStageFor(GirviNoticeAction action) {
+    final stage = action.noticeStage;
+    if (stage != null) return stage;
+    switch (action.actionType) {
+      case GirviNoticeActionTypes.firstNoticePrepared:
+      case GirviNoticeActionTypes.noticeDraftCopied:
+        return 1;
+      case GirviNoticeActionTypes.secondNoticePrepared:
+        return 2;
+      case GirviNoticeActionTypes.finalNoticePrepared:
+        return 3;
+      default:
+        return null;
+    }
   }
 
   String _monthsDaysLabel(GirviElapsedPeriod period) {
@@ -124,11 +172,28 @@ class NoticeAuctionCase {
 
   int get daysPastNoticePeriod => math.max(0, overdueDays - noticePeriodDays);
 
+  bool get isFinalNoticeCycleComplete {
+    final finalAction = finalNoticeAction;
+    if (finalAction == null) return false;
+    final readyDate = DateUtils.dateOnly(
+      finalAction.actionAt.add(Duration(days: noticePeriodDays)),
+    );
+    return !DateUtils.dateOnly(now).isBefore(readyDate);
+  }
+
   NoticeAuctionStage get stage {
     if (isAuctioned || hasDisposalSettlement) return NoticeAuctionStage.settled;
-    if (preparedNoticeCount >= 3) return NoticeAuctionStage.disposalReady;
-    if (preparedNoticeCount == 2) return NoticeAuctionStage.finalNoticeDue;
-    if (preparedNoticeCount == 1) return NoticeAuctionStage.secondNoticeDue;
+    if (highestPreparedNoticeStage >= 3) {
+      return isFinalNoticeCycleComplete
+          ? NoticeAuctionStage.disposalReady
+          : NoticeAuctionStage.finalNoticeDue;
+    }
+    if (highestPreparedNoticeStage == 2) {
+      return NoticeAuctionStage.secondNoticeDue;
+    }
+    if (highestPreparedNoticeStage == 1) {
+      return NoticeAuctionStage.firstNoticeDue;
+    }
     return NoticeAuctionStage.firstNoticeDue;
   }
 
@@ -150,11 +215,13 @@ class NoticeAuctionCase {
   String get stageDescription {
     switch (stage) {
       case NoticeAuctionStage.firstNoticeDue:
-        return 'Prepare the first settlement warning.';
+        return highestPreparedNoticeStage == 0
+            ? 'Prepare the first settlement warning.'
+            : 'First notice is prepared. Continue with the second notice when required.';
       case NoticeAuctionStage.secondNoticeDue:
-        return 'Second warning is required before final notice.';
+        return 'Second notice is prepared. Continue with the final notice when required.';
       case NoticeAuctionStage.finalNoticeDue:
-        return 'Final redemption notice is pending.';
+        return 'Final notice is prepared. Wait for the notice cycle before disposal review.';
       case NoticeAuctionStage.disposalReady:
         return 'All three notices are prepared. Review disposal settlement.';
       case NoticeAuctionStage.settled:
@@ -306,5 +373,26 @@ class NoticeAuctionState {
       inlineMessage:
           clearInlineMessage ? null : inlineMessage ?? this.inlineMessage,
     );
+  }
+
+  int countForFilter(NoticeAuctionFilter filter) {
+    return allCases.where((item) => _matchesFilter(item, filter)).length;
+  }
+
+  bool _matchesFilter(NoticeAuctionCase item, NoticeAuctionFilter filter) {
+    switch (filter) {
+      case NoticeAuctionFilter.all:
+        return item.stage != NoticeAuctionStage.settled;
+      case NoticeAuctionFilter.firstNotice:
+        return item.stage == NoticeAuctionStage.firstNoticeDue;
+      case NoticeAuctionFilter.secondNotice:
+        return item.stage == NoticeAuctionStage.secondNoticeDue;
+      case NoticeAuctionFilter.finalNotice:
+        return item.stage == NoticeAuctionStage.finalNoticeDue;
+      case NoticeAuctionFilter.disposalReady:
+        return item.stage == NoticeAuctionStage.disposalReady;
+      case NoticeAuctionFilter.settled:
+        return item.stage == NoticeAuctionStage.settled;
+    }
   }
 }
