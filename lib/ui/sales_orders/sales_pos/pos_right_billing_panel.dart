@@ -30,7 +30,6 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
   bool _exchangeExpanded = false;
   //  Promise date is owned by PosBillingController.
 
-  String? _refundMethod;
   double _lastPayableAmount = 0.0;
   double _lastTotalPaid = 0.0;
 
@@ -53,11 +52,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
       _lastTotalPaid = widget.ctrl.totalPaid;
       shouldReset = true;
     }
-
-    if (shouldReset && _refundMethod != null) {
-      setState(() {
-        _refundMethod = null;
-      });
+    if (shouldReset) {
+      setState(() {});
     }
   }
 
@@ -667,7 +663,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
     final discAmt = widget.ctrl.discountAmount;
     final isPercent = widget.ctrl.discountType == DiscountType.percentage;
     // Show a warning when percentage mode exceeds 100%.
-    final double inputVal = double.tryParse(widget.ctrl.discountCtrl.text) ?? 0;
+    final double inputVal = widget.ctrl.discountInputAmount;
     final bool isInvalidPct = isPercent && inputVal > 100;
 
     return Padding(
@@ -1084,11 +1080,16 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
         !isEmptyCart && widget.ctrl.validateInvoiceReadiness() != null;
     final isDue = widget.ctrl.balanceDue > 0.005;
     final isReturn = widget.ctrl.balanceDue < -0.005;
+    final returnMethod = widget.ctrl.changeReturnMethod;
+    final returnMethodLabel = returnMethod?.displayName;
+    final settledReturnLabel = returnMethod == RefundMethod.accountCredit
+        ? "CHANGE ADDED TO CUSTOMER ACCOUNT"
+        : "CHANGE RETURNED VIA $returnMethodLabel";
     final isPaid = !isDue && !isReturn && !isEmptyCart && !hasIncompleteDraft;
 
     final balanceColor = hasIncompleteDraft
         ? SalesPosColors.warning
-        : (isReturn && _refundMethod != null) || isPaid
+        : (isReturn && returnMethod != null) || isPaid
             ? SalesPosColors.success
             : (isReturn ? SalesPosColors.warning : SalesPosColors.danger);
 
@@ -1154,8 +1155,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                           Text(
                               hasIncompleteDraft
                                   ? "INVOICE INCOMPLETE"
-                                  : isReturn && _refundMethod != null
-                                      ? "CHANGE RETURNED VIA ${_refundMethod!}"
+                                  : isReturn && returnMethodLabel != null
+                                      ? settledReturnLabel
                                       : isReturn
                                           ? "CHANGE DUE TO CUSTOMER"
                                           : isPaid
@@ -1178,7 +1179,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                       Icon(
                           hasIncompleteDraft
                               ? SalesPosIcons.dueWarning
-                              : (isReturn && _refundMethod != null) || isPaid
+                              : (isReturn && returnMethod != null) || isPaid
                                   ? SalesPosIcons.settledVerified
                                   : isReturn
                                       ? SalesPosIcons.returnChange
@@ -1190,13 +1191,19 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                 ],
               ),
             ),
-            if (isReturn && _refundMethod == null) ...[
+            if (isReturn && returnMethod == null) ...[
               const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => setState(() => _refundMethod = "CASH"),
+                      onPressed: widget.ctrl.canReturnChangeWith(
+                        RefundMethod.cash,
+                      )
+                          ? () => widget.ctrl.setChangeReturnMethod(
+                                RefundMethod.cash,
+                              )
+                          : null,
                       icon: const Icon(SalesPosIcons.cashFilled,
                           size: 18, color: Colors.white),
                       label: const Text("RETURN CASH",
@@ -1217,7 +1224,13 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => setState(() => _refundMethod = "UPI"),
+                      onPressed: widget.ctrl.canReturnChangeWith(
+                        RefundMethod.upi,
+                      )
+                          ? () => widget.ctrl.setChangeReturnMethod(
+                                RefundMethod.upi,
+                              )
+                          : null,
                       icon: const Icon(SalesPosIcons.bankUpi,
                           size: 18, color: Colors.white),
                       label: const Text("RETURN UPI",
@@ -1237,6 +1250,47 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   ),
                 ],
               ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: widget.ctrl.canReturnChangeWith(
+                    RefundMethod.accountCredit,
+                  )
+                      ? () => widget.ctrl.setChangeReturnMethod(
+                            RefundMethod.accountCredit,
+                          )
+                      : null,
+                  icon: const Icon(SalesPosIcons.advancePayment,
+                      size: 18, color: Colors.white),
+                  label: const Text("ADD TO CUSTOMER ACCOUNT",
+                      style: TextStyle(
+                          fontSize: SalesPosStyles.fontLabel,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 0)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: SalesPosColors.brandGold,
+                    disabledBackgroundColor:
+                        SalesPosColors.bodyTextMuted.withValues(alpha: 0.20),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+              if (widget.ctrl.selectedCustomer == null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  "Select a customer to keep excess payment as account credit.",
+                  style: TextStyle(
+                    color: SalesPosColors.bodyTextMuted.withValues(alpha: 0.85),
+                    fontSize: SalesPosStyles.fontCaption,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ],
           ],
           if (isDue && !isEmptyCart) ...[

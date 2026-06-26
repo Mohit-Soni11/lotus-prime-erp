@@ -92,6 +92,8 @@ class CustomerProfileRepository {
         ..sort((a, b) => b.startDate.compareTo(a.startDate));
 
       final advanceOrders = await _fetchAdvanceOrders(customerId);
+      final accountCreditBalance =
+          await _fetchCustomerAccountCreditBalance(customerId);
       final dues = _buildDues(bills);
 
       return CustomerProfileModel(
@@ -104,6 +106,7 @@ class CustomerProfileRepository {
         createdAt: cust.createdAt,
         creditLimit: cust.creditLimit,
         outstanding: outstanding,
+        accountCreditBalance: accountCreditBalance,
         bills: bills,
         loans: loans,
         advanceOrders: advanceOrders,
@@ -345,6 +348,27 @@ class CustomerProfileRepository {
     } catch (e) {
       AppLogger.error("Customer advance orders fetch error: $e");
       return [];
+    }
+  }
+
+  Future<double> _fetchCustomerAccountCreditBalance(int customerId) async {
+    try {
+      final rows = await (_db.select(_db.customerAccountLedger)
+            ..where(
+              (t) => t.customerId.equals(customerId) & t.isVoided.equals(false),
+            ))
+          .get();
+
+      return rows.fold<double>(0.0, (sum, entry) {
+        final amount = entry.amount;
+        if (entry.entryType.toUpperCase() == 'DEBIT') {
+          return sum - amount;
+        }
+        return sum + amount;
+      });
+    } catch (e) {
+      AppLogger.error("Customer account credit fetch error: $e");
+      return 0.0;
     }
   }
 

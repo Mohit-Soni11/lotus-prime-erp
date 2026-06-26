@@ -105,6 +105,34 @@ class InvoicePrintConfig {
 enum InvoiceGenState { idle, generating, ready, error }
 
 class PosInvoiceController extends ChangeNotifier {
+  static const PdfColor _pdfTextColor = PdfColors.black;
+  static const PdfColor _pdfMutedTextColor = PdfColors.black;
+  static const PdfColor _pdfBorderColor = PdfColors.grey600;
+  static const PdfColor _pdfLightBorderColor = PdfColors.grey500;
+  static const PdfColor _pdfSoftFillColor = PdfColors.grey100;
+  static const PdfColor _pdfHeaderFillColor = PdfColors.grey200;
+  static const double _pdfShopTitleSize = 22;
+  static const double _pdfTitleSize = 15;
+  static const double _pdfCustomerNameSize = 13.5;
+  static const double _pdfBodySize = 10.5;
+  static const double _pdfLabelSize = 9.5;
+  static const double _pdfTableHeaderSize = 9.2;
+  static const double _pdfTableCellSize = 9;
+  static const double _pdfTotalSize = 10.5;
+  static const double _pdfGrandLabelSize = 12.5;
+  static const double _pdfGrandValueSize = 13.5;
+  static const double _pdfPolicyTitleSize = 9;
+  static const double _pdfPolicyBodySize = 8.8;
+  bool _isDisposed = false;
+
+  @override
+  void notifyListeners() {
+    if (_isDisposed) {
+      return;
+    }
+    super.notifyListeners();
+  }
+
   final PosBillingController billing;
   final ShopSetupRepository _shopRepo = ShopSetupRepository();
   final SalesBillingRepo _salesBillingRepo = SalesBillingRepo();
@@ -531,11 +559,14 @@ class PosInvoiceController extends ChangeNotifier {
       totalOldGoldDeduction: billing.oldGoldCashDeduction,
       grandTotal: billing.grandTotal,
       totalMakingCharge: billing.totalMakingCharge,
-      cashPaid: double.tryParse(billing.cashCtrl.text) ?? 0,
-      upiPaid: double.tryParse(billing.upiCtrl.text) ?? 0,
-      cardPaid: double.tryParse(billing.cardCtrl.text) ?? 0,
-      advancePaid: double.tryParse(billing.advCtrl.text) ?? 0,
-      balanceDue: billing.balanceDue,
+      cashPaid: billing.cashPaidAmount,
+      upiPaid: billing.upiPaidAmount,
+      cardPaid: billing.cardPaidAmount,
+      advancePaid: billing.advancePaidAmount,
+      balanceDue: billing.invoiceBalanceDue,
+      changeSettlementMethod: billing.changeReturnMethod,
+      changeSettlementAmount: billing.changeReturnAmount,
+      changeSettlementPaymentMode: billing.changeCreditSourcePaymentMode,
       promiseDate: dueDate,
     );
   }
@@ -599,6 +630,9 @@ class PosInvoiceController extends ChangeNotifier {
       cardPaid: source.cardPaid,
       advancePaid: source.advancePaid,
       balanceDue: source.balanceDue,
+      changeSettlementMethod: source.changeSettlementMethod,
+      changeSettlementAmount: source.changeSettlementAmount,
+      changeSettlementPaymentMode: source.changeSettlementPaymentMode,
       totalMakingCharge: source.totalMakingCharge,
       promiseDate: source.promiseDate,
     );
@@ -696,6 +730,10 @@ class PosInvoiceController extends ChangeNotifier {
       cardPaid: cardPaid,
       advancePaid: advancePaid,
       balanceDue: scopedNetPayable - scopedPaid,
+      changeSettlementMethod: source.changeSettlementMethod,
+      changeSettlementAmount:
+          _splitPayment(source.changeSettlementAmount, paymentRatio),
+      changeSettlementPaymentMode: source.changeSettlementPaymentMode,
       totalMakingCharge: scopedMakingCharge,
       promiseDate: source.promiseDate,
     );
@@ -953,29 +991,36 @@ class PosInvoiceController extends ChangeNotifier {
       children: [
         pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
           pw.Text(inv.shopName,
-              style:
-                  pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+              style: pw.TextStyle(
+                  fontSize: _pdfShopTitleSize,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _pdfTextColor)),
           pw.Text(inv.shopAddress,
-              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+              style: const pw.TextStyle(
+                  fontSize: _pdfBodySize, color: _pdfMutedTextColor)),
           pw.Text("Ph: ${inv.shopPhone}",
-              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+              style: const pw.TextStyle(
+                  fontSize: _pdfBodySize, color: _pdfMutedTextColor)),
           if (inv.billType == BillType.gst && inv.shopGstin != "Not Registered")
             pw.Text("GSTIN: ${inv.shopGstin}",
-                style: const pw.TextStyle(fontSize: 9)),
+                style: const pw.TextStyle(
+                    fontSize: _pdfBodySize, color: _pdfTextColor)),
         ]),
         pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
           if (title.isNotEmpty)
             pw.Text(title,
                 style: pw.TextStyle(
-                    fontSize: 14,
+                    fontSize: _pdfTitleSize,
                     fontWeight: pw.FontWeight.bold,
                     color: PdfColors.amber800)),
           pw.SizedBox(height: 4),
           pw.Text("No: ${inv.invoiceNumber}",
-              style: const pw.TextStyle(fontSize: 10)),
+              style: pw.TextStyle(
+                  fontSize: _pdfBodySize, fontWeight: pw.FontWeight.bold)),
           pw.Text(
               "Date: ${inv.invoiceDate.day}/${inv.invoiceDate.month}/${inv.invoiceDate.year}",
-              style: const pw.TextStyle(fontSize: 10)),
+              style: const pw.TextStyle(
+                  fontSize: _pdfBodySize, color: _pdfTextColor)),
         ]),
       ],
     );
@@ -996,7 +1041,7 @@ class PosInvoiceController extends ChangeNotifier {
     return pw.Container(
       padding: const pw.EdgeInsets.all(10),
       decoration: const pw.BoxDecoration(
-          color: PdfColors.grey100,
+          color: _pdfSoftFillColor,
           borderRadius: pw.BorderRadius.all(pw.Radius.circular(6))),
       child: pw.Row(children: [
         pw.Expanded(
@@ -1004,15 +1049,17 @@ class PosInvoiceController extends ChangeNotifier {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Text("BILL TO",
-                style:
-                    const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+                style: const pw.TextStyle(
+                    fontSize: _pdfLabelSize, color: _pdfTextColor)),
             pw.SizedBox(height: 3),
             pw.Text(name,
-                style:
-                    pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                style: pw.TextStyle(
+                    fontSize: _pdfCustomerNameSize,
+                    fontWeight: pw.FontWeight.bold)),
             if (inv.customerMobile.isNotEmpty)
               pw.Text(inv.customerMobile,
-                  style: const pw.TextStyle(fontSize: 9)),
+                  style: const pw.TextStyle(
+                      fontSize: _pdfBodySize, color: _pdfTextColor)),
           ],
         )),
       ]),
@@ -1042,25 +1089,27 @@ class PosInvoiceController extends ChangeNotifier {
             pw.Container(
               width: double.infinity,
               padding:
-                  const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-              decoration: const pw.BoxDecoration(color: PdfColors.grey100),
+                  const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: const pw.BoxDecoration(color: _pdfHeaderFillColor),
               child: pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text("${metal.displayName} ITEM DETAILS",
                       style: pw.TextStyle(
-                          fontSize: 8,
+                          fontSize: _pdfLabelSize,
                           fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.grey800)),
+                          color: _pdfTextColor)),
                   pw.Text(
                       "Section Total: Rs ${sectionTotal.toStringAsFixed(2)}",
                       style: pw.TextStyle(
-                          fontSize: 8, fontWeight: pw.FontWeight.bold)),
+                          fontSize: _pdfLabelSize,
+                          fontWeight: pw.FontWeight.bold,
+                          color: _pdfTextColor)),
                 ],
               ),
             ),
             pw.Table(
-              border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+              border: pw.TableBorder.all(color: _pdfBorderColor, width: 0.55),
               children: [
                 pw.TableRow(
                   decoration: const pw.BoxDecoration(color: PdfColors.amber50),
@@ -1124,11 +1173,16 @@ class PosInvoiceController extends ChangeNotifier {
   pw.Widget _th(String text) => pw.Padding(
       padding: const pw.EdgeInsets.all(5),
       child: pw.Text(text,
-          style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)));
+          style: pw.TextStyle(
+              fontSize: _pdfTableHeaderSize,
+              fontWeight: pw.FontWeight.bold,
+              color: _pdfTextColor)));
 
   pw.Widget _cell(String text) => pw.Padding(
       padding: const pw.EdgeInsets.all(5),
-      child: pw.Text(text, style: const pw.TextStyle(fontSize: 8)));
+      child: pw.Text(text,
+          style: const pw.TextStyle(
+              fontSize: _pdfTableCellSize, color: _pdfTextColor)));
 
   String _formatMakingCharge(
     SaleItemModel item,
@@ -1282,7 +1336,7 @@ class PosInvoiceController extends ChangeNotifier {
               ]);
             }(),
           ],
-          pw.Divider(color: PdfColors.amber800),
+          pw.Divider(color: PdfColors.amber800, thickness: 1.0),
           // Use the invoice net payable value directly.
           _totalRow("GRAND TOTAL", inv.netPayable, isBold: true, isGrand: true),
         ]),
@@ -1299,13 +1353,15 @@ class PosInvoiceController extends ChangeNotifier {
           children: [
             pw.Text(label,
                 style: pw.TextStyle(
-                    fontSize: isGrand ? 11 : 9,
+                    fontSize: isGrand ? _pdfGrandLabelSize : _pdfTotalSize,
+                    color: _pdfTextColor,
                     fontWeight:
                         isBold ? pw.FontWeight.bold : pw.FontWeight.normal)),
             pw.Text(
                 "${isDeduction ? '- ' : ''}Rs ${amount.abs().toStringAsFixed(2)}",
                 style: pw.TextStyle(
-                    fontSize: isGrand ? 12 : 9,
+                    fontSize: isGrand ? _pdfGrandValueSize : _pdfTotalSize,
+                    color: _pdfTextColor,
                     fontWeight:
                         isBold ? pw.FontWeight.bold : pw.FontWeight.normal)),
           ]),
@@ -1314,6 +1370,8 @@ class PosInvoiceController extends ChangeNotifier {
 
   pw.Widget _pdfPaymentBlock(PosInvoiceModel inv) {
     final double totalCashPaid = inv.totalPaid;
+    final hasChangeSettlement =
+        inv.changeSettlementMethod != null && inv.changeSettlementAmount > 0.5;
 
     final List<Map<String, dynamic>> payments = [
       if (inv.cashPaid > 0) {'label': 'Cash', 'amount': inv.cashPaid},
@@ -1329,7 +1387,7 @@ class PosInvoiceController extends ChangeNotifier {
     return pw.Container(
       padding: const pw.EdgeInsets.all(14),
       decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: PdfColors.grey300),
+        border: pw.Border.all(color: _pdfBorderColor, width: 0.7),
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
       ),
       child: pw.Column(
@@ -1341,9 +1399,9 @@ class PosInvoiceController extends ChangeNotifier {
               pw.Text(
                 "PAYMENT RECEIVED",
                 style: pw.TextStyle(
-                    fontSize: 8,
+                    fontSize: _pdfLabelSize,
                     fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.grey600),
+                    color: _pdfTextColor),
               ),
               if (isPaid)
                 pw.Container(
@@ -1355,7 +1413,7 @@ class PosInvoiceController extends ChangeNotifier {
                   ),
                   child: pw.Text(" FULLY PAID",
                       style: pw.TextStyle(
-                          fontSize: 7,
+                          fontSize: _pdfLabelSize,
                           fontWeight: pw.FontWeight.bold,
                           color: PdfColors.green800)),
                 ),
@@ -1371,27 +1429,28 @@ class PosInvoiceController extends ChangeNotifier {
                   padding: const pw.EdgeInsets.symmetric(
                       horizontal: 10, vertical: 5),
                   decoration: pw.BoxDecoration(
-                    color: PdfColors.grey50,
+                    color: _pdfSoftFillColor,
                     borderRadius:
                         const pw.BorderRadius.all(pw.Radius.circular(4)),
-                    border: pw.Border.all(color: PdfColors.grey200, width: 0.5),
+                    border:
+                        pw.Border.all(color: _pdfLightBorderColor, width: 0.5),
                   ),
                   child: pw.RichText(
                     text: pw.TextSpan(children: [
                       pw.TextSpan(
                         text: "${p['label']}:  ",
                         style: const pw.TextStyle(
-                          fontSize: 9,
-                          color: PdfColors.grey600,
+                          fontSize: _pdfBodySize,
+                          color: _pdfTextColor,
                         ),
                       ),
                       pw.TextSpan(
                         text:
                             "Rs ${(p['amount'] as double).toStringAsFixed(2)}",
                         style: pw.TextStyle(
-                            fontSize: 9,
+                            fontSize: _pdfBodySize,
                             fontWeight: pw.FontWeight.bold,
-                            color: PdfColors.black),
+                            color: _pdfTextColor),
                       ),
                     ]),
                   ),
@@ -1400,23 +1459,29 @@ class PosInvoiceController extends ChangeNotifier {
             ),
             pw.SizedBox(height: 10),
           ],
+          if (hasChangeSettlement) ...[
+            _pdfChangeSettlementBlock(inv),
+            pw.SizedBox(height: 10),
+          ],
           if (payments.length > 1) ...[
-            pw.Divider(color: PdfColors.grey200, thickness: 0.5),
+            pw.Divider(color: _pdfLightBorderColor, thickness: 0.5),
             pw.SizedBox(height: 4),
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text("Total Paid",
                     style: const pw.TextStyle(
-                        fontSize: 9, color: PdfColors.grey600)),
+                        fontSize: _pdfBodySize, color: _pdfTextColor)),
                 pw.Text("Rs ${totalCashPaid.toStringAsFixed(2)}",
                     style: pw.TextStyle(
-                        fontSize: 9, fontWeight: pw.FontWeight.bold)),
+                        fontSize: _pdfBodySize,
+                        fontWeight: pw.FontWeight.bold,
+                        color: _pdfTextColor)),
               ],
             ),
             pw.SizedBox(height: 6),
           ],
-          pw.Divider(color: PdfColors.grey300, thickness: 0.8),
+          pw.Divider(color: _pdfBorderColor, thickness: 0.8),
           pw.SizedBox(height: 6),
           if (hasDue) ...[
             pw.Row(
@@ -1427,23 +1492,23 @@ class PosInvoiceController extends ChangeNotifier {
                   children: [
                     pw.Text("Balance Outstanding",
                         style: pw.TextStyle(
-                            fontSize: 9,
+                            fontSize: _pdfBodySize,
                             fontWeight: pw.FontWeight.bold,
                             color: PdfColors.red700)),
                     if (inv.promiseDate != null)
                       pw.Text(
                         "Pay by: ${inv.promiseDate!.day.toString().padLeft(2, '0')}/${inv.promiseDate!.month.toString().padLeft(2, '0')}/${inv.promiseDate!.year}",
-                        style: pw.TextStyle(
-                            fontSize: 8,
-                            color: PdfColors.orange700,
-                            fontStyle: pw.FontStyle.italic),
+                        style: const pw.TextStyle(
+                          fontSize: _pdfLabelSize,
+                          color: _pdfTextColor,
+                        ),
                       ),
                   ],
                 ),
                 pw.Text(
                   "Rs ${inv.balanceDue.toStringAsFixed(2)}",
                   style: pw.TextStyle(
-                      fontSize: 12,
+                      fontSize: _pdfGrandValueSize,
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColors.red700),
                 ),
@@ -1455,10 +1520,10 @@ class PosInvoiceController extends ChangeNotifier {
               children: [
                 pw.Text("Balance Outstanding",
                     style: const pw.TextStyle(
-                        fontSize: 9, color: PdfColors.grey600)),
+                        fontSize: _pdfBodySize, color: _pdfTextColor)),
                 pw.Text("Nil",
                     style: pw.TextStyle(
-                        fontSize: 9,
+                        fontSize: _pdfBodySize,
                         fontWeight: pw.FontWeight.bold,
                         color: PdfColors.green700)),
               ],
@@ -1467,6 +1532,102 @@ class PosInvoiceController extends ChangeNotifier {
         ],
       ),
     );
+  }
+
+  pw.Widget _pdfChangeSettlementBlock(PosInvoiceModel inv) {
+    final method = inv.changeSettlementMethod;
+    final amount = inv.changeSettlementAmount;
+    final settlementLabel = _changeSettlementLabel(method);
+    final sourceLabel = _paymentModeLabel(inv.changeSettlementPaymentMode);
+    final isAccountCredit = method == RefundMethod.accountCredit;
+
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: pw.BoxDecoration(
+        color: isAccountCredit ? PdfColors.green50 : PdfColors.amber50,
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+        border: pw.Border.all(
+          color: isAccountCredit ? PdfColors.green700 : PdfColors.amber800,
+          width: 0.65,
+        ),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            "EXCESS PAYMENT SETTLEMENT",
+            style: pw.TextStyle(
+              fontSize: _pdfLabelSize,
+              fontWeight: pw.FontWeight.bold,
+              color: _pdfTextColor,
+            ),
+          ),
+          pw.SizedBox(height: 5),
+          _pdfMiniSettlementRow(
+            "Excess Amount",
+            "Rs ${amount.toStringAsFixed(2)}",
+          ),
+          _pdfMiniSettlementRow("Settlement", settlementLabel),
+          if (sourceLabel.isNotEmpty)
+            _pdfMiniSettlementRow("Received Through", sourceLabel),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _pdfMiniSettlementRow(String label, String value) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(top: 2),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(
+            label,
+            style: const pw.TextStyle(
+              fontSize: _pdfLabelSize,
+              color: _pdfTextColor,
+            ),
+          ),
+          pw.Text(
+            value,
+            style: pw.TextStyle(
+              fontSize: _pdfLabelSize,
+              fontWeight: pw.FontWeight.bold,
+              color: _pdfTextColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _changeSettlementLabel(RefundMethod? method) {
+    switch (method) {
+      case RefundMethod.cash:
+        return "Returned to customer in Cash";
+      case RefundMethod.upi:
+        return "Returned to customer through UPI";
+      case RefundMethod.accountCredit:
+        return "Added to Customer Account Credit";
+      case null:
+        return "";
+    }
+  }
+
+  String _paymentModeLabel(PaymentMode? mode) {
+    switch (mode) {
+      case PaymentMode.cash:
+        return "Cash";
+      case PaymentMode.upi:
+        return "UPI / Bank Transfer";
+      case PaymentMode.card:
+        return "Card";
+      case PaymentMode.advance:
+        return "Customer Advance";
+      case null:
+        return "";
+    }
   }
 
   pw.Widget _pdfPolicyBlock(PosInvoiceModel inv) {
@@ -1501,7 +1662,7 @@ class PosInvoiceController extends ChangeNotifier {
       margin: const pw.EdgeInsets.only(top: 12),
       padding: const pw.EdgeInsets.all(10),
       decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: PdfColors.grey300, width: 0.6),
+        border: pw.Border.all(color: _pdfBorderColor, width: 0.6),
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
       ),
       child: pw.Column(
@@ -1527,9 +1688,9 @@ class PosInvoiceController extends ChangeNotifier {
       pw.Text(
         title,
         style: pw.TextStyle(
-          fontSize: 7.5,
+          fontSize: _pdfPolicyTitleSize,
           fontWeight: pw.FontWeight.bold,
-          color: PdfColors.grey700,
+          color: _pdfTextColor,
         ),
       ),
     );
@@ -1538,8 +1699,8 @@ class PosInvoiceController extends ChangeNotifier {
       pw.Text(
         text,
         style: const pw.TextStyle(
-          fontSize: 7.2,
-          color: PdfColors.grey700,
+          fontSize: _pdfPolicyBodySize,
+          color: _pdfTextColor,
           lineSpacing: 1.2,
         ),
       ),
@@ -1559,15 +1720,17 @@ class PosInvoiceController extends ChangeNotifier {
     final footerMessage = footerMessages.join(" | ");
 
     return pw.Column(children: [
-      pw.Divider(color: PdfColors.grey300),
+      pw.Divider(color: _pdfBorderColor),
       pw.SizedBox(height: 6),
       pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
         pw.Expanded(
           child: pw.Text(footerMessage,
-              style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+              style: const pw.TextStyle(
+                  fontSize: _pdfLabelSize, color: _pdfTextColor)),
         ),
         pw.Text("${inv.shopName}  E&OE",
-            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey500)),
+            style: const pw.TextStyle(
+                fontSize: _pdfLabelSize, color: _pdfTextColor)),
       ]),
     ]);
   }
@@ -1578,19 +1741,38 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   pw.Widget _buildThermalLayout(PosInvoiceModel inv, PrintFormat fmt) {
-    final fontSize = fmt == PrintFormat.thermal2inch ? 7.0 : 8.5;
+    final fontSize = fmt == PrintFormat.thermal2inch ? 8.5 : 9.5;
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
         pw.Text(inv.shopName,
             style:
-                pw.TextStyle(fontSize: 12.0, fontWeight: pw.FontWeight.bold)),
+                pw.TextStyle(fontSize: 13.0, fontWeight: pw.FontWeight.bold)),
         pw.Text("No: ${inv.invoiceNumber}",
             style: pw.TextStyle(fontSize: fontSize)),
-        pw.Divider(color: PdfColors.grey400),
+        pw.Divider(color: _pdfBorderColor),
         pw.Text("GRAND TOTAL: Rs ${inv.netPayable.toStringAsFixed(2)}",
             style: pw.TextStyle(
                 fontSize: fontSize + 2, fontWeight: pw.FontWeight.bold)),
+        if (inv.changeSettlementMethod != null &&
+            inv.changeSettlementAmount > 0.5) ...[
+          pw.SizedBox(height: 4),
+          pw.Text(
+            "EXCESS: Rs ${inv.changeSettlementAmount.toStringAsFixed(2)}",
+            style: pw.TextStyle(
+              fontSize: fontSize,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.Text(
+            _changeSettlementLabel(inv.changeSettlementMethod),
+            textAlign: pw.TextAlign.center,
+            style: pw.TextStyle(
+              fontSize: fontSize,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -1726,6 +1908,9 @@ class PosInvoiceController extends ChangeNotifier {
         cardPaid: invoice!.cardPaid,
         advancePaid: invoice!.advancePaid,
         balanceDue: invoice!.balanceDue,
+        changeSettlementMethod: invoice!.changeSettlementMethod,
+        changeSettlementAmount: invoice!.changeSettlementAmount,
+        changeSettlementPaymentMode: invoice!.changeSettlementPaymentMode,
         totalMakingCharge: invoice!.totalMakingCharge,
         promiseDate: dueDate,
       );
@@ -1735,18 +1920,23 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   void reset() {
+    _resetState();
+    notifyListeners();
+  }
+
+  void _resetState() {
     genState = InvoiceGenState.idle;
     invoice = null;
     pdfBytes = null;
     errorMessage = null;
     isSavedToDb = false;
     savedBillDbId = null;
-    notifyListeners();
   }
 
   @override
   void dispose() {
-    reset();
+    _isDisposed = true;
+    _resetState();
     super.dispose();
   }
 }

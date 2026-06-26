@@ -936,6 +936,8 @@ class _PosCustomerHistoryCard extends StatelessWidget {
     final totalBills = history.bills.length;
     final outstanding = history.outstanding;
     final hasDue = outstanding > 0;
+    final accountCredit = history.accountCreditBalance;
+    final hasAccountCredit = accountCredit > 0.005;
     final dueBills = history.dues;
     final dueBillCount = dueBills.length;
 
@@ -1032,6 +1034,49 @@ class _PosCustomerHistoryCard extends StatelessWidget {
               ),
             ],
           ),
+
+          if (hasAccountCredit) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: SalesPosColors.success.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: SalesPosColors.success.withValues(alpha: 0.35),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.account_balance_wallet_outlined,
+                    size: 16,
+                    color: SalesPosColors.success,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'ACCOUNT CREDIT',
+                    style: TextStyle(
+                      color: SalesPosColors.success,
+                      fontSize: SalesPosStyles.fontCaption,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    _fmt(accountCredit),
+                    style: const TextStyle(
+                      color: SalesPosColors.success,
+                      fontSize: SalesPosStyles.fontLabel,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           //  DUE SECTION
           if (hasDue) ...[

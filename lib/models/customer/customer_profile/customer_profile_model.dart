@@ -3,7 +3,6 @@
 // MODULE: Customer -> Customer Profile
 // -----------------------------------------------------------------------------
 
-
 import '../../girvi/girvi_loan_model.dart';
 import 'package:flutter/foundation.dart';
 
@@ -393,6 +392,7 @@ class CustomerProfileModel {
   final DateTime createdAt;
   final double creditLimit;
   final double outstanding;
+  final double accountCreditBalance;
   final List<CustomerBillModel> bills;
   final List<CustomerLoanModel> loans;
   final List<CustomerAdvanceOrderModel> advanceOrders;
@@ -409,6 +409,7 @@ class CustomerProfileModel {
     required this.createdAt,
     this.creditLimit = 50000.0,
     this.outstanding = 0.0,
+    this.accountCreditBalance = 0.0,
     this.bills = const [],
     this.loans = const [],
     this.advanceOrders = const [],
@@ -537,7 +538,11 @@ class CustomerProfileModel {
   double get dueLimit => creditLimit;
 
   double get availableCredit =>
-      (creditLimit - outstanding).clamp(0, double.infinity);
+      (creditLimit + accountCreditBalance - outstanding)
+          .clamp(0, double.infinity);
+
+  double get netOutstandingAfterCredit =>
+      (outstanding - accountCreditBalance).clamp(0, double.infinity);
 
   double get usedPercent =>
       creditLimit > 0 ? (outstanding / creditLimit * 100).clamp(0, 100) : 0;
@@ -612,6 +617,7 @@ class CustomerProfileModel {
     String? whatsapp,
     String? city,
     String? type,
+    double? accountCreditBalance,
     List<CustomerAdvanceOrderModel>? advanceOrders,
     List<CustomerDueModel>? dues,
   }) {
@@ -625,6 +631,7 @@ class CustomerProfileModel {
       createdAt: createdAt,
       creditLimit: creditLimit ?? this.creditLimit,
       outstanding: outstanding,
+      accountCreditBalance: accountCreditBalance ?? this.accountCreditBalance,
       bills: bills,
       loans: loans,
       advanceOrders: advanceOrders ?? this.advanceOrders,

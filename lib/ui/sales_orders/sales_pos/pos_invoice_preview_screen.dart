@@ -53,13 +53,22 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
     _invCtrl = PosInvoiceController(billing: widget.billingCtrl);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
       await _invCtrl.generateInvoice();
     });
-    _invCtrl.addListener(() => setState(() {}));
+    _invCtrl.addListener(_handleInvoiceControllerChanged);
+  }
+
+  void _handleInvoiceControllerChanged() {
+    if (!mounted) {
+      return;
+    }
+    setState(() {});
   }
 
   @override
   void dispose() {
+    _invCtrl.removeListener(_handleInvoiceControllerChanged);
     _invCtrl.dispose();
     super.dispose();
   }

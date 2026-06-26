@@ -111,6 +111,9 @@ class PosInvoiceModel {
   final double cardPaid;
   final double advancePaid;
   final double balanceDue;
+  final RefundMethod? changeSettlementMethod;
+  final double changeSettlementAmount;
+  final PaymentMode? changeSettlementPaymentMode;
 
   final DateTime? promiseDate;
   final double totalMakingCharge;
@@ -158,6 +161,9 @@ class PosInvoiceModel {
     required this.advancePaid,
     required this.balanceDue,
     required this.totalMakingCharge,
+    this.changeSettlementMethod,
+    this.changeSettlementAmount = 0.0,
+    this.changeSettlementPaymentMode,
     this.promiseDate,
   });
 }

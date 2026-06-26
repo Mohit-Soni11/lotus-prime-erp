@@ -32,6 +32,16 @@ import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../models/customer/customer_profile/customer_profile_model.dart';
 
 class PosBillingController extends ChangeNotifier {
+  bool _isDisposed = false;
+
+  @override
+  void notifyListeners() {
+    if (_isDisposed) {
+      return;
+    }
+    super.notifyListeners();
+  }
+
   // --- GLOBAL CONFIG ---
   //  Shop name is loaded from the active shop setup.
   String shopName = "Lotus Jewellers";
@@ -66,6 +76,7 @@ class PosBillingController extends ChangeNotifier {
     try {
       final tenantId = await ShopSessionManager.getPermanentTenantId();
       final shopData = await _shopRepo.fetchExistingSetup(tenantId);
+      if (_isDisposed) return;
       if (shopData != null) {
         final basicInfo = shopData['basic_info'] as Map<String, dynamic>?;
         if (basicInfo != null) {
@@ -86,6 +97,7 @@ class PosBillingController extends ChangeNotifier {
   Future<void> _loadTaxGstConfig() async {
     try {
       final config = await _db.taxGstDao.fetchConfig();
+      if (_isDisposed) return;
       final slabs = gstSlabListFromJson(config?.gstSlabsJson);
       _metalGstRates[MetalType.gold] =
           _rateForCategory(slabs, const ['gold'], _defaultJewelleryGstRate);
@@ -175,6 +187,7 @@ class PosBillingController extends ChangeNotifier {
     try {
       // Load customers from the local database.
       final rows = await _db.select(_db.customers).get();
+      if (_isDisposed) return;
 
       // Mobile input uses substring matching.
       // Name input uses fuzzy matching.
@@ -237,6 +250,7 @@ class PosBillingController extends ChangeNotifier {
       final row = await (_db.select(_db.customers)
             ..where((tbl) => tbl.mobile.equals(cleanMobile)))
           .getSingleOrNull();
+      if (_isDisposed) return;
       if (row == null) {
         await searchCustomersByName(cleanMobile);
         return;
@@ -286,6 +300,7 @@ class PosBillingController extends ChangeNotifier {
     notifyListeners();
     try {
       final profile = await _profileRepo.fetchProfile(customerId);
+      if (_isDisposed) return;
       customerHistory = profile;
     } catch (_) {
       customerHistory = null;
@@ -332,6 +347,7 @@ class PosBillingController extends ChangeNotifier {
           query: term,
           metal: metal,
         );
+        if (_isDisposed) return;
         _descSuggestionRowIndex = rowIndex;
       } catch (_) {
         _descriptionSuggestions = [];
@@ -360,6 +376,7 @@ class PosBillingController extends ChangeNotifier {
           query: term,
           metal: metal,
         );
+        if (_isDisposed) return;
         _huidSuggestionRowIndex = rowIndex;
       } catch (_) {
         _huidSuggestions = [];
@@ -414,7 +431,7 @@ class PosBillingController extends ChangeNotifier {
       query: query,
       metal: item.metal,
     );
-    if (match == null) {
+    if (_isDisposed || match == null) {
       return;
     }
 
@@ -474,7 +491,9 @@ class PosBillingController extends ChangeNotifier {
       purityLabel: puritySnapshot,
     );
 
-    if (item.metal != metalSnapshot ||
+    if (_isDisposed ||
+        !saleItems.contains(item) ||
+        item.metal != metalSnapshot ||
         item.purityCtrl.text.trim() != puritySnapshot) {
       return;
     }
@@ -519,7 +538,9 @@ class PosBillingController extends ChangeNotifier {
       purityPercent: purityText.isEmpty ? null : purityPercent,
     );
 
-    if (item.metal != metalSnapshot ||
+    if (_isDisposed ||
+        !oldGoldItems.contains(item) ||
+        item.metal != metalSnapshot ||
         item.purityCtrl.text.trim() != purityText) {
       return;
     }
@@ -543,6 +564,7 @@ class PosBillingController extends ChangeNotifier {
 
   Future<void> _prefillWholesaleBhawFromMaster({bool force = false}) async {
     final quotes = await _rateQuoteService.defaultSellingQuotes();
+    if (_isDisposed) return;
     _setBhawIfEmpty(
       goldBhawCtrl,
       _wholesaleBhawInput(quotes[MetalRateMetal.gold]),
@@ -666,6 +688,7 @@ class PosBillingController extends ChangeNotifier {
   double _upiInput = 0.0;
   double _cardInput = 0.0;
   double _advInput = 0.0;
+  RefundMethod? changeReturnMethod;
 
   double _goldBhawInput = 0.0;
   double _silverBhawInput = 0.0;
@@ -678,22 +701,27 @@ class PosBillingController extends ChangeNotifier {
     unawaited(_loadTaxGstConfig());
     discountCtrl.addListener(() {
       _discountInput = _parseSafeNumber(discountCtrl.text);
+      _clearChangeReturnMethod();
       notifyListeners();
     });
     cashCtrl.addListener(() {
       _cashInput = _parseSafeNumber(cashCtrl.text);
+      _clearChangeReturnMethod();
       notifyListeners();
     });
     upiCtrl.addListener(() {
       _upiInput = _parseSafeNumber(upiCtrl.text);
+      _clearChangeReturnMethod();
       notifyListeners();
     });
     cardCtrl.addListener(() {
       _cardInput = _parseSafeNumber(cardCtrl.text);
+      _clearChangeReturnMethod();
       notifyListeners();
     });
     advCtrl.addListener(() {
       _advInput = _parseSafeNumber(advCtrl.text);
+      _clearChangeReturnMethod();
       notifyListeners();
     });
 
@@ -735,6 +763,7 @@ class PosBillingController extends ChangeNotifier {
 
     try {
       final details = await _checkoutRepo.fetchEditableBill(billId);
+      if (_isDisposed) return false;
       if (details == null) {
         editLoadError = 'Sales bill could not be loaded for editing.';
         return false;
@@ -819,6 +848,7 @@ class PosBillingController extends ChangeNotifier {
 
     try {
       final details = await _bookingAdvanceRepo.fetchEditableBooking(orderId);
+      if (_isDisposed) return false;
       if (details == null) {
         advanceConversionError =
             'Advance order could not be loaded for conversion.';
@@ -872,6 +902,7 @@ class PosBillingController extends ChangeNotifier {
         orderId: orderId,
         invoiceNumber: invoiceNumber,
       );
+      if (_isDisposed) return;
       if (success) {
         convertedAdvanceOrderId = null;
         convertedAdvanceOrderNo = null;
@@ -1220,8 +1251,101 @@ class PosBillingController extends ChangeNotifier {
   double get finalPayableAmount => billingMode == BillingMode.wholesale
       ? grandTotal
       : grandTotal - oldGoldCashDeduction;
+  double get discountInputAmount => _discountInput;
+  double get cashPaidAmount => _allocatedPaymentAmount(PaymentMode.cash);
+  double get upiPaidAmount => _allocatedPaymentAmount(PaymentMode.upi);
+  double get cardPaidAmount => _allocatedPaymentAmount(PaymentMode.card);
+  double get advancePaidAmount => _allocatedPaymentAmount(PaymentMode.advance);
   double get totalPaid => _cashInput + _upiInput + _cardInput + _advInput;
   double get balanceDue => finalPayableAmount - totalPaid;
+  double get changeReturnAmount {
+    final excess = totalPaid - finalPayableAmount;
+    return excess > _invoiceAmountTolerance ? excess : 0.0;
+  }
+
+  bool get hasChangeReturn => changeReturnAmount > _invoiceAmountTolerance;
+  bool get hasConfirmedChangeReturn =>
+      hasChangeReturn &&
+      changeReturnMethod != null &&
+      canReturnChangeWith(changeReturnMethod!);
+  double get invoiceTotalPaid =>
+      cashPaidAmount + upiPaidAmount + cardPaidAmount + advancePaidAmount;
+  double get invoiceBalanceDue => finalPayableAmount - invoiceTotalPaid;
+
+  PaymentMode? get changeCreditSourcePaymentMode {
+    if (!hasChangeReturn) return null;
+    final allocatedCash = cashPaidAmount;
+    if (_cashInput - allocatedCash > _invoiceAmountTolerance) {
+      return PaymentMode.cash;
+    }
+    final allocatedUpi = upiPaidAmount;
+    if (_upiInput - allocatedUpi > _invoiceAmountTolerance) {
+      return PaymentMode.upi;
+    }
+    final allocatedCard = cardPaidAmount;
+    if (_cardInput - allocatedCard > _invoiceAmountTolerance) {
+      return PaymentMode.card;
+    }
+    final allocatedAdvance = advancePaidAmount;
+    if (_advInput - allocatedAdvance > _invoiceAmountTolerance) {
+      return PaymentMode.advance;
+    }
+    return PaymentMode.cash;
+  }
+
+  double _allocatedPaymentAmount(PaymentMode mode) {
+    var remaining = finalPayableAmount;
+    if (remaining <= _invoiceAmountTolerance) {
+      return 0.0;
+    }
+
+    double take(double raw) {
+      if (remaining <= _invoiceAmountTolerance || raw <= 0) {
+        return 0.0;
+      }
+      final allocated = raw > remaining ? remaining : raw;
+      remaining -= allocated;
+      return allocated;
+    }
+
+    final cash = take(_cashInput);
+    final upi = take(_upiInput);
+    final card = take(_cardInput);
+    final advance = take(_advInput);
+
+    switch (mode) {
+      case PaymentMode.cash:
+        return cash;
+      case PaymentMode.upi:
+        return upi;
+      case PaymentMode.card:
+        return card;
+      case PaymentMode.advance:
+        return advance;
+    }
+  }
+
+  bool canReturnChangeWith(RefundMethod method) {
+    if (!hasChangeReturn) return false;
+    if (method == RefundMethod.accountCredit) {
+      return selectedCustomer != null;
+    }
+    return true;
+  }
+
+  void setChangeReturnMethod(RefundMethod? method) {
+    if (changeReturnMethod == method) {
+      return;
+    }
+    changeReturnMethod = method;
+    notifyListeners();
+  }
+
+  void _clearChangeReturnMethod() {
+    if (changeReturnMethod != null) {
+      changeReturnMethod = null;
+    }
+  }
 
   static const double _invoiceWeightTolerance = 0.0005;
   static const double _invoiceAmountTolerance = 0.005;
@@ -1288,8 +1412,13 @@ class PosBillingController extends ChangeNotifier {
       return "This bill creates a refund/exchange balance. Please use the separate refund or exchange flow.";
     }
 
-    if (totalPaid - finalPayableAmount > _invoiceAmountTolerance) {
-      return "Payment received is higher than the final payable amount. Reduce payment or use the separate refund flow.";
+    if (hasChangeReturn) {
+      if (changeReturnMethod == null) {
+        return "Settle the excess amount before generating the invoice.";
+      }
+      if (!canReturnChangeWith(changeReturnMethod!)) {
+        return "Select or create a customer before adding excess amount to customer account.";
+      }
     }
 
     if (balanceDue > _invoiceAmountTolerance) {
@@ -1349,7 +1478,10 @@ class PosBillingController extends ChangeNotifier {
   // ==========================================
   // UI ACTIONS & MEMORY SAFE LISTENERS
   // ==========================================
-  void _onChildItemChanged() => notifyListeners();
+  void _onChildItemChanged() {
+    _clearChangeReturnMethod();
+    notifyListeners();
+  }
 
   void addNewSaleItem() {
     var newItem = SaleItemModel();
@@ -1412,11 +1544,13 @@ class PosBillingController extends ChangeNotifier {
 
   void toggleOldGoldMode(OldGoldAdjustMode mode) {
     oldGoldMode = mode;
+    _clearChangeReturnMethod();
     notifyListeners();
   }
 
   void toggleBillingMode(BillingMode mode) {
     billingMode = mode;
+    _clearChangeReturnMethod();
     notifyListeners();
     if (mode == BillingMode.wholesale) {
       unawaited(_prefillWholesaleBhawFromMaster());
@@ -1425,12 +1559,14 @@ class PosBillingController extends ChangeNotifier {
 
   void toggleBillType(BillType type) {
     billType = type;
+    _clearChangeReturnMethod();
     notifyListeners();
     unawaited(refreshInvoiceSequencePreview());
   }
 
   void toggleDiscountType(DiscountType type) {
     discountType = type;
+    _clearChangeReturnMethod();
     notifyListeners();
   }
 
@@ -1447,6 +1583,7 @@ class PosBillingController extends ChangeNotifier {
 
   Future<void> _restoreHeldBills() async {
     final restored = await _holdRepo.loadHeldBills();
+    if (_isDisposed) return;
     restored.sort((a, b) => b.holdTime.compareTo(a.holdTime));
     heldBills
       ..clear()
@@ -1471,6 +1608,7 @@ class PosBillingController extends ChangeNotifier {
       final row = await (_db.select(_db.customers)
             ..where((tbl) => tbl.id.equals(customerId)))
           .getSingleOrNull();
+      if (_isDisposed) return;
       if (row == null) {
         return;
       }
@@ -1601,6 +1739,7 @@ class PosBillingController extends ChangeNotifier {
     convertedAdvanceOrderNo = null;
     advanceConversionError = null;
     _committedInvoiceNumber = null;
+    changeReturnMethod = null;
     selectedCustomer = null;
     customerSuggestions = [];
     customerNotFound = false;
@@ -1647,6 +1786,7 @@ class PosBillingController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
     _descSearchTimer?.cancel(); //  Cancel any pending debounce timer.
     _huidSearchTimer?.cancel();
     clearEntirePOS(isHolding: false, refreshInvoicePreview: false);

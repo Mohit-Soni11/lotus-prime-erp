@@ -11,6 +11,7 @@ import '../../core/logging/app_logger.dart';
 import '../tables/bill_items.dart';
 import '../tables/bill_old_gold_items.dart';
 import '../tables/bills.dart';
+import '../tables/customer_account_ledger.dart';
 import '../tables/customers.dart';
 import '../tables/daily_rates/daily_rates.dart';
 import '../tables/delivery/delivery_items.dart';
@@ -51,6 +52,7 @@ part 'app_database.g.dart';
     Bills,
     BillItems,
     BillOldGoldItems,
+    CustomerAccountLedger,
     SalesOrders,
     OrderAdvances,
     Loans,
@@ -638,6 +640,13 @@ class AppDatabase extends _$AppDatabase {
               'v28 Girvi notice action audit schema applied.',
             );
           }
+
+          if (from < 29) {
+            await m.createTable(customerAccountLedger);
+            AppLogger.info(
+              'v29 customer account credit ledger applied.',
+            );
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -650,6 +659,7 @@ class AppDatabase extends _$AppDatabase {
 
           await _ensureGirviPaymentReceiptIndex();
           await ensureGirviNoticeActionSchema();
+          await _ensureCustomerAccountLedgerSchema();
 
           await customStatement('''
             CREATE TABLE IF NOT EXISTS "bank_accounts" (
@@ -756,6 +766,13 @@ class AppDatabase extends _$AppDatabase {
       }
     }
     for (final statement in _girviNoticeActionIndexSql) {
+      await customStatement(statement);
+    }
+  }
+
+  Future<void> _ensureCustomerAccountLedgerSchema() async {
+    await customStatement(_createCustomerAccountLedgerTableSql);
+    for (final statement in _customerAccountLedgerIndexSql) {
       await customStatement(statement);
     }
   }
@@ -1383,6 +1400,31 @@ const List<String> _purchaseVoucherIndexSql = [
   'CREATE INDEX IF NOT EXISTS "idx_purchase_vouchers_customer_id" ON "purchase_vouchers" ("customer_id")',
   'CREATE INDEX IF NOT EXISTS "idx_purchase_vouchers_supplier_id" ON "purchase_vouchers" ("supplier_id")',
   'CREATE INDEX IF NOT EXISTS "idx_purchase_voucher_items_voucher_id" ON "purchase_voucher_items" ("purchase_voucher_id")',
+];
+
+const String _createCustomerAccountLedgerTableSql = '''
+CREATE TABLE IF NOT EXISTS "customer_account_ledger" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "created_at" INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+  "updated_at" INTEGER,
+  "customer_id" INTEGER NOT NULL,
+  "entry_type" TEXT NOT NULL,
+  "source_type" TEXT NOT NULL,
+  "source_reference" TEXT,
+  "amount" REAL NOT NULL DEFAULT 0.0,
+  "payment_mode" TEXT,
+  "notes" TEXT,
+  "entry_date" INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+  "is_voided" INTEGER NOT NULL DEFAULT 0,
+  "void_reason" TEXT,
+  FOREIGN KEY ("customer_id") REFERENCES "customers" ("id") ON DELETE RESTRICT
+)
+''';
+
+const List<String> _customerAccountLedgerIndexSql = [
+  'CREATE INDEX IF NOT EXISTS "idx_customer_account_customer" ON "customer_account_ledger" ("customer_id")',
+  'CREATE INDEX IF NOT EXISTS "idx_customer_account_reference" ON "customer_account_ledger" ("source_reference")',
+  'CREATE INDEX IF NOT EXISTS "idx_customer_account_date" ON "customer_account_ledger" ("entry_date")',
 ];
 
 const String _createGirviNoticeActionsTableSql = '''

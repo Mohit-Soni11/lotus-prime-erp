@@ -2,6 +2,8 @@ import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/models/finance/bank_book/bank_book_enums.dart'
+    as bank_book;
 import 'package:lotus_erp/models/finance/cash_book/cash_book_enums.dart'
     as cash_book;
 import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart'
@@ -163,6 +165,116 @@ void main() {
   );
 
   test(
+    'finalizeSale keeps excess payment as customer account credit',
+    () async {
+      final customerId = await _insertCustomer(db);
+      final saleItem = _manualSaleItem(grossWeight: 10, rate: 100);
+      final invoice = _invoice(
+        invoiceNumber: 'INV-LJ-2026-0001',
+        saleItems: [saleItem],
+        customerName: 'Reyansh Soni',
+        customerMobile: '9304479436',
+        cashPaid: 1000,
+        changeSettlementMethod: pos.RefundMethod.accountCredit,
+        changeSettlementAmount: 25,
+        changeSettlementPaymentMode: pos.PaymentMode.cash,
+      );
+
+      final result = await repository.finalizeSale(
+        invoice: invoice,
+        customerId: customerId,
+      );
+
+      final bill = await (db.select(db.bills)
+            ..where((tbl) => tbl.id.equals(result.billId)))
+          .getSingle();
+      final customerCredits = await db.select(db.customerAccountLedger).get();
+      final cashRows = await db.select(db.cashTransactions).get();
+
+      expect(bill.finalAmount, 1000);
+      expect(bill.paidAmount, 1000);
+      expect(bill.paymentStatus, 'PAID');
+      expect(customerCredits, hasLength(1));
+      expect(customerCredits.single.customerId, customerId);
+      expect(customerCredits.single.entryType, 'CREDIT');
+      expect(customerCredits.single.sourceType, 'POS_CHANGE_CREDIT');
+      expect(customerCredits.single.sourceReference,
+          'INV-LJ-2026-0001#ACCOUNT_CREDIT');
+      expect(customerCredits.single.amount, 25);
+      expect(customerCredits.single.isVoided, isFalse);
+
+      expect(cashRows, hasLength(2));
+      final saleCash = cashRows.singleWhere(
+        (row) => row.referenceId == 'INV-LJ-2026-0001#CASH',
+      );
+      final creditCash = cashRows.singleWhere(
+        (row) => row.referenceId == 'INV-LJ-2026-0001#ACCOUNT_CREDIT#CASH',
+      );
+      expect(saleCash.amount, 1000);
+      expect(saleCash.category, cash_book.IncomeCategory.sale.dbValue);
+      expect(creditCash.amount, 25);
+      expect(
+        creditCash.category,
+        cash_book.IncomeCategory.advanceBooking.dbValue,
+      );
+      expect(creditCash.referenceType, 'CUSTOMER_ACCOUNT');
+
+      _disposeItems(saleItems: [saleItem]);
+    },
+  );
+
+  test(
+    'finalizeSale records cross-mode UPI change return against cash excess',
+    () async {
+      await _insertPrimaryBankAccount(db);
+      final saleItem = _manualSaleItem(grossWeight: 10, rate: 100);
+      final invoice = _invoice(
+        invoiceNumber: 'INV-LJ-2026-0001',
+        saleItems: [saleItem],
+        cashPaid: 1000,
+        changeSettlementMethod: pos.RefundMethod.upi,
+        changeSettlementAmount: 30,
+        changeSettlementPaymentMode: pos.PaymentMode.cash,
+      );
+
+      await repository.finalizeSale(
+        invoice: invoice,
+        customerId: null,
+      );
+
+      final cashRows = await db.select(db.cashTransactions).get();
+      final bankRows = await db.select(db.bankTransactions).get();
+
+      expect(cashRows, hasLength(2));
+      expect(
+        cashRows
+            .singleWhere((row) => row.referenceId == 'INV-LJ-2026-0001#CASH')
+            .amount,
+        1000,
+      );
+      final cashExcess = cashRows.singleWhere(
+        (row) =>
+            row.referenceId == 'INV-LJ-2026-0001#CHANGE_RETURN#SOURCE_CASH',
+      );
+      expect(cashExcess.amount, 30);
+      expect(cashExcess.referenceType, 'CUSTOMER_CHANGE');
+      expect(cashExcess.category, cash_book.IncomeCategory.miscIncome.dbValue);
+
+      expect(bankRows, hasLength(1));
+      expect(bankRows.single.type, bank_book.BankTransactionType.debit.dbValue);
+      expect(bankRows.single.category,
+          bank_book.BankDebitCategory.miscDebit.dbValue);
+      expect(bankRows.single.amount, 30);
+      expect(
+        bankRows.single.referenceId,
+        'INV-LJ-2026-0001#CHANGE_RETURN#RETURN_UPI',
+      );
+
+      _disposeItems(saleItems: [saleItem]);
+    },
+  );
+
+  test(
     'updateSale restores previous stock, deducts updated stock, and reposts POS ledger entries',
     () async {
       await _insertPrimaryBankAccount(db);
@@ -276,6 +388,58 @@ void main() {
       expect(bill.paymentStatus, 'PAID');
 
       _disposeItems(saleItems: [firstItem, secondItem]);
+    },
+  );
+
+  test(
+    'updateSale voids previous customer account credit when excess is removed',
+    () async {
+      final customerId = await _insertCustomer(db);
+      final saleItem = _manualSaleItem(grossWeight: 10, rate: 100);
+      final firstInvoice = _invoice(
+        invoiceNumber: 'INV-LJ-2026-0001',
+        saleItems: [saleItem],
+        customerName: 'Reyansh Soni',
+        customerMobile: '9304479436',
+        cashPaid: 1000,
+        changeSettlementMethod: pos.RefundMethod.accountCredit,
+        changeSettlementAmount: 30,
+        changeSettlementPaymentMode: pos.PaymentMode.cash,
+      );
+
+      final result = await repository.finalizeSale(
+        invoice: firstInvoice,
+        customerId: customerId,
+      );
+
+      final editedInvoice = _invoice(
+        invoiceNumber: result.invoiceNumber,
+        saleItems: [saleItem],
+        customerName: 'Reyansh Soni',
+        customerMobile: '9304479436',
+        cashPaid: 1000,
+      );
+
+      await repository.updateSale(
+        billId: result.billId,
+        invoice: editedInvoice,
+        customerId: customerId,
+      );
+
+      final credits = await db.select(db.customerAccountLedger).get();
+      final creditCashRows = (await db.select(db.cashTransactions).get())
+          .where(
+            (row) => row.referenceId == 'INV-LJ-2026-0001#ACCOUNT_CREDIT#CASH',
+          )
+          .toList();
+
+      expect(credits, hasLength(1));
+      expect(credits.single.amount, 30);
+      expect(credits.single.isVoided, isTrue);
+      expect(creditCashRows, hasLength(1));
+      expect(creditCashRows.single.isVoided, isTrue);
+
+      _disposeItems(saleItems: [saleItem]);
     },
   );
 
@@ -453,6 +617,9 @@ PosInvoiceModel _invoice({
   double upiPaid = 0,
   double cardPaid = 0,
   double advancePaid = 0,
+  pos.RefundMethod? changeSettlementMethod,
+  double changeSettlementAmount = 0,
+  pos.PaymentMode? changeSettlementPaymentMode,
   DateTime? promiseDate,
 }) {
   final grossAmount =
@@ -491,6 +658,9 @@ PosInvoiceModel _invoice({
     cardPaid: cardPaid,
     advancePaid: advancePaid,
     balanceDue: netPayable - totalPaid,
+    changeSettlementMethod: changeSettlementMethod,
+    changeSettlementAmount: changeSettlementAmount,
+    changeSettlementPaymentMode: changeSettlementPaymentMode,
     totalMakingCharge: 0,
     promiseDate: promiseDate,
   );
