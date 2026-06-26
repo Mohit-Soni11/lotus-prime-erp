@@ -5,6 +5,8 @@
 //               One model per metal. No DB dependency.
 // =============================================================================
 
+import '../../../features/print_templates/domain/print_template_registry.dart';
+
 // Metal identifier constants — matches MetalType enum values
 class BillingMetal {
   static const String gold = 'gold';
@@ -63,9 +65,12 @@ class PurchaseReturnModeOptions {
 
 // Template options (expandable in future)
 class TemplateOptions {
-  static const String defaultTemplate = 'default';
-  static const List<String> all = [defaultTemplate];
-  // Future: 'thermal_58mm', 'thermal_80mm', 'a4_gst', 'a5_minimal'
+  static const String defaultTemplate = PrintTemplateRegistry.defaultTemplateId;
+  static List<String> get all => PrintTemplateRegistry.templateIds;
+
+  static String labelFor(String templateId) {
+    return PrintTemplateRegistry.labelFor(templateId);
+  }
 }
 
 class SalesBillingTemplateOptions {
@@ -100,9 +105,8 @@ class SalesBillingTemplateOptions {
     final baseTemplate = SalesBillingTemplateOptions.baseTemplate(
       model.selectedTemplate,
     ).trim();
-    final resolvedTemplate = baseTemplate.isEmpty
-        ? TemplateOptions.defaultTemplate
-        : baseTemplate;
+    final resolvedTemplate =
+        baseTemplate.isEmpty ? TemplateOptions.defaultTemplate : baseTemplate;
     final flags = [
       'terms=${model.printTermsAndConditions ? 1 : 0}',
       'return=${model.printReturnPolicy ? 1 : 0}',
