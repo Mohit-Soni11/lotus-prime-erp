@@ -315,7 +315,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                                   const Text(
                                     "POS Session",
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: SalesPosStyles.fontCaption,
                                       fontWeight: FontWeight.bold,
                                       color: SalesPosColors.goldHoverDark,
                                     ),
@@ -355,7 +355,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                                   Text(
                                     "Create New Customer",
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: SalesPosStyles.fontCaption,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
@@ -502,7 +502,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: SalesPosColors.textDark,
-                  fontSize: 13,
+                  fontSize: SalesPosStyles.fontLabel,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -523,7 +523,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
               hintText: hint,
               hintStyle: TextStyle(
                 color: SalesPosColors.bodyTextMuted.withValues(alpha: 0.6),
-                fontSize: 13,
+                fontSize: SalesPosStyles.fontLabel,
                 fontWeight: FontWeight.w500,
               ),
               prefixIcon: icon != null
@@ -626,7 +626,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                                 style: TextStyle(
                                   color: SalesPosColors.danger,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 13,
+                                  fontSize: SalesPosStyles.fontLabel,
                                 ),
                               ),
                               SizedBox(height: 2),
@@ -634,7 +634,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                                 "Not Registered  -  Click 'New Customer' to add",
                                 style: TextStyle(
                                   color: SalesPosColors.bodyTextMuted,
-                                  fontSize: 11,
+                                  fontSize: SalesPosStyles.fontCaption,
                                 ),
                               ),
                             ],
@@ -677,7 +677,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                                   style: const TextStyle(
                                     color: SalesPosColors.brandGold,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 13,
+                                    fontSize: SalesPosStyles.fontLabel,
                                   ),
                                 ),
                               ),
@@ -691,7 +691,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                                       style: const TextStyle(
                                         color: SalesPosColors.textDark,
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 14,
+                                        fontSize: SalesPosStyles.fontBody,
                                       ),
                                     ),
                                     if (c.mobile.isNotEmpty)
@@ -699,7 +699,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                                         c.mobile,
                                         style: const TextStyle(
                                           color: SalesPosColors.bodyTextMuted,
-                                          fontSize: 12,
+                                          fontSize: SalesPosStyles.fontCaption,
                                         ),
                                       ),
                                   ],
@@ -710,7 +710,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                                   c.city,
                                   style: const TextStyle(
                                     color: SalesPosColors.bodyTextMuted,
-                                    fontSize: 12,
+                                    fontSize: SalesPosStyles.fontCaption,
                                   ),
                                 ),
                             ],
@@ -832,7 +832,7 @@ class _HoverAnimatedButtonState extends State<_HoverAnimatedButton> {
                         : (_isHovered
                             ? SalesPosColors.goldHoverDark
                             : SalesPosColors.textDark),
-                    fontSize: 14,
+                    fontSize: SalesPosStyles.fontBody,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -896,8 +896,9 @@ class _PosCustomerHistoryCard extends StatelessWidget {
             SizedBox(width: 10),
             Text(
               'Loading customer history...',
-              style:
-                  TextStyle(color: SalesPosColors.bodyTextMuted, fontSize: 12),
+              style: TextStyle(
+                  color: SalesPosColors.bodyTextMuted,
+                  fontSize: SalesPosStyles.fontCaption),
             ),
           ],
         ),
@@ -922,8 +923,9 @@ class _PosCustomerHistoryCard extends StatelessWidget {
             SizedBox(width: 8),
             Text(
               'New customer - no previous records found',
-              style:
-                  TextStyle(color: SalesPosColors.bodyTextMuted, fontSize: 12),
+              style: TextStyle(
+                  color: SalesPosColors.bodyTextMuted,
+                  fontSize: SalesPosStyles.fontCaption),
             ),
           ],
         ),
@@ -985,9 +987,9 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                 'CUSTOMER HISTORY',
                 style: TextStyle(
                   color: SalesPosColors.brandGold,
-                  fontSize: 11,
+                  fontSize: SalesPosStyles.fontCaption,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
+                  letterSpacing: 0,
                 ),
               ),
               const Spacer(),
@@ -1003,7 +1005,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                   history.type.toUpperCase(),
                   style: const TextStyle(
                     color: SalesPosColors.brandGold,
-                    fontSize: 10,
+                    fontSize: SalesPosStyles.fontCaption,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1071,9 +1073,9 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                         'TOTAL OUTSTANDING',
                         style: TextStyle(
                           color: SalesPosColors.danger.withValues(alpha: 0.85),
-                          fontSize: 10,
+                          fontSize: SalesPosStyles.fontCaption,
                           fontWeight: FontWeight.w800,
-                          letterSpacing: 1.2,
+                          letterSpacing: 0,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -1083,7 +1085,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                             : 'Pending against $dueBillCount bills',
                         style: const TextStyle(
                           color: SalesPosColors.bodyTextMuted,
-                          fontSize: 11,
+                          fontSize: SalesPosStyles.fontCaption,
                         ),
                       ),
                     ],
@@ -1096,9 +1098,9 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                     _fmt(outstanding),
                     style: const TextStyle(
                       color: SalesPosColors.danger,
-                      fontSize: 22,
+                      fontSize: SalesPosStyles.fontAmount,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
+                      letterSpacing: 0,
                     ),
                   ),
                 ],
@@ -1135,7 +1137,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                                 due.billNo,
                                 style: const TextStyle(
                                   color: SalesPosColors.bodyTextMuted,
-                                  fontSize: 12,
+                                  fontSize: SalesPosStyles.fontCaption,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -1145,7 +1147,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                                 style: TextStyle(
                                   color: SalesPosColors.bodyTextMuted
                                       .withValues(alpha: 0.6),
-                                  fontSize: 10,
+                                  fontSize: SalesPosStyles.fontCaption,
                                 ),
                               ),
                               const Spacer(),
@@ -1153,7 +1155,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                                 _fmt(due.dueAmount),
                                 style: const TextStyle(
                                   color: SalesPosColors.danger,
-                                  fontSize: 13,
+                                  fontSize: SalesPosStyles.fontLabel,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -1194,7 +1196,8 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                         label: const Text(
                           'Clear Due',
                           style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w800),
+                              fontSize: SalesPosStyles.fontLabel,
+                              fontWeight: FontWeight.w800),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: SalesPosColors.danger,
@@ -1240,7 +1243,7 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                           'New Bill',
                           style: TextStyle(
                               color: Colors.white,
-                              fontSize: 13,
+                              fontSize: SalesPosStyles.fontLabel,
                               fontWeight: FontWeight.w800),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -1267,7 +1270,9 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                 SizedBox(width: 6),
                 Text(
                   'No outstanding balance. Account is fully settled.',
-                  style: TextStyle(color: SalesPosColors.success, fontSize: 11),
+                  style: TextStyle(
+                      color: SalesPosColors.success,
+                      fontSize: SalesPosStyles.fontCaption),
                 ),
               ],
             ),
@@ -1348,15 +1353,16 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                       'DUE COLLECTION',
                       style: TextStyle(
                         color: SalesPosColors.textDark,
-                        fontSize: 15,
+                        fontSize: SalesPosStyles.fontInput,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 0.8,
+                        letterSpacing: 0,
                       ),
                     ),
                     Text(
                       widget.customerName,
                       style: const TextStyle(
-                          color: SalesPosColors.bodyTextMuted, fontSize: 12),
+                          color: SalesPosColors.bodyTextMuted,
+                          fontSize: SalesPosStyles.fontCaption),
                     ),
                   ],
                 ),
@@ -1392,14 +1398,14 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                     'Total Outstanding (${widget.dueBills.length} bills)',
                     style: const TextStyle(
                         color: SalesPosColors.danger,
-                        fontSize: 12,
+                        fontSize: SalesPosStyles.fontCaption,
                         fontWeight: FontWeight.w700),
                   ),
                   Text(
                     _fmt(widget.totalOutstanding),
                     style: const TextStyle(
                       color: SalesPosColors.danger,
-                      fontSize: 20,
+                      fontSize: SalesPosStyles.fontSection,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -1414,9 +1420,9 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
               'BILL-WISE BREAKDOWN',
               style: TextStyle(
                 color: SalesPosColors.bodyTextMuted,
-                fontSize: 10,
+                fontSize: SalesPosStyles.fontCaption,
                 fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
+                letterSpacing: 0,
               ),
             ),
             const SizedBox(height: 6),
@@ -1445,20 +1451,20 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                         const SizedBox(width: 6),
                         Text(due.billNo,
                             style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: SalesPosStyles.fontCaption,
                                 fontWeight: FontWeight.w700,
                                 color: SalesPosColors.textDark)),
                         const SizedBox(width: 8),
                         Text(due.formattedDate,
                             style: const TextStyle(
-                                fontSize: 10,
+                                fontSize: SalesPosStyles.fontCaption,
                                 color: SalesPosColors.bodyTextMuted)),
                         const Spacer(),
                         Text(
                           _fmt(due.dueAmount),
                           style: const TextStyle(
                             color: SalesPosColors.danger,
-                            fontSize: 13,
+                            fontSize: SalesPosStyles.fontLabel,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -1476,9 +1482,9 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
               'PAYMENT MODE',
               style: TextStyle(
                 color: SalesPosColors.bodyTextMuted,
-                fontSize: 10,
+                fontSize: SalesPosStyles.fontCaption,
                 fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
+                letterSpacing: 0,
               ),
             ),
             const SizedBox(height: 8),
@@ -1511,7 +1517,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                           color: selected
                               ? SalesPosColors.goldHoverDark
                               : SalesPosColors.bodyTextMuted,
-                          fontSize: 12,
+                          fontSize: SalesPosStyles.fontCaption,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -1534,9 +1540,9 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                         'AMOUNT RECEIVED',
                         style: TextStyle(
                           color: SalesPosColors.bodyTextMuted,
-                          fontSize: 10,
+                          fontSize: SalesPosStyles.fontCaption,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: 1.2,
+                          letterSpacing: 0,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -1548,7 +1554,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                               decimal: true),
                           style: const TextStyle(
                             color: SalesPosColors.textDark,
-                            fontSize: 16,
+                            fontSize: SalesPosStyles.fontValue,
                             fontWeight: FontWeight.w700,
                           ),
                           decoration: InputDecoration(
@@ -1556,7 +1562,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                             prefixText: 'Rs  ',
                             hintStyle: const TextStyle(
                                 color: SalesPosColors.bodyTextMuted,
-                                fontSize: 14),
+                                fontSize: SalesPosStyles.fontBody),
                             filled: true,
                             fillColor: SalesPosColors.formInputBg,
                             contentPadding: const EdgeInsets.symmetric(
@@ -1614,7 +1620,7 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                         color: _payFull
                             ? SalesPosColors.success
                             : SalesPosColors.bodyTextMuted,
-                        fontSize: 12,
+                        fontSize: SalesPosStyles.fontCaption,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -1659,9 +1665,9 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                   'CONFIRM COLLECTION',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 14,
+                    fontSize: SalesPosStyles.fontBody,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
+                    letterSpacing: 0,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -1711,7 +1717,7 @@ class _HistoryStat extends StatelessWidget {
                   label,
                   style: const TextStyle(
                     color: SalesPosColors.bodyTextMuted,
-                    fontSize: 10,
+                    fontSize: SalesPosStyles.fontCaption,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -1719,7 +1725,7 @@ class _HistoryStat extends StatelessWidget {
                   value,
                   style: TextStyle(
                     color: valueColor,
-                    fontSize: 12,
+                    fontSize: SalesPosStyles.fontCaption,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

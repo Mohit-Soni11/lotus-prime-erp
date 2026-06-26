@@ -263,7 +263,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                       children: [
                         Text("Exchange Value Adjusted",
                             style: TextStyle(
-                                fontSize: 13,
+                                fontSize: SalesPosStyles.fontLabel,
                                 fontWeight: FontWeight.w900,
                                 color: SalesPosColors.danger
                                     .withValues(alpha: 0.90))),
@@ -272,7 +272,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                             Text(
                                 "- Rs ${widget.ctrl.oldGoldCashDeduction.toStringAsFixed(2)}",
                                 style: const TextStyle(
-                                    fontSize: 14,
+                                    fontSize: SalesPosStyles.fontBody,
                                     fontWeight: FontWeight.w900,
                                     color: SalesPosColors.danger)),
                             const SizedBox(width: 4),
@@ -452,21 +452,21 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
               style: TextStyle(
                   fontWeight: FontWeight.w900,
                   color: color,
-                  fontSize: 11,
-                  letterSpacing: 1.2)),
+                  fontSize: SalesPosStyles.fontCaption,
+                  letterSpacing: 0)),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text("Total Fine Sold:",
                   style: TextStyle(
-                      fontSize: 13,
+                      fontSize: SalesPosStyles.fontLabel,
                       fontWeight: FontWeight.w800,
                       color:
                           SalesPosColors.bodyTextMain.withValues(alpha: 0.8))),
               Text("${sold.toStringAsFixed(3)} $unit",
                   style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: SalesPosStyles.fontLabel,
                       fontWeight: FontWeight.w900,
                       color: SalesPosColors.bodyTextMain)),
             ],
@@ -477,13 +477,13 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
             children: [
               Text("Total Fine Jama:",
                   style: TextStyle(
-                      fontSize: 13,
+                      fontSize: SalesPosStyles.fontLabel,
                       fontWeight: FontWeight.w800,
                       color:
                           SalesPosColors.bodyTextMain.withValues(alpha: 0.8))),
               Text("- ${jama.toStringAsFixed(3)} $unit",
                   style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: SalesPosStyles.fontLabel,
                       fontWeight: FontWeight.w900,
                       color: SalesPosColors.danger)),
             ],
@@ -497,12 +497,12 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
             children: [
               const Text("Net Fine Balance:",
                   style: TextStyle(
-                      fontSize: 14,
+                      fontSize: SalesPosStyles.fontBody,
                       fontWeight: FontWeight.w900,
                       color: SalesPosColors.bodyTextMain)),
               Text("${net.toStringAsFixed(3)} $unit",
                   style: TextStyle(
-                      fontSize: 14,
+                      fontSize: SalesPosStyles.fontBody,
                       fontWeight: FontWeight.w900,
                       color: net < 0
                           ? SalesPosColors.success
@@ -525,7 +525,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                             hintText: rateHint,
                             hintStyle: TextStyle(
                                 color: color.withValues(alpha: 0.5),
-                                fontSize: 13),
+                                fontSize: SalesPosStyles.fontLabel),
                             filled: true,
                             fillColor: SalesPosColors.bodyBg,
                             contentPadding:
@@ -542,7 +542,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                           ),
                           style: TextStyle(
                               fontWeight: FontWeight.w900,
-                              fontSize: 14,
+                              fontSize: SalesPosStyles.fontBody,
                               color: color),
                         ))),
                 const SizedBox(width: 14),
@@ -554,7 +554,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                           : "Rs ${bhawAmt.toStringAsFixed(2)}",
                       textAlign: TextAlign.right,
                       style: TextStyle(
-                          fontSize: 16,
+                          fontSize: SalesPosStyles.fontValue,
                           fontWeight: FontWeight.w900,
                           color: bhawAmt < 0
                               ? SalesPosColors.success
@@ -598,14 +598,14 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
             children: [
               Text(title,
                   style: const TextStyle(
-                      fontSize: 14,
-                      letterSpacing: 1.2,
+                      fontSize: SalesPosStyles.fontBody,
+                      letterSpacing: 0,
                       color: SalesPosColors.bodyTextMain,
                       fontWeight: FontWeight.w900)),
               const SizedBox(height: 2),
               Text(subtitle,
                   style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: SalesPosStyles.fontCaption,
                       fontWeight: FontWeight.w800,
                       color: SalesPosColors.bodyTextMuted)),
             ],
@@ -624,12 +624,12 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
         children: [
           Text(label,
               style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: SalesPosStyles.fontLabel,
                   fontWeight: FontWeight.w800,
                   color: SalesPosColors.bodyTextMain)),
           Text(customVal ?? "Rs ${amount.toStringAsFixed(2)}",
               style: TextStyle(
-                  fontSize: 13,
+                  fontSize: SalesPosStyles.fontLabel,
                   fontWeight: FontWeight.w900,
                   color: color ?? SalesPosColors.bodyTextMain)),
         ],
@@ -644,7 +644,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
       children: [
         Text(label,
             style: TextStyle(
-                fontSize: isMid ? 14 : 15,
+                fontSize:
+                    isMid ? SalesPosStyles.fontBody : SalesPosStyles.fontInput,
                 fontWeight: FontWeight.w900,
                 color: SalesPosColors.bodyTextMain)),
         Text(
@@ -652,7 +653,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                 ? "- Rs ${amount.abs().toStringAsFixed(2)}"
                 : "Rs ${amount.toStringAsFixed(2)}",
             style: TextStyle(
-                fontSize: isMid ? 16 : 17,
+                fontSize:
+                    isMid ? SalesPosStyles.fontValue : SalesPosStyles.fontTitle,
                 fontWeight: FontWeight.w900,
                 color: isCredit
                     ? SalesPosColors.success
@@ -680,7 +682,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                 children: [
                   const Text("Discount Applied",
                       style: TextStyle(
-                          fontSize: 13,
+                          fontSize: SalesPosStyles.fontLabel,
                           fontWeight: FontWeight.w900,
                           color: SalesPosColors.bodyTextMain)),
                   const SizedBox(width: 10),
@@ -701,7 +703,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                           Text(widget.ctrl.discountType.symbol,
                               style: const TextStyle(
                                   color: SalesPosColors.brandGold,
-                                  fontSize: 13,
+                                  fontSize: SalesPosStyles.fontLabel,
                                   fontWeight: FontWeight.w900)),
                           const SizedBox(width: 4),
                           const Icon(SalesPosIcons.arrowDown,
@@ -719,7 +721,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                       padding: const EdgeInsets.only(right: 10),
                       child: Text("- Rs ${discAmt.toStringAsFixed(2)}",
                           style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: SalesPosStyles.fontBody,
                               fontWeight: FontWeight.w900,
                               color: SalesPosColors.danger)),
                     ),
@@ -735,7 +737,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                         color: isInvalidPct
                             ? SalesPosColors.danger
                             : SalesPosColors.danger,
-                        fontSize: 14,
+                        fontSize: SalesPosStyles.fontBody,
                         fontWeight: FontWeight.w900,
                       ),
                       decoration: InputDecoration(
@@ -781,7 +783,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   Text(
                     "Max 100%  -  Auto-capped at 100%",
                     style: TextStyle(
-                        fontSize: 11,
+                        fontSize: SalesPosStyles.fontCaption,
                         color: SalesPosColors.danger.withValues(alpha: 0.85),
                         fontWeight: FontWeight.w600),
                   ),
@@ -806,7 +808,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
               children: [
                 const Text("Total Making Charges",
                     style: TextStyle(
-                        fontSize: 13,
+                        fontSize: SalesPosStyles.fontLabel,
                         fontWeight: FontWeight.w800,
                         color: SalesPosColors.bodyTextMain)),
                 Row(
@@ -814,7 +816,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                     Text(
                         "Rs ${widget.ctrl.totalMakingCharge.toStringAsFixed(2)}",
                         style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: SalesPosStyles.fontLabel,
                             fontWeight: FontWeight.w900,
                             color: SalesPosColors.bodyTextMain)),
                     const SizedBox(width: 4),
@@ -888,9 +890,9 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
         children: [
           Text("$metalName GST BREAKDOWN",
               style: TextStyle(
-                  fontSize: 11,
+                  fontSize: SalesPosStyles.fontCaption,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
+                  letterSpacing: 0,
                   color: brandColor)),
           const SizedBox(height: 8),
           _buildSubtleRow(
@@ -914,12 +916,12 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
             children: [
               const Text("Total GST",
                   style: TextStyle(
-                      fontSize: 13,
+                      fontSize: SalesPosStyles.fontLabel,
                       fontWeight: FontWeight.w900,
                       color: SalesPosColors.bodyTextMain)),
               Text("Rs ${controllerTotalGst.toStringAsFixed(2)}",
                   style: TextStyle(
-                      fontSize: 14,
+                      fontSize: SalesPosStyles.fontBody,
                       fontWeight: FontWeight.w900,
                       color: brandColor)),
             ],
@@ -946,14 +948,14 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
               children: [
                 Text(gstTitle,
                     style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: SalesPosStyles.fontLabel,
                         fontWeight: FontWeight.w800,
                         color: SalesPosColors.bodyTextMain)),
                 Row(
                   children: [
                     Text("Rs ${widget.ctrl.totalGst.toStringAsFixed(2)}",
                         style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: SalesPosStyles.fontLabel,
                             fontWeight: FontWeight.w900,
                             color: SalesPosColors.bodyTextMain)),
                     const SizedBox(width: 4),
@@ -1067,10 +1069,10 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
       child: const Center(
         child: Text("NORMAL BILL    NO GST APPLIED",
             style: TextStyle(
-                fontSize: 11,
+                fontSize: SalesPosStyles.fontCaption,
                 fontWeight: FontWeight.w900,
                 color: SalesPosColors.bodyTextMain,
-                letterSpacing: 0.8)),
+                letterSpacing: 0)),
       ),
     );
   }
@@ -1124,10 +1126,10 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
               child: const Center(
                 child: Text("NO CASH / AMOUNT DUE YET",
                     style: TextStyle(
-                        fontSize: 12,
+                        fontSize: SalesPosStyles.fontCaption,
                         fontWeight: FontWeight.w900,
                         color: SalesPosColors.bodyTextMain,
-                        letterSpacing: 1.5)),
+                        letterSpacing: 0)),
               ),
             )
           else ...[
@@ -1160,15 +1162,15 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                                               ? "INVOICE SETTLED"
                                               : "BALANCE OUTSTANDING",
                               style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: SalesPosStyles.fontCaption,
                                   fontWeight: FontWeight.w900,
-                                  letterSpacing: 1.2,
+                                  letterSpacing: 0,
                                   color: balanceColor)),
                           const SizedBox(height: 4),
                           Text(
                               "Rs ${widget.ctrl.balanceDue.abs().toStringAsFixed(2)}",
                               style: TextStyle(
-                                  fontSize: 26,
+                                  fontSize: SalesPosStyles.fontHero,
                                   fontWeight: FontWeight.w900,
                                   color: balanceColor)),
                         ],
@@ -1199,10 +1201,10 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                           size: 18, color: Colors.white),
                       label: const Text("RETURN CASH",
                           style: TextStyle(
-                              fontSize: 13,
+                              fontSize: SalesPosStyles.fontLabel,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
-                              letterSpacing: 0.5)),
+                              letterSpacing: 0)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: SalesPosColors.success,
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1220,10 +1222,10 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                           size: 18, color: Colors.white),
                       label: const Text("RETURN UPI",
                           style: TextStyle(
-                              fontSize: 13,
+                              fontSize: SalesPosStyles.fontLabel,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
-                              letterSpacing: 0.5)),
+                              letterSpacing: 0)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: SalesPosColors.upiButtonBg,
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1261,7 +1263,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                       const SizedBox(width: 10),
                       Text("Promise Date",
                           style: TextStyle(
-                              fontSize: 13,
+                              fontSize: SalesPosStyles.fontLabel,
                               fontWeight: FontWeight.w900,
                               color: SalesPosColors.danger
                                   .withValues(alpha: 0.95))),
@@ -1272,12 +1274,12 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                             style: const TextStyle(
                                 color: SalesPosColors.danger,
                                 fontWeight: FontWeight.w900,
-                                fontSize: 14))
+                                fontSize: SalesPosStyles.fontBody))
                         : const Text("Select Date",
                             style: TextStyle(
                                 color: SalesPosColors.danger,
                                 fontWeight: FontWeight.w900,
-                                fontSize: 12)),
+                                fontSize: SalesPosStyles.fontCaption)),
                   ],
                 ),
               ),
@@ -1300,7 +1302,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
               const SizedBox(width: 10),
               Text(label,
                   style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: SalesPosStyles.fontLabel,
                       fontWeight: FontWeight.w900,
                       color: SalesPosColors.bodyTextMain)),
             ],
@@ -1317,12 +1319,13 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
               textAlign: TextAlign.right,
               style: const TextStyle(
                   color: SalesPosColors.bodyTextMain,
-                  fontSize: 15,
+                  fontSize: SalesPosStyles.fontInput,
                   fontWeight: FontWeight.w900),
               decoration: InputDecoration(
                 hintText: "0.00",
                 hintStyle: const TextStyle(
-                    color: SalesPosColors.bodyTextMuted, fontSize: 14),
+                    color: SalesPosColors.bodyTextMuted,
+                    fontSize: SalesPosStyles.fontBody),
                 filled: true,
                 fillColor: SalesPosColors.bodyBg,
                 contentPadding:
@@ -1376,12 +1379,12 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   children: [
                     Text(topLabel,
                         style: TextStyle(
-                            fontSize: 12,
+                            fontSize: SalesPosStyles.fontCaption,
                             fontWeight: FontWeight.w900,
                             color: isCredit
                                 ? boxColor
                                 : SalesPosColors.bodyTextMain,
-                            letterSpacing: 1.5)),
+                            letterSpacing: 0)),
                     const SizedBox(height: 6),
                     Text(
                         "${isCredit ? '- ' : ''}Rs ${payableAmount.abs().toStringAsFixed(2)}",
@@ -1414,8 +1417,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                       style: const TextStyle(
                           color: SalesPosColors.warning,
                           fontWeight: FontWeight.w900,
-                          fontSize: 12,
-                          letterSpacing: 1.0)),
+                          fontSize: SalesPosStyles.fontCaption,
+                          letterSpacing: 0)),
                   style: TextButton.styleFrom(
                     backgroundColor:
                         SalesPosColors.warning.withValues(alpha: 0.1),
@@ -1452,8 +1455,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                     label: const Text("HOLD",
                         style: TextStyle(
                             fontWeight: FontWeight.w900,
-                            fontSize: 14,
-                            letterSpacing: 1.2)),
+                            fontSize: SalesPosStyles.fontBody,
+                            letterSpacing: 0)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: SalesPosColors.warning,
                       side: BorderSide(
@@ -1501,8 +1504,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                       style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
-                          fontSize: 14,
-                          letterSpacing: 1.0),
+                          fontSize: SalesPosStyles.fontBody,
+                          letterSpacing: 0),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: SalesPosColors.success,

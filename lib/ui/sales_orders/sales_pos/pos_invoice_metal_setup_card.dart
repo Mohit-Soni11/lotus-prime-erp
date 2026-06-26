@@ -141,8 +141,8 @@ class PosInvoiceMetalSetupCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: accentColor.withValues(alpha: 0.16),
                         borderRadius: BorderRadius.circular(9),
-                        border:
-                            Border.all(color: accentColor.withValues(alpha: 0.22)),
+                        border: Border.all(
+                            color: accentColor.withValues(alpha: 0.22)),
                       ),
                       child: Icon(Icons.tune_rounded,
                           size: 18, color: accentColor),
@@ -156,7 +156,7 @@ class PosInvoiceMetalSetupCard extends StatelessWidget {
                             "${metal.displayName} Invoice Setup",
                             style: const TextStyle(
                               color: SalesPosColors.shellTextTitle,
-                              fontSize: 13,
+                              fontSize: SalesPosStyles.fontLabel,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
@@ -165,7 +165,7 @@ class PosInvoiceMetalSetupCard extends StatelessWidget {
                             "Metal-specific print controls",
                             style: TextStyle(
                               color: SalesPosColors.shellTextMuted,
-                              fontSize: 10,
+                              fontSize: SalesPosStyles.fontCaption,
                               height: 1.2,
                             ),
                           ),
@@ -213,7 +213,8 @@ class PosInvoiceMetalSetupCard extends StatelessWidget {
           _CompactActionRow(
             icon: Icons.dashboard_customize_rounded,
             title: 'Invoice Fields',
-            subtitle: '$activeFieldCount of ${_fieldOptions.length} fields visible',
+            subtitle:
+                '$activeFieldCount of ${_fieldOptions.length} fields visible',
             accentColor: accentColor,
             actionLabel: 'Add More',
             onPressed: () => _showFieldSelector(context),
@@ -341,7 +342,7 @@ class _FieldSelectorPanel extends StatelessWidget {
                               "${metal.displayName} Field Setup",
                               style: const TextStyle(
                                 color: SalesPosColors.shellTextTitle,
-                                fontSize: 15,
+                                fontSize: SalesPosStyles.fontInput,
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
@@ -350,7 +351,7 @@ class _FieldSelectorPanel extends StatelessWidget {
                               "Choose invoice columns for this metal",
                               style: TextStyle(
                                 color: SalesPosColors.shellTextMuted,
-                                fontSize: 10,
+                                fontSize: SalesPosStyles.fontCaption,
                               ),
                             ),
                           ],
@@ -420,7 +421,7 @@ class _FieldSelectorPanel extends StatelessWidget {
                         'APPLY CHANGES',
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
-                          letterSpacing: 0.8,
+                          letterSpacing: 0,
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -488,9 +489,9 @@ class _FieldGroup extends StatelessWidget {
                     title,
                     style: const TextStyle(
                       color: SalesPosColors.shellTextTitle,
-                      fontSize: 12,
+                      fontSize: SalesPosStyles.fontCaption,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 0.5,
+                      letterSpacing: 0,
                     ),
                   ),
                 ),
@@ -555,7 +556,7 @@ class _CompactActionRow extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     color: SalesPosColors.shellTextTitle,
-                    fontSize: 12,
+                    fontSize: SalesPosStyles.fontCaption,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -564,7 +565,7 @@ class _CompactActionRow extends StatelessWidget {
                   subtitle,
                   style: const TextStyle(
                     color: SalesPosColors.shellTextMuted,
-                    fontSize: 9.5,
+                    fontSize: SalesPosStyles.fontCaption,
                   ),
                 ),
               ],
@@ -586,7 +587,7 @@ class _CompactActionRow extends StatelessWidget {
             child: Text(
               actionLabel,
               style: const TextStyle(
-                fontSize: 11,
+                fontSize: SalesPosStyles.fontCaption,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -629,7 +630,7 @@ class _CopySuiteRow extends StatelessWidget {
                   'Print Saved Copy',
                   style: TextStyle(
                     color: SalesPosColors.shellTextTitle,
-                    fontSize: 12,
+                    fontSize: SalesPosStyles.fontCaption,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -638,7 +639,7 @@ class _CopySuiteRow extends StatelessWidget {
                   subtitle,
                   style: const TextStyle(
                     color: SalesPosColors.shellTextMuted,
-                    fontSize: 9.5,
+                    fontSize: SalesPosStyles.fontCaption,
                   ),
                 ),
               ],
@@ -687,7 +688,7 @@ class _FieldOptionTile extends StatelessWidget {
         option.title,
         style: const TextStyle(
           color: SalesPosColors.shellTextTitle,
-          fontSize: 12,
+          fontSize: SalesPosStyles.fontCaption,
           fontWeight: FontWeight.w900,
         ),
       ),
@@ -695,7 +696,7 @@ class _FieldOptionTile extends StatelessWidget {
         option.subtitle,
         style: const TextStyle(
           color: SalesPosColors.shellTextMuted,
-          fontSize: 9.5,
+          fontSize: SalesPosStyles.fontCaption,
         ),
       ),
     );
@@ -724,7 +725,7 @@ class _StatusPill extends StatelessWidget {
         label,
         style: TextStyle(
           color: color,
-          fontSize: 10,
+          fontSize: SalesPosStyles.fontCaption,
           fontWeight: FontWeight.w900,
         ),
       ),
@@ -761,7 +762,7 @@ class _MetricPill extends StatelessWidget {
             label,
             style: TextStyle(
               color: color,
-              fontSize: 10,
+              fontSize: SalesPosStyles.fontCaption,
               fontWeight: FontWeight.w900,
             ),
           ),

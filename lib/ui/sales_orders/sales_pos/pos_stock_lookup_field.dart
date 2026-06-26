@@ -225,7 +225,7 @@ class _StockSuggestionDropdown extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: SalesPosColors.bodyTextMain,
-                              fontSize: 13.5,
+                              fontSize: SalesPosStyles.fontLabel,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -236,7 +236,7 @@ class _StockSuggestionDropdown extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: SalesPosColors.bodyTextMuted,
-                              fontSize: 11.5,
+                              fontSize: SalesPosStyles.fontCaption,
                               fontWeight: FontWeight.w600,
                               height: 1.35,
                             ),
@@ -261,7 +261,7 @@ class _StockSuggestionDropdown extends StatelessWidget {
                         item.sku,
                         style: const TextStyle(
                           color: SalesPosColors.bodyTextMain,
-                          fontSize: 10.5,
+                          fontSize: SalesPosStyles.fontCaption,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

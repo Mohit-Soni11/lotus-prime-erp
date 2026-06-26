@@ -53,9 +53,9 @@ class PosTopControlBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // 
+                  //
                   // HEADING ROW
-                  // 
+                  //
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -89,7 +89,7 @@ class PosTopControlBar extends StatelessWidget {
                               AnimatedDefaultTextStyle(
                                 duration: const Duration(milliseconds: 260),
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: SalesPosStyles.fontCaption,
                                   fontWeight: FontWeight.bold,
                                   color: isGstOn
                                       ? SalesPosColors.success
@@ -140,9 +140,9 @@ class PosTopControlBar extends StatelessWidget {
                             AnimatedDefaultTextStyle(
                               duration: const Duration(milliseconds: 260),
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: SalesPosStyles.fontCaption,
                                 fontWeight: FontWeight.w900,
-                                letterSpacing: 0.8,
+                                letterSpacing: 0,
                                 color: isGstOn
                                     ? SalesPosColors.success
                                     : SalesPosColors.textDark,
@@ -155,7 +155,7 @@ class PosTopControlBar extends StatelessWidget {
                     ],
                   ),
 
-                  //  Divider 
+                  //  Divider
                   Container(
                     height: 1,
                     width: double.infinity,
@@ -163,9 +163,9 @@ class PosTopControlBar extends StatelessWidget {
                     color: SalesPosColors.bodyBorder,
                   ),
 
-                  // 
+                  //
                   // CONTROLS ROW
-                  // 
+                  //
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -260,9 +260,9 @@ class PosTopControlBar extends StatelessWidget {
                                   const Text(
                                     "TAX STATUS",
                                     style: TextStyle(
-                                      fontSize: 10,
+                                      fontSize: SalesPosStyles.fontCaption,
                                       fontWeight: FontWeight.w900,
-                                      letterSpacing: 1.0,
+                                      letterSpacing: 0,
                                       color: SalesPosColors.textDark,
                                     ),
                                   ),
@@ -273,9 +273,9 @@ class PosTopControlBar extends StatelessWidget {
                                       isGstOn ? "GST INVOICE" : "NORMAL",
                                       key: ValueKey(isGstOn),
                                       style: TextStyle(
-                                        fontSize: 15,
+                                        fontSize: SalesPosStyles.fontInput,
                                         fontWeight: FontWeight.w900,
-                                        letterSpacing: 0.2,
+                                        letterSpacing: 0,
                                         color: isGstOn
                                             ? SalesPosColors.success
                                             : SalesPosColors.textDark,
@@ -383,8 +383,8 @@ class PosTopControlBar extends StatelessWidget {
                 style: TextStyle(
                   color: SalesPosColors.textDark,
                   fontWeight: isActive ? FontWeight.w900 : FontWeight.w700,
-                  fontSize: 13,
-                  letterSpacing: 0.8,
+                  fontSize: SalesPosStyles.fontLabel,
+                  letterSpacing: 0,
                 ),
               ),
             ],
@@ -402,9 +402,9 @@ class PosTopControlBar extends StatelessWidget {
     return AnimatedDefaultTextStyle(
       duration: const Duration(milliseconds: 220),
       style: TextStyle(
-        fontSize: 12,
+        fontSize: SalesPosStyles.fontCaption,
         fontWeight: FontWeight.w900,
-        letterSpacing: 0.5,
+        letterSpacing: 0,
         color: isActive ? activeColor : SalesPosColors.bodyTextMuted,
       ),
       child: Text(label),

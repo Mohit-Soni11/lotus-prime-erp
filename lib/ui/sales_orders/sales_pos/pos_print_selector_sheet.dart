@@ -150,14 +150,14 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                     Text("SELECT PRINT FORMAT",
                         style: TextStyle(
                             color: SalesPosColors.shellTextTitle,
-                            fontSize: 14,
+                            fontSize: SalesPosStyles.fontBody,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: 1.4)),
+                            letterSpacing: 0)),
                     SizedBox(height: 2),
                     Text("Choose paper size for your printer",
                         style: TextStyle(
                             color: SalesPosColors.shellTextMuted,
-                            fontSize: 12)),
+                            fontSize: SalesPosStyles.fontCaption)),
                   ]),
             ),
             IconButton(
@@ -176,9 +176,9 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
         const Text("PAPER SIZE",
             style: TextStyle(
                 color: SalesPosColors.shellTextMuted,
-                fontSize: 11,
+                fontSize: SalesPosStyles.fontCaption,
                 fontWeight: FontWeight.w700,
-                letterSpacing: 1.2)),
+                letterSpacing: 0)),
         const SizedBox(height: 10),
         Row(
           children: PrintFormat.values
@@ -209,9 +209,9 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
         const Text("SIZE PREVIEW",
             style: TextStyle(
                 color: SalesPosColors.shellTextMuted,
-                fontSize: 11,
+                fontSize: SalesPosStyles.fontCaption,
                 fontWeight: FontWeight.w700,
-                letterSpacing: 1.2)),
+                letterSpacing: 0)),
         const SizedBox(height: 10),
         Container(
           height: 130,
@@ -247,9 +247,9 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
         const Text("PRINT OPTIONS",
             style: TextStyle(
                 color: SalesPosColors.shellTextMuted,
-                fontSize: 11,
+                fontSize: SalesPosStyles.fontCaption,
                 fontWeight: FontWeight.w700,
-                letterSpacing: 1.2)),
+                letterSpacing: 0)),
         const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -270,12 +270,12 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                       Text("Number of copies",
                           style: TextStyle(
                               color: SalesPosColors.bodyTextMain,
-                              fontSize: 13,
+                              fontSize: SalesPosStyles.fontLabel,
                               fontWeight: FontWeight.w700)),
                       Text("Print multiple copies at once",
                           style: TextStyle(
                               color: SalesPosColors.shellTextMuted,
-                              fontSize: 11)),
+                              fontSize: SalesPosStyles.fontCaption)),
                     ]),
               ),
               _CopyStepper(
@@ -309,12 +309,12 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                       Text("Mark as DUPLICATE",
                           style: TextStyle(
                               color: SalesPosColors.bodyTextMain,
-                              fontSize: 13,
+                              fontSize: SalesPosStyles.fontLabel,
                               fontWeight: FontWeight.w700)),
                       Text("Adds a 'Duplicate Copy' watermark",
                           style: TextStyle(
                               color: SalesPosColors.shellTextMuted,
-                              fontSize: 11)),
+                              fontSize: SalesPosStyles.fontCaption)),
                     ]),
               ),
               Switch(
@@ -355,7 +355,7 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                 ),
                 child: const Text("CANCEL",
                     style: TextStyle(
-                        fontWeight: FontWeight.w800, letterSpacing: 0.8)),
+                        fontWeight: FontWeight.w800, letterSpacing: 0)),
               ),
             ),
           ),
@@ -379,8 +379,8 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                     style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
-                        fontSize: 13,
-                        letterSpacing: 0.8)),
+                        fontSize: SalesPosStyles.fontLabel,
+                        letterSpacing: 0)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: SalesPosColors.brandGold,
                   foregroundColor: Colors.white,
@@ -453,7 +453,7 @@ class _FormatOptionCard extends StatelessWidget {
                 color: isSelected
                     ? SalesPosColors.brandGold
                     : SalesPosColors.shellTextMuted,
-                fontSize: 11,
+                fontSize: SalesPosStyles.fontCaption,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 height: 1.3,
               ),
@@ -544,7 +544,8 @@ class _PaperSizeThumbnail extends StatelessWidget {
         Text(
           format.subtitle.split(' - ').first.trim(),
           style: const TextStyle(
-              color: SalesPosColors.shellTextMuted, fontSize: 10),
+              color: SalesPosColors.shellTextMuted,
+              fontSize: SalesPosStyles.fontCaption),
         ),
       ],
     );
@@ -574,7 +575,7 @@ class _CopyStepper extends StatelessWidget {
             // Selection text uses brand gold and a larger font.
             style: const TextStyle(
                 color: SalesPosColors.brandGold,
-                fontSize: 18,
+                fontSize: SalesPosStyles.fontTitle,
                 fontWeight: FontWeight.w900),
           ),
         ),

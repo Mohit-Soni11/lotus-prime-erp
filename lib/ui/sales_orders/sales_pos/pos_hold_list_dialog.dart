@@ -58,14 +58,14 @@ class _PosHoldListDialogState extends State<PosHoldListDialog>
         title: const Text("Discard Invoice?",
             style: TextStyle(
                 color: SalesPosColors.shellTextTitle,
-                fontSize: 18,
+                fontSize: SalesPosStyles.fontTitle,
                 fontWeight: FontWeight.w900)),
         content: Text(
           "This will permanently discard the parked invoice for "
           "${hold.customerName.isEmpty ? 'Walk-in Customer' : hold.customerName}.",
           style: const TextStyle(
               color: SalesPosColors.shellTextTitle,
-              fontSize: 15,
+              fontSize: SalesPosStyles.fontInput,
               fontWeight: FontWeight.w600,
               height: 1.4),
         ),
@@ -76,7 +76,7 @@ class _PosHoldListDialogState extends State<PosHoldListDialog>
                 style: TextStyle(
                     color: SalesPosColors.shellTextMuted,
                     fontWeight: FontWeight.w700,
-                    fontSize: 14)),
+                    fontSize: SalesPosStyles.fontBody)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -89,7 +89,9 @@ class _PosHoldListDialogState extends State<PosHoldListDialog>
             ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text("Discard",
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: SalesPosStyles.fontBody)),
           ),
         ],
       ),
@@ -197,9 +199,9 @@ class _PosHoldListDialogState extends State<PosHoldListDialog>
                       "PARKED INVOICES",
                       style: TextStyle(
                         color: SalesPosColors.shellTextTitle,
-                        fontSize: 16,
+                        fontSize: SalesPosStyles.fontValue,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 1.8,
+                        letterSpacing: 0,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -207,7 +209,7 @@ class _PosHoldListDialogState extends State<PosHoldListDialog>
                       "${widget.ctrl.heldBills.length} bill${widget.ctrl.heldBills.length == 1 ? '' : 's'} on hold",
                       style: const TextStyle(
                           color: SalesPosColors.shellTextMuted,
-                          fontSize: 13,
+                          fontSize: SalesPosStyles.fontLabel,
                           fontWeight: FontWeight.w600),
                     ),
                   ],
@@ -230,7 +232,7 @@ class _PosHoldListDialogState extends State<PosHoldListDialog>
                     style: const TextStyle(
                         color: Colors.black,
                         fontWeight: FontWeight.w900,
-                        fontSize: 15,
+                        fontSize: SalesPosStyles.fontInput,
                         height: 1.0), // height 1.0 ensures vertical centering
                   ),
                 ),
@@ -302,7 +304,7 @@ class _PosHoldListDialogState extends State<PosHoldListDialog>
             "No Parked Invoices",
             style: TextStyle(
                 color: SalesPosColors.shellTextTitle,
-                fontSize: 18,
+                fontSize: SalesPosStyles.fontTitle,
                 fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 10),
@@ -311,7 +313,7 @@ class _PosHoldListDialogState extends State<PosHoldListDialog>
             textAlign: TextAlign.center,
             style: TextStyle(
                 color: SalesPosColors.shellTextMuted,
-                fontSize: 14,
+                fontSize: SalesPosStyles.fontBody,
                 fontWeight: FontWeight.w600,
                 height: 1.6),
           ),
@@ -327,7 +329,9 @@ class _PosHoldListDialogState extends State<PosHoldListDialog>
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
             ),
             child: const Text("Back to Billing",
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: SalesPosStyles.fontBody)),
           ),
         ],
       ),
@@ -458,8 +462,7 @@ class _AnimatedHoldCardState extends State<_AnimatedHoldCard>
                             decoration: BoxDecoration(
                               color: isWalkIn
                                   ? SalesPosColors.bodyTextMuted.withValues(
-                                      alpha:
-                                          0.12) // Uses muted body text.
+                                      alpha: 0.12) // Uses muted body text.
                                   : SalesPosColors.brandGold
                                       .withValues(alpha: 0.15),
                               shape: BoxShape.circle,
@@ -473,7 +476,7 @@ class _AnimatedHoldCardState extends State<_AnimatedHoldCard>
                                       : SalesPosColors
                                           .brandGold, // Uses primary body text.
                                   fontWeight: FontWeight.w900,
-                                  fontSize: 16,
+                                  fontSize: SalesPosStyles.fontValue,
                                 ),
                               ),
                             ),
@@ -491,7 +494,7 @@ class _AnimatedHoldCardState extends State<_AnimatedHoldCard>
                                     color: SalesPosColors
                                         .bodyTextMain, // Uses primary title color.
                                     fontWeight: FontWeight.w900,
-                                    fontSize: 16,
+                                    fontSize: SalesPosStyles.fontValue,
                                   ),
                                 ),
                                 if (hasPhone)
@@ -500,7 +503,7 @@ class _AnimatedHoldCardState extends State<_AnimatedHoldCard>
                                     // Made phone number strictly dark/black
                                     style: const TextStyle(
                                         color: Colors.black87,
-                                        fontSize: 13,
+                                        fontSize: SalesPosStyles.fontLabel,
                                         fontWeight: FontWeight.w700),
                                   ),
                               ],
@@ -569,7 +572,7 @@ class _AnimatedHoldCardState extends State<_AnimatedHoldCard>
             textAlign: TextAlign.center,
             style: const TextStyle(
                 color: SalesPosColors.brandGold,
-                fontSize: 12,
+                fontSize: SalesPosStyles.fontCaption,
                 fontWeight: FontWeight.w900,
                 height: 1.3),
           ),
@@ -578,7 +581,7 @@ class _AnimatedHoldCardState extends State<_AnimatedHoldCard>
           Text(date,
               style: const TextStyle(
                   color: SalesPosColors.bodyTextMain,
-                  fontSize: 11.5,
+                  fontSize: SalesPosStyles.fontCaption,
                   fontWeight: FontWeight.w800)),
         ],
       ),
@@ -607,7 +610,9 @@ class _AnimatedHoldCardState extends State<_AnimatedHoldCard>
           const SizedBox(width: 4),
           Text(label,
               style: TextStyle(
-                  fontSize: 13, color: textColor, fontWeight: FontWeight.w800)),
+                  fontSize: SalesPosStyles.fontLabel,
+                  color: textColor,
+                  fontWeight: FontWeight.w800)),
         ],
       ),
     );
@@ -632,9 +637,9 @@ class _AnimatedHoldCardState extends State<_AnimatedHoldCard>
             icon: const Icon(Icons.play_arrow_rounded, size: 18),
             label: const Text("RESUME",
                 style: TextStyle(
-                    fontSize: 12,
+                    fontSize: SalesPosStyles.fontCaption,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8)),
+                    letterSpacing: 0)),
             onPressed: widget.onResume,
           ),
         ),
@@ -654,9 +659,9 @@ class _AnimatedHoldCardState extends State<_AnimatedHoldCard>
             icon: const Icon(Icons.delete_outline_rounded, size: 16),
             label: const Text("DISCARD",
                 style: TextStyle(
-                    fontSize: 12,
+                    fontSize: SalesPosStyles.fontCaption,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8)),
+                    letterSpacing: 0)),
             onPressed: widget.onDelete,
           ),
         ),

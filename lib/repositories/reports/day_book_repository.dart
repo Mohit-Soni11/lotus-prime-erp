@@ -171,25 +171,41 @@ class DayBookRepository {
 
       if (rows.isEmpty) return const GstBillSummary();
 
+      final paymentsByBill = await _fetchSalePaymentBreakupsForBills(
+        rows,
+        start,
+        end,
+      );
+
+      double taxable = 0;
+      double cgst = 0;
+      double sgst = 0;
       double finalTotal = 0;
-      double paidTotal = 0;
+      var payments = const PaymentBreakup();
 
       for (final b in rows) {
         finalTotal += b.finalAmount;
-        paidTotal += b.paidAmount;
+        if (b.taxableAmount > 0 || b.cgstAmount > 0 || b.sgstAmount > 0) {
+          taxable += b.taxableAmount;
+          cgst += b.cgstAmount;
+          sgst += b.sgstAmount;
+        } else if (b.finalAmount > 0) {
+          final billTaxable = b.finalAmount / 1.03;
+          final billGst = b.finalAmount - billTaxable;
+          taxable += billTaxable;
+          cgst += billGst / 2;
+          sgst += billGst / 2;
+        }
+        payments += paymentsByBill[b.billNo] ?? const PaymentBreakup();
       }
-
-      // GST = 3% included in finalAmount
-      final taxable = finalTotal / 1.03;
-      final gst = finalTotal - taxable;
 
       return GstBillSummary(
         billCount: rows.length,
         taxableAmount: taxable,
-        cgst: gst / 2,
-        sgst: gst / 2,
+        cgst: cgst,
+        sgst: sgst,
         finalAmount: finalTotal,
-        payments: PaymentBreakup(cash: paidTotal),
+        payments: payments,
       );
     } catch (e) {
       AppLogger.debug('❌ _fetchGstBills: $e');
@@ -213,17 +229,23 @@ class DayBookRepository {
 
       if (rows.isEmpty) return const NonGstBillSummary();
 
+      final paymentsByBill = await _fetchSalePaymentBreakupsForBills(
+        rows,
+        start,
+        end,
+      );
+
       double total = 0;
-      double paid = 0;
+      var payments = const PaymentBreakup();
       for (final b in rows) {
         total += b.finalAmount;
-        paid += b.paidAmount;
+        payments += paymentsByBill[b.billNo] ?? const PaymentBreakup();
       }
 
       return NonGstBillSummary(
         billCount: rows.length,
         totalAmount: total,
-        payments: PaymentBreakup(cash: paid),
+        payments: payments,
       );
     } catch (e) {
       AppLogger.debug('❌ _fetchNonGstBills: $e');
@@ -476,73 +498,189 @@ class DayBookRepository {
   Future<PaymentBreakup> _fetchPaymentBreakup(
       DateTime start, DateTime end) async {
     try {
-      final cashRows = await (_db.select(_db.cashTransactions)
-            ..where((t) =>
-                t.type.equals('INCOME') &
-                t.isVoided.equals(false) &
-                t.referenceType.equals('BILL') &
-                t.txnDate.isBiggerOrEqualValue(start) &
-                t.txnDate.isSmallerOrEqualValue(end)))
+      final saleBills = await (_db.select(_db.bills)
+            ..where((b) =>
+                (b.billNo.like('TAX-%') |
+                    b.billNo.like('INV-%') |
+                    b.billNo.like('EST-%')) &
+                b.status.equals('ACTIVE') &
+                b.billDate.isBiggerOrEqualValue(start) &
+                b.billDate.isSmallerOrEqualValue(end)))
           .get();
-
-      final bankRows = await (_db.select(_db.bankTransactions)
-            ..where((t) =>
-                t.type.equals('CREDIT') &
-                t.isVoided.equals(false) &
-                t.referenceType.equals('BILL') &
-                t.txnDate.isBiggerOrEqualValue(start) &
-                t.txnDate.isSmallerOrEqualValue(end)))
-          .get();
-
-      double cash = 0, upi = 0, card = 0, bank = 0, cheque = 0;
-      for (final r in cashRows) {
-        switch (r.paymentMode.toUpperCase()) {
-          case 'CASH':
-            cash += r.amount;
-            break;
-          case 'UPI':
-            upi += r.amount;
-            break;
-          case 'CARD':
-            card += r.amount;
-            break;
-          case 'BANK':
-            bank += r.amount;
-            break;
-          case 'CHEQUE':
-            cheque += r.amount;
-            break;
-        }
-      }
-
-      for (final r in bankRows) {
-        switch (r.paymentMode.toUpperCase()) {
-          case 'UPI':
-            upi += r.amount;
-            break;
-          case 'CARD':
-            card += r.amount;
-            break;
-          case 'CHEQUE':
-            cheque += r.amount;
-            break;
-          default:
-            bank += r.amount;
-            break;
-        }
-      }
-
-      return PaymentBreakup(
-        cash: cash,
-        upi: upi,
-        card: card,
-        bank: bank,
-        cheque: cheque,
+      final saleBreakups = await _fetchSalePaymentBreakupsForBills(
+        saleBills,
+        start,
+        end,
       );
+      final dueBreakups = await _fetchLedgerPaymentBreakups(
+        start,
+        end,
+        cashCategories: const {'DUE_COLLECTION'},
+        bankCategories: const {'DUE_COLLECTION'},
+      );
+      var total = const PaymentBreakup();
+      for (final row in saleBreakups.values) {
+        total += row;
+      }
+      for (final row in dueBreakups.values) {
+        total += row;
+      }
+      return total;
     } catch (e) {
       AppLogger.debug('❌ _fetchPaymentBreakup: $e');
       return const PaymentBreakup();
     }
+  }
+
+  Future<Map<String, PaymentBreakup>> _fetchSalePaymentBreakupsForBills(
+    List<Bill> bills,
+    DateTime start,
+    DateTime end,
+  ) async {
+    if (bills.isEmpty) return {};
+
+    final billNumbers = bills.map((bill) => bill.billNo).toSet();
+    final ledgerBreakups = await _fetchLedgerPaymentBreakups(
+      start,
+      end,
+      billNumbers: billNumbers,
+      cashCategories: const {'SALE'},
+      bankCategories: const {'SALE_PAYMENT'},
+    );
+
+    for (final bill in bills) {
+      ledgerBreakups.putIfAbsent(
+        bill.billNo,
+        () => _legacyBillPaymentBreakup(bill),
+      );
+    }
+    return ledgerBreakups;
+  }
+
+  Future<Map<String, PaymentBreakup>> _fetchLedgerPaymentBreakups(
+    DateTime start,
+    DateTime end, {
+    Set<String>? billNumbers,
+    required Set<String> cashCategories,
+    required Set<String> bankCategories,
+  }) async {
+    final result = <String, PaymentBreakup>{};
+
+    final cashRows = await (_db.select(_db.cashTransactions)
+          ..where((t) =>
+              t.type.equals('INCOME') &
+              t.isVoided.equals(false) &
+              t.referenceType.equals('BILL') &
+              t.txnDate.isBiggerOrEqualValue(start) &
+              t.txnDate.isSmallerOrEqualValue(end)))
+        .get();
+
+    for (final row in cashRows) {
+      if (!cashCategories.contains(row.category.toUpperCase())) continue;
+      final billNo = _billNumberFromReference(row.referenceId);
+      if (billNo == null) continue;
+      if (billNumbers != null && !billNumbers.contains(billNo)) continue;
+      _addLedgerPayment(
+        result,
+        billNo: billNo,
+        paymentMode: row.paymentMode,
+        amount: row.amount,
+      );
+    }
+
+    final bankRows = await (_db.select(_db.bankTransactions)
+          ..where((t) =>
+              t.type.equals('CREDIT') &
+              t.isVoided.equals(false) &
+              t.referenceType.equals('BILL') &
+              t.txnDate.isBiggerOrEqualValue(start) &
+              t.txnDate.isSmallerOrEqualValue(end)))
+        .get();
+
+    for (final row in bankRows) {
+      if (!bankCategories.contains(row.category.toUpperCase())) continue;
+      final billNo = _billNumberFromReference(row.referenceId);
+      if (billNo == null) continue;
+      if (billNumbers != null && !billNumbers.contains(billNo)) continue;
+      _addLedgerPayment(
+        result,
+        billNo: billNo,
+        paymentMode: row.paymentMode,
+        amount: row.amount,
+      );
+    }
+
+    return result;
+  }
+
+  void _addLedgerPayment(
+    Map<String, PaymentBreakup> target, {
+    required String billNo,
+    required String paymentMode,
+    required double amount,
+  }) {
+    if (amount <= 0) return;
+    final current = target[billNo] ?? const PaymentBreakup();
+    final mode = paymentMode.trim().toUpperCase();
+    target[billNo] = switch (mode) {
+      'CASH' || 'CASH_DEPOSIT' => PaymentBreakup(
+          cash: current.cash + amount,
+          upi: current.upi,
+          card: current.card,
+          bank: current.bank,
+          cheque: current.cheque,
+        ),
+      'UPI' => PaymentBreakup(
+          cash: current.cash,
+          upi: current.upi + amount,
+          card: current.card,
+          bank: current.bank,
+          cheque: current.cheque,
+        ),
+      'CARD' => PaymentBreakup(
+          cash: current.cash,
+          upi: current.upi,
+          card: current.card + amount,
+          bank: current.bank,
+          cheque: current.cheque,
+        ),
+      'CHEQUE' => PaymentBreakup(
+          cash: current.cash,
+          upi: current.upi,
+          card: current.card,
+          bank: current.bank,
+          cheque: current.cheque + amount,
+        ),
+      _ => PaymentBreakup(
+          cash: current.cash,
+          upi: current.upi,
+          card: current.card,
+          bank: current.bank + amount,
+          cheque: current.cheque,
+        ),
+    };
+  }
+
+  String? _billNumberFromReference(String? referenceId) {
+    final value = referenceId?.trim() ?? '';
+    if (value.isEmpty) return null;
+    final billNo = value.split('#').first.trim();
+    return billNo.isEmpty ? null : billNo;
+  }
+
+  PaymentBreakup _legacyBillPaymentBreakup(Bill bill) {
+    final paidByMode = bill.cashPaid + bill.upiPaid + bill.cardPaid;
+    if (paidByMode > 0) {
+      return PaymentBreakup(
+        cash: bill.cashPaid,
+        upi: bill.upiPaid,
+        card: bill.cardPaid,
+      );
+    }
+    if (bill.paidAmount > 0) {
+      return PaymentBreakup(cash: bill.paidAmount);
+    }
+    return const PaymentBreakup();
   }
 
   Future<double> _fetchDueCollectionReceipts(

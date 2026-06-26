@@ -349,7 +349,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
         child: Text(
           '$number',
           style: TextStyle(
-              fontSize: 14,
+              fontSize: SalesPosStyles.fontBody,
               fontWeight: FontWeight.w900,
               color: metalColor,
               fontFeatures: const [FontFeature.tabularFigures()]),
@@ -373,7 +373,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
           isExpanded: true,
           icon: Icon(SalesPosIcons.dropdownArrow, color: metalColor, size: 22),
           style: SalesPosStyles.inputText
-              .copyWith(color: metalColor, fontSize: 14),
+              .copyWith(color: metalColor, fontSize: SalesPosStyles.fontBody),
           dropdownColor: SalesPosColors.bodyPanelBg,
           items: MetalType.values
               .map((type) => DropdownMenuItem<MetalType>(
@@ -460,7 +460,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                 widget.item.isLessPerPiece ? "/pc" : "Tot",
                 style: const TextStyle(
                     fontWeight: FontWeight.w900,
-                    fontSize: 13,
+                    fontSize: SalesPosStyles.fontLabel,
                     color: SalesPosColors.brandGold),
               ),
             ),
@@ -493,7 +493,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
           hintText: "Tunch",
           hintStyle: TextStyle(
               color: metalColor.withValues(alpha: 0.50),
-              fontSize: 13,
+              fontSize: SalesPosStyles.fontLabel,
               fontWeight: FontWeight.w800),
         ),
       ),
@@ -564,7 +564,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                             style: TextStyle(
                                 color: metalColor,
                                 fontWeight: FontWeight.w900,
-                                fontSize: 14)),
+                                fontSize: SalesPosStyles.fontBody)),
                       ),
                     ))
                 .toList(),
@@ -591,8 +591,9 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
       ),
       child: FittedBox(
         fit: BoxFit.scaleDown,
-        alignment:
-            align == TextAlign.center ? Alignment.center : Alignment.centerRight,
+        alignment: align == TextAlign.center
+            ? Alignment.center
+            : Alignment.centerRight,
         child: Text(
           value,
           maxLines: 1,
@@ -602,7 +603,8 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
           style: TextStyle(
               color: color,
               fontWeight: FontWeight.w900,
-              fontSize: isBold ? 16 : 15,
+              fontSize:
+                  isBold ? SalesPosStyles.fontValue : SalesPosStyles.fontInput,
               fontFeatures: const [FontFeature.tabularFigures()]),
         ),
       ),
@@ -665,7 +667,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                 symbol,
                 style: const TextStyle(
                     fontWeight: FontWeight.w900,
-                    fontSize: 13,
+                    fontSize: SalesPosStyles.fontLabel,
                     color: SalesPosColors.brandGold),
               ),
             ),

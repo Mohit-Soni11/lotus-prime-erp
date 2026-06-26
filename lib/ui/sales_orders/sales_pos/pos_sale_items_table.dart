@@ -143,9 +143,9 @@ class PosSaleItemsTable extends StatelessWidget {
                   Text(
                     "CART : ${ctrl.saleItems.length}",
                     style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: SalesPosStyles.fontBody,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 0.8,
+                        letterSpacing: 0,
                         color: SalesPosColors.bodyTextMain),
                   ),
                 ],
@@ -250,9 +250,9 @@ class PosSaleItemsTable extends StatelessWidget {
               "CART IS EMPTY",
               style: TextStyle(
                   color: SalesPosColors.bodyTextMain,
-                  fontSize: 17,
+                  fontSize: SalesPosStyles.fontTitle,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 1.5),
+                  letterSpacing: 0),
             ),
             const SizedBox(height: 6),
             Text(
@@ -327,9 +327,9 @@ class PosSaleItemsTable extends StatelessWidget {
                     "ADD NEW ITEM",
                     style: TextStyle(
                         color: SalesPosColors.success,
-                        fontSize: 14,
+                        fontSize: SalesPosStyles.fontBody,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 0.8),
+                        letterSpacing: 0),
                   ),
                   const SizedBox(width: 14),
                   Container(
@@ -343,9 +343,9 @@ class PosSaleItemsTable extends StatelessWidget {
                       "[F2]",
                       style: TextStyle(
                           color: SalesPosColors.success,
-                          fontSize: 12,
+                          fontSize: SalesPosStyles.fontCaption,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: 1.0),
+                          letterSpacing: 0),
                     ),
                   ),
                 ],
@@ -401,9 +401,9 @@ class PosSaleItemsTable extends StatelessWidget {
           Text("$metalName TOTAL",
               style: TextStyle(
                   fontWeight: FontWeight.w900,
-                  fontSize: 10,
+                  fontSize: SalesPosStyles.fontCaption,
                   color: color,
-                  letterSpacing: 1.0)),
+                  letterSpacing: 0)),
           const SizedBox(height: 4),
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -411,12 +411,14 @@ class PosSaleItemsTable extends StatelessWidget {
               Text("$wtLabel ${wt.toStringAsFixed(3)} $unit",
                   style: TextStyle(
                       fontWeight: FontWeight.w900,
-                      fontSize: 12,
+                      fontSize: SalesPosStyles.fontCaption,
                       color: color.withValues(alpha: 0.8))),
               const SizedBox(width: 10),
               Text("Rs ${totalVal.toStringAsFixed(2)}",
                   style: TextStyle(
-                      fontWeight: FontWeight.w900, fontSize: 14, color: color)),
+                      fontWeight: FontWeight.w900,
+                      fontSize: SalesPosStyles.fontBody,
+                      color: color)),
             ],
           ),
         ],

@@ -154,7 +154,7 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
               loadError,
               style: const TextStyle(
                 color: SalesPosColors.textDark,
-                fontSize: 16,
+                fontSize: SalesPosStyles.fontValue,
                 fontWeight: FontWeight.w700,
               ),
             ),

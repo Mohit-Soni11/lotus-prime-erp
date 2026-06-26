@@ -84,7 +84,8 @@ class PosAtomicTextField extends StatelessWidget {
         style: SalesPosStyles.standardRowText,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: SalesPosStyles.subTitleMuted.copyWith(fontSize: 13),
+          hintStyle: SalesPosStyles.subTitleMuted
+              .copyWith(fontSize: SalesPosStyles.fontLabel),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
           filled: true,

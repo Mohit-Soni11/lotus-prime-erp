@@ -94,15 +94,15 @@ class _PosAppBarState extends State<PosAppBar> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            //  1. Animated back button 
+            //  1. Animated back button
             _HoverBackButton(onTap: widget.onBack),
             const SizedBox(width: 18),
 
-            //  2. Vertical Divider 
+            //  2. Vertical Divider
             _buildVerticalDivider(),
             const SizedBox(width: 18),
 
-            //  3. Module icon for New Sales 
+            //  3. Module icon for New Sales
             Container(
               width: 34,
               height: 34,
@@ -133,12 +133,12 @@ class _PosAppBarState extends State<PosAppBar> {
             ),
             const SizedBox(width: 14),
 
-            //  4. Main title 
+            //  4. Main title
             if (_shopDisplayName.isNotEmpty) ...[
               Text(
                 _shopDisplayName.toUpperCase(),
                 style: SalesPosStyles.headerTitle.copyWith(
-                  fontSize: 14,
+                  fontSize: SalesPosStyles.fontBody,
                   color: SalesPosStyles.headerTitle.color
                           ?.withValues(alpha: 0.8) ??
                       Colors.white70,
@@ -148,8 +148,9 @@ class _PosAppBarState extends State<PosAppBar> {
                 padding: EdgeInsets.symmetric(horizontal: 10.0),
                 child: Text(
                   " - ",
-                  style:
-                      TextStyle(color: SalesPosColors.brandGold, fontSize: 18),
+                  style: TextStyle(
+                      color: SalesPosColors.brandGold,
+                      fontSize: SalesPosStyles.fontTitle),
                 ),
               ),
             ],
@@ -162,7 +163,7 @@ class _PosAppBarState extends State<PosAppBar> {
             // Spacer pushes the radar widget to the far right side
             const Spacer(),
 
-            //  5. System online status badge 
+            //  5. System online status badge
             const RadarStatusWidget(),
           ],
         ),
@@ -189,9 +190,9 @@ class _PosAppBarState extends State<PosAppBar> {
   }
 }
 
-// 
+//
 // HOVER BACK BUTTON
-// 
+//
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
   const _HoverBackButton({required this.onTap});
@@ -254,9 +255,9 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-// 
+//
 // RADAR STATUS (Updated to Match the Premium Pill Shape exactly)
-// 
+//
 class RadarStatusWidget extends StatefulWidget {
   const RadarStatusWidget({super.key});
   @override
@@ -339,9 +340,9 @@ class _RadarStatusWidgetState extends State<RadarStatusWidget>
             "SYSTEM ONLINE",
             style: TextStyle(
               color: SalesPosColors.onlineIndicator,
-              fontSize: 12.0,
+              fontSize: SalesPosStyles.fontCaption,
               fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
+              letterSpacing: 0,
             ),
           ),
         ],

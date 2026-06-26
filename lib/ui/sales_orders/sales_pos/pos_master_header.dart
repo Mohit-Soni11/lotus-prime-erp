@@ -70,8 +70,8 @@ class PosMasterHeader extends StatelessWidget implements PreferredSizeWidget {
                       "ENTERPRISE POS TERMINAL",
                       style: SalesPosStyles.headerTitle.copyWith(
                         color: SalesPosColors.brandSilver,
-                        fontSize: 12,
-                        letterSpacing: 2.0,
+                        fontSize: SalesPosStyles.fontCaption,
+                        letterSpacing: 0,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -81,9 +81,9 @@ class PosMasterHeader extends StatelessWidget implements PreferredSizeWidget {
                           authCtrl.displayShopName.toUpperCase(),
                           style: const TextStyle(
                             color: SalesPosColors.shellTextTitle,
-                            fontSize: 18,
+                            fontSize: SalesPosStyles.fontTitle,
                             fontWeight: FontWeight.bold,
-                            letterSpacing: 1.0,
+                            letterSpacing: 0,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -100,7 +100,7 @@ class PosMasterHeader extends StatelessWidget implements PreferredSizeWidget {
                             authCtrl.shopCity.toUpperCase(),
                             style: const TextStyle(
                               color: SalesPosColors.shellTextMuted,
-                              fontSize: 10,
+                              fontSize: SalesPosStyles.fontCaption,
                               fontWeight: FontWeight.w800,
                             ),
                           ),

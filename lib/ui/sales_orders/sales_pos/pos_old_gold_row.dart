@@ -207,7 +207,7 @@ class _PosOldGoldRowState extends State<PosOldGoldRow> {
           '$number',
           style: SalesPosStyles.inputText.copyWith(
               color: metalColor,
-              fontSize: 14,
+              fontSize: SalesPosStyles.fontBody,
               fontFeatures: const [FontFeature.tabularFigures()]),
         ),
       ),
@@ -229,7 +229,7 @@ class _PosOldGoldRowState extends State<PosOldGoldRow> {
           isExpanded: true,
           icon: Icon(SalesPosIcons.dropdownArrow, color: metalColor, size: 22),
           style: SalesPosStyles.inputText
-              .copyWith(color: metalColor, fontSize: 14),
+              .copyWith(color: metalColor, fontSize: SalesPosStyles.fontBody),
           dropdownColor: SalesPosColors.bodyPanelBg,
           items: MetalType.values
               .map((type) => DropdownMenuItem<MetalType>(
@@ -298,7 +298,8 @@ class _PosOldGoldRowState extends State<PosOldGoldRow> {
         textAlign: align,
         style: SalesPosStyles.inputText.copyWith(
             color: color,
-            fontSize: isBold ? 15 : 14,
+            fontSize:
+                isBold ? SalesPosStyles.fontInput : SalesPosStyles.fontBody,
             fontFeatures: const [FontFeature.tabularFigures()]),
       ),
     );

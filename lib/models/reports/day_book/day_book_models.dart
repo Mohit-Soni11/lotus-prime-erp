@@ -114,7 +114,8 @@ class CashInflow {
     this.otherIncome = 0,
   });
 
-  double get retailSalesTotal => gstSales.finalAmount + nonGstSales.totalAmount;
+  double get retailSalesTotal =>
+      gstSales.payments.total + nonGstSales.payments.total;
 
   double get manualIncomeTotal =>
       dueCollection +

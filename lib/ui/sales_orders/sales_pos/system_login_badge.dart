@@ -111,7 +111,7 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
     );
   }
 
-  //  AVATAR 
+  //  AVATAR
   Widget _buildAvatar() {
     return SizedBox(
       width: 36,
@@ -143,9 +143,9 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
                 widget.userInitials,
                 style: TextStyle(
                   color: _primaryColor,
-                  fontSize: 12,
+                  fontSize: SalesPosStyles.fontCaption,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 0.5,
+                  letterSpacing: 0,
                 ),
               ),
             ),
@@ -179,7 +179,7 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
     );
   }
 
-  //  USER INFO 
+  //  USER INFO
   Widget _buildUserInfo() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -188,8 +188,8 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
         Text(
           widget.userName,
           style: SalesPosStyles.badgeNameText.copyWith(
-            fontSize: 13,
-            letterSpacing: 0.3,
+            fontSize: SalesPosStyles.fontLabel,
+            letterSpacing: 0,
           ),
         ),
         const SizedBox(height: 4),
@@ -215,8 +215,8 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
           child: Text(
             widget.userRole.toUpperCase(),
             style: SalesPosStyles.badgeRoleText.copyWith(
-              fontSize: 9,
-              letterSpacing: 0.8,
+              fontSize: SalesPosStyles.fontCaption,
+              letterSpacing: 0,
               color: Colors.white,
             ),
           ),
@@ -225,7 +225,7 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
     );
   }
 
-  //  VERTICAL DIVIDER 
+  //  VERTICAL DIVIDER
   Widget _buildVerticalDivider() {
     return Container(
       width: 1,
@@ -244,7 +244,7 @@ class _SystemLoginBadgeState extends State<SystemLoginBadge>
     );
   }
 
-  //  LOGOUT ICON 
+  //  LOGOUT ICON
   Widget _buildLogoutIcon() {
     return const Icon(
       SalesPosIcons.logout,

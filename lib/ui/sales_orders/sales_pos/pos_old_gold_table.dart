@@ -129,9 +129,9 @@ class PosOldGoldTable extends StatelessWidget {
                   "ITEMS : ${ctrl.oldGoldItems.length}",
                   style: const TextStyle(
                       fontWeight: FontWeight.w900,
-                      fontSize: 14,
+                      fontSize: SalesPosStyles.fontBody,
                       color: SalesPosColors.danger,
-                      letterSpacing: 0.5),
+                      letterSpacing: 0),
                 ),
               ],
             ),
@@ -217,9 +217,9 @@ class PosOldGoldTable extends StatelessWidget {
             Text(isWholesale ? "NO METAL INWARDS" : "NO EXCHANGE ITEMS",
                 style: const TextStyle(
                     color: SalesPosColors.bodyTextMain,
-                    fontSize: 17,
+                    fontSize: SalesPosStyles.fontTitle,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5)),
+                    letterSpacing: 0)),
             const SizedBox(height: 6),
             Text(
                 isWholesale
@@ -287,9 +287,9 @@ class PosOldGoldTable extends StatelessWidget {
                           : "RECORD EXCHANGE ITEM",
                       style: const TextStyle(
                           color: SalesPosColors.danger,
-                          fontSize: 14,
+                          fontSize: SalesPosStyles.fontBody,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: 0.8)),
+                          letterSpacing: 0)),
                 ],
               ),
             ),
@@ -341,9 +341,9 @@ class PosOldGoldTable extends StatelessWidget {
           Text(isWholesale ? "$metalName INWARD" : "$metalName TOTAL",
               style: TextStyle(
                   fontWeight: FontWeight.w900,
-                  fontSize: 11,
+                  fontSize: SalesPosStyles.fontCaption,
                   color: color,
-                  letterSpacing: 1.2)),
+                  letterSpacing: 0)),
           const SizedBox(height: 4),
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -351,14 +351,14 @@ class PosOldGoldTable extends StatelessWidget {
               Text("Fine: ${fineWt.toStringAsFixed(3)} $unit",
                   style: TextStyle(
                       fontWeight: FontWeight.w900,
-                      fontSize: 13,
+                      fontSize: SalesPosStyles.fontLabel,
                       color: color.withValues(alpha: 0.9))),
               if (!isWholesale) ...[
                 const SizedBox(width: 12),
                 Text("Rs ${totalVal.toStringAsFixed(2)}",
                     style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        fontSize: 16,
+                        fontSize: SalesPosStyles.fontValue,
                         color: color)),
               ],
             ],

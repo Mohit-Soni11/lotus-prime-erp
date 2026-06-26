@@ -82,7 +82,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
     );
   }
 
-  //  MAIN CARD 
+  //  MAIN CARD
   Widget _buildCard() {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
@@ -106,9 +106,9 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 
+            //
             // HEADING ROW
-            // 
+            //
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -142,7 +142,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
                         AnimatedDefaultTextStyle(
                           duration: const Duration(milliseconds: 260),
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: SalesPosStyles.fontCaption,
                             fontWeight: FontWeight.bold,
                             color: _isGst
                                 ? SalesPosColors.success
@@ -192,9 +192,9 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
                       AnimatedDefaultTextStyle(
                         duration: const Duration(milliseconds: 260),
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: SalesPosStyles.fontCaption,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: 0.8,
+                          letterSpacing: 0,
                           color: _isGst
                               ? SalesPosColors.success
                               : SalesPosColors.textDark,
@@ -207,7 +207,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
               ],
             ),
 
-            //  Divider 
+            //  Divider
             Container(
               height: 1,
               width: double.infinity,
@@ -215,21 +215,21 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
               color: SalesPosColors.bodyBorder,
             ),
 
-            // 
+            //
             // CONTENT ROW
-            // 
+            //
             SizedBox(
               height: 52,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  //  Invoice icon box 
+                  //  Invoice icon box
                   _buildInvoiceIconBox(),
 
                   const SizedBox(width: 16),
 
-                  //  Invoice number block 
+                  //  Invoice number block
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,9 +237,9 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
                       Text(
                         SalesPosStrings.lblInvoiceNo.trim(),
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: SalesPosStyles.fontCaption,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: 1.4,
+                          letterSpacing: 0,
                           color: SalesPosColors.textDark,
                           height: 1,
                         ),
@@ -250,9 +250,9 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
                         style: TextStyle(
                           color:
                               _isGst ? _accentColor : SalesPosColors.textDark,
-                          fontSize: 20,
+                          fontSize: SalesPosStyles.fontSection,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
+                          letterSpacing: 0,
                           height: 1,
                         ),
                       ),
@@ -261,7 +261,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
 
                   const SizedBox(width: 24),
 
-                  //  Vertical rule 
+                  //  Vertical rule
                   Container(
                     width: 1,
                     height: 34,
@@ -280,7 +280,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
 
                   const SizedBox(width: 20),
 
-                  //  Date + Time chips 
+                  //  Date + Time chips
                   StreamBuilder<DateCardModel>(
                     stream: _dateLogic.timeStream,
                     initialData: _dateLogic.initialData,
@@ -419,9 +419,9 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
                 subLabel,
                 style: TextStyle(
                   color: iconColor.withValues(alpha: 0.8),
-                  fontSize: 9,
+                  fontSize: SalesPosStyles.fontCaption,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 1.0,
+                  letterSpacing: 0,
                 ),
               ),
               const SizedBox(height: 2),
@@ -431,7 +431,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
                   color: valueColor,
                   fontSize: valueFontSize,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 0.3,
+                  letterSpacing: 0,
                   height: 1,
                 ),
               ),

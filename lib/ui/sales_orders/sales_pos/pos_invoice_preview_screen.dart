@@ -141,12 +141,13 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                 Text("INVOICE HUB",
                     style: TextStyle(
                         color: SalesPosColors.shellTextTitle,
-                        fontSize: 16,
+                        fontSize: SalesPosStyles.fontValue,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5)),
+                        letterSpacing: 0)),
                 Text("Review, Export & Finalize",
                     style: TextStyle(
-                        color: SalesPosColors.shellTextMuted, fontSize: 12)),
+                        color: SalesPosColors.shellTextMuted,
+                        fontSize: SalesPosStyles.fontCaption)),
               ],
             ),
           ),
@@ -162,9 +163,9 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
         const Text("PAPER SIZE",
             style: TextStyle(
                 color: SalesPosColors.shellTextMuted,
-                fontSize: 11,
+                fontSize: SalesPosStyles.fontCaption,
                 fontWeight: FontWeight.w800,
-                letterSpacing: 1.2)),
+                letterSpacing: 0)),
         const SizedBox(height: 10),
         Row(
           children: PrintFormat.values.map((fmt) {
@@ -200,7 +201,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                               color: isSelected
                                   ? SalesPosColors.brandGold
                                   : SalesPosColors.shellTextMuted,
-                              fontSize: 11,
+                              fontSize: SalesPosStyles.fontCaption,
                               fontWeight: FontWeight.w800)),
                     ],
                   ),
@@ -231,9 +232,9 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
         const Text("INVOICE PROFILE",
             style: TextStyle(
                 color: SalesPosColors.shellTextMuted,
-                fontSize: 11,
+                fontSize: SalesPosStyles.fontCaption,
                 fontWeight: FontWeight.w800,
-                letterSpacing: 1.2)),
+                letterSpacing: 0)),
         const SizedBox(height: 10),
         Container(
           width: double.infinity,
@@ -250,8 +251,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                 runSpacing: 8,
                 children: [
                   _buildProfileChip(Icons.storefront_rounded, billingModeLabel),
-                  _buildProfileChip(
-                      Icons.receipt_long_rounded, billTypeLabel),
+                  _buildProfileChip(Icons.receipt_long_rounded, billTypeLabel),
                   _buildProfileChip(
                     Icons.category_rounded,
                     metals.isEmpty
@@ -265,7 +265,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                 "This profile is detected automatically from the active POS bill.",
                 style: TextStyle(
                     color: SalesPosColors.shellTextMuted.withValues(alpha: 0.9),
-                    fontSize: 10,
+                    fontSize: SalesPosStyles.fontCaption,
                     height: 1.3),
               ),
             ],
@@ -275,9 +275,9 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
         const Text("METAL BILLING SETUP",
             style: TextStyle(
                 color: SalesPosColors.shellTextMuted,
-                fontSize: 11,
+                fontSize: SalesPosStyles.fontCaption,
                 fontWeight: FontWeight.w800,
-                letterSpacing: 1.2)),
+                letterSpacing: 0)),
         const SizedBox(height: 10),
         if (metals.isEmpty)
           Container(
@@ -289,17 +289,17 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                 border: Border.all(color: SalesPosColors.shellBorder)),
             child: const Text(
               "Add invoice items to load metal-specific billing controls.",
-              style:
-                  TextStyle(color: SalesPosColors.shellTextMuted, fontSize: 12),
+              style: TextStyle(
+                  color: SalesPosColors.shellTextMuted,
+                  fontSize: SalesPosStyles.fontCaption),
             ),
           )
-        else
-          ...[
-            _buildMetalInvoiceSelector(metals),
-            const SizedBox(height: 12),
-            if (_invCtrl.effectiveActiveMetal != null)
-              _buildMetalBillingSetupCard(_invCtrl.effectiveActiveMetal!),
-          ],
+        else ...[
+          _buildMetalInvoiceSelector(metals),
+          const SizedBox(height: 12),
+          if (_invCtrl.effectiveActiveMetal != null)
+            _buildMetalBillingSetupCard(_invCtrl.effectiveActiveMetal!),
+        ],
       ],
     );
   }
@@ -321,7 +321,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
             label,
             style: const TextStyle(
               color: SalesPosColors.shellTextTitle,
-              fontSize: 11,
+              fontSize: SalesPosStyles.fontCaption,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -373,7 +373,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
               "${metal.displayName} Invoice",
               style: TextStyle(
                 color: isSelected ? color : SalesPosColors.shellTextTitle,
-                fontSize: 11,
+                fontSize: SalesPosStyles.fontCaption,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -420,9 +420,9 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
         const Text("DUE DATE",
             style: TextStyle(
                 color: SalesPosColors.shellTextMuted,
-                fontSize: 11,
+                fontSize: SalesPosStyles.fontCaption,
                 fontWeight: FontWeight.w800,
-                letterSpacing: 1.2)),
+                letterSpacing: 0)),
         const SizedBox(height: 10),
         GestureDetector(
           onTap: () async {
@@ -478,7 +478,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                         "Payment Due By",
                         style: TextStyle(
                           color: SalesPosColors.shellTextMuted,
-                          fontSize: 10,
+                          fontSize: SalesPosStyles.fontCaption,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -488,7 +488,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                           color: dueDate != null
                               ? SalesPosColors.brandGold
                               : SalesPosColors.shellTextTitle,
-                          fontSize: 13,
+                          fontSize: SalesPosStyles.fontLabel,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -517,9 +517,9 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
         const Text("OUTPUT OPTIONS",
             style: TextStyle(
                 color: SalesPosColors.shellTextMuted,
-                fontSize: 11,
+                fontSize: SalesPosStyles.fontCaption,
                 fontWeight: FontWeight.w800,
-                letterSpacing: 1.2)),
+                letterSpacing: 0)),
         const SizedBox(height: 10),
         AnimatedContainer(
           duration: const Duration(milliseconds: 220),
@@ -537,7 +537,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                   const Text("Copies",
                       style: TextStyle(
                           color: SalesPosColors.shellTextTitle,
-                          fontSize: 13,
+                          fontSize: SalesPosStyles.fontLabel,
                           fontWeight: FontWeight.bold)),
                   Row(
                     children: [
@@ -554,7 +554,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                       Text("${_invCtrl.printCopies}",
                           style: const TextStyle(
                               color: SalesPosColors.brandGold,
-                              fontSize: 16,
+                              fontSize: SalesPosStyles.fontValue,
                               fontWeight: FontWeight.w900)),
                       IconButton(
                           icon: const Icon(Icons.add_circle_outline,
@@ -580,12 +580,12 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                       Text("Duplicate Stamp",
                           style: TextStyle(
                               color: SalesPosColors.shellTextTitle,
-                              fontSize: 13,
+                              fontSize: SalesPosStyles.fontLabel,
                               fontWeight: FontWeight.bold)),
                       Text("Applies a duplicate watermark",
                           style: TextStyle(
                               color: SalesPosColors.shellTextMuted,
-                              fontSize: 10)),
+                              fontSize: SalesPosStyles.fontCaption)),
                     ],
                   ),
                   Switch(
@@ -627,8 +627,9 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                       : null,
                   icon: const Icon(Icons.chat_bubble_rounded, size: 16),
                   label: const Text("Send WhatsApp",
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: SalesPosStyles.fontLabel)),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF25D366),
                       foregroundColor: Colors.white,
@@ -638,7 +639,6 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                 ),
               ),
               const SizedBox(width: 8),
-
               Expanded(
                 child: OutlinedButton(
                   onPressed: (isReady && !_isSavingPdf)
@@ -692,7 +692,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                                   Text("Exported",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 13,
+                                          fontSize: SalesPosStyles.fontLabel,
                                           color: SalesPosColors.success)),
                                 ],
                               )
@@ -705,7 +705,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                                   Text("Export PDF",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 13)),
+                                          fontSize: SalesPosStyles.fontLabel)),
                                 ],
                               ),
                   ),
@@ -727,8 +727,8 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                 label: Text(isFinalized ? "PRINT INVOICE" : "FINALIZE & PRINT",
                     style: const TextStyle(
                         fontWeight: FontWeight.w900,
-                        fontSize: 15,
-                        letterSpacing: 1.1)),
+                        fontSize: SalesPosStyles.fontInput,
+                        letterSpacing: 0)),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: SalesPosColors.brandGold,
                     foregroundColor: Colors.black,
@@ -738,7 +738,6 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
               ),
             ),
           ),
-
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
@@ -766,8 +765,8 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                 "FINISH & NEW SALE",
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
-                  fontSize: 15,
-                  letterSpacing: 1.2,
+                  fontSize: SalesPosStyles.fontInput,
+                  letterSpacing: 0,
                 ),
               ),
               style: OutlinedButton.styleFrom(
