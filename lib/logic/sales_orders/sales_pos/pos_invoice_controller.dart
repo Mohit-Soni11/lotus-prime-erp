@@ -6,14 +6,10 @@
 
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'dart:io';
-
-import 'package:file_picker/file_picker.dart';
 
 //  Database persistence dependencies
 import '../../../database/db/app_database.dart';
+import '../../../features/sales_pos/application/services/pos_invoice_output_service.dart';
 
 import '../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
@@ -136,6 +132,8 @@ class PosInvoiceController extends ChangeNotifier {
   final PosBillingController billing;
   final ShopSetupRepository _shopRepo = ShopSetupRepository();
   final SalesBillingRepo _salesBillingRepo = SalesBillingRepo();
+  final PosInvoiceOutputService _outputService =
+      const PosInvoiceOutputService();
 
   final InvoicePrintConfig printConfig = InvoicePrintConfig();
   final Map<MetalType, BillSettings> metalPrintSettings = {};
@@ -1790,80 +1788,27 @@ class PosInvoiceController extends ChangeNotifier {
       format,
       includeAllMetals: true,
     );
-    await Printing.layoutPdf(onLayout: (_) async => printBytes);
+    await _outputService.printPdf(printBytes);
   }
 
   Future<void> openDirectWhatsAppChat() async {
     await finalizeInvoiceIfNeeded();
-    if (invoice == null || invoice!.customerMobile.isEmpty) return;
-
-    final phone = invoice!.customerMobile.replaceAll(RegExp(r'\D'), '');
-    final cleanPhone = phone.length == 10 ? "91$phone" : phone;
-
-    final customerName =
-        invoice!.customerName.isNotEmpty ? invoice!.customerName : "Customer";
-    final textMessage =
-        "Dear $customerName,\n\nThank you for shopping at *${invoice!.shopName}*!\n\nHere are your invoice details:\n*Invoice No:* ${invoice!.invoiceNumber}\n*Total Amount:* Rs ${invoice!.netPayable.toStringAsFixed(2)}\n\nVisit again!";
-
-    final url = Uri.parse(
-        "https://wa.me/$cleanPhone?text=${Uri.encodeComponent(textMessage)}");
-
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      AppLogger.debug("Could not launch WhatsApp");
-    }
+    if (invoice == null) return;
+    await _outputService.openWhatsAppInvoice(invoice!);
   }
 
   Future<String?> downloadPdf() async {
     await finalizeInvoiceIfNeeded();
     if (pdfBytes == null || invoice == null) return null;
 
-    try {
-      String custName =
-          invoice!.customerName.isNotEmpty ? invoice!.customerName : "Customer";
-      String cleanName = custName
-          .replaceAll(RegExp(r'[^a-zA-Z0-9\s]'), '')
-          .replaceAll(' ', '_');
-      String cleanInv =
-          invoice!.invoiceNumber.replaceAll(RegExp(r'[^a-zA-Z0-9\-]'), '_');
-
-      final fileName = "${cleanName}_$cleanInv.pdf";
-      final selectedPath = await FilePicker.platform.saveFile(
-        dialogTitle: "Export Invoice PDF",
-        fileName: fileName,
-        type: FileType.custom,
-        allowedExtensions: const ['pdf'],
-        lockParentWindow: true,
-      );
-
-      if (selectedPath == null) {
-        AppLogger.debug("PDF export cancelled by user");
-        return null;
-      }
-
-      final exportPath = selectedPath.toLowerCase().endsWith('.pdf')
-          ? selectedPath
-          : '$selectedPath.pdf';
-      final file = File(exportPath);
-      final parentDir = file.parent;
-      if (!await parentDir.exists()) {
-        await parentDir.create(recursive: true);
-      }
-
-      final saveBytes = await _buildPdf(
+    return _outputService.downloadPdf(
+      invoice: invoice!,
+      buildPdfBytes: () => _buildPdf(
         invoice!,
         selectedFormat,
         includeAllMetals: true,
-      );
-      await file.writeAsBytes(saveBytes);
-      AppLogger.debug("File successfully saved at: ${file.path}");
-
-      return file.path;
-    } catch (e) {
-      AppLogger.error("Error saving file: $e");
-      return null;
-    }
+      ),
+    );
   }
 
   Future<void> switchFormat(PrintFormat fmt) async {

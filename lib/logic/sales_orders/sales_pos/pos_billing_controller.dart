@@ -7,6 +7,10 @@
 import 'package:flutter/material.dart';
 import 'dart:async'; //  Timer support for debounced input
 
+import '../../../features/sales_pos/domain/services/pos_number_formatter.dart';
+import '../../../features/sales_pos/domain/services/pos_number_parser.dart';
+import '../../../features/sales_pos/domain/use_cases/calculate_pos_totals.dart';
+import '../../../features/sales_pos/domain/use_cases/validate_pos_invoice_readiness.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_hold_bill_model.dart';
@@ -39,6 +43,7 @@ class PosBillingController extends ChangeNotifier {
     if (_isDisposed) {
       return;
     }
+    _cachedTotals = null;
     super.notifyListeners();
   }
 
@@ -71,6 +76,7 @@ class PosBillingController extends ChangeNotifier {
   };
   double _makingGstRate = _defaultMakingGstRate;
   bool _roundOffGstAmount = true;
+  PosTotals? _cachedTotals;
 
   Future<void> _initShopName() async {
     try {
@@ -140,20 +146,6 @@ class PosBillingController extends ChangeNotifier {
       return fallback;
     }
     return parsed / 100;
-  }
-
-  double _metalGstRate(MetalType metal) =>
-      _metalGstRates[metal] ?? _defaultJewelleryGstRate;
-
-  double _taxAmount(double taxable, double rate) {
-    if (taxable <= 0 || rate <= 0) {
-      return 0.0;
-    }
-    final amount = taxable * rate;
-    if (!_roundOffGstAmount) {
-      return amount;
-    }
-    return (amount * 100).roundToDouble() / 100;
   }
 
   // ==========================================
@@ -632,20 +624,7 @@ class PosBillingController extends ChangeNotifier {
   }
 
   String _formatRateInput(double value) {
-    final rounded = value.roundToDouble();
-    if ((value - rounded).abs() < 0.0001) {
-      return rounded.toStringAsFixed(0);
-    }
-    return value
-        .toStringAsFixed(2)
-        .replaceFirst(RegExp(r'0+$'), '')
-        .replaceFirst(RegExp(r'\.$'), '');
-  }
-
-  double _roundWeight3(double value) {
-    if (value == 0) return 0.0;
-    final rounded = (value * 1000).roundToDouble() / 1000.0;
-    return rounded == -0.0 ? 0.0 : rounded;
+    return PosNumberFormatter.compact(value);
   }
 
   // --- CORE STATES ---
@@ -919,15 +898,7 @@ class PosBillingController extends ChangeNotifier {
   }
 
   String _formatEditNumber(double value) {
-    if (value.abs() < 0.0001) return '';
-    final rounded = value.roundToDouble();
-    if ((value - rounded).abs() < 0.0001) {
-      return rounded.toStringAsFixed(0);
-    }
-    return value
-        .toStringAsFixed(3)
-        .replaceFirst(RegExp(r'0+$'), '')
-        .replaceFirst(RegExp(r'\.$'), '');
+    return PosNumberFormatter.compact(value, maxFractionDigits: 3);
   }
 
   MetalType _metalFromDb(String value) {
@@ -977,9 +948,7 @@ class PosBillingController extends ChangeNotifier {
   }
 
   double _parseSafeNumber(String text) {
-    if (text.isEmpty) return 0.0;
-    String cleanText = text.replaceAll(RegExp(r'[^0-9.]'), '');
-    return double.tryParse(cleanText) ?? 0.0;
+    return PosNumberParser.parseNonNegative(text);
   }
 
   String get shopInitials {
@@ -1026,303 +995,99 @@ class PosBillingController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ==========================================
-  // 1. RETAIL ENGINE (B2C)
-  // ==========================================
-  double get totalGoldWt => saleItems
-      .where((i) => i.metal == MetalType.gold)
-      .fold(0, (sum, i) => sum + i.netWt);
-  double get totalSilverWt => saleItems
-      .where((i) => i.metal == MetalType.silver)
-      .fold(0, (sum, i) => sum + i.netWt);
-  double get totalPlatinumWt => saleItems
-      .where((i) => i.metal == MetalType.platinum)
-      .fold(0, (sum, i) => sum + i.netWt);
-  double get totalDiamondWt => saleItems
-      .where((i) => i.metal == MetalType.diamond)
-      .fold(0, (sum, i) => sum + i.netWt);
-
-  double get totalGoldAmount => saleItems
-      .where((i) => i.metal == MetalType.gold)
-      .fold(0, (sum, i) => sum + i.totalValue);
-  double get totalSilverAmount => saleItems
-      .where((i) => i.metal == MetalType.silver)
-      .fold(0, (sum, i) => sum + i.totalValue);
-  double get totalPlatinumAmount => saleItems
-      .where((i) => i.metal == MetalType.platinum)
-      .fold(0, (sum, i) => sum + i.totalValue);
-  double get totalDiamondAmount => saleItems
-      .where((i) => i.metal == MetalType.diamond)
-      .fold(0, (sum, i) => sum + i.totalValue);
-
-  double get totalOldGoldAmount =>
-      oldGoldItems.fold(0, (sum, i) => sum + i.totalValue);
-  double get oldGoldCashDeduction =>
-      oldGoldMode == OldGoldAdjustMode.cashAdjust ? totalOldGoldAmount : 0.0;
-
-  double get _retailGrossAmount =>
-      totalGoldAmount +
-      totalSilverAmount +
-      totalPlatinumAmount +
-      totalDiamondAmount;
-
-  double get pureGoldAmount => totalGoldAmount - goldMakingCharge;
-  double get pureSilverAmount => totalSilverAmount - silverMakingCharge;
-  double get purePlatinumAmount => totalPlatinumAmount - platinumMakingCharge;
-  double get pureDiamondAmount => totalDiamondAmount - diamondMakingCharge;
-
-  // ==========================================
-  // 2. WHOLESALE ENGINE (B2B)
-  // ==========================================
-  double get _goldBhawPerGram => _goldBhawInput / 10.0;
-  double get _platBhawPerGram => _platBhawInput / 10.0;
-  double get _silverBhawPerGram => _silverBhawInput / 1000.0;
-  double get _diaBhawPerCarat => _diaBhawInput;
-
-  double get goldSoldFine => _roundWeight3(saleItems
-      .where((i) => i.metal == MetalType.gold)
-      .fold(0.0, (sum, i) => sum + i.fineWt));
-  double get silverSoldFine => _roundWeight3(saleItems
-      .where((i) => i.metal == MetalType.silver)
-      .fold(0.0, (sum, i) => sum + i.fineWt));
-  double get platSoldFine => _roundWeight3(saleItems
-      .where((i) => i.metal == MetalType.platinum)
-      .fold(0.0, (sum, i) => sum + i.fineWt));
-  double get diaSoldFine => _roundWeight3(saleItems
-      .where((i) => i.metal == MetalType.diamond)
-      .fold(0.0, (sum, i) => sum + i.fineWt));
-
-  double get goldJamaFine => _roundWeight3(oldGoldItems
-      .where((i) => i.metal == MetalType.gold)
-      .fold(0.0, (sum, i) => sum + i.fineWt));
-  double get silverJamaFine => _roundWeight3(oldGoldItems
-      .where((i) => i.metal == MetalType.silver)
-      .fold(0.0, (sum, i) => sum + i.fineWt));
-  double get platJamaFine => _roundWeight3(oldGoldItems
-      .where((i) => i.metal == MetalType.platinum)
-      .fold(0.0, (sum, i) => sum + i.fineWt));
-  double get diaJamaFine => _roundWeight3(oldGoldItems
-      .where((i) => i.metal == MetalType.diamond)
-      .fold(0.0, (sum, i) => sum + i.fineWt));
-
-  double get goldNetFine => _roundWeight3(goldSoldFine - goldJamaFine);
-  double get silverNetFine => _roundWeight3(silverSoldFine - silverJamaFine);
-  double get platNetFine => _roundWeight3(platSoldFine - platJamaFine);
-  double get diaNetFine => _roundWeight3(diaSoldFine - diaJamaFine);
-
-  double get goldBhawAmt => goldNetFine * _goldBhawPerGram;
-  double get silverBhawAmt => silverNetFine * _silverBhawPerGram;
-  double get platBhawAmt => platNetFine * _platBhawPerGram;
-  double get diaBhawAmt => diaNetFine * _diaBhawPerCarat;
-
-  double get _wholesaleTotalMetalAmount =>
-      goldBhawAmt + silverBhawAmt + platBhawAmt + diaBhawAmt;
-
-  double get goldMakingCharge =>
-      saleItems.where((i) => i.metal == MetalType.gold).fold(
-          0,
-          (sum, i) =>
-              sum +
-              (billingMode == BillingMode.wholesale
-                  ? i.wholesaleLabourAmt
-                  : i.makingAmt));
-  double get silverMakingCharge =>
-      saleItems.where((i) => i.metal == MetalType.silver).fold(
-          0,
-          (sum, i) =>
-              sum +
-              (billingMode == BillingMode.wholesale
-                  ? i.wholesaleLabourAmt
-                  : i.makingAmt));
-  double get platinumMakingCharge =>
-      saleItems.where((i) => i.metal == MetalType.platinum).fold(
-          0,
-          (sum, i) =>
-              sum +
-              (billingMode == BillingMode.wholesale
-                  ? i.wholesaleLabourAmt
-                  : i.makingAmt));
-  double get diamondMakingCharge =>
-      saleItems.where((i) => i.metal == MetalType.diamond).fold(
-          0,
-          (sum, i) =>
-              sum +
-              (billingMode == BillingMode.wholesale
-                  ? i.wholesaleLabourAmt
-                  : i.makingAmt));
-
-  double get totalMakingCharge =>
-      goldMakingCharge +
-      silverMakingCharge +
-      platinumMakingCharge +
-      diamondMakingCharge;
-
-  double get _wholesaleGrossAmount =>
-      _wholesaleTotalMetalAmount + totalMakingCharge;
-
-  // ==========================================
-  // 3. FACADE ROUTER & MATH ENGINE
-  // ==========================================
-  double get grossAmount => billingMode == BillingMode.wholesale
-      ? _wholesaleGrossAmount
-      : _retailGrossAmount;
-
-  double get discountAmount {
-    if (discountType == DiscountType.percentage) {
-      //  Percentage discount cannot exceed 100%.
-      final clampedPct = _discountInput.clamp(0.0, 100.0);
-      return grossAmount * clampedPct / 100;
-    } else {
-      //  Flat discount cannot exceed the gross amount.
-      return _discountInput.clamp(0.0, grossAmount);
-    }
+  PosTotals get _totals {
+    return _cachedTotals ??= const CalculatePosTotals()(
+      PosTotalsInput(
+        saleItems: saleItems,
+        oldGoldItems: oldGoldItems,
+        billingMode: billingMode,
+        billType: billType,
+        oldGoldMode: oldGoldMode,
+        discountType: discountType,
+        discountInput: _discountInput,
+        cashInput: _cashInput,
+        upiInput: _upiInput,
+        cardInput: _cardInput,
+        advanceInput: _advInput,
+        goldBhawInput: _goldBhawInput,
+        silverBhawInput: _silverBhawInput,
+        platinumBhawInput: _platBhawInput,
+        diamondBhawInput: _diaBhawInput,
+        metalGstRates: _metalGstRates,
+        defaultJewelleryGstRate: _defaultJewelleryGstRate,
+        makingGstRate: _makingGstRate,
+        roundOffGstAmount: _roundOffGstAmount,
+        amountTolerance: _invoiceAmountTolerance,
+      ),
+    );
   }
 
-  double get taxableAmount => grossAmount - discountAmount;
-
-  double _proportionalRatio(double partAmount) =>
-      grossAmount == 0 ? 0 : (partAmount / grossAmount);
-
-  double get goldGst {
-    if (billType != BillType.gst) return 0.0;
-    if (billingMode == BillingMode.wholesale) {
-      double metalTaxable = goldBhawAmt -
-          (discountAmount * _proportionalRatio(_wholesaleTotalMetalAmount));
-      double labourTaxable = goldMakingCharge -
-          (discountAmount * _proportionalRatio(totalMakingCharge));
-      return _taxAmount(metalTaxable, _metalGstRate(MetalType.gold)) +
-          _taxAmount(labourTaxable, _makingGstRate);
-    }
-    double retailTaxable = totalGoldAmount -
-        (discountAmount * _proportionalRatio(totalGoldAmount));
-    return _taxAmount(retailTaxable, _metalGstRate(MetalType.gold));
-  }
-
-  double get silverGst {
-    if (billType != BillType.gst) return 0.0;
-    if (billingMode == BillingMode.wholesale) {
-      double metalTaxable = silverBhawAmt -
-          (discountAmount * _proportionalRatio(_wholesaleTotalMetalAmount));
-      double labourTaxable = silverMakingCharge -
-          (discountAmount * _proportionalRatio(totalMakingCharge));
-      return _taxAmount(metalTaxable, _metalGstRate(MetalType.silver)) +
-          _taxAmount(labourTaxable, _makingGstRate);
-    }
-    double retailTaxable = totalSilverAmount -
-        (discountAmount * _proportionalRatio(totalSilverAmount));
-    return _taxAmount(retailTaxable, _metalGstRate(MetalType.silver));
-  }
-
-  double get platinumGst {
-    if (billType != BillType.gst) return 0.0;
-    if (billingMode == BillingMode.wholesale) {
-      double metalTaxable = platBhawAmt -
-          (discountAmount * _proportionalRatio(_wholesaleTotalMetalAmount));
-      double labourTaxable = platinumMakingCharge -
-          (discountAmount * _proportionalRatio(totalMakingCharge));
-      return _taxAmount(metalTaxable, _metalGstRate(MetalType.platinum)) +
-          _taxAmount(labourTaxable, _makingGstRate);
-    }
-    double retailTaxable = totalPlatinumAmount -
-        (discountAmount * _proportionalRatio(totalPlatinumAmount));
-    return _taxAmount(retailTaxable, _metalGstRate(MetalType.platinum));
-  }
-
-  double get diamondGst {
-    if (billType != BillType.gst) return 0.0;
-    if (billingMode == BillingMode.wholesale) {
-      double metalTaxable = diaBhawAmt -
-          (discountAmount * _proportionalRatio(_wholesaleTotalMetalAmount));
-      double labourTaxable = diamondMakingCharge -
-          (discountAmount * _proportionalRatio(totalMakingCharge));
-      return _taxAmount(metalTaxable, _metalGstRate(MetalType.diamond)) +
-          _taxAmount(labourTaxable, _makingGstRate);
-    }
-    double retailTaxable = totalDiamondAmount -
-        (discountAmount * _proportionalRatio(totalDiamondAmount));
-    return _taxAmount(retailTaxable, _metalGstRate(MetalType.diamond));
-  }
-
-  double get totalGst => goldGst + silverGst + platinumGst + diamondGst;
-  double get cgst => totalGst / 2;
-  double get sgst => totalGst / 2;
-
-  double get grandTotal => taxableAmount + totalGst;
-  double get finalPayableAmount => billingMode == BillingMode.wholesale
-      ? grandTotal
-      : grandTotal - oldGoldCashDeduction;
+  double get totalGoldWt => _totals.totalGoldWt;
+  double get totalSilverWt => _totals.totalSilverWt;
+  double get totalPlatinumWt => _totals.totalPlatinumWt;
+  double get totalDiamondWt => _totals.totalDiamondWt;
+  double get totalGoldAmount => _totals.totalGoldAmount;
+  double get totalSilverAmount => _totals.totalSilverAmount;
+  double get totalPlatinumAmount => _totals.totalPlatinumAmount;
+  double get totalDiamondAmount => _totals.totalDiamondAmount;
+  double get totalOldGoldAmount => _totals.totalOldGoldAmount;
+  double get oldGoldCashDeduction => _totals.oldGoldCashDeduction;
+  double get pureGoldAmount => _totals.pureGoldAmount;
+  double get pureSilverAmount => _totals.pureSilverAmount;
+  double get purePlatinumAmount => _totals.purePlatinumAmount;
+  double get pureDiamondAmount => _totals.pureDiamondAmount;
+  double get goldSoldFine => _totals.goldSoldFine;
+  double get silverSoldFine => _totals.silverSoldFine;
+  double get platSoldFine => _totals.platinumSoldFine;
+  double get diaSoldFine => _totals.diamondSoldFine;
+  double get goldJamaFine => _totals.goldJamaFine;
+  double get silverJamaFine => _totals.silverJamaFine;
+  double get platJamaFine => _totals.platinumJamaFine;
+  double get diaJamaFine => _totals.diamondJamaFine;
+  double get goldNetFine => _totals.goldNetFine;
+  double get silverNetFine => _totals.silverNetFine;
+  double get platNetFine => _totals.platinumNetFine;
+  double get diaNetFine => _totals.diamondNetFine;
+  double get goldBhawAmt => _totals.goldBhawAmount;
+  double get silverBhawAmt => _totals.silverBhawAmount;
+  double get platBhawAmt => _totals.platinumBhawAmount;
+  double get diaBhawAmt => _totals.diamondBhawAmount;
+  double get goldMakingCharge => _totals.goldMakingCharge;
+  double get silverMakingCharge => _totals.silverMakingCharge;
+  double get platinumMakingCharge => _totals.platinumMakingCharge;
+  double get diamondMakingCharge => _totals.diamondMakingCharge;
+  double get totalMakingCharge => _totals.totalMakingCharge;
+  double get grossAmount => _totals.grossAmount;
+  double get discountAmount => _totals.discountAmount;
+  double get taxableAmount => _totals.taxableAmount;
+  double get goldGst => _totals.goldGst;
+  double get silverGst => _totals.silverGst;
+  double get platinumGst => _totals.platinumGst;
+  double get diamondGst => _totals.diamondGst;
+  double get totalGst => _totals.totalGst;
+  double get cgst => _totals.cgst;
+  double get sgst => _totals.sgst;
+  double get grandTotal => _totals.grandTotal;
+  double get finalPayableAmount => _totals.finalPayableAmount;
   double get discountInputAmount => _discountInput;
-  double get cashPaidAmount => _allocatedPaymentAmount(PaymentMode.cash);
-  double get upiPaidAmount => _allocatedPaymentAmount(PaymentMode.upi);
-  double get cardPaidAmount => _allocatedPaymentAmount(PaymentMode.card);
-  double get advancePaidAmount => _allocatedPaymentAmount(PaymentMode.advance);
-  double get totalPaid => _cashInput + _upiInput + _cardInput + _advInput;
-  double get balanceDue => finalPayableAmount - totalPaid;
-  double get changeReturnAmount {
-    final excess = totalPaid - finalPayableAmount;
-    return excess > _invoiceAmountTolerance ? excess : 0.0;
-  }
+  double get cashPaidAmount => _totals.cashPaidAmount;
+  double get upiPaidAmount => _totals.upiPaidAmount;
+  double get cardPaidAmount => _totals.cardPaidAmount;
+  double get advancePaidAmount => _totals.advancePaidAmount;
+  double get totalPaid => _totals.totalPaid;
+  double get balanceDue => _totals.balanceDue;
+  double get changeReturnAmount => _totals.changeReturnAmount;
 
   bool get hasChangeReturn => changeReturnAmount > _invoiceAmountTolerance;
   bool get hasConfirmedChangeReturn =>
       hasChangeReturn &&
       changeReturnMethod != null &&
       canReturnChangeWith(changeReturnMethod!);
-  double get invoiceTotalPaid =>
-      cashPaidAmount + upiPaidAmount + cardPaidAmount + advancePaidAmount;
-  double get invoiceBalanceDue => finalPayableAmount - invoiceTotalPaid;
+  double get invoiceTotalPaid => _totals.invoiceTotalPaid;
+  double get invoiceBalanceDue => _totals.invoiceBalanceDue;
 
   PaymentMode? get changeCreditSourcePaymentMode {
-    if (!hasChangeReturn) return null;
-    final allocatedCash = cashPaidAmount;
-    if (_cashInput - allocatedCash > _invoiceAmountTolerance) {
-      return PaymentMode.cash;
-    }
-    final allocatedUpi = upiPaidAmount;
-    if (_upiInput - allocatedUpi > _invoiceAmountTolerance) {
-      return PaymentMode.upi;
-    }
-    final allocatedCard = cardPaidAmount;
-    if (_cardInput - allocatedCard > _invoiceAmountTolerance) {
-      return PaymentMode.card;
-    }
-    final allocatedAdvance = advancePaidAmount;
-    if (_advInput - allocatedAdvance > _invoiceAmountTolerance) {
-      return PaymentMode.advance;
-    }
-    return PaymentMode.cash;
-  }
-
-  double _allocatedPaymentAmount(PaymentMode mode) {
-    var remaining = finalPayableAmount;
-    if (remaining <= _invoiceAmountTolerance) {
-      return 0.0;
-    }
-
-    double take(double raw) {
-      if (remaining <= _invoiceAmountTolerance || raw <= 0) {
-        return 0.0;
-      }
-      final allocated = raw > remaining ? remaining : raw;
-      remaining -= allocated;
-      return allocated;
-    }
-
-    final cash = take(_cashInput);
-    final upi = take(_upiInput);
-    final card = take(_cardInput);
-    final advance = take(_advInput);
-
-    switch (mode) {
-      case PaymentMode.cash:
-        return cash;
-      case PaymentMode.upi:
-        return upi;
-      case PaymentMode.card:
-        return card;
-      case PaymentMode.advance:
-        return advance;
-    }
+    return _totals.changeCreditSourcePaymentMode;
   }
 
   bool canReturnChangeWith(RefundMethod method) {
@@ -1371,70 +1136,23 @@ class PosBillingController extends ChangeNotifier {
       oldGoldItems.any(_isBillableOldMetalItem);
 
   String? validateInvoiceReadiness() {
-    if (saleItems.isEmpty && oldGoldItems.isEmpty) {
-      return "The cart is empty. Please add at least one item before generating an invoice.";
-    }
-
-    for (int index = 0; index < saleItems.length; index++) {
-      final item = saleItems[index];
-      final rowNumber = index + 1;
-      if (item.netWt <= _invoiceWeightTolerance) {
-        return "Enter gross weight for item row $rowNumber before generating an invoice.";
-      }
-      if (billingMode == BillingMode.retail && item.rate <= 0) {
-        return "Enter a valid rate for item row $rowNumber before generating an invoice.";
-      }
-      if (billingMode == BillingMode.retail &&
-          item.totalValue <= _invoiceAmountTolerance) {
-        return "Complete item row $rowNumber before generating an invoice.";
-      }
-    }
-
-    for (int index = 0; index < oldGoldItems.length; index++) {
-      final item = oldGoldItems[index];
-      final rowNumber = index + 1;
-      if (item.netWt <= _invoiceWeightTolerance) {
-        return "Enter gross weight for exchange row $rowNumber before generating an invoice.";
-      }
-      if (item.rate <= 0) {
-        return "Enter a valid rate for exchange row $rowNumber before generating an invoice.";
-      }
-      if (item.totalValue <= _invoiceAmountTolerance) {
-        return "Complete exchange row $rowNumber before generating an invoice.";
-      }
-    }
-
-    if (!hasBillableInvoiceItems) {
-      return "Complete at least one billable item before generating an invoice.";
-    }
-
-    if (finalPayableAmount < -_invoiceAmountTolerance) {
-      return "This bill creates a refund/exchange balance. Please use the separate refund or exchange flow.";
-    }
-
-    if (hasChangeReturn) {
-      if (changeReturnMethod == null) {
-        return "Settle the excess amount before generating the invoice.";
-      }
-      if (!canReturnChangeWith(changeReturnMethod!)) {
-        return "Select or create a customer before adding excess amount to customer account.";
-      }
-    }
-
-    if (balanceDue > _invoiceAmountTolerance) {
-      if (selectedCustomer == null) {
-        return "Select or create a customer before saving a due bill.";
-      }
-      if (promiseDate == null) {
-        return "Select a promise date before saving a due bill.";
-      }
-    }
-
-    if (_advInput > _invoiceAmountTolerance && selectedCustomer == null) {
-      return "Select or create a customer before using advance payment.";
-    }
-
-    return null;
+    return const PosInvoiceReadinessValidator().validate(
+      PosInvoiceReadinessInput(
+        saleItems: saleItems,
+        oldGoldItems: oldGoldItems,
+        billingMode: billingMode,
+        finalPayableAmount: finalPayableAmount,
+        hasChangeReturn: hasChangeReturn,
+        hasConfirmedChangeReturn: hasConfirmedChangeReturn,
+        changeReturnMethod: changeReturnMethod,
+        balanceDue: balanceDue,
+        hasSelectedCustomer: selectedCustomer != null,
+        hasPromiseDate: promiseDate != null,
+        advanceInput: _advInput,
+        amountTolerance: _invoiceAmountTolerance,
+        weightTolerance: _invoiceWeightTolerance,
+      ),
+    );
   }
 
   void focusFirstInvoiceIssue() {

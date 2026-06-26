@@ -28,6 +28,38 @@ void main() {
     await db.close();
   });
 
+  test('wholesale percentage making is calculated from metal value', () {
+    final item = SaleItemModel(
+      metal: pos.MetalType.gold,
+      makingChargeType: pos.MakingChargeType.percentage,
+    );
+    item.grossCtrl.text = '10';
+    item.lessCtrl.text = '0';
+    item.rateCtrl.text = '1000';
+    item.makingCtrl.text = '5';
+
+    expect(item.wholesaleLabourAmt, 500);
+
+    item.dispose();
+  });
+
+  test('old silver exchange does not treat blank purity as pure silver', () {
+    final item = OldGoldItemModel(metal: pos.MetalType.silver);
+    item.grossCtrl.text = '10';
+    item.lessCtrl.text = '0';
+    item.rateCtrl.text = '100';
+    item.purityCtrl.clear();
+
+    expect(item.fineWt, 0);
+    expect(item.totalValue, 0);
+
+    item.purityCtrl.text = '92.5';
+    expect(item.fineWt, 9.25);
+    expect(item.totalValue, 925);
+
+    item.dispose();
+  });
+
   test(
     'finalizeSale saves bill, sale items, old gold, stock movement and cash ledger',
     () async {

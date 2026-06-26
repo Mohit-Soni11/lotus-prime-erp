@@ -1,19 +1,12 @@
-// ==========================================
-// FILE: sales_pos_models.dart
-// TYPE: Core Data Models (UPGRADED)
-// AUTHOR: Senior System Architect
-// DESCRIPTION: Zero-Lag Data Models. Implements Value-Equality checks
-//              to prevent UI rebuild spam on non-value keystrokes.
-// ==========================================
-
 import 'package:flutter/material.dart';
+
+import '../../../features/sales_pos/domain/services/pos_number_formatter.dart';
+import '../../../features/sales_pos/domain/services/pos_number_parser.dart';
+import '../../../features/sales_pos/domain/services/pos_weight_math.dart';
 import '../sales_pos_enums/sales_pos_enums.dart';
 
-//  Optimized parser
 double _parseSafeNumber(String text) {
-  if (text.isEmpty) return 0.0;
-  String cleanText = text.replaceAll(RegExp(r'[^0-9.]'), '');
-  return double.tryParse(cleanText) ?? 0.0;
+  return PosNumberParser.parseNonNegative(text);
 }
 
 //  Converts purity labels to their effective fine percentages.
@@ -46,21 +39,11 @@ double _purityLabelToPercent(String label) {
 }
 
 String _formatMasterInput(double value) {
-  if (value <= 0) return '';
-  final rounded = value.roundToDouble();
-  if ((value - rounded).abs() < 0.0001) {
-    return rounded.toStringAsFixed(0);
-  }
-  return value
-      .toStringAsFixed(2)
-      .replaceFirst(RegExp(r'0+$'), '')
-      .replaceFirst(RegExp(r'\.$'), '');
+  return PosNumberFormatter.compact(value);
 }
 
 double _roundWeight3(double value) {
-  if (value == 0) return 0.0;
-  final rounded = (value * 1000).roundToDouble() / 1000.0;
-  return rounded == -0.0 ? 0.0 : rounded;
+  return PosWeightMath.roundToThreeDecimals(value);
 }
 
 class SaleItemModel extends ChangeNotifier {
@@ -217,8 +200,9 @@ class SaleItemModel extends ChangeNotifier {
       case MakingChargeType.perKg:
         return _makingInput * (netWt / 1000);
       case MakingChargeType.perGram:
-      case MakingChargeType.percentage: // Fallback for invalid state
         return _makingInput * netWt;
+      case MakingChargeType.percentage:
+        return (netWt * _rate) * (_makingInput / 100);
     }
   }
 
@@ -463,16 +447,10 @@ class OldGoldItemModel extends ChangeNotifier {
   String? get rateSourceLabel => _rateSourceLabel;
 
   double get fineWt {
-    if (_metal == MetalType.silver && purityCtrl.text.isEmpty) {
-      return _roundWeight3(netWt);
-    }
     return _roundWeight3(netWt * (_purity / 100));
   }
 
   double get totalValue {
-    if (_metal == MetalType.silver && purityCtrl.text.isEmpty) {
-      return netWt * _rate;
-    }
     return fineWt * _rate;
   }
 

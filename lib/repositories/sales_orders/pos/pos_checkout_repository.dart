@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../../database/db/app_database.dart';
+import '../../../features/sales_pos/domain/services/pos_number_parser.dart';
 import '../../../models/finance/bank_book/bank_book_enums.dart' as bank_book;
 import '../../../models/finance/cash_book/cash_book_enums.dart' as cash_book;
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
@@ -1125,11 +1126,7 @@ class PosCheckoutRepository {
   }
 
   double _parseSafeNumber(String text) {
-    if (text.trim().isEmpty) {
-      return 0.0;
-    }
-    final cleanText = text.replaceAll(RegExp(r'[^0-9.]'), '');
-    return double.tryParse(cleanText) ?? 0.0;
+    return PosNumberParser.parseNonNegative(text);
   }
 
   double _dueAmount(PosInvoiceModel invoice) {
