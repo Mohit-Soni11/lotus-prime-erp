@@ -13,7 +13,9 @@ import '../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../logic/sales_orders/sales_pos/pos_invoice_controller.dart';
+import '../../../features/print_templates/domain/print_template_registry.dart';
 import 'pos_invoice_metal_setup_card.dart';
+import 'pos_invoice_template_selector.dart';
 
 class PosInvoicePreviewScreen extends StatefulWidget {
   final PosBillingController billingCtrl;
@@ -102,6 +104,8 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildFormatGrid(),
+                          const SizedBox(height: 24),
+                          _buildTemplateSelector(),
                           const SizedBox(height: 24),
                           _buildCategorizedCustomization(),
                           const SizedBox(height: 24),
@@ -220,6 +224,14 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
           }).toList(),
         ),
       ],
+    );
+  }
+
+  Widget _buildTemplateSelector() {
+    return PosInvoiceTemplateSelector(
+      selectedTemplateId: _invCtrl.selectedTemplateId,
+      documentType: PrintTemplateDocumentType.salesInvoice,
+      onChanged: (templateId) => _invCtrl.selectPrintTemplate(templateId),
     );
   }
 
@@ -809,7 +821,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
     }
 
     final previewKey = ValueKey(
-      '${_invCtrl.selectedFormat.name}-${_invCtrl.effectiveActiveMetal?.name ?? 'all'}-${_invCtrl.pdfBytes?.length ?? 0}',
+      '${_invCtrl.selectedFormat.name}-${_invCtrl.selectedTemplateId}-${_invCtrl.effectiveActiveMetal?.name ?? 'all'}-${_invCtrl.pdfBytes?.length ?? 0}',
     );
 
     return AnimatedSwitcher(
