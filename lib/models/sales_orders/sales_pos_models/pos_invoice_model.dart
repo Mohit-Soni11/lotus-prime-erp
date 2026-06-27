@@ -86,6 +86,8 @@ class PosInvoiceModel {
   final String shopAddress;
   final String shopPhone;
   final String shopGstin;
+  final String shopLogoPath;
+  final String shopLogoShape;
 
   final String customerName;
   final String customerMobile;
@@ -139,6 +141,8 @@ class PosInvoiceModel {
     required this.shopAddress,
     required this.shopPhone,
     required this.shopGstin,
+    this.shopLogoPath = '',
+    this.shopLogoShape = 'square',
     required this.customerName,
     required this.customerMobile,
     required this.customerCity,

@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -198,29 +201,48 @@ class PosLotusClassicInvoicePdfLayout {
 
   pw.Widget _brandMark(PosInvoiceModel invoice) {
     final initials = _initials(invoice.shopName);
+    final logoImage = _loadLogoImage(invoice.shopLogoPath);
+    final logoShape = invoice.shopLogoShape.trim().toLowerCase();
+    final isSquare = logoShape != 'circle';
+    final content = logoImage == null
+        ? pw.Container(
+            alignment: pw.Alignment.center,
+            color: _gold,
+            child: pw.Text(
+              initials,
+              style: pw.TextStyle(
+                color: PdfColors.white,
+                fontSize: 22,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          )
+        : pw.Container(
+            color: PdfColors.white,
+            child: pw.Image(
+              logoImage,
+              fit: pw.BoxFit.cover,
+            ),
+          );
+    final clipped = isSquare
+        ? pw.ClipRRect(
+            horizontalRadius: 7,
+            verticalRadius: 7,
+            child: content,
+          )
+        : pw.ClipOval(child: content);
+
     return pw.Container(
       width: 52,
       height: 52,
       padding: const pw.EdgeInsets.all(2),
-      decoration: const pw.BoxDecoration(
+      decoration: pw.BoxDecoration(
         color: _gold,
-        borderRadius: pw.BorderRadius.all(pw.Radius.circular(8)),
+        shape: isSquare ? pw.BoxShape.rectangle : pw.BoxShape.circle,
+        borderRadius:
+            isSquare ? const pw.BorderRadius.all(pw.Radius.circular(8)) : null,
       ),
-      child: pw.Container(
-        alignment: pw.Alignment.center,
-        decoration: const pw.BoxDecoration(
-          color: PdfColors.white,
-          borderRadius: pw.BorderRadius.all(pw.Radius.circular(6)),
-        ),
-        child: pw.Text(
-          initials,
-          style: pw.TextStyle(
-            color: _gold,
-            fontSize: 18,
-            fontWeight: pw.FontWeight.bold,
-          ),
-        ),
-      ),
+      child: clipped,
     );
   }
 
@@ -1247,5 +1269,43 @@ class PosLotusClassicInvoicePdfLayout {
     if (words.isEmpty) return 'AJ';
     final initials = words.take(2).map((word) => word[0].toUpperCase()).join();
     return initials.isEmpty ? 'AJ' : initials;
+  }
+
+  pw.MemoryImage? _loadLogoImage(String rawPath) {
+    final bytes = _readLogoBytes(rawPath);
+    return bytes == null ? null : pw.MemoryImage(bytes);
+  }
+
+  Uint8List? _readLogoBytes(String rawPath) {
+    var path = rawPath.trim();
+    if (path.isEmpty) return null;
+
+    try {
+      final uri = Uri.tryParse(path);
+      if (uri != null && uri.isScheme('file')) {
+        path = uri.toFilePath();
+      }
+
+      final candidates = <File>[
+        File(path),
+        if (!_isAbsolutePath(path))
+          File('${Directory.current.path}${Platform.pathSeparator}$path'),
+      ];
+
+      for (final file in candidates) {
+        if (file.existsSync()) {
+          return file.readAsBytesSync();
+        }
+      }
+    } catch (_) {
+      return null;
+    }
+
+    return null;
+  }
+
+  bool _isAbsolutePath(String path) {
+    if (path.startsWith('/') || path.startsWith(r'\')) return true;
+    return RegExp(r'^[A-Za-z]:[\\/]').hasMatch(path);
   }
 }

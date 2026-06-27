@@ -16,6 +16,7 @@ class AppRoutes {
 
   // Settings
   static const String billingSetupRoute = '/settings/billing-setup';
+  static const String printTemplatesRoute = '/settings/print-templates';
 
   // Customer
   static const String customerListRoute = '/customer/list';
@@ -84,6 +85,7 @@ class AppRoutes {
     exitAppRoute: 'Exit Application',
     accountProfileRoute: 'My Account',
     billingSetupRoute: 'Billing Setup',
+    printTemplatesRoute: 'Print Templates',
     customerListRoute: 'Customer List',
     addCustomerRoute: 'Add New Customer',
     customerProfileRoute: 'Customer Profile',
@@ -143,6 +145,7 @@ class RoutePaths {
 
   // Settings
   static const String billingSetup = '/app/settings/billing-setup';
+  static const String printTemplates = '/app/settings/print-templates';
 
   // Customer
   static const String customerList = '/app/customer/list';
@@ -231,6 +234,7 @@ class RouteMapper {
     AppRoutes.settingsRoute: RoutePaths.settings,
     AppRoutes.accountProfileRoute: RoutePaths.accountProfile,
     AppRoutes.billingSetupRoute: RoutePaths.billingSetup,
+    AppRoutes.printTemplatesRoute: RoutePaths.printTemplates,
     AppRoutes.customerListRoute: RoutePaths.customerList,
     AppRoutes.addCustomerRoute: RoutePaths.customerAdd,
     AppRoutes.creditLimitRoute: RoutePaths.customerCreditLimit,

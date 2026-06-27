@@ -68,6 +68,8 @@ class PosInvoiceController extends ChangeNotifier {
   String _realShopAddress = "Address not set";
   String _realShopPhone = "Phone not set";
   String _realShopGstin = "Not Registered";
+  String _realShopLogoPath = "";
+  String _realShopLogoShape = "square";
 
   BillSettings getActiveConfig(BillingMode mode, BillType type) {
     if (mode == BillingMode.retail) {
@@ -413,6 +415,11 @@ class PosInvoiceController extends ChangeNotifier {
               : ownerPhone.isNotEmpty
                   ? ownerPhone
                   : "Phone not set";
+
+          _realShopLogoPath = basicInfo['logo_path']?.toString().trim() ?? '';
+          _realShopLogoShape =
+              basicInfo['logo_shape']?.toString().trim().toLowerCase() ??
+                  'square';
         }
 
         if (addressData != null) {
@@ -446,6 +453,8 @@ class PosInvoiceController extends ChangeNotifier {
       AppLogger.error(" [INVOICE] Error fetching shop data: $e");
       _realShopName =
           billing.shopName.isNotEmpty ? billing.shopName : "Lotus Jewellers";
+      _realShopLogoPath = "";
+      _realShopLogoShape = "square";
     }
   }
 
@@ -459,6 +468,8 @@ class PosInvoiceController extends ChangeNotifier {
       shopAddress: _realShopAddress,
       shopPhone: _realShopPhone,
       shopGstin: _realShopGstin,
+      shopLogoPath: _realShopLogoPath,
+      shopLogoShape: _realShopLogoShape,
       customerName: billing.nameCtrl.text,
       customerMobile: billing.mobileCtrl.text,
       customerCity: billing.cityCtrl.text,
@@ -526,6 +537,8 @@ class PosInvoiceController extends ChangeNotifier {
       shopAddress: source.shopAddress,
       shopPhone: source.shopPhone,
       shopGstin: source.shopGstin,
+      shopLogoPath: source.shopLogoPath,
+      shopLogoShape: source.shopLogoShape,
       customerName: source.customerName,
       customerMobile: source.customerMobile,
       customerCity: source.customerCity,
@@ -773,6 +786,8 @@ class PosInvoiceController extends ChangeNotifier {
         shopAddress: invoice!.shopAddress,
         shopPhone: invoice!.shopPhone,
         shopGstin: invoice!.shopGstin,
+        shopLogoPath: invoice!.shopLogoPath,
+        shopLogoShape: invoice!.shopLogoShape,
         customerName: invoice!.customerName,
         customerMobile: invoice!.customerMobile,
         customerCity: invoice!.customerCity,

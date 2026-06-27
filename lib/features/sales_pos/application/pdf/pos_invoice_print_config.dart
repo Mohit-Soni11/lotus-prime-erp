@@ -62,10 +62,10 @@ class BillSettings {
       termsAndConditions: model.termsAndConditions,
       returnPolicyText: model.returnPolicyText,
       buybackPolicyText: model.buybackPolicyText,
-      printTermsAndConditions: false,
-      printReturnPolicy: false,
-      printBuybackPolicy: false,
-      printFooterMessage: false,
+      printTermsAndConditions: model.printTermsAndConditions,
+      printReturnPolicy: model.printReturnPolicy,
+      printBuybackPolicy: model.printBuybackPolicy,
+      printFooterMessage: model.printFooterMessage,
       selectedTemplate: model.selectedTemplate,
     );
   }

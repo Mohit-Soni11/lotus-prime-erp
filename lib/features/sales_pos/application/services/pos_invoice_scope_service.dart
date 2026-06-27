@@ -90,6 +90,8 @@ class PosInvoiceScopeService {
       shopAddress: source.shopAddress,
       shopPhone: source.shopPhone,
       shopGstin: source.shopGstin,
+      shopLogoPath: source.shopLogoPath,
+      shopLogoShape: source.shopLogoShape,
       customerName: source.customerName,
       customerMobile: source.customerMobile,
       customerCity: source.customerCity,

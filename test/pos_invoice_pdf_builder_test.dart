@@ -31,9 +31,13 @@ void main() {
 
       expect(scoped, hasLength(2));
       expect(scoped[0].invoiceNumber, 'POS-001-GOLD');
+      expect(scoped[0].shopLogoPath, 'C:/Lotus/logo.png');
+      expect(scoped[0].shopLogoShape, 'square');
       expect(scoped[0].saleItems, [gold]);
       expect(scoped[0].grossAmount, gold.totalValue);
       expect(scoped[1].invoiceNumber, 'POS-001-SILVER');
+      expect(scoped[1].shopLogoPath, 'C:/Lotus/logo.png');
+      expect(scoped[1].shopLogoShape, 'square');
       expect(scoped[1].saleItems, [silver]);
       expect(scoped[1].grossAmount, silver.totalValue);
 
@@ -101,6 +105,8 @@ PosInvoiceModel _invoice({
     shopAddress: 'Patna',
     shopPhone: '9304479436',
     shopGstin: '',
+    shopLogoPath: 'C:/Lotus/logo.png',
+    shopLogoShape: 'square',
     customerName: 'Reyansh Soni',
     customerMobile: '9304479436',
     customerCity: 'Patna',

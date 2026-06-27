@@ -9,7 +9,7 @@ import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart'
 import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../services/pos_invoice_scope_service.dart';
 import 'pos_invoice_print_config.dart';
-import 'pos_lotus_classic_invoice_pdf_layout.dart';
+import 'pos_invoice_template_renderer_registry.dart';
 
 class PosInvoicePdfBuildOptions {
   final PrintFormat format;
@@ -160,11 +160,16 @@ class _PosInvoicePdfDocumentBuilder {
   }
 
   pw.Widget _buildA4Layout(PosInvoiceModel invoice) {
-    if (_usesLotusClassicTemplate) {
-      return PosLotusClassicInvoicePdfLayout(
+    final templateLayout = PosInvoiceTemplateRendererRegistry.tryBuildA4(
+      templateId: options.templateId,
+      invoice: invoice,
+      context: PosInvoiceTemplateRenderContext(
         scopeService: scopeService,
         metalPrintSettings: options.metalPrintSettings,
-      ).build(invoice);
+      ),
+    );
+    if (templateLayout != null) {
+      return templateLayout;
     }
 
     return pw.Column(
@@ -184,11 +189,6 @@ class _PosInvoicePdfDocumentBuilder {
         _pdfFooter(invoice),
       ],
     );
-  }
-
-  bool get _usesLotusClassicTemplate {
-    return PrintTemplateRegistry.byId(options.templateId).id ==
-        PrintTemplateRegistry.defaultTemplateId;
   }
 
   pw.Widget _pdfA4Header(PosInvoiceModel invoice) {

@@ -33,6 +33,7 @@ import '../../ui/dashboard/dashboard_screen.dart';
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
 import '../../ui/settings/settings_dashboard/settings_screen.dart';
+import '../../ui/settings/print_templates/print_templates_screen.dart';
 
 // ── sales_orders ────────────────────────────────────────────────────────────
 import '../../ui/sales_orders/sales_pos/pos_master_sale_screen.dart';
@@ -365,6 +366,11 @@ GoRouter createAppRouter() {
             builder: (context, state) => SettingsScreen(
               onNavigate: (routeId) => context.go(RouteMapper.toPath(routeId)),
             ),
+          ),
+
+          GoRoute(
+            path: RoutePaths.printTemplates,
+            builder: (context, state) => const PrintTemplatesScreen(),
           ),
 
           // ── CUSTOMER ──────────────────────────────────────────────────────────

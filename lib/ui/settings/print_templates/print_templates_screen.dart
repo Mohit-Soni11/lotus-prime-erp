@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
+import '../../../constants/app_routes.dart';
 import '../../../features/print_templates/application/print_template_preview_pdf_service.dart';
 import '../../../features/print_templates/data/print_template_repository.dart';
 import '../../../features/print_templates/domain/print_template_registry.dart';
@@ -56,7 +58,15 @@ class _PrintTemplatesScreenState extends State<PrintTemplatesScreen> {
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(
-              child: _Header(onBack: () => Navigator.of(context).pop()),
+              child: _Header(
+                onBack: () {
+                  if (context.canPop()) {
+                    context.pop();
+                    return;
+                  }
+                  context.go(RoutePaths.settings);
+                },
+              ),
             ),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),

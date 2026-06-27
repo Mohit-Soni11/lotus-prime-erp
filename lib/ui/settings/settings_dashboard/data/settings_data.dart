@@ -3,6 +3,7 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import '../../../../constants/app_routes.dart';
 import '../../../../models/setting/settings_model.dart';
 import '../../../../theme/settings/settings_dashboard/settings_theme.dart';
 
@@ -42,7 +43,7 @@ class SettingsData {
       accentColor: Color(0xFF0EA5E9),
     ),
     SettingsModel(
-      id: 'print_templates',
+      id: AppRoutes.printTemplatesRoute,
       icon: SettingsIcons.printTemplates,
       title: 'Print Templates',
       subtitle: 'Design invoice, receipt & girvi note print formats',
