@@ -1,23 +1,18 @@
-// =============================================================================
-// FILE        : lib/repositories/setting/billing/sales_billing_repo.dart
-// MODULE      : Billing Setup → Sales
-// DESCRIPTION : DB read/write for sales billing settings.
-//               Upsert pattern: one row per metal, insert or update.
-// =============================================================================
-
-import '../../../database/db/app_database.dart';
-import '../../../core/logging/app_logger.dart';
-import '../../../models/setting/billing_setup/sales_billing_model.dart';
 import 'package:drift/drift.dart';
 
-class SalesBillingRepo {
-  final AppDatabase _db = AppDatabase();
+import '../../../core/logging/app_logger.dart';
+import '../../../database/db/app_database.dart';
+import '../../../models/setting/billing_setup/sales_billing_model.dart';
 
-  // ── Fetch settings for one metal ─────────────────────────────────────────
+class SalesBillingRepo {
+  final AppDatabase _db;
+
+  SalesBillingRepo({AppDatabase? db}) : _db = db ?? AppDatabase();
+
   Future<SalesBillingModel> fetchForMetal(String metal) async {
     await _db.ensureBillingSetupSchema();
     final rows = await (_db.select(_db.salesBillingSettings)
-          ..where((t) => t.metal.equals(metal))
+          ..where((table) => table.metal.equals(metal))
           ..limit(1))
         .get();
 
@@ -25,20 +20,19 @@ class SalesBillingRepo {
     return _rowToModel(rows.first);
   }
 
-  // ── Save settings for one metal (upsert) ─────────────────────────────────
   Future<bool> saveForMetal(SalesBillingModel model) async {
     try {
       await _db.ensureBillingSetupSchema();
       final companion = _toCompanion(model);
       final existingRows = await (_db.select(_db.salesBillingSettings)
-            ..where((t) => t.metal.equals(model.metal)))
+            ..where((table) => table.metal.equals(model.metal)))
           .get();
 
       if (existingRows.isEmpty) {
         await _db.into(_db.salesBillingSettings).insert(companion);
       } else {
         await (_db.update(_db.salesBillingSettings)
-              ..where((t) => t.metal.equals(model.metal)))
+              ..where((table) => table.metal.equals(model.metal)))
             .write(companion);
       }
       return true;
@@ -49,6 +43,18 @@ class SalesBillingRepo {
         stackTrace: stackTrace,
       );
       return false;
+    }
+  }
+
+  Future<void> seedDefaults() async {
+    await _db.ensureBillingSetupSchema();
+    for (final metal in BillingMetal.all) {
+      final existing = await (_db.select(_db.salesBillingSettings)
+            ..where((table) => table.metal.equals(metal)))
+          .getSingleOrNull();
+      if (existing == null) {
+        await saveForMetal(SalesBillingModel.defaultFor(metal));
+      }
     }
   }
 
@@ -91,19 +97,6 @@ class SalesBillingRepo {
     );
   }
 
-  // ── Seed defaults for all 4 metals (called on first app launch) ───────────
-  Future<void> seedDefaults() async {
-    for (final metal in BillingMetal.all) {
-      final existing = await (_db.select(_db.salesBillingSettings)
-            ..where((t) => t.metal.equals(metal)))
-          .getSingleOrNull();
-      if (existing == null) {
-        await saveForMetal(SalesBillingModel.defaultFor(metal));
-      }
-    }
-  }
-
-  // ── Map DB row → model ────────────────────────────────────────────────────
   SalesBillingModel _rowToModel(SalesBillingSetting row) {
     final storedTemplate = row.selectedTemplate;
     return SalesBillingModel(
@@ -139,7 +132,9 @@ class SalesBillingRepo {
       returnPolicyText: row.returnPolicyText,
       buybackPolicyText: row.buybackPolicyText,
       footerMessage: row.footerMessage,
-      selectedTemplate: SalesBillingTemplateOptions.baseTemplate(storedTemplate),
+      selectedTemplate: SalesBillingTemplateOptions.baseTemplate(
+        storedTemplate,
+      ),
       printTermsAndConditions: SalesBillingTemplateOptions.readFlag(
         storedTemplate,
         'terms',

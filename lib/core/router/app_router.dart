@@ -5,17 +5,9 @@
 //               Replaces the 518-line if-else God Class in MainLayoutWrapper.
 //
 // ARCHITECTURE:
-//   /login                    → LoginScreen (standalone, no sidebar)
-//   /app                      → ShellRoute with AppShell (sidebar + content)
-//     /app/dashboard          → DashboardScreen
-//     /app/settings           → SettingsScreen
-//     /app/customer/list      → CustomerListScreen
-//     /app/customer/add       → AddCustomerScreen
-//     /app/customer/profile/:id → CustomerProfileScreen
 //     ... (all 40+ routes)
 //
 // CHANGELOG:
-//   v1 — Extracted from MainLayoutWrapper. Zero if-else navigation.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -25,40 +17,32 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../constants/app_routes.dart';
 import '../../theme/dashboard/app/uv.dart';
 
-// ── AUTH ────────────────────────────────────────────────────────────────────
 import '../../ui/auth/login_screen.dart';
 
-// ── DASHBOARD ─────────────────────────────────────────────────────────────────
 import '../../ui/dashboard/dashboard_screen.dart';
 
-// ── SETTINGS ──────────────────────────────────────────────────────────────────
 import '../../ui/settings/settings_dashboard/settings_screen.dart';
 import '../../ui/settings/print_templates/print_templates_screen.dart';
+import '../../features/settings/billing_setup/presentation/screens/billing_setup_workspace_screen.dart';
 
-// ── sales_orders ────────────────────────────────────────────────────────────
 import '../../ui/sales_orders/sales_pos/pos_master_sale_screen.dart';
 import '../../ui/booking_advance/booking_advance_screen.dart';
 import '../../ui/sales_orders/delivery/delivery_management_screen.dart';
 
-// ── STOCK ─────────────────────────────────────────────────────────────────────
 import '../../ui/stock/add_stock/add_stock_hub_screen.dart';
 import '../../ui/stock/inventory/inventory_screen.dart';
 
-// ── CUSTOMER ──────────────────────────────────────────────────────────────────
 import '../../ui/customer/customer_list/customer_list_screen.dart';
 import '../../ui/customer/add_customer/add_customer_screen.dart';
 import '../../ui/customer/customer_profile/customer_profile_screen.dart';
 import '../../ui/customer/defaulter/defaulter_list_screen.dart';
 
-// ── SUPPLIER ──────────────────────────────────────────────────────────────────
 import '../../ui/stock/supplier/supplier_list/supplier_list_screen.dart';
 import '../../ui/stock/supplier/add_supplier/add_supplier_screen.dart';
 import '../../ui/stock/supplier/supplier_profile/supplier_profile_screen.dart';
 
-// ── PURCHASE ────────────────────────────────────────────────────────────────────
 import '../../ui/purchase_orders/purchase_entry/purchase_entry_screen.dart';
 
-// ── FINANCE ─────────────────────────────────────────────────────────────────────
 import '../../ui/finance/cash_book/cash_book_screen.dart';
 import '../../ui/finance/bank_book/bank_book_screen.dart';
 import '../../ui/finance/due_collection_entry/due_collection_entry_screen.dart';
@@ -66,29 +50,20 @@ import '../../ui/finance/due_report/due_report_screen.dart';
 import '../../ui/finance/due_receipt_history/due_receipt_history_screen.dart';
 import '../../ui/finance/expense/expense_screen.dart';
 
-// ── KARIGAR ─────────────────────────────────────────────────────────────────────
 import '../../ui/karigar/issue_karigar/issue_karigar_screen.dart';
 import '../../ui/karigar/receive_karigar/receive_karigar_screen.dart';
 import '../../ui/karigar/pending_jobs/pending_jobs_screen.dart';
 import '../../ui/karigar/karigar_hisaab/karigar_hisaab_screen.dart';
 
-// ── GIRVI ───────────────────────────────────────────────────────────────────────
 import '../../ui/girvi/new_girvi/new_girvi_screen.dart';
 import '../../ui/girvi/girvi_account/girvi_account_detail_screen.dart';
 import '../../ui/girvi/girvi_list/girvi_list_screen.dart';
 import '../../ui/girvi/interest_calc/interest_calc_screen.dart';
 import '../../ui/girvi/notice_auction/notice_auction_screen.dart';
 
-// ── REPORTS ─────────────────────────────────────────────────────────────────────
 import '../../ui/report/day_book/day_book_screen.dart';
 
-// ── SHELL ───────────────────────────────────────────────────────────────────────
 import '../../ui/layout/app_shell.dart';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// 3. AUTH NOTIFIER — Drives router redirect on login/logout
-// ═══════════════════════════════════════════════════════════════════════════════
 
 final _authNotifier = ValueNotifier<bool>(false);
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -110,10 +85,6 @@ void initAuthRouting() {
     _authNotifier.value = user != null;
   });
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 4. COMING SOON SCREEN — Placeholder for unimplemented routes
-// ═══════════════════════════════════════════════════════════════════════════════
 
 class _ComingSoonScreen extends StatelessWidget {
   final String pageTitle;
@@ -155,9 +126,7 @@ class _ComingSoonScreen extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // 5. ROUTER FACTORY
-// ═══════════════════════════════════════════════════════════════════════════════
 
 GoRouter createAppRouter() {
   return GoRouter(
@@ -168,12 +137,10 @@ GoRouter createAppRouter() {
       final isLoggedIn = _authNotifier.value;
       final isLoginRoute = state.matchedLocation == RoutePaths.login;
 
-      // Not logged in + not on login page → send to login
       if (!isLoggedIn && !isLoginRoute) {
         return RoutePaths.login;
       }
 
-      // Logged in + on login page → send to dashboard
       if (isLoggedIn && isLoginRoute) {
         return RoutePaths.dashboard;
       }
@@ -182,13 +149,10 @@ GoRouter createAppRouter() {
       return null;
     },
     routes: [
-      // ── LOGIN (standalone, no sidebar) ───────────────────────────────────────
       GoRoute(
         path: RoutePaths.login,
         builder: (_, __) => const LoginScreen(),
       ),
-
-      // ── APP SHELL (sidebar + content) ────────────────────────────────────────
       GoRoute(
         path: RoutePaths.girviNew,
         builder: (context, state) {
@@ -211,7 +175,6 @@ GoRouter createAppRouter() {
           );
         },
       ),
-
       GoRoute(
         path: RoutePaths.girviInterest,
         builder: (context, state) {
@@ -236,7 +199,6 @@ GoRouter createAppRouter() {
           );
         },
       ),
-
       GoRoute(
         path: RoutePaths.girviList,
         builder: (context, state) => GirviListScreen(
@@ -244,7 +206,6 @@ GoRouter createAppRouter() {
           onNewGirvi: () => context.go(RoutePaths.girviNew),
         ),
       ),
-
       GoRoute(
         path: RoutePaths.girviAccountDetail,
         builder: (context, state) {
@@ -268,14 +229,12 @@ GoRouter createAppRouter() {
           );
         },
       ),
-
       GoRoute(
         path: RoutePaths.customerDefaulters,
         builder: (context, state) => DefaulterListScreen(
           onBack: () => context.go(RoutePaths.dashboard),
         ),
       ),
-
       GoRoute(
         path: RoutePaths.girviNotice,
         builder: (context, state) => NoticeAuctionScreen(
@@ -283,7 +242,6 @@ GoRouter createAppRouter() {
           onBack: () => context.go(RoutePaths.dashboard),
         ),
       ),
-
       GoRoute(
         path: RoutePaths.salesPos,
         builder: (context, state) {
@@ -314,7 +272,6 @@ GoRouter createAppRouter() {
           );
         },
       ),
-
       GoRoute(
         path: RoutePaths.salesBooking,
         builder: (context, state) {
@@ -341,11 +298,9 @@ GoRouter createAppRouter() {
           );
         },
       ),
-
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
-          // ── CORE ────────────────────────────────────────────────────────────
           GoRoute(
             path: RoutePaths.dashboard,
             builder: (context, state) => DashboardScreen(
@@ -360,20 +315,16 @@ GoRouter createAppRouter() {
               },
             ),
           ),
-
           GoRoute(
             path: RoutePaths.settings,
             builder: (context, state) => SettingsScreen(
               onNavigate: (routeId) => context.go(RouteMapper.toPath(routeId)),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.printTemplates,
             builder: (context, state) => const PrintTemplatesScreen(),
           ),
-
-          // ── CUSTOMER ──────────────────────────────────────────────────────────
           GoRoute(
             path: RoutePaths.customerList,
             builder: (context, state) => CustomerListScreen(
@@ -383,7 +334,6 @@ GoRouter createAppRouter() {
                   context.go(RoutePaths.customerProfileFor(customerId)),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.customerAdd,
             builder: (context, state) => AddCustomerScreen(
@@ -391,7 +341,6 @@ GoRouter createAppRouter() {
               onSaved: () => context.go(RoutePaths.customerList),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.customerProfile,
             builder: (context, state) {
@@ -450,8 +399,6 @@ GoRouter createAppRouter() {
               );
             },
           ),
-
-          // ── SUPPLIER ──────────────────────────────────────────────────────────
           GoRoute(
             path: RoutePaths.supplierList,
             builder: (context, state) => SupplierListScreen(
@@ -461,7 +408,6 @@ GoRouter createAppRouter() {
                   context.go(RoutePaths.supplierProfileFor(supplierId)),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.supplierAdd,
             builder: (context, state) => AddSupplierScreen(
@@ -469,7 +415,6 @@ GoRouter createAppRouter() {
               onSaved: () => context.go(RoutePaths.supplierList),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.supplierProfile,
             builder: (context, state) {
@@ -482,75 +427,60 @@ GoRouter createAppRouter() {
               );
             },
           ),
-
-          // ── sales_orders ────────────────────────────────────────────────────
           GoRoute(
             path: RoutePaths.salesDelivery,
             builder: (context, state) => DeliveryManagementScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),
-
-          // ── PURCHASE ──────────────────────────────────────────────────────────
           GoRoute(
             path: RoutePaths.purchaseEntry,
             builder: (_, __) => const PurchaseEntryScreen(),
           ),
-
           GoRoute(
             path: RoutePaths.purchaseOldGold,
             builder: (context, state) => _ComingSoonScreen(
               pageTitle: AppRoutes.getTitle(AppRoutes.oldGoldBuyRoute),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.purchaseReturn,
             builder: (context, state) => _ComingSoonScreen(
               pageTitle: AppRoutes.getTitle(AppRoutes.purchaseReturnRoute),
             ),
           ),
-
-          // ── STOCK ─────────────────────────────────────────────────────────────
           GoRoute(
             path: RoutePaths.stockInventory,
             builder: (context, state) => InventoryScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.stockAdd,
             builder: (_, __) => const AddStockHubScreen(),
           ),
-
           GoRoute(
             path: RoutePaths.stockBarcode,
             builder: (context, state) => _ComingSoonScreen(
               pageTitle: AppRoutes.getTitle(AppRoutes.barcodePrintRoute),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.stockTransfer,
             builder: (context, state) => _ComingSoonScreen(
               pageTitle: AppRoutes.getTitle(AppRoutes.stockTransferRoute),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.stockLowAlert,
             builder: (context, state) => _ComingSoonScreen(
               pageTitle: AppRoutes.getTitle(AppRoutes.lowStockAlertRoute),
             ),
           ),
-
-          // ── KARIGAR ────────────────────────────────────────────────────────────
           GoRoute(
             path: RoutePaths.karigarIssue,
             builder: (_, __) => const IssueKarigarScreen(),
           ),
-
           GoRoute(
             path: RoutePaths.karigarReceive,
             builder: (context, state) {
@@ -561,7 +491,6 @@ GoRouter createAppRouter() {
               );
             },
           ),
-
           GoRoute(
             path: RoutePaths.karigarPending,
             builder: (context, state) => PendingJobsScreen(
@@ -570,47 +499,38 @@ GoRouter createAppRouter() {
                   context.go('${RoutePaths.karigarReceive}?issueId=$issueId'),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.karigarLedger,
             builder: (context, state) => KarigarHisaabScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),
-
-          // ── GIRVI ─────────────────────────────────────────────────────────────
-          // ── FINANCE ────────────────────────────────────────────────────────────
           GoRoute(
             path: RoutePaths.financeCashBook,
             builder: (_, __) => const CashBookScreen(),
           ),
-
           GoRoute(
             path: RoutePaths.financeBankBook,
             builder: (_, __) => const BankBookScreen(),
           ),
-
           GoRoute(
             path: RoutePaths.financeExpense,
             builder: (context, state) => ExpenseScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.financeJournal,
             builder: (context, state) => _ComingSoonScreen(
               pageTitle: AppRoutes.getTitle(AppRoutes.journalEntryRoute),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.financeDueReport,
             builder: (context, state) => DueReportScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.financeDueCollection,
             builder: (context, state) {
@@ -635,81 +555,64 @@ GoRouter createAppRouter() {
               );
             },
           ),
-
           GoRoute(
             path: RoutePaths.financeDueReceipts,
             builder: (context, state) => DueReceiptHistoryScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),
-
-          // ── REPORTS ────────────────────────────────────────────────────────────
           GoRoute(
             path: RoutePaths.reportDayBook,
             builder: (context, state) => DayBookScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.reportSales,
             builder: (context, state) => _ComingSoonScreen(
               pageTitle: AppRoutes.getTitle(AppRoutes.salesReportRoute),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.reportPurchase,
             builder: (context, state) => _ComingSoonScreen(
               pageTitle: AppRoutes.getTitle(AppRoutes.purchaseReportRoute),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.reportStock,
             builder: (context, state) => _ComingSoonScreen(
               pageTitle: AppRoutes.getTitle(AppRoutes.stockSummaryRoute),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.reportPnl,
             builder: (context, state) => _ComingSoonScreen(
               pageTitle: AppRoutes.getTitle(AppRoutes.profitLossRoute),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.reportGst,
             builder: (context, state) => _ComingSoonScreen(
               pageTitle: AppRoutes.getTitle(AppRoutes.gstReportRoute),
             ),
           ),
-
-          // ── SCHEMES ──────────────────────────────────────────────────────────────
           GoRoute(
             path: RoutePaths.schemesNew,
             builder: (context, state) => _ComingSoonScreen(
               pageTitle: AppRoutes.getTitle(AppRoutes.newSchemeRoute),
             ),
           ),
-
           GoRoute(
             path: RoutePaths.schemesCollection,
             builder: (context, state) => _ComingSoonScreen(
               pageTitle: AppRoutes.getTitle(AppRoutes.monthlyCollectionRoute),
             ),
           ),
-
-          // ── SETTINGS SUB-ROUTES ────────────────────────────────────────────────
           GoRoute(
             path: RoutePaths.billingSetup,
-            builder: (context, state) => _ComingSoonScreen(
-              pageTitle: AppRoutes.getTitle(AppRoutes.billingSetupRoute),
-            ),
+            builder: (context, state) => const BillingSetupWorkspaceScreen(),
           ),
-
-          // ── ACCOUNT ───────────────────────────────────────────────────────────
           GoRoute(
             path: RoutePaths.accountProfile,
             builder: (context, state) => _ComingSoonScreen(

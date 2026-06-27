@@ -17,7 +17,6 @@ class CategoryMeta {
 
 class SettingsData {
   static const List<SettingsModel> items = [
-    // ── BUSINESS ──────────────────────────────────────────────────────────
     SettingsModel(
       id: 'shop_profile',
       icon: SettingsIcons.shopProfile,
@@ -35,7 +34,7 @@ class SettingsData {
       accentColor: Color(0xFF7C6AE8),
     ),
     SettingsModel(
-      id: 'billing_setup',
+      id: AppRoutes.billingSetupRoute,
       icon: SettingsIcons.billing,
       title: 'Billing Setup',
       subtitle: 'Customize invoice layout, terms & printer preferences',
@@ -50,8 +49,6 @@ class SettingsData {
       category: SettingsCategory.business,
       accentColor: Color(0xFFE06B3F),
     ),
-
-    // ── FINANCE ───────────────────────────────────────────────────────────
     SettingsModel(
       id: 'metal_costing',
       icon: Icons.analytics_rounded,
@@ -76,8 +73,6 @@ class SettingsData {
       category: SettingsCategory.finance,
       accentColor: Color(0xFFD97706),
     ),
-
-    // ── SECURITY ──────────────────────────────────────────────────────────
     SettingsModel(
       id: 'security',
       icon: SettingsIcons.security,
@@ -86,8 +81,6 @@ class SettingsData {
       category: SettingsCategory.security,
       accentColor: Color(0xFFDC2626),
     ),
-
-    // ── SYSTEM ────────────────────────────────────────────────────────────
     SettingsModel(
       id: 'notifications',
       icon: SettingsIcons.notifications,
@@ -114,7 +107,6 @@ class SettingsData {
     ),
   ];
 
-  // ── CATEGORY METADATA ─────────────────────────────────────────────────────
   static const Map<SettingsCategory, CategoryMeta> categoryMeta = {
     SettingsCategory.business: CategoryMeta(
       label: 'BUSINESS',

@@ -1,21 +1,19 @@
-// =============================================================================
-// FILE        : lib/repositories/setting/billing/purchase_billing_repo.dart
-// MODULE      : Billing Setup → Purchase
-// =============================================================================
-
-import '../../../database/db/app_database.dart';
-import '../../../core/logging/app_logger.dart';
-import '../../../models/setting/billing_setup/purchase_billing_model.dart';
-import '../../../models/setting/billing_setup/sales_billing_model.dart';
 import 'package:drift/drift.dart';
 
+import '../../../core/logging/app_logger.dart';
+import '../../../database/db/app_database.dart';
+import '../../../models/setting/billing_setup/purchase_billing_model.dart';
+import '../../../models/setting/billing_setup/sales_billing_model.dart';
+
 class PurchaseBillingRepo {
-  final AppDatabase _db = AppDatabase();
+  final AppDatabase _db;
+
+  PurchaseBillingRepo({AppDatabase? db}) : _db = db ?? AppDatabase();
 
   Future<PurchaseBillingModel> fetchForMetal(String metal) async {
     await _db.ensureBillingSetupSchema();
     final rows = await (_db.select(_db.purchaseBillingSettings)
-          ..where((t) => t.metal.equals(metal))
+          ..where((table) => table.metal.equals(metal))
           ..limit(1))
         .get();
 
@@ -28,14 +26,14 @@ class PurchaseBillingRepo {
       await _db.ensureBillingSetupSchema();
       final companion = _toCompanion(model);
       final existingRows = await (_db.select(_db.purchaseBillingSettings)
-            ..where((t) => t.metal.equals(model.metal)))
+            ..where((table) => table.metal.equals(model.metal)))
           .get();
 
       if (existingRows.isEmpty) {
         await _db.into(_db.purchaseBillingSettings).insert(companion);
       } else {
         await (_db.update(_db.purchaseBillingSettings)
-              ..where((t) => t.metal.equals(model.metal)))
+              ..where((table) => table.metal.equals(model.metal)))
             .write(companion);
       }
       return true;
@@ -46,6 +44,18 @@ class PurchaseBillingRepo {
         stackTrace: stackTrace,
       );
       return false;
+    }
+  }
+
+  Future<void> seedDefaults() async {
+    await _db.ensureBillingSetupSchema();
+    for (final metal in BillingMetal.all) {
+      final existing = await (_db.select(_db.purchaseBillingSettings)
+            ..where((table) => table.metal.equals(metal)))
+          .getSingleOrNull();
+      if (existing == null) {
+        await saveForMetal(PurchaseBillingModel.defaultFor(metal));
+      }
     }
   }
 
@@ -79,17 +89,6 @@ class PurchaseBillingRepo {
       footerMessage: Value(model.footerMessage),
       selectedTemplate: Value(model.selectedTemplate),
     );
-  }
-
-  Future<void> seedDefaults() async {
-    for (final metal in BillingMetal.all) {
-      final existing = await (_db.select(_db.purchaseBillingSettings)
-            ..where((t) => t.metal.equals(metal)))
-          .getSingleOrNull();
-      if (existing == null) {
-        await saveForMetal(PurchaseBillingModel.defaultFor(metal));
-      }
-    }
   }
 
   PurchaseBillingModel _rowToModel(PurchaseBillingSetting row) {
