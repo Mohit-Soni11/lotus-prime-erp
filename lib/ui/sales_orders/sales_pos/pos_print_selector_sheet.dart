@@ -8,6 +8,7 @@
 // ==========================================
 
 import 'package:flutter/material.dart';
+import '../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../logic/sales_orders/sales_pos/pos_invoice_controller.dart';
@@ -48,6 +49,7 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
   late Animation<double> _slideAnim;
 
   late PrintFormat _selected;
+  late String _selectedTemplateId;
   int _copies = 1;
   bool _duplicateStamp = false;
 
@@ -55,6 +57,7 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
   void initState() {
     super.initState();
     _selected = widget.invoiceCtrl.selectedFormat;
+    _selectedTemplateId = widget.invoiceCtrl.selectedTemplateId;
     _copies = widget.invoiceCtrl.printCopies;
     _duplicateStamp = widget.invoiceCtrl.includeDuplicateStamp;
 
@@ -94,6 +97,8 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _buildTemplateSelector(),
+                    const SizedBox(height: 20),
                     _buildFormatGrid(),
                     const SizedBox(height: 20),
                     _buildPreviewThumbnail(),
@@ -154,7 +159,7 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                             fontWeight: FontWeight.w900,
                             letterSpacing: 0)),
                     SizedBox(height: 2),
-                    Text("Choose paper size for your printer",
+                    Text("Choose template, paper size and print options",
                         style: TextStyle(
                             color: SalesPosColors.shellTextMuted,
                             fontSize: SalesPosStyles.fontCaption)),
@@ -196,6 +201,42 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                       ),
                     ),
                   ))
+              .toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTemplateSelector() {
+    final templates = PrintTemplateRegistry.forDocument(
+      PrintTemplateDocumentType.salesInvoice,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("INVOICE TEMPLATE",
+            style: TextStyle(
+                color: SalesPosColors.shellTextMuted,
+                fontSize: SalesPosStyles.fontCaption,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0)),
+        const SizedBox(height: 10),
+        Column(
+          children: templates
+              .map(
+                (template) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _TemplateOptionCard(
+                    template: template,
+                    isSelected: _selectedTemplateId == template.id,
+                    onTap: () {
+                      setState(() => _selectedTemplateId = template.id);
+                      widget.invoiceCtrl.selectPrintTemplate(template.id);
+                    },
+                  ),
+                ),
+              )
               .toList(),
         ),
       ],
@@ -367,6 +408,7 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
               child: ElevatedButton.icon(
                 onPressed: () {
                   widget.invoiceCtrl.selectedFormat = _selected;
+                  widget.invoiceCtrl.selectedTemplateId = _selectedTemplateId;
                   widget.invoiceCtrl.printCopies = _copies;
                   widget.invoiceCtrl.includeDuplicateStamp = _duplicateStamp;
                   Navigator.pop(context);
@@ -392,6 +434,124 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TemplateOptionCard extends StatelessWidget {
+  final PrintTemplateDefinition template;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _TemplateOptionCard({
+    required this.template,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? SalesPosColors.brandGold.withValues(alpha: 0.10)
+              : SalesPosColors.bodyPanelBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? SalesPosColors.brandGold
+                : SalesPosColors.bodyBorder,
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 56,
+              decoration: BoxDecoration(
+                color: const Color(0xFF172437),
+                borderRadius: BorderRadius.circular(7),
+                border: Border.all(
+                  color: SalesPosColors.brandGold.withValues(alpha: 0.85),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    height: 8,
+                    margin: const EdgeInsets.fromLTRB(7, 7, 7, 5),
+                    decoration: BoxDecoration(
+                      color: SalesPosColors.brandGold,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  Container(height: 1, color: SalesPosColors.brandGold),
+                  const SizedBox(height: 5),
+                  ...List.generate(
+                    3,
+                    (index) => Container(
+                      height: 3.5,
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.82),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    template.name,
+                    style: TextStyle(
+                      color: isSelected
+                          ? SalesPosColors.brandGold
+                          : SalesPosColors.bodyTextMain,
+                      fontSize: SalesPosStyles.fontLabel,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    template.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: SalesPosColors.shellTextMuted,
+                      fontSize: SalesPosStyles.fontCaption,
+                      height: 1.35,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Icon(
+              isSelected
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              color: isSelected
+                  ? SalesPosColors.brandGold
+                  : SalesPosColors.shellTextMuted,
+              size: 22,
+            ),
+          ],
+        ),
       ),
     );
   }

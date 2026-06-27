@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
 
+import '../../../features/print_templates/application/print_template_preview_pdf_service.dart';
 import '../../../features/print_templates/data/print_template_repository.dart';
 import '../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../theme/settings/settings_dashboard/settings_theme.dart';
@@ -13,6 +16,8 @@ class PrintTemplatesScreen extends StatefulWidget {
 
 class _PrintTemplatesScreenState extends State<PrintTemplatesScreen> {
   final PrintTemplateRepository _repository = PrintTemplateRepository();
+  final PrintTemplatePreviewPdfService _previewService =
+      PrintTemplatePreviewPdfService();
   bool _isApplying = false;
   String? _notice;
 
@@ -30,6 +35,17 @@ class _PrintTemplatesScreenState extends State<PrintTemplatesScreen> {
       _notice =
           '${template.shortName} is now the default print template for Sales, Purchase and Girvi billing.';
     });
+  }
+
+  Future<void> _showTemplatePreview(PrintTemplateDefinition template) {
+    return showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.72),
+      builder: (context) => _TemplatePreviewDialog(
+        template: template,
+        previewService: _previewService,
+      ),
+    );
   }
 
   @override
@@ -62,6 +78,7 @@ class _PrintTemplatesScreenState extends State<PrintTemplatesScreen> {
                       child: _TemplateCard(
                         template: template,
                         isApplying: _isApplying,
+                        onView: () => _showTemplatePreview(template),
                         onApply: () => _applyDefault(template),
                       ),
                     ),
@@ -265,11 +282,13 @@ class _MetricTile extends StatelessWidget {
 class _TemplateCard extends StatelessWidget {
   final PrintTemplateDefinition template;
   final bool isApplying;
+  final VoidCallback onView;
   final VoidCallback onApply;
 
   const _TemplateCard({
     required this.template,
     required this.isApplying,
+    required this.onView,
     required this.onApply,
   });
 
@@ -395,6 +414,23 @@ class _TemplateCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 16),
+                    OutlinedButton.icon(
+                      onPressed: onView,
+                      icon: const Icon(Icons.visibility_outlined),
+                      label: const Text('View'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF111827),
+                        side: const BorderSide(color: Color(0xFFD6B24A)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     FilledButton.icon(
                       onPressed: isApplying ? null : onApply,
                       icon: isApplying
@@ -426,6 +462,220 @@ class _TemplateCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TemplatePreviewDialog extends StatefulWidget {
+  final PrintTemplateDefinition template;
+  final PrintTemplatePreviewPdfService previewService;
+
+  const _TemplatePreviewDialog({
+    required this.template,
+    required this.previewService,
+  });
+
+  @override
+  State<_TemplatePreviewDialog> createState() => _TemplatePreviewDialogState();
+}
+
+class _TemplatePreviewDialogState extends State<_TemplatePreviewDialog> {
+  late PrintTemplateDocumentType _selectedType;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedType = widget.template.supportedDocuments.first;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final dialogWidth = size.width > 1040 ? 1040.0 : size.width - 32;
+    final dialogHeight = size.height > 820 ? 820.0 : size.height - 32;
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(16),
+      child: SizedBox(
+        width: dialogWidth,
+        height: dialogHeight,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Material(
+            color: const Color(0xFF111827),
+            child: Column(
+              children: [
+                _TemplatePreviewHeader(
+                  template: widget.template,
+                  selectedType: _selectedType,
+                  onClose: () => Navigator.of(context).pop(),
+                ),
+                _TemplateTypeSelector(
+                  supportedDocuments: widget.template.supportedDocuments,
+                  selectedType: _selectedType,
+                  onChanged: (type) => setState(() => _selectedType = type),
+                ),
+                Expanded(
+                  child: PdfPreview(
+                    key:
+                        ValueKey('${widget.template.id}-${_selectedType.name}'),
+                    build: (format) => widget.previewService.build(
+                      template: widget.template,
+                      documentType: _selectedType,
+                      pageFormat: format,
+                    ),
+                    initialPageFormat: PdfPageFormat.a4,
+                    allowPrinting: false,
+                    allowSharing: false,
+                    canChangeOrientation: false,
+                    canChangePageFormat: false,
+                    canDebug: false,
+                    useActions: false,
+                    maxPageWidth: 760,
+                    pdfFileName:
+                        '${widget.template.id}_${_selectedType.name}_preview.pdf',
+                    scrollViewDecoration: const BoxDecoration(
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TemplatePreviewHeader extends StatelessWidget {
+  final PrintTemplateDefinition template;
+  final PrintTemplateDocumentType selectedType;
+  final VoidCallback onClose;
+
+  const _TemplatePreviewHeader({
+    required this.template,
+    required this.selectedType,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 16, 12, 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFF111827),
+        border: Border(
+          bottom: BorderSide(color: Color(0xFF263244)),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD4AF37).withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: const Color(0xFFD4AF37).withValues(alpha: 0.38),
+              ),
+            ),
+            child: const Icon(
+              Icons.receipt_long_outlined,
+              color: Color(0xFFD4AF37),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  template.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '${selectedType.label} preview in the shared print template format',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFB8C1D1),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Close preview',
+            onPressed: onClose,
+            icon: const Icon(Icons.close_rounded, color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TemplateTypeSelector extends StatelessWidget {
+  final List<PrintTemplateDocumentType> supportedDocuments;
+  final PrintTemplateDocumentType selectedType;
+  final ValueChanged<PrintTemplateDocumentType> onChanged;
+
+  const _TemplateTypeSelector({
+    required this.supportedDocuments,
+    required this.selectedType,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
+      color: const Color(0xFF172033),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: supportedDocuments
+              .map(
+                (type) => Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(type.label),
+                    selected: selectedType == type,
+                    onSelected: (_) => onChanged(type),
+                    selectedColor: const Color(0xFFD4AF37),
+                    backgroundColor: const Color(0xFF111827),
+                    side: BorderSide(
+                      color: selectedType == type
+                          ? const Color(0xFFD4AF37)
+                          : const Color(0xFF334155),
+                    ),
+                    labelStyle: TextStyle(
+                      color: selectedType == type
+                          ? const Color(0xFF111827)
+                          : Colors.white,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        ),
       ),
     );
   }

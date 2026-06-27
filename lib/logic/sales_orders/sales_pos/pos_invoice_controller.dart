@@ -1,5 +1,6 @@
 //  Database persistence dependencies
 import '../../../database/db/app_database.dart';
+import '../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../features/sales_pos/application/pdf/pos_invoice_pdf_builder.dart';
 import '../../../features/sales_pos/application/pdf/pos_invoice_print_config.dart';
 import '../../../features/sales_pos/application/services/pos_invoice_output_service.dart';
@@ -56,6 +57,7 @@ class PosInvoiceController extends ChangeNotifier {
   final PosCheckoutRepository _checkoutRepo = PosCheckoutRepository();
 
   PrintFormat selectedFormat = PrintFormat.a4;
+  String selectedTemplateId = PrintTemplateRegistry.defaultTemplateId;
   int printCopies = 1;
   bool includeDuplicateStamp = false;
   MetalType? activePrintMetal;
@@ -77,6 +79,10 @@ class PosInvoiceController extends ChangeNotifier {
           ? printConfig.wholesaleNormal
           : printConfig.wholesaleGst;
     }
+  }
+
+  PrintTemplateDefinition get selectedTemplate {
+    return PrintTemplateRegistry.byId(selectedTemplateId);
   }
 
   List<MetalType> get presentMetals {
@@ -287,6 +293,13 @@ class PosInvoiceController extends ChangeNotifier {
     } else if (activePrintMetal == null || !metals.contains(activePrintMetal)) {
       activePrintMetal = metals.first;
     }
+    if (metals.isNotEmpty) {
+      final configuredTemplate =
+          settings[activePrintMetal ?? metals.first]?.selectedTemplate ?? '';
+      if (configuredTemplate.trim().isNotEmpty) {
+        selectedTemplateId = PrintTemplateRegistry.byId(configuredTemplate).id;
+      }
+    }
   }
 
   List<MetalType> _collectMetals(PosInvoiceModel inv) {
@@ -307,6 +320,18 @@ class PosInvoiceController extends ChangeNotifier {
       {required int copies, required bool duplicate}) async {
     printCopies = copies;
     includeDuplicateStamp = duplicate;
+    if (invoice != null) {
+      await _refreshActivePreviewPdf();
+      notifyListeners();
+    }
+  }
+
+  Future<void> selectPrintTemplate(String templateId) async {
+    final resolvedTemplate = PrintTemplateRegistry.byId(templateId);
+    if (selectedTemplateId == resolvedTemplate.id) return;
+
+    selectedTemplateId = resolvedTemplate.id;
+    notifyListeners();
     if (invoice != null) {
       await _refreshActivePreviewPdf();
       notifyListeners();
@@ -683,6 +708,7 @@ class PosInvoiceController extends ChangeNotifier {
         format: fmt,
         copies: printCopies,
         includeDuplicateStamp: includeDuplicateStamp,
+        templateId: selectedTemplateId,
         activeMetal: activeMetal,
         includeAllMetals: includeAllMetals,
         metalPrintSettings: metalPrintSettings,

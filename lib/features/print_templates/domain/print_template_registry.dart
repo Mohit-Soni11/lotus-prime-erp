@@ -63,6 +63,14 @@ class PrintTemplateRegistry {
     return templates.map((template) => template.id).toList(growable: false);
   }
 
+  static List<PrintTemplateDefinition> forDocument(
+    PrintTemplateDocumentType type,
+  ) {
+    return templates
+        .where((template) => template.supports(type))
+        .toList(growable: false);
+  }
+
   static PrintTemplateDefinition byId(String id) {
     final normalized = id.trim();
     for (final template in templates) {

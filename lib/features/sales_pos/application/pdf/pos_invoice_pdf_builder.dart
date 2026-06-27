@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
@@ -15,6 +16,7 @@ class PosInvoicePdfBuildOptions {
   final bool includeDuplicateStamp;
   final MetalType? activeMetal;
   final bool includeAllMetals;
+  final String templateId;
   final Map<MetalType, BillSettings> metalPrintSettings;
 
   const PosInvoicePdfBuildOptions({
@@ -22,6 +24,7 @@ class PosInvoicePdfBuildOptions {
     required this.copies,
     required this.includeDuplicateStamp,
     required this.metalPrintSettings,
+    this.templateId = PrintTemplateRegistry.defaultTemplateId,
     this.activeMetal,
     this.includeAllMetals = false,
   });

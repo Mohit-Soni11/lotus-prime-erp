@@ -28,5 +28,21 @@ void main() {
         PrintTemplateRegistry.defaultTemplateId,
       );
     });
+
+    test('filters templates by document type', () {
+      final templates = PrintTemplateRegistry.forDocument(
+        PrintTemplateDocumentType.salesInvoice,
+      );
+
+      expect(templates, contains(PrintTemplateRegistry.lotusClassic));
+      expect(
+        templates.every(
+          (template) => template.supports(
+            PrintTemplateDocumentType.salesInvoice,
+          ),
+        ),
+        isTrue,
+      );
+    });
   });
 }
