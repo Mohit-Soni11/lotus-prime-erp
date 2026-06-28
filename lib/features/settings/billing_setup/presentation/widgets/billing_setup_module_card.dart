@@ -1,243 +1,187 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../../theme/settings/billing_setup/billing_setup_colors.dart';
 import '../../domain/entities/billing_setup_module.dart';
 import '../theme/billing_setup_design_tokens.dart';
 
-class BillingSetupModuleCard extends StatelessWidget {
+class BillingSetupModuleCard extends StatefulWidget {
   final BillingSetupModule module;
   final VoidCallback onOpen;
+  final double height;
 
   const BillingSetupModuleCard({
     super.key,
     required this.module,
     required this.onOpen,
+    this.height = 218,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final accent = BillingSetupDesignTokens.accentFor(module.id);
+  State<BillingSetupModuleCard> createState() => _BillingSetupModuleCardState();
+}
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: BillingSetupDesignTokens.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: BillingSetupDesignTokens.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: accent.withValues(alpha: 0.22)),
+class _BillingSetupModuleCardState extends State<BillingSetupModuleCard> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = BillingSetupDesignTokens.accentFor(widget.module.id);
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedScale(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        scale: _hovered ? 1.018 : 1,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: widget.onOpen,
+            borderRadius: BorderRadius.circular(14),
+            splashColor: accent.withValues(alpha: 0.08),
+            highlightColor: accent.withValues(alpha: 0.04),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              height: widget.height,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: BillingSetupColors.cardBg,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: _hovered
+                      ? accent.withValues(alpha: 0.50)
+                      : BillingSetupColors.cardBorder,
+                  width: _hovered ? 1.5 : 1,
                 ),
-                child: Icon(
-                  BillingSetupDesignTokens.iconFor(module.id),
-                  color: accent,
-                  size: 22,
-                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _hovered
+                        ? accent.withValues(alpha: 0.12)
+                        : Colors.black.withValues(alpha: 0.04),
+                    blurRadius: _hovered ? 20 : 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            module.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: BillingSetupDesignTokens.textStrong,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                        _StatusPill(label: module.statusLabel, color: accent),
-                      ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: _hovered ? 0.15 : 0.08),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      module.subtitle,
-                      maxLines: 2,
+                    child: Icon(
+                      BillingSetupDesignTokens.iconFor(widget.module.id),
+                      color: accent,
+                      size: 23,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 150),
+                    style: GoogleFonts.manrope(
+                      color: _hovered ? accent : BillingSetupColors.textDark,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0,
+                    ),
+                    child: Text(
+                      widget.module.title,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: BillingSetupDesignTokens.textBody,
-                        fontSize: 13,
-                        height: 1.35,
-                        fontWeight: FontWeight.w500,
-                      ),
                     ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _MetricTile(
-                  label: module.primaryMetric,
-                  value: module.secondaryMetric,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MetricTile(
-                  label: 'Scope',
-                  value: module.capabilities.length.toString(),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: module.capabilities
-                .map((capability) => _CapabilityChip(label: capability))
-                .toList(growable: false),
-          ),
-          const Spacer(),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            height: 42,
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: accent,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              onPressed: onOpen,
-              icon: const Icon(Icons.open_in_new_rounded, size: 18),
-              label: Text(
-                module.actionLabel,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    widget.module.subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      color: BillingSetupColors.textMuted,
+                      fontSize: 11.5,
+                      height: 1.4,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _Tag(label: widget.module.tag, accent: accent),
+                  const Spacer(),
+                  Row(
+                    children: [
+                      Text(
+                        widget.module.actionLabel,
+                        style: GoogleFonts.inter(
+                          color: accent.withValues(alpha: _hovered ? 1 : 0.62),
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                      const Spacer(),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: accent.withValues(
+                            alpha: _hovered ? 0.16 : 0.08,
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.arrow_forward_rounded,
+                          color: accent,
+                          size: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusPill extends StatelessWidget {
-  final String label;
-  final Color color;
-
-  const _StatusPill({
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.20)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
         ),
       ),
     );
   }
 }
 
-class _MetricTile extends StatelessWidget {
+class _Tag extends StatelessWidget {
   final String label;
-  final String value;
+  final Color accent;
 
-  const _MetricTile({
+  const _Tag({
     required this.label,
-    required this.value,
+    required this.accent,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: BillingSetupDesignTokens.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: BillingSetupDesignTokens.textStrong,
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: BillingSetupDesignTokens.textMuted,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CapabilityChip extends StatelessWidget {
-  final String label;
-
-  const _CapabilityChip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: BillingSetupDesignTokens.border),
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accent.withValues(alpha: 0.20)),
       ),
       child: Text(
         label,
-        style: const TextStyle(
-          color: BillingSetupDesignTokens.textBody,
-          fontSize: 12,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: GoogleFonts.inter(
+          color: accent,
+          fontSize: 9.5,
           fontWeight: FontWeight.w700,
+          letterSpacing: 0,
         ),
       ),
     );

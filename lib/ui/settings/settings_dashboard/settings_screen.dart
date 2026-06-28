@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../constants/app_routes.dart';
 import '../../../database/db/app_database.dart';
 
 import '../../../theme/settings/settings_dashboard/settings_theme.dart';
@@ -13,6 +14,7 @@ import '../metal_costing/metal_costing_hub_screen.dart';
 import '../metal_rate/metal_rate_hub_screen.dart';
 
 import '../tax_gst/tax_gst_hub_screen.dart';
+import '../../../features/settings/billing_setup/presentation/screens/billing_setup_workspace_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   final Function(String routeId) onNavigate;
@@ -56,6 +58,23 @@ class SettingsScreen extends StatelessWidget {
           context,
           PageRouteBuilder(
             pageBuilder: (_, animation, __) => const MetalRateHubScreen(),
+            transitionsBuilder: (_, animation, __, child) => FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              ),
+              child: child,
+            ),
+            transitionDuration: const Duration(milliseconds: 260),
+          ),
+        );
+        break;
+
+      case AppRoutes.billingSetupRoute:
+        Navigator.of(context, rootNavigator: true).push(
+          PageRouteBuilder(
+            pageBuilder: (_, animation, __) =>
+                const BillingSetupWorkspaceScreen(),
             transitionsBuilder: (_, animation, __, child) => FadeTransition(
               opacity: CurvedAnimation(
                 parent: animation,

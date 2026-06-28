@@ -2,28 +2,22 @@ enum BillingSetupModuleId {
   sales,
   purchase,
   girvi,
-  printTemplates,
+  shopPrintInformation,
 }
 
 class BillingSetupModule {
   final BillingSetupModuleId id;
   final String title;
   final String subtitle;
-  final String statusLabel;
-  final String primaryMetric;
-  final String secondaryMetric;
+  final String tag;
   final String actionLabel;
-  final List<String> capabilities;
 
   const BillingSetupModule({
     required this.id,
     required this.title,
     required this.subtitle,
-    required this.statusLabel,
-    required this.primaryMetric,
-    required this.secondaryMetric,
+    required this.tag,
     required this.actionLabel,
-    required this.capabilities,
   });
 }
 
@@ -34,60 +28,31 @@ class BillingSetupModules {
     BillingSetupModule(
       id: BillingSetupModuleId.sales,
       title: 'Sales Billing',
-      subtitle:
-          'Invoice fields, return rules, buyback terms, and print output.',
-      statusLabel: 'Active',
-      primaryMetric: '4 metals',
-      secondaryMetric: 'Invoice controls',
-      actionLabel: 'Open Sales',
-      capabilities: [
-        'Item field visibility',
-        'Return and buyback policy',
-        'Customer invoice copy',
-      ],
+      subtitle: 'Invoice display, return policy and terms per metal type.',
+      tag: 'Gold, Silver, Diamond, Platinum',
+      actionLabel: 'Configure Sales',
     ),
     BillingSetupModule(
       id: BillingSetupModuleId.purchase,
       title: 'Purchase Billing',
-      subtitle:
-          'Supplier voucher fields, purity deductions, and return policy.',
-      statusLabel: 'Active',
-      primaryMetric: '4 metals',
-      secondaryMetric: 'Voucher controls',
-      actionLabel: 'Open Purchase',
-      capabilities: [
-        'Supplier voucher layout',
-        'Purity deduction rules',
-        'Purchase return policy',
-      ],
+      subtitle: 'Voucher display, supplier return policy and terms per metal.',
+      tag: 'Gold, Silver, Diamond, Platinum',
+      actionLabel: 'Configure Purchase',
     ),
     BillingSetupModule(
       id: BillingSetupModuleId.girvi,
       title: 'Girvi Billing',
-      subtitle: 'Interest rules, pledge receipt fields, notices, and terms.',
-      statusLabel: 'Active',
-      primaryMetric: 'Loan flow',
-      secondaryMetric: 'Receipt controls',
-      actionLabel: 'Open Girvi',
-      capabilities: [
-        'Interest and grace period',
-        'Notice and auction terms',
-        'Receipt display settings',
-      ],
+      subtitle: 'Interest rules, notice controls, receipt terms and footer.',
+      tag: 'Interest, Notice, Terms',
+      actionLabel: 'Configure Girvi',
     ),
     BillingSetupModule(
-      id: BillingSetupModuleId.printTemplates,
-      title: 'Print Templates',
-      subtitle: 'Shared invoice, voucher, and receipt print formats.',
-      statusLabel: 'Shared',
-      primaryMetric: 'Default format',
-      secondaryMetric: 'Print engine',
-      actionLabel: 'Open Templates',
-      capabilities: [
-        'Sales invoice format',
-        'Purchase voucher format',
-        'Girvi receipt format',
-      ],
+      id: BillingSetupModuleId.shopPrintInformation,
+      title: 'Shop Print Information',
+      subtitle:
+          'Choose shop, tax, contact and social details printed on bills.',
+      tag: 'Name, GSTIN, BIS, Mobile, Social',
+      actionLabel: 'Configure Shop Info',
     ),
   ];
 }

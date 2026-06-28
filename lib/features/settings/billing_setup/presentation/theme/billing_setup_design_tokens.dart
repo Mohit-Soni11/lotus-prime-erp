@@ -15,9 +15,9 @@ class BillingSetupDesignTokens {
   static const Color border = Color(0xFFE2E8F0);
   static const Color gold = Color(0xFFD4AF37);
   static const Color sales = Color(0xFF0EA5E9);
-  static const Color purchase = Color(0xFF16A34A);
-  static const Color girvi = Color(0xFF7C3AED);
-  static const Color print = Color(0xFFE06B3F);
+  static const Color purchase = Color(0xFF2563EB);
+  static const Color girvi = Color(0xFFD97706);
+  static const Color shopPrint = Color(0xFF059669);
 
   static Color accentFor(BillingSetupModuleId id) {
     switch (id) {
@@ -27,8 +27,8 @@ class BillingSetupDesignTokens {
         return purchase;
       case BillingSetupModuleId.girvi:
         return girvi;
-      case BillingSetupModuleId.printTemplates:
-        return print;
+      case BillingSetupModuleId.shopPrintInformation:
+        return shopPrint;
     }
   }
 
@@ -39,9 +39,9 @@ class BillingSetupDesignTokens {
       case BillingSetupModuleId.purchase:
         return Icons.shopping_bag_outlined;
       case BillingSetupModuleId.girvi:
-        return Icons.account_balance_wallet_outlined;
-      case BillingSetupModuleId.printTemplates:
-        return Icons.description_outlined;
+        return Icons.lock_outline_rounded;
+      case BillingSetupModuleId.shopPrintInformation:
+        return Icons.storefront_rounded;
     }
   }
 }
