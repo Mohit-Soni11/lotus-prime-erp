@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../../../../models/setting/billing_setup/purchase_billing_model.dart';
 import '../../../../../../../models/setting/billing_setup/sales_billing_model.dart';
-import '../../../presentation/theme/billing_setup_design_tokens.dart';
+import '../../../../../../../theme/settings/billing_setup/billing_setup_colors.dart';
 import '../../domain/purchase_billing_metal_profile.dart';
 import '../../domain/purchase_billing_policy_input.dart';
 import 'purchase_billing_section_card.dart';
@@ -48,8 +49,7 @@ class PurchaseBillingPolicyForm extends StatelessWidget {
       children: [
         PurchaseBillingSectionCard(
           title: 'Purchase Voucher Display',
-          subtitle:
-              'Choose the fields printed on ${BillingMetal.displayName(model.metal)} purchase vouchers.',
+          subtitle: 'Choose the fields printed on each purchase row',
           icon: Icons.request_quote_outlined,
           accent: accent,
           child: _DisplayFieldGrid(
@@ -60,9 +60,8 @@ class PurchaseBillingPolicyForm extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         PurchaseBillingSectionCard(
-          title: 'Return and Purity Policy',
-          subtitle:
-              'Control return mode, deduction rules, and settlement policy copy.',
+          title: 'Return & Buyback Policy',
+          subtitle: 'Supplier return rules, purity deductions and notes',
           icon: Icons.assignment_return_outlined,
           accent: accent,
           child: _PolicyFields(
@@ -79,9 +78,9 @@ class PurchaseBillingPolicyForm extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         PurchaseBillingSectionCard(
-          title: 'Terms, Footer, and Template',
+          title: 'Terms & Conditions',
           subtitle:
-              'Manage purchase voucher terms, footer copy, and print template.',
+              'Footer copy printed on every ${BillingMetal.displayName(model.metal)} purchase voucher',
           icon: Icons.article_outlined,
           accent: accent,
           child: _TermsAndTemplateFields(
@@ -356,20 +355,19 @@ class _TextInput extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: BillingSetupDesignTokens.textStrong,
+          style: GoogleFonts.inter(
+            color: BillingSetupColors.textBody,
             fontSize: 13,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
           ),
         ),
         if (helper != null) ...[
           const SizedBox(height: 3),
           Text(
             helper!,
-            style: const TextStyle(
-              color: BillingSetupDesignTokens.textMuted,
+            style: GoogleFonts.inter(
+              color: BillingSetupColors.textHint,
               fontSize: 12,
-              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -380,35 +378,35 @@ class _TextInput extends StatelessWidget {
           inputFormatters: inputFormatters,
           maxLines: maxLines,
           onChanged: onChanged,
-          style: const TextStyle(
-            color: BillingSetupDesignTokens.textStrong,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
+          style: GoogleFonts.inter(
+            color: BillingSetupColors.textDark,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
           ),
           decoration: InputDecoration(
             suffixText: suffix,
             filled: true,
-            fillColor: const Color(0xFFF8FAFC),
+            fillColor: BillingSetupColors.inputBg,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 12,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: BillingSetupDesignTokens.border,
+                color: Color(0xFFE5E7EB),
               ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: BillingSetupDesignTokens.border,
+                color: Color(0xFFE5E7EB),
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: BillingSetupDesignTokens.purchase,
+                color: BillingSetupColors.purchaseBrand,
                 width: 1.4,
               ),
             ),
@@ -443,10 +441,10 @@ class _SelectInput extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: BillingSetupDesignTokens.textStrong,
+          style: GoogleFonts.inter(
+            color: BillingSetupColors.textBody,
             fontSize: 13,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 8),
@@ -455,25 +453,25 @@ class _SelectInput extends StatelessWidget {
           dropdownColor: Colors.white,
           decoration: InputDecoration(
             filled: true,
-            fillColor: const Color(0xFFF8FAFC),
+            fillColor: BillingSetupColors.inputBg,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 12,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: BillingSetupDesignTokens.border,
+                color: Color(0xFFE5E7EB),
               ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: BillingSetupDesignTokens.border,
+                color: Color(0xFFE5E7EB),
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: accent, width: 1.4),
             ),
           ),

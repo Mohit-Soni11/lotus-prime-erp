@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import '../../../presentation/theme/billing_setup_design_tokens.dart';
+import '../../../../../../../theme/settings/billing_setup/billing_setup_colors.dart';
 
 class PurchaseBillingToggleTile extends StatelessWidget {
   final String label;
@@ -24,12 +25,12 @@ class PurchaseBillingToggleTile extends StatelessWidget {
       duration: const Duration(milliseconds: 160),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: value ? accent.withValues(alpha: 0.07) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(8),
+        color:
+            value ? accent.withValues(alpha: 0.07) : BillingSetupColors.inputBg,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: value
-              ? accent.withValues(alpha: 0.24)
-              : BillingSetupDesignTokens.border,
+          color:
+              value ? accent.withValues(alpha: 0.24) : const Color(0xFFE5E7EB),
         ),
       ),
       child: Column(
@@ -42,10 +43,10 @@ class PurchaseBillingToggleTile extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: BillingSetupDesignTokens.textStrong,
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w800,
+                  style: GoogleFonts.inter(
+                    color: BillingSetupColors.textDark,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -65,11 +66,10 @@ class PurchaseBillingToggleTile extends StatelessWidget {
             description,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: BillingSetupDesignTokens.textMuted,
+            style: GoogleFonts.inter(
+              color: BillingSetupColors.textMuted,
               fontSize: 12,
               height: 1.3,
-              fontWeight: FontWeight.w500,
             ),
           ),
         ],

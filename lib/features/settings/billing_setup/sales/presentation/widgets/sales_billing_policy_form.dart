@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../../../../models/setting/billing_setup/sales_billing_model.dart';
-import '../../../presentation/theme/billing_setup_design_tokens.dart';
+import '../../../../../../../theme/settings/billing_setup/billing_setup_colors.dart';
 import '../../domain/sales_billing_metal_profile.dart';
 import '../../domain/sales_billing_policy_input.dart';
 import 'sales_billing_section_card.dart';
@@ -59,8 +60,7 @@ class SalesBillingPolicyForm extends StatelessWidget {
       children: [
         SalesBillingSectionCard(
           title: 'Invoice Item Display',
-          subtitle:
-              'Choose the fields printed on ${BillingMetal.displayName(model.metal)} sales invoices.',
+          subtitle: 'Choose the fields printed on every item row',
           icon: Icons.receipt_long_rounded,
           accent: accent,
           child: _DisplayFieldGrid(
@@ -71,9 +71,8 @@ class SalesBillingPolicyForm extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         SalesBillingSectionCard(
-          title: 'Return and Buyback Policy',
-          subtitle:
-              'Control eligibility, deductions, settlement mode, and customer-facing policy copy.',
+          title: 'Return & Buyback Policy',
+          subtitle: 'Control eligibility, deductions and settlement mode',
           icon: Icons.swap_horiz_rounded,
           accent: accent,
           child: _PolicyFields(
@@ -92,9 +91,9 @@ class SalesBillingPolicyForm extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         SalesBillingSectionCard(
-          title: 'Terms, Footer, and Print Output',
+          title: 'Terms & Conditions',
           subtitle:
-              'Manage invoice footer copy, template selection, and print visibility.',
+              'Footer copy printed on every ${BillingMetal.displayName(model.metal)} bill',
           icon: Icons.article_outlined,
           accent: accent,
           child: _TermsAndPrintFields(
@@ -488,20 +487,19 @@ class _TextInput extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: BillingSetupDesignTokens.textStrong,
+          style: GoogleFonts.inter(
+            color: BillingSetupColors.textBody,
             fontSize: 13,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
           ),
         ),
         if (helper != null) ...[
           const SizedBox(height: 3),
           Text(
             helper!,
-            style: const TextStyle(
-              color: BillingSetupDesignTokens.textMuted,
+            style: GoogleFonts.inter(
+              color: BillingSetupColors.textHint,
               fontSize: 12,
-              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -512,35 +510,35 @@ class _TextInput extends StatelessWidget {
           inputFormatters: inputFormatters,
           maxLines: maxLines,
           onChanged: onChanged,
-          style: const TextStyle(
-            color: BillingSetupDesignTokens.textStrong,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
+          style: GoogleFonts.inter(
+            color: BillingSetupColors.textDark,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
           ),
           decoration: InputDecoration(
             suffixText: suffix,
             filled: true,
-            fillColor: const Color(0xFFF8FAFC),
+            fillColor: BillingSetupColors.inputBg,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 12,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: BillingSetupDesignTokens.border,
+                color: Color(0xFFE5E7EB),
               ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: BillingSetupDesignTokens.border,
+                color: Color(0xFFE5E7EB),
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: BillingSetupDesignTokens.sales,
+                color: BillingSetupColors.salesBrand,
                 width: 1.4,
               ),
             ),
@@ -575,10 +573,10 @@ class _SelectInput extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: BillingSetupDesignTokens.textStrong,
+          style: GoogleFonts.inter(
+            color: BillingSetupColors.textBody,
             fontSize: 13,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 8),
@@ -587,25 +585,25 @@ class _SelectInput extends StatelessWidget {
           dropdownColor: Colors.white,
           decoration: InputDecoration(
             filled: true,
-            fillColor: const Color(0xFFF8FAFC),
+            fillColor: BillingSetupColors.inputBg,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 12,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: BillingSetupDesignTokens.border,
+                color: Color(0xFFE5E7EB),
               ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: BillingSetupDesignTokens.border,
+                color: Color(0xFFE5E7EB),
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: accent, width: 1.4),
             ),
           ),

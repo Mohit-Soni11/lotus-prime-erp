@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-
-import '../../../../../../../models/setting/billing_setup/sales_billing_model.dart';
-import '../../../presentation/theme/billing_setup_design_tokens.dart';
-import '../../application/sales_billing_controller.dart';
-import '../../domain/sales_billing_policy_input.dart';
-import '../widgets/sales_billing_header.dart';
-import '../widgets/sales_billing_metal_selector.dart';
-import '../widgets/sales_billing_policy_form.dart';
-import '../widgets/sales_billing_summary_panel.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lotus_erp/features/settings/billing_setup/presentation/widgets/billing_metal_intro_panel.dart';
+import 'package:lotus_erp/features/settings/billing_setup/sales/application/sales_billing_controller.dart';
+import 'package:lotus_erp/features/settings/billing_setup/sales/domain/sales_billing_metal_profile.dart';
+import 'package:lotus_erp/features/settings/billing_setup/sales/domain/sales_billing_policy_input.dart';
+import 'package:lotus_erp/features/settings/billing_setup/sales/presentation/widgets/sales_billing_metal_selector.dart';
+import 'package:lotus_erp/features/settings/billing_setup/sales/presentation/widgets/sales_billing_policy_form.dart';
+import 'package:lotus_erp/features/settings/billing_setup/sales/presentation/widgets/sales_billing_visuals.dart';
+import 'package:lotus_erp/models/setting/billing_setup/sales_billing_model.dart';
+import 'package:lotus_erp/theme/settings/billing_setup/billing_setup_colors.dart';
+import 'package:lotus_erp/ui/settings/billing_setup/billing_setup_app_bar.dart';
 
 class SalesBillingWorkspaceScreen extends StatefulWidget {
   const SalesBillingWorkspaceScreen({super.key});
@@ -83,14 +85,11 @@ class _SalesBillingWorkspaceScreenState
     }
   }
 
-  void _updateInput(SalesBillingPolicyInput input) {
-    _controller.updateCurrentInput(input);
-  }
-
   Future<void> _saveCurrent() async {
     final metalName = BillingMetal.displayName(_controller.state.selectedMetal);
     final saved = await _controller.saveCurrent();
     if (!mounted) return;
+    if (saved) _forceEditorSync();
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -98,10 +97,15 @@ class _SalesBillingWorkspaceScreenState
         SnackBar(
           content: Text(
             saved
-                ? '$metalName sales billing settings saved.'
+                ? '$metalName billing settings saved!'
                 : 'Please review the highlighted Sales Billing issues.',
+            style: const TextStyle(color: Colors.white),
           ),
           behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          duration: const Duration(seconds: 2),
           backgroundColor:
               saved ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
         ),
@@ -113,32 +117,21 @@ class _SalesBillingWorkspaceScreenState
     final state = _controller.state;
     final model = state.currentSettings;
     final input = state.currentInput;
+    final metalName = BillingMetal.displayName(state.selectedMetal);
 
     return Scaffold(
-      backgroundColor: BillingSetupDesignTokens.canvas,
-      bottomNavigationBar: model == null || input == null || state.isLoading
-          ? null
-          : _ActionBar(
-              isSaving: state.isSaving,
-              isDirty: state.isCurrentDirty,
-              onDiscard: () {
-                _controller.discardCurrentChanges();
-                _forceEditorSync();
-              },
-              onReset: () {
-                _controller.resetCurrentToDefaults();
-                _forceEditorSync();
-              },
-              onSave: _saveCurrent,
-            ),
+      backgroundColor: BillingSetupColors.bodyBg,
+      appBar: BillingSetupAppBar(
+        screenTitle: '$metalName Sales',
+        screenSubtitle: state.isLoading
+            ? 'Loading settings...'
+            : 'Invoice display, return rules and footer copy',
+        onBack: () => Navigator.maybePop(context),
+      ),
       body: SafeArea(
+        top: false,
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(
-              child: SalesBillingHeader(
-                onBack: () => Navigator.maybePop(context),
-              ),
-            ),
             if (state.isLoading)
               const SliverFillRemaining(
                 hasScrollBody: false,
@@ -153,129 +146,69 @@ class _SalesBillingWorkspaceScreenState
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 22, 24, 110),
-                sliver: SliverToBoxAdapter(
-                  child: _WorkspaceBody(
-                    controller: _controller,
-                    model: model,
-                    input: input,
-                    returnWindowController: _returnWindowController,
-                    handlingChargeController: _handlingChargeController,
-                    buybackRateController: _buybackRateController,
-                    purityDeductionController: _purityDeductionController,
-                    termsController: _termsController,
-                    returnPolicyController: _returnPolicyController,
-                    buybackPolicyController: _buybackPolicyController,
-                    footerController: _footerController,
-                    onInputChanged: _updateInput,
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate(
+                    [
+                      BillingMetalIntroPanel(
+                        metalName: metalName,
+                        logoAsset: _metalLogoFor(model.metal),
+                        title: '$metalName sales controls',
+                        description:
+                            'Fine tune invoice fields, return rules and customer footer copy.',
+                        accent: SalesBillingVisuals.accentFor(model.metal),
+                        enabledCount:
+                            SalesBillingMetalProfiles.activeFieldCount(model),
+                        returnMode: model.returnMode,
+                        fieldLabel: 'active fields',
+                      ),
+                      const SizedBox(height: 18),
+                      SalesBillingMetalSelector(
+                        selectedMetal: state.selectedMetal,
+                        dirtyMetals: state.dirtyMetals,
+                        onSelected: _controller.selectMetal,
+                      ),
+                      const SizedBox(height: 18),
+                      _ValidationBanner(messages: state.validationMessages),
+                      if (state.validationMessages.isNotEmpty)
+                        const SizedBox(height: 18),
+                      SalesBillingPolicyForm(
+                        model: model,
+                        input: input,
+                        returnWindowController: _returnWindowController,
+                        handlingChargeController: _handlingChargeController,
+                        buybackRateController: _buybackRateController,
+                        purityDeductionController: _purityDeductionController,
+                        termsController: _termsController,
+                        returnPolicyController: _returnPolicyController,
+                        buybackPolicyController: _buybackPolicyController,
+                        footerController: _footerController,
+                        onInputChanged: _controller.updateCurrentInput,
+                        onReturnModeChanged: _controller.updateReturnMode,
+                        onFieldChanged: _controller.toggleField,
+                        onTemplateChanged: _controller.updateSelectedTemplate,
+                        onPrintTermsChanged: _controller.updatePrintTerms,
+                        onPrintReturnPolicyChanged:
+                            _controller.updatePrintReturnPolicy,
+                        onPrintBuybackPolicyChanged:
+                            _controller.updatePrintBuybackPolicy,
+                        onPrintFooterChanged: _controller.updatePrintFooter,
+                      ),
+                      const SizedBox(height: 32),
+                      _SaveButton(
+                        isSaving: state.isSaving,
+                        label: 'Save $metalName Settings',
+                        accent: SalesBillingVisuals.accentFor(model.metal),
+                        onPressed: _saveCurrent,
+                      ),
+                      const SizedBox(height: 40),
+                    ],
                   ),
                 ),
               ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _WorkspaceBody extends StatelessWidget {
-  final SalesBillingController controller;
-  final SalesBillingModel model;
-  final SalesBillingPolicyInput input;
-  final TextEditingController returnWindowController;
-  final TextEditingController handlingChargeController;
-  final TextEditingController buybackRateController;
-  final TextEditingController purityDeductionController;
-  final TextEditingController termsController;
-  final TextEditingController returnPolicyController;
-  final TextEditingController buybackPolicyController;
-  final TextEditingController footerController;
-  final ValueChanged<SalesBillingPolicyInput> onInputChanged;
-
-  const _WorkspaceBody({
-    required this.controller,
-    required this.model,
-    required this.input,
-    required this.returnWindowController,
-    required this.handlingChargeController,
-    required this.buybackRateController,
-    required this.purityDeductionController,
-    required this.termsController,
-    required this.returnPolicyController,
-    required this.buybackPolicyController,
-    required this.footerController,
-    required this.onInputChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final isDesktop = width >= 1180;
-    final form = SalesBillingPolicyForm(
-      model: model,
-      input: input,
-      returnWindowController: returnWindowController,
-      handlingChargeController: handlingChargeController,
-      buybackRateController: buybackRateController,
-      purityDeductionController: purityDeductionController,
-      termsController: termsController,
-      returnPolicyController: returnPolicyController,
-      buybackPolicyController: buybackPolicyController,
-      footerController: footerController,
-      onInputChanged: onInputChanged,
-      onReturnModeChanged: controller.updateReturnMode,
-      onFieldChanged: controller.toggleField,
-      onTemplateChanged: controller.updateSelectedTemplate,
-      onPrintTermsChanged: controller.updatePrintTerms,
-      onPrintReturnPolicyChanged: controller.updatePrintReturnPolicy,
-      onPrintBuybackPolicyChanged: controller.updatePrintBuybackPolicy,
-      onPrintFooterChanged: controller.updatePrintFooter,
-    );
-    final validation = _ValidationBanner(
-      messages: controller.state.validationMessages,
-    );
-
-    if (!isDesktop) {
-      return Column(
-        children: [
-          SalesBillingMetalSelector(
-            selectedMetal: controller.state.selectedMetal,
-            dirtyMetals: controller.state.dirtyMetals,
-            onSelected: controller.selectMetal,
-          ),
-          const SizedBox(height: 16),
-          validation,
-          if (controller.state.validationMessages.isNotEmpty)
-            const SizedBox(height: 16),
-          form,
-          const SizedBox(height: 16),
-          SalesBillingSummaryPanel(model: model, input: input),
-        ],
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SalesBillingMetalSelector(
-          selectedMetal: controller.state.selectedMetal,
-          dirtyMetals: controller.state.dirtyMetals,
-          onSelected: controller.selectMetal,
-        ),
-        const SizedBox(width: 18),
-        Expanded(
-          child: Column(
-            children: [
-              validation,
-              if (controller.state.validationMessages.isNotEmpty)
-                const SizedBox(height: 16),
-              form,
-            ],
-          ),
-        ),
-        const SizedBox(width: 18),
-        SalesBillingSummaryPanel(model: model, input: input),
-      ],
     );
   }
 }
@@ -294,16 +227,16 @@ class _ValidationBanner extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFFEF2F2),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFFECACA)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Review Required',
-            style: TextStyle(
-              color: Color(0xFF991B1B),
+            style: GoogleFonts.manrope(
+              color: const Color(0xFF991B1B),
               fontSize: 13.5,
               fontWeight: FontWeight.w800,
             ),
@@ -314,8 +247,8 @@ class _ValidationBanner extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 4),
               child: Text(
                 message,
-                style: const TextStyle(
-                  color: Color(0xFF7F1D1D),
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF7F1D1D),
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                 ),
@@ -327,99 +260,66 @@ class _ValidationBanner extends StatelessWidget {
   }
 }
 
-class _ActionBar extends StatelessWidget {
+class _SaveButton extends StatelessWidget {
   final bool isSaving;
-  final bool isDirty;
-  final VoidCallback onDiscard;
-  final VoidCallback onReset;
-  final VoidCallback onSave;
+  final String label;
+  final Color accent;
+  final VoidCallback onPressed;
 
-  const _ActionBar({
+  const _SaveButton({
     required this.isSaving,
-    required this.isDirty,
-    required this.onDiscard,
-    required this.onReset,
-    required this.onSave,
+    required this.label,
+    required this.accent,
+    required this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            top: BorderSide(color: BillingSetupDesignTokens.border),
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        onPressed: isSaving ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: accent,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final status = Text(
-              isDirty ? 'Unsaved changes' : 'No pending changes',
-              style: TextStyle(
-                color: isDirty
-                    ? const Color(0xFFB45309)
-                    : BillingSetupDesignTokens.textMuted,
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
+        child: isSaving
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : Text(
+                label,
+                style: GoogleFonts.manrope(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            );
-            final actions = Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              alignment: WrapAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: isSaving ? null : onDiscard,
-                  icon: const Icon(Icons.undo_rounded, size: 18),
-                  label: const Text('Discard'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: isSaving ? null : onReset,
-                  icon: const Icon(Icons.restart_alt_rounded, size: 18),
-                  label: const Text('Reset Defaults'),
-                ),
-                FilledButton.icon(
-                  onPressed: isSaving ? null : onSave,
-                  icon: isSaving
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.save_rounded, size: 18),
-                  label: const Text('Save Current Metal'),
-                ),
-              ],
-            );
-
-            if (constraints.maxWidth < 680) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  status,
-                  const SizedBox(height: 10),
-                  Align(alignment: Alignment.centerRight, child: actions),
-                ],
-              );
-            }
-
-            return Row(
-              children: [
-                status,
-                const Spacer(),
-                actions,
-              ],
-            );
-          },
-        ),
       ),
     );
+  }
+}
+
+String _metalLogoFor(String metal) {
+  switch (metal) {
+    case BillingMetal.gold:
+      return 'lib/logo/gold.jpeg';
+    case BillingMetal.silver:
+      return 'lib/logo/silver and platinum .jpeg';
+    case BillingMetal.diamond:
+      return 'lib/logo/diamond .jpeg';
+    case BillingMetal.platinum:
+      return 'lib/logo/silver and platinum .jpeg';
+    default:
+      return 'lib/logo/gold.jpeg';
   }
 }

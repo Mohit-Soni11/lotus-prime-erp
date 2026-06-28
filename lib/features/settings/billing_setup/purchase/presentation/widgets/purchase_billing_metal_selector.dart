@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../../../../models/setting/billing_setup/sales_billing_model.dart';
-import '../../../presentation/theme/billing_setup_design_tokens.dart';
+import '../../../../../../../theme/settings/billing_setup/billing_setup_colors.dart';
 import '../../domain/purchase_billing_metal_profile.dart';
 import 'purchase_billing_visuals.dart';
 
@@ -19,64 +20,73 @@ class PurchaseBillingMetalSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 760) {
-          return Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: PurchaseBillingMetalProfiles.all
-                .map(
-                  (profile) => SizedBox(
-                    width: (constraints.maxWidth - 10) / 2,
-                    child: _MetalItem(
-                      profile: profile,
-                      selected: selectedMetal == profile.metal,
-                      dirty: dirtyMetals.contains(profile.metal),
-                      onTap: () => onSelected(profile.metal),
-                    ),
-                  ),
-                )
-                .toList(growable: false),
-          );
-        }
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Select Metal',
+            style: GoogleFonts.manrope(
+              color: BillingSetupColors.textDark,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Switch between Gold, Silver, Diamond and Platinum purchase controls.',
+            style: GoogleFonts.inter(
+              color: BillingSetupColors.textMuted,
+              fontSize: 13,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = (constraints.maxWidth / 220)
+                  .floor()
+                  .clamp(1, PurchaseBillingMetalProfiles.all.length)
+                  .toInt();
+              const gap = 12.0;
+              final itemWidth =
+                  (constraints.maxWidth - (gap * (columns - 1))) / columns;
 
-        return Container(
-          width: 260,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: BillingSetupDesignTokens.surface,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: BillingSetupDesignTokens.border),
+              return Wrap(
+                spacing: gap,
+                runSpacing: gap,
+                children: PurchaseBillingMetalProfiles.all
+                    .map(
+                      (profile) => SizedBox(
+                        width: itemWidth,
+                        child: _MetalItem(
+                          profile: profile,
+                          selected: selectedMetal == profile.metal,
+                          dirty: dirtyMetals.contains(profile.metal),
+                          onTap: () => onSelected(profile.metal),
+                        ),
+                      ),
+                    )
+                    .toList(growable: false),
+              );
+            },
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(8, 4, 8, 10),
-                child: Text(
-                  'Metals',
-                  style: TextStyle(
-                    color: BillingSetupDesignTokens.textMuted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              for (final profile in PurchaseBillingMetalProfiles.all)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: _MetalItem(
-                    profile: profile,
-                    selected: selectedMetal == profile.metal,
-                    dirty: dirtyMetals.contains(profile.metal),
-                    onTap: () => onSelected(profile.metal),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
@@ -99,29 +109,32 @@ class _MetalItem extends StatelessWidget {
     final accent = PurchaseBillingVisuals.accentFor(profile.metal);
 
     return InkWell(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(12),
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? accent.withValues(alpha: 0.10) : Colors.white,
-          borderRadius: BorderRadius.circular(8),
+          color: selected
+              ? accent.withValues(alpha: 0.08)
+              : BillingSetupColors.inputBg,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected
-                ? accent.withValues(alpha: 0.30)
-                : BillingSetupDesignTokens.border,
+                ? accent.withValues(alpha: 0.28)
+                : const Color(0xFFE5E7EB),
           ),
         ),
         child: Row(
           children: [
             Container(
-              width: 34,
-              height: 34,
+              width: 36,
+              height: 36,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: accent.withValues(alpha: 0.16)),
               ),
               child: Icon(
                 PurchaseBillingVisuals.iconFor(profile.metal),
@@ -141,8 +154,8 @@ class _MetalItem extends StatelessWidget {
                           profile.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: BillingSetupDesignTokens.textStrong,
+                          style: GoogleFonts.inter(
+                            color: BillingSetupColors.textDark,
                             fontSize: 13.5,
                             fontWeight: FontWeight.w800,
                           ),
@@ -162,8 +175,8 @@ class _MetalItem extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     BillingMetal.displayName(profile.metal),
-                    style: const TextStyle(
-                      color: BillingSetupDesignTokens.textMuted,
+                    style: GoogleFonts.inter(
+                      color: BillingSetupColors.textMuted,
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
                     ),

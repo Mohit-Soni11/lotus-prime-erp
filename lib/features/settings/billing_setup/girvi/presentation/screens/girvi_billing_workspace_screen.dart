@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lotus_erp/features/settings/billing_setup/girvi/application/girvi_billing_controller.dart';
 import 'package:lotus_erp/features/settings/billing_setup/girvi/domain/girvi_billing_policy_input.dart';
-import 'package:lotus_erp/features/settings/billing_setup/girvi/presentation/widgets/girvi_billing_header.dart';
+import 'package:lotus_erp/features/settings/billing_setup/girvi/presentation/widgets/girvi_billing_intro_panel.dart';
 import 'package:lotus_erp/features/settings/billing_setup/girvi/presentation/widgets/girvi_billing_policy_form.dart';
-import 'package:lotus_erp/features/settings/billing_setup/girvi/presentation/widgets/girvi_billing_summary_panel.dart';
-import 'package:lotus_erp/features/settings/billing_setup/presentation/theme/billing_setup_design_tokens.dart';
-import 'package:lotus_erp/models/setting/billing_setup/girvi_billing_model.dart';
+import 'package:lotus_erp/theme/settings/billing_setup/billing_setup_colors.dart';
+import 'package:lotus_erp/theme/settings/billing_setup/billing_setup_strings.dart';
+import 'package:lotus_erp/ui/settings/billing_setup/billing_setup_app_bar.dart';
 
 class GirviBillingWorkspaceScreen extends StatefulWidget {
   const GirviBillingWorkspaceScreen({super.key});
@@ -80,14 +81,10 @@ class _GirviBillingWorkspaceScreenState
     _footerController.text = input.footerMessage;
   }
 
-  void _forceEditorSync() {
-    _syncEditors(_controller.state.input);
-  }
-
   Future<void> _save() async {
     final saved = await _controller.save();
     if (!mounted) return;
-    if (saved) _forceEditorSync();
+    if (saved) _syncEditors(_controller.state.input);
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -95,12 +92,17 @@ class _GirviBillingWorkspaceScreenState
         SnackBar(
           content: Text(
             saved
-                ? 'Girvi billing settings saved.'
+                ? 'Girvi settings saved!'
                 : 'Please review the highlighted Girvi Billing issues.',
+            style: const TextStyle(color: Colors.white),
           ),
-          behavior: SnackBarBehavior.floating,
           backgroundColor:
               saved ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          duration: const Duration(seconds: 2),
         ),
       );
   }
@@ -110,30 +112,16 @@ class _GirviBillingWorkspaceScreenState
     final state = _controller.state;
 
     return Scaffold(
-      backgroundColor: BillingSetupDesignTokens.canvas,
-      bottomNavigationBar: state.isLoading
-          ? null
-          : _ActionBar(
-              isSaving: state.isSaving,
-              isDirty: state.isDirty,
-              onDiscard: () {
-                _controller.discardChanges();
-                _forceEditorSync();
-              },
-              onReset: () {
-                _controller.resetToDefaults();
-                _forceEditorSync();
-              },
-              onSave: _save,
-            ),
+      backgroundColor: BillingSetupColors.bodyBg,
+      appBar: BillingSetupAppBar(
+        screenTitle: BillingSetupStrings.girviTitle,
+        screenSubtitle: 'Interest, invoice display and notice controls',
+        onBack: () => Navigator.maybePop(context),
+      ),
       body: SafeArea(
+        top: false,
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(
-              child: GirviBillingHeader(
-                onBack: () => Navigator.maybePop(context),
-              ),
-            ),
             if (state.isLoading)
               const SliverFillRemaining(
                 hasScrollBody: false,
@@ -141,130 +129,60 @@ class _GirviBillingWorkspaceScreenState
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 22, 24, 110),
-                sliver: SliverToBoxAdapter(
-                  child: _WorkspaceBody(
-                    controller: _controller,
-                    model: state.model,
-                    input: state.input,
-                    prefixController: _prefixController,
-                    startingNumberController: _startingNumberController,
-                    interestRateController: _interestRateController,
-                    gracePeriodController: _gracePeriodController,
-                    reminderDaysController: _reminderDaysController,
-                    noticeDaysController: _noticeDaysController,
-                    termsController: _termsController,
-                    termsHindiController: _termsHindiController,
-                    declarationController: _declarationController,
-                    declarationHindiController: _declarationHindiController,
-                    footerController: _footerController,
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate(
+                    [
+                      GirviBillingIntroPanel(
+                        accent: BillingSetupColors.girviBrand,
+                        interestRate: state.model.defaultInterestRate,
+                        interestType: state.model.interestType,
+                        autoPrint: state.model.autoPrint,
+                        invoiceFieldCount: state.model.visibleInvoiceFieldCount,
+                      ),
+                      const SizedBox(height: 18),
+                      _ValidationBanner(
+                        messages: state.validationMessages,
+                      ),
+                      if (state.validationMessages.isNotEmpty)
+                        const SizedBox(height: 18),
+                      GirviBillingPolicyForm(
+                        model: state.model,
+                        input: state.input,
+                        selectedInvoiceMetal: state.selectedInvoiceMetal,
+                        prefixController: _prefixController,
+                        startingNumberController: _startingNumberController,
+                        interestRateController: _interestRateController,
+                        gracePeriodController: _gracePeriodController,
+                        reminderDaysController: _reminderDaysController,
+                        noticeDaysController: _noticeDaysController,
+                        termsController: _termsController,
+                        termsHindiController: _termsHindiController,
+                        declarationController: _declarationController,
+                        declarationHindiController: _declarationHindiController,
+                        footerController: _footerController,
+                        onInputChanged: _controller.updateInput,
+                        onModelChanged: _controller.updateModel,
+                        onInvoiceMetalChanged: _controller.selectInvoiceMetal,
+                        onInterestTypeChanged: _controller.updateInterestType,
+                        onDefaultDurationChanged:
+                            _controller.updateDefaultDuration,
+                        onTemplateChanged: _controller.updateSelectedTemplate,
+                        onAutoPrintChanged: _controller.updateAutoPrint,
+                      ),
+                      const SizedBox(height: 32),
+                      _SaveButton(
+                        isSaving: state.isSaving,
+                        onPressed: _save,
+                      ),
+                      const SizedBox(height: 40),
+                    ],
                   ),
                 ),
               ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _WorkspaceBody extends StatelessWidget {
-  final GirviBillingController controller;
-  final GirviBillingModel model;
-  final GirviBillingPolicyInput input;
-  final TextEditingController prefixController;
-  final TextEditingController startingNumberController;
-  final TextEditingController interestRateController;
-  final TextEditingController gracePeriodController;
-  final TextEditingController reminderDaysController;
-  final TextEditingController noticeDaysController;
-  final TextEditingController termsController;
-  final TextEditingController termsHindiController;
-  final TextEditingController declarationController;
-  final TextEditingController declarationHindiController;
-  final TextEditingController footerController;
-
-  const _WorkspaceBody({
-    required this.controller,
-    required this.model,
-    required this.input,
-    required this.prefixController,
-    required this.startingNumberController,
-    required this.interestRateController,
-    required this.gracePeriodController,
-    required this.reminderDaysController,
-    required this.noticeDaysController,
-    required this.termsController,
-    required this.termsHindiController,
-    required this.declarationController,
-    required this.declarationHindiController,
-    required this.footerController,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final isDesktop = width >= 1180;
-    final validation = _ValidationBanner(
-      messages: controller.state.validationMessages,
-    );
-    final form = GirviBillingPolicyForm(
-      model: model,
-      input: input,
-      selectedInvoiceMetal: controller.state.selectedInvoiceMetal,
-      prefixController: prefixController,
-      startingNumberController: startingNumberController,
-      interestRateController: interestRateController,
-      gracePeriodController: gracePeriodController,
-      reminderDaysController: reminderDaysController,
-      noticeDaysController: noticeDaysController,
-      termsController: termsController,
-      termsHindiController: termsHindiController,
-      declarationController: declarationController,
-      declarationHindiController: declarationHindiController,
-      footerController: footerController,
-      onInputChanged: controller.updateInput,
-      onModelChanged: controller.updateModel,
-      onInvoiceMetalChanged: controller.selectInvoiceMetal,
-      onInterestTypeChanged: controller.updateInterestType,
-      onDefaultDurationChanged: controller.updateDefaultDuration,
-      onTemplateChanged: controller.updateSelectedTemplate,
-      onAutoPrintChanged: controller.updateAutoPrint,
-    );
-
-    if (!isDesktop) {
-      return Column(
-        children: [
-          validation,
-          if (controller.state.validationMessages.isNotEmpty)
-            const SizedBox(height: 16),
-          form,
-          const SizedBox(height: 16),
-          GirviBillingSummaryPanel(model: model, input: input),
-        ],
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            children: [
-              validation,
-              if (controller.state.validationMessages.isNotEmpty)
-                const SizedBox(height: 16),
-              form,
-            ],
-          ),
-        ),
-        const SizedBox(width: 18),
-        GirviBillingSummaryPanel(
-          model: model,
-          input: input,
-          width: 318,
-        ),
-      ],
     );
   }
 }
@@ -283,16 +201,16 @@ class _ValidationBanner extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFFEF2F2),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFFECACA)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Review Required',
-            style: TextStyle(
-              color: Color(0xFF991B1B),
+            style: GoogleFonts.manrope(
+              color: const Color(0xFF991B1B),
               fontSize: 13.5,
               fontWeight: FontWeight.w800,
             ),
@@ -303,8 +221,8 @@ class _ValidationBanner extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 4),
               child: Text(
                 message,
-                style: const TextStyle(
-                  color: Color(0xFF7F1D1D),
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF7F1D1D),
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                 ),
@@ -316,98 +234,46 @@ class _ValidationBanner extends StatelessWidget {
   }
 }
 
-class _ActionBar extends StatelessWidget {
+class _SaveButton extends StatelessWidget {
   final bool isSaving;
-  final bool isDirty;
-  final VoidCallback onDiscard;
-  final VoidCallback onReset;
-  final VoidCallback onSave;
+  final VoidCallback onPressed;
 
-  const _ActionBar({
+  const _SaveButton({
     required this.isSaving,
-    required this.isDirty,
-    required this.onDiscard,
-    required this.onReset,
-    required this.onSave,
+    required this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            top: BorderSide(color: BillingSetupDesignTokens.border),
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        onPressed: isSaving ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: BillingSetupColors.girviBrand,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final status = Text(
-              isDirty ? 'Unsaved changes' : 'No pending changes',
-              style: TextStyle(
-                color: isDirty
-                    ? const Color(0xFFB45309)
-                    : BillingSetupDesignTokens.textMuted,
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
+        child: isSaving
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : Text(
+                'Save Girvi Settings',
+                style: GoogleFonts.manrope(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            );
-            final actions = Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              alignment: WrapAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: isSaving ? null : onDiscard,
-                  icon: const Icon(Icons.undo_rounded, size: 18),
-                  label: const Text('Discard'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: isSaving ? null : onReset,
-                  icon: const Icon(Icons.restart_alt_rounded, size: 18),
-                  label: const Text('Reset Defaults'),
-                ),
-                FilledButton.icon(
-                  onPressed: isSaving ? null : onSave,
-                  icon: isSaving
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.save_rounded, size: 18),
-                  label: const Text('Save Girvi Settings'),
-                ),
-              ],
-            );
-
-            if (constraints.maxWidth < 680) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  status,
-                  const SizedBox(height: 10),
-                  Align(alignment: Alignment.centerRight, child: actions),
-                ],
-              );
-            }
-
-            return Row(
-              children: [
-                status,
-                const Spacer(),
-                actions,
-              ],
-            );
-          },
-        ),
       ),
     );
   }

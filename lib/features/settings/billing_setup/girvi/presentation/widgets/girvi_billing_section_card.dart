@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lotus_erp/features/settings/billing_setup/presentation/theme/billing_setup_design_tokens.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lotus_erp/theme/settings/billing_setup/billing_setup_colors.dart';
 
 class GirviBillingSectionCard extends StatelessWidget {
   final String title;
@@ -21,9 +22,16 @@ class GirviBillingSectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: BillingSetupDesignTokens.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: BillingSetupDesignTokens.border),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,21 +41,18 @@ class GirviBillingSectionCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.06),
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(8)),
-              border: const Border(
-                bottom: BorderSide(color: BillingSetupDesignTokens.border),
-              ),
+                  const BorderRadius.vertical(top: Radius.circular(18)),
+              border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 36,
-                  height: 36,
+                  padding: const EdgeInsets.all(8),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: accent.withValues(alpha: 0.20)),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: accent.withValues(alpha: 0.16)),
                   ),
                   child: Icon(icon, size: 18, color: accent),
                 ),
@@ -58,8 +63,8 @@ class GirviBillingSectionCard extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
-                          color: BillingSetupDesignTokens.textStrong,
+                        style: GoogleFonts.manrope(
+                          color: BillingSetupColors.textDark,
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                         ),
@@ -67,11 +72,10 @@ class GirviBillingSectionCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         subtitle,
-                        style: const TextStyle(
-                          color: BillingSetupDesignTokens.textBody,
-                          fontSize: 12.5,
-                          height: 1.35,
-                          fontWeight: FontWeight.w500,
+                        style: GoogleFonts.inter(
+                          color: BillingSetupColors.textMuted,
+                          fontSize: 13,
+                          height: 1.3,
                         ),
                       ),
                     ],
