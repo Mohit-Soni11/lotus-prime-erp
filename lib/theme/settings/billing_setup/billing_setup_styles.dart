@@ -59,10 +59,10 @@ class BillingSetupStyles {
   // â”€â”€ APP BAR TYPOGRAPHY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   static TextStyle get appBarTitle => GoogleFonts.inter(
-        fontSize: 15,
+        fontSize: 18,
         fontWeight: FontWeight.w700,
         color: BillingSetupColors.shellTextTitle,
-        letterSpacing: 0.5,
+        letterSpacing: 1.2,
       );
 
   static TextStyle get appBarSubtitle => GoogleFonts.inter(
@@ -73,10 +73,10 @@ class BillingSetupStyles {
       );
 
   static TextStyle get systemOnlineText => GoogleFonts.inter(
-        fontSize: 9,
-        fontWeight: FontWeight.w800,
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
         color: BillingSetupColors.onlineGreen,
-        letterSpacing: 1.0,
+        letterSpacing: 0.5,
       );
 
   static TextStyle get moduleBadgeTitle => GoogleFonts.inter(
@@ -96,7 +96,7 @@ class BillingSetupStyles {
   // DIMENSIONS
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-  static const double appBarHeight = 72.0;
+  static const double appBarHeight = 70.0;
   static const double inputHeight = 52.0;
   static const double dropdownHeight = 52.0;
   static const double rCard = 16.0;

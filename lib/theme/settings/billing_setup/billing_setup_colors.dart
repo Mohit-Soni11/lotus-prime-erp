@@ -14,6 +14,7 @@ class BillingSetupColors {
 
   // ── BRAND ─────────────────────────────────────────────────────────────────
   static const Color brandGold = Color(0xFFD4AF37);
+  static const Color brandGoldBright = Color(0xFFFFD700);
   static const Color brandGoldLight = Color(0x1AD4AF37);
   static const Color brandGoldGlow = Color(0x40D4AF37);
 
