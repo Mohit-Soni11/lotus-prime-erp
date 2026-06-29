@@ -15,6 +15,7 @@ import 'pos_hold_list_dialog.dart';
 
 //  Invoice preview dependency
 import 'pos_invoice_preview_screen.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class PosRightBillingPanel extends StatefulWidget {
   final PosBillingController ctrl;
@@ -1499,11 +1500,11 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                         return;
                       }
                       widget.ctrl.holdCurrentBill();
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text("Bill successfully parked!"),
-                        backgroundColor: SalesPosColors.success,
-                        behavior: SnackBarBehavior.floating,
-                      ));
+                      AppFeedback.show(
+                        context,
+                        type: AppFeedbackType.success,
+                        message: "Bill successfully parked!",
+                      );
                     },
                     icon: const Icon(SalesPosIcons.holdFilled, size: 18),
                     label: const Text("HOLD",
@@ -1534,11 +1535,11 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                           widget.ctrl.validateInvoiceReadiness();
                       if (validationMessage != null) {
                         widget.ctrl.focusFirstInvoiceIssue();
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(validationMessage),
-                          backgroundColor: SalesPosColors.danger,
-                          behavior: SnackBarBehavior.floating,
-                        ));
+                        AppFeedback.show(
+                          context,
+                          type: AppFeedbackType.error,
+                          message: validationMessage,
+                        );
                         return;
                       }
 

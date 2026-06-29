@@ -10,6 +10,7 @@ import 'package:lotus_erp/features/settings/billing_setup/purchase/presentation/
 import 'package:lotus_erp/models/setting/billing_setup/sales_billing_model.dart';
 import 'package:lotus_erp/theme/settings/billing_setup/billing_setup_colors.dart';
 import 'package:lotus_erp/ui/settings/billing_setup/billing_setup_app_bar.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class PurchaseBillingWorkspaceScreen extends StatefulWidget {
   const PurchaseBillingWorkspaceScreen({super.key});
@@ -95,25 +96,14 @@ class _PurchaseBillingWorkspaceScreenState
     if (!mounted) return;
     if (saved) _forceEditorSync();
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            saved
-                ? '$metalName purchase settings saved!'
-                : 'Please review the highlighted Purchase Billing issues.',
-            style: const TextStyle(color: Colors.white),
-          ),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          duration: const Duration(seconds: 2),
-          backgroundColor:
-              saved ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
-        ),
-      );
+    AppFeedback.show(
+      context,
+      type: saved ? AppFeedbackType.success : AppFeedbackType.error,
+      message: saved
+          ? '$metalName purchase settings saved!'
+          : 'Please review the highlighted Purchase Billing issues.',
+      duration: const Duration(seconds: 2),
+    );
   }
 
   @override

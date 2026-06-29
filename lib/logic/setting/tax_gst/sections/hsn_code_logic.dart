@@ -67,9 +67,9 @@ class HsnCodeLogic extends ChangeNotifier {
     notifyListeners();
     try {
       await _dao.saveHsnOnly(hsnListToJson(codes));
-      successMessage = TaxGstStrings.snackSaved;
+      successMessage = TaxGstStrings.feedbackSaved;
     } catch (_) {
-      errorMessage = TaxGstStrings.snackSaveError;
+      errorMessage = TaxGstStrings.feedbackSaveError;
     } finally {
       isSaving = false;
       notifyListeners();

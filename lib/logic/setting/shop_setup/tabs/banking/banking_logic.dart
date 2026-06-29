@@ -2,7 +2,7 @@
 // FILE: banking_logic.dart
 // TYPE: Business Logic / Master Controller
 // AUTHOR: Senior System Architect
-// DESCRIPTION: 🚀 UPGRADED: 100% Decoupled from UI. BuildContext and SnackBars
+// DESCRIPTION: 🚀 UPGRADED: 100% Decoupled from UI. BuildContext and feedback overlays
 //              removed. Zero-lag State Management using ValueNotifier.
 // -----------------------------------------------------------------------------
 
@@ -82,7 +82,7 @@ class BankingLogic {
   Future<bool> copyToClipboard(String text) async {
     if (text.isEmpty) return false;
     await Clipboard.setData(ClipboardData(text: text));
-    return true; // Return true on success. UI will catch this and show the SnackBar!
+    return true; // Return true on success. UI will catch this and show the feedback overlay!
   }
 
   // 🚀 UPGRADE: Strict Memory Disposal

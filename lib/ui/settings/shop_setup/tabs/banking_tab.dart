@@ -25,6 +25,7 @@ import '../../../../logic/setting/shop_setup/tabs/tax_gst/document_crop_logic.da
 import '../../../../helpers/banking/banking_validators.dart';
 import '../../../../core/logging/app_logger.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 // ==========================================
 // MAIN BANKING TAB
@@ -439,14 +440,12 @@ class _BankAccountCardState extends State<BankAccountCard> {
                           bool success = await widget.logicCore
                               .copyToClipboard(_accCtrl.text);
                           if (success && mounted) {
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(const SnackBar(
-                              content:
-                                  Text("Account Number Copied to Clipboard!"),
-                              backgroundColor: BankingColors.statusActiveText,
-                              behavior: SnackBarBehavior.floating,
-                              duration: Duration(seconds: 2),
-                            ));
+                            AppFeedback.show(
+                              context,
+                              type: AppFeedbackType.info,
+                              message: "Account Number Copied to Clipboard!",
+                              duration: const Duration(seconds: 2),
+                            );
                           }
                         },
                         child: const Icon(BankingIcons.copy,
@@ -875,10 +874,11 @@ class _QrDocumentWidgetState extends State<QrDocumentWidget> {
       if (mounted) setState(() => _isProcessing = false);
       if (e is FormatException && e.message == "FILE_TOO_LARGE") {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(BankingStrings.errFileSize,
-                  style: BankingStyles.snackBarText),
-              backgroundColor: BankingColors.btnDanger));
+          AppFeedback.show(
+            context,
+            type: AppFeedbackType.error,
+            message: BankingStrings.errFileSize,
+          );
         }
       }
     }

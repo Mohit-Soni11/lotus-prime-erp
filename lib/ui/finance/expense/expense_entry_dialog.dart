@@ -17,6 +17,7 @@ import 'package:intl/intl.dart';
 import '../../../logic/finance/expense/expense_controller.dart';
 import '../../../models/finance/cash_book/cash_book_enums.dart';
 import '../../../theme/finance/expense/expense_theme.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class ExpenseEntryDialog extends StatefulWidget {
   final ExpenseController ctrl;
@@ -496,27 +497,19 @@ class _SaveButton extends StatelessWidget {
               final ok = await ctrl.saveExpense();
               if (ok && ctx.mounted) {
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                  content: const Text(ExpenseStrings.saveSuccess,
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                  backgroundColor: ExpenseColors.moduleAccent,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  margin: const EdgeInsets.all(16),
+                AppFeedback.show(
+                  ctx,
+                  type: AppFeedbackType.success,
+                  message: ExpenseStrings.saveSuccess,
                   duration: const Duration(seconds: 2),
-                ));
+                );
               } else if (!ok && ctx.mounted) {
-                ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                  content: const Text(ExpenseStrings.saveFailed,
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                  backgroundColor: ExpenseColors.danger,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  margin: const EdgeInsets.all(16),
+                AppFeedback.show(
+                  ctx,
+                  type: AppFeedbackType.error,
+                  message: ExpenseStrings.saveFailed,
                   duration: const Duration(seconds: 2),
-                ));
+                );
               }
             },
       child: AnimatedContainer(

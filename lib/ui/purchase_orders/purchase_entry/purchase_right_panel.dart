@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/feedback/app_feedback.dart';
 import '../../../logic/purchase/purchase_entry_controller.dart';
 import '../../../logic/purchase/purchase_voucher_print_service.dart';
 import '../../../models/purchase/purchase_enums/purchase_enums.dart';
@@ -605,24 +606,19 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                     onPressed: widget.ctrl.isSaving
                         ? null
                         : () async {
-                            final messenger = ScaffoldMessenger.of(context);
                             final saved = await widget.ctrl.savePurchase();
                             if (!mounted) {
                               return;
                             }
-                            messenger.showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  saved
-                                      ? 'Purchase voucher saved successfully.'
-                                      : widget.ctrl.saveErrorMessage ??
-                                          'The purchase could not be saved. Review the details and try again.',
-                                ),
-                                backgroundColor: saved
-                                    ? PurchaseEntryColors.success
-                                    : PurchaseEntryColors.danger,
-                                behavior: SnackBarBehavior.floating,
-                              ),
+                            AppFeedback.show(
+                              context,
+                              type: saved
+                                  ? AppFeedbackType.success
+                                  : AppFeedbackType.error,
+                              message: saved
+                                  ? 'Purchase voucher saved successfully.'
+                                  : widget.ctrl.saveErrorMessage ??
+                                      'The purchase could not be saved. Review the details and try again.',
                             );
                           },
                     icon: widget.ctrl.isSaving

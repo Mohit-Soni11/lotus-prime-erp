@@ -8,6 +8,7 @@ import 'day_book_app_bar.dart';
 import 'day_book_eod_dialog.dart';
 import 'day_book_sections.dart';
 import '../../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class DayBookScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -85,8 +86,10 @@ class _DayBookScreenState extends State<DayBookScreen> {
 
   void _showNotice(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.info,
+      message: message,
     );
   }
 

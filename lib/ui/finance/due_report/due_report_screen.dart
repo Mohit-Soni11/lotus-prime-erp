@@ -15,6 +15,7 @@ import 'due_report_bill_panel.dart';
 import 'due_report_customer_list.dart';
 import 'due_report_filter_bar.dart';
 import 'due_report_summary_panel.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class DueReportScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -385,16 +386,11 @@ class _DueReportScreenState extends State<DueReportScreen> {
 
   void _showNotice(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content:
-            Text(message, style: const TextStyle(fontWeight: FontWeight.w700)),
-        behavior: SnackBarBehavior.floating,
-        width: 360,
-        backgroundColor: DueReportColors.appBarBg,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ),
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.info,
+      message: message,
+      duration: const Duration(seconds: 2),
     );
   }
 

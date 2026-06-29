@@ -14,6 +14,7 @@ import 'package:flutter/services.dart';
 import '../../../logic/finance/bank_book/bank_book_controller.dart';
 import '../../../models/finance/bank_book/bank_book_enums.dart';
 import '../../../theme/finance/bank_book/bank_book_theme.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class BankBookAddAccountDialog extends StatefulWidget {
   final BankBookController ctrl;
@@ -125,15 +126,10 @@ class _BankBookAddAccountDialogState extends State<BankBookAddAccountDialog>
     if (!mounted) return;
     if (success) {
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Bank account added successfully'),
-          backgroundColor: BankBookColors.creditAccent,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          margin: const EdgeInsets.all(16),
-        ),
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.success,
+        message: 'Bank account added successfully',
       );
     }
   }

@@ -26,6 +26,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../constants/app_routes.dart';
 import '../../../database/db/app_database.dart';

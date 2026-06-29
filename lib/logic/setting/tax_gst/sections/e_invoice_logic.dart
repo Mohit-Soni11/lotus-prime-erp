@@ -88,10 +88,10 @@ class EInvoiceLogic extends ChangeNotifier {
         gstr3bReminder: gstr3bReminder,
       );
       isEditing = false;
-      successMessage = TaxGstStrings.snackSaved;
+      successMessage = TaxGstStrings.feedbackSaved;
       return true;
     } catch (_) {
-      errorMessage = TaxGstStrings.snackSaveError;
+      errorMessage = TaxGstStrings.feedbackSaveError;
       return false;
     } finally {
       isSaving = false;

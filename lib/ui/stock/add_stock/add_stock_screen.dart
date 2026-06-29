@@ -7,6 +7,7 @@ import 'package:lotus_erp/ui/stock/add_stock/add_stock_app_bar.dart';
 import 'stock_metal_ui.dart';
 import 'add_stock_items_step.dart';
 import 'add_stock_purity_step.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class AddStockScreen extends StatefulWidget {
   final StockCategory metal;
@@ -200,12 +201,10 @@ class _AddStockScreenState extends State<AddStockScreen> {
     }
 
     if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_ctrl.errorMessage ?? AddStockStrings.errSaveFailed),
-          backgroundColor: AddStockColors.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.error,
+        message: _ctrl.errorMessage ?? AddStockStrings.errSaveFailed,
       );
       return;
     }

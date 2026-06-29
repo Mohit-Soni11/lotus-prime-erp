@@ -80,16 +80,6 @@ class DayBookStyles {
           shape: outlineShape,
         ),
       ),
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: DayBookColors.shellPanel,
-        contentTextStyle: GoogleFonts.inter(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: DayBookColors.shellTitle,
-        ),
-        behavior: SnackBarBehavior.floating,
-        shape: outlineShape,
-      ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: DayBookColors.brandGold,
         linearTrackColor: DayBookColors.bodyBorder,

@@ -7,6 +7,7 @@ import '../../../../theme/settings/tax_gst/tax_gst_theme.dart';
 import '../../../../logic/setting/tax_gst/sections/gst_slabs_logic.dart';
 import '../widgets/tax_gst_section_header.dart';
 import '../widgets/tax_gst_info_banner.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class GstSlabsSection extends StatelessWidget {
   const GstSlabsSection({super.key, required this.logic});
@@ -33,7 +34,7 @@ class GstSlabsSection extends StatelessWidget {
               onCancel: logic.cancelEdit,
               onSave: () async {
                 final ok = await logic.save();
-                if (context.mounted) _snack(context, ok);
+                if (context.mounted) _showFeedback(context, ok);
               },
             ),
 
@@ -166,16 +167,10 @@ class _SlabRow extends StatelessWidget {
   }
 }
 
-void _snack(BuildContext context, bool ok) {
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      content:
-          Text(ok ? TaxGstStrings.snackSaved : TaxGstStrings.snackSaveError),
-      backgroundColor: ok ? TaxGstColors.btnSave : TaxGstColors.statusDanger,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(TaxGstStyles.radiusButton)),
-      margin: const EdgeInsets.all(16),
-    ));
+void _showFeedback(BuildContext context, bool ok) {
+  AppFeedback.show(
+    context,
+    type: AppFeedbackType.error,
+    message: ok ? TaxGstStrings.feedbackSaved : TaxGstStrings.feedbackSaveError,
+  );
 }

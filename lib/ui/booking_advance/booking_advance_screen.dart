@@ -15,6 +15,7 @@ import 'booking_right_panel.dart';
 import 'booking_scrap_table.dart';
 import 'booking_status_bar.dart';
 import 'booking_top_control_bar.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class BookingAdvanceScreen extends StatefulWidget {
   const BookingAdvanceScreen({
@@ -186,17 +187,12 @@ class _BookingAdvanceScreenState extends State<BookingAdvanceScreen> {
               child: BookingRightPanel(
                 ctrl: _ctrl,
                 onSaved: (message, isSuccess) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(message),
-                      backgroundColor: isSuccess
-                          ? BookingAdvanceColors.success
-                          : BookingAdvanceColors.danger,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
+                  AppFeedback.show(
+                    context,
+                    type: isSuccess
+                        ? AppFeedbackType.success
+                        : AppFeedbackType.error,
+                    message: message,
                   );
                 },
               ),

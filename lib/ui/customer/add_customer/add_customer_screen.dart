@@ -22,6 +22,7 @@ import '../../../models/customer/customer_enums/add_customer_enums.dart';
 import '../../../models/customer/add_customer/add_customer_form_model.dart';
 import '../../../theme/customer/add_customer/add_customer_theme.dart'; // âœ… Added centralized theme
 import 'add_customer_app_bar.dart'; // âœ… Added external AppBar (Adjust path as needed)
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 // =============================================================================
 // MASTER SCREEN
@@ -363,7 +364,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     final ok = await _logic.saveCustomer();
     if (!mounted) return;
     if (ok) {
-      _showSnack(
+      _showFeedback(
         _isEditMode
             ? AddCustomerStrings.updateSuccessMsg
             : AddCustomerStrings.successMsg,
@@ -378,9 +379,9 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
         widget.onBack?.call();
       }
     } else if (_logic.saveState == SaveState.duplicate) {
-      _showSnack(AddCustomerStrings.duplicateMsg, isSuccess: false);
+      _showFeedback(AddCustomerStrings.duplicateMsg, isSuccess: false);
     } else {
-      _showSnack(AddCustomerStrings.errorMsg, isSuccess: false);
+      _showFeedback(AddCustomerStrings.errorMsg, isSuccess: false);
     }
   }
 
@@ -424,25 +425,13 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     FocusScope.of(context).unfocus();
   }
 
-  void _showSnack(String msg, {required bool isSuccess}) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [
-        Icon(isSuccess ? Icons.check_circle_rounded : Icons.error_rounded,
-            color: Colors.white, size: 18),
-        const SizedBox(width: 10),
-        Expanded(
-            child: Text(msg,
-                style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600))),
-      ]),
-      backgroundColor:
-          isSuccess ? AddCustomerColors.success : AddCustomerColors.error,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+  void _showFeedback(String msg, {required bool isSuccess}) {
+    AppFeedback.show(
+      context,
+      type: isSuccess ? AppFeedbackType.success : AppFeedbackType.error,
+      message: msg,
       duration: const Duration(seconds: 3),
-    ));
+    );
   }
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•

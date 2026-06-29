@@ -32,6 +32,7 @@ import 'cash_book_app_bar.dart';
 import 'cash_book_left_panel.dart';
 import 'cash_book_transaction_list.dart';
 import 'cash_book_entry_dialog.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class CashBookScreen extends StatefulWidget {
   const CashBookScreen({super.key});
@@ -76,18 +77,11 @@ class _CashBookScreenState extends State<CashBookScreen> {
   Future<void> _onSyncBills() async {
     await _ctrl.syncTodaysBills();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(
-          CashBookStrings.syncSuccess,
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: CashBookColors.incomeAccent,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 2),
-      ),
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.success,
+      message: CashBookStrings.syncSuccess,
+      duration: const Duration(seconds: 2),
     );
   }
 

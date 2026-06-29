@@ -25,6 +25,7 @@ import '../../../logic/karigar/add_karigar_logic.dart';
 import '../../../models/karigar/karigar_enums/karigar_enums.dart';
 import '../../../theme/karigar/add_karigar/add_karigar_theme.dart';
 import 'add_karigar_app_bar.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class AddKarigarScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -154,13 +155,13 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
     final ok = await _logic.saveKarigar();
     if (!mounted) return;
     if (ok) {
-      _showSnack(AddKarigarStrings.successMsg, isSuccess: true);
+      _showFeedback(AddKarigarStrings.successMsg, isSuccess: true);
       await Future.delayed(const Duration(milliseconds: 800));
       if (!mounted) return;
       widget.onSaved?.call();
       widget.onBack?.call();
     } else if (_logic.errorMessage != null) {
-      _showSnack(_logic.errorMessage!, isSuccess: false);
+      _showFeedback(_logic.errorMessage!, isSuccess: false);
     }
   }
 
@@ -183,25 +184,13 @@ class _AddKarigarScreenState extends State<AddKarigarScreen>
     FocusScope.of(context).unfocus();
   }
 
-  void _showSnack(String msg, {required bool isSuccess}) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [
-        Icon(isSuccess ? Icons.check_circle_rounded : Icons.error_rounded,
-            color: Colors.white, size: 18),
-        const SizedBox(width: 10),
-        Expanded(
-            child: Text(msg,
-                style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600))),
-      ]),
-      backgroundColor:
-          isSuccess ? AddKarigarColors.success : AddKarigarColors.error,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+  void _showFeedback(String msg, {required bool isSuccess}) {
+    AppFeedback.show(
+      context,
+      type: isSuccess ? AppFeedbackType.success : AppFeedbackType.error,
+      message: msg,
       duration: const Duration(seconds: 3),
-    ));
+    );
   }
 
   Widget _anim(int i, Widget child) => FadeTransition(

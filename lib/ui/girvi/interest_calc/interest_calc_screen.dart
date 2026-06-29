@@ -15,6 +15,7 @@ import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import '../shared/girvi_shared_widgets.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'parts/interest_customer_panel.dart';
 part 'parts/interest_entry_layout.dart';
@@ -193,12 +194,10 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
 
     final ok = await _ctrl.recordPayment();
     if (!mounted || !ok) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_ctrl.successMessage ?? 'Payment entry recorded.'),
-        backgroundColor: GirviColors.success,
-        behavior: SnackBarBehavior.floating,
-      ),
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.success,
+      message: _ctrl.successMessage ?? 'Payment entry recorded.',
     );
   }
 
@@ -376,7 +375,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
       );
       if (!mounted) return;
       if (draft == null) {
-        _showInfoSnack('Girvi invoice details could not be loaded.');
+        _showInfoFeedback('Girvi invoice details could not be loaded.');
         return;
       }
 
@@ -389,7 +388,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
         if (!mounted) return;
         final bytes = controller.pdfBytes;
         if (bytes == null) {
-          _showInfoSnack('Girvi invoice PDF could not be generated.');
+          _showInfoFeedback('Girvi invoice PDF could not be generated.');
           return;
         }
         await _showReceiptPreview(pdfBytes: bytes);
@@ -398,20 +397,18 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
       }
     } catch (error) {
       if (mounted) {
-        _showInfoSnack('Girvi invoice preview could not be opened.');
+        _showInfoFeedback('Girvi invoice preview could not be opened.');
       }
     } finally {
       if (mounted) setState(() => _openingReceipt = false);
     }
   }
 
-  void _showInfoSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: GirviColors.shellBg,
-        behavior: SnackBarBehavior.floating,
-      ),
+  void _showInfoFeedback(String message) {
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.info,
+      message: message,
     );
   }
 

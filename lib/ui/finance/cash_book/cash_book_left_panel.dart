@@ -14,6 +14,7 @@ import '../../../logic/finance/cash_book/cash_book_controller.dart';
 import '../../../models/finance/cash_book/cash_book_enums.dart';
 import '../../../models/finance/cash_book/cash_book_summary_model.dart';
 import '../../../theme/finance/cash_book/cash_book_theme.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class CashBookLeftPanel extends StatelessWidget {
   final CashBookController ctrl;
@@ -354,9 +355,10 @@ class _OpeningBalanceCard extends StatelessWidget {
               await ctrl.updateOpeningBalance(v);
               if (context.mounted) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text(CashBookStrings.openingBalanceSaved)),
+                AppFeedback.show(
+                  context,
+                  type: AppFeedbackType.success,
+                  message: CashBookStrings.openingBalanceSaved,
                 );
               }
             },

@@ -84,12 +84,6 @@ class BankingStyles {
   static TextStyle cropDialogTitle =
       const TextStyle(color: BankingColors.cardBg, fontWeight: FontWeight.bold);
 
-  // ðŸš€ UPGRADE: Newly Injected SnackBar Text Style
-  static TextStyle snackBarText = GoogleFonts.inter(
-      fontSize: 14.0,
-      fontWeight: FontWeight.w600,
-      color: BankingColors.textWhite);
-
   // --- Dynamic Badge Logic ---
   static Color getBadgeBgColor(String type) {
     if (type == "Current") {

@@ -112,10 +112,10 @@ class GstRegistrationLogic extends ChangeNotifier {
         stateCode: _nullIfEmpty(stateCtrl.text.trim()),
       );
       isEditing = false;
-      successMessage = TaxGstStrings.snackSaved;
+      successMessage = TaxGstStrings.feedbackSaved;
       return true;
     } catch (e) {
-      errorMessage = TaxGstStrings.snackSaveError;
+      errorMessage = TaxGstStrings.feedbackSaveError;
       return false;
     } finally {
       isSaving = false;

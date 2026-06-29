@@ -24,6 +24,7 @@ import '../../../theme/karigar/karigar_theme.dart';
 import 'receive_karigar_app_bar.dart'; // NAYA IMPORT
 import '../shared/karigar_field_widgets.dart';
 import '../shared/karigar_section_card.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class ReceiveKarigarScreen extends StatefulWidget {
   final int? preSelectedIssueId;
@@ -149,7 +150,7 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
     );
 
     if (ok && mounted) {
-      _showSuccessSnackbar(
+      _showSuccessFeedback(
           _ctrl.successMessage ?? KarigarStrings.successReceiptSaved);
       _resetAll();
     }
@@ -172,20 +173,13 @@ class _ReceiveKarigarScreenState extends State<ReceiveKarigarScreen>
     await _ctrl.resetForm();
   }
 
-  void _showSuccessSnackbar(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [
-        const Icon(KarigarIcons.markDone, color: Colors.white, size: 18),
-        const SizedBox(width: 10),
-        Expanded(
-            child: Text(msg,
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 13))),
-      ]),
-      backgroundColor: KarigarColors.success,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+  void _showSuccessFeedback(String msg) {
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.success,
+      message: msg,
       duration: const Duration(seconds: 3),
-    ));
+    );
   }
 
   Future<void> _pickReceiptDate() async {

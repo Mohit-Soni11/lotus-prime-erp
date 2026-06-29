@@ -8,6 +8,7 @@ import 'package:lotus_erp/theme/stock/add_stock/add_stock_gold/gold_stock_theme.
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_gold/add_gold_stock_items_step.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_gold/gold_app_bar.dart';
 import 'package:lotus_erp/ui/stock/add_stock/add_stock_gold/gold_purity_step.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class GoldStockScreen extends StatefulWidget {
   const GoldStockScreen({super.key});
@@ -146,12 +147,10 @@ class _GoldStockScreenState extends State<GoldStockScreen> {
     }
 
     if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_ctrl.errorMessage ?? AddStockStrings.errSaveFailed),
-          backgroundColor: AddStockColors.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.error,
+        message: _ctrl.errorMessage ?? AddStockStrings.errSaveFailed,
       );
       return;
     }

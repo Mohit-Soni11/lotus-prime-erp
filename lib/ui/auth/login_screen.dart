@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../theme/dashboard/app/uv.dart';
 import 'services/auth_service.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -474,16 +475,14 @@ class _LoginScreenState extends State<LoginScreen> {
               );
 
               if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    res == "SUCCESS"
-                        ? "Password reset link sent. Please check your email."
-                        : res,
-                  ),
-                  backgroundColor:
-                      res == "SUCCESS" ? UV.colors.success : UV.colors.error,
-                ),
+              AppFeedback.show(
+                context,
+                type: res == "SUCCESS"
+                    ? AppFeedbackType.success
+                    : AppFeedbackType.error,
+                message: res == "SUCCESS"
+                    ? "Password reset link sent. Please check your email."
+                    : res,
               );
             },
             child: Text("Send Link", style: UV.styles.action),
@@ -506,21 +505,19 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (res == "SUCCESS") {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text("Signed in successfully. Redirecting..."),
-          backgroundColor: UV.colors.success,
-          duration: const Duration(seconds: 1),
-        ),
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.success,
+        message: "Signed in successfully. Redirecting...",
+        duration: const Duration(seconds: 1),
       );
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(res),
-        backgroundColor: UV.colors.error,
-      ),
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.error,
+      message: res,
     );
   }
 
@@ -540,23 +537,20 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (res == "SUCCESS") {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.warning,
+        message:
             "Account created successfully. Please verify your email and sign in.",
-          ),
-          backgroundColor: UV.colors.success,
-        ),
       );
       setState(() => _isLogin = true);
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(res),
-        backgroundColor: UV.colors.error,
-      ),
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.error,
+      message: res,
     );
   }
 }

@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import '../../customer/add_customer/add_customer_screen.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class PosCustomerDetailsPanel extends StatefulWidget {
   final PosBillingController ctrl;
@@ -1265,21 +1266,12 @@ class _PosCustomerHistoryCard extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: () {
                           // Continue billing from the active customer history state.
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Row(
-                                children: [
-                                  Icon(Icons.receipt_long,
-                                      color: Colors.white, size: 16),
-                                  SizedBox(width: 8),
-                                  Text(
-                                      'New invoice ready. Add items and collect outstanding dues when required.'),
-                                ],
-                              ),
-                              backgroundColor: SalesPosColors.success,
-                              behavior: SnackBarBehavior.floating,
-                              duration: Duration(seconds: 3),
-                            ),
+                          AppFeedback.show(
+                            context,
+                            type: AppFeedbackType.warning,
+                            message:
+                                'New invoice ready. Add items and collect outstanding dues when required.',
+                            duration: const Duration(seconds: 3),
                           );
                         },
                         icon: const Icon(Icons.add_circle_outline,
@@ -1685,23 +1677,19 @@ class _ClearDueDialogState extends State<_ClearDueDialog> {
                   final amount =
                       double.tryParse(_amountCtrl.text.trim()) ?? 0.0;
                   if (amount <= 0) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please enter an amount.'),
-                        backgroundColor: SalesPosColors.danger,
-                        behavior: SnackBarBehavior.floating,
-                      ),
+                    AppFeedback.show(
+                      context,
+                      type: AppFeedbackType.error,
+                      message: 'Please enter an amount.',
                     );
                     return;
                   }
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                          'Rs ${amount.toStringAsFixed(0)} collected via $_selectedMode. Bill update is pending.'),
-                      backgroundColor: SalesPosColors.success,
-                      behavior: SnackBarBehavior.floating,
-                    ),
+                  AppFeedback.show(
+                    context,
+                    type: AppFeedbackType.success,
+                    message:
+                        'Rs ${amount.toStringAsFixed(0)} collected via $_selectedMode. Bill update is pending.',
                   );
                 },
                 icon: const Icon(Icons.check_circle_outline,

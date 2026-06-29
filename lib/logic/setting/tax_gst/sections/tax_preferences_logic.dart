@@ -77,10 +77,10 @@ class TaxPreferencesLogic extends ChangeNotifier {
         compositeMode: compositeSupply,
       );
       isEditing = false;
-      successMessage = TaxGstStrings.snackSaved;
+      successMessage = TaxGstStrings.feedbackSaved;
       return true;
     } catch (_) {
-      errorMessage = TaxGstStrings.snackSaveError;
+      errorMessage = TaxGstStrings.feedbackSaveError;
       return false;
     } finally {
       isSaving = false;

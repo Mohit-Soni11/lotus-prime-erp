@@ -8,6 +8,7 @@ import '../../../../models/stock/supplier_model/supplier_enums.dart';
 import '../../../../models/stock/supplier_model/supplier_model.dart';
 import '../../../../theme/stock/supplier/add_supplier/add_supplier_theme.dart';
 import 'add_supplier_app_bar.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class AddSupplierScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -1121,28 +1122,24 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
     if (!mounted) return;
 
     if (success) {
-      _showSnack(_logic.successMessage ?? 'Supplier saved', isSuccess: true);
+      _showFeedback(_logic.successMessage ?? 'Supplier saved', isSuccess: true);
       widget.onSaved?.call();
     } else {
-      _showSnack('Please check highlighted fields', isSuccess: false);
+      _showFeedback('Please check highlighted fields', isSuccess: false);
     }
   }
 
   void _handleClear() {
     _logic.resetForm();
     _syncControllersFromForm();
-    _showSnack('Supplier form cleared', isSuccess: true);
+    _showFeedback('Supplier form cleared', isSuccess: true);
   }
 
-  void _showSnack(String message, {required bool isSuccess}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor:
-            isSuccess ? AddSupplierColors.success : AddSupplierColors.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+  void _showFeedback(String message, {required bool isSuccess}) {
+    AppFeedback.show(
+      context,
+      type: isSuccess ? AppFeedbackType.success : AppFeedbackType.error,
+      message: message,
     );
   }
 }

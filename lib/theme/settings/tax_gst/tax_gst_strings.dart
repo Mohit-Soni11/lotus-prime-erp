@@ -228,13 +228,14 @@ abstract final class TaxGstStrings {
   // ── Dialog ───────────────────────────────────────────────────
   static const String dialogAddHsnTitle = 'Add HSN Code';
 
-  // ── Snackbar Messages ────────────────────────────────────────
-  static const String snackSaved = 'Changes saved & synced with Shop Profile';
-  static const String snackSaveError = 'Save failed. Please try again.';
-  static const String snackValidationError =
+  // ── Feedback Messages ────────────────────────────────────────
+  static const String feedbackSaved =
+      'Changes saved & synced with Shop Profile';
+  static const String feedbackSaveError = 'Save failed. Please try again.';
+  static const String feedbackValidationError =
       'Please fix the errors before saving.';
-  static const String snackHsnAdded = 'HSN code added successfully';
-  static const String snackHsnRemoved = 'HSN code removed';
+  static const String feedbackHsnAdded = 'HSN code added successfully';
+  static const String feedbackHsnRemoved = 'HSN code removed';
 
   // ── Validation Messages ──────────────────────────────────────
   static const String validGstinFormat =

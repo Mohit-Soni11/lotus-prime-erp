@@ -19,6 +19,7 @@ import '../../../../theme/settings/shop_setup/tabs/tax_gst/tax_gst_theme.dart';
 import '../../../../logic/setting/shop_setup/tabs/tax_gst/tax_gst_logic.dart';
 import '../../../../logic/setting/shop_setup/tabs/tax_gst/document_crop_logic.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class TaxGstTab extends StatefulWidget {
   // ðŸš€ NEW: Receive initial data from parent
@@ -92,7 +93,7 @@ class _TaxGstTabState extends State<TaxGstTab> {
     } else {
       bool success = await logic.saveSection(sectionId);
       if (success && mounted) {
-        _showSaveSnack(TaxGstStrings.snackTaxSyncDone);
+        _showSaveFeedback(TaxGstStrings.feedbackTaxSyncDone);
       }
     }
   }
@@ -153,22 +154,14 @@ class _TaxGstTabState extends State<TaxGstTab> {
     }
   }
 
-  void _showSaveSnack(String msg, {bool isError = false}) {
+  void _showSaveFeedback(String msg, {bool isError = false}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [
-        Icon(isError ? TaxGstIcons.error : TaxGstIcons.check,
-            color: TaxGstColors.cardBg, size: 20),
-        const SizedBox(width: 8),
-        Text(msg, style: const TextStyle(color: TaxGstColors.cardBg))
-      ]),
-      backgroundColor: isError ? TaxGstColors.btnDanger : TaxGstColors.saveBtn,
-      behavior: SnackBarBehavior.floating,
+    AppFeedback.show(
+      context,
+      type: isError ? AppFeedbackType.error : AppFeedbackType.success,
+      message: msg,
       duration: const Duration(seconds: 2),
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(TaxGstStyles.rInput)),
-    ));
+    );
   }
 
   @override
@@ -462,7 +455,7 @@ class _TaxGstTabState extends State<TaxGstTab> {
                           logic.toggleHsnLock();
                         } else {
                           await logic.toggleHsnLock();
-                          _showSaveSnack(TaxGstStrings.snackTaxSyncDone);
+                          _showSaveFeedback(TaxGstStrings.feedbackTaxSyncDone);
                         }
                       },
                 child: AnimatedContainer(
@@ -973,11 +966,11 @@ class _EnterpriseDocumentWidgetState extends State<EnterpriseDocumentWidget> {
       if (mounted) {
         setState(() => _isProcessing = false);
         if (e.message == "FILE_TOO_LARGE") {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text(TaxGstStrings.errFileTooLarge,
-                style: TextStyle(color: TaxGstColors.cardBg)),
-            backgroundColor: TaxGstColors.btnDanger,
-          ));
+          AppFeedback.show(
+            context,
+            type: AppFeedbackType.error,
+            message: TaxGstStrings.errFileTooLarge,
+          );
         }
       }
     } catch (e) {

@@ -14,6 +14,7 @@ import 'due_receipt_history_detail_panel.dart';
 import 'due_receipt_history_filter_bar.dart';
 import 'due_receipt_history_list.dart';
 import 'due_receipt_history_summary_panel.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class DueReceiptHistoryScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -311,16 +312,11 @@ class _DueReceiptHistoryScreenState extends State<DueReceiptHistoryScreen> {
 
   void _showNotice(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content:
-            Text(message, style: const TextStyle(fontWeight: FontWeight.w700)),
-        behavior: SnackBarBehavior.floating,
-        width: 390,
-        backgroundColor: DueReceiptHistoryColors.appBarBg,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ),
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.info,
+      message: message,
+      duration: const Duration(seconds: 2),
     );
   }
 

@@ -36,6 +36,7 @@ import '../../finance/bank_book/bank_book_left_panel.dart';
 import '../../finance/bank_book/bank_book_transaction_list.dart';
 import '../../finance/bank_book/bank_book_entry_dialog.dart';
 import '../../finance/bank_book/bank_book_add_account_dialog.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class BankBookScreen extends StatefulWidget {
   const BankBookScreen({super.key});
@@ -68,15 +69,10 @@ class _BankBookScreenState extends State<BankBookScreen> {
 
   void _showAddEntryDialog() {
     if (_ctrl.selectedAccount == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please add or select a bank account first'),
-          backgroundColor: BankBookColors.chequeAccent,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          margin: const EdgeInsets.all(16),
-        ),
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.warning,
+        message: 'Please add or select a bank account first',
       );
       return;
     }
@@ -110,18 +106,11 @@ class _BankBookScreenState extends State<BankBookScreen> {
         ? '$count bill(s) synced successfully'
         : BankBookStrings.syncSuccess;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: BankBookColors.creditAccent,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 2),
-      ),
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.info,
+      message: message,
+      duration: const Duration(seconds: 2),
     );
   }
 

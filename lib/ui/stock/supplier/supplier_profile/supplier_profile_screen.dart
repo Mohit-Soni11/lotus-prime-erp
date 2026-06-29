@@ -8,6 +8,7 @@ import '../../../../models/stock/supplier_model/supplier_enums.dart';
 import '../../../../models/stock/supplier_profile/supplier_profile_model.dart';
 import '../../../../theme/stock/supplier/supplier_profile/supplier_profile_theme.dart';
 import 'supplier_profile_app_bar.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class SupplierProfileScreen extends StatefulWidget {
   final int supplierId;
@@ -1079,7 +1080,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
                           if (!mounted) return;
                           if (ok) {
                             dialogNavigator.pop();
-                            _showSnack(SupplierProfileStrings.editSuccess);
+                            _showFeedback(SupplierProfileStrings.editSuccess);
                           } else {
                             setDialogState(() => saving = false);
                           }
@@ -1168,7 +1169,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
               Navigator.of(dialogContext).pop();
               final ok = await _logic.deactivateSupplier();
               if (!mounted || !ok) return;
-              _showSnack('${profile.businessName} deactivated');
+              _showFeedback('${profile.businessName} deactivated');
             },
             child: const Text(SupplierProfileStrings.deleteConfirm),
           ),
@@ -1177,12 +1178,11 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
     );
   }
 
-  void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-      ),
+  void _showFeedback(String message) {
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.info,
+      message: message,
     );
   }
 

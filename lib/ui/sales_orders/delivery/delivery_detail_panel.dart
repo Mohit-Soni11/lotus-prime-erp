@@ -15,6 +15,7 @@ import '../../../logic/sales_orders/delivery/delivery_management_controller.dart
 import '../../../models/sales_orders/delivery/delivery_model.dart';
 import '../../../models/sales_orders/delivery/delivery_enums.dart';
 import '../../../theme/sales/delivery/delivery_theme.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class DeliveryDetailPanel extends StatelessWidget {
   final DeliveryManagementController ctrl;
@@ -463,7 +464,7 @@ class _ActionSection extends StatelessWidget {
                 amountCollected: ctrl.finalAmountValue,
               );
               if (ok && context.mounted) {
-                _showSnack(context, DeliveryStrings.snackDueCollected,
+                _showFeedback(context, DeliveryStrings.feedbackDueCollected,
                     isError: false);
                 onDelivered();
               }
@@ -497,7 +498,7 @@ class _ActionSection extends StatelessWidget {
               onTap: () async {
                 final ok = await ctrl.markInMaking(order.id);
                 if (ok && context.mounted) {
-                  _showSnack(context, DeliveryStrings.snackInMaking);
+                  _showFeedback(context, DeliveryStrings.feedbackInMaking);
                 }
               },
             ),
@@ -511,7 +512,7 @@ class _ActionSection extends StatelessWidget {
               onTap: () async {
                 final ok = await ctrl.markReady(order.id);
                 if (ok && context.mounted) {
-                  _showSnack(context, DeliveryStrings.snackReadyMarked);
+                  _showFeedback(context, DeliveryStrings.feedbackReadyMarked);
                 }
               },
             ),
@@ -546,7 +547,7 @@ class _ActionSection extends StatelessWidget {
                       advancePaid: order.advancePaid,
                     );
                     if (ok && context.mounted) {
-                      _showSnack(context, DeliveryStrings.snackDelivered);
+                      _showFeedback(context, DeliveryStrings.feedbackDelivered);
                       onDelivered();
                     }
                   },
@@ -566,7 +567,7 @@ class _ActionSection extends StatelessWidget {
                   advancePaid: order.advancePaid,
                 );
                 if (ok && context.mounted) {
-                  _showSnack(context, DeliveryStrings.snackDelivered);
+                  _showFeedback(context, DeliveryStrings.feedbackDelivered);
                   onDelivered();
                 }
               },
@@ -640,7 +641,7 @@ class _ActionSection extends StatelessWidget {
               Navigator.pop(context);
               final ok = await ctrl.cancelOrder(o.id);
               if (ok && context.mounted) {
-                _showSnack(context, DeliveryStrings.snackCancelled);
+                _showFeedback(context, DeliveryStrings.feedbackCancelled);
               }
             },
             child: const Text(DeliveryStrings.btnConfirm,
@@ -651,14 +652,13 @@ class _ActionSection extends StatelessWidget {
     );
   }
 
-  void _showSnack(BuildContext context, String msg, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor:
-          isError ? DeliveryColors.actionCancel : DeliveryColors.statusReady,
-      behavior: SnackBarBehavior.floating,
+  void _showFeedback(BuildContext context, String msg, {bool isError = false}) {
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.error,
+      message: msg,
       duration: const Duration(seconds: 2),
-    ));
+    );
   }
 }
 

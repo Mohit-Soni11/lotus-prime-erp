@@ -8,6 +8,7 @@ import '../../../../logic/setting/tax_gst/sections/gst_registration_logic.dart';
 import '../widgets/tax_gst_section_header.dart';
 import '../widgets/tax_gst_info_banner.dart';
 import '../widgets/tax_gst_field_row.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class GstRegistrationSection extends StatelessWidget {
   const GstRegistrationSection({super.key, required this.logic});
@@ -35,11 +36,11 @@ class GstRegistrationSection extends StatelessWidget {
               onSave: () async {
                 final ok = await logic.save();
                 if (context.mounted) {
-                  _showSnack(
+                  _showFeedback(
                       context,
                       ok
-                          ? TaxGstStrings.snackSaved
-                          : TaxGstStrings.snackSaveError,
+                          ? TaxGstStrings.feedbackSaved
+                          : TaxGstStrings.feedbackSaveError,
                       isError: !ok);
                 }
               },
@@ -290,29 +291,12 @@ class _DropdownField extends StatelessWidget {
   }
 }
 
-// â”€â”€ Snackbar helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-void _showSnack(BuildContext context, String msg, {bool isError = false}) {
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      content: Row(children: [
-        Icon(
-          isError ? TaxGstIcons.statusError : TaxGstIcons.statusSuccess,
-          color: Colors.white,
-          size: 16,
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(msg,
-              style: const TextStyle(color: Colors.white, fontSize: 13)),
-        ),
-      ]),
-      backgroundColor:
-          isError ? TaxGstColors.statusDanger : TaxGstColors.btnSave,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(TaxGstStyles.radiusButton)),
-      margin: const EdgeInsets.all(16),
-      duration: const Duration(seconds: 3),
-    ));
+// â”€â”€ Feedback helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+void _showFeedback(BuildContext context, String msg, {bool isError = false}) {
+  AppFeedback.show(
+    context,
+    type: AppFeedbackType.error,
+    message: msg,
+    duration: const Duration(seconds: 3),
+  );
 }

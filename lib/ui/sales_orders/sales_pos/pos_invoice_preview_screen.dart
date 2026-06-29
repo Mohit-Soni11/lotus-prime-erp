@@ -16,6 +16,7 @@ import '../../../logic/sales_orders/sales_pos/pos_invoice_controller.dart';
 import '../../../features/print_templates/domain/print_template_registry.dart';
 import 'pos_invoice_metal_setup_card.dart';
 import 'pos_invoice_template_selector.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class PosInvoicePreviewScreen extends StatefulWidget {
   final PosBillingController billingCtrl;
@@ -769,15 +770,12 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                       if (!mounted) return;
                       widget.billingCtrl.clearEntirePOS();
                       Navigator.of(context).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
+                      AppFeedback.show(
+                        context,
+                        type: AppFeedbackType.success,
+                        message:
                             "Invoice finalized successfully. The POS is ready for the next customer.",
-                          ),
-                          backgroundColor: SalesPosColors.success,
-                          behavior: SnackBarBehavior.floating,
-                          duration: Duration(seconds: 3),
-                        ),
+                        duration: const Duration(seconds: 3),
                       );
                     }
                   : null,

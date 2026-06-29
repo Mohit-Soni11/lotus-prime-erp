@@ -14,6 +14,7 @@ import '../../../logic/finance/bank_book/bank_book_controller.dart';
 import '../../../models/finance/bank_book/bank_book_enums.dart';
 import '../../../models/finance/bank_book/bank_account_model.dart';
 import '../../../theme/finance/bank_book/bank_book_theme.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class BankBookTransactionList extends StatelessWidget {
   final BankBookController ctrl;
@@ -664,8 +665,10 @@ class _ActionRow extends StatelessWidget {
           onTap: () async {
             await ctrl.markReconciled(txn.id);
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Marked as reconciled')),
+              AppFeedback.show(
+                context,
+                type: AppFeedbackType.success,
+                message: 'Marked as reconciled',
               );
             }
           },
@@ -710,8 +713,10 @@ class _ActionRow extends StatelessWidget {
               Navigator.pop(context);
               await ctrl.voidTransaction(txn.id);
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text(BankBookStrings.voidSuccess)),
+                AppFeedback.show(
+                  context,
+                  type: AppFeedbackType.success,
+                  message: BankBookStrings.voidSuccess,
                 );
               }
             },

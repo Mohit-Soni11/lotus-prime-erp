@@ -19,6 +19,7 @@ import '../../../../theme/settings/shop_setup/tabs/address/address_theme.dart';
 import '../../../../logic/setting/shop_setup/tabs/address/address_logic.dart';
 import '../../../../logic/setting/shop_setup/tabs/address/address_map_logic.dart';
 import '../../../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class AddressTab extends StatefulWidget {
   // ðŸš€ NEW: Receive initial data from parent
@@ -190,7 +191,7 @@ class AddressTabState extends State<AddressTab> {
   // --- SMART MAP HANDLING ---
   void _handleMapTap(LatLng latLng) {
     if (mapLogic.isMapLocked.value) {
-      _showMapSnack(AddressStrings.msgUnlockMap, isError: true);
+      _showMapFeedback(AddressStrings.msgUnlockMap, isError: true);
     } else {
       mapLogic.onMapTap(latLng);
       _updateMapMarker(latLng);
@@ -202,9 +203,10 @@ class AddressTabState extends State<AddressTab> {
       LatLng newLoc = await mapLogic.detectCurrentLocation();
       _updateMapMarker(newLoc);
       mapController.move(newLoc, 16.0);
-      _showMapSnack("Location Detected Successfully", isError: false);
+      _showMapFeedback("Location Detected Successfully", isError: false);
     } catch (e) {
-      _showMapSnack(e.toString().replaceAll("Exception: ", ""), isError: true);
+      _showMapFeedback(e.toString().replaceAll("Exception: ", ""),
+          isError: true);
     }
   }
 
@@ -223,26 +225,14 @@ class AddressTabState extends State<AddressTab> {
     });
   }
 
-  void _showMapSnack(String msg, {bool isError = false}) {
+  void _showMapFeedback(String msg, {bool isError = false}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [
-        Icon(isError ? AddressIcons.errorOutline : AddressIcons.checkCircle,
-            color: AddressColors.surfaceWhite, size: 20),
-        const SizedBox(width: 8),
-        Expanded(
-            child: Text(msg,
-                style: GoogleFonts.manrope(fontWeight: FontWeight.w600),
-                overflow: TextOverflow.ellipsis))
-      ]),
-      backgroundColor:
-          isError ? AddressColors.btnDanger : AddressColors.saveBtn,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      margin: const EdgeInsets.all(16),
+    AppFeedback.show(
+      context,
+      type: isError ? AppFeedbackType.error : AppFeedbackType.success,
+      message: msg,
       duration: const Duration(seconds: 2),
-    ));
+    );
   }
 
   void _handleChipSelect(String type) {
@@ -472,7 +462,7 @@ class AddressTabState extends State<AddressTab> {
                   icon: AddressIcons.sectionMap,
                   isLocked: isLocked,
                   isSaving: false,
-                  onToggle: () => _showMapSnack(mapLogic.toggleLock()),
+                  onToggle: () => _showMapFeedback(mapLogic.toggleLock()),
                 ),
                 const Divider(
                     height: 40, thickness: 1, color: AddressColors.borderLight),

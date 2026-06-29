@@ -437,19 +437,12 @@ extension NewGirviActions on _NewGirviScreenState {
   }
 
   void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [
-        const Icon(Icons.error_outline_rounded, color: Colors.white, size: 18),
-        const SizedBox(width: 10),
-        Expanded(
-            child: Text(msg,
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 13))),
-      ]),
-      backgroundColor: GirviColors.danger,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.error,
+      message: msg,
       duration: const Duration(seconds: 3),
-    ));
+    );
   }
 
   Future<void> _pickStartDate() async {

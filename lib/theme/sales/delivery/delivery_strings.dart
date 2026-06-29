@@ -123,11 +123,12 @@ class DeliveryStrings {
   static const String btnConfirm = 'Confirm';
   static const String btnCancel2 = 'Wapas Jao';
 
-  // ── SNACKBAR ──────────────────────────────────────────────────────────────
-  static const String snackDelivered = '✅ Order successfully deliver ho gaya!';
-  static const String snackReadyMarked = '✅ Order Ready mark ho gaya!';
-  static const String snackInMaking = '✅ Order In Making mark ho gaya!';
-  static const String snackDueCollected = '✅ Due payment collect ho gaya!';
-  static const String snackCancelled = 'Order cancel ho gaya.';
-  static const String snackError = '❌ Kuch error aaya, dobara try karein.';
+  // ── FEEDBACK ──────────────────────────────────────────────────────────────
+  static const String feedbackDelivered = 'Order delivered successfully.';
+  static const String feedbackReadyMarked = 'Order marked as ready.';
+  static const String feedbackInMaking = 'Order moved to in-making.';
+  static const String feedbackDueCollected =
+      'Due payment collected successfully.';
+  static const String feedbackCancelled = 'Order cancelled successfully.';
+  static const String feedbackError = 'Something went wrong. Please try again.';
 }

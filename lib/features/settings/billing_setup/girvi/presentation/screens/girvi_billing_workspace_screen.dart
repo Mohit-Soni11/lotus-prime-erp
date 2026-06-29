@@ -7,6 +7,7 @@ import 'package:lotus_erp/features/settings/billing_setup/girvi/presentation/wid
 import 'package:lotus_erp/theme/settings/billing_setup/billing_setup_colors.dart';
 import 'package:lotus_erp/theme/settings/billing_setup/billing_setup_strings.dart';
 import 'package:lotus_erp/ui/settings/billing_setup/billing_setup_app_bar.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class GirviBillingWorkspaceScreen extends StatefulWidget {
   const GirviBillingWorkspaceScreen({super.key});
@@ -68,25 +69,14 @@ class _GirviBillingWorkspaceScreenState
     if (!mounted) return;
     if (saved) _syncEditors(_controller.state.input);
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            saved
-                ? 'Girvi settings saved!'
-                : 'Please review the highlighted Girvi Billing issues.',
-            style: const TextStyle(color: Colors.white),
-          ),
-          backgroundColor:
-              saved ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+    AppFeedback.show(
+      context,
+      type: saved ? AppFeedbackType.success : AppFeedbackType.error,
+      message: saved
+          ? 'Girvi settings saved!'
+          : 'Please review the highlighted Girvi Billing issues.',
+      duration: const Duration(seconds: 2),
+    );
   }
 
   @override

@@ -19,6 +19,7 @@ import '../../../../theme/settings/shop_setup/tabs/basic_info_tab/basic_info_the
 import '../../../../../../models/setting/shop_setup/shop_profile_model.dart';
 import '../../../../../../models/setting/shop_setup/enums/basic_info_enums.dart';
 import '../../../../ui/settings/shop_setup/tabs/professional_photo_widget.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class BasicInfoTab extends StatefulWidget {
   final ShopProfileModel? initialData;
@@ -228,23 +229,19 @@ class BasicInfoTabState extends State<BasicInfoTab> {
     }
   }
 
-  void _showSnackBar(
-      {required String message, required IconData icon, required Color color}) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(
-        children: [
-          Icon(icon, color: BasicInfoColors.surfaceWhite, size: 20),
-          const SizedBox(width: 8),
-          Expanded(child: Text(message)),
-        ],
-      ),
-      backgroundColor: color,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(BasicInfoStyles.rInputRadius)),
+  void _showFeedback({
+    required String message,
+    required IconData icon,
+    required Color color,
+  }) {
+    AppFeedback.show(
+      context,
+      type: color == BasicInfoColors.btnDanger
+          ? AppFeedbackType.error
+          : AppFeedbackType.info,
+      message: message,
       duration: const Duration(seconds: 2),
-    ));
+    );
   }
 
   ShopProfileModel? validateAndSave() {
@@ -261,7 +258,7 @@ class BasicInfoTabState extends State<BasicInfoTab> {
         shopWa: shopWaCtrl.text);
 
     if (entErrs.isNotEmpty || opsErrs.isNotEmpty || commErrs.isNotEmpty) {
-      _showSnackBar(
+      _showFeedback(
           message: BasicInfoStrings.msgFixErrors,
           icon: BasicInfoIcons.warning,
           color: BasicInfoColors.btnDanger);
@@ -353,7 +350,7 @@ class BasicInfoTabState extends State<BasicInfoTab> {
           onImageSaved: (File? file, String shape) async {
             String? error = await logic.updateLogo(file, shape);
             if (error != null && mounted) {
-              _showSnackBar(
+              _showFeedback(
                   message: error,
                   icon: BasicInfoIcons.error,
                   color: BasicInfoColors.btnDanger);
@@ -371,7 +368,7 @@ class BasicInfoTabState extends State<BasicInfoTab> {
           onImageSaved: (File? file, String shape) async {
             String? error = await logic.updateSignature(file, shape);
             if (error != null && mounted) {
-              _showSnackBar(
+              _showFeedback(
                   message: error,
                   icon: BasicInfoIcons.error,
                   color: BasicInfoColors.btnDanger);

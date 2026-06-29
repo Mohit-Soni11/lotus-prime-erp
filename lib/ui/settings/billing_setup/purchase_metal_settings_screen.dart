@@ -15,6 +15,7 @@ import '../../../../models/setting/billing_setup/sales_billing_model.dart';
 import '../../../repositories/setting/billing_setup/purchase_billing_repo.dart';
 import '../../../../theme/settings/billing_setup/billing_setup_theme.dart';
 import 'billing_setup_app_bar.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class PurchaseMetalSettingsScreen extends StatefulWidget {
   final String metal;
@@ -90,22 +91,14 @@ class _PurchaseMetalSettingsScreenState
         _saving = false;
         if (ok) _model = updated;
       });
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(
-            ok
-                ? '$_metalDisplay purchase settings saved!'
-                : 'Save failed. Please try again.',
-            style: const TextStyle(color: Colors.white),
-          ),
-          backgroundColor:
-              ok ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          duration: const Duration(seconds: 2),
-        ));
+      AppFeedback.show(
+        context,
+        type: ok ? AppFeedbackType.success : AppFeedbackType.error,
+        message: ok
+            ? '$_metalDisplay purchase settings saved!'
+            : 'Save failed. Please try again.',
+        duration: const Duration(seconds: 2),
+      );
     }
   }
 

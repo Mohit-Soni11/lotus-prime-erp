@@ -21,6 +21,7 @@ import '../../../logic/sales_orders/sales_pos/pos_invoice_controller.dart';
 import '../../../models/customer/customer_profile/customer_profile_model.dart';
 import '../add_customer/add_customer_screen.dart';
 import 'customer_profile_app_bar.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   final int customerId;
@@ -1682,7 +1683,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                     ? null
                     : () async {
                         final dialogNavigator = Navigator.of(ctx);
-                        final messenger = ScaffoldMessenger.of(context);
                         final ok = await _logic.saveEdit(
                           name: _editNameCtrl.text,
                           mobile: _editMobileCtrl.text,
@@ -1696,12 +1696,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                         );
                         if (ok && mounted) {
                           dialogNavigator.pop();
-                          messenger.showSnackBar(
-                            const SnackBar(
-                              content: Text(CustomerProfileStrings.editSuccess),
-                              backgroundColor: Color(0xFF10B981),
-                              behavior: SnackBarBehavior.floating,
-                            ),
+                          AppFeedback.success(
+                            context,
+                            message: CustomerProfileStrings.editSuccess,
                           );
                         } else {
                           setDialogState(() {});
@@ -1832,12 +1829,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             if (val == null || val < 0) return;
             final ok = await _logic.saveDueLimit(val);
             if (ok && mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(CustomerProfileStrings.savedLimit),
-                  backgroundColor: Color(0xFF10B981),
-                  behavior: SnackBarBehavior.floating,
-                ),
+              AppFeedback.show(
+                context,
+                type: AppFeedbackType.success,
+                message: CustomerProfileStrings.savedLimit,
               );
             }
           },
@@ -1919,12 +1914,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
               Navigator.pop(context);
               final ok = await _logic.deleteCustomer();
               if (!ok && mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(CustomerProfileStrings.deleteError),
-                    backgroundColor: CustomerProfileColors.deleteText,
-                    behavior: SnackBarBehavior.floating,
-                  ),
+                AppFeedback.show(
+                  context,
+                  type: AppFeedbackType.error,
+                  message: CustomerProfileStrings.deleteError,
                 );
               }
             },
@@ -1961,7 +1954,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             if (widget.onEditBill != null) {
               widget.onEditBill!(bill.id);
             } else {
-              _showInfoSnack('Sales editing is not configured yet.');
+              _showInfoFeedback('Sales editing is not configured yet.');
             }
           },
         ),
@@ -1993,7 +1986,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
               if (widget.onCollectDue != null) {
                 widget.onCollectDue!(widget.customerId, bill.billNo);
               } else {
-                _showInfoSnack('Due collection is not configured yet.');
+                _showInfoFeedback('Due collection is not configured yet.');
               }
             },
           ),
@@ -2016,7 +2009,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             if (widget.onEditGirvi != null) {
               widget.onEditGirvi!(loan.id);
             } else {
-              _showInfoSnack('Girvi editing is not configured yet.');
+              _showInfoFeedback('Girvi editing is not configured yet.');
             }
           },
         ),
@@ -2057,7 +2050,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             if (widget.onEditAdvance != null) {
               widget.onEditAdvance!(order.id);
             } else {
-              _showInfoSnack('Advance editing is not configured yet.');
+              _showInfoFeedback('Advance editing is not configured yet.');
             }
           },
         ),
@@ -2252,13 +2245,13 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     final detail = await _logic.fetchBillDetails(billId);
     if (!mounted) return;
     if (detail == null) {
-      _showInfoSnack('Sales invoice details could not be loaded.');
+      _showInfoFeedback('Sales invoice details could not be loaded.');
       return;
     }
     final bytes = await _buildSalesInvoicePdfFromWorkspace(billId);
     if (!mounted) return;
     if (bytes == null) {
-      _showInfoSnack('Sales invoice PDF could not be generated.');
+      _showInfoFeedback('Sales invoice PDF could not be generated.');
       return;
     }
     await _showDocumentPreview(pdfBytes: bytes);
@@ -2268,13 +2261,13 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     final detail = await _logic.fetchBillDetails(billId);
     if (!mounted) return;
     if (detail == null) {
-      _showInfoSnack('Sales invoice details could not be loaded.');
+      _showInfoFeedback('Sales invoice details could not be loaded.');
       return;
     }
     final bytes = await _buildSalesInvoicePdfFromWorkspace(billId);
     if (!mounted) return;
     if (bytes == null) {
-      _showInfoSnack('Sales invoice PDF could not be generated.');
+      _showInfoFeedback('Sales invoice PDF could not be generated.');
       return;
     }
     await Printing.layoutPdf(
@@ -2303,7 +2296,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     final draft = await _logic.fetchGirviInvoiceDraft(loanId);
     if (!mounted) return;
     if (draft == null) {
-      _showInfoSnack('Girvi receipt details could not be loaded.');
+      _showInfoFeedback('Girvi receipt details could not be loaded.');
       return;
     }
     final controller = GirviInvoiceHubController(
@@ -2315,7 +2308,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
       if (!mounted) return;
       final bytes = controller.pdfBytes;
       if (bytes == null) {
-        _showInfoSnack('Girvi receipt PDF could not be generated.');
+        _showInfoFeedback('Girvi receipt PDF could not be generated.');
         return;
       }
       await _showDocumentPreview(pdfBytes: bytes);
@@ -2328,7 +2321,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     final draft = await _logic.fetchGirviInvoiceDraft(loanId);
     if (!mounted) return;
     if (draft == null) {
-      _showInfoSnack('Girvi receipt details could not be loaded.');
+      _showInfoFeedback('Girvi receipt details could not be loaded.');
       return;
     }
     final controller = GirviInvoiceHubController(
@@ -2338,7 +2331,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     try {
       final printed = await controller.printInvoice();
       if (!mounted) return;
-      if (!printed) _showInfoSnack('Girvi receipt could not be printed.');
+      if (!printed) _showInfoFeedback('Girvi receipt could not be printed.');
     } finally {
       controller.dispose();
     }
@@ -2616,14 +2609,12 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
 
   String _rs(double value) => 'Rs ${_fmt(value)}';
 
-  void _showInfoSnack(String message) {
+  void _showInfoFeedback(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: CustomerProfileColors.shellBg,
-      ),
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.info,
+      message: message,
     );
   }
 

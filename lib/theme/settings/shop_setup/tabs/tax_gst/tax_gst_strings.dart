@@ -73,12 +73,12 @@ class TaxGstStrings {
   static const String btnConfirm = "CONFIRM";
   static const String btnCancel = "CANCEL";
 
-  // --- Dialogs & Snackbars ---
+  // --- Dialogs & Feedback messages ---
   static const String dlgSelectDate = "SELECT DATE";
   static const String dlgCropDoc = "Crop Document";
   static const String dlgSecureCrop = "Secure Document Crop";
   static const String dlgDocOptions = "Document Options";
-  static const String snackTaxSyncDone = "Tax Sync Done";
+  static const String feedbackTaxSyncDone = "Tax Sync Done";
 
   // --- Error & Validation Messages ---
   static const String errGstinEmpty = "GSTIN cannot be empty";

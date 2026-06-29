@@ -22,6 +22,7 @@ import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import 'girvi_release_app_bar.dart'; // NAYA IMPORT
 import '../shared/girvi_shared_widgets.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class GirviReleaseScreen extends StatefulWidget {
   final GirviLoanModel loan;
@@ -206,29 +207,20 @@ class _GirviReleaseScreenState extends State<GirviReleaseScreen>
   }
 
   void _showSuccess(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [
-        const Icon(GirviIcons.markDone, color: Colors.white, size: 18),
-        const SizedBox(width: 10),
-        Expanded(
-            child: Text(msg,
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 13))),
-      ]),
-      backgroundColor: GirviColors.success,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.success,
+      message: msg,
       duration: const Duration(seconds: 3),
-    ));
+    );
   }
 
   void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg,
-          style: GoogleFonts.inter(color: Colors.white, fontSize: 13)),
-      backgroundColor: GirviColors.danger,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-    ));
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.error,
+      message: msg,
+    );
   }
 
   Widget _animated(int i, Widget child) => FadeTransition(

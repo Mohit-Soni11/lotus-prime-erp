@@ -55,7 +55,7 @@ class PhotoUploadLogic {
       return File(pickedFile.path);
     } catch (e) {
       AppLogger.error("Picker Error: $e");
-      rethrow; // Let the UI layer catch this and show the SnackBar
+      rethrow; // Let the UI layer catch this and show the feedback overlay
     }
   }
 

@@ -22,6 +22,7 @@ import '../../../repositories/girvi/girvi_details_repository.dart';
 import '../../../repositories/girvi/girvi_invoice_branding_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import '../shared/girvi_shared_widgets.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'parts/girvi_account_detail_layout.dart';
 part 'parts/girvi_account_detail_panels.dart';
@@ -364,12 +365,10 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: GirviColors.shellBg,
-        behavior: SnackBarBehavior.floating,
-      ),
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.info,
+      message: message,
     );
   }
 

@@ -17,6 +17,7 @@ import '../../../models/finance/bank_book/bank_book_enums.dart';
 import '../../../models/finance/bank_book/bank_account_model.dart';
 import '../../../models/finance/bank_book/bank_book_summary_model.dart';
 import '../../../theme/finance/bank_book/bank_book_theme.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class BankBookLeftPanel extends StatelessWidget {
   final BankBookController ctrl;
@@ -552,9 +553,10 @@ class _OpeningBalanceCard extends StatelessWidget {
               await ctrl.updateOpeningBalance(v);
               if (context.mounted) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text(BankBookStrings.openingBalanceSaved)),
+                AppFeedback.show(
+                  context,
+                  type: AppFeedbackType.success,
+                  message: BankBookStrings.openingBalanceSaved,
                 );
               }
             },

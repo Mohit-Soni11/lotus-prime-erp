@@ -17,6 +17,7 @@ import 'delivery_stats_header.dart';
 import 'delivery_tab_bar.dart';
 import 'delivery_order_list.dart';
 import 'delivery_detail_panel.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class DeliveryManagementScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -112,14 +113,11 @@ class _DesktopLayout extends StatelessWidget {
           child: DeliveryDetailPanel(
             ctrl: ctrl,
             onDelivered: () {
-              // After deliver — show snack and clear
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(DeliveryStrings.snackDelivered),
-                  backgroundColor: DeliveryColors.statusReady,
-                  behavior: SnackBarBehavior.floating,
-                  duration: Duration(seconds: 2),
-                ),
+              AppFeedback.show(
+                context,
+                type: AppFeedbackType.success,
+                message: DeliveryStrings.feedbackDelivered,
+                duration: const Duration(seconds: 2),
               );
             },
           ),
@@ -168,12 +166,10 @@ class _MobileLayout extends StatelessWidget {
             ctrl: ctrl,
             onDelivered: () {
               Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(DeliveryStrings.snackDelivered),
-                  backgroundColor: DeliveryColors.statusReady,
-                  behavior: SnackBarBehavior.floating,
-                ),
+              AppFeedback.show(
+                context,
+                type: AppFeedbackType.success,
+                message: DeliveryStrings.feedbackDelivered,
               );
             },
           ),

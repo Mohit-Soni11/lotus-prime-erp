@@ -22,6 +22,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../ui/auth/services/auth_service.dart';
 import '../../../theme/settings/account_profile/account_profile_theme.dart';
 import 'account_profile_app_bar.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class AccountProfileScreen extends StatefulWidget {
   const AccountProfileScreen({super.key});
@@ -212,12 +213,12 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
       await _firestore.collection('users').doc(uid).update(update);
 
       if (mounted) {
-        _showSnack(AccountProfileStrings.successProfile, isError: false);
+        _showFeedback(AccountProfileStrings.successProfile, isError: false);
         await _loadUserData();
       }
     } catch (e) {
       if (mounted) {
-        _showSnack('Error: ${e.toString()}', isError: true);
+        _showFeedback('Error: ${e.toString()}', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -230,11 +231,11 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
 
   Future<void> _changePassword() async {
     if (_newPassCtrl.text != _confirmPassCtrl.text) {
-      _showSnack(AccountProfileStrings.errorPassMismatch, isError: true);
+      _showFeedback(AccountProfileStrings.errorPassMismatch, isError: true);
       return;
     }
     if (_newPassCtrl.text.length < 6) {
-      _showSnack(AccountProfileStrings.errorPassLength, isError: true);
+      _showFeedback(AccountProfileStrings.errorPassLength, isError: true);
       return;
     }
     setState(() => _isSaving = true);
@@ -248,7 +249,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
       await user.updatePassword(_newPassCtrl.text);
 
       if (mounted) {
-        _showSnack(AccountProfileStrings.successPassword, isError: false);
+        _showFeedback(AccountProfileStrings.successPassword, isError: false);
         _currPassCtrl.clear();
         _newPassCtrl.clear();
         _confirmPassCtrl.clear();
@@ -258,7 +259,7 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
       final msg = e.code == 'wrong-password'
           ? AccountProfileStrings.errorWrongPass
           : 'Password change failed. Try again.';
-      if (mounted) _showSnack(msg, isError: true);
+      if (mounted) _showFeedback(msg, isError: true);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -268,32 +269,12 @@ class _AccountProfileScreenState extends State<AccountProfileScreen>
   // SNACKBAR
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  void _showSnack(String msg, {required bool isError}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              isError
-                  ? Icons.error_outline_rounded
-                  : Icons.check_circle_outline_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-                child: Text(msg,
-                    style: const TextStyle(color: Colors.white, fontSize: 13))),
-          ],
-        ),
-        backgroundColor: isError
-            ? AccountProfileColors.danger
-            : AccountProfileColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 3),
-      ),
+  void _showFeedback(String msg, {required bool isError}) {
+    AppFeedback.show(
+      context,
+      type: isError ? AppFeedbackType.success : AppFeedbackType.error,
+      message: msg,
+      duration: const Duration(seconds: 3),
     );
   }
 

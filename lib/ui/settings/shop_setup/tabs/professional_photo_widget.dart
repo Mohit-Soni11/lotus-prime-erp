@@ -15,6 +15,7 @@ import 'package:crop_your_image/crop_your_image.dart';
 // NOTE: Adjust paths according to your actual folder structure
 import '../../../../logic/setting/shop_setup/tabs/basic_info/photo_logic.dart';
 import '../../../../theme/settings/shop_setup/tabs/basic_info_tab/basic_info_theme.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class ProfessionalPhotoUploadSystem extends StatefulWidget {
   final String title;
@@ -124,9 +125,11 @@ class _ProfessionalPhotoUploadSystemState
     } catch (e) {
       if (mounted) {
         setState(() => _isProcessing = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: BasicInfoColors.btnDanger));
+        AppFeedback.show(
+          context,
+          type: AppFeedbackType.error,
+          message: e.toString(),
+        );
       }
     }
   }

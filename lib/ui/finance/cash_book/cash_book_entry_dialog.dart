@@ -14,6 +14,7 @@ import 'package:intl/intl.dart';
 import '../../../logic/finance/cash_book/cash_book_controller.dart';
 import '../../../models/finance/cash_book/cash_book_enums.dart';
 import '../../../theme/finance/cash_book/cash_book_theme.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class CashBookEntryDialog extends StatefulWidget {
   final CashBookController ctrl;
@@ -541,16 +542,12 @@ class _SaveButton extends StatelessWidget {
               final ok = await ctrl.saveEntry();
               if (ok && ctx.mounted) {
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                  content: const Text('Entry saved successfully',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                  backgroundColor: CashBookColors.incomeAccent,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  margin: const EdgeInsets.all(16),
+                AppFeedback.show(
+                  ctx,
+                  type: AppFeedbackType.success,
+                  message: 'Entry saved successfully',
                   duration: const Duration(seconds: 2),
-                ));
+                );
               }
             },
       child: AnimatedContainer(

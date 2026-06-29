@@ -21,7 +21,7 @@ class DocumentCropLogic {
   static const int maxFileSizeMb = 10;
 
   /// 🚀 UPGRADE: Removed BuildContext. Throws FormatException on error,
-  /// allowing the UI layer to catch it and show a Snackbar cleanly.
+  /// allowing the UI layer to catch it and show a feedback overlay cleanly.
   Future<File?> pickDocumentFromGallery() async {
     try {
       final XFile? pickedFile = await _picker.pickImage(

@@ -7,6 +7,7 @@ import '../../../logic/girvi/girvi_invoice_pdf_service.dart';
 import '../../../models/girvi/girvi_invoice_draft.dart';
 import '../../../models/setting/billing_setup/girvi_billing_model.dart';
 import '../../../theme/girvi/girvi_theme.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'parts/girvi_invoice_hub_actions.dart';
 part 'parts/girvi_invoice_hub_controls.dart';
@@ -85,12 +86,10 @@ class _GirviInvoiceHubScreenState extends State<GirviInvoiceHubScreen> {
   }
 
   void _showMessage(String message, {bool error = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: error ? GirviColors.danger : GirviColors.success,
-        behavior: SnackBarBehavior.floating,
-      ),
+    AppFeedback.show(
+      context,
+      type: error ? AppFeedbackType.success : AppFeedbackType.error,
+      message: message,
     );
   }
 

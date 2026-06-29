@@ -25,6 +25,7 @@ import 'issue_karigar_app_bar.dart';
 import '../shared/karigar_field_widgets.dart';
 import '../shared/karigar_section_card.dart';
 import '../shared/add_karigar_dialog.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class IssueKarigarScreen extends StatefulWidget {
   const IssueKarigarScreen({super.key});
@@ -139,7 +140,7 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
     );
 
     if (ok && mounted) {
-      _showSuccessSnackbar(
+      _showSuccessFeedback(
           _ctrl.successMessage ?? KarigarStrings.successIssueSaved);
       _resetAll();
     }
@@ -158,20 +159,13 @@ class _IssueKarigarScreenState extends State<IssueKarigarScreen>
     await _ctrl.resetForm();
   }
 
-  void _showSuccessSnackbar(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(children: [
-        const Icon(KarigarIcons.markDone, color: Colors.white, size: 18),
-        const SizedBox(width: 10),
-        Expanded(
-            child: Text(msg,
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 13))),
-      ]),
-      backgroundColor: KarigarColors.success,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+  void _showSuccessFeedback(String msg) {
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.success,
+      message: msg,
       duration: const Duration(seconds: 3),
-    ));
+    );
   }
 
   Future<void> _pickDate({required bool isIssueDate}) async {

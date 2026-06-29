@@ -17,6 +17,7 @@ import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import 'girvi_list_app_bar.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'parts/girvi_ledger_controls.dart';
 part 'parts/girvi_ledger_detail_panel.dart';
@@ -306,12 +307,10 @@ class _GirviListScreenState extends State<GirviListScreen>
   }
 
   void _showLedgerMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: GirviColors.shellBg,
-        behavior: SnackBarBehavior.floating,
-      ),
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.info,
+      message: message,
     );
   }
 

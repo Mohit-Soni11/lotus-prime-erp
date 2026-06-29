@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/feedback/app_feedback.dart';
 import '../../../logic/report/day_book/day_book_controller.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 
@@ -74,7 +75,6 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
 
   Future<void> _closeDay() async {
     setState(() => _isClosing = true);
-    final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final closed = await widget.ctrl.closeDay();
 
@@ -83,16 +83,16 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
 
     if (closed) {
       navigator.pop();
-      messenger.showSnackBar(
-        const SnackBar(content: Text(DayBookStrings.closeSuccess)),
+      AppFeedback.success(
+        context,
+        message: DayBookStrings.closeSuccess,
       );
       return;
     }
 
-    messenger.showSnackBar(
-      const SnackBar(
-        content: Text('The cash count must match before closing the day.'),
-      ),
+    AppFeedback.warning(
+      context,
+      message: 'The cash count must match before closing the day.',
     );
   }
 }

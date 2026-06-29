@@ -16,6 +16,7 @@ import '../../../logic/setting/metal_rate/metal_rate_controller.dart';
 import '../../../models/setting/metal_rate/metal_rate_model.dart';
 import '../../../theme/settings/metal_rate/metal_rate_theme.dart';
 import 'metal_rate_app_bar.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'widgets/metal_rate_counter_section.dart';
 part 'widgets/metal_rate_detail_shared.dart';
@@ -43,16 +44,11 @@ class _MetalRateDetailScreenState extends State<MetalRateDetailScreen> {
     await widget.controller.saveProfile(profile);
     if (!mounted) return;
     setState(() => _isEditing = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${profile.metal.label} rates saved and applied to billing.',
-          style: GoogleFonts.inter(color: Colors.white),
-        ),
-        backgroundColor: MetalRateColors.success,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.success,
+      message: '${profile.metal.label} rates saved and applied to billing.',
+      duration: const Duration(seconds: 2),
     );
   }
 
@@ -60,16 +56,11 @@ class _MetalRateDetailScreenState extends State<MetalRateDetailScreen> {
     await widget.controller.resetProfile(widget.metal);
     if (!mounted) return;
     setState(() => _isEditing = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${widget.metal.label} default rates restored.',
-          style: GoogleFonts.inter(color: Colors.white),
-        ),
-        backgroundColor: MetalRateColors.warning,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.warning,
+      message: '${widget.metal.label} default rates restored.',
+      duration: const Duration(seconds: 2),
     );
   }
 

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/settings/tax_gst/tax_gst_theme.dart';
 import '../../../../logic/setting/tax_gst/sections/hsn_code_logic.dart';
 import '../widgets/tax_gst_info_banner.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class HsnCodeSection extends StatefulWidget {
   const HsnCodeSection({super.key, required this.logic});
@@ -86,7 +87,7 @@ class _HsnCodeSectionState extends State<HsnCodeSection> {
                     accent: a,
                     onDelete: () {
                       widget.logic.removeCode(entry.key);
-                      _snack(context, TaxGstStrings.snackHsnRemoved);
+                      _showFeedback(context, TaxGstStrings.feedbackHsnRemoved);
                     },
                   ),
                 );
@@ -110,7 +111,7 @@ class _HsnCodeSectionState extends State<HsnCodeSection> {
                 onAdd: () {
                   widget.logic.addCode();
                   setState(() => _showAddForm = false);
-                  _snack(context, TaxGstStrings.snackHsnAdded);
+                  _showFeedback(context, TaxGstStrings.feedbackHsnAdded);
                 },
                 onCancel: () {
                   widget.logic.resetAddForm();
@@ -349,15 +350,10 @@ class _EmptyHsnState extends StatelessWidget {
   }
 }
 
-void _snack(BuildContext ctx, String msg) {
-  ScaffoldMessenger.of(ctx)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: TaxGstColors.btnSave,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(TaxGstStyles.radiusButton)),
-      margin: const EdgeInsets.all(16),
-    ));
+void _showFeedback(BuildContext ctx, String msg) {
+  AppFeedback.show(
+    ctx,
+    type: AppFeedbackType.info,
+    message: msg,
+  );
 }

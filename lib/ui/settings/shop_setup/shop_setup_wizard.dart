@@ -8,8 +8,7 @@
 
 import 'package:flutter/material.dart';
 
-// --- THEME & MODEL IMPORTS ---
-import '../../../../theme/settings/shop_setup/layout/layout_theme.dart';
+// --- MODEL IMPORTS ---
 import '../../../../models/setting/shop_setup/shop_step_model.dart';
 import '../../../../models/setting/shop_setup/shop_profile_model.dart';
 import '../../../../models/setting/shop_setup/enums/basic_info_enums.dart';
@@ -33,6 +32,7 @@ import 'tabs/tax_gst_tab.dart';
 import 'tabs/banking_tab.dart';
 import 'tabs/branding_tab.dart';
 import '../../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class ShopSetupWizard extends StatefulWidget {
   const ShopSetupWizard({super.key});
@@ -187,7 +187,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
 
     if (!isValid) {
       setState(() => _isLoading = false);
-      _showErrorSnackbar(
+      _showErrorFeedback(
           "Please correct the errors in the form before proceeding.");
       return;
     }
@@ -317,11 +317,11 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
       if (isSuccess) {
         _finishSetup();
       } else {
-        _showErrorSnackbar("Failed to sync configuration with the database.");
+        _showErrorFeedback("Failed to sync configuration with the database.");
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      _showErrorSnackbar("System Error: Setup could not be saved.");
+      _showErrorFeedback("System Error: Setup could not be saved.");
       AppLogger.debug("Master Submission Crash Log: $e");
     }
   }
@@ -361,17 +361,19 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
   }
 
   void _finishSetup() {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Setup Saved Securely! Redirecting..."),
-        backgroundColor: LayoutColors.success,
-        behavior: SnackBarBehavior.floating));
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.success,
+      message: "Setup Saved Securely! Redirecting...",
+    );
   }
 
-  void _showErrorSnackbar(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(msg, style: const TextStyle(color: Colors.white)),
-        backgroundColor: LayoutColors.error,
-        behavior: SnackBarBehavior.floating));
+  void _showErrorFeedback(String msg) {
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.error,
+      message: msg,
+    );
   }
 
   // --- MAIN BUILDER ---

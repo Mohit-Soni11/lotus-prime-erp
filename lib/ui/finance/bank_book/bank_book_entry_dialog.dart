@@ -15,6 +15,7 @@ import 'package:intl/intl.dart';
 import '../../../logic/finance/bank_book/bank_book_controller.dart';
 import '../../../models/finance/bank_book/bank_book_enums.dart';
 import '../../../theme/finance/bank_book/bank_book_theme.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class BankBookEntryDialog extends StatelessWidget {
   final BankBookController ctrl;
@@ -676,27 +677,17 @@ class _SaveButton extends StatelessWidget {
                 if (!context.mounted) return;
                 if (success) {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Entry saved successfully'),
-                      backgroundColor: BankBookColors.creditAccent,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      margin: const EdgeInsets.all(16),
-                      duration: const Duration(seconds: 2),
-                    ),
+                  AppFeedback.show(
+                    context,
+                    type: AppFeedbackType.success,
+                    message: 'Entry saved successfully',
+                    duration: const Duration(seconds: 2),
                   );
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Please enter a valid amount'),
-                      backgroundColor: BankBookColors.debitAccent,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      margin: const EdgeInsets.all(16),
-                    ),
+                  AppFeedback.show(
+                    context,
+                    type: AppFeedbackType.warning,
+                    message: 'Please enter a valid amount',
                   );
                 }
               },
