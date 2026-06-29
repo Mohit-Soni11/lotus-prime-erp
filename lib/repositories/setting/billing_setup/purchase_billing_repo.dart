@@ -83,7 +83,12 @@ class PurchaseBillingRepo {
       returnWindowDays: Value(model.returnWindowDays),
       returnMode: Value(model.returnMode),
       purityDeductPercent: Value(model.purityDeductPercent),
+      lateReclaimPenaltyAmount: Value(model.lateReclaimPenaltyAmount),
+      highValueReclaimThreshold: Value(model.highValueReclaimThreshold),
+      highValueReclaimPenaltyPercent:
+          Value(model.highValueReclaimPenaltyPercent),
       termsAndConditions: Value(model.termsAndConditions),
+      sellerDeclarationText: Value(model.sellerDeclarationText),
       returnPolicyText: Value(model.returnPolicyText),
       buybackPolicyText: Value(model.buybackPolicyText),
       footerMessage: Value(model.footerMessage),
@@ -113,12 +118,19 @@ class PurchaseBillingRepo {
       showCertificationNo: row.showCertificationNo,
       showGstBreakup: row.showGstBreakup,
       showHsnCode: row.showHsnCode,
-      returnWindowDays: row.returnWindowDays,
-      returnMode: row.returnMode,
+      returnWindowDays: _upgradeLegacyReturnWindow(row, defaults),
+      returnMode: _upgradeLegacyReturnMode(row, defaults),
       purityDeductPercent: row.purityDeductPercent,
+      lateReclaimPenaltyAmount: row.lateReclaimPenaltyAmount,
+      highValueReclaimThreshold: row.highValueReclaimThreshold,
+      highValueReclaimPenaltyPercent: row.highValueReclaimPenaltyPercent,
       termsAndConditions: _upgradeLegacyPurchaseCopy(
         row.termsAndConditions,
         defaults.termsAndConditions,
+      ),
+      sellerDeclarationText: _upgradeLegacyPurchaseCopy(
+        row.sellerDeclarationText,
+        defaults.sellerDeclarationText,
       ),
       returnPolicyText: _upgradeLegacyPurchaseCopy(
         row.returnPolicyText,
@@ -142,6 +154,30 @@ class PurchaseBillingRepo {
       return fallback;
     }
     return storedValue;
+  }
+
+  int _upgradeLegacyReturnWindow(
+    PurchaseBillingSetting row,
+    PurchaseBillingModel fallback,
+  ) {
+    if (row.returnWindowDays == 3 &&
+        (_usesLegacySupplierPurchaseCopy(row.termsAndConditions) ||
+            _usesLegacySupplierPurchaseCopy(row.returnPolicyText))) {
+      return fallback.returnWindowDays;
+    }
+    return row.returnWindowDays;
+  }
+
+  String _upgradeLegacyReturnMode(
+    PurchaseBillingSetting row,
+    PurchaseBillingModel fallback,
+  ) {
+    if (row.returnMode == 'Credit Note' &&
+        (_usesLegacySupplierPurchaseCopy(row.termsAndConditions) ||
+            _usesLegacySupplierPurchaseCopy(row.returnPolicyText))) {
+      return fallback.returnMode;
+    }
+    return row.returnMode;
   }
 
   bool _usesLegacySupplierPurchaseCopy(String value) {

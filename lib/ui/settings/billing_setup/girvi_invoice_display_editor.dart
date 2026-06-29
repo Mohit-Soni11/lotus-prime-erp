@@ -156,24 +156,22 @@ class GirviInvoiceDisplayEditor extends StatelessWidget {
           accent: accent,
         ),
         const SizedBox(height: 12),
-        for (final group in groups) ...[
-          _GroupLabel(label: group, accent: accent),
-          const SizedBox(height: 7),
-          _OptionGrid(
-            options: options.where((option) => option.group == group).toList(),
-            accent: accent,
-            valueFor: (key) => readGirviItemSetting(settings, key),
-            onChanged: (key, value) {
-              onChanged(
-                model.withMetalSettings(
-                  selectedMetal,
-                  writeGirviItemSetting(settings, key, value),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-        ],
+        _GroupLegend(groups: groups, accent: accent),
+        const SizedBox(height: 10),
+        _OptionGrid(
+          options: options,
+          accent: accent,
+          valueFor: (key) => readGirviItemSetting(settings, key),
+          onChanged: (key, value) {
+            onChanged(
+              model.withMetalSettings(
+                selectedMetal,
+                writeGirviItemSetting(settings, key, value),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(11),
@@ -358,18 +356,15 @@ class GirviInvoiceDocumentEditor extends StatelessWidget {
           accent: accent,
         ),
         const SizedBox(height: 12),
-        for (final group in groups) ...[
-          _GroupLabel(label: group, accent: accent),
-          const SizedBox(height: 7),
-          _OptionGrid(
-            options: options.where((option) => option.group == group).toList(),
-            accent: accent,
-            valueFor: (key) => readGirviDocumentSetting(model, key),
-            onChanged: (key, value) =>
-                onChanged(writeGirviDocumentSetting(model, key, value)),
-          ),
-          const SizedBox(height: 12),
-        ],
+        const _GroupLegend(groups: groups, accent: accent),
+        const SizedBox(height: 10),
+        _OptionGrid(
+          options: options,
+          accent: accent,
+          valueFor: (key) => readGirviDocumentSetting(model, key),
+          onChanged: (key, value) =>
+              onChanged(writeGirviDocumentSetting(model, key, value)),
+        ),
       ],
     );
   }
@@ -565,23 +560,25 @@ class _OptionGrid extends StatelessWidget {
                 ? 2
                 : 1;
         const gap = 10.0;
-        final width = (constraints.maxWidth - (columns - 1) * gap) / columns;
-        return Wrap(
-          spacing: gap,
-          runSpacing: gap,
-          children: options
-              .map(
-                (option) => SizedBox(
-                  width: width,
-                  child: _FieldTile(
-                    option: option,
-                    value: valueFor(option.key),
-                    accent: accent,
-                    onChanged: (value) => onChanged(option.key, value),
-                  ),
-                ),
-              )
-              .toList(),
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisExtent: 82,
+            mainAxisSpacing: gap,
+            crossAxisSpacing: gap,
+          ),
+          itemCount: options.length,
+          itemBuilder: (context, index) {
+            final option = options[index];
+            return _FieldTile(
+              option: option,
+              value: valueFor(option.key),
+              accent: accent,
+              onChanged: (value) => onChanged(option.key, value),
+            );
+          },
         );
       },
     );
@@ -656,32 +653,52 @@ class _EditorSummary extends StatelessWidget {
   }
 }
 
-class _GroupLabel extends StatelessWidget {
-  const _GroupLabel({required this.label, required this.accent});
+class _GroupLegend extends StatelessWidget {
+  const _GroupLegend({required this.groups, required this.accent});
 
-  final String label;
+  final List<String> groups;
   final Color accent;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 7),
-        Text(
-          label.toUpperCase(),
-          style: GoogleFonts.inter(
-            color: BillingSetupColors.textMuted,
-            fontSize: 9.5,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.55,
-          ),
-        ),
-      ],
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: groups
+          .map(
+            (group) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: accent.withValues(alpha: 0.14)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: accent,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    group.toUpperCase(),
+                    style: GoogleFonts.inter(
+                      color: BillingSetupColors.textMuted,
+                      fontSize: 9.2,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+          .toList(growable: false),
     );
   }
 }
@@ -744,7 +761,8 @@ class _FieldTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
       padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
       decoration: BoxDecoration(
         color:
@@ -758,20 +776,39 @@ class _FieldTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            option.icon,
-            color: value ? accent : BillingSetupColors.textHint,
-            size: 18,
+          Container(
+            width: 32,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: value
+                  ? accent.withValues(alpha: 0.10)
+                  : Colors.white.withValues(alpha: 0.72),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: value
+                    ? accent.withValues(alpha: 0.18)
+                    : BillingSetupColors.borderLight,
+              ),
+            ),
+            child: Icon(
+              option.icon,
+              color: value ? accent : BillingSetupColors.textHint,
+              size: 17,
+            ),
           ),
-          const SizedBox(width: 9),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   option.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    fontSize: 12,
+                    fontSize: 12.2,
                     fontWeight: FontWeight.w800,
                     color: BillingSetupColors.textBody,
                   ),
@@ -788,10 +825,14 @@ class _FieldTile extends StatelessWidget {
               ],
             ),
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: accent,
+          Transform.scale(
+            scale: 0.82,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeThumbColor: accent,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
           ),
         ],
       ),

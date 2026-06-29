@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
-import 'package:lotus_erp/features/settings/billing_setup/girvi/domain/girvi_billing_options.dart';
 import 'package:lotus_erp/features/settings/billing_setup/girvi/domain/girvi_billing_policy_input.dart';
 import 'package:lotus_erp/models/setting/billing_setup/girvi_billing_model.dart';
 import 'package:lotus_erp/theme/settings/billing_setup/billing_setup_colors.dart';
@@ -14,12 +11,6 @@ class GirviBillingPolicyForm extends StatelessWidget {
   final GirviBillingModel model;
   final GirviBillingPolicyInput input;
   final String selectedInvoiceMetal;
-  final TextEditingController prefixController;
-  final TextEditingController startingNumberController;
-  final TextEditingController interestRateController;
-  final TextEditingController gracePeriodController;
-  final TextEditingController reminderDaysController;
-  final TextEditingController noticeDaysController;
   final TextEditingController termsController;
   final TextEditingController termsHindiController;
   final TextEditingController declarationController;
@@ -28,9 +19,6 @@ class GirviBillingPolicyForm extends StatelessWidget {
   final ValueChanged<GirviBillingPolicyInput> onInputChanged;
   final ValueChanged<GirviBillingModel> onModelChanged;
   final ValueChanged<String> onInvoiceMetalChanged;
-  final ValueChanged<String> onInterestTypeChanged;
-  final ValueChanged<String> onDefaultDurationChanged;
-  final ValueChanged<String> onTemplateChanged;
   final ValueChanged<bool> onAutoPrintChanged;
 
   const GirviBillingPolicyForm({
@@ -38,12 +26,6 @@ class GirviBillingPolicyForm extends StatelessWidget {
     required this.model,
     required this.input,
     required this.selectedInvoiceMetal,
-    required this.prefixController,
-    required this.startingNumberController,
-    required this.interestRateController,
-    required this.gracePeriodController,
-    required this.reminderDaysController,
-    required this.noticeDaysController,
     required this.termsController,
     required this.termsHindiController,
     required this.declarationController,
@@ -52,155 +34,13 @@ class GirviBillingPolicyForm extends StatelessWidget {
     required this.onInputChanged,
     required this.onModelChanged,
     required this.onInvoiceMetalChanged,
-    required this.onInterestTypeChanged,
-    required this.onDefaultDurationChanged,
-    required this.onTemplateChanged,
     required this.onAutoPrintChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    final templates = PrintTemplateRegistry.forDocument(
-      PrintTemplateDocumentType.girviReceipt,
-    );
-
     return Column(
       children: [
-        GirviBillingSectionCard(
-          title: 'Ticket Numbering',
-          subtitle: 'Set the next Girvi ticket prefix, sequence and template',
-          icon: Icons.confirmation_number_outlined,
-          accent: BillingSetupColors.girviBrand,
-          child: _ResponsiveFields(
-            children: [
-              _InputField(
-                label: 'Ticket Prefix',
-                hint: 'e.g. GRV-',
-                subtitle: 'Printed before the ticket number',
-                controller: prefixController,
-                accent: BillingSetupColors.girviBrand,
-                textCapitalization: TextCapitalization.characters,
-                onChanged: (value) => onInputChanged(
-                  input.copyWith(girviPrefix: value),
-                ),
-              ),
-              _InputField(
-                label: 'Starting Number',
-                hint: 'e.g. 1',
-                subtitle: 'Next Girvi sequence',
-                controller: startingNumberController,
-                accent: BillingSetupColors.girviBrand,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                onChanged: (value) => onInputChanged(
-                  input.copyWith(startingNumber: value),
-                ),
-              ),
-              _DropdownField(
-                label: 'Receipt Template',
-                value: PrintTemplateRegistry.byId(model.selectedTemplate).id,
-                items: templates.map((template) => template.id).toList(),
-                labelFor: PrintTemplateRegistry.labelFor,
-                accent: BillingSetupColors.girviBrand,
-                onChanged: onTemplateChanged,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        GirviBillingSectionCard(
-          title: 'Interest Rules',
-          subtitle: 'Define how pledge interest is calculated',
-          icon: Icons.percent_rounded,
-          accent: BillingSetupColors.grvInterest,
-          child: Column(
-            children: [
-              _ResponsiveFields(
-                children: [
-                  _InputField(
-                    label: 'Interest Rate (% / month)',
-                    hint: 'e.g. 1.5',
-                    controller: interestRateController,
-                    accent: BillingSetupColors.grvInterest,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    onChanged: (value) => onInputChanged(
-                      input.copyWith(defaultInterestRate: value),
-                    ),
-                  ),
-                  _DropdownField(
-                    label: 'Interest Type',
-                    value: model.interestType,
-                    items: GirviBillingOptions.interestTypes,
-                    accent: BillingSetupColors.grvInterest,
-                    onChanged: onInterestTypeChanged,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              _ResponsiveFields(
-                children: [
-                  _InputField(
-                    label: 'Grace Period (Days)',
-                    hint: 'e.g. 3',
-                    subtitle: 'Extra days after due date',
-                    controller: gracePeriodController,
-                    accent: BillingSetupColors.grvInterest,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onChanged: (value) => onInputChanged(
-                      input.copyWith(gracePeriodDays: value),
-                    ),
-                  ),
-                  _DropdownField(
-                    label: 'Default Loan Duration',
-                    value: model.defaultDuration,
-                    items: GirviBillingOptions.durations,
-                    accent: BillingSetupColors.grvInterest,
-                    onChanged: onDefaultDurationChanged,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        GirviBillingSectionCard(
-          title: 'Reminder & Notice Period',
-          subtitle: 'Set reminder timing and legal notice window',
-          icon: Icons.notifications_outlined,
-          accent: BillingSetupColors.grvNotice,
-          child: _ResponsiveFields(
-            children: [
-              _InputField(
-                label: 'Reminder Days',
-                hint: 'e.g. 15',
-                subtitle: 'Before maturity',
-                controller: reminderDaysController,
-                accent: BillingSetupColors.grvNotice,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                onChanged: (value) => onInputChanged(
-                  input.copyWith(reminderDays: value),
-                ),
-              ),
-              _InputField(
-                label: 'Notice Days',
-                hint: 'e.g. 30',
-                subtitle: 'After maturity',
-                controller: noticeDaysController,
-                accent: BillingSetupColors.grvNotice,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                onChanged: (value) => onInputChanged(
-                  input.copyWith(noticeDays: value),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
         GirviBillingSectionCard(
           title: 'Invoice Item Display',
           subtitle:
@@ -303,52 +143,12 @@ class GirviBillingPolicyForm extends StatelessWidget {
   }
 }
 
-class _ResponsiveFields extends StatelessWidget {
-  final List<Widget> children;
-
-  const _ResponsiveFields({
-    required this.children,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = (constraints.maxWidth / 320)
-            .floor()
-            .clamp(1, children.length)
-            .toInt();
-        const gap = 14.0;
-        final itemWidth =
-            (constraints.maxWidth - (gap * (columns - 1))) / columns;
-
-        return Wrap(
-          spacing: gap,
-          runSpacing: 14,
-          children: children
-              .map(
-                (child) => SizedBox(
-                  width: itemWidth,
-                  child: child,
-                ),
-              )
-              .toList(growable: false),
-        );
-      },
-    );
-  }
-}
-
 class _InputField extends StatelessWidget {
   final String label;
   final String hint;
-  final String? subtitle;
   final TextEditingController controller;
   final Color accent;
-  final TextInputType keyboardType;
-  final List<TextInputFormatter>? inputFormatters;
   final int maxLines;
-  final TextCapitalization textCapitalization;
   final ValueChanged<String> onChanged;
 
   const _InputField({
@@ -357,109 +157,11 @@ class _InputField extends StatelessWidget {
     required this.controller,
     required this.accent,
     required this.onChanged,
-    this.subtitle,
-    this.keyboardType = TextInputType.text,
-    this.inputFormatters,
     this.maxLines = 1,
-    this.textCapitalization = TextCapitalization.none,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: BillingSetupColors.textBody,
-              ),
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  '- $subtitle',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: BillingSetupColors.textHint,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          maxLines: maxLines,
-          textCapitalization: textCapitalization,
-          onChanged: onChanged,
-          style: GoogleFonts.inter(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: BillingSetupColors.textDark,
-          ),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: GoogleFonts.inter(
-              fontSize: 13,
-              color: const Color(0xFFD1D5DB),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 12,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: accent, width: 1.5),
-            ),
-            filled: true,
-            fillColor: BillingSetupColors.inputBg,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DropdownField extends StatelessWidget {
-  final String label;
-  final String value;
-  final List<String> items;
-  final String Function(String value)? labelFor;
-  final Color accent;
-  final ValueChanged<String> onChanged;
-
-  const _DropdownField({
-    required this.label,
-    required this.value,
-    required this.items,
-    required this.accent,
-    required this.onChanged,
-    this.labelFor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final resolvedValue = items.contains(value) ? value : items.first;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -472,25 +174,21 @@ class _DropdownField extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: resolvedValue,
-          isExpanded: true,
-          items: items
-              .map(
-                (item) => DropdownMenuItem<String>(
-                  value: item,
-                  child: Text(labelFor == null ? item : labelFor!(item)),
-                ),
-              )
-              .toList(growable: false),
-          onChanged: (value) {
-            if (value != null) onChanged(value);
-          },
+        TextField(
+          controller: controller,
+          maxLines: maxLines,
+          onChanged: onChanged,
           style: GoogleFonts.inter(
-            fontSize: 13,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
             color: BillingSetupColors.textDark,
           ),
           decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: GoogleFonts.inter(
+              fontSize: 13,
+              color: const Color(0xFFD1D5DB),
+            ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 12,

@@ -27357,7 +27357,7 @@ class $PurchaseBillingSettingsTable extends PurchaseBillingSettings
       'return_window_days', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: false,
-      defaultValue: const Constant(3));
+      defaultValue: const Constant(1));
   static const VerificationMeta _returnModeMeta =
       const VerificationMeta('returnMode');
   @override
@@ -27365,7 +27365,7 @@ class $PurchaseBillingSettingsTable extends PurchaseBillingSettings
       'return_mode', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: false,
-      defaultValue: const Constant('Credit Note'));
+      defaultValue: const Constant('Cash Refund'));
   static const VerificationMeta _purityDeductPercentMeta =
       const VerificationMeta('purityDeductPercent');
   @override
@@ -27374,6 +27374,32 @@ class $PurchaseBillingSettingsTable extends PurchaseBillingSettings
           type: DriftSqlType.double,
           requiredDuringInsert: false,
           defaultValue: const Constant(2.0));
+  static const VerificationMeta _lateReclaimPenaltyAmountMeta =
+      const VerificationMeta('lateReclaimPenaltyAmount');
+  @override
+  late final GeneratedColumn<double> lateReclaimPenaltyAmount =
+      GeneratedColumn<double>('late_reclaim_penalty_amount', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(2000.0));
+  static const VerificationMeta _highValueReclaimThresholdMeta =
+      const VerificationMeta('highValueReclaimThreshold');
+  @override
+  late final GeneratedColumn<double> highValueReclaimThreshold =
+      GeneratedColumn<double>(
+          'high_value_reclaim_threshold', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(50000.0));
+  static const VerificationMeta _highValueReclaimPenaltyPercentMeta =
+      const VerificationMeta('highValueReclaimPenaltyPercent');
+  @override
+  late final GeneratedColumn<double> highValueReclaimPenaltyPercent =
+      GeneratedColumn<double>(
+          'high_value_reclaim_penalty_percent', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(12.0));
   static const VerificationMeta _termsAndConditionsMeta =
       const VerificationMeta('termsAndConditions');
   @override
@@ -27384,6 +27410,14 @@ class $PurchaseBillingSettingsTable extends PurchaseBillingSettings
       defaultValue: const Constant('Quality will be checked on delivery.\n'
           'Short delivery or defective goods must be reported within 24 hours.\n'
           'Payment as per agreed terms only.'));
+  static const VerificationMeta _sellerDeclarationTextMeta =
+      const VerificationMeta('sellerDeclarationText');
+  @override
+  late final GeneratedColumn<String> sellerDeclarationText =
+      GeneratedColumn<String>('seller_declaration_text', aliasedName, false,
+          type: DriftSqlType.string,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(''));
   static const VerificationMeta _returnPolicyTextMeta =
       const VerificationMeta('returnPolicyText');
   @override
@@ -27444,7 +27478,11 @@ class $PurchaseBillingSettingsTable extends PurchaseBillingSettings
         returnWindowDays,
         returnMode,
         purityDeductPercent,
+        lateReclaimPenaltyAmount,
+        highValueReclaimThreshold,
+        highValueReclaimPenaltyPercent,
         termsAndConditions,
+        sellerDeclarationText,
         returnPolicyText,
         buybackPolicyText,
         footerMessage,
@@ -27594,11 +27632,38 @@ class $PurchaseBillingSettingsTable extends PurchaseBillingSettings
           purityDeductPercent.isAcceptableOrUnknown(
               data['purity_deduct_percent']!, _purityDeductPercentMeta));
     }
+    if (data.containsKey('late_reclaim_penalty_amount')) {
+      context.handle(
+          _lateReclaimPenaltyAmountMeta,
+          lateReclaimPenaltyAmount.isAcceptableOrUnknown(
+              data['late_reclaim_penalty_amount']!,
+              _lateReclaimPenaltyAmountMeta));
+    }
+    if (data.containsKey('high_value_reclaim_threshold')) {
+      context.handle(
+          _highValueReclaimThresholdMeta,
+          highValueReclaimThreshold.isAcceptableOrUnknown(
+              data['high_value_reclaim_threshold']!,
+              _highValueReclaimThresholdMeta));
+    }
+    if (data.containsKey('high_value_reclaim_penalty_percent')) {
+      context.handle(
+          _highValueReclaimPenaltyPercentMeta,
+          highValueReclaimPenaltyPercent.isAcceptableOrUnknown(
+              data['high_value_reclaim_penalty_percent']!,
+              _highValueReclaimPenaltyPercentMeta));
+    }
     if (data.containsKey('terms_and_conditions')) {
       context.handle(
           _termsAndConditionsMeta,
           termsAndConditions.isAcceptableOrUnknown(
               data['terms_and_conditions']!, _termsAndConditionsMeta));
+    }
+    if (data.containsKey('seller_declaration_text')) {
+      context.handle(
+          _sellerDeclarationTextMeta,
+          sellerDeclarationText.isAcceptableOrUnknown(
+              data['seller_declaration_text']!, _sellerDeclarationTextMeta));
     }
     if (data.containsKey('return_policy_text')) {
       context.handle(
@@ -27682,8 +27747,20 @@ class $PurchaseBillingSettingsTable extends PurchaseBillingSettings
       purityDeductPercent: attachedDatabase.typeMapping.read(
           DriftSqlType.double,
           data['${effectivePrefix}purity_deduct_percent'])!,
+      lateReclaimPenaltyAmount: attachedDatabase.typeMapping.read(
+          DriftSqlType.double,
+          data['${effectivePrefix}late_reclaim_penalty_amount'])!,
+      highValueReclaimThreshold: attachedDatabase.typeMapping.read(
+          DriftSqlType.double,
+          data['${effectivePrefix}high_value_reclaim_threshold'])!,
+      highValueReclaimPenaltyPercent: attachedDatabase.typeMapping.read(
+          DriftSqlType.double,
+          data['${effectivePrefix}high_value_reclaim_penalty_percent'])!,
       termsAndConditions: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}terms_and_conditions'])!,
+      sellerDeclarationText: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}seller_declaration_text'])!,
       returnPolicyText: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}return_policy_text'])!,
       buybackPolicyText: attachedDatabase.typeMapping.read(
@@ -27727,7 +27804,11 @@ class PurchaseBillingSetting extends DataClass
   final int returnWindowDays;
   final String returnMode;
   final double purityDeductPercent;
+  final double lateReclaimPenaltyAmount;
+  final double highValueReclaimThreshold;
+  final double highValueReclaimPenaltyPercent;
   final String termsAndConditions;
+  final String sellerDeclarationText;
   final String returnPolicyText;
   final String buybackPolicyText;
   final String footerMessage;
@@ -27757,7 +27838,11 @@ class PurchaseBillingSetting extends DataClass
       required this.returnWindowDays,
       required this.returnMode,
       required this.purityDeductPercent,
+      required this.lateReclaimPenaltyAmount,
+      required this.highValueReclaimThreshold,
+      required this.highValueReclaimPenaltyPercent,
       required this.termsAndConditions,
+      required this.sellerDeclarationText,
       required this.returnPolicyText,
       required this.buybackPolicyText,
       required this.footerMessage,
@@ -27791,7 +27876,14 @@ class PurchaseBillingSetting extends DataClass
     map['return_window_days'] = Variable<int>(returnWindowDays);
     map['return_mode'] = Variable<String>(returnMode);
     map['purity_deduct_percent'] = Variable<double>(purityDeductPercent);
+    map['late_reclaim_penalty_amount'] =
+        Variable<double>(lateReclaimPenaltyAmount);
+    map['high_value_reclaim_threshold'] =
+        Variable<double>(highValueReclaimThreshold);
+    map['high_value_reclaim_penalty_percent'] =
+        Variable<double>(highValueReclaimPenaltyPercent);
     map['terms_and_conditions'] = Variable<String>(termsAndConditions);
+    map['seller_declaration_text'] = Variable<String>(sellerDeclarationText);
     map['return_policy_text'] = Variable<String>(returnPolicyText);
     map['buyback_policy_text'] = Variable<String>(buybackPolicyText);
     map['footer_message'] = Variable<String>(footerMessage);
@@ -27827,7 +27919,11 @@ class PurchaseBillingSetting extends DataClass
       returnWindowDays: Value(returnWindowDays),
       returnMode: Value(returnMode),
       purityDeductPercent: Value(purityDeductPercent),
+      lateReclaimPenaltyAmount: Value(lateReclaimPenaltyAmount),
+      highValueReclaimThreshold: Value(highValueReclaimThreshold),
+      highValueReclaimPenaltyPercent: Value(highValueReclaimPenaltyPercent),
       termsAndConditions: Value(termsAndConditions),
+      sellerDeclarationText: Value(sellerDeclarationText),
       returnPolicyText: Value(returnPolicyText),
       buybackPolicyText: Value(buybackPolicyText),
       footerMessage: Value(footerMessage),
@@ -27866,8 +27962,16 @@ class PurchaseBillingSetting extends DataClass
       returnMode: serializer.fromJson<String>(json['returnMode']),
       purityDeductPercent:
           serializer.fromJson<double>(json['purityDeductPercent']),
+      lateReclaimPenaltyAmount:
+          serializer.fromJson<double>(json['lateReclaimPenaltyAmount']),
+      highValueReclaimThreshold:
+          serializer.fromJson<double>(json['highValueReclaimThreshold']),
+      highValueReclaimPenaltyPercent:
+          serializer.fromJson<double>(json['highValueReclaimPenaltyPercent']),
       termsAndConditions:
           serializer.fromJson<String>(json['termsAndConditions']),
+      sellerDeclarationText:
+          serializer.fromJson<String>(json['sellerDeclarationText']),
       returnPolicyText: serializer.fromJson<String>(json['returnPolicyText']),
       buybackPolicyText: serializer.fromJson<String>(json['buybackPolicyText']),
       footerMessage: serializer.fromJson<String>(json['footerMessage']),
@@ -27902,7 +28006,14 @@ class PurchaseBillingSetting extends DataClass
       'returnWindowDays': serializer.toJson<int>(returnWindowDays),
       'returnMode': serializer.toJson<String>(returnMode),
       'purityDeductPercent': serializer.toJson<double>(purityDeductPercent),
+      'lateReclaimPenaltyAmount':
+          serializer.toJson<double>(lateReclaimPenaltyAmount),
+      'highValueReclaimThreshold':
+          serializer.toJson<double>(highValueReclaimThreshold),
+      'highValueReclaimPenaltyPercent':
+          serializer.toJson<double>(highValueReclaimPenaltyPercent),
       'termsAndConditions': serializer.toJson<String>(termsAndConditions),
+      'sellerDeclarationText': serializer.toJson<String>(sellerDeclarationText),
       'returnPolicyText': serializer.toJson<String>(returnPolicyText),
       'buybackPolicyText': serializer.toJson<String>(buybackPolicyText),
       'footerMessage': serializer.toJson<String>(footerMessage),
@@ -27935,7 +28046,11 @@ class PurchaseBillingSetting extends DataClass
           int? returnWindowDays,
           String? returnMode,
           double? purityDeductPercent,
+          double? lateReclaimPenaltyAmount,
+          double? highValueReclaimThreshold,
+          double? highValueReclaimPenaltyPercent,
           String? termsAndConditions,
+          String? sellerDeclarationText,
           String? returnPolicyText,
           String? buybackPolicyText,
           String? footerMessage,
@@ -27965,7 +28080,15 @@ class PurchaseBillingSetting extends DataClass
         returnWindowDays: returnWindowDays ?? this.returnWindowDays,
         returnMode: returnMode ?? this.returnMode,
         purityDeductPercent: purityDeductPercent ?? this.purityDeductPercent,
+        lateReclaimPenaltyAmount:
+            lateReclaimPenaltyAmount ?? this.lateReclaimPenaltyAmount,
+        highValueReclaimThreshold:
+            highValueReclaimThreshold ?? this.highValueReclaimThreshold,
+        highValueReclaimPenaltyPercent: highValueReclaimPenaltyPercent ??
+            this.highValueReclaimPenaltyPercent,
         termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+        sellerDeclarationText:
+            sellerDeclarationText ?? this.sellerDeclarationText,
         returnPolicyText: returnPolicyText ?? this.returnPolicyText,
         buybackPolicyText: buybackPolicyText ?? this.buybackPolicyText,
         footerMessage: footerMessage ?? this.footerMessage,
@@ -28031,9 +28154,22 @@ class PurchaseBillingSetting extends DataClass
       purityDeductPercent: data.purityDeductPercent.present
           ? data.purityDeductPercent.value
           : this.purityDeductPercent,
+      lateReclaimPenaltyAmount: data.lateReclaimPenaltyAmount.present
+          ? data.lateReclaimPenaltyAmount.value
+          : this.lateReclaimPenaltyAmount,
+      highValueReclaimThreshold: data.highValueReclaimThreshold.present
+          ? data.highValueReclaimThreshold.value
+          : this.highValueReclaimThreshold,
+      highValueReclaimPenaltyPercent:
+          data.highValueReclaimPenaltyPercent.present
+              ? data.highValueReclaimPenaltyPercent.value
+              : this.highValueReclaimPenaltyPercent,
       termsAndConditions: data.termsAndConditions.present
           ? data.termsAndConditions.value
           : this.termsAndConditions,
+      sellerDeclarationText: data.sellerDeclarationText.present
+          ? data.sellerDeclarationText.value
+          : this.sellerDeclarationText,
       returnPolicyText: data.returnPolicyText.present
           ? data.returnPolicyText.value
           : this.returnPolicyText,
@@ -28076,7 +28212,12 @@ class PurchaseBillingSetting extends DataClass
           ..write('returnWindowDays: $returnWindowDays, ')
           ..write('returnMode: $returnMode, ')
           ..write('purityDeductPercent: $purityDeductPercent, ')
+          ..write('lateReclaimPenaltyAmount: $lateReclaimPenaltyAmount, ')
+          ..write('highValueReclaimThreshold: $highValueReclaimThreshold, ')
+          ..write(
+              'highValueReclaimPenaltyPercent: $highValueReclaimPenaltyPercent, ')
           ..write('termsAndConditions: $termsAndConditions, ')
+          ..write('sellerDeclarationText: $sellerDeclarationText, ')
           ..write('returnPolicyText: $returnPolicyText, ')
           ..write('buybackPolicyText: $buybackPolicyText, ')
           ..write('footerMessage: $footerMessage, ')
@@ -28111,7 +28252,11 @@ class PurchaseBillingSetting extends DataClass
         returnWindowDays,
         returnMode,
         purityDeductPercent,
+        lateReclaimPenaltyAmount,
+        highValueReclaimThreshold,
+        highValueReclaimPenaltyPercent,
         termsAndConditions,
+        sellerDeclarationText,
         returnPolicyText,
         buybackPolicyText,
         footerMessage,
@@ -28145,7 +28290,12 @@ class PurchaseBillingSetting extends DataClass
           other.returnWindowDays == this.returnWindowDays &&
           other.returnMode == this.returnMode &&
           other.purityDeductPercent == this.purityDeductPercent &&
+          other.lateReclaimPenaltyAmount == this.lateReclaimPenaltyAmount &&
+          other.highValueReclaimThreshold == this.highValueReclaimThreshold &&
+          other.highValueReclaimPenaltyPercent ==
+              this.highValueReclaimPenaltyPercent &&
           other.termsAndConditions == this.termsAndConditions &&
+          other.sellerDeclarationText == this.sellerDeclarationText &&
           other.returnPolicyText == this.returnPolicyText &&
           other.buybackPolicyText == this.buybackPolicyText &&
           other.footerMessage == this.footerMessage &&
@@ -28178,7 +28328,11 @@ class PurchaseBillingSettingsCompanion
   final Value<int> returnWindowDays;
   final Value<String> returnMode;
   final Value<double> purityDeductPercent;
+  final Value<double> lateReclaimPenaltyAmount;
+  final Value<double> highValueReclaimThreshold;
+  final Value<double> highValueReclaimPenaltyPercent;
   final Value<String> termsAndConditions;
+  final Value<String> sellerDeclarationText;
   final Value<String> returnPolicyText;
   final Value<String> buybackPolicyText;
   final Value<String> footerMessage;
@@ -28208,7 +28362,11 @@ class PurchaseBillingSettingsCompanion
     this.returnWindowDays = const Value.absent(),
     this.returnMode = const Value.absent(),
     this.purityDeductPercent = const Value.absent(),
+    this.lateReclaimPenaltyAmount = const Value.absent(),
+    this.highValueReclaimThreshold = const Value.absent(),
+    this.highValueReclaimPenaltyPercent = const Value.absent(),
     this.termsAndConditions = const Value.absent(),
+    this.sellerDeclarationText = const Value.absent(),
     this.returnPolicyText = const Value.absent(),
     this.buybackPolicyText = const Value.absent(),
     this.footerMessage = const Value.absent(),
@@ -28239,7 +28397,11 @@ class PurchaseBillingSettingsCompanion
     this.returnWindowDays = const Value.absent(),
     this.returnMode = const Value.absent(),
     this.purityDeductPercent = const Value.absent(),
+    this.lateReclaimPenaltyAmount = const Value.absent(),
+    this.highValueReclaimThreshold = const Value.absent(),
+    this.highValueReclaimPenaltyPercent = const Value.absent(),
     this.termsAndConditions = const Value.absent(),
+    this.sellerDeclarationText = const Value.absent(),
     this.returnPolicyText = const Value.absent(),
     this.buybackPolicyText = const Value.absent(),
     this.footerMessage = const Value.absent(),
@@ -28270,7 +28432,11 @@ class PurchaseBillingSettingsCompanion
     Expression<int>? returnWindowDays,
     Expression<String>? returnMode,
     Expression<double>? purityDeductPercent,
+    Expression<double>? lateReclaimPenaltyAmount,
+    Expression<double>? highValueReclaimThreshold,
+    Expression<double>? highValueReclaimPenaltyPercent,
     Expression<String>? termsAndConditions,
+    Expression<String>? sellerDeclarationText,
     Expression<String>? returnPolicyText,
     Expression<String>? buybackPolicyText,
     Expression<String>? footerMessage,
@@ -28305,8 +28471,16 @@ class PurchaseBillingSettingsCompanion
       if (returnMode != null) 'return_mode': returnMode,
       if (purityDeductPercent != null)
         'purity_deduct_percent': purityDeductPercent,
+      if (lateReclaimPenaltyAmount != null)
+        'late_reclaim_penalty_amount': lateReclaimPenaltyAmount,
+      if (highValueReclaimThreshold != null)
+        'high_value_reclaim_threshold': highValueReclaimThreshold,
+      if (highValueReclaimPenaltyPercent != null)
+        'high_value_reclaim_penalty_percent': highValueReclaimPenaltyPercent,
       if (termsAndConditions != null)
         'terms_and_conditions': termsAndConditions,
+      if (sellerDeclarationText != null)
+        'seller_declaration_text': sellerDeclarationText,
       if (returnPolicyText != null) 'return_policy_text': returnPolicyText,
       if (buybackPolicyText != null) 'buyback_policy_text': buybackPolicyText,
       if (footerMessage != null) 'footer_message': footerMessage,
@@ -28339,7 +28513,11 @@ class PurchaseBillingSettingsCompanion
       Value<int>? returnWindowDays,
       Value<String>? returnMode,
       Value<double>? purityDeductPercent,
+      Value<double>? lateReclaimPenaltyAmount,
+      Value<double>? highValueReclaimThreshold,
+      Value<double>? highValueReclaimPenaltyPercent,
       Value<String>? termsAndConditions,
+      Value<String>? sellerDeclarationText,
       Value<String>? returnPolicyText,
       Value<String>? buybackPolicyText,
       Value<String>? footerMessage,
@@ -28369,7 +28547,15 @@ class PurchaseBillingSettingsCompanion
       returnWindowDays: returnWindowDays ?? this.returnWindowDays,
       returnMode: returnMode ?? this.returnMode,
       purityDeductPercent: purityDeductPercent ?? this.purityDeductPercent,
+      lateReclaimPenaltyAmount:
+          lateReclaimPenaltyAmount ?? this.lateReclaimPenaltyAmount,
+      highValueReclaimThreshold:
+          highValueReclaimThreshold ?? this.highValueReclaimThreshold,
+      highValueReclaimPenaltyPercent:
+          highValueReclaimPenaltyPercent ?? this.highValueReclaimPenaltyPercent,
       termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+      sellerDeclarationText:
+          sellerDeclarationText ?? this.sellerDeclarationText,
       returnPolicyText: returnPolicyText ?? this.returnPolicyText,
       buybackPolicyText: buybackPolicyText ?? this.buybackPolicyText,
       footerMessage: footerMessage ?? this.footerMessage,
@@ -28453,8 +28639,24 @@ class PurchaseBillingSettingsCompanion
       map['purity_deduct_percent'] =
           Variable<double>(purityDeductPercent.value);
     }
+    if (lateReclaimPenaltyAmount.present) {
+      map['late_reclaim_penalty_amount'] =
+          Variable<double>(lateReclaimPenaltyAmount.value);
+    }
+    if (highValueReclaimThreshold.present) {
+      map['high_value_reclaim_threshold'] =
+          Variable<double>(highValueReclaimThreshold.value);
+    }
+    if (highValueReclaimPenaltyPercent.present) {
+      map['high_value_reclaim_penalty_percent'] =
+          Variable<double>(highValueReclaimPenaltyPercent.value);
+    }
     if (termsAndConditions.present) {
       map['terms_and_conditions'] = Variable<String>(termsAndConditions.value);
+    }
+    if (sellerDeclarationText.present) {
+      map['seller_declaration_text'] =
+          Variable<String>(sellerDeclarationText.value);
     }
     if (returnPolicyText.present) {
       map['return_policy_text'] = Variable<String>(returnPolicyText.value);
@@ -28498,7 +28700,12 @@ class PurchaseBillingSettingsCompanion
           ..write('returnWindowDays: $returnWindowDays, ')
           ..write('returnMode: $returnMode, ')
           ..write('purityDeductPercent: $purityDeductPercent, ')
+          ..write('lateReclaimPenaltyAmount: $lateReclaimPenaltyAmount, ')
+          ..write('highValueReclaimThreshold: $highValueReclaimThreshold, ')
+          ..write(
+              'highValueReclaimPenaltyPercent: $highValueReclaimPenaltyPercent, ')
           ..write('termsAndConditions: $termsAndConditions, ')
+          ..write('sellerDeclarationText: $sellerDeclarationText, ')
           ..write('returnPolicyText: $returnPolicyText, ')
           ..write('buybackPolicyText: $buybackPolicyText, ')
           ..write('footerMessage: $footerMessage, ')
@@ -46789,7 +46996,11 @@ typedef $$PurchaseBillingSettingsTableCreateCompanionBuilder
   Value<int> returnWindowDays,
   Value<String> returnMode,
   Value<double> purityDeductPercent,
+  Value<double> lateReclaimPenaltyAmount,
+  Value<double> highValueReclaimThreshold,
+  Value<double> highValueReclaimPenaltyPercent,
   Value<String> termsAndConditions,
+  Value<String> sellerDeclarationText,
   Value<String> returnPolicyText,
   Value<String> buybackPolicyText,
   Value<String> footerMessage,
@@ -46821,7 +47032,11 @@ typedef $$PurchaseBillingSettingsTableUpdateCompanionBuilder
   Value<int> returnWindowDays,
   Value<String> returnMode,
   Value<double> purityDeductPercent,
+  Value<double> lateReclaimPenaltyAmount,
+  Value<double> highValueReclaimThreshold,
+  Value<double> highValueReclaimPenaltyPercent,
   Value<String> termsAndConditions,
+  Value<String> sellerDeclarationText,
   Value<String> returnPolicyText,
   Value<String> buybackPolicyText,
   Value<String> footerMessage,
@@ -46922,8 +47137,25 @@ class $$PurchaseBillingSettingsTableFilterComposer
       column: $table.purityDeductPercent,
       builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<double> get lateReclaimPenaltyAmount => $composableBuilder(
+      column: $table.lateReclaimPenaltyAmount,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get highValueReclaimThreshold => $composableBuilder(
+      column: $table.highValueReclaimThreshold,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get highValueReclaimPenaltyPercent =>
+      $composableBuilder(
+          column: $table.highValueReclaimPenaltyPercent,
+          builder: (column) => ColumnFilters(column));
+
   ColumnFilters<String> get termsAndConditions => $composableBuilder(
       column: $table.termsAndConditions,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get sellerDeclarationText => $composableBuilder(
+      column: $table.sellerDeclarationText,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get returnPolicyText => $composableBuilder(
@@ -47038,8 +47270,25 @@ class $$PurchaseBillingSettingsTableOrderingComposer
       column: $table.purityDeductPercent,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<double> get lateReclaimPenaltyAmount => $composableBuilder(
+      column: $table.lateReclaimPenaltyAmount,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get highValueReclaimThreshold => $composableBuilder(
+      column: $table.highValueReclaimThreshold,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get highValueReclaimPenaltyPercent =>
+      $composableBuilder(
+          column: $table.highValueReclaimPenaltyPercent,
+          builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get termsAndConditions => $composableBuilder(
       column: $table.termsAndConditions,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get sellerDeclarationText => $composableBuilder(
+      column: $table.sellerDeclarationText,
       builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get returnPolicyText => $composableBuilder(
@@ -47140,8 +47389,22 @@ class $$PurchaseBillingSettingsTableAnnotationComposer
   GeneratedColumn<double> get purityDeductPercent => $composableBuilder(
       column: $table.purityDeductPercent, builder: (column) => column);
 
+  GeneratedColumn<double> get lateReclaimPenaltyAmount => $composableBuilder(
+      column: $table.lateReclaimPenaltyAmount, builder: (column) => column);
+
+  GeneratedColumn<double> get highValueReclaimThreshold => $composableBuilder(
+      column: $table.highValueReclaimThreshold, builder: (column) => column);
+
+  GeneratedColumn<double> get highValueReclaimPenaltyPercent =>
+      $composableBuilder(
+          column: $table.highValueReclaimPenaltyPercent,
+          builder: (column) => column);
+
   GeneratedColumn<String> get termsAndConditions => $composableBuilder(
       column: $table.termsAndConditions, builder: (column) => column);
+
+  GeneratedColumn<String> get sellerDeclarationText => $composableBuilder(
+      column: $table.sellerDeclarationText, builder: (column) => column);
 
   GeneratedColumn<String> get returnPolicyText => $composableBuilder(
       column: $table.returnPolicyText, builder: (column) => column);
@@ -47211,7 +47474,11 @@ class $$PurchaseBillingSettingsTableTableManager extends RootTableManager<
             Value<int> returnWindowDays = const Value.absent(),
             Value<String> returnMode = const Value.absent(),
             Value<double> purityDeductPercent = const Value.absent(),
+            Value<double> lateReclaimPenaltyAmount = const Value.absent(),
+            Value<double> highValueReclaimThreshold = const Value.absent(),
+            Value<double> highValueReclaimPenaltyPercent = const Value.absent(),
             Value<String> termsAndConditions = const Value.absent(),
+            Value<String> sellerDeclarationText = const Value.absent(),
             Value<String> returnPolicyText = const Value.absent(),
             Value<String> buybackPolicyText = const Value.absent(),
             Value<String> footerMessage = const Value.absent(),
@@ -47242,7 +47509,11 @@ class $$PurchaseBillingSettingsTableTableManager extends RootTableManager<
             returnWindowDays: returnWindowDays,
             returnMode: returnMode,
             purityDeductPercent: purityDeductPercent,
+            lateReclaimPenaltyAmount: lateReclaimPenaltyAmount,
+            highValueReclaimThreshold: highValueReclaimThreshold,
+            highValueReclaimPenaltyPercent: highValueReclaimPenaltyPercent,
             termsAndConditions: termsAndConditions,
+            sellerDeclarationText: sellerDeclarationText,
             returnPolicyText: returnPolicyText,
             buybackPolicyText: buybackPolicyText,
             footerMessage: footerMessage,
@@ -47273,7 +47544,11 @@ class $$PurchaseBillingSettingsTableTableManager extends RootTableManager<
             Value<int> returnWindowDays = const Value.absent(),
             Value<String> returnMode = const Value.absent(),
             Value<double> purityDeductPercent = const Value.absent(),
+            Value<double> lateReclaimPenaltyAmount = const Value.absent(),
+            Value<double> highValueReclaimThreshold = const Value.absent(),
+            Value<double> highValueReclaimPenaltyPercent = const Value.absent(),
             Value<String> termsAndConditions = const Value.absent(),
+            Value<String> sellerDeclarationText = const Value.absent(),
             Value<String> returnPolicyText = const Value.absent(),
             Value<String> buybackPolicyText = const Value.absent(),
             Value<String> footerMessage = const Value.absent(),
@@ -47304,7 +47579,11 @@ class $$PurchaseBillingSettingsTableTableManager extends RootTableManager<
             returnWindowDays: returnWindowDays,
             returnMode: returnMode,
             purityDeductPercent: purityDeductPercent,
+            lateReclaimPenaltyAmount: lateReclaimPenaltyAmount,
+            highValueReclaimThreshold: highValueReclaimThreshold,
+            highValueReclaimPenaltyPercent: highValueReclaimPenaltyPercent,
             termsAndConditions: termsAndConditions,
+            sellerDeclarationText: sellerDeclarationText,
             returnPolicyText: returnPolicyText,
             buybackPolicyText: buybackPolicyText,
             footerMessage: footerMessage,

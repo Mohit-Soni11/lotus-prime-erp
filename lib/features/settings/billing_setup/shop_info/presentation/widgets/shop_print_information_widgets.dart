@@ -87,6 +87,13 @@ class ShopPrintInformationSummary extends StatelessWidget {
                       label: '${state.configuredCount} configured',
                       icon: Icons.verified_rounded,
                     ),
+                    if (state.missingCount > 0)
+                      _MetricPill(
+                        label: '${state.missingCount} missing',
+                        icon: Icons.info_outline_rounded,
+                        color: BillingSetupColors.warning,
+                        backgroundColor: BillingSetupColors.warningBg,
+                      ),
                     _MetricPill(
                       label: '${state.fields.length} fields',
                       icon: Icons.tune_rounded,
@@ -125,6 +132,7 @@ class ShopPrintInformationSection extends StatelessWidget {
   final List<ShopPrintField> fields;
   final bool Function(ShopPrintField field) isEnabled;
   final void Function(ShopPrintField field, bool enabled) onChanged;
+  final void Function(ShopPrintField field) onMissingFieldTap;
 
   const ShopPrintInformationSection({
     super.key,
@@ -132,6 +140,7 @@ class ShopPrintInformationSection extends StatelessWidget {
     required this.fields,
     required this.isEnabled,
     required this.onChanged,
+    required this.onMissingFieldTap,
   });
 
   @override
@@ -184,25 +193,33 @@ class ShopPrintInformationSection extends StatelessWidget {
           const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, constraints) {
-              final columns = constraints.maxWidth >= 780 ? 2 : 1;
-              final tileWidth =
-                  (constraints.maxWidth - ((columns - 1) * 10)) / columns;
+              final columns = constraints.maxWidth >= 1180
+                  ? 3
+                  : constraints.maxWidth >= 760
+                      ? 2
+                      : 1;
 
-              return Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  for (final field in fields)
-                    SizedBox(
-                      width: tileWidth,
-                      child: ShopPrintInformationTile(
-                        field: field,
-                        accent: meta.accent,
-                        enabled: isEnabled(field),
-                        onChanged: (value) => onChanged(field, value),
-                      ),
-                    ),
-                ],
+              return GridView.builder(
+                itemCount: fields.length,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: columns,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  mainAxisExtent: 142,
+                ),
+                itemBuilder: (context, index) {
+                  final field = fields[index];
+
+                  return ShopPrintInformationTile(
+                    field: field,
+                    accent: meta.accent,
+                    enabled: isEnabled(field),
+                    onChanged: (value) => onChanged(field, value),
+                    onMissingFieldTap: () => onMissingFieldTap(field),
+                  );
+                },
               );
             },
           ),
@@ -217,6 +234,7 @@ class ShopPrintInformationTile extends StatelessWidget {
   final Color accent;
   final bool enabled;
   final ValueChanged<bool> onChanged;
+  final VoidCallback onMissingFieldTap;
 
   const ShopPrintInformationTile({
     super.key,
@@ -224,34 +242,54 @@ class ShopPrintInformationTile extends StatelessWidget {
     required this.accent,
     required this.enabled,
     required this.onChanged,
+    required this.onMissingFieldTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final isAvailable = field.isConfigured;
+    final isPrinted = enabled && isAvailable;
+    final statusLabel = !isAvailable
+        ? 'Missing data'
+        : isPrinted
+            ? 'Printed'
+            : 'Available';
+    final statusColor = !isAvailable
+        ? BillingSetupColors.warning
+        : isPrinted
+            ? BillingSetupColors.success
+            : BillingSetupColors.textMuted;
+    final statusBg = !isAvailable
+        ? BillingSetupColors.warningBg
+        : isPrinted
+            ? BillingSetupColors.successBg
+            : BillingSetupColors.inputBg;
+    final borderColor = !isAvailable
+        ? BillingSetupColors.warning.withValues(alpha: 0.38)
+        : isPrinted
+            ? accent.withValues(alpha: 0.28)
+            : BillingSetupColors.cardBorder;
+    final backgroundColor = !isAvailable
+        ? BillingSetupColors.warningBg
+        : isPrinted
+            ? accent.withValues(alpha: 0.07)
+            : BillingSetupColors.inputBg;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 160),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: enabled && isAvailable
-            ? accent.withValues(alpha: 0.07)
-            : BillingSetupColors.inputBg,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: enabled && isAvailable
-              ? accent.withValues(alpha: 0.28)
-              : BillingSetupColors.cardBorder,
-        ),
+        border: Border.all(color: borderColor),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+          Row(
+            children: [
+              Expanded(
+                child: Text(
                   field.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -262,45 +300,130 @@ class ShopPrintInformationTile extends StatelessWidget {
                     letterSpacing: 0,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  field.description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: BillingSetupColors.textMuted,
-                    fontSize: 11,
-                    height: 1.35,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0,
-                  ),
+              ),
+              const SizedBox(width: 8),
+              _PrintFieldStatusPill(
+                label: statusLabel,
+                color: statusColor,
+                backgroundColor: statusBg,
+              ),
+              const SizedBox(width: 8),
+              Transform.scale(
+                scale: 0.82,
+                child: Switch(
+                  value: isPrinted,
+                  onChanged: (value) {
+                    if (!isAvailable) {
+                      onMissingFieldTap();
+                      return;
+                    }
+                    onChanged(value);
+                  },
+                  activeThumbColor: accent,
+                  activeTrackColor: accent.withValues(alpha: 0.26),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                const SizedBox(height: 7),
-                Text(
-                  isAvailable ? field.value : 'Not configured in Shop Setup',
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            field.description,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              color: BillingSetupColors.textMuted,
+              fontSize: 11,
+              height: 1.35,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0,
+            ),
+          ),
+          const Spacer(),
+          Row(
+            children: [
+              Icon(
+                isAvailable
+                    ? Icons.check_circle_outline_rounded
+                    : Icons.info_outline_rounded,
+                size: 14,
+                color: isAvailable ? BillingSetupColors.success : statusColor,
+              ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  isAvailable
+                      ? field.value
+                      : 'Add this detail in ${field.sourceSection}.',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: isAvailable
                         ? BillingSetupColors.textBody
-                        : BillingSetupColors.danger,
+                        : BillingSetupColors.textDark,
                     fontSize: 10.5,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0,
                   ),
                 ),
+              ),
+              if (!isAvailable) ...[
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: onMissingFieldTap,
+                  icon: const Icon(Icons.add_business_rounded, size: 14),
+                  label: const Text('Add data'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: BillingSetupColors.warning,
+                    minimumSize: const Size(0, 30),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    textStyle: GoogleFonts.inter(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ),
               ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Switch(
-            value: enabled && isAvailable,
-            onChanged: isAvailable ? onChanged : null,
-            activeThumbColor: accent,
-            activeTrackColor: accent.withValues(alpha: 0.26),
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PrintFieldStatusPill extends StatelessWidget {
+  final String label;
+  final Color color;
+  final Color backgroundColor;
+
+  const _PrintFieldStatusPill({
+    required this.label,
+    required this.color,
+    required this.backgroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: GoogleFonts.inter(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0,
+        ),
       ),
     );
   }
@@ -370,10 +493,14 @@ class ShopPrintGroupMeta {
 class _MetricPill extends StatelessWidget {
   final String label;
   final IconData icon;
+  final Color color;
+  final Color? backgroundColor;
 
   const _MetricPill({
     required this.label,
     required this.icon,
+    this.color = BillingSetupColors.success,
+    this.backgroundColor,
   });
 
   @override
@@ -381,14 +508,14 @@ class _MetricPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: BillingSetupColors.inputBg,
+        color: backgroundColor ?? BillingSetupColors.inputBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: BillingSetupColors.cardBorder),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: BillingSetupColors.success),
+          Icon(icon, size: 13, color: color),
           const SizedBox(width: 6),
           Text(
             label,

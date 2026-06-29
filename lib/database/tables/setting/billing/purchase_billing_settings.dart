@@ -64,13 +64,19 @@ class PurchaseBillingSettings extends Table with BaseTable {
   // Rules for returning purchased items back to supplier/customer.
   // ═══════════════════════════════════════════════════════════════════════════
 
-  IntColumn get returnWindowDays => integer().withDefault(const Constant(3))();
+  IntColumn get returnWindowDays => integer().withDefault(const Constant(1))();
   // 'Exchange' | 'Credit Note' | 'Cash Refund'
   TextColumn get returnMode =>
-      text().withDefault(const Constant('Credit Note'))();
+      text().withDefault(const Constant('Cash Refund'))();
   // % deducted for quality/purity issues found during testing
   RealColumn get purityDeductPercent =>
       real().withDefault(const Constant(2.0))();
+  RealColumn get lateReclaimPenaltyAmount =>
+      real().withDefault(const Constant(2000.0))();
+  RealColumn get highValueReclaimThreshold =>
+      real().withDefault(const Constant(50000.0))();
+  RealColumn get highValueReclaimPenaltyPercent =>
+      real().withDefault(const Constant(12.0))();
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SECTION 3 — TERMS & FOOTER
@@ -82,6 +88,8 @@ class PurchaseBillingSettings extends Table with BaseTable {
       'Short delivery or defective goods must be reported within 24 hours.\n'
       'Payment as per agreed terms only.'))();
   // ✅ NEW columns
+  TextColumn get sellerDeclarationText =>
+      text().withDefault(const Constant(''))();
   TextColumn get returnPolicyText => text().withDefault(const Constant(
       'Returns accepted within 24 hours with original voucher.'))();
   TextColumn get buybackPolicyText => text().withDefault(

@@ -47,7 +47,15 @@ class ShopPrintInformationState {
           (field) => field.isConfigured && enabledFieldIds.contains(field.id))
       .length;
 
-  bool isEnabled(ShopPrintField field) => enabledFieldIds.contains(field.id);
+  int get missingCount => fields.length - configuredCount;
+
+  Set<String> get configuredFieldIds => {
+        for (final field in fields)
+          if (field.isConfigured) field.id,
+      };
+
+  bool isEnabled(ShopPrintField field) =>
+      field.isConfigured && enabledFieldIds.contains(field.id);
 
   ShopPrintInformationState copyWith({
     Set<String>? enabledFieldIds,

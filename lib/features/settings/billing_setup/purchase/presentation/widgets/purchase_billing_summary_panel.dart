@@ -68,16 +68,20 @@ class PurchaseBillingSummaryPanel extends StatelessWidget {
             value: activeFields.toString(),
           ),
           _SummaryMetric(
-            label: 'Return mode',
-            value: model.returnMode,
-          ),
-          _SummaryMetric(
-            label: 'Return window',
+            label: 'Seller reclaim window',
             value: '${input.returnWindowDays.trim()} days',
           ),
           _SummaryMetric(
-            label: 'Purity deduction',
-            value: '${input.purityDeductPercent.trim()}%',
+            label: 'Flat late penalty',
+            value: 'Rs. ${input.lateReclaimPenaltyAmount.trim()}',
+          ),
+          _SummaryMetric(
+            label: 'High-value threshold',
+            value: 'Rs. ${input.highValueReclaimThreshold.trim()}',
+          ),
+          _SummaryMetric(
+            label: 'High-value penalty',
+            value: '${input.highValueReclaimPenaltyPercent.trim()}%',
           ),
           const SizedBox(height: 12),
           Container(

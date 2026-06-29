@@ -22,7 +22,11 @@ class PurchaseBillingModel {
   final int returnWindowDays;
   final String returnMode;
   final double purityDeductPercent;
+  final double lateReclaimPenaltyAmount;
+  final double highValueReclaimThreshold;
+  final double highValueReclaimPenaltyPercent;
   final String termsAndConditions;
+  final String sellerDeclarationText;
   final String returnPolicyText;
   final String buybackPolicyText;
   final String footerMessage;
@@ -50,8 +54,12 @@ class PurchaseBillingModel {
     this.returnWindowDays = 1,
     this.returnMode = PurchaseReturnModeOptions.cashRefund,
     this.purityDeductPercent = 2.0,
+    this.lateReclaimPenaltyAmount = 2000.0,
+    this.highValueReclaimThreshold = 50000.0,
+    this.highValueReclaimPenaltyPercent = 12.0,
     this.termsAndConditions = _defaultTerms,
-    this.returnPolicyText = _defaultVerificationNote,
+    this.sellerDeclarationText = _defaultSellerDeclaration,
+    this.returnPolicyText = _defaultReclaimPolicy,
     this.buybackPolicyText = _defaultPayoutNote,
     this.footerMessage = _defaultFooter,
     this.selectedTemplate = 'default',
@@ -76,8 +84,12 @@ class PurchaseBillingModel {
           returnWindowDays: 1,
           returnMode: PurchaseReturnModeOptions.cashRefund,
           purityDeductPercent: 2.0,
+          lateReclaimPenaltyAmount: 2000.0,
+          highValueReclaimThreshold: 50000.0,
+          highValueReclaimPenaltyPercent: 12.0,
           termsAndConditions: _goldTerms,
-          returnPolicyText: _goldVerificationNote,
+          sellerDeclarationText: _goldSellerDeclaration,
+          returnPolicyText: _goldReclaimPolicy,
           buybackPolicyText: _goldPayoutNote,
           footerMessage: _defaultFooter,
         );
@@ -98,8 +110,12 @@ class PurchaseBillingModel {
           returnWindowDays: 1,
           returnMode: PurchaseReturnModeOptions.cashRefund,
           purityDeductPercent: 3.0,
+          lateReclaimPenaltyAmount: 2000.0,
+          highValueReclaimThreshold: 50000.0,
+          highValueReclaimPenaltyPercent: 12.0,
           termsAndConditions: _silverTerms,
-          returnPolicyText: _silverVerificationNote,
+          sellerDeclarationText: _silverSellerDeclaration,
+          returnPolicyText: _silverReclaimPolicy,
           buybackPolicyText: _silverPayoutNote,
           footerMessage: _defaultFooter,
         );
@@ -124,8 +140,12 @@ class PurchaseBillingModel {
           returnWindowDays: 1,
           returnMode: PurchaseReturnModeOptions.cashRefund,
           purityDeductPercent: 5.0,
+          lateReclaimPenaltyAmount: 2000.0,
+          highValueReclaimThreshold: 50000.0,
+          highValueReclaimPenaltyPercent: 12.0,
           termsAndConditions: _diamondTerms,
-          returnPolicyText: _diamondVerificationNote,
+          sellerDeclarationText: _diamondSellerDeclaration,
+          returnPolicyText: _diamondReclaimPolicy,
           buybackPolicyText: _diamondPayoutNote,
           footerMessage: _defaultFooter,
         );
@@ -146,8 +166,12 @@ class PurchaseBillingModel {
           returnWindowDays: 1,
           returnMode: PurchaseReturnModeOptions.cashRefund,
           purityDeductPercent: 2.0,
+          lateReclaimPenaltyAmount: 2000.0,
+          highValueReclaimThreshold: 50000.0,
+          highValueReclaimPenaltyPercent: 12.0,
           termsAndConditions: _platinumTerms,
-          returnPolicyText: _platinumVerificationNote,
+          sellerDeclarationText: _platinumSellerDeclaration,
+          returnPolicyText: _platinumReclaimPolicy,
           buybackPolicyText: _platinumPayoutNote,
           footerMessage: _defaultFooter,
         );
@@ -178,7 +202,11 @@ class PurchaseBillingModel {
     int? returnWindowDays,
     String? returnMode,
     double? purityDeductPercent,
+    double? lateReclaimPenaltyAmount,
+    double? highValueReclaimThreshold,
+    double? highValueReclaimPenaltyPercent,
     String? termsAndConditions,
+    String? sellerDeclarationText,
     String? returnPolicyText,
     String? buybackPolicyText,
     String? footerMessage,
@@ -206,7 +234,15 @@ class PurchaseBillingModel {
       returnWindowDays: returnWindowDays ?? this.returnWindowDays,
       returnMode: returnMode ?? this.returnMode,
       purityDeductPercent: purityDeductPercent ?? this.purityDeductPercent,
+      lateReclaimPenaltyAmount:
+          lateReclaimPenaltyAmount ?? this.lateReclaimPenaltyAmount,
+      highValueReclaimThreshold:
+          highValueReclaimThreshold ?? this.highValueReclaimThreshold,
+      highValueReclaimPenaltyPercent:
+          highValueReclaimPenaltyPercent ?? this.highValueReclaimPenaltyPercent,
       termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+      sellerDeclarationText:
+          sellerDeclarationText ?? this.sellerDeclarationText,
       returnPolicyText: returnPolicyText ?? this.returnPolicyText,
       buybackPolicyText: buybackPolicyText ?? this.buybackPolicyText,
       footerMessage: footerMessage ?? this.footerMessage,
@@ -215,102 +251,105 @@ class PurchaseBillingModel {
   }
 }
 
-const _defaultTerms = 'Seller confirms legal ownership of the jewellery.\n'
-    'विक्रेता पुष्टि करता है कि आभूषण उसका वैध स्वामित्व है.\n'
-    'Valid identity proof is required before payout.\n'
-    'भुगतान से पहले valid identity proof आवश्यक है.\n'
-    'Once payment is completed, the purchase is treated as final.\n'
-    'भुगतान पूरा होने के बाद purchase final माना जाएगा.';
+const _defaultTerms =
+    'Seller must submit Aadhaar or valid government ID before payout.\n'
+    'Payout से पहले विक्रेता को Aadhaar या valid government ID देना आवश्यक है.\n'
+    'Purchase value is calculated on verified fine weight, item condition and applicable item-wise deductions.\n'
+    'खरीद मूल्य verified fine weight, item condition और applicable item-wise deductions पर calculated होगा.\n'
+    'After payout, ownership of the item is transferred to the shop.\n'
+    'Payout के बाद item का ownership shop को transfer माना जाएगा.';
 
-const _defaultVerificationNote =
-    'Final acceptance is subject to KYC, weight, purity and ownership verification.\n'
-    'अंतिम स्वीकृति KYC, वजन, शुद्धता और स्वामित्व जांच के बाद होगी.';
+const _defaultSellerDeclaration =
+    'Seller declares that the item is his or her lawful property and is free from theft, dispute, pledge, loan, lien or third-party claim.\n'
+    'विक्रेता घोषणा करता/करती है कि item उसका वैध स्वामित्व है और theft, dispute, pledge, loan, lien या third-party claim से मुक्त है.\n'
+    'If the item is later found stolen, disputed or illegal, the seller accepts full responsibility and will cooperate with police or legal authorities.\n'
+    'यदि item बाद में stolen, disputed या illegal पाया जाता है, तो पूरी जिम्मेदारी विक्रेता की होगी और वह police/legal authorities के साथ cooperate करेगा/करेगी.\n'
+    'The shop is not responsible for any false declaration, hidden fact or incorrect identity information provided by the seller.\n'
+    'Seller द्वारा दी गई false declaration, hidden fact या incorrect identity information के लिए shop जिम्मेदार नहीं होगी.';
+
+const _defaultReclaimPolicy =
+    'Seller may request return of the sold item only within 1 day from the purchase voucher date, subject to item availability.\n'
+    'विक्रेता purchase voucher date से सिर्फ 1 दिन के अंदर sold item return request कर सकता/सकती है, item availability के अनुसार.\n'
+    'After 1 day, the item will not be returned. If management approves an exceptional late reclaim, the configured penalty amount will be charged.\n'
+    '1 दिन के बाद item return नहीं होगा. Management exceptional late reclaim approve करे तो configured penalty amount charge किया जाएगा.';
 
 const _defaultPayoutNote =
-    'Purchase value is calculated on verified net weight, purity and live purchase rate.\n'
-    'खरीद मूल्य verified net weight, शुद्धता और live purchase rate के आधार पर calculated होगा.\n'
-    'Testing, melting, stone, dust or impurity deductions may apply before payout.\n'
-    'Payout से पहले testing, melting, stone, dust या impurity deduction लागू हो सकती है.';
+    'Final payout is based on verified fine weight, purchase rate, item condition and applicable deductions.\n'
+    'Final payout verified fine weight, purchase rate, item condition और applicable deductions पर based होगा.\n'
+    'Stone, dust, wax, thread, non-metal parts, testing loss or melting loss may be deducted before payout.\n'
+    'Payout से पहले stone, dust, wax, thread, non-metal parts, testing loss या melting loss deduct हो सकता है.';
 
 const _defaultFooter = 'Thank you for trusting us.\n'
     'हम पर भरोसा करने के लिए धन्यवाद.';
 
 const _goldTerms =
-    'Seller must provide valid ID and ownership confirmation for gold purchase.\n'
-    'Gold purchase के लिए विक्रेता को valid ID और ownership confirmation देना आवश्यक है.\n'
-    'Hallmark, HUID, weight and purity will be verified before payout.\n'
-    'Payout से पहले hallmark, HUID, वजन और शुद्धता verify की जाएगी.\n'
-    'Once payment is completed, the purchase is treated as final.\n'
-    'भुगतान पूरा होने के बाद purchase final माना जाएगा.';
+    'Seller must submit Aadhaar or valid government ID before gold payout.\n'
+    'Gold payout से पहले विक्रेता को Aadhaar या valid government ID देना आवश्यक है.\n'
+    'Gold payout is calculated on verified fine weight, condition and applicable item-wise deductions.\n'
+    'Gold payout verified fine weight, condition और applicable item-wise deductions पर calculated होगा.\n'
+    'After payout, ownership of the gold item is transferred to the shop.\n'
+    'Payout के बाद gold item का ownership shop को transfer माना जाएगा.';
 
-const _goldVerificationNote =
-    'Gold ornaments are accepted only after weight, purity and ownership verification.\n'
-    'Gold ornaments वजन, शुद्धता और ownership verification के बाद ही स्वीकार होंगे.\n'
-    'Stones, beads, dust, wax, thread or non-gold parts will be deducted from payable weight.\n'
-    'Stone, beads, dust, wax, thread या non-gold parts payable weight से deduct किए जाएंगे.';
+const _goldSellerDeclaration = _defaultSellerDeclaration;
+
+const _goldReclaimPolicy = _defaultReclaimPolicy;
 
 const _goldPayoutNote =
-    'Gold payout is based on verified fine weight, live purchase rate and approved deductions.\n'
-    'Gold payout verified fine weight, live purchase rate और approved deductions पर based होगा.\n'
-    'Testing, melting or refining deductions may apply before final settlement.\n'
-    'Final settlement से पहले testing, melting या refining deduction लागू हो सकती है.';
+    'Gold payout is based on verified fine weight, purchase rate and item-wise testing or melting result.\n'
+    'Gold payout verified fine weight, purchase rate और item-wise testing/melting result पर based होगा.\n'
+    'Stone, beads, dust, wax, thread, testing loss or melting loss will be deducted from payable value.\n'
+    'Stone, beads, dust, wax, thread, testing loss या melting loss payable value से deduct होगा.';
 
 const _silverTerms =
-    'Seller must provide valid ID and ownership confirmation for silver purchase.\n'
-    'Silver purchase के लिए विक्रेता को valid ID और ownership confirmation देना आवश्यक है.\n'
-    'Weight and purity will be verified before payout.\n'
-    'Payout से पहले वजन और शुद्धता verify की जाएगी.\n'
-    'Once payment is completed, the purchase is treated as final.\n'
-    'भुगतान पूरा होने के बाद purchase final माना जाएगा.';
+    'Seller must submit Aadhaar or valid government ID before silver payout.\n'
+    'Silver payout से पहले विक्रेता को Aadhaar या valid government ID देना आवश्यक है.\n'
+    'Silver payout is calculated on verified fine weight, condition and applicable item-wise deductions.\n'
+    'Silver payout verified fine weight, condition और applicable item-wise deductions पर calculated होगा.\n'
+    'After payout, ownership of the silver item is transferred to the shop.\n'
+    'Payout के बाद silver item का ownership shop को transfer माना जाएगा.';
 
-const _silverVerificationNote =
-    'Silver items are accepted only after weight, purity and condition verification.\n'
-    'Silver items वजन, शुद्धता और condition verification के बाद ही स्वीकार होंगे.\n'
-    'Stone, enamel, wax, dust or non-silver parts will be deducted from payable weight.\n'
-    'Stone, enamel, wax, dust या non-silver parts payable weight से deduct किए जाएंगे.';
+const _silverSellerDeclaration = _defaultSellerDeclaration;
+
+const _silverReclaimPolicy = _defaultReclaimPolicy;
 
 const _silverPayoutNote =
-    'Silver payout is based on verified net weight, purity and live silver purchase rate.\n'
-    'Silver payout verified net weight, शुद्धता और live silver purchase rate पर based होगा.\n'
-    'Testing, melting or refining deductions may apply before final settlement.\n'
-    'Final settlement से पहले testing, melting या refining deduction लागू हो सकती है.';
+    'Silver payout is based on verified fine weight, purchase rate and item-wise testing or melting result.\n'
+    'Silver payout verified fine weight, purchase rate और item-wise testing/melting result पर based होगा.\n'
+    'Stone, enamel, wax, dust, non-silver parts, testing loss or melting loss will be deducted from payable value.\n'
+    'Stone, enamel, wax, dust, non-silver parts, testing loss या melting loss payable value से deduct होगा.';
 
 const _diamondTerms =
-    'Seller must provide valid ID and ownership confirmation for diamond purchase.\n'
-    'Diamond purchase के लिए विक्रेता को valid ID और ownership confirmation देना आवश्यक है.\n'
-    'Certificate, carat, clarity, cut and condition will be verified before payout.\n'
-    'Payout से पहले certificate, carat, clarity, cut और condition verify किए जाएंगे.\n'
-    'Once payment is completed, the purchase is treated as final.\n'
-    'भुगतान पूरा होने के बाद purchase final माना जाएगा.';
+    'Seller must submit Aadhaar or valid government ID before diamond payout.\n'
+    'Diamond payout से पहले विक्रेता को Aadhaar या valid government ID देना आवश्यक है.\n'
+    'Diamond payout is calculated after certificate, carat, clarity, cut and condition verification.\n'
+    'Diamond payout certificate, carat, clarity, cut और condition verification के बाद calculated होगा.\n'
+    'After payout, ownership of the diamond item is transferred to the shop.\n'
+    'Payout के बाद diamond item का ownership shop को transfer माना जाएगा.';
 
-const _diamondVerificationNote =
-    'Diamond purchase acceptance depends on certificate, carat, clarity and expert inspection.\n'
-    'Diamond purchase acceptance certificate, carat, clarity और expert inspection पर निर्भर करेगी.\n'
-    'Mismatch in certificate, damage or quality variation can change the final valuation.\n'
-    'Certificate mismatch, damage या quality variation final valuation बदल सकता है.';
+const _diamondSellerDeclaration = _defaultSellerDeclaration;
+
+const _diamondReclaimPolicy = _defaultReclaimPolicy;
 
 const _diamondPayoutNote =
     'Diamond payout is based on verified stone quality, condition and agreed purchase value.\n'
     'Diamond payout verified stone quality, condition और agreed purchase value पर based होगा.\n'
-    'Final valuation is confirmed only after expert inspection.\n'
-    'Final valuation expert inspection के बाद ही confirm होगी.';
+    'Certificate mismatch, damage or quality variation can change the final valuation.\n'
+    'Certificate mismatch, damage या quality variation final valuation बदल सकता है.';
 
 const _platinumTerms =
-    'Seller must provide valid ID and ownership confirmation for platinum purchase.\n'
-    'Platinum purchase के लिए विक्रेता को valid ID और ownership confirmation देना आवश्यक है.\n'
-    'Weight, purity and condition will be verified before payout.\n'
-    'Payout से पहले वजन, शुद्धता और condition verify की जाएगी.\n'
-    'Once payment is completed, the purchase is treated as final.\n'
-    'भुगतान पूरा होने के बाद purchase final माना जाएगा.';
+    'Seller must submit Aadhaar or valid government ID before platinum payout.\n'
+    'Platinum payout से पहले विक्रेता को Aadhaar या valid government ID देना आवश्यक है.\n'
+    'Platinum payout is calculated on verified fine weight, condition and applicable item-wise deductions.\n'
+    'Platinum payout verified fine weight, condition और applicable item-wise deductions पर calculated होगा.\n'
+    'After payout, ownership of the platinum item is transferred to the shop.\n'
+    'Payout के बाद platinum item का ownership shop को transfer माना जाएगा.';
 
-const _platinumVerificationNote =
-    'Platinum items are accepted only after weight, purity and condition verification.\n'
-    'Platinum items वजन, शुद्धता और condition verification के बाद ही स्वीकार होंगे.\n'
-    'Non-platinum parts, stones or damage will be deducted from payable value.\n'
-    'Non-platinum parts, stones या damage payable value से deduct किए जाएंगे.';
+const _platinumSellerDeclaration = _defaultSellerDeclaration;
+
+const _platinumReclaimPolicy = _defaultReclaimPolicy;
 
 const _platinumPayoutNote =
-    'Platinum payout is based on verified net weight, purity and live platinum purchase rate.\n'
-    'Platinum payout verified net weight, शुद्धता और live platinum purchase rate पर based होगा.\n'
-    'Testing, melting or condition-based deductions may apply before final settlement.\n'
-    'Final settlement से पहले testing, melting या condition-based deduction लागू हो सकती है.';
+    'Platinum payout is based on verified fine weight, purchase rate and item-wise testing or melting result.\n'
+    'Platinum payout verified fine weight, purchase rate और item-wise testing/melting result पर based होगा.\n'
+    'Non-platinum parts, stones, testing loss, melting loss or condition-based deduction will be deducted from payable value.\n'
+    'Non-platinum parts, stones, testing loss, melting loss या condition-based deduction payable value से deduct होगा.';

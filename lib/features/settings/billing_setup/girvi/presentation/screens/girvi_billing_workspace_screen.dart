@@ -19,12 +19,6 @@ class GirviBillingWorkspaceScreen extends StatefulWidget {
 class _GirviBillingWorkspaceScreenState
     extends State<GirviBillingWorkspaceScreen> {
   late final GirviBillingController _controller;
-  final _prefixController = TextEditingController();
-  final _startingNumberController = TextEditingController();
-  final _interestRateController = TextEditingController();
-  final _gracePeriodController = TextEditingController();
-  final _reminderDaysController = TextEditingController();
-  final _noticeDaysController = TextEditingController();
   final _termsController = TextEditingController();
   final _termsHindiController = TextEditingController();
   final _declarationController = TextEditingController();
@@ -44,12 +38,6 @@ class _GirviBillingWorkspaceScreenState
     _controller
       ..removeListener(_handleStateChanged)
       ..dispose();
-    _prefixController.dispose();
-    _startingNumberController.dispose();
-    _interestRateController.dispose();
-    _gracePeriodController.dispose();
-    _reminderDaysController.dispose();
-    _noticeDaysController.dispose();
     _termsController.dispose();
     _termsHindiController.dispose();
     _declarationController.dispose();
@@ -68,12 +56,6 @@ class _GirviBillingWorkspaceScreenState
   }
 
   void _syncEditors(GirviBillingPolicyInput input) {
-    _prefixController.text = input.girviPrefix;
-    _startingNumberController.text = input.startingNumber;
-    _interestRateController.text = input.defaultInterestRate;
-    _gracePeriodController.text = input.gracePeriodDays;
-    _reminderDaysController.text = input.reminderDays;
-    _noticeDaysController.text = input.noticeDays;
     _termsController.text = input.termsAndConditions;
     _termsHindiController.text = input.termsAndConditionsHindi;
     _declarationController.text = input.customerDeclaration;
@@ -115,7 +97,7 @@ class _GirviBillingWorkspaceScreenState
       backgroundColor: BillingSetupColors.bodyBg,
       appBar: BillingSetupAppBar(
         screenTitle: BillingSetupStrings.girviTitle,
-        screenSubtitle: 'Interest, invoice display and notice controls',
+        screenSubtitle: 'Interest, receipt display and customer terms',
         onBack: () => Navigator.maybePop(context),
       ),
       body: SafeArea(
@@ -135,8 +117,6 @@ class _GirviBillingWorkspaceScreenState
                     [
                       GirviBillingIntroPanel(
                         accent: BillingSetupColors.girviBrand,
-                        interestRate: state.model.defaultInterestRate,
-                        interestType: state.model.interestType,
                         autoPrint: state.model.autoPrint,
                         invoiceFieldCount: state.model.visibleInvoiceFieldCount,
                       ),
@@ -150,12 +130,6 @@ class _GirviBillingWorkspaceScreenState
                         model: state.model,
                         input: state.input,
                         selectedInvoiceMetal: state.selectedInvoiceMetal,
-                        prefixController: _prefixController,
-                        startingNumberController: _startingNumberController,
-                        interestRateController: _interestRateController,
-                        gracePeriodController: _gracePeriodController,
-                        reminderDaysController: _reminderDaysController,
-                        noticeDaysController: _noticeDaysController,
                         termsController: _termsController,
                         termsHindiController: _termsHindiController,
                         declarationController: _declarationController,
@@ -164,10 +138,6 @@ class _GirviBillingWorkspaceScreenState
                         onInputChanged: _controller.updateInput,
                         onModelChanged: _controller.updateModel,
                         onInvoiceMetalChanged: _controller.selectInvoiceMetal,
-                        onInterestTypeChanged: _controller.updateInterestType,
-                        onDefaultDurationChanged:
-                            _controller.updateDefaultDuration,
-                        onTemplateChanged: _controller.updateSelectedTemplate,
                         onAutoPrintChanged: _controller.updateAutoPrint,
                       ),
                       const SizedBox(height: 32),

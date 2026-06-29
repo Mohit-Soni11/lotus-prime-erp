@@ -9,7 +9,7 @@ class BillingMetalIntroPanel extends StatelessWidget {
   final String description;
   final Color accent;
   final int enabledCount;
-  final String returnMode;
+  final String? returnMode;
   final String fieldLabel;
 
   const BillingMetalIntroPanel({
@@ -20,8 +20,8 @@ class BillingMetalIntroPanel extends StatelessWidget {
     required this.description,
     required this.accent,
     required this.enabledCount,
-    required this.returnMode,
     required this.fieldLabel,
+    this.returnMode,
   });
 
   @override
@@ -112,11 +112,12 @@ class BillingMetalIntroPanel extends StatelessWidget {
                 icon: Icons.view_column_outlined,
                 accent: accent,
               ),
-              _SummaryPill(
-                label: returnMode,
-                icon: Icons.swap_horiz_rounded,
-                accent: accent,
-              ),
+              if (returnMode != null && returnMode!.trim().isNotEmpty)
+                _SummaryPill(
+                  label: returnMode!,
+                  icon: Icons.swap_horiz_rounded,
+                  accent: accent,
+                ),
               _SummaryPill(
                 label: metalName,
                 icon: Icons.workspace_premium_rounded,

@@ -233,8 +233,13 @@ class PurchaseVoucherPrintService {
       );
       _addPolicyEntry(
         entries,
-        title: '$metalName OWNERSHIP & VERIFICATION POLICY',
-        body: settings.returnPolicyText,
+        title: '$metalName SELLER OWNERSHIP DECLARATION',
+        body: settings.sellerDeclarationText,
+      );
+      _addPolicyEntry(
+        entries,
+        title: '$metalName SELLER RECLAIM POLICY',
+        body: _reclaimPolicyBody(settings),
       );
       _addPolicyEntry(
         entries,
@@ -294,6 +299,21 @@ class PurchaseVoucherPrintService {
         ),
       ),
     );
+  }
+
+  static String _reclaimPolicyBody(PurchaseBillingModel settings) {
+    final flatPenalty = _formatAmount(settings.lateReclaimPenaltyAmount);
+    final threshold = _formatAmount(settings.highValueReclaimThreshold);
+    final percent = _formatAmount(settings.highValueReclaimPenaltyPercent);
+    return '${settings.returnPolicyText.trim()}\n'
+        'Late reclaim penalty: Rs. $flatPenalty for regular-value payouts; '
+        '$percent% for payouts above Rs. $threshold.';
+  }
+
+  static String _formatAmount(double value) {
+    return value == value.roundToDouble()
+        ? value.toStringAsFixed(0)
+        : value.toStringAsFixed(2);
   }
 
   static pw.Widget _footer(

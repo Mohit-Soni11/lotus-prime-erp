@@ -23,8 +23,11 @@ class _PurchaseBillingWorkspaceScreenState
     extends State<PurchaseBillingWorkspaceScreen> {
   late final PurchaseBillingController _controller;
   final _returnWindowController = TextEditingController();
-  final _purityDeductionController = TextEditingController();
+  final _lateReclaimPenaltyController = TextEditingController();
+  final _highValueThresholdController = TextEditingController();
+  final _highValuePenaltyPercentController = TextEditingController();
   final _termsController = TextEditingController();
+  final _sellerDeclarationController = TextEditingController();
   final _returnPolicyController = TextEditingController();
   final _buybackPolicyController = TextEditingController();
   final _footerController = TextEditingController();
@@ -43,8 +46,11 @@ class _PurchaseBillingWorkspaceScreenState
       ..removeListener(_handleStateChanged)
       ..dispose();
     _returnWindowController.dispose();
-    _purityDeductionController.dispose();
+    _lateReclaimPenaltyController.dispose();
+    _highValueThresholdController.dispose();
+    _highValuePenaltyPercentController.dispose();
     _termsController.dispose();
+    _sellerDeclarationController.dispose();
     _returnPolicyController.dispose();
     _buybackPolicyController.dispose();
     _footerController.dispose();
@@ -63,8 +69,12 @@ class _PurchaseBillingWorkspaceScreenState
   void _syncEditors(String metal, PurchaseBillingPolicyInput input) {
     _syncedMetal = metal;
     _returnWindowController.text = input.returnWindowDays;
-    _purityDeductionController.text = input.purityDeductPercent;
+    _lateReclaimPenaltyController.text = input.lateReclaimPenaltyAmount;
+    _highValueThresholdController.text = input.highValueReclaimThreshold;
+    _highValuePenaltyPercentController.text =
+        input.highValueReclaimPenaltyPercent;
     _termsController.text = input.termsAndConditions;
+    _sellerDeclarationController.text = input.sellerDeclarationText;
     _returnPolicyController.text = input.returnPolicyText;
     _buybackPolicyController.text = input.buybackPolicyText;
     _footerController.text = input.footerMessage;
@@ -156,7 +166,6 @@ class _PurchaseBillingWorkspaceScreenState
                             PurchaseBillingMetalProfiles.activeFieldCount(
                           model,
                         ),
-                        returnMode: model.returnMode,
                         fieldLabel: 'active fields',
                       ),
                       const SizedBox(height: 18),
@@ -173,13 +182,19 @@ class _PurchaseBillingWorkspaceScreenState
                         model: model,
                         input: input,
                         returnWindowController: _returnWindowController,
-                        purityDeductionController: _purityDeductionController,
+                        lateReclaimPenaltyController:
+                            _lateReclaimPenaltyController,
+                        highValueThresholdController:
+                            _highValueThresholdController,
+                        highValuePenaltyPercentController:
+                            _highValuePenaltyPercentController,
                         termsController: _termsController,
+                        sellerDeclarationController:
+                            _sellerDeclarationController,
                         returnPolicyController: _returnPolicyController,
                         buybackPolicyController: _buybackPolicyController,
                         footerController: _footerController,
                         onInputChanged: _controller.updateCurrentInput,
-                        onReturnModeChanged: _controller.updateReturnMode,
                         onFieldChanged: _controller.toggleField,
                       ),
                       const SizedBox(height: 32),

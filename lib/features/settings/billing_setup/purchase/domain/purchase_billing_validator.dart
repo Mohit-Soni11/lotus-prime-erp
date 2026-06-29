@@ -23,9 +23,9 @@ class PurchaseBillingValidator {
     final messages = <String>[];
     final returnWindowDays = _parseInt(
       input.returnWindowDays,
-      label: 'Verification window',
+      label: 'Seller reclaim window',
       min: 0,
-      max: 365,
+      max: 30,
       messages: messages,
     );
     final purityDeductPercent = _parsePercent(
@@ -33,7 +33,23 @@ class PurchaseBillingValidator {
       label: 'Purity or melting deduction',
       messages: messages,
     );
+    final lateReclaimPenaltyAmount = _parseAmount(
+      input.lateReclaimPenaltyAmount,
+      label: 'Late reclaim penalty amount',
+      messages: messages,
+    );
+    final highValueReclaimThreshold = _parseAmount(
+      input.highValueReclaimThreshold,
+      label: 'High-value reclaim threshold',
+      messages: messages,
+    );
+    final highValueReclaimPenaltyPercent = _parsePercent(
+      input.highValueReclaimPenaltyPercent,
+      label: 'High-value reclaim penalty',
+      messages: messages,
+    );
     final termsAndConditions = input.termsAndConditions.trim();
+    final sellerDeclarationText = input.sellerDeclarationText.trim();
     final returnPolicyText = input.returnPolicyText.trim();
     final buybackPolicyText = input.buybackPolicyText.trim();
     final footerMessage = input.footerMessage.trim();
@@ -44,8 +60,13 @@ class PurchaseBillingValidator {
       messages: messages,
     );
     _requireText(
+      sellerDeclarationText,
+      label: 'Seller ownership declaration',
+      messages: messages,
+    );
+    _requireText(
       returnPolicyText,
-      label: 'Ownership and verification note',
+      label: 'Seller reclaim policy',
       messages: messages,
     );
     _requireText(
@@ -62,7 +83,11 @@ class PurchaseBillingValidator {
       model: baseModel.copyWith(
         returnWindowDays: returnWindowDays,
         purityDeductPercent: purityDeductPercent,
+        lateReclaimPenaltyAmount: lateReclaimPenaltyAmount,
+        highValueReclaimThreshold: highValueReclaimThreshold,
+        highValueReclaimPenaltyPercent: highValueReclaimPenaltyPercent,
         termsAndConditions: termsAndConditions,
+        sellerDeclarationText: sellerDeclarationText,
         returnPolicyText: returnPolicyText,
         buybackPolicyText: buybackPolicyText,
         footerMessage: footerMessage,
@@ -103,6 +128,24 @@ class PurchaseBillingValidator {
     }
     if (value < 0 || value > 100) {
       messages.add('$label must be between 0 and 100%.');
+      return null;
+    }
+    return value;
+  }
+
+  static double? _parseAmount(
+    String raw, {
+    required String label,
+    required List<String> messages,
+  }) {
+    final normalized = raw.trim().replaceAll(',', '');
+    final value = double.tryParse(normalized);
+    if (value == null) {
+      messages.add('$label must be a valid amount.');
+      return null;
+    }
+    if (value < 0 || value > 1000000) {
+      messages.add('$label must be between 0 and 1000000.');
       return null;
     }
     return value;

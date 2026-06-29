@@ -55,8 +55,12 @@ void main() {
       ..toggleField(PurchaseBillingFieldKey.huid, false)
       ..updateCurrentInput(
         input.copyWith(
-          returnWindowDays: '12',
-          purityDeductPercent: '4.5',
+          returnWindowDays: '1',
+          lateReclaimPenaltyAmount: '2500',
+          highValueReclaimThreshold: '100000',
+          highValueReclaimPenaltyPercent: '12',
+          sellerDeclarationText:
+              'Seller accepts full ownership responsibility.',
         ),
       );
 
@@ -67,8 +71,14 @@ void main() {
     final silver = await repo.fetchForMetal(BillingMetal.silver);
 
     expect(gold.showHuid, isFalse);
-    expect(gold.returnWindowDays, 12);
-    expect(gold.purityDeductPercent, 4.5);
+    expect(gold.returnWindowDays, 1);
+    expect(gold.lateReclaimPenaltyAmount, 2500);
+    expect(gold.highValueReclaimThreshold, 100000);
+    expect(gold.highValueReclaimPenaltyPercent, 12);
+    expect(
+      gold.sellerDeclarationText,
+      'Seller accepts full ownership responsibility.',
+    );
     expect(
       silver.returnWindowDays,
       PurchaseBillingModel.defaultFor(BillingMetal.silver).returnWindowDays,
@@ -82,7 +92,9 @@ void main() {
     controller.updateCurrentInput(
       input.copyWith(
         returnWindowDays: '400',
-        purityDeductPercent: '120',
+        lateReclaimPenaltyAmount: '-1',
+        highValueReclaimThreshold: '-100',
+        highValueReclaimPenaltyPercent: '120',
       ),
     );
 

@@ -7,12 +7,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../features/settings/billing_setup/girvi/presentation/screens/girvi_billing_workspace_screen.dart';
 import '../../../theme/settings/billing_setup/billing_setup_colors.dart';
 import '../../../theme/settings/billing_setup/billing_setup_strings.dart';
 import 'billing_setup_app_bar.dart';
 import 'sales_metal_hub.dart';
 import 'purchase_metal_hub.dart';
-import 'girvi_billing_screen.dart';
 
 class BillingSetupHubScreen extends StatelessWidget {
   const BillingSetupHubScreen({super.key});
@@ -55,8 +55,6 @@ class BillingSetupHubScreen extends StatelessWidget {
                     color: BillingSetupColors.textMuted,
                   )),
               const SizedBox(height: 16),
-
-              // â”€â”€ Row 1: Sales + Purchase â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Row(children: [
                 Expanded(
                   child: _ModuleCard(
@@ -82,9 +80,7 @@ class BillingSetupHubScreen extends StatelessWidget {
                   ),
                 ),
               ]),
-
               const SizedBox(height: 14),
-
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 520),
                 child: _ModuleCard(
@@ -93,13 +89,11 @@ class BillingSetupHubScreen extends StatelessWidget {
                   subtitle: BillingSetupStrings.cardGirviSub,
                   accent: BillingSetupColors.girviBrand,
                   tag: 'Interest - Notice - Terms',
-                  onTap: () => _navigate(context, const GirviBillingScreen()),
+                  onTap: () =>
+                      _navigate(context, const GirviBillingWorkspaceScreen()),
                 ),
               ),
-
               const SizedBox(height: 24),
-
-              // â”€â”€ Info banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(

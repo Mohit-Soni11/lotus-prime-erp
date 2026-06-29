@@ -20,12 +20,7 @@ class ShopPrintInformationRepository {
     final fields = ShopPrintInformationCatalog.fromPayload(payload);
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getStringList(_keyFor(tenantId));
-    final enabledIds = saved == null
-        ? fields
-            .where((field) => field.defaultEnabled)
-            .map((field) => field.id)
-            .toSet()
-        : saved.toSet();
+    final enabledIds = _resolveEnabledIds(fields, saved);
 
     return ShopPrintInformationState(
       tenantId: tenantId,
@@ -36,10 +31,35 @@ class ShopPrintInformationRepository {
 
   Future<void> save(ShopPrintInformationState state) async {
     final prefs = await SharedPreferences.getInstance();
+    final configuredIds = state.configuredFieldIds;
+    final enabledIds = state.enabledFieldIds
+        .where(configuredIds.contains)
+        .toList(growable: false)
+      ..sort();
+
     await prefs.setStringList(
       _keyFor(state.tenantId),
-      state.enabledFieldIds.toList()..sort(),
+      enabledIds,
     );
+  }
+
+  Set<String> _resolveEnabledIds(
+    List<ShopPrintField> fields,
+    List<String>? saved,
+  ) {
+    final configuredIds = {
+      for (final field in fields)
+        if (field.isConfigured) field.id,
+    };
+
+    if (saved == null) {
+      return fields
+          .where((field) => field.defaultEnabled && field.isConfigured)
+          .map((field) => field.id)
+          .toSet();
+    }
+
+    return saved.where(configuredIds.contains).toSet();
   }
 
   String _keyFor(String tenantId) => '$_preferencePrefix.$tenantId.v1';

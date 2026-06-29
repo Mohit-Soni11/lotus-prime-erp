@@ -74,10 +74,6 @@ class PurchaseBillingController extends ChangeNotifier {
     );
   }
 
-  void updateReturnMode(String mode) {
-    _updateCurrentSettings((model) => model.copyWith(returnMode: mode));
-  }
-
   void resetCurrentToDefaults() {
     final metal = _state.selectedMetal;
     final model = PurchaseBillingModel.defaultFor(metal);

@@ -24,11 +24,18 @@ class _ShopPrintInformationScreenState
   ShopPrintInformationState? _state;
   bool _isLoading = true;
   bool _isSaving = false;
+  OverlayEntry? _saveConfirmationOverlay;
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _saveConfirmationOverlay?.remove();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -45,6 +52,11 @@ class _ShopPrintInformationScreenState
     final state = _state;
     if (state == null) return;
 
+    if (enabled && !field.isConfigured) {
+      _showMissingFieldGuidance(field);
+      return;
+    }
+
     final nextIds = {...state.enabledFieldIds};
     if (enabled) {
       nextIds.add(field.id);
@@ -53,6 +65,30 @@ class _ShopPrintInformationScreenState
     }
 
     setState(() => _state = state.copyWith(enabledFieldIds: nextIds));
+  }
+
+  void _showMissingFieldGuidance(ShopPrintField field) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            'Add ${field.label} in ${field.sourceSection} before enabling it for bill print.',
+            style: const TextStyle(color: Colors.white),
+          ),
+          action: SnackBarAction(
+            label: 'Open Profile',
+            textColor: BillingSetupColors.onlineGreen,
+            onPressed: _openShopProfile,
+          ),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          duration: const Duration(seconds: 4),
+          backgroundColor: BillingSetupColors.shellBg,
+        ),
+      );
   }
 
   Future<void> _save() async {
@@ -64,22 +100,26 @@ class _ShopPrintInformationScreenState
     if (!mounted) return;
 
     setState(() => _isSaving = false);
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Shop print information settings saved.',
-            style: TextStyle(color: Colors.white),
-          ),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          duration: const Duration(seconds: 2),
-          backgroundColor: BillingSetupColors.success,
-        ),
-      );
+    _showSaveConfirmation();
+  }
+
+  void _showSaveConfirmation() {
+    _saveConfirmationOverlay?.remove();
+
+    final overlay = Overlay.of(context);
+    final entry = OverlayEntry(
+      builder: (context) => const _SaveConfirmationOverlay(),
+    );
+
+    _saveConfirmationOverlay = entry;
+    overlay.insert(entry);
+
+    Future<void>.delayed(const Duration(milliseconds: 1700), () {
+      if (_saveConfirmationOverlay == entry) {
+        entry.remove();
+        _saveConfirmationOverlay = null;
+      }
+    });
   }
 
   Future<void> _openShopProfile() async {
@@ -124,6 +164,7 @@ class _ShopPrintInformationScreenState
                                   .toList(growable: false),
                               isEnabled: state.isEnabled,
                               onChanged: _toggleField,
+                              onMissingFieldTap: _showMissingFieldGuidance,
                             ),
                             const SizedBox(height: 18),
                           ],
@@ -138,6 +179,102 @@ class _ShopPrintInformationScreenState
                   ),
                 ],
               ),
+      ),
+    );
+  }
+}
+
+class _SaveConfirmationOverlay extends StatelessWidget {
+  const _SaveConfirmationOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: AbsorbPointer(
+        child: Material(
+          color: Colors.black.withValues(alpha: 0.08),
+          child: Center(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.94, end: 1),
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, child) {
+                final opacity = ((value - 0.94) / 0.06).clamp(0.0, 1.0);
+
+                return Opacity(
+                  opacity: opacity,
+                  child: Transform.scale(
+                    scale: value,
+                    child: child,
+                  ),
+                );
+              },
+              child: Container(
+                width: 330,
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 22),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: BillingSetupColors.successBorder,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x26000000),
+                      blurRadius: 34,
+                      offset: Offset(0, 18),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 58,
+                      height: 58,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: BillingSetupColors.successBg,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: BillingSetupColors.successBorder,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.check_rounded,
+                        color: BillingSetupColors.success,
+                        size: 34,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Saved Successfully',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.manrope(
+                        color: BillingSetupColors.textDark,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Text(
+                      'Shop print information is ready for billing documents.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        color: BillingSetupColors.textBody,
+                        fontSize: 12.5,
+                        height: 1.45,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

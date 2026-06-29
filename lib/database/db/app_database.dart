@@ -1042,8 +1042,16 @@ class AppDatabase extends _$AppDatabase {
         purchaseBillingSettings, purchaseBillingSettings.returnMode));
     await runIfNeeded(() => m.addColumn(
         purchaseBillingSettings, purchaseBillingSettings.purityDeductPercent));
+    await runIfNeeded(() => m.addColumn(purchaseBillingSettings,
+        purchaseBillingSettings.lateReclaimPenaltyAmount));
+    await runIfNeeded(() => m.addColumn(purchaseBillingSettings,
+        purchaseBillingSettings.highValueReclaimThreshold));
+    await runIfNeeded(() => m.addColumn(purchaseBillingSettings,
+        purchaseBillingSettings.highValueReclaimPenaltyPercent));
     await runIfNeeded(() => m.addColumn(
         purchaseBillingSettings, purchaseBillingSettings.termsAndConditions));
+    await runIfNeeded(() => m.addColumn(purchaseBillingSettings,
+        purchaseBillingSettings.sellerDeclarationText));
     await runIfNeeded(() => m.addColumn(
         purchaseBillingSettings, purchaseBillingSettings.returnPolicyText));
     await runIfNeeded(() => m.addColumn(
@@ -1187,10 +1195,14 @@ const List<String> _billingSetupSchemaSafetySql = [
     "show_certification_no" INTEGER NOT NULL DEFAULT 0,
     "show_gst_breakup" INTEGER NOT NULL DEFAULT 0,
     "show_hsn_code" INTEGER NOT NULL DEFAULT 0,
-    "return_window_days" INTEGER NOT NULL DEFAULT 3,
-    "return_mode" TEXT NOT NULL DEFAULT 'Credit Note',
+    "return_window_days" INTEGER NOT NULL DEFAULT 1,
+    "return_mode" TEXT NOT NULL DEFAULT 'Cash Refund',
     "purity_deduct_percent" REAL NOT NULL DEFAULT 2.0,
+    "late_reclaim_penalty_amount" REAL NOT NULL DEFAULT 2000.0,
+    "high_value_reclaim_threshold" REAL NOT NULL DEFAULT 50000.0,
+    "high_value_reclaim_penalty_percent" REAL NOT NULL DEFAULT 12.0,
     "terms_and_conditions" TEXT NOT NULL DEFAULT '',
+    "seller_declaration_text" TEXT NOT NULL DEFAULT '',
     "return_policy_text" TEXT NOT NULL DEFAULT '',
     "buyback_policy_text" TEXT NOT NULL DEFAULT '',
     "footer_message" TEXT NOT NULL DEFAULT '',
@@ -1276,10 +1288,14 @@ const List<String> _billingSetupSchemaSafetySql = [
   'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_certification_no" INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_gst_breakup" INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE "purchase_billing_settings" ADD COLUMN "show_hsn_code" INTEGER NOT NULL DEFAULT 0',
-  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "return_window_days" INTEGER NOT NULL DEFAULT 3',
-  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "return_mode" TEXT NOT NULL DEFAULT "Credit Note"',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "return_window_days" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "return_mode" TEXT NOT NULL DEFAULT "Cash Refund"',
   'ALTER TABLE "purchase_billing_settings" ADD COLUMN "purity_deduct_percent" REAL NOT NULL DEFAULT 2.0',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "late_reclaim_penalty_amount" REAL NOT NULL DEFAULT 2000.0',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "high_value_reclaim_threshold" REAL NOT NULL DEFAULT 50000.0',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "high_value_reclaim_penalty_percent" REAL NOT NULL DEFAULT 12.0',
   'ALTER TABLE "purchase_billing_settings" ADD COLUMN "terms_and_conditions" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "seller_declaration_text" TEXT NOT NULL DEFAULT ""',
   'ALTER TABLE "purchase_billing_settings" ADD COLUMN "return_policy_text" TEXT NOT NULL DEFAULT ""',
   'ALTER TABLE "purchase_billing_settings" ADD COLUMN "buyback_policy_text" TEXT NOT NULL DEFAULT ""',
   'ALTER TABLE "purchase_billing_settings" ADD COLUMN "footer_message" TEXT NOT NULL DEFAULT ""',

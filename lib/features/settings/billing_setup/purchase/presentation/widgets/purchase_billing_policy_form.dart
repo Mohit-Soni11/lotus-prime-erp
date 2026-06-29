@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../../../../models/setting/billing_setup/purchase_billing_model.dart';
-import '../../../../../../../models/setting/billing_setup/sales_billing_model.dart';
 import '../../../../../../../theme/settings/billing_setup/billing_setup_colors.dart';
 import '../../domain/purchase_billing_metal_profile.dart';
 import '../../domain/purchase_billing_policy_input.dart';
@@ -15,13 +14,15 @@ class PurchaseBillingPolicyForm extends StatelessWidget {
   final PurchaseBillingModel model;
   final PurchaseBillingPolicyInput input;
   final TextEditingController returnWindowController;
-  final TextEditingController purityDeductionController;
+  final TextEditingController lateReclaimPenaltyController;
+  final TextEditingController highValueThresholdController;
+  final TextEditingController highValuePenaltyPercentController;
   final TextEditingController termsController;
+  final TextEditingController sellerDeclarationController;
   final TextEditingController returnPolicyController;
   final TextEditingController buybackPolicyController;
   final TextEditingController footerController;
   final ValueChanged<PurchaseBillingPolicyInput> onInputChanged;
-  final ValueChanged<String> onReturnModeChanged;
   final void Function(PurchaseBillingFieldKey key, bool value) onFieldChanged;
 
   const PurchaseBillingPolicyForm({
@@ -29,13 +30,15 @@ class PurchaseBillingPolicyForm extends StatelessWidget {
     required this.model,
     required this.input,
     required this.returnWindowController,
-    required this.purityDeductionController,
+    required this.lateReclaimPenaltyController,
+    required this.highValueThresholdController,
+    required this.highValuePenaltyPercentController,
     required this.termsController,
+    required this.sellerDeclarationController,
     required this.returnPolicyController,
     required this.buybackPolicyController,
     required this.footerController,
     required this.onInputChanged,
-    required this.onReturnModeChanged,
     required this.onFieldChanged,
   });
 
@@ -59,32 +62,32 @@ class PurchaseBillingPolicyForm extends StatelessWidget {
         const SizedBox(height: 16),
         PurchaseBillingSectionCard(
           title: 'Seller Purchase Policy',
-          subtitle:
-              'Control KYC, ownership checks, purity deductions and payout copy',
+          subtitle: 'Control reclaim limits, penalty rules and valuation copy',
           icon: Icons.verified_user_outlined,
           accent: accent,
           child: _PolicyFields(
-            model: model,
             input: input,
-            accent: accent,
             returnWindowController: returnWindowController,
-            purityDeductionController: purityDeductionController,
+            lateReclaimPenaltyController: lateReclaimPenaltyController,
+            highValueThresholdController: highValueThresholdController,
+            highValuePenaltyPercentController:
+                highValuePenaltyPercentController,
             returnPolicyController: returnPolicyController,
             buybackPolicyController: buybackPolicyController,
             onInputChanged: onInputChanged,
-            onReturnModeChanged: onReturnModeChanged,
           ),
         ),
         const SizedBox(height: 16),
         PurchaseBillingSectionCard(
-          title: 'Bilingual Terms & Footer',
+          title: 'Bilingual Terms & Declaration',
           subtitle:
-              'English and Hindi purchase voucher copy, written line by line',
+              'English and Hindi seller declaration, ownership transfer and footer copy',
           icon: Icons.article_outlined,
           accent: accent,
           child: _TermsAndFooterFields(
             input: input,
             termsController: termsController,
+            sellerDeclarationController: sellerDeclarationController,
             footerController: footerController,
             onInputChanged: onInputChanged,
           ),
@@ -147,26 +150,24 @@ class _DisplayFieldGrid extends StatelessWidget {
 }
 
 class _PolicyFields extends StatelessWidget {
-  final PurchaseBillingModel model;
   final PurchaseBillingPolicyInput input;
-  final Color accent;
   final TextEditingController returnWindowController;
-  final TextEditingController purityDeductionController;
+  final TextEditingController lateReclaimPenaltyController;
+  final TextEditingController highValueThresholdController;
+  final TextEditingController highValuePenaltyPercentController;
   final TextEditingController returnPolicyController;
   final TextEditingController buybackPolicyController;
   final ValueChanged<PurchaseBillingPolicyInput> onInputChanged;
-  final ValueChanged<String> onReturnModeChanged;
 
   const _PolicyFields({
-    required this.model,
     required this.input,
-    required this.accent,
     required this.returnWindowController,
-    required this.purityDeductionController,
+    required this.lateReclaimPenaltyController,
+    required this.highValueThresholdController,
+    required this.highValuePenaltyPercentController,
     required this.returnPolicyController,
     required this.buybackPolicyController,
     required this.onInputChanged,
-    required this.onReturnModeChanged,
   });
 
   @override
@@ -176,8 +177,8 @@ class _PolicyFields extends StatelessWidget {
         _PolicyControlGrid(
           children: [
             _TextInput(
-              label: 'Verification Window',
-              helper: 'Time allowed for ownership, purity and payout review',
+              label: 'Seller Reclaim Window',
+              helper: 'Sold item reclaim allowed only within this period',
               suffix: 'days',
               controller: returnWindowController,
               keyboardType: TextInputType.number,
@@ -186,25 +187,46 @@ class _PolicyFields extends StatelessWidget {
                 input.copyWith(returnWindowDays: value),
               ),
             ),
-            _SelectInput(
-              label: 'Settlement Mode',
-              helper: 'Customer payout or adjustment method',
-              value: model.returnMode,
-              items: PurchaseReturnModeOptions.all,
-              itemLabel: _purchaseReturnModeLabel,
-              accent: accent,
-              onChanged: onReturnModeChanged,
-            ),
             _TextInput(
-              label: 'Purity / Melting Deduction',
-              helper: 'Testing, melting or impurity deduction',
-              suffix: '%',
-              controller: purityDeductionController,
+              label: 'Flat Late Penalty',
+              helper: 'Low-value late reclaim exception charge',
+              prefix: 'Rs.',
+              controller: lateReclaimPenaltyController,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [_DecimalInputFormatter()],
+              inputFormatters: const [
+                _DecimalInputFormatter(maxIntegerDigits: 10),
+              ],
               onChanged: (value) => onInputChanged(
-                input.copyWith(purityDeductPercent: value),
+                input.copyWith(lateReclaimPenaltyAmount: value),
+              ),
+            ),
+            _TextInput(
+              label: 'High-Value Threshold',
+              helper: 'Above this payout, percentage penalty applies',
+              prefix: 'Rs.',
+              controller: highValueThresholdController,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: const [
+                _DecimalInputFormatter(maxIntegerDigits: 10),
+              ],
+              onChanged: (value) => onInputChanged(
+                input.copyWith(highValueReclaimThreshold: value),
+              ),
+            ),
+            _TextInput(
+              label: 'High-Value Penalty',
+              helper: 'Penalty percentage for high-value late reclaim',
+              suffix: '%',
+              controller: highValuePenaltyPercentController,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: const [
+                _DecimalInputFormatter(maxIntegerDigits: 3),
+              ],
+              onChanged: (value) => onInputChanged(
+                input.copyWith(highValueReclaimPenaltyPercent: value),
               ),
             ),
           ],
@@ -212,10 +234,10 @@ class _PolicyFields extends StatelessWidget {
         const SizedBox(height: 16),
         _ResponsivePair(
           first: _TextInput(
-            label: 'Ownership & Verification Note',
-            helper: 'English and Hindi print copy for customer-sold jewellery',
+            label: 'Seller Reclaim Policy',
+            helper: '1-day sold item reclaim policy and penalty terms',
             hintText:
-                'Example:\nSeller confirms that the jewellery is legally owned and free from dispute.\nविक्रेता पुष्टि करता है कि आभूषण उसका वैध स्वामित्व है और किसी विवाद से मुक्त है.\n\nFinal acceptance is subject to KYC, weight and purity verification.\nअंतिम स्वीकृति KYC, वजन और शुद्धता जांच के बाद होगी.',
+                'Example:\nSeller may request return of the sold item only within 1 day from the voucher date.\nविक्रेता voucher date से सिर्फ 1 दिन के अंदर sold item return request कर सकता/सकती है.\n\nAfter 1 day, the item will not be returned. Approved exception will attract the configured penalty.\n1 दिन के बाद item return नहीं होगा. Approved exception पर configured penalty लगेगी.',
             controller: returnPolicyController,
             maxLines: 8,
             onChanged: (value) => onInputChanged(
@@ -225,9 +247,9 @@ class _PolicyFields extends StatelessWidget {
           second: _TextInput(
             label: 'Valuation & Payout Note',
             helper:
-                'English and Hindi print copy for rate, deduction and payout',
+                'Dynamic item-wise valuation copy, no fixed deduction promise',
             hintText:
-                'Example:\nPurchase value is calculated on verified net weight, purity and live purchase rate.\nखरीद मूल्य verified net weight, शुद्धता और live purchase rate के आधार पर calculated होगा.\n\nTesting, melting, stone, dust or impurity deductions may apply before payout.\nPayout से पहले testing, melting, stone, dust या impurity deduction लागू हो सकती है.',
+                'Example:\nFinal payout is based on verified fine weight, purchase rate, item condition and applicable item-wise deductions.\nFinal payout verified fine weight, purchase rate, item condition और applicable deductions पर based होगा.\n\nStone, dust, wax, thread, non-metal parts, testing loss or melting loss may be deducted before payout.\nPayout से पहले stone, dust, wax, thread, non-metal parts, testing loss या melting loss deduct हो सकता है.',
             controller: buybackPolicyController,
             maxLines: 8,
             onChanged: (value) => onInputChanged(
@@ -238,30 +260,19 @@ class _PolicyFields extends StatelessWidget {
       ],
     );
   }
-
-  String _purchaseReturnModeLabel(String value) {
-    switch (value) {
-      case PurchaseReturnModeOptions.exchange:
-        return 'Exchange against new jewellery';
-      case PurchaseReturnModeOptions.creditNote:
-        return 'Store credit / customer ledger';
-      case PurchaseReturnModeOptions.cashRefund:
-        return 'Cash or bank payout';
-      default:
-        return value;
-    }
-  }
 }
 
 class _TermsAndFooterFields extends StatelessWidget {
   final PurchaseBillingPolicyInput input;
   final TextEditingController termsController;
+  final TextEditingController sellerDeclarationController;
   final TextEditingController footerController;
   final ValueChanged<PurchaseBillingPolicyInput> onInputChanged;
 
   const _TermsAndFooterFields({
     required this.input,
     required this.termsController,
+    required this.sellerDeclarationController,
     required this.footerController,
     required this.onInputChanged,
   });
@@ -279,6 +290,19 @@ class _TermsAndFooterFields extends StatelessWidget {
           maxLines: 9,
           onChanged: (value) => onInputChanged(
             input.copyWith(termsAndConditions: value),
+          ),
+        ),
+        const SizedBox(height: 14),
+        _TextInput(
+          label: 'Seller Ownership Declaration',
+          helper:
+              'Separate customer declaration for ownership, police and legal responsibility',
+          hintText:
+              'Example:\nSeller declares that the item is lawful property and free from theft, dispute, pledge or third-party claim.\nविक्रेता घोषणा करता/करती है कि item उसका वैध स्वामित्व है और theft, dispute, pledge या third-party claim से मुक्त है.\n\nIf the item is later found stolen or disputed, seller accepts full responsibility and will cooperate with police/legal authorities.\nयदि item बाद में stolen या disputed पाया जाता है, तो पूरी जिम्मेदारी विक्रेता की होगी और वह police/legal authorities के साथ cooperate करेगा/करेगी.',
+          controller: sellerDeclarationController,
+          maxLines: 9,
+          onChanged: (value) => onInputChanged(
+            input.copyWith(sellerDeclarationText: value),
           ),
         ),
         const SizedBox(height: 14),
@@ -307,11 +331,13 @@ class _PolicyControlGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 900
-            ? 3
-            : constraints.maxWidth >= 620
-                ? 2
-                : 1;
+        final columns = constraints.maxWidth >= 1120
+            ? 4
+            : constraints.maxWidth >= 820
+                ? 3
+                : constraints.maxWidth >= 620
+                    ? 2
+                    : 1;
         const gap = 12.0;
         final itemWidth =
             (constraints.maxWidth - (gap * (columns - 1))) / columns;
@@ -392,6 +418,7 @@ class _TextInput extends StatelessWidget {
   final String label;
   final String? helper;
   final String? hintText;
+  final String? prefix;
   final String? suffix;
   final TextEditingController controller;
   final TextInputType keyboardType;
@@ -405,6 +432,7 @@ class _TextInput extends StatelessWidget {
     required this.onChanged,
     this.helper,
     this.hintText,
+    this.prefix,
     this.suffix,
     this.keyboardType = TextInputType.text,
     this.inputFormatters,
@@ -451,6 +479,12 @@ class _TextInput extends StatelessWidget {
           ),
           decoration: InputDecoration(
             hintText: hintText,
+            prefixText: prefix,
+            prefixStyle: GoogleFonts.inter(
+              color: BillingSetupColors.textDark,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w800,
+            ),
             suffixText: suffix,
             suffixStyle: GoogleFonts.inter(
               color: BillingSetupColors.textDark,
@@ -495,109 +529,13 @@ class _TextInput extends StatelessWidget {
   }
 }
 
-class _SelectInput extends StatelessWidget {
-  final String label;
-  final String? helper;
-  final String value;
-  final List<String> items;
-  final String Function(String value)? itemLabel;
-  final Color accent;
-  final ValueChanged<String> onChanged;
+class _DecimalInputFormatter extends TextInputFormatter {
+  final int maxIntegerDigits;
 
-  const _SelectInput({
-    required this.label,
-    required this.value,
-    required this.items,
-    required this.accent,
-    required this.onChanged,
-    this.helper,
-    this.itemLabel,
+  const _DecimalInputFormatter({
+    required this.maxIntegerDigits,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            color: BillingSetupColors.textBody,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        if (helper != null) ...[
-          const SizedBox(height: 3),
-          Text(
-            helper!,
-            style: GoogleFonts.inter(
-              color: const Color(0xFF475569),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: items.contains(value) ? value : items.first,
-          dropdownColor: Colors.white,
-          menuMaxHeight: 320,
-          icon: Icon(Icons.keyboard_arrow_down_rounded, color: accent),
-          style: GoogleFonts.inter(
-            color: BillingSetupColors.textDark,
-            fontSize: 14.5,
-            fontWeight: FontWeight.w800,
-          ),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 12,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFFCBD5E1),
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFFCBD5E1),
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: accent, width: 1.4),
-            ),
-          ),
-          items: items
-              .map(
-                (item) => DropdownMenuItem<String>(
-                  value: item,
-                  child: Text(
-                    itemLabel?.call(item) ?? item,
-                    style: GoogleFonts.inter(
-                      color: BillingSetupColors.textDark,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              )
-              .toList(growable: false),
-          onChanged: (value) {
-            if (value != null) onChanged(value);
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class _DecimalInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
@@ -605,7 +543,10 @@ class _DecimalInputFormatter extends TextInputFormatter {
   ) {
     final text = newValue.text;
     if (text.isEmpty) return newValue;
-    if (RegExp(r'^\d{0,3}(\.\d{0,2})?$').hasMatch(text)) {
+    final pattern = RegExp(
+      '^\\d{0,$maxIntegerDigits}(\\.\\d{0,2})?\$',
+    );
+    if (pattern.hasMatch(text)) {
       return newValue;
     }
     return oldValue;

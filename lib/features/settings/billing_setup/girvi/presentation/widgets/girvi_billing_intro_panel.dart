@@ -4,16 +4,12 @@ import 'package:lotus_erp/theme/settings/billing_setup/billing_setup_colors.dart
 
 class GirviBillingIntroPanel extends StatelessWidget {
   final Color accent;
-  final double interestRate;
-  final String interestType;
   final bool autoPrint;
   final int invoiceFieldCount;
 
   const GirviBillingIntroPanel({
     super.key,
     required this.accent,
-    required this.interestRate,
-    required this.interestType,
     required this.autoPrint,
     required this.invoiceFieldCount,
   });
@@ -65,7 +61,7 @@ class GirviBillingIntroPanel extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Manage interest calculation, reminders, invoice fields and printed terms.',
+                      'Manage interest calculation, receipt fields and printed customer terms.',
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         height: 1.35,
@@ -82,11 +78,6 @@ class GirviBillingIntroPanel extends StatelessWidget {
             runSpacing: 8,
             alignment: isCompact ? WrapAlignment.start : WrapAlignment.end,
             children: [
-              _SummaryPill(
-                label: '${interestRate.toStringAsFixed(2)}% $interestType',
-                icon: Icons.percent_rounded,
-                accent: accent,
-              ),
               _SummaryPill(
                 label: '$invoiceFieldCount active fields',
                 icon: Icons.view_column_outlined,
