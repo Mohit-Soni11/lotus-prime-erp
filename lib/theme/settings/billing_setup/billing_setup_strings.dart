@@ -21,7 +21,7 @@ class BillingSetupStrings {
   static const String salesSub = 'Sales invoice configuration';
 
   static const String purchaseTitle = 'PURCHASE BILLING';
-  static const String purchaseSub = 'Supplier purchase configuration';
+  static const String purchaseSub = 'Customer jewellery purchase configuration';
 
   static const String girviTitle = 'GIRVI BILLING';
   static const String girviSub = 'Gold loan ticket configuration';
@@ -37,7 +37,7 @@ class BillingSetupStrings {
 
   static const String cardPurchaseTitle = 'Purchase Billing';
   static const String cardPurchaseSub =
-      'Voucher display, return policy & terms\nper metal type';
+      'Seller KYC, valuation, payout policy & terms\nper metal type';
   static const String cardPurchaseTag = 'Gold · Silver · Diamond · Platinum';
 
   static const String hubInfoNote =
@@ -71,13 +71,13 @@ class BillingSetupStrings {
 
   // Metal hub card subtitles — Purchase
   static const String goldPurchaseSub =
-      'Voucher display, HUID, return\npolicy & T&C for gold purchase';
+      'Seller KYC, HUID, valuation\npolicy & T&C for gold purchase';
   static const String silverPurchaseSub =
-      'Voucher display, purity, return\npolicy & T&C for silver purchase';
+      'Seller KYC, purity, payout\npolicy & T&C for silver purchase';
   static const String diamondPurchaseSub =
-      'Carat, clarity, certification,\nreturn policy & T&C for diamond';
+      'Seller KYC, carat, clarity,\nvaluation policy & T&C for diamond';
   static const String platinumPurchaseSub =
-      'Voucher display, purity, return\npolicy & T&C for platinum purchase';
+      'Seller KYC, purity, payout\npolicy & T&C for platinum purchase';
 
   // Helper — subtitle for a metal in Sales hub
   static String salesMetalSub(String metal) {
@@ -124,9 +124,9 @@ class BillingSetupStrings {
   static const String subReturnBuyback =
       'Rules for this metal\'s return & exchange';
 
-  static const String secPurchaseReturn = 'Purchase Return Policy';
+  static const String secPurchaseReturn = 'Seller Purchase Policy';
   static const String subPurchaseReturn =
-      'Rules for returning purchased items to supplier';
+      'KYC, ownership, valuation and payout rules';
 
   static const String secTermsTemplate = 'Terms & Template';
 
@@ -206,7 +206,7 @@ class BillingSetupStrings {
   static const String togTotalValue = 'Total Value';
   static const String togTotalValueSub = 'Final line item total';
 
-  static const String togSupplierDetails = 'Supplier / Seller Details';
+  static const String togSupplierDetails = 'Seller Details';
   static const String togSupplierDetailsSub = 'Name, mobile, city on voucher';
 
   static const String togPanNumber = 'PAN Number';
@@ -239,7 +239,7 @@ class BillingSetupStrings {
   static const String lblFooter = 'Footer Message';
   static const String lblTemplate = 'Print Template';
   static const String hintFooter = 'e.g. Thank you for shopping with us!';
-  static const String hintFooterPurchase = 'e.g. Thank you for your supply.';
+  static const String hintFooterPurchase = 'e.g. Thank you for trusting us.';
   static const String templateHelper = 'More templates can be added in future';
 
   // ── SAVE BUTTON ───────────────────────────────────────────────────────────
@@ -255,7 +255,7 @@ class BillingSetupStrings {
   static const String salesSettingsSub =
       'Invoice display · Return policy · Terms';
   static const String purchaseSettingsSub =
-      'Voucher display · Return policy · Terms';
+      'Voucher display · Seller KYC · Payout terms';
   static const String selectModuleSub = 'Select metal type to configure';
 
   // ── MODULE HUB INFO ───────────────────────────────────────────────────────

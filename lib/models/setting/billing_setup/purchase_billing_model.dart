@@ -1,14 +1,7 @@
-// =============================================================================
-// FILE        : lib/models/setting/billing/purchase_billing_model.dart
-// MODULE      : Billing Setup → Purchase
-// =============================================================================
-
 import 'sales_billing_model.dart';
 
 class PurchaseBillingModel {
   final String metal;
-
-  // Section 1 — Purchase Voucher Display
   final bool showGrossWeight;
   final bool showLessWeight;
   final bool showNetWeight;
@@ -26,19 +19,13 @@ class PurchaseBillingModel {
   final bool showCertificationNo;
   final bool showGstBreakup;
   final bool showHsnCode;
-
-  // Section 2 — Purchase Return Policy
   final int returnWindowDays;
   final String returnMode;
   final double purityDeductPercent;
-
-  // Section 3 — Terms
   final String termsAndConditions;
-  final String returnPolicyText; // ✅ NEW
-  final String buybackPolicyText; // ✅ NEW
+  final String returnPolicyText;
+  final String buybackPolicyText;
   final String footerMessage;
-
-  // Section 4 — Template
   final String selectedTemplate;
 
   const PurchaseBillingModel({
@@ -60,16 +47,13 @@ class PurchaseBillingModel {
     this.showCertificationNo = false,
     this.showGstBreakup = false,
     this.showHsnCode = false,
-    this.returnWindowDays = 3,
-    this.returnMode = 'Credit Note',
+    this.returnWindowDays = 1,
+    this.returnMode = PurchaseReturnModeOptions.cashRefund,
     this.purityDeductPercent = 2.0,
-    this.termsAndConditions = 'Quality will be checked on delivery.\n'
-        'Short delivery or defective goods must be reported within 24 hours.\n'
-        'Payment as per agreed terms only.',
-    this.returnPolicyText =
-        'Returns accepted within 24 hours with original voucher.',
-    this.buybackPolicyText = 'Buyback at agreed rate after purity deduction.',
-    this.footerMessage = '',
+    this.termsAndConditions = _defaultTerms,
+    this.returnPolicyText = _defaultVerificationNote,
+    this.buybackPolicyText = _defaultPayoutNote,
+    this.footerMessage = _defaultFooter,
     this.selectedTemplate = 'default',
   });
 
@@ -89,27 +73,20 @@ class PurchaseBillingModel {
           showSupplierDetails: true,
           showPanNumber: true,
           showGstBreakup: false,
-          returnWindowDays: 3,
-          returnMode: 'Credit Note',
+          returnWindowDays: 1,
+          returnMode: PurchaseReturnModeOptions.cashRefund,
           purityDeductPercent: 2.0,
-          termsAndConditions:
-              'Gold quality will be verified by hallmarking/testing.\n'
-              'HUID required for all gold purchases above 20g.\n'
-              'Defective goods must be reported within 24 hours of delivery.\n'
-              'Payment as per agreed terms only.',
-          returnPolicyText:
-              'Gold purchase returns are accepted within 3 days after hallmark and purity verification.\n'
-              'Short weight, damaged items or mismatch in HUID must be reported immediately.',
-          buybackPolicyText:
-              'Gold buyback settlement is based on agreed rate, final purity and fine weight.\n'
-              'Testing, refining or compliance deductions may apply before payment.',
+          termsAndConditions: _goldTerms,
+          returnPolicyText: _goldVerificationNote,
+          buybackPolicyText: _goldPayoutNote,
+          footerMessage: _defaultFooter,
         );
 
       case BillingMetal.silver:
         return PurchaseBillingModel(
           metal: metal,
           showGrossWeight: true,
-          showLessWeight: false,
+          showLessWeight: true,
           showNetWeight: true,
           showPurity: true,
           showRate: true,
@@ -118,19 +95,13 @@ class PurchaseBillingModel {
           showHuid: false,
           showSupplierDetails: true,
           showPanNumber: true,
-          returnWindowDays: 3,
-          returnMode: 'Credit Note',
+          returnWindowDays: 1,
+          returnMode: PurchaseReturnModeOptions.cashRefund,
           purityDeductPercent: 3.0,
-          termsAndConditions:
-              'Silver quality will be verified by purity testing.\n'
-              'Short delivery must be reported within 24 hours.\n'
-              'Payment as per agreed terms only.',
-          returnPolicyText:
-              'Silver purchase returns are accepted within 3 days after weight and purity verification.\n'
-              'Short delivery, damage or purity mismatch must be reported within 24 hours.',
-          buybackPolicyText:
-              'Silver buyback settlement is based on agreed silver rate, net weight and purity test.\n'
-              'Testing or refining deductions may apply as per purchase terms.',
+          termsAndConditions: _silverTerms,
+          returnPolicyText: _silverVerificationNote,
+          buybackPolicyText: _silverPayoutNote,
+          footerMessage: _defaultFooter,
         );
 
       case BillingMetal.diamond:
@@ -150,19 +121,13 @@ class PurchaseBillingModel {
           showCertificationNo: true,
           showSupplierDetails: true,
           showPanNumber: true,
-          returnWindowDays: 0,
-          returnMode: 'Exchange',
+          returnWindowDays: 1,
+          returnMode: PurchaseReturnModeOptions.cashRefund,
           purityDeductPercent: 5.0,
-          termsAndConditions: 'Diamond quality as per certificate provided.\n'
-              'Certificate is mandatory for all diamond purchases.\n'
-              'Any discrepancy to be reported within 24 hours.\n'
-              'Payment as per agreed terms only.',
-          returnPolicyText:
-              'Diamond purchase returns are accepted only after certificate and quality mismatch verification.\n'
-              'Discrepancies in carat, clarity or certificate must be reported within 24 hours.',
-          buybackPolicyText:
-              'Diamond buyback settlement depends on certificate, carat, clarity, cut, condition and agreed rate.\n'
-              'Final valuation is confirmed only after expert inspection.',
+          termsAndConditions: _diamondTerms,
+          returnPolicyText: _diamondVerificationNote,
+          buybackPolicyText: _diamondPayoutNote,
+          footerMessage: _defaultFooter,
         );
 
       case BillingMetal.platinum:
@@ -178,19 +143,13 @@ class PurchaseBillingModel {
           showHuid: false,
           showSupplierDetails: true,
           showPanNumber: true,
-          returnWindowDays: 3,
-          returnMode: 'Credit Note',
+          returnWindowDays: 1,
+          returnMode: PurchaseReturnModeOptions.cashRefund,
           purityDeductPercent: 2.0,
-          termsAndConditions:
-              'Platinum quality will be verified by purity testing.\n'
-              'Defective goods must be reported within 24 hours.\n'
-              'Payment as per agreed terms only.',
-          returnPolicyText:
-              'Platinum purchase returns are accepted within 3 days after purity and weight verification.\n'
-              'Custom or altered items require manager approval before return.',
-          buybackPolicyText:
-              'Platinum buyback settlement is calculated on agreed rate, purity and verified net weight.\n'
-              'Testing, refining or condition-based deductions may apply.',
+          termsAndConditions: _platinumTerms,
+          returnPolicyText: _platinumVerificationNote,
+          buybackPolicyText: _platinumPayoutNote,
+          footerMessage: _defaultFooter,
         );
 
       default:
@@ -255,3 +214,103 @@ class PurchaseBillingModel {
     );
   }
 }
+
+const _defaultTerms = 'Seller confirms legal ownership of the jewellery.\n'
+    'विक्रेता पुष्टि करता है कि आभूषण उसका वैध स्वामित्व है.\n'
+    'Valid identity proof is required before payout.\n'
+    'भुगतान से पहले valid identity proof आवश्यक है.\n'
+    'Once payment is completed, the purchase is treated as final.\n'
+    'भुगतान पूरा होने के बाद purchase final माना जाएगा.';
+
+const _defaultVerificationNote =
+    'Final acceptance is subject to KYC, weight, purity and ownership verification.\n'
+    'अंतिम स्वीकृति KYC, वजन, शुद्धता और स्वामित्व जांच के बाद होगी.';
+
+const _defaultPayoutNote =
+    'Purchase value is calculated on verified net weight, purity and live purchase rate.\n'
+    'खरीद मूल्य verified net weight, शुद्धता और live purchase rate के आधार पर calculated होगा.\n'
+    'Testing, melting, stone, dust or impurity deductions may apply before payout.\n'
+    'Payout से पहले testing, melting, stone, dust या impurity deduction लागू हो सकती है.';
+
+const _defaultFooter = 'Thank you for trusting us.\n'
+    'हम पर भरोसा करने के लिए धन्यवाद.';
+
+const _goldTerms =
+    'Seller must provide valid ID and ownership confirmation for gold purchase.\n'
+    'Gold purchase के लिए विक्रेता को valid ID और ownership confirmation देना आवश्यक है.\n'
+    'Hallmark, HUID, weight and purity will be verified before payout.\n'
+    'Payout से पहले hallmark, HUID, वजन और शुद्धता verify की जाएगी.\n'
+    'Once payment is completed, the purchase is treated as final.\n'
+    'भुगतान पूरा होने के बाद purchase final माना जाएगा.';
+
+const _goldVerificationNote =
+    'Gold ornaments are accepted only after weight, purity and ownership verification.\n'
+    'Gold ornaments वजन, शुद्धता और ownership verification के बाद ही स्वीकार होंगे.\n'
+    'Stones, beads, dust, wax, thread or non-gold parts will be deducted from payable weight.\n'
+    'Stone, beads, dust, wax, thread या non-gold parts payable weight से deduct किए जाएंगे.';
+
+const _goldPayoutNote =
+    'Gold payout is based on verified fine weight, live purchase rate and approved deductions.\n'
+    'Gold payout verified fine weight, live purchase rate और approved deductions पर based होगा.\n'
+    'Testing, melting or refining deductions may apply before final settlement.\n'
+    'Final settlement से पहले testing, melting या refining deduction लागू हो सकती है.';
+
+const _silverTerms =
+    'Seller must provide valid ID and ownership confirmation for silver purchase.\n'
+    'Silver purchase के लिए विक्रेता को valid ID और ownership confirmation देना आवश्यक है.\n'
+    'Weight and purity will be verified before payout.\n'
+    'Payout से पहले वजन और शुद्धता verify की जाएगी.\n'
+    'Once payment is completed, the purchase is treated as final.\n'
+    'भुगतान पूरा होने के बाद purchase final माना जाएगा.';
+
+const _silverVerificationNote =
+    'Silver items are accepted only after weight, purity and condition verification.\n'
+    'Silver items वजन, शुद्धता और condition verification के बाद ही स्वीकार होंगे.\n'
+    'Stone, enamel, wax, dust or non-silver parts will be deducted from payable weight.\n'
+    'Stone, enamel, wax, dust या non-silver parts payable weight से deduct किए जाएंगे.';
+
+const _silverPayoutNote =
+    'Silver payout is based on verified net weight, purity and live silver purchase rate.\n'
+    'Silver payout verified net weight, शुद्धता और live silver purchase rate पर based होगा.\n'
+    'Testing, melting or refining deductions may apply before final settlement.\n'
+    'Final settlement से पहले testing, melting या refining deduction लागू हो सकती है.';
+
+const _diamondTerms =
+    'Seller must provide valid ID and ownership confirmation for diamond purchase.\n'
+    'Diamond purchase के लिए विक्रेता को valid ID और ownership confirmation देना आवश्यक है.\n'
+    'Certificate, carat, clarity, cut and condition will be verified before payout.\n'
+    'Payout से पहले certificate, carat, clarity, cut और condition verify किए जाएंगे.\n'
+    'Once payment is completed, the purchase is treated as final.\n'
+    'भुगतान पूरा होने के बाद purchase final माना जाएगा.';
+
+const _diamondVerificationNote =
+    'Diamond purchase acceptance depends on certificate, carat, clarity and expert inspection.\n'
+    'Diamond purchase acceptance certificate, carat, clarity और expert inspection पर निर्भर करेगी.\n'
+    'Mismatch in certificate, damage or quality variation can change the final valuation.\n'
+    'Certificate mismatch, damage या quality variation final valuation बदल सकता है.';
+
+const _diamondPayoutNote =
+    'Diamond payout is based on verified stone quality, condition and agreed purchase value.\n'
+    'Diamond payout verified stone quality, condition और agreed purchase value पर based होगा.\n'
+    'Final valuation is confirmed only after expert inspection.\n'
+    'Final valuation expert inspection के बाद ही confirm होगी.';
+
+const _platinumTerms =
+    'Seller must provide valid ID and ownership confirmation for platinum purchase.\n'
+    'Platinum purchase के लिए विक्रेता को valid ID और ownership confirmation देना आवश्यक है.\n'
+    'Weight, purity and condition will be verified before payout.\n'
+    'Payout से पहले वजन, शुद्धता और condition verify की जाएगी.\n'
+    'Once payment is completed, the purchase is treated as final.\n'
+    'भुगतान पूरा होने के बाद purchase final माना जाएगा.';
+
+const _platinumVerificationNote =
+    'Platinum items are accepted only after weight, purity and condition verification.\n'
+    'Platinum items वजन, शुद्धता और condition verification के बाद ही स्वीकार होंगे.\n'
+    'Non-platinum parts, stones or damage will be deducted from payable value.\n'
+    'Non-platinum parts, stones या damage payable value से deduct किए जाएंगे.';
+
+const _platinumPayoutNote =
+    'Platinum payout is based on verified net weight, purity and live platinum purchase rate.\n'
+    'Platinum payout verified net weight, शुद्धता और live platinum purchase rate पर based होगा.\n'
+    'Testing, melting or condition-based deductions may apply before final settlement.\n'
+    'Final settlement से पहले testing, melting या condition-based deduction लागू हो सकती है.';

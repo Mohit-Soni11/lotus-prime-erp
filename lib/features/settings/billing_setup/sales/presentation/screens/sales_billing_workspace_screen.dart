@@ -152,7 +152,8 @@ class _SalesBillingWorkspaceScreenState
                     [
                       BillingMetalIntroPanel(
                         metalName: metalName,
-                        logoAsset: _metalLogoFor(model.metal),
+                        logoAsset:
+                            SalesBillingVisuals.logoAssetFor(model.metal),
                         title: '$metalName sales controls',
                         description:
                             'Fine tune invoice fields, return rules and customer footer copy.',
@@ -186,7 +187,6 @@ class _SalesBillingWorkspaceScreenState
                         onInputChanged: _controller.updateCurrentInput,
                         onReturnModeChanged: _controller.updateReturnMode,
                         onFieldChanged: _controller.toggleField,
-                        onTemplateChanged: _controller.updateSelectedTemplate,
                         onPrintTermsChanged: _controller.updatePrintTerms,
                         onPrintReturnPolicyChanged:
                             _controller.updatePrintReturnPolicy,
@@ -306,20 +306,5 @@ class _SaveButton extends StatelessWidget {
               ),
       ),
     );
-  }
-}
-
-String _metalLogoFor(String metal) {
-  switch (metal) {
-    case BillingMetal.gold:
-      return 'lib/logo/gold.jpeg';
-    case BillingMetal.silver:
-      return 'lib/logo/silver and platinum .jpeg';
-    case BillingMetal.diamond:
-      return 'lib/logo/diamond .jpeg';
-    case BillingMetal.platinum:
-      return 'lib/logo/silver and platinum .jpeg';
-    default:
-      return 'lib/logo/gold.jpeg';
   }
 }

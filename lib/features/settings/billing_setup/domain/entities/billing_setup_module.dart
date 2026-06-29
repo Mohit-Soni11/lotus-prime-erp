@@ -35,7 +35,7 @@ class BillingSetupModules {
     BillingSetupModule(
       id: BillingSetupModuleId.purchase,
       title: 'Purchase Billing',
-      subtitle: 'Voucher display, supplier return policy and terms per metal.',
+      subtitle: 'Seller KYC, valuation, payout policy and terms per metal.',
       tag: 'Gold, Silver, Diamond, Platinum',
       actionLabel: 'Configure Purchase',
     ),

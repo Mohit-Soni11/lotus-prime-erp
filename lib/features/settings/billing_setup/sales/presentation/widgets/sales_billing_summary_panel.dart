@@ -78,10 +78,6 @@ class SalesBillingSummaryPanel extends StatelessWidget {
             label: 'Buyback rate',
             value: '${input.buybackRatePercent.trim()}%',
           ),
-          _SummaryMetric(
-            label: 'Print template',
-            value: TemplateOptions.labelFor(model.selectedTemplate),
-          ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(12),

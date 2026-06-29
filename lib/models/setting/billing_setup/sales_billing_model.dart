@@ -205,14 +205,23 @@ class SalesBillingModel {
     // Terms
     this.termsAndConditions =
         'Items once sold will not be taken back or exchanged.\n'
+            'बिक्री के बाद वस्तु वापस या एक्सचेंज नहीं की जाएगी.\n'
             'Guarantee is provided as per BIS standards.\n'
-            'Original bill is mandatory for any service claim.',
+            'गारंटी BIS मानकों के अनुसार दी जाएगी.\n'
+            'Original bill is mandatory for any service claim.\n'
+            'किसी भी सेवा दावे के लिए मूल बिल आवश्यक है.',
     this.returnPolicyText =
         'Returns accepted within 7 days with original bill only.\n'
-            'Exchange is subject to stock availability.',
-    this.buybackPolicyText = 'Buyback at market rate after purity deduction.\n'
-        'Original bill mandatory for buyback.',
-    this.footerMessage = 'Thank you for shopping with us! Visit us again.',
+            'रिटर्न केवल मूल बिल के साथ 7 दिनों के अंदर स्वीकार होगा.\n'
+            'Exchange is subject to stock availability.\n'
+            'एक्सचेंज स्टॉक उपलब्धता पर निर्भर करेगा.',
+    this.buybackPolicyText =
+        'Buyback is calculated at market rate after purity deduction.\n'
+            'बायबैक शुद्धता कटौती के बाद बाजार दर पर calculated होगा.\n'
+            'Original bill is mandatory for buyback.\n'
+            'बायबैक के लिए मूल बिल आवश्यक है.',
+    this.footerMessage = 'Thank you for shopping with us! Visit us again.\n'
+        'खरीदारी के लिए धन्यवाद! फिर पधारें.',
     // Template
     this.selectedTemplate = 'default',
     this.printTermsAndConditions = false,
@@ -251,16 +260,25 @@ class SalesBillingModel {
           buybackPurityDeductPercent: 2.0,
           termsAndConditions:
               'Gold items once sold will not be taken back or exchanged.\n'
+              'सोने की वस्तु बिक्री के बाद वापस या एक्सचेंज नहीं की जाएगी.\n'
               'Guarantee is provided as per BIS Hallmark standards.\n'
+              'गारंटी BIS Hallmark मानकों के अनुसार दी जाएगी.\n'
               'HUID is mandatory for all gold items as per Govt. norms.\n'
-              'Original bill is mandatory for any service claim.',
+              'सरकारी नियमों के अनुसार सोने की वस्तु में HUID आवश्यक है.\n'
+              'Original bill is mandatory for any service claim.\n'
+              'किसी भी सेवा दावे के लिए मूल बिल आवश्यक है.',
           returnPolicyText:
               'Gold jewellery is eligible for exchange within 7 days with the original invoice.\n'
-              'Used, damaged, altered or custom-made items are not eligible for return.',
+              'सोने की ज्वेलरी मूल बिल के साथ 7 दिनों के अंदर एक्सचेंज के लिए मान्य है.\n'
+              'Used, damaged, altered or custom-made items are not eligible for return.\n'
+              'उपयोग की गई, टूटी, बदली हुई या कस्टम वस्तु रिटर्न के लिए मान्य नहीं होगी.',
           buybackPolicyText:
               'Gold buyback is calculated on the current market rate after purity verification.\n'
-              'HUID/original invoice may be required for compliance and valuation.',
-          footerMessage: 'Thank you for shopping with us! Visit us again.',
+              'सोने का बायबैक शुद्धता जांच के बाद मौजूदा बाजार दर पर calculated होगा.\n'
+              'HUID/original invoice may be required for compliance and valuation.\n'
+              'नियमों और मूल्यांकन के लिए HUID या मूल बिल मांगा जा सकता है.',
+          footerMessage: 'Thank you for shopping with us! Visit us again.\n'
+              'खरीदारी के लिए धन्यवाद! फिर पधारें.',
         );
 
       case BillingMetal.silver:
@@ -290,15 +308,23 @@ class SalesBillingModel {
           buybackPurityDeductPercent: 3.0,
           termsAndConditions:
               'Silver items once sold will not be taken back or exchanged.\n'
+              'चांदी की वस्तु बिक्री के बाद वापस या एक्सचेंज नहीं की जाएगी.\n'
               'Exchange subject to purity verification.\n'
-              'Original bill is mandatory for any service claim.',
+              'एक्सचेंज शुद्धता जांच पर निर्भर करेगा.\n'
+              'Original bill is mandatory for any service claim.\n'
+              'किसी भी सेवा दावे के लिए मूल बिल आवश्यक है.',
           returnPolicyText:
               'Silver items can be exchanged within 7 days with the original invoice.\n'
-              'Tarnish, usage marks, damage or customised orders are not covered under return.',
+              'चांदी की वस्तु मूल बिल के साथ 7 दिनों के अंदर एक्सचेंज की जा सकती है.\n'
+              'Tarnish, usage marks, damage or customised orders are not covered under return.\n'
+              'दाग, उपयोग के निशान, टूट-फूट या कस्टम ऑर्डर रिटर्न में शामिल नहीं होंगे.',
           buybackPolicyText:
               'Silver buyback is based on current silver rate, purity test and applicable deductions.\n'
-              'Original invoice is recommended for faster valuation.',
-          footerMessage: 'Thank you for shopping with us! Visit us again.',
+              'चांदी का बायबैक मौजूदा दर, शुद्धता जांच और लागू कटौती पर आधारित होगा.\n'
+              'Original invoice is recommended for faster valuation.\n'
+              'तेज मूल्यांकन के लिए मूल बिल साथ लाना बेहतर है.',
+          footerMessage: 'Thank you for shopping with us! Visit us again.\n'
+              'खरीदारी के लिए धन्यवाद! फिर पधारें.',
         );
 
       case BillingMetal.diamond:
@@ -333,16 +359,25 @@ class SalesBillingModel {
           buybackPurityDeductPercent: 5.0,
           termsAndConditions:
               'Diamond jewellery once sold cannot be returned or exchanged.\n'
+              'डायमंड ज्वेलरी बिक्री के बाद वापस या एक्सचेंज नहीं होगी.\n'
               'Certificate is mandatory for resale or valuation.\n'
+              'रीसेल या मूल्यांकन के लिए certificate आवश्यक है.\n'
               'Diamond quality is as per certificate provided.\n'
-              'Original bill is mandatory for any service claim.',
+              'डायमंड quality दिए गए certificate के अनुसार होगी.\n'
+              'Original bill is mandatory for any service claim.\n'
+              'किसी भी सेवा दावे के लिए मूल बिल आवश्यक है.',
           returnPolicyText:
               'Diamond jewellery is generally non-returnable after billing.\n'
-              'Exchange or upgrade requests require original invoice and certificate verification.',
+              'डायमंड ज्वेलरी बिलिंग के बाद सामान्यतः non-returnable होगी.\n'
+              'Exchange or upgrade requests require original invoice and certificate verification.\n'
+              'एक्सचेंज या upgrade के लिए मूल बिल और certificate verification आवश्यक है.',
           buybackPolicyText:
               'Diamond buyback depends on certificate, cut, clarity, carat, condition and market demand.\n'
-              'Final value is confirmed only after expert inspection.',
-          footerMessage: 'Thank you for shopping with us! Visit us again.',
+              'डायमंड बायबैक certificate, cut, clarity, carat, condition और market demand पर निर्भर करेगा.\n'
+              'Final value is confirmed only after expert inspection.\n'
+              'अंतिम मूल्य expert inspection के बाद ही तय होगा.',
+          footerMessage: 'Thank you for shopping with us! Visit us again.\n'
+              'खरीदारी के लिए धन्यवाद! फिर पधारें.',
         );
 
       case BillingMetal.platinum:
@@ -372,15 +407,23 @@ class SalesBillingModel {
           buybackPurityDeductPercent: 2.0,
           termsAndConditions:
               'Platinum items once sold will not be taken back or exchanged.\n'
+              'प्लैटिनम वस्तु बिक्री के बाद वापस या एक्सचेंज नहीं की जाएगी.\n'
               'Purity as per Pt marking on item.\n'
-              'Original bill is mandatory for any service claim.',
+              'शुद्धता वस्तु पर दिए गए Pt marking के अनुसार होगी.\n'
+              'Original bill is mandatory for any service claim.\n'
+              'किसी भी सेवा दावे के लिए मूल बिल आवश्यक है.',
           returnPolicyText:
               'Platinum jewellery is eligible for exchange within 7 days with the original invoice.\n'
-              'Customised, damaged or altered items are not eligible for return.',
+              'प्लैटिनम ज्वेलरी मूल बिल के साथ 7 दिनों के अंदर एक्सचेंज के लिए मान्य है.\n'
+              'Customised, damaged or altered items are not eligible for return.\n'
+              'कस्टम, टूटी या बदली हुई वस्तु रिटर्न के लिए मान्य नहीं होगी.',
           buybackPolicyText:
               'Platinum buyback is calculated on current platinum rate after purity and weight verification.\n'
-              'Deductions may apply for testing, refining or item condition.',
-          footerMessage: 'Thank you for shopping with us! Visit us again.',
+              'प्लैटिनम बायबैक शुद्धता और वजन जांच के बाद मौजूदा दर पर calculated होगा.\n'
+              'Deductions may apply for testing, refining or item condition.\n'
+              'Testing, refining या item condition के अनुसार कटौती लागू हो सकती है.',
+          footerMessage: 'Thank you for shopping with us! Visit us again.\n'
+              'खरीदारी के लिए धन्यवाद! फिर पधारें.',
         );
 
       default:

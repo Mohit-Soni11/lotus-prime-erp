@@ -119,7 +119,7 @@ class _PurchaseBillingWorkspaceScreenState
         screenTitle: '$metalName Purchase',
         screenSubtitle: state.isLoading
             ? 'Loading settings...'
-            : 'Voucher display, supplier returns and footer copy',
+            : 'Customer purchase verification and payout copy',
         onBack: () => Navigator.maybePop(context),
       ),
       body: SafeArea(
@@ -146,10 +146,11 @@ class _PurchaseBillingWorkspaceScreenState
                     [
                       BillingMetalIntroPanel(
                         metalName: metalName,
-                        logoAsset: _metalLogoFor(model.metal),
+                        logoAsset:
+                            PurchaseBillingVisuals.logoAssetFor(model.metal),
                         title: '$metalName purchase controls',
                         description:
-                            'Fine tune voucher fields, supplier return rules and purchase footer copy.',
+                            'Fine tune seller identity, purity verification, deduction rules and purchase voucher copy.',
                         accent: PurchaseBillingVisuals.accentFor(model.metal),
                         enabledCount:
                             PurchaseBillingMetalProfiles.activeFieldCount(
@@ -180,7 +181,6 @@ class _PurchaseBillingWorkspaceScreenState
                         onInputChanged: _controller.updateCurrentInput,
                         onReturnModeChanged: _controller.updateReturnMode,
                         onFieldChanged: _controller.toggleField,
-                        onTemplateChanged: _controller.updateSelectedTemplate,
                       ),
                       const SizedBox(height: 32),
                       _SaveButton(
@@ -294,20 +294,5 @@ class _SaveButton extends StatelessWidget {
               ),
       ),
     );
-  }
-}
-
-String _metalLogoFor(String metal) {
-  switch (metal) {
-    case BillingMetal.gold:
-      return 'lib/logo/gold.jpeg';
-    case BillingMetal.silver:
-      return 'lib/logo/silver and platinum .jpeg';
-    case BillingMetal.diamond:
-      return 'lib/logo/diamond .jpeg';
-    case BillingMetal.platinum:
-      return 'lib/logo/silver and platinum .jpeg';
-    default:
-      return 'lib/logo/gold.jpeg';
   }
 }

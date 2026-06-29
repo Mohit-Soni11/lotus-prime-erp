@@ -34,4 +34,19 @@ class PurchaseBillingVisuals {
         return Icons.shopping_bag_outlined;
     }
   }
+
+  static String logoAssetFor(String metal) {
+    switch (metal) {
+      case BillingMetal.gold:
+        return 'lib/logo/gold.jpeg';
+      case BillingMetal.silver:
+        return 'lib/logo/silver and platinum .jpeg';
+      case BillingMetal.diamond:
+        return 'lib/logo/diamond .jpeg';
+      case BillingMetal.platinum:
+        return 'lib/logo/silver and platinum .jpeg';
+      default:
+        return 'lib/logo/gold.jpeg';
+    }
+  }
 }

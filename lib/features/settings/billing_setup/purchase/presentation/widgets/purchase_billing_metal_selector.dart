@@ -135,11 +135,25 @@ class _MetalItem extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: accent.withValues(alpha: 0.16)),
+                boxShadow: [
+                  BoxShadow(
+                    color: accent.withValues(alpha: selected ? 0.18 : 0.08),
+                    blurRadius: selected ? 12 : 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
-              child: Icon(
-                PurchaseBillingVisuals.iconFor(profile.metal),
-                color: accent,
-                size: 18,
+              clipBehavior: Clip.antiAlias,
+              child: Image.asset(
+                PurchaseBillingVisuals.logoAssetFor(profile.metal),
+                fit: BoxFit.cover,
+                width: 36,
+                height: 36,
+                errorBuilder: (_, __, ___) => Icon(
+                  PurchaseBillingVisuals.iconFor(profile.metal),
+                  color: accent,
+                  size: 18,
+                ),
               ),
             ),
             const SizedBox(width: 10),

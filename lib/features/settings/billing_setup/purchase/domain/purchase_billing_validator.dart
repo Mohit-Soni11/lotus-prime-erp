@@ -23,14 +23,14 @@ class PurchaseBillingValidator {
     final messages = <String>[];
     final returnWindowDays = _parseInt(
       input.returnWindowDays,
-      label: 'Return window',
+      label: 'Verification window',
       min: 0,
       max: 365,
       messages: messages,
     );
     final purityDeductPercent = _parsePercent(
       input.purityDeductPercent,
-      label: 'Purity deduction',
+      label: 'Purity or melting deduction',
       messages: messages,
     );
     final termsAndConditions = input.termsAndConditions.trim();
@@ -45,12 +45,12 @@ class PurchaseBillingValidator {
     );
     _requireText(
       returnPolicyText,
-      label: 'Return policy',
+      label: 'Ownership and verification note',
       messages: messages,
     );
     _requireText(
       buybackPolicyText,
-      label: 'Settlement policy',
+      label: 'Valuation and payout note',
       messages: messages,
     );
 

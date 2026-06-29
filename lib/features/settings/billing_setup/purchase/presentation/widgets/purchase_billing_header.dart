@@ -77,7 +77,7 @@ class PurchaseBillingHeader extends StatelessWidget {
                 ),
                 SizedBox(height: 3),
                 Text(
-                  'Metal-wise voucher fields, return rules, and supplier controls',
+                  'Metal-wise seller KYC, valuation rules, and payout copy',
                   style: TextStyle(
                     color: Color(0xFFB8C1D1),
                     fontSize: 12.5,

@@ -92,6 +92,8 @@ class PurchaseBillingRepo {
   }
 
   PurchaseBillingModel _rowToModel(PurchaseBillingSetting row) {
+    final defaults = PurchaseBillingModel.defaultFor(row.metal);
+
     return PurchaseBillingModel(
       metal: row.metal,
       showGrossWeight: row.showGrossWeight,
@@ -114,11 +116,42 @@ class PurchaseBillingRepo {
       returnWindowDays: row.returnWindowDays,
       returnMode: row.returnMode,
       purityDeductPercent: row.purityDeductPercent,
-      termsAndConditions: row.termsAndConditions,
-      returnPolicyText: row.returnPolicyText,
-      buybackPolicyText: row.buybackPolicyText,
-      footerMessage: row.footerMessage,
+      termsAndConditions: _upgradeLegacyPurchaseCopy(
+        row.termsAndConditions,
+        defaults.termsAndConditions,
+      ),
+      returnPolicyText: _upgradeLegacyPurchaseCopy(
+        row.returnPolicyText,
+        defaults.returnPolicyText,
+      ),
+      buybackPolicyText: _upgradeLegacyPurchaseCopy(
+        row.buybackPolicyText,
+        defaults.buybackPolicyText,
+      ),
+      footerMessage: _upgradeLegacyPurchaseCopy(
+        row.footerMessage,
+        defaults.footerMessage,
+      ),
       selectedTemplate: row.selectedTemplate,
     );
+  }
+
+  String _upgradeLegacyPurchaseCopy(String storedValue, String fallback) {
+    final text = storedValue.trim();
+    if (text.isEmpty || _usesLegacySupplierPurchaseCopy(text)) {
+      return fallback;
+    }
+    return storedValue;
+  }
+
+  bool _usesLegacySupplierPurchaseCopy(String value) {
+    final normalized = value.toLowerCase();
+    return normalized.contains('supplier return') ||
+        normalized.contains('your supply') ||
+        normalized.contains('short delivery') ||
+        normalized.contains('quality will be checked on delivery') ||
+        normalized.contains('purchase returns are accepted') ||
+        normalized.contains('buyback settlement') ||
+        normalized.contains('supplier settlement');
   }
 }

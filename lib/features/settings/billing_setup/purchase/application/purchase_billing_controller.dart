@@ -78,12 +78,6 @@ class PurchaseBillingController extends ChangeNotifier {
     _updateCurrentSettings((model) => model.copyWith(returnMode: mode));
   }
 
-  void updateSelectedTemplate(String templateId) {
-    _updateCurrentSettings(
-      (model) => model.copyWith(selectedTemplate: templateId),
-    );
-  }
-
   void resetCurrentToDefaults() {
     final metal = _state.selectedMetal;
     final model = PurchaseBillingModel.defaultFor(metal);

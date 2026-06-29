@@ -79,10 +79,6 @@ class PurchaseBillingSummaryPanel extends StatelessWidget {
             label: 'Purity deduction',
             value: '${input.purityDeductPercent.trim()}%',
           ),
-          _SummaryMetric(
-            label: 'Print template',
-            value: TemplateOptions.labelFor(model.selectedTemplate),
-          ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(12),

@@ -12,7 +12,7 @@ enum PurchaseBillingFieldKey {
   stoneDetails,
   stoneValue,
   huid,
-  supplierDetails,
+  sellerDetails,
   panNumber,
   diamondCarats,
   diamondClarity,
@@ -54,25 +54,25 @@ class PurchaseBillingMetalProfiles {
     PurchaseBillingMetalProfile(
       metal: BillingMetal.gold,
       title: 'Gold',
-      subtitle: 'Hallmark, HUID, purity, fine weight, PAN, and supplier rules.',
+      subtitle: 'Seller KYC, HUID, purity, fine weight and payout rules.',
       shortDescription: 'Gold voucher controls.',
     ),
     PurchaseBillingMetalProfile(
       metal: BillingMetal.silver,
       title: 'Silver',
-      subtitle: 'Weight, purity, fine weight, supplier, and settlement policy.',
+      subtitle: 'Seller identity, weight, purity and payout policy.',
       shortDescription: 'Silver purchase defaults.',
     ),
     PurchaseBillingMetalProfile(
       metal: BillingMetal.diamond,
       title: 'Diamond',
-      subtitle: 'Certificate, carat, clarity, value, and supplier checks.',
+      subtitle: 'Seller KYC, certificate, carat, clarity and valuation checks.',
       shortDescription: 'Diamond acquisition controls.',
     ),
     PurchaseBillingMetalProfile(
       metal: BillingMetal.platinum,
       title: 'Platinum',
-      subtitle: 'Purity, fine weight, rate, supplier, and return policy.',
+      subtitle: 'Seller identity, purity, fine weight, rate and payout rules.',
       shortDescription: 'Platinum voucher rules.',
     ),
   ];
@@ -172,9 +172,9 @@ class PurchaseBillingMetalProfiles {
         description: 'Final voucher amount for the item row.',
       ),
       PurchaseBillingFieldDefinition(
-        key: PurchaseBillingFieldKey.supplierDetails,
-        label: 'Supplier Details',
-        description: 'Supplier identity and address on the voucher.',
+        key: PurchaseBillingFieldKey.sellerDetails,
+        label: 'Seller Details',
+        description: 'Customer or seller identity and address on the voucher.',
       ),
       PurchaseBillingFieldDefinition(
         key: PurchaseBillingFieldKey.panNumber,
@@ -227,7 +227,7 @@ class PurchaseBillingMetalProfiles {
         return model.showStoneValue;
       case PurchaseBillingFieldKey.huid:
         return model.showHuid;
-      case PurchaseBillingFieldKey.supplierDetails:
+      case PurchaseBillingFieldKey.sellerDetails:
         return model.showSupplierDetails;
       case PurchaseBillingFieldKey.panNumber:
         return model.showPanNumber;
@@ -270,7 +270,7 @@ class PurchaseBillingMetalProfiles {
         return model.copyWith(showStoneValue: value);
       case PurchaseBillingFieldKey.huid:
         return model.copyWith(showHuid: value);
-      case PurchaseBillingFieldKey.supplierDetails:
+      case PurchaseBillingFieldKey.sellerDetails:
         return model.copyWith(showSupplierDetails: value);
       case PurchaseBillingFieldKey.panNumber:
         return model.copyWith(showPanNumber: value);
