@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
+
 @immutable
 class GirviInvoiceBranding {
   const GirviInvoiceBranding({
@@ -10,6 +12,9 @@ class GirviInvoiceBranding {
     this.shopGstin = '',
     this.logoPath,
     this.logoShape = 'circle',
+    this.printFields = const <ShopPrintDocumentField>[],
+    this.signaturePath,
+    this.signatureShape = 'square',
   });
 
   static const fallback = GirviInvoiceBranding(
@@ -20,6 +25,9 @@ class GirviInvoiceBranding {
     shopGstin: '',
     logoPath: null,
     logoShape: 'circle',
+    printFields: <ShopPrintDocumentField>[],
+    signaturePath: null,
+    signatureShape: 'square',
   );
 
   final String shopName;
@@ -29,13 +37,47 @@ class GirviInvoiceBranding {
   final String shopGstin;
   final String? logoPath;
   final String logoShape;
+  final List<ShopPrintDocumentField> printFields;
+  final String? signaturePath;
+  final String signatureShape;
 
   String get initial {
-    final value = shopName.trim();
+    final value = printShopName.trim();
     return value.isEmpty ? 'S' : value.substring(0, 1).toUpperCase();
   }
 
+  String get printShopName {
+    final configured = printValue('shop_name');
+    return configured.isNotEmpty ? configured : shopName;
+  }
+
+  List<String> get printHeaderLines {
+    if (printFields.isEmpty) {
+      return [
+        if (shopAddress.trim().isNotEmpty) shopAddress.trim(),
+        if (detailLine.trim().isNotEmpty) detailLine.trim(),
+      ];
+    }
+
+    return printFields
+        .where((field) => field.id != 'shop_name')
+        .map((field) => field.displayText)
+        .where((value) => value.trim().isNotEmpty)
+        .toList(growable: false);
+  }
+
+  String printValue(String id) {
+    for (final field in printFields) {
+      if (field.id == id) return field.value;
+    }
+    return '';
+  }
+
   String get contactLine {
+    if (printFields.isNotEmpty) {
+      return printHeaderLines.join('  |  ');
+    }
+
     final values = <String>[
       if (shopAddress.trim().isNotEmpty) shopAddress.trim(),
       if (shopMobile.trim().isNotEmpty) 'Mobile: ${shopMobile.trim()}',
@@ -47,6 +89,16 @@ class GirviInvoiceBranding {
   }
 
   String get detailLine {
+    if (printFields.isNotEmpty) {
+      return printFields
+          .where((field) =>
+              field.group == ShopPrintFieldGroup.contact ||
+              field.group == ShopPrintFieldGroup.statutory)
+          .map((field) => field.displayText)
+          .where((value) => value.trim().isNotEmpty)
+          .join('  |  ');
+    }
+
     final values = <String>[
       if (shopMobile.trim().isNotEmpty) 'Mobile: ${shopMobile.trim()}',
       if (shopAlternateMobile.trim().isNotEmpty)
@@ -57,10 +109,13 @@ class GirviInvoiceBranding {
   }
 
   factory GirviInvoiceBranding.fromShopSetup(
-    Map<String, dynamic> payload,
-  ) {
+    Map<String, dynamic> payload, {
+    ShopPrintDocumentProfile printProfile = ShopPrintDocumentProfile.empty,
+  }) {
     final basicInfo = _stringMap(payload['basic_info']);
-    final branding = _stringMap(payload['branding']);
+    final branding = _stringMap(
+      payload['branding_social'] ?? payload['branding'],
+    );
     final address = _stringMap(payload['address']);
     final tax = _stringMap(payload['tax_compliance']);
     final shopName = _firstValue([
@@ -96,8 +151,13 @@ class GirviInvoiceBranding {
       shopMobile: mobile,
       shopAlternateMobile: alternateMobile,
       shopGstin: tax['gstin']?.toString().trim() ?? '',
-      logoPath: _nullablePath(basicInfo['logo_path']),
-      logoShape: _shape(basicInfo['logo_shape']),
+      logoPath: printProfile.logoPath ?? _nullablePath(basicInfo['logo_path']),
+      logoShape: printProfile.logoPath == null
+          ? _shape(basicInfo['logo_shape'])
+          : printProfile.logoShape,
+      printFields: printProfile.fields,
+      signaturePath: printProfile.signaturePath,
+      signatureShape: printProfile.signatureShape,
     );
   }
 

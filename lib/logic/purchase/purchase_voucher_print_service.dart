@@ -8,6 +8,8 @@ import 'package:printing/printing.dart';
 import '../../models/purchase/purchase_enums/purchase_enums.dart';
 import '../../models/setting/billing_setup/purchase_billing_model.dart';
 import '../../models/setting/billing_setup/sales_billing_model.dart';
+import '../../features/settings/billing_setup/shop_info/data/shop_print_information_repository.dart';
+import '../../features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 import '../../repositories/setting/billing_setup/purchase_billing_repo.dart';
 import 'purchase_entry_controller.dart';
 
@@ -15,6 +17,8 @@ class PurchaseVoucherPrintService {
   PurchaseVoucherPrintService._();
 
   static final PurchaseBillingRepo _billingRepo = PurchaseBillingRepo();
+  static final ShopPrintInformationRepository _shopPrintRepo =
+      ShopPrintInformationRepository();
 
   static Future<void> printDraft(PurchaseEntryController ctrl) async {
     final bytes = await buildDraftBytes(ctrl);
@@ -29,6 +33,7 @@ class PurchaseVoucherPrintService {
     final settingsByMetal = await _loadBillingSettings(
       lines.map((item) => item.metal),
     );
+    final shopProfile = await _shopPrintRepo.loadDocumentProfile();
     final sourceLabel = ctrl.purchaseSource == PurchaseSource.fromCustomer
         ? 'Seller Purchase'
         : 'Supplier Purchase';
@@ -41,33 +46,12 @@ class PurchaseVoucherPrintService {
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(24),
         build: (context) => [
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text(
-                    'Purchase Voucher',
-                    style: pw.TextStyle(
-                      fontSize: 20,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  pw.SizedBox(height: 4),
-                  pw.Text(sourceLabel),
-                ],
-              ),
-              pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.end,
-                children: [
-                  pw.Text('Voucher: ${ctrl.formattedPurchaseNo}'),
-                  pw.Text(
-                    'Date: $formattedDate',
-                  ),
-                ],
-              ),
-            ],
+          _shopHeader(
+            profile: shopProfile,
+            documentTitle: 'Purchase Voucher',
+            documentSubtitle: sourceLabel,
+            documentNumber: ctrl.formattedPurchaseNo,
+            documentDate: formattedDate,
           ),
           pw.SizedBox(height: 18),
           pw.Container(
@@ -184,6 +168,76 @@ class PurchaseVoucherPrintService {
             style: pw.TextStyle(
               fontWeight: emphasize ? pw.FontWeight.bold : pw.FontWeight.normal,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _shopHeader({
+    required ShopPrintDocumentProfile profile,
+    required String documentTitle,
+    required String documentSubtitle,
+    required String documentNumber,
+    required String documentDate,
+  }) {
+    final title =
+        profile.primaryName.isEmpty ? 'Lotus ERP' : profile.primaryName;
+    final headerLines = profile.headerLines;
+
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.all(12),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.grey600, width: 0.7),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+      ),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  title,
+                  style: pw.TextStyle(
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                for (final line in headerLines.take(6))
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.only(top: 2),
+                    child: pw.Text(
+                      line,
+                      style: const pw.TextStyle(
+                        fontSize: 8.8,
+                        color: PdfColors.black,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          pw.SizedBox(width: 16),
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.end,
+            children: [
+              pw.Text(
+                documentTitle,
+                style: pw.TextStyle(
+                  fontSize: 16,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 4),
+              pw.Text(documentSubtitle),
+              pw.SizedBox(height: 8),
+              pw.Text('Voucher: $documentNumber'),
+              pw.Text('Date: $documentDate'),
+            ],
           ),
         ],
       ),

@@ -1,5 +1,7 @@
 import '../../database/db/app_database.dart';
 import '../../database/local_database/shop_database_helper.dart';
+import '../../features/settings/billing_setup/shop_info/data/shop_print_information_repository.dart';
+import '../../features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 import '../../models/girvi/girvi_invoice_branding.dart';
 import '../setting/shop_setup/shop_session_manager.dart';
 
@@ -7,17 +9,25 @@ class GirviInvoiceBrandingRepository {
   GirviInvoiceBrandingRepository({
     AppDatabase? db,
     Future<Map<String, dynamic>?> Function()? shopSetupLoader,
+    Future<ShopPrintDocumentProfile> Function()? printProfileLoader,
   })  : _db = db ?? AppDatabase(),
-        _shopSetupLoader = shopSetupLoader ?? _loadShopSetup;
+        _shopSetupLoader = shopSetupLoader ?? _loadShopSetup,
+        _printProfileLoader = printProfileLoader ??
+            (() => ShopPrintInformationRepository().loadDocumentProfile());
 
   final AppDatabase _db;
   final Future<Map<String, dynamic>?> Function() _shopSetupLoader;
+  final Future<ShopPrintDocumentProfile> Function() _printProfileLoader;
 
   Future<GirviInvoiceBranding> fetch() async {
     try {
       final payload = await _shopSetupLoader();
       if (payload != null) {
-        final branding = GirviInvoiceBranding.fromShopSetup(payload);
+        final printProfile = await _loadPrintProfileSafely();
+        final branding = GirviInvoiceBranding.fromShopSetup(
+          payload,
+          printProfile: printProfile,
+        );
         if (branding.shopName != GirviInvoiceBranding.fallback.shopName) {
           return branding;
         }
@@ -64,6 +74,14 @@ class GirviInvoiceBrandingRepository {
       );
     } catch (_) {
       return GirviInvoiceBranding.fallback;
+    }
+  }
+
+  Future<ShopPrintDocumentProfile> _loadPrintProfileSafely() async {
+    try {
+      return await _printProfileLoader();
+    } catch (_) {
+      return ShopPrintDocumentProfile.empty;
     }
   }
 

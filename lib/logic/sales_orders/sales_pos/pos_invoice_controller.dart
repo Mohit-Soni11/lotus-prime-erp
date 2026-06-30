@@ -5,6 +5,8 @@ import '../../../features/sales_pos/application/pdf/pos_invoice_pdf_builder.dart
 import '../../../features/sales_pos/application/pdf/pos_invoice_print_config.dart';
 import '../../../features/sales_pos/application/services/pos_invoice_output_service.dart';
 import '../../../features/sales_pos/application/services/pos_invoice_scope_service.dart';
+import '../../../features/settings/billing_setup/shop_info/data/shop_print_information_repository.dart';
+import '../../../features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 
 import '../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
@@ -34,6 +36,8 @@ class PosInvoiceController extends ChangeNotifier {
 
   final PosBillingController billing;
   final ShopSetupRepository _shopRepo = ShopSetupRepository();
+  final ShopPrintInformationRepository _shopPrintRepo =
+      ShopPrintInformationRepository();
   final SalesBillingRepo _salesBillingRepo = SalesBillingRepo();
   final PosInvoiceScopeService _scopeService = const PosInvoiceScopeService();
   final PosInvoicePdfBuilder _pdfBuilder = const PosInvoicePdfBuilder();
@@ -70,6 +74,7 @@ class PosInvoiceController extends ChangeNotifier {
   String _realShopGstin = "Not Registered";
   String _realShopLogoPath = "";
   String _realShopLogoShape = "square";
+  ShopPrintDocumentProfile _shopPrintProfile = ShopPrintDocumentProfile.empty;
 
   BillSettings getActiveConfig(BillingMode mode, BillType type) {
     if (mode == BillingMode.retail) {
@@ -449,13 +454,34 @@ class PosInvoiceController extends ChangeNotifier {
         _realShopAddress = "Please complete Shop Setup";
         _realShopPhone = "Phone not set";
       }
+
+      final printProfile = await _shopPrintRepo.loadDocumentProfile();
+      _applyShopPrintProfile(printProfile);
     } catch (e) {
       AppLogger.error(" [INVOICE] Error fetching shop data: $e");
       _realShopName =
           billing.shopName.isNotEmpty ? billing.shopName : "Lotus Jewellers";
       _realShopLogoPath = "";
       _realShopLogoShape = "square";
+      _shopPrintProfile = ShopPrintDocumentProfile.empty;
     }
+  }
+
+  void _applyShopPrintProfile(ShopPrintDocumentProfile profile) {
+    _shopPrintProfile = profile;
+    if (profile.primaryName.isNotEmpty) {
+      _realShopName = profile.primaryName;
+    }
+    if (profile.primaryAddress.isNotEmpty) {
+      _realShopAddress = profile.primaryAddress;
+    }
+    if (profile.primaryPhone.isNotEmpty) {
+      _realShopPhone = profile.primaryPhone;
+    }
+    _realShopGstin =
+        profile.gstin.isNotEmpty ? profile.gstin : "Not Registered";
+    _realShopLogoPath = profile.logoPath ?? '';
+    _realShopLogoShape = profile.logoShape;
   }
 
   PosInvoiceModel _buildInvoiceSnapshot() {
@@ -470,6 +496,9 @@ class PosInvoiceController extends ChangeNotifier {
       shopGstin: _realShopGstin,
       shopLogoPath: _realShopLogoPath,
       shopLogoShape: _realShopLogoShape,
+      shopPrintFields: _shopPrintProfile.fields,
+      shopSignaturePath: _shopPrintProfile.signaturePath ?? '',
+      shopSignatureShape: _shopPrintProfile.signatureShape,
       customerName: billing.nameCtrl.text,
       customerMobile: billing.mobileCtrl.text,
       customerCity: billing.cityCtrl.text,
@@ -539,6 +568,9 @@ class PosInvoiceController extends ChangeNotifier {
       shopGstin: source.shopGstin,
       shopLogoPath: source.shopLogoPath,
       shopLogoShape: source.shopLogoShape,
+      shopPrintFields: source.shopPrintFields,
+      shopSignaturePath: source.shopSignaturePath,
+      shopSignatureShape: source.shopSignatureShape,
       customerName: source.customerName,
       customerMobile: source.customerMobile,
       customerCity: source.customerCity,
@@ -788,6 +820,9 @@ class PosInvoiceController extends ChangeNotifier {
         shopGstin: invoice!.shopGstin,
         shopLogoPath: invoice!.shopLogoPath,
         shopLogoShape: invoice!.shopLogoShape,
+        shopPrintFields: invoice!.shopPrintFields,
+        shopSignaturePath: invoice!.shopSignaturePath,
+        shopSignatureShape: invoice!.shopSignatureShape,
         customerName: invoice!.customerName,
         customerMobile: invoice!.customerMobile,
         customerCity: invoice!.customerCity,

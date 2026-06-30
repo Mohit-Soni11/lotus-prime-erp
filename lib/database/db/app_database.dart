@@ -37,6 +37,7 @@ import '../tables/stock/suppliers.dart';
 import '../tables/setting/billing/sales_billing_settings.dart';
 import '../tables/setting/billing/purchase_billing_settings.dart';
 import '../tables/setting/billing/girvi_billing_settings.dart';
+import '../tables/setting/billing/shop_print_information_settings.dart';
 
 // ✅ v16: Tax & GST
 import '../../database/tables/setting/tax_gst/tax_gst_config_dao.dart';
@@ -76,6 +77,7 @@ part 'app_database.g.dart';
     SalesBillingSettings,
     PurchaseBillingSettings,
     GirviBillingSettings,
+    ShopPrintInformationSettings,
     TaxGstConfigs, // ✅ v16
   ],
 )
@@ -647,6 +649,13 @@ class AppDatabase extends _$AppDatabase {
               'v29 customer account credit ledger applied.',
             );
           }
+
+          if (from < 32) {
+            await m.createTable(shopPrintInformationSettings);
+            AppLogger.info(
+              'v32 shop print information settings applied.',
+            );
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -933,6 +942,7 @@ class AppDatabase extends _$AppDatabase {
     await runIfNeeded(() => m.createTable(salesBillingSettings));
     await runIfNeeded(() => m.createTable(purchaseBillingSettings));
     await runIfNeeded(() => m.createTable(girviBillingSettings));
+    await runIfNeeded(() => m.createTable(shopPrintInformationSettings));
 
     await runIfNeeded(
         () => customStatement('DROP TABLE IF EXISTS "billing_settings"'));
@@ -1132,6 +1142,19 @@ class AppDatabase extends _$AppDatabase {
 }
 
 const List<String> _billingSetupSchemaSafetySql = [
+  '''
+  CREATE TABLE IF NOT EXISTS "shop_print_information_settings" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "created_at" INTEGER NOT NULL DEFAULT 0,
+    "updated_at" INTEGER,
+    "tenant_id" TEXT NOT NULL,
+    "enabled_field_ids_json" TEXT NOT NULL DEFAULT '[]'
+  )
+  ''',
+  '''
+  CREATE UNIQUE INDEX IF NOT EXISTS "idx_shop_print_information_tenant"
+  ON "shop_print_information_settings" ("tenant_id")
+  ''',
   '''
   CREATE TABLE IF NOT EXISTS "sales_billing_settings" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,

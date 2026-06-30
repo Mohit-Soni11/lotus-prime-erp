@@ -29611,6 +29611,320 @@ class GirviBillingSettingsCompanion
   }
 }
 
+class $ShopPrintInformationSettingsTable extends ShopPrintInformationSettings
+    with
+        TableInfo<$ShopPrintInformationSettingsTable,
+            ShopPrintInformationSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ShopPrintInformationSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _tenantIdMeta =
+      const VerificationMeta('tenantId');
+  @override
+  late final GeneratedColumn<String> tenantId = GeneratedColumn<String>(
+      'tenant_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _enabledFieldIdsJsonMeta =
+      const VerificationMeta('enabledFieldIdsJson');
+  @override
+  late final GeneratedColumn<String> enabledFieldIdsJson =
+      GeneratedColumn<String>('enabled_field_ids_json', aliasedName, false,
+          type: DriftSqlType.string,
+          requiredDuringInsert: false,
+          defaultValue: const Constant('[]'));
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, createdAt, updatedAt, tenantId, enabledFieldIdsJson];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'shop_print_information_settings';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<ShopPrintInformationSetting> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('tenant_id')) {
+      context.handle(_tenantIdMeta,
+          tenantId.isAcceptableOrUnknown(data['tenant_id']!, _tenantIdMeta));
+    } else if (isInserting) {
+      context.missing(_tenantIdMeta);
+    }
+    if (data.containsKey('enabled_field_ids_json')) {
+      context.handle(
+          _enabledFieldIdsJsonMeta,
+          enabledFieldIdsJson.isAcceptableOrUnknown(
+              data['enabled_field_ids_json']!, _enabledFieldIdsJsonMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ShopPrintInformationSetting map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ShopPrintInformationSetting(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      tenantId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}tenant_id'])!,
+      enabledFieldIdsJson: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}enabled_field_ids_json'])!,
+    );
+  }
+
+  @override
+  $ShopPrintInformationSettingsTable createAlias(String alias) {
+    return $ShopPrintInformationSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class ShopPrintInformationSetting extends DataClass
+    implements Insertable<ShopPrintInformationSetting> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final String tenantId;
+  final String enabledFieldIdsJson;
+  const ShopPrintInformationSetting(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.tenantId,
+      required this.enabledFieldIdsJson});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['tenant_id'] = Variable<String>(tenantId);
+    map['enabled_field_ids_json'] = Variable<String>(enabledFieldIdsJson);
+    return map;
+  }
+
+  ShopPrintInformationSettingsCompanion toCompanion(bool nullToAbsent) {
+    return ShopPrintInformationSettingsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      tenantId: Value(tenantId),
+      enabledFieldIdsJson: Value(enabledFieldIdsJson),
+    );
+  }
+
+  factory ShopPrintInformationSetting.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ShopPrintInformationSetting(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      tenantId: serializer.fromJson<String>(json['tenantId']),
+      enabledFieldIdsJson:
+          serializer.fromJson<String>(json['enabledFieldIdsJson']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'tenantId': serializer.toJson<String>(tenantId),
+      'enabledFieldIdsJson': serializer.toJson<String>(enabledFieldIdsJson),
+    };
+  }
+
+  ShopPrintInformationSetting copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          String? tenantId,
+          String? enabledFieldIdsJson}) =>
+      ShopPrintInformationSetting(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        tenantId: tenantId ?? this.tenantId,
+        enabledFieldIdsJson: enabledFieldIdsJson ?? this.enabledFieldIdsJson,
+      );
+  ShopPrintInformationSetting copyWithCompanion(
+      ShopPrintInformationSettingsCompanion data) {
+    return ShopPrintInformationSetting(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      tenantId: data.tenantId.present ? data.tenantId.value : this.tenantId,
+      enabledFieldIdsJson: data.enabledFieldIdsJson.present
+          ? data.enabledFieldIdsJson.value
+          : this.enabledFieldIdsJson,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ShopPrintInformationSetting(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('enabledFieldIdsJson: $enabledFieldIdsJson')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, createdAt, updatedAt, tenantId, enabledFieldIdsJson);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ShopPrintInformationSetting &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.tenantId == this.tenantId &&
+          other.enabledFieldIdsJson == this.enabledFieldIdsJson);
+}
+
+class ShopPrintInformationSettingsCompanion
+    extends UpdateCompanion<ShopPrintInformationSetting> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<String> tenantId;
+  final Value<String> enabledFieldIdsJson;
+  const ShopPrintInformationSettingsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.tenantId = const Value.absent(),
+    this.enabledFieldIdsJson = const Value.absent(),
+  });
+  ShopPrintInformationSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required String tenantId,
+    this.enabledFieldIdsJson = const Value.absent(),
+  }) : tenantId = Value(tenantId);
+  static Insertable<ShopPrintInformationSetting> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? tenantId,
+    Expression<String>? enabledFieldIdsJson,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (tenantId != null) 'tenant_id': tenantId,
+      if (enabledFieldIdsJson != null)
+        'enabled_field_ids_json': enabledFieldIdsJson,
+    });
+  }
+
+  ShopPrintInformationSettingsCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<String>? tenantId,
+      Value<String>? enabledFieldIdsJson}) {
+    return ShopPrintInformationSettingsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      tenantId: tenantId ?? this.tenantId,
+      enabledFieldIdsJson: enabledFieldIdsJson ?? this.enabledFieldIdsJson,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (tenantId.present) {
+      map['tenant_id'] = Variable<String>(tenantId.value);
+    }
+    if (enabledFieldIdsJson.present) {
+      map['enabled_field_ids_json'] =
+          Variable<String>(enabledFieldIdsJson.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ShopPrintInformationSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('tenantId: $tenantId, ')
+          ..write('enabledFieldIdsJson: $enabledFieldIdsJson')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $TaxGstConfigsTable extends TaxGstConfigs
     with TableInfo<$TaxGstConfigsTable, TaxGstConfigData> {
   @override
@@ -31263,6 +31577,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $PurchaseBillingSettingsTable(this);
   late final $GirviBillingSettingsTable girviBillingSettings =
       $GirviBillingSettingsTable(this);
+  late final $ShopPrintInformationSettingsTable shopPrintInformationSettings =
+      $ShopPrintInformationSettingsTable(this);
   late final $TaxGstConfigsTable taxGstConfigs = $TaxGstConfigsTable(this);
   late final Index idxCustomersName = Index('idx_customers_name',
       'CREATE INDEX idx_customers_name ON customers (name)');
@@ -31409,6 +31725,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       'CREATE UNIQUE INDEX idx_sales_billing_metal ON sales_billing_settings (metal)');
   late final Index idxPurchaseBillingMetal = Index('idx_purchase_billing_metal',
       'CREATE UNIQUE INDEX idx_purchase_billing_metal ON purchase_billing_settings (metal)');
+  late final Index idxShopPrintInformationTenant = Index(
+      'idx_shop_print_information_tenant',
+      'CREATE UNIQUE INDEX idx_shop_print_information_tenant ON shop_print_information_settings (tenant_id)');
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -31444,6 +31763,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         salesBillingSettings,
         purchaseBillingSettings,
         girviBillingSettings,
+        shopPrintInformationSettings,
         taxGstConfigs,
         idxCustomersName,
         idxCustomersMobile,
@@ -31513,7 +31833,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         idxDitemOrder,
         idxDitemStatus,
         idxSalesBillingMetal,
-        idxPurchaseBillingMetal
+        idxPurchaseBillingMetal,
+        idxShopPrintInformationTenant
       ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules(
@@ -48002,6 +48323,182 @@ typedef $$GirviBillingSettingsTableProcessedTableManager
         ),
         GirviBillingSetting,
         PrefetchHooks Function()>;
+typedef $$ShopPrintInformationSettingsTableCreateCompanionBuilder
+    = ShopPrintInformationSettingsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required String tenantId,
+  Value<String> enabledFieldIdsJson,
+});
+typedef $$ShopPrintInformationSettingsTableUpdateCompanionBuilder
+    = ShopPrintInformationSettingsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<String> tenantId,
+  Value<String> enabledFieldIdsJson,
+});
+
+class $$ShopPrintInformationSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $ShopPrintInformationSettingsTable> {
+  $$ShopPrintInformationSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get tenantId => $composableBuilder(
+      column: $table.tenantId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get enabledFieldIdsJson => $composableBuilder(
+      column: $table.enabledFieldIdsJson,
+      builder: (column) => ColumnFilters(column));
+}
+
+class $$ShopPrintInformationSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ShopPrintInformationSettingsTable> {
+  $$ShopPrintInformationSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get tenantId => $composableBuilder(
+      column: $table.tenantId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get enabledFieldIdsJson => $composableBuilder(
+      column: $table.enabledFieldIdsJson,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$ShopPrintInformationSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ShopPrintInformationSettingsTable> {
+  $$ShopPrintInformationSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get tenantId =>
+      $composableBuilder(column: $table.tenantId, builder: (column) => column);
+
+  GeneratedColumn<String> get enabledFieldIdsJson => $composableBuilder(
+      column: $table.enabledFieldIdsJson, builder: (column) => column);
+}
+
+class $$ShopPrintInformationSettingsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ShopPrintInformationSettingsTable,
+    ShopPrintInformationSetting,
+    $$ShopPrintInformationSettingsTableFilterComposer,
+    $$ShopPrintInformationSettingsTableOrderingComposer,
+    $$ShopPrintInformationSettingsTableAnnotationComposer,
+    $$ShopPrintInformationSettingsTableCreateCompanionBuilder,
+    $$ShopPrintInformationSettingsTableUpdateCompanionBuilder,
+    (
+      ShopPrintInformationSetting,
+      BaseReferences<_$AppDatabase, $ShopPrintInformationSettingsTable,
+          ShopPrintInformationSetting>
+    ),
+    ShopPrintInformationSetting,
+    PrefetchHooks Function()> {
+  $$ShopPrintInformationSettingsTableTableManager(
+      _$AppDatabase db, $ShopPrintInformationSettingsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ShopPrintInformationSettingsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ShopPrintInformationSettingsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ShopPrintInformationSettingsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<String> tenantId = const Value.absent(),
+            Value<String> enabledFieldIdsJson = const Value.absent(),
+          }) =>
+              ShopPrintInformationSettingsCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            tenantId: tenantId,
+            enabledFieldIdsJson: enabledFieldIdsJson,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required String tenantId,
+            Value<String> enabledFieldIdsJson = const Value.absent(),
+          }) =>
+              ShopPrintInformationSettingsCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            tenantId: tenantId,
+            enabledFieldIdsJson: enabledFieldIdsJson,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ShopPrintInformationSettingsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $ShopPrintInformationSettingsTable,
+        ShopPrintInformationSetting,
+        $$ShopPrintInformationSettingsTableFilterComposer,
+        $$ShopPrintInformationSettingsTableOrderingComposer,
+        $$ShopPrintInformationSettingsTableAnnotationComposer,
+        $$ShopPrintInformationSettingsTableCreateCompanionBuilder,
+        $$ShopPrintInformationSettingsTableUpdateCompanionBuilder,
+        (
+          ShopPrintInformationSetting,
+          BaseReferences<_$AppDatabase, $ShopPrintInformationSettingsTable,
+              ShopPrintInformationSetting>
+        ),
+        ShopPrintInformationSetting,
+        PrefetchHooks Function()>;
 typedef $$TaxGstConfigsTableCreateCompanionBuilder = TaxGstConfigsCompanion
     Function({
   Value<int> id,
@@ -48706,6 +49203,10 @@ class $AppDatabaseManager {
           _db, _db.purchaseBillingSettings);
   $$GirviBillingSettingsTableTableManager get girviBillingSettings =>
       $$GirviBillingSettingsTableTableManager(_db, _db.girviBillingSettings);
+  $$ShopPrintInformationSettingsTableTableManager
+      get shopPrintInformationSettings =>
+          $$ShopPrintInformationSettingsTableTableManager(
+              _db, _db.shopPrintInformationSettings);
   $$TaxGstConfigsTableTableManager get taxGstConfigs =>
       $$TaxGstConfigsTableTableManager(_db, _db.taxGstConfigs);
 }

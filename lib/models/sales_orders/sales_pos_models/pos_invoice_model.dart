@@ -6,6 +6,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 
@@ -88,6 +89,9 @@ class PosInvoiceModel {
   final String shopGstin;
   final String shopLogoPath;
   final String shopLogoShape;
+  final List<ShopPrintDocumentField> shopPrintFields;
+  final String shopSignaturePath;
+  final String shopSignatureShape;
 
   final String customerName;
   final String customerMobile;
@@ -122,6 +126,55 @@ class PosInvoiceModel {
 
   double get totalPaid => cashPaid + upiPaid + cardPaid + advancePaid;
 
+  String get printShopName {
+    final configured = shopPrintValue('shop_name');
+    return configured.isNotEmpty ? configured : shopName;
+  }
+
+  String get printShopAddress {
+    final address = [
+      shopPrintValue('address_line'),
+      shopPrintValue('city_state_pin'),
+    ].where((value) => value.trim().isNotEmpty).join(', ');
+    return address.isNotEmpty ? address : shopAddress;
+  }
+
+  String get printShopPhone {
+    final mobile = shopPrintValue('mobile_number');
+    if (mobile.isNotEmpty) return mobile;
+    final whatsapp = shopPrintValue('whatsapp_number');
+    return whatsapp.isNotEmpty ? whatsapp : shopPhone;
+  }
+
+  String get printShopGstin {
+    final value = shopPrintValue('gstin');
+    return value.isNotEmpty ? value : shopGstin;
+  }
+
+  List<String> get shopPrintHeaderLines {
+    if (shopPrintFields.isEmpty) {
+      return [
+        if (shopAddress.trim().isNotEmpty) shopAddress.trim(),
+        if (shopPhone.trim().isNotEmpty) 'Mobile: ${shopPhone.trim()}',
+        if (shopGstin.trim().isNotEmpty && shopGstin != 'Not Registered')
+          'GSTIN: ${shopGstin.trim()}',
+      ];
+    }
+
+    return shopPrintFields
+        .where((field) => field.id != 'shop_name')
+        .map((field) => field.displayText)
+        .where((value) => value.trim().isNotEmpty)
+        .toList(growable: false);
+  }
+
+  String shopPrintValue(String id) {
+    for (final field in shopPrintFields) {
+      if (field.id == id) return field.value;
+    }
+    return '';
+  }
+
   double get netPayable => billingMode == BillingMode.wholesale
       ? grandTotal
       : grandTotal - totalOldGoldDeduction;
@@ -143,6 +196,9 @@ class PosInvoiceModel {
     required this.shopGstin,
     this.shopLogoPath = '',
     this.shopLogoShape = 'square',
+    this.shopPrintFields = const <ShopPrintDocumentField>[],
+    this.shopSignaturePath = '',
+    this.shopSignatureShape = 'square',
     required this.customerName,
     required this.customerMobile,
     required this.customerCity,

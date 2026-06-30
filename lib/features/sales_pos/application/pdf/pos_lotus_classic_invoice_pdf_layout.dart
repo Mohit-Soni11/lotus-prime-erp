@@ -94,7 +94,10 @@ class PosLotusClassicInvoicePdfLayout {
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text(
-                        _fallback(invoice.shopName, 'ANJALI JEWELLERS'),
+                        _fallback(
+                          invoice.printShopName,
+                          'ANJALI JEWELLERS',
+                        ),
                         maxLines: 1,
                         overflow: pw.TextOverflow.clip,
                         style: pw.TextStyle(
@@ -105,20 +108,13 @@ class PosLotusClassicInvoicePdfLayout {
                         ),
                       ),
                       pw.SizedBox(height: 3),
-                      pw.Text(
-                        _fallback(invoice.shopAddress, 'PATNA'),
-                        maxLines: 2,
-                        overflow: pw.TextOverflow.clip,
-                        style: pw.TextStyle(
-                          color: PdfColors.white,
-                          fontSize: 8.7,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                      if (invoice.shopPhone.trim().isNotEmpty) ...[
+                      for (final line
+                          in _headerPrintLines(invoice).take(4)) ...[
                         pw.SizedBox(height: 2),
                         pw.Text(
-                          'Mobile: ${invoice.shopPhone.trim()}',
+                          line,
+                          maxLines: 1,
+                          overflow: pw.TextOverflow.clip,
                           style: pw.TextStyle(
                             color: _gold,
                             fontSize: 7.4,
@@ -200,7 +196,7 @@ class PosLotusClassicInvoicePdfLayout {
   }
 
   pw.Widget _brandMark(PosInvoiceModel invoice) {
-    final initials = _initials(invoice.shopName);
+    final initials = _initials(invoice.printShopName);
     final logoImage = _loadLogoImage(invoice.shopLogoPath);
     final logoShape = invoice.shopLogoShape.trim().toLowerCase();
     final isSquare = logoShape != 'circle';
@@ -244,6 +240,16 @@ class PosLotusClassicInvoicePdfLayout {
       ),
       child: clipped,
     );
+  }
+
+  List<String> _headerPrintLines(PosInvoiceModel invoice) {
+    if (invoice.shopPrintFields.isNotEmpty) {
+      return invoice.shopPrintHeaderLines;
+    }
+    if (invoice.shopPrintHeaderLines.isEmpty) {
+      return [_fallback(invoice.shopAddress, 'PATNA')];
+    }
+    return invoice.shopPrintHeaderLines;
   }
 
   pw.Widget _headerMeta({

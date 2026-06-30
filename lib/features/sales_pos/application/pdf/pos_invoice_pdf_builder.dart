@@ -246,34 +246,19 @@ class _PosInvoicePdfDocumentBuilder {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Text(
-              invoice.shopName,
+              invoice.printShopName,
               style: pw.TextStyle(
                 fontSize: _pdfShopTitleSize,
                 fontWeight: pw.FontWeight.bold,
                 color: _pdfTextColor,
               ),
             ),
-            pw.Text(
-              invoice.shopAddress,
-              style: const pw.TextStyle(
-                fontSize: _pdfBodySize,
-                color: _pdfMutedTextColor,
-              ),
-            ),
-            pw.Text(
-              'Ph: ${invoice.shopPhone}',
-              style: const pw.TextStyle(
-                fontSize: _pdfBodySize,
-                color: _pdfMutedTextColor,
-              ),
-            ),
-            if (invoice.billType == BillType.gst &&
-                invoice.shopGstin != 'Not Registered')
+            for (final line in invoice.shopPrintHeaderLines)
               pw.Text(
-                'GSTIN: ${invoice.shopGstin}',
+                line,
                 style: const pw.TextStyle(
                   fontSize: _pdfBodySize,
-                  color: _pdfTextColor,
+                  color: _pdfMutedTextColor,
                 ),
               ),
           ],
@@ -1136,7 +1121,7 @@ class _PosInvoicePdfDocumentBuilder {
               ),
             ),
             pw.Text(
-              '${invoice.shopName}  E&OE',
+              '${invoice.printShopName}  E&OE',
               style: const pw.TextStyle(
                 fontSize: _pdfLabelSize,
                 color: _pdfTextColor,
@@ -1162,12 +1147,18 @@ class _PosInvoicePdfDocumentBuilder {
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
         pw.Text(
-          invoice.shopName,
+          invoice.printShopName,
           style: pw.TextStyle(
             fontSize: 13.0,
             fontWeight: pw.FontWeight.bold,
           ),
         ),
+        for (final line in invoice.shopPrintHeaderLines.take(3))
+          pw.Text(
+            line,
+            textAlign: pw.TextAlign.center,
+            style: pw.TextStyle(fontSize: fontSize - 1),
+          ),
         pw.Text(
           'No: ${invoice.invoiceNumber}',
           style: pw.TextStyle(fontSize: fontSize),

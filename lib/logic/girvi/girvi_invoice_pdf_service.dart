@@ -419,7 +419,7 @@ class GirviInvoicePdfService {
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text(
-                        branding.shopName.toUpperCase(),
+                        branding.printShopName.toUpperCase(),
                         style: pw.TextStyle(
                           color: PdfColors.white,
                           fontSize: compact ? 14 : 19,
@@ -427,33 +427,22 @@ class GirviInvoicePdfService {
                           letterSpacing: 0.5,
                         ),
                       ),
-                      if (branding.shopAddress.trim().isNotEmpty) ...[
-                        pw.SizedBox(height: compact ? 2 : 3),
-                        pw.Text(
-                          branding.shopAddress.trim(),
-                          maxLines: compact ? 1 : 2,
-                          overflow: pw.TextOverflow.clip,
-                          style: pw.TextStyle(
-                            color: PdfColors.white,
-                            fontSize: compact ? 7 : 8.5,
-                            fontWeight: pw.FontWeight.bold,
+                      for (final line
+                          in branding.printHeaderLines.take(compact ? 2 : 4))
+                        if (line.trim().isNotEmpty) ...[
+                          pw.SizedBox(height: compact ? 2 : 3),
+                          pw.Text(
+                            line.trim(),
+                            maxLines: 1,
+                            overflow: pw.TextOverflow.clip,
+                            style: pw.TextStyle(
+                              color: _gold,
+                              fontSize: compact ? 6.2 : 7.2,
+                              fontWeight: pw.FontWeight.bold,
+                              letterSpacing: 0.25,
+                            ),
                           ),
-                        ),
-                      ],
-                      if (branding.detailLine.isNotEmpty) ...[
-                        pw.SizedBox(height: 2),
-                        pw.Text(
-                          branding.detailLine,
-                          maxLines: 1,
-                          overflow: pw.TextOverflow.clip,
-                          style: pw.TextStyle(
-                            color: _gold,
-                            fontSize: compact ? 6.2 : 7.2,
-                            fontWeight: pw.FontWeight.bold,
-                            letterSpacing: 0.25,
-                          ),
-                        ),
-                      ],
+                        ],
                     ],
                   ),
                 ),

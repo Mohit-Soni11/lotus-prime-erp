@@ -68,6 +68,151 @@ class ShopPrintInformationState {
   }
 }
 
+class ShopPrintDocumentField {
+  final String id;
+  final String label;
+  final String value;
+  final ShopPrintFieldGroup group;
+
+  const ShopPrintDocumentField({
+    required this.id,
+    required this.label,
+    required this.value,
+    required this.group,
+  });
+
+  String get displayText {
+    switch (group) {
+      case ShopPrintFieldGroup.identity:
+        if (id == 'shop_name' || id == 'tagline') return value;
+        if (id == 'legal_name') return 'Legal Name: $value';
+        if (id == 'branch_code') return 'Branch: $value';
+        return '$label: $value';
+      case ShopPrintFieldGroup.address:
+        return value;
+      case ShopPrintFieldGroup.contact:
+      case ShopPrintFieldGroup.statutory:
+      case ShopPrintFieldGroup.social:
+      case ShopPrintFieldGroup.banking:
+        return '$label: $value';
+    }
+  }
+}
+
+class ShopPrintDocumentProfile {
+  static const Set<String> _assetFieldIds = {'logo', 'signature'};
+
+  final String tenantId;
+  final List<ShopPrintDocumentField> fields;
+  final String? logoPath;
+  final String logoShape;
+  final String? signaturePath;
+  final String signatureShape;
+
+  const ShopPrintDocumentProfile({
+    required this.tenantId,
+    required this.fields,
+    this.logoPath,
+    this.logoShape = 'square',
+    this.signaturePath,
+    this.signatureShape = 'square',
+  });
+
+  static const empty = ShopPrintDocumentProfile(
+    tenantId: '',
+    fields: <ShopPrintDocumentField>[],
+  );
+
+  factory ShopPrintDocumentProfile.fromState(
+    ShopPrintInformationState state,
+    Map<String, dynamic>? payload,
+  ) {
+    final basic = ShopPrintInformationCatalog._map(payload?['basic_info']);
+    final enabledIds = state.enabledFieldIds;
+    final textFields = <ShopPrintDocumentField>[
+      for (final field in state.fields)
+        if (state.isEnabled(field) && !_assetFieldIds.contains(field.id))
+          ShopPrintDocumentField(
+            id: field.id,
+            label: field.label,
+            value: field.value,
+            group: field.group,
+          ),
+    ];
+
+    return ShopPrintDocumentProfile(
+      tenantId: state.tenantId,
+      fields: textFields,
+      logoPath: enabledIds.contains('logo')
+          ? _nullablePath(basic['logo_path'])
+          : null,
+      logoShape: _shape(basic['logo_shape']),
+      signaturePath: enabledIds.contains('signature')
+          ? _nullablePath(basic['signature_path'])
+          : null,
+      signatureShape: _shape(basic['signature_shape']),
+    );
+  }
+
+  String valueOf(String id) {
+    for (final field in fields) {
+      if (field.id == id) return field.value;
+    }
+    return '';
+  }
+
+  String get primaryName {
+    final shopName = valueOf('shop_name');
+    if (shopName.isNotEmpty) return shopName;
+    return valueOf('legal_name');
+  }
+
+  String get primaryAddress {
+    return _join([
+      valueOf('address_line'),
+      valueOf('city_state_pin'),
+    ]);
+  }
+
+  String get primaryPhone {
+    final mobile = valueOf('mobile_number');
+    if (mobile.isNotEmpty) return mobile;
+    return valueOf('whatsapp_number');
+  }
+
+  String get gstin => valueOf('gstin');
+
+  List<String> get headerLines {
+    return fields
+        .where((field) => field.id != 'shop_name')
+        .map((field) => field.displayText)
+        .where((value) => value.trim().isNotEmpty)
+        .toList(growable: false);
+  }
+
+  List<String> linesForGroups(Set<ShopPrintFieldGroup> groups) {
+    return fields
+        .where((field) => groups.contains(field.group))
+        .map((field) => field.displayText)
+        .where((value) => value.trim().isNotEmpty)
+        .toList(growable: false);
+  }
+
+  static String? _nullablePath(Object? value) {
+    final path = value?.toString().trim() ?? '';
+    return path.isEmpty ? null : path;
+  }
+
+  static String _shape(Object? value) {
+    final normalized = value?.toString().trim().toLowerCase();
+    return normalized == 'circle' ? 'circle' : 'square';
+  }
+
+  static String _join(List<String> values) {
+    return values.where((value) => value.trim().isNotEmpty).join(', ');
+  }
+}
+
 class ShopPrintInformationCatalog {
   ShopPrintInformationCatalog._();
 
