@@ -34,6 +34,13 @@ class ShopPrintInformationRepository {
     return ShopPrintDocumentProfile.fromState(result.state, result.payload);
   }
 
+  Future<ShopPrintDocumentProfile> buildDocumentProfile(
+    ShopPrintInformationState state,
+  ) async {
+    final payload = await _shopSetupLoader(state.tenantId);
+    return ShopPrintDocumentProfile.fromState(state, payload);
+  }
+
   Future<_ShopPrintLoadResult> _loadStateAndPayload() async {
     final tenantId = await ShopSessionManager.getPermanentTenantId();
     final payload = await _shopSetupLoader(tenantId);

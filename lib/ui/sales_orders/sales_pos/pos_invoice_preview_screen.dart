@@ -322,6 +322,8 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
           if (_invCtrl.effectiveActiveMetal != null)
             _buildMetalBillingSetupCard(_invCtrl.effectiveActiveMetal!),
         ],
+        const SizedBox(height: 12),
+        _buildShopPrintSetupCard(),
       ],
     );
   }
@@ -411,6 +413,10 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
       controller: _invCtrl,
       accentColor: _metalColor(metal),
     );
+  }
+
+  Widget _buildShopPrintSetupCard() {
+    return PosInvoiceShopPrintSetupCard(controller: _invCtrl);
   }
 
   Color _metalColor(MetalType metal) {

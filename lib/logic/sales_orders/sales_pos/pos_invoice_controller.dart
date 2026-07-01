@@ -75,6 +75,9 @@ class PosInvoiceController extends ChangeNotifier {
   String _realShopLogoPath = "";
   String _realShopLogoShape = "square";
   ShopPrintDocumentProfile _shopPrintProfile = ShopPrintDocumentProfile.empty;
+  ShopPrintInformationState? _shopPrintState;
+
+  ShopPrintInformationState? get shopPrintInformationState => _shopPrintState;
 
   BillSettings getActiveConfig(BillingMode mode, BillType type) {
     if (mode == BillingMode.retail) {
@@ -155,10 +158,32 @@ class PosInvoiceController extends ChangeNotifier {
         return config.showMaking;
       case 'makingType':
         return config.showMakingType;
+      case 'stoneDetails':
+        return config.showStoneDetails;
+      case 'stoneValue':
+        return config.showStoneValue;
       case 'amount':
         return config.showAmount;
       case 'exchange':
         return config.showExchangeBreakdown;
+      case 'wastage':
+        return config.showWastage;
+      case 'diamondClarity':
+        return config.showDiamondClarity;
+      case 'certificationNo':
+        return config.showCertificationNo;
+      case 'diamondCarats':
+        return config.showDiamondCarats;
+      case 'diamondPieces':
+        return config.showDiamondPieces;
+      case 'metalWeight':
+        return config.showMetalWeight;
+      case 'fineWeight':
+        return config.showFineWeight;
+      case 'gstBreakup':
+        return config.showGstBreakup;
+      case 'hsnCode':
+        return config.showHsnCode;
       case 'printTerms':
         return config.printTermsAndConditions;
       case 'printReturnPolicy':
@@ -208,11 +233,44 @@ class PosInvoiceController extends ChangeNotifier {
       case 'makingType':
         config.showMakingType = value;
         break;
+      case 'stoneDetails':
+        config.showStoneDetails = value;
+        break;
+      case 'stoneValue':
+        config.showStoneValue = value;
+        break;
       case 'amount':
         config.showAmount = value;
         break;
       case 'exchange':
         config.showExchangeBreakdown = value;
+        break;
+      case 'wastage':
+        config.showWastage = value;
+        break;
+      case 'diamondClarity':
+        config.showDiamondClarity = value;
+        break;
+      case 'certificationNo':
+        config.showCertificationNo = value;
+        break;
+      case 'diamondCarats':
+        config.showDiamondCarats = value;
+        break;
+      case 'diamondPieces':
+        config.showDiamondPieces = value;
+        break;
+      case 'metalWeight':
+        config.showMetalWeight = value;
+        break;
+      case 'fineWeight':
+        config.showFineWeight = value;
+        break;
+      case 'gstBreakup':
+        config.showGstBreakup = value;
+        break;
+      case 'hsnCode':
+        config.showHsnCode = value;
         break;
       case 'printTerms':
         config.printTermsAndConditions = value;
@@ -277,6 +335,58 @@ class PosInvoiceController extends ChangeNotifier {
       await _refreshActivePreviewPdf();
     }
     notifyListeners();
+  }
+
+  bool getShopPrintFieldValue(String fieldId) {
+    final state = _shopPrintState;
+    if (state == null) return false;
+    for (final field in state.fields) {
+      if (field.id == fieldId) return state.isEnabled(field);
+    }
+    return false;
+  }
+
+  Future<void> setShopPrintFieldEnabled(
+    ShopPrintField field,
+    bool enabled,
+  ) async {
+    final state = _shopPrintState;
+    if (state == null || !field.isConfigured) return;
+
+    final enabledIds = {...state.enabledFieldIds};
+    if (enabled) {
+      enabledIds.add(field.id);
+    } else {
+      enabledIds.remove(field.id);
+    }
+
+    _shopPrintState = state.copyWith(enabledFieldIds: enabledIds);
+    await _refreshShopPrintProfile();
+    notifyListeners();
+  }
+
+  Future<void> restoreShopPrintInformationSetup() async {
+    _shopPrintState = await _shopPrintRepo.load();
+    await _refreshShopPrintProfile();
+    notifyListeners();
+  }
+
+  Future<void> _ensureShopPrintStateLoaded() async {
+    _shopPrintState ??= await _shopPrintRepo.load();
+  }
+
+  Future<void> _refreshShopPrintProfile() async {
+    await _ensureShopPrintStateLoaded();
+    final state = _shopPrintState;
+    if (state == null) return;
+
+    final printProfile = await _shopPrintRepo.buildDocumentProfile(state);
+    _applyShopPrintProfile(printProfile);
+
+    if (invoice != null) {
+      invoice = _buildInvoiceSnapshot();
+      await _refreshActivePreviewPdf();
+    }
   }
 
   Future<void> _loadMetalBillingSettings(PosInvoiceModel inv) async {
@@ -455,7 +565,10 @@ class PosInvoiceController extends ChangeNotifier {
         _realShopPhone = "Phone not set";
       }
 
-      final printProfile = await _shopPrintRepo.loadDocumentProfile();
+      await _ensureShopPrintStateLoaded();
+      final printProfile = await _shopPrintRepo.buildDocumentProfile(
+        _shopPrintState!,
+      );
       _applyShopPrintProfile(printProfile);
     } catch (e) {
       AppLogger.error(" [INVOICE] Error fetching shop data: $e");
@@ -497,6 +610,7 @@ class PosInvoiceController extends ChangeNotifier {
       shopLogoPath: _realShopLogoPath,
       shopLogoShape: _realShopLogoShape,
       shopPrintFields: _shopPrintProfile.fields,
+      shopPrintProfileApplied: _shopPrintProfile.tenantId.isNotEmpty,
       shopSignaturePath: _shopPrintProfile.signaturePath ?? '',
       shopSignatureShape: _shopPrintProfile.signatureShape,
       customerName: billing.nameCtrl.text,
@@ -569,6 +683,7 @@ class PosInvoiceController extends ChangeNotifier {
       shopLogoPath: source.shopLogoPath,
       shopLogoShape: source.shopLogoShape,
       shopPrintFields: source.shopPrintFields,
+      shopPrintProfileApplied: source.shopPrintProfileApplied,
       shopSignaturePath: source.shopSignaturePath,
       shopSignatureShape: source.shopSignatureShape,
       customerName: source.customerName,
@@ -821,6 +936,7 @@ class PosInvoiceController extends ChangeNotifier {
         shopLogoPath: invoice!.shopLogoPath,
         shopLogoShape: invoice!.shopLogoShape,
         shopPrintFields: invoice!.shopPrintFields,
+        shopPrintProfileApplied: invoice!.shopPrintProfileApplied,
         shopSignaturePath: invoice!.shopSignaturePath,
         shopSignatureShape: invoice!.shopSignatureShape,
         customerName: invoice!.customerName,

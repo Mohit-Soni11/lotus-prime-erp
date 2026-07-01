@@ -245,14 +245,15 @@ class _PosInvoicePdfDocumentBuilder {
         pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Text(
-              invoice.printShopName,
-              style: pw.TextStyle(
-                fontSize: _pdfShopTitleSize,
-                fontWeight: pw.FontWeight.bold,
-                color: _pdfTextColor,
+            if (invoice.printShopName.trim().isNotEmpty)
+              pw.Text(
+                invoice.printShopName,
+                style: pw.TextStyle(
+                  fontSize: _pdfShopTitleSize,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _pdfTextColor,
+                ),
               ),
-            ),
             for (final line in invoice.shopPrintHeaderLines)
               pw.Text(
                 line,
@@ -416,6 +417,8 @@ class _PosInvoicePdfDocumentBuilder {
                       if (activeConfig.showLessWt) _th('Less(g)'),
                       if (activeConfig.showNetWt)
                         _th(isWholesale ? 'Fine(g)' : 'Net(g)'),
+                      if (activeConfig.showFineWeight && !isWholesale)
+                        _th('Fine(g)'),
                       if (activeConfig.showRate) _th('Rate'),
                       if (activeConfig.showMaking ||
                           activeConfig.showMakingType)
@@ -451,6 +454,8 @@ class _PosInvoicePdfDocumentBuilder {
                           _cell(isWholesale
                               ? item.fineWt.toStringAsFixed(3)
                               : item.netWt.toStringAsFixed(3)),
+                        if (activeConfig.showFineWeight && !isWholesale)
+                          _cell(item.fineWt.toStringAsFixed(3)),
                         if (activeConfig.showRate)
                           _cell(item.rate.toStringAsFixed(0)),
                         if (activeConfig.showMaking ||
@@ -607,6 +612,9 @@ class _PosInvoicePdfDocumentBuilder {
     final showExchangeBreakdown = invoice.oldGoldItems.any(
       (item) => _getMetalConfig(item.metal).showExchangeBreakdown,
     );
+    final showGstBreakup = scopeService
+        .collectMetals(invoice)
+        .any((metal) => _getMetalConfig(metal).showGstBreakup);
 
     return pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.end,
@@ -622,7 +630,7 @@ class _PosInvoicePdfDocumentBuilder {
                   -invoice.discountAmount,
                   isDeduction: true,
                 ),
-              if (invoice.billType == BillType.gst) ...[
+              if (invoice.billType == BillType.gst && showGstBreakup) ...[
                 _totalRow('CGST', invoice.cgst),
                 _totalRow('SGST', invoice.sgst),
               ],
@@ -1121,7 +1129,9 @@ class _PosInvoicePdfDocumentBuilder {
               ),
             ),
             pw.Text(
-              '${invoice.printShopName}  E&OE',
+              invoice.printShopName.trim().isEmpty
+                  ? 'E&OE'
+                  : '${invoice.printShopName}  E&OE',
               style: const pw.TextStyle(
                 fontSize: _pdfLabelSize,
                 color: _pdfTextColor,
@@ -1146,13 +1156,14 @@ class _PosInvoicePdfDocumentBuilder {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
-        pw.Text(
-          invoice.printShopName,
-          style: pw.TextStyle(
-            fontSize: 13.0,
-            fontWeight: pw.FontWeight.bold,
+        if (invoice.printShopName.trim().isNotEmpty)
+          pw.Text(
+            invoice.printShopName,
+            style: pw.TextStyle(
+              fontSize: 13.0,
+              fontWeight: pw.FontWeight.bold,
+            ),
           ),
-        ),
         for (final line in invoice.shopPrintHeaderLines.take(3))
           pw.Text(
             line,

@@ -90,6 +90,7 @@ class PosInvoiceModel {
   final String shopLogoPath;
   final String shopLogoShape;
   final List<ShopPrintDocumentField> shopPrintFields;
+  final bool shopPrintProfileApplied;
   final String shopSignaturePath;
   final String shopSignatureShape;
 
@@ -128,7 +129,8 @@ class PosInvoiceModel {
 
   String get printShopName {
     final configured = shopPrintValue('shop_name');
-    return configured.isNotEmpty ? configured : shopName;
+    if (configured.isNotEmpty) return configured;
+    return shopPrintProfileApplied ? '' : shopName;
   }
 
   String get printShopAddress {
@@ -136,22 +138,33 @@ class PosInvoiceModel {
       shopPrintValue('address_line'),
       shopPrintValue('city_state_pin'),
     ].where((value) => value.trim().isNotEmpty).join(', ');
-    return address.isNotEmpty ? address : shopAddress;
+    if (address.isNotEmpty) return address;
+    return shopPrintProfileApplied ? '' : shopAddress;
   }
 
   String get printShopPhone {
     final mobile = shopPrintValue('mobile_number');
     if (mobile.isNotEmpty) return mobile;
     final whatsapp = shopPrintValue('whatsapp_number');
-    return whatsapp.isNotEmpty ? whatsapp : shopPhone;
+    if (whatsapp.isNotEmpty) return whatsapp;
+    return shopPrintProfileApplied ? '' : shopPhone;
   }
 
   String get printShopGstin {
     final value = shopPrintValue('gstin');
-    return value.isNotEmpty ? value : shopGstin;
+    if (value.isNotEmpty) return value;
+    return shopPrintProfileApplied ? '' : shopGstin;
   }
 
   List<String> get shopPrintHeaderLines {
+    if (shopPrintProfileApplied) {
+      return shopPrintFields
+          .where((field) => field.id != 'shop_name')
+          .map((field) => field.displayText)
+          .where((value) => value.trim().isNotEmpty)
+          .toList(growable: false);
+    }
+
     if (shopPrintFields.isEmpty) {
       return [
         if (shopAddress.trim().isNotEmpty) shopAddress.trim(),
@@ -167,6 +180,9 @@ class PosInvoiceModel {
         .where((value) => value.trim().isNotEmpty)
         .toList(growable: false);
   }
+
+  bool get shouldPrintBrandMark =>
+      !shopPrintProfileApplied || shopLogoPath.trim().isNotEmpty;
 
   String shopPrintValue(String id) {
     for (final field in shopPrintFields) {
@@ -197,6 +213,7 @@ class PosInvoiceModel {
     this.shopLogoPath = '',
     this.shopLogoShape = 'square',
     this.shopPrintFields = const <ShopPrintDocumentField>[],
+    this.shopPrintProfileApplied = false,
     this.shopSignaturePath = '',
     this.shopSignatureShape = 'square',
     required this.customerName,

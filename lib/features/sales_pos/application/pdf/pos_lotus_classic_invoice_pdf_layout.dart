@@ -87,27 +87,28 @@ class PosLotusClassicInvoicePdfLayout {
             child: pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.center,
               children: [
-                _brandMark(invoice),
-                pw.SizedBox(width: 14),
+                if (invoice.shouldPrintBrandMark) ...[
+                  _brandMark(invoice),
+                  pw.SizedBox(width: 14),
+                ],
                 pw.Expanded(
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text(
-                        _fallback(
+                      if (invoice.printShopName.trim().isNotEmpty)
+                        pw.Text(
                           invoice.printShopName,
-                          'ANJALI JEWELLERS',
+                          maxLines: 1,
+                          overflow: pw.TextOverflow.clip,
+                          style: pw.TextStyle(
+                            color: PdfColors.white,
+                            fontSize: 19,
+                            fontWeight: pw.FontWeight.bold,
+                            letterSpacing: 0.4,
+                          ),
                         ),
-                        maxLines: 1,
-                        overflow: pw.TextOverflow.clip,
-                        style: pw.TextStyle(
-                          color: PdfColors.white,
-                          fontSize: 19,
-                          fontWeight: pw.FontWeight.bold,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                      pw.SizedBox(height: 3),
+                      if (invoice.printShopName.trim().isNotEmpty)
+                        pw.SizedBox(height: 3),
                       for (final line
                           in _headerPrintLines(invoice).take(4)) ...[
                         pw.SizedBox(height: 2),
@@ -243,7 +244,7 @@ class PosLotusClassicInvoicePdfLayout {
   }
 
   List<String> _headerPrintLines(PosInvoiceModel invoice) {
-    if (invoice.shopPrintFields.isNotEmpty) {
+    if (invoice.shopPrintProfileApplied) {
       return invoice.shopPrintHeaderLines;
     }
     if (invoice.shopPrintHeaderLines.isEmpty) {
@@ -543,6 +544,7 @@ class PosLotusClassicInvoicePdfLayout {
       if (config.showGrossWt) 'Gross',
       if (config.showLessWt) 'Less',
       if (config.showNetWt) isWholesale ? 'Fine' : 'Net',
+      if (config.showFineWeight && !isWholesale) 'Fine',
       if (config.showRate) 'Rate',
       if (config.showMaking || config.showMakingType)
         isWholesale ? 'Labour' : 'Making',
@@ -563,6 +565,8 @@ class PosLotusClassicInvoicePdfLayout {
                 ? item.fineWt.toStringAsFixed(3)
                 : item.netWt.toStringAsFixed(3),
           ),
+        if (config.showFineWeight && !isWholesale)
+          _weightText(item.fineWt.toStringAsFixed(3)),
         if (config.showRate) _amount(item.rate),
         if (config.showMaking || config.showMakingType)
           _formatMakingCharge(item, config, isWholesale: isWholesale),
@@ -648,11 +652,14 @@ class PosLotusClassicInvoicePdfLayout {
   }
 
   pw.Widget _totalsBlock(PosInvoiceModel invoice) {
+    final showGstBreakup = scopeService
+        .collectMetals(invoice)
+        .any((metal) => _getMetalConfig(metal).showGstBreakup);
     final totalLines = <pw.Widget>[
       _totalLine('Gross Amount', invoice.grossAmount),
       if (invoice.discountAmount > 0)
         _totalLine('Discount', -invoice.discountAmount, isDeduction: true),
-      if (invoice.billType == BillType.gst) ...[
+      if (invoice.billType == BillType.gst && showGstBreakup) ...[
         _totalLine('CGST', invoice.cgst),
         _totalLine('SGST', invoice.sgst),
       ],

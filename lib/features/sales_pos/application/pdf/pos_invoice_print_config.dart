@@ -10,8 +10,19 @@ class BillSettings {
   bool showRate;
   bool showMaking;
   bool showMakingType;
+  bool showStoneDetails;
+  bool showStoneValue;
   bool showAmount;
   bool showExchangeBreakdown;
+  bool showWastage;
+  bool showDiamondClarity;
+  bool showCertificationNo;
+  bool showDiamondCarats;
+  bool showDiamondPieces;
+  bool showMetalWeight;
+  bool showFineWeight;
+  bool showGstBreakup;
+  bool showHsnCode;
   String footerMessage;
   String termsAndConditions;
   String returnPolicyText;
@@ -32,8 +43,19 @@ class BillSettings {
     this.showRate = true,
     this.showMaking = true,
     this.showMakingType = true,
+    this.showStoneDetails = false,
+    this.showStoneValue = false,
     this.showAmount = true,
     this.showExchangeBreakdown = true,
+    this.showWastage = false,
+    this.showDiamondClarity = false,
+    this.showCertificationNo = false,
+    this.showDiamondCarats = false,
+    this.showDiamondPieces = false,
+    this.showMetalWeight = false,
+    this.showFineWeight = false,
+    this.showGstBreakup = false,
+    this.showHsnCode = false,
     this.footerMessage = 'Thank you for shopping with us! Visit us again.',
     this.termsAndConditions = '',
     this.returnPolicyText = '',
@@ -56,8 +78,19 @@ class BillSettings {
       showRate: model.showRate,
       showMaking: model.showMakingCharges,
       showMakingType: model.showMakingChargeType,
+      showStoneDetails: model.showStoneDetails,
+      showStoneValue: model.showStoneValue,
       showAmount: model.showTotalValue,
       showExchangeBreakdown: model.showOldGoldLine,
+      showWastage: model.showWastage,
+      showDiamondClarity: model.showDiamondClarity,
+      showCertificationNo: model.showCertificationNo,
+      showDiamondCarats: model.showDiamondCarats,
+      showDiamondPieces: model.showDiamondPieces,
+      showMetalWeight: model.showMetalWeight,
+      showFineWeight: model.showFineWeight,
+      showGstBreakup: model.showGstBreakup,
+      showHsnCode: model.showHsnCode,
       footerMessage: model.footerMessage,
       termsAndConditions: model.termsAndConditions,
       returnPolicyText: model.returnPolicyText,

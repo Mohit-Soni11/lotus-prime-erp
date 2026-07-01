@@ -93,6 +93,7 @@ class PosInvoiceScopeService {
       shopLogoPath: source.shopLogoPath,
       shopLogoShape: source.shopLogoShape,
       shopPrintFields: source.shopPrintFields,
+      shopPrintProfileApplied: source.shopPrintProfileApplied,
       shopSignaturePath: source.shopSignaturePath,
       shopSignatureShape: source.shopSignatureShape,
       customerName: source.customerName,
