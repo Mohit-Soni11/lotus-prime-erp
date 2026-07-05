@@ -43,7 +43,7 @@ class PosLotusClassicInvoicePdfLayout {
         _sectionHeading(
           number: '01',
           title: 'ITEM DETAILS',
-          subtitle: _itemSummary(invoice),
+          subtitle: '',
         ),
         pw.SizedBox(height: 8),
         _saleItemSections(invoice),
@@ -153,9 +153,7 @@ class PosLotusClassicInvoicePdfLayout {
                     ),
                     pw.SizedBox(height: 5),
                     pw.Text(
-                      invoice.billingMode == BillingMode.wholesale
-                          ? 'WHOLESALE BILL'
-                          : 'RETAIL BILL',
+                      _billTypeLabel(invoice).toUpperCase(),
                       style: pw.TextStyle(
                         color: _gold,
                         fontSize: 6.7,
@@ -445,17 +443,19 @@ class PosLotusClassicInvoicePdfLayout {
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
-              pw.SizedBox(height: 2),
-              pw.Text(
-                subtitle,
-                maxLines: 1,
-                overflow: pw.TextOverflow.clip,
-                style: pw.TextStyle(
-                  color: _ink,
-                  fontSize: 8,
-                  fontWeight: pw.FontWeight.bold,
+              if (subtitle.trim().isNotEmpty) ...[
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: pw.TextOverflow.clip,
+                  style: pw.TextStyle(
+                    color: _ink,
+                    fontSize: 8,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
@@ -1114,26 +1114,14 @@ class PosLotusClassicInvoicePdfLayout {
 
   String _invoiceTitle(PosInvoiceModel invoice) {
     final metals = scopeService.collectMetals(invoice);
-    final typeLabel =
-        invoice.billType == BillType.gst ? 'TAX INVOICE' : 'INVOICE';
     if (metals.length == 1) {
-      return '${metals.first.displayName.toUpperCase()} $typeLabel';
+      return '${metals.first.displayName.toUpperCase()} INVOICE';
     }
-    return typeLabel;
+    return 'SALES INVOICE';
   }
 
   String _billTypeLabel(PosInvoiceModel invoice) {
-    return invoice.billType == BillType.gst ? 'GST Invoice' : 'Normal Bill';
-  }
-
-  String _itemSummary(PosInvoiceModel invoice) {
-    final pieces =
-        invoice.saleItems.fold<int>(0, (sum, item) => sum + item.pcs);
-    final metals = scopeService.collectMetals(invoice);
-    final metalText = metals.isEmpty
-        ? 'No metal'
-        : metals.map((metal) => metal.displayName).join(' + ');
-    return '${invoice.saleItems.length} item${invoice.saleItems.length == 1 ? '' : 's'} | $pieces piece${pieces == 1 ? '' : 's'} | $metalText';
+    return invoice.billType == BillType.gst ? 'GST Bill' : 'Sales Bill';
   }
 
   String _itemDescription(SaleItemModel item, BillSettings config) {

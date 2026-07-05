@@ -299,12 +299,10 @@ class _PosInvoicePdfDocumentBuilder {
 
   String _invoiceTitle(PosInvoiceModel invoice) {
     final metals = scopeService.collectMetals(invoice);
-    final typeLabel =
-        invoice.billType == BillType.gst ? 'TAX INVOICE' : 'INVOICE';
     if (metals.length == 1) {
-      return '${metals.first.displayName.toUpperCase()} $typeLabel';
+      return '${metals.first.displayName.toUpperCase()} INVOICE';
     }
-    return invoice.billType == BillType.gst ? typeLabel : '';
+    return 'SALES INVOICE';
   }
 
   pw.Widget _pdfCustomerBlock(PosInvoiceModel invoice) {
