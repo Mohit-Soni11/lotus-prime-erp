@@ -322,28 +322,10 @@ class ShopPrintInformationCatalog {
       ),
       ShopPrintField(
         id: 'bis_license',
-        label: 'BIS License Scope',
-        description: 'Hallmarking registration scope for jewellery compliance.',
+        label: 'BIS Registration No.',
+        description: 'BIS jeweller hallmarking registration number.',
         sourceSection: 'GST & Legal',
-        value: _bisScopeValue(tax),
-        group: ShopPrintFieldGroup.statutory,
-        defaultEnabled: true,
-      ),
-      ShopPrintField(
-        id: 'gold_bis_license',
-        label: 'Gold BIS License',
-        description: 'BIS hallmarking registration number for gold jewellery.',
-        sourceSection: 'GST & Legal',
-        value: _value(tax['gold_bis_license_no']),
-        group: ShopPrintFieldGroup.statutory,
-        defaultEnabled: false,
-      ),
-      ShopPrintField(
-        id: 'silver_bis_license',
-        label: 'Silver BIS License',
-        description: 'BIS hallmarking registration number for silver articles.',
-        sourceSection: 'GST & Legal',
-        value: _value(tax['silver_bis_license_no']),
+        value: _bisRegistrationValue(tax),
         group: ShopPrintFieldGroup.statutory,
         defaultEnabled: false,
       ),
@@ -497,7 +479,7 @@ class ShopPrintInformationCatalog {
     return values.map(_value).where((value) => value.isNotEmpty).join(', ');
   }
 
-  static String _bisScopeValue(Map<String, dynamic> tax) {
+  static String _bisRegistrationValue(Map<String, dynamic> tax) {
     final legacy = _value(tax['bis_license_no']);
     if (legacy.isNotEmpty) return legacy;
 

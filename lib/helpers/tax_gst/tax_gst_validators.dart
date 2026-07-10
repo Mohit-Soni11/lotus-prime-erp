@@ -41,23 +41,23 @@ class TaxGstValidators {
     return null;
   }
 
-  /// Validates BIS License format (e.g., HM/C-XXXXXXXX)
+  /// Validates BIS registration number when the field is mandatory.
   static String? validateBisLicense(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return "BIS License number is required";
+      return "BIS registration number is required";
     }
 
     return validateOptionalBisLicense(value);
   }
 
-  /// Validates BIS license only when a value is provided.
+  /// Validates BIS registration number only when a value is provided.
   static String? validateOptionalBisLicense(String? value) {
     if (value == null || value.trim().isEmpty) return null;
 
     final String cleanValue = value.trim().toUpperCase();
 
     if (cleanValue.length < 5) {
-      return "Invalid BIS License format";
+      return "Invalid BIS registration number";
     }
     return null;
   }

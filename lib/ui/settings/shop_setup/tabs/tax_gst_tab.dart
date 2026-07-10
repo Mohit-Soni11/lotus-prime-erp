@@ -51,16 +51,15 @@ class _TaxGstTabState extends State<TaxGstTab> {
           widget.initialData!['gold_bis_license_no']?.toString() ?? '';
       final silverBisLicense =
           widget.initialData!['silver_bis_license_no']?.toString() ?? '';
-      logic.goldBisLicCtrl.text =
-          goldBisLicense.isNotEmpty ? goldBisLicense : legacyBisLicense;
-      logic.silverBisLicCtrl.text = silverBisLicense;
+      logic.bisLicCtrl.text = _resolveBisRegistrationNumber(
+        legacyBisLicense,
+        goldBisLicense,
+        silverBisLicense,
+      );
 
       if (widget.initialData!['reg_date'] != null) {
         logic.setRegDate(widget.initialData!['reg_date'].toString());
       }
-
-      logic.setBisDates(widget.initialData!['bis_valid_from']?.toString() ?? '',
-          widget.initialData!['bis_valid_upto']?.toString() ?? '');
 
       if (widget.initialData!['taxpayer_type'] != null) {
         logic.setTaxpayer(widget.initialData!['taxpayer_type'].toString());
@@ -86,6 +85,20 @@ class _TaxGstTabState extends State<TaxGstTab> {
     super.dispose();
   }
 
+  String _resolveBisRegistrationNumber(
+    String legacy,
+    String gold,
+    String silver,
+  ) {
+    final legacyValue = legacy.trim();
+    if (legacyValue.isNotEmpty) return legacyValue;
+
+    final goldValue = gold.trim();
+    final silverValue = silver.trim();
+    if (goldValue.isNotEmpty) return goldValue;
+    return silverValue;
+  }
+
   // --- SMART TOGGLE HANDLING FOR FORM ---
   void _handleSectionToggle(String sectionId, String sectionName) async {
     if (logic.loadingSection == sectionId) return;
@@ -108,11 +121,6 @@ class _TaxGstTabState extends State<TaxGstTab> {
   // --- DATE PICKER LOGIC ---
   Future<void> _selectDate(TextEditingController controller) async {
     if (logic.isGstLocked && controller == logic.regDateCtrl) return;
-    if (logic.isBisLocked &&
-        (controller == logic.validFromCtrl ||
-            controller == logic.validUptoCtrl)) {
-      return;
-    }
 
     DateTime? picked = await showDatePicker(
       context: context,
@@ -153,10 +161,6 @@ class _TaxGstTabState extends State<TaxGstTab> {
           "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
       if (controller == logic.regDateCtrl) {
         logic.setRegDate(formattedDate);
-      } else if (controller == logic.validFromCtrl) {
-        logic.setBisDates(formattedDate, "");
-      } else if (controller == logic.validUptoCtrl) {
-        logic.setBisDates("", formattedDate);
       }
     }
   }
@@ -302,6 +306,7 @@ class _TaxGstTabState extends State<TaxGstTab> {
                   currentFile: logic.gstCertFile,
                   isInitiallyLocked: logic.isGstLocked,
                   onImageSaved: logic.updateGstFile,
+                  useTallPreview: true,
                 )),
           ],
         ),
@@ -320,16 +325,8 @@ class _TaxGstTabState extends State<TaxGstTab> {
                   currentFile: logic.bisLicenseFile,
                   isInitiallyLocked: logic.isBisLocked,
                   onImageSaved: logic.updateBisFile,
+                  useTallPreview: true,
                 )),
-          ],
-        ),
-        const SizedBox(height: TaxGstStyles.gapCard),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(flex: 60, child: _buildTaxStructureCard()),
-            const SizedBox(width: TaxGstStyles.gapCard),
-            const Expanded(flex: 40, child: SizedBox()),
           ],
         ),
       ],
@@ -360,8 +357,6 @@ class _TaxGstTabState extends State<TaxGstTab> {
           isInitiallyLocked: logic.isBisLocked,
           onImageSaved: logic.updateBisFile,
         ),
-        const SizedBox(height: TaxGstStyles.gapCard),
-        _buildTaxStructureCard(),
       ],
     );
   }
@@ -449,272 +444,17 @@ class _TaxGstTabState extends State<TaxGstTab> {
               height: 40, thickness: 1, color: TaxGstColors.borderLight),
           _buildSectionLabel(TaxGstStrings.secBisLabel),
           const SizedBox(height: TaxGstStyles.gapInput),
-          _buildBisScopeCallout(),
-          const SizedBox(height: TaxGstStyles.gapInput),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final useColumns = constraints.maxWidth >= 680;
-              final goldField = _buildThemeInput(
-                label: TaxGstStrings.lblGoldBisLic,
-                hint: TaxGstStrings.hintBisLic,
-                icon: TaxGstIcons.bisVerified,
-                ctrl: logic.goldBisLicCtrl,
-                isLocked: logic.isBisLocked,
-                focusNode: logic.goldBisLicFocus,
-                nextFocus: logic.silverBisLicFocus,
-                isCapital: true,
-                brandColor: TaxGstColors.brandBis,
-              );
-              final silverField = _buildThemeInput(
-                label: TaxGstStrings.lblSilverBisLic,
-                hint: TaxGstStrings.hintBisLic,
-                icon: TaxGstIcons.bisVerified,
-                ctrl: logic.silverBisLicCtrl,
-                isLocked: logic.isBisLocked,
-                focusNode: logic.silverBisLicFocus,
-                nextFocus: logic.validFromFocus,
-                isCapital: true,
-                brandColor: TaxGstColors.brandBis,
-              );
-
-              if (!useColumns) {
-                return Column(
-                  children: [
-                    goldField,
-                    const SizedBox(height: TaxGstStyles.gapInput),
-                    silverField,
-                  ],
-                );
-              }
-
-              return Row(
-                children: [
-                  Expanded(child: goldField),
-                  const SizedBox(width: 20),
-                  Expanded(child: silverField),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: TaxGstStyles.gapInput),
-          Row(
-            children: [
-              Expanded(
-                  child: _buildDateInput(
-                      label: TaxGstStrings.lblValidFrom,
-                      hint: TaxGstStrings.hintDate,
-                      icon: TaxGstIcons.dateRange,
-                      ctrl: logic.validFromCtrl,
-                      isLocked: logic.isBisLocked,
-                      focusNode: logic.validFromFocus)),
-              const SizedBox(width: 20),
-              Expanded(
-                  child: _buildDateInput(
-                      label: TaxGstStrings.lblValidUpto,
-                      hint: TaxGstStrings.hintDate,
-                      icon: TaxGstIcons.dateRange,
-                      ctrl: logic.validUptoCtrl,
-                      isLocked: logic.isBisLocked,
-                      focusNode: logic.validUptoFocus)),
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTaxStructureCard() {
-    bool isSavingHsn = logic.loadingSection == 'hsn';
-
-    return Container(
-      padding: TaxGstStyles.padCardInternal,
-      decoration: TaxGstStyles.cardDecoration,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(TaxGstIcons.secHsn,
-                      color: TaxGstColors.goldAccent, size: 22),
-                  const SizedBox(width: 12),
-                  Text(TaxGstStrings.secHsnTitle,
-                      style: TaxGstStyles.sectionTitle),
-                ],
-              ),
-              InkWell(
-                onTap: isSavingHsn
-                    ? null
-                    : () async {
-                        if (logic.isHsnLocked) {
-                          logic.toggleHsnLock();
-                        } else {
-                          await logic.toggleHsnLock();
-                          _showSaveFeedback(TaxGstStrings.feedbackTaxSyncDone);
-                        }
-                      },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                      color: logic.isHsnLocked
-                          ? TaxGstColors.badgeRedBg
-                          : TaxGstColors.statusActiveBg,
-                      borderRadius: BorderRadius.circular(6)),
-                  child: Row(
-                    children: [
-                      if (isSavingHsn)
-                        const SizedBox(
-                            width: 12,
-                            height: 12,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: TaxGstColors.statusActiveText))
-                      else
-                        Icon(
-                            logic.isHsnLocked
-                                ? TaxGstIcons.hsnSync
-                                : TaxGstIcons.edit,
-                            size: 12,
-                            color: logic.isHsnLocked
-                                ? TaxGstColors.badgeRedText
-                                : TaxGstColors.statusActiveText),
-                      const SizedBox(width: 4),
-                      Text(
-                          isSavingHsn
-                              ? TaxGstStrings.btnSyncing
-                              : (logic.isHsnLocked
-                                  ? TaxGstStrings.btnLiveSync
-                                  : TaxGstStrings.btnEditing),
-                          style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: logic.isHsnLocked
-                                  ? TaxGstColors.badgeRedText
-                                  : TaxGstColors.statusActiveText)),
-                    ],
-                  ),
-                ),
-              )
-            ],
-          ),
-          const SizedBox(height: 5),
-          Text(TaxGstStrings.secHsnSubtitle,
-              style: TaxGstStyles.sectionSub
-                  .copyWith(fontStyle: FontStyle.italic)),
-          const Divider(
-              height: 30, thickness: 1, color: TaxGstColors.borderLight),
-          ...logic.hsnList.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item['title'], style: TaxGstStyles.fieldText),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Container(
-                          width: 90,
-                          height: 38,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                              color: TaxGstColors.inputBg,
-                              borderRadius: BorderRadius.circular(6),
-                              border:
-                                  Border.all(color: TaxGstColors.borderLight)),
-                          child: Text(item['label'],
-                              style: TaxGstStyles.fieldHint
-                                  .copyWith(fontWeight: FontWeight.w700)),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                            child: _buildSmallGridInput(item['code'],
-                                isCenter: false)),
-                        const SizedBox(width: 10),
-                        SizedBox(
-                            width: 70,
-                            child: _buildSmallGridInput(item['rate'],
-                                isCenter: true, highlight: true)),
-                      ],
-                    )
-                  ],
-                ),
-              )),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                  child: _buildActionBtn(TaxGstStrings.btnFetchLatest,
-                      TaxGstIcons.cloudUp, false)),
-              const SizedBox(width: 12),
-              Expanded(
-                  child: _buildActionBtn(TaxGstStrings.btnMarkVerified,
-                      TaxGstIcons.verifyCheck, true)),
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBisScopeCallout() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: TaxGstColors.goldAccent10,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: TaxGstColors.goldAccent30),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            TaxGstIcons.bisVerified,
-            size: 17,
-            color: TaxGstColors.brandBis,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              TaxGstStrings.bisScopeNote,
-              style: TaxGstStyles.fieldHint.copyWith(
-                color: TaxGstColors.textBody,
-                height: 1.35,
-              ),
-            ),
+          _buildThemeInput(
+            label: TaxGstStrings.lblBisLic,
+            hint: TaxGstStrings.hintBisLic,
+            icon: TaxGstIcons.bisVerified,
+            ctrl: logic.bisLicCtrl,
+            isLocked: logic.isBisLocked,
+            focusNode: logic.bisLicFocus,
+            isCapital: true,
+            brandColor: TaxGstColors.brandBis,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSmallGridInput(String val,
-      {bool isCenter = false, bool highlight = false}) {
-    return Container(
-      height: 38,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: logic.isHsnLocked ? TaxGstColors.cardBg : TaxGstColors.inputBg,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-            color:
-                highlight ? TaxGstColors.goldAccent : TaxGstColors.borderLight),
-      ),
-      child: TextFormField(
-        initialValue: val,
-        readOnly: logic.isHsnLocked,
-        textAlign: isCenter ? TextAlign.center : TextAlign.start,
-        style: TaxGstStyles.fieldText.copyWith(
-            fontSize: 13,
-            color: highlight ? TaxGstColors.textDark : TaxGstColors.textBody),
-        decoration: InputDecoration(
-            border: InputBorder.none,
-            contentPadding:
-                EdgeInsets.only(left: isCenter ? 0 : 12, bottom: 14)),
       ),
     );
   }
@@ -995,37 +735,6 @@ class _TaxGstTabState extends State<TaxGstTab> {
   Widget _buildSectionLabel(String text) {
     return Text(text, style: TaxGstStyles.sectionSub);
   }
-
-  Widget _buildActionBtn(String label, IconData icon, bool isPrimary) {
-    return InkWell(
-      onTap: () {},
-      borderRadius: BorderRadius.circular(TaxGstStyles.rBtn),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-            color:
-                isPrimary ? TaxGstColors.goldAccent : TaxGstColors.transparent,
-            border: Border.all(color: TaxGstColors.goldAccent),
-            borderRadius: BorderRadius.circular(TaxGstStyles.rBtn)),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon,
-                size: 16,
-                color: isPrimary ? TaxGstColors.cardBg : TaxGstColors.textDark),
-            const SizedBox(width: 8),
-            Text(label,
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isPrimary
-                        ? TaxGstColors.cardBg
-                        : TaxGstColors.textDark)),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 // =========================================================================
@@ -1038,6 +747,7 @@ class EnterpriseDocumentWidget extends StatefulWidget {
   final File? currentFile;
   final Function(File?) onImageSaved;
   final bool isInitiallyLocked;
+  final bool useTallPreview;
 
   const EnterpriseDocumentWidget({
     super.key,
@@ -1047,6 +757,7 @@ class EnterpriseDocumentWidget extends StatefulWidget {
     required this.currentFile,
     required this.onImageSaved,
     this.isInitiallyLocked = true,
+    this.useTallPreview = false,
   });
 
   @override
@@ -1300,8 +1011,8 @@ class _EnterpriseDocumentWidgetState extends State<EnterpriseDocumentWidget> {
   @override
   Widget build(BuildContext context) {
     bool hasFile = widget.currentFile != null;
-    final previewHeight =
-        MediaQuery.sizeOf(context).width >= 1000 ? 240.0 : 220.0;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 1000;
+    final previewHeight = widget.useTallPreview && isDesktop ? 300.0 : 220.0;
 
     return Container(
       padding: const EdgeInsets.all(24),

@@ -27,8 +27,11 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Statutory & Tax Compliance'), findsOneWidget);
     expect(find.text('Bureau of Indian Standards'), findsOneWidget);
-    expect(find.text('Gold BIS License No. (HM/C)'), findsOneWidget);
-    expect(find.text('Silver BIS License No. (HM/C)'), findsOneWidget);
+    expect(find.text('BIS Registration No.'), findsOneWidget);
+    expect(find.text('Applicable GST Structure'), findsNothing);
+    expect(find.textContaining('BIS hallmarking covers'), findsNothing);
+    expect(find.text('Valid From'), findsNothing);
+    expect(find.text('Valid Upto'), findsNothing);
   });
 
   testWidgets('Shop setup shell gives GST step a bounded layout',
@@ -86,5 +89,6 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Statutory & Tax Compliance'), findsOneWidget);
     expect(find.text('Bureau of Indian Standards'), findsOneWidget);
+    expect(find.text('Applicable GST Structure'), findsNothing);
   });
 }

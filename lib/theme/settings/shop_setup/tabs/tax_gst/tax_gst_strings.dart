@@ -12,7 +12,7 @@ class TaxGstStrings {
   // --- Page Headers ---
   static const String pageTitle = "Statutory & Tax Compliance";
   static const String pageSubtitle =
-      "Manage GSTIN, BIS Hallmarking, and Tax Structure";
+      "Manage GSTIN and BIS hallmarking registration";
   static const String badgeComplianceActive = "COMPLIANCE ACTIVE";
 
   // --- Section Titles & Labels ---
@@ -20,11 +20,7 @@ class TaxGstStrings {
   static const String secGstLabel = "REGISTRATION DATA";
 
   static const String secBisTitle = "Bureau of Indian Standards";
-  static const String secBisLabel = "HALLMARKING REGISTRATION SCOPE";
-
-  static const String secHsnTitle = "Applicable GST Structure";
-  static const String secHsnSubtitle =
-      "Current applicable GST rates (Snapshot)";
+  static const String secBisLabel = "JEWELLER HALLMARKING REGISTRATION";
 
   // --- Input Labels & Hints ---
   static const String lblGstin = "GSTIN Number";
@@ -38,22 +34,15 @@ class TaxGstStrings {
 
   static const String lblTaxpayerType = "Taxpayer Type";
 
-  static const String lblBisLic = "BIS License No. (HM/C)";
-  static const String lblGoldBisLic = "Gold BIS License No. (HM/C)";
-  static const String lblSilverBisLic = "Silver BIS License No. (HM/C)";
-  static const String hintBisLic = "HM/C-XXXXXXXX";
-  static const String bisScopeNote =
-      "BIS hallmarking covers gold and silver. Keep the numbers separate when your registration scope differs; use the same number in both fields when one registration covers both.";
-
-  static const String lblValidFrom = "Valid From";
-  static const String lblValidUpto = "Valid Upto";
+  static const String lblBisLic = "BIS Registration No.";
+  static const String hintBisLic = "Enter BIS registration number";
 
   // --- Documents & Uploads ---
   static const String docGstTitle = "GST Certificate";
   static const String docGstSub = "Upload Form GST REG-06";
 
-  static const String docBisTitle = "BIS License Copy";
-  static const String docBisSub = "Upload Hallmarking Grant (HM/C)";
+  static const String docBisTitle = "BIS Registration Certificate";
+  static const String docBisSub = "Upload jeweller hallmarking registration";
 
   static const String docEmpty = "No Document Uploaded";
   static const String btnUploadDoc = "Upload Document";
@@ -68,11 +57,6 @@ class TaxGstStrings {
   static const String btnSaving = "Saving...";
   static const String btnLocked = "Locked";
   static const String btnEdit = "Edit";
-  static const String btnSyncing = "SYNCING";
-  static const String btnLiveSync = "LIVE SYNC";
-  static const String btnEditing = "EDITING";
-  static const String btnFetchLatest = "Fetch Latest";
-  static const String btnMarkVerified = "Mark Verified";
 
   static const String btnConfirm = "CONFIRM";
   static const String btnCancel = "CANCEL";
@@ -91,7 +75,7 @@ class TaxGstStrings {
   static const String errLegalNameEmpty = "Legal Trade Name is required";
   static const String errLegalNameShort =
       "Name must be at least 3 characters long";
-  static const String errBisEmpty = "BIS License number is required";
-  static const String errBisInvalid = "Invalid BIS License format";
+  static const String errBisEmpty = "BIS registration number is required";
+  static const String errBisInvalid = "Invalid BIS registration number";
   static const String errFileTooLarge = "File too large. Max 10MB.";
 }

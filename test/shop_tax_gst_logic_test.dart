@@ -13,42 +13,37 @@ void main() {
     logic.legalNameCtrl.text = '  Lotus Jewellers Pvt Ltd  ';
     logic.regDateCtrl.text = '05/07/2026';
     logic.selectedTaxpayer = TaxpayerType.composition;
-    logic.goldBisLicCtrl.text = ' gold-bis-123 ';
-    logic.silverBisLicCtrl.text = ' silver-bis-456 ';
-    logic.validFromCtrl.text = '01/07/2026';
-    logic.validUptoCtrl.text = '01/07/2027';
+    logic.bisLicCtrl.text = ' bis-reg-123 ';
 
     final model = logic.generateFinalModel();
 
     expect(model.gstin, '27AABCU9603R1ZM');
     expect(model.legalName, 'Lotus Jewellers Pvt Ltd');
     expect(model.taxpayerType, TaxpayerType.composition);
-    expect(model.goldBisLicenseNo, 'GOLD-BIS-123');
-    expect(model.silverBisLicenseNo, 'SILVER-BIS-456');
-    expect(
-      model.bisLicenseNo,
-      'Gold: GOLD-BIS-123 | Silver: SILVER-BIS-456',
-    );
+    expect(model.bisLicenseNo, 'BIS-REG-123');
+    expect(model.goldBisLicenseNo, 'BIS-REG-123');
+    expect(model.silverBisLicenseNo, 'BIS-REG-123');
     expect(logic.taxData, model);
   });
 
-  test('BIS model serializes gold and silver license scopes separately', () {
+  test('BIS model serializes registration number without validity dates', () {
     const model = TaxGstModel(
-      bisLicenseNo: 'Gold: HM/C-GOLD | Silver: HM/C-SILVER',
-      goldBisLicenseNo: 'HM/C-GOLD',
-      silverBisLicenseNo: 'HM/C-SILVER',
-      bisValidFrom: '01/07/2026',
-      bisValidUpto: '01/07/2027',
+      bisLicenseNo: 'BIS-REG-123',
+      goldBisLicenseNo: 'BIS-REG-123',
+      silverBisLicenseNo: 'BIS-REG-123',
     );
 
-    final restored = TaxGstModel.fromJson(model.toJson());
+    final json = model.toJson();
+    final restored = TaxGstModel.fromJson(json);
 
-    expect(restored.goldBisLicenseNo, 'HM/C-GOLD');
-    expect(restored.silverBisLicenseNo, 'HM/C-SILVER');
-    expect(restored.bisLicenseNo, 'Gold: HM/C-GOLD | Silver: HM/C-SILVER');
+    expect(restored.bisLicenseNo, 'BIS-REG-123');
+    expect(restored.goldBisLicenseNo, 'BIS-REG-123');
+    expect(restored.silverBisLicenseNo, 'BIS-REG-123');
+    expect(json.containsKey('bis_valid_from'), isFalse);
+    expect(json.containsKey('bis_valid_upto'), isFalse);
   });
 
-  test('legacy single BIS license loads as gold BIS fallback', () {
+  test('legacy single BIS license loads as BIS registration fallback', () {
     final restored = TaxGstModel.fromJson(const {
       'bis_license_no': 'HM/C-LEGACY',
       'bis_valid_from': '01/07/2026',

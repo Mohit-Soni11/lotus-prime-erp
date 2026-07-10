@@ -17,8 +17,6 @@ class TaxGstModel {
   final String bisLicenseNo;
   final String goldBisLicenseNo;
   final String silverBisLicenseNo;
-  final String bisValidFrom;
-  final String bisValidUpto;
   final String? gstCertPath; // 🚀 FIXED
   final String? bisLicensePath; // 🚀 FIXED
 
@@ -30,8 +28,6 @@ class TaxGstModel {
     this.bisLicenseNo = "",
     this.goldBisLicenseNo = "",
     this.silverBisLicenseNo = "",
-    this.bisValidFrom = "",
-    this.bisValidUpto = "",
     this.gstCertPath,
     this.bisLicensePath,
   });
@@ -56,8 +52,6 @@ class TaxGstModel {
           : _combinedBisLicense(goldBisLicense, silverBisLicense),
       goldBisLicenseNo: goldBisLicense,
       silverBisLicenseNo: silverBisLicense,
-      bisValidFrom: json['bis_valid_from']?.toString() ?? "",
-      bisValidUpto: json['bis_valid_upto']?.toString() ?? "",
       gstCertPath: json['gst_cert_path']?.toString(),
       bisLicensePath: json['bis_license_path']?.toString(),
     );
@@ -72,8 +66,6 @@ class TaxGstModel {
       'bis_license_no': bisLicenseNo,
       'gold_bis_license_no': goldBisLicenseNo,
       'silver_bis_license_no': silverBisLicenseNo,
-      'bis_valid_from': bisValidFrom,
-      'bis_valid_upto': bisValidUpto,
       'gst_cert_path': gstCertPath,
       'bis_license_path': bisLicensePath,
     };
@@ -87,8 +79,6 @@ class TaxGstModel {
     String? bisLicenseNo,
     String? goldBisLicenseNo,
     String? silverBisLicenseNo,
-    String? bisValidFrom,
-    String? bisValidUpto,
     String? gstCertPath,
     String? bisLicensePath,
   }) {
@@ -100,8 +90,6 @@ class TaxGstModel {
       bisLicenseNo: bisLicenseNo ?? this.bisLicenseNo,
       goldBisLicenseNo: goldBisLicenseNo ?? this.goldBisLicenseNo,
       silverBisLicenseNo: silverBisLicenseNo ?? this.silverBisLicenseNo,
-      bisValidFrom: bisValidFrom ?? this.bisValidFrom,
-      bisValidUpto: bisValidUpto ?? this.bisValidUpto,
       gstCertPath: gstCertPath ?? this.gstCertPath,
       bisLicensePath: bisLicensePath ?? this.bisLicensePath,
     );
@@ -118,8 +106,6 @@ class TaxGstModel {
         other.bisLicenseNo == bisLicenseNo &&
         other.goldBisLicenseNo == goldBisLicenseNo &&
         other.silverBisLicenseNo == silverBisLicenseNo &&
-        other.bisValidFrom == bisValidFrom &&
-        other.bisValidUpto == bisValidUpto &&
         other.gstCertPath == gstCertPath &&
         other.bisLicensePath == bisLicensePath;
   }
@@ -134,8 +120,6 @@ class TaxGstModel {
       bisLicenseNo,
       goldBisLicenseNo,
       silverBisLicenseNo,
-      bisValidFrom,
-      bisValidUpto,
       gstCertPath,
       bisLicensePath,
     );
