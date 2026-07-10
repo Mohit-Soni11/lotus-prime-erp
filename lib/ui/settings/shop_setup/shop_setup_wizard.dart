@@ -264,15 +264,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
         final gstLogic = _gstKey.currentState?.logic;
         if (gstLogic != null) {
           try {
-            gstData = gstLogic.generateFinalModel(
-                gstin: gstLogic.gstinCtrl?.text ?? "",
-                legalName: gstLogic.legalNameCtrl?.text ?? "",
-                regDate: gstLogic.regDateCtrl?.text ?? "",
-                taxpayerType:
-                    gstLogic.selectedTaxpayer?.toString() ?? "Regular",
-                bisLic: gstLogic.bisLicCtrl?.text ?? "",
-                validFrom: gstLogic.validFromCtrl?.text ?? "",
-                validUpto: gstLogic.validUptoCtrl?.text ?? "");
+            gstData = gstLogic.generateFinalModel();
           } catch (_) {
             gstData = gstLogic.taxData ?? const TaxGstModel();
           }

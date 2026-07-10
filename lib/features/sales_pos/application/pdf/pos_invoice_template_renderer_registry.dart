@@ -10,10 +10,12 @@ import 'pos_lotus_classic_invoice_pdf_layout.dart';
 class PosInvoiceTemplateRenderContext {
   final PosInvoiceScopeService scopeService;
   final Map<MetalType, BillSettings> metalPrintSettings;
+  final bool includePolicyBlock;
 
   const PosInvoiceTemplateRenderContext({
     required this.scopeService,
     required this.metalPrintSettings,
+    this.includePolicyBlock = true,
   });
 }
 
@@ -30,7 +32,10 @@ class PosInvoiceTemplateRendererRegistry {
       return PosLotusClassicInvoicePdfLayout(
         scopeService: context.scopeService,
         metalPrintSettings: context.metalPrintSettings,
-      ).build(invoice);
+      ).build(
+        invoice,
+        includePolicyBlock: context.includePolicyBlock,
+      );
     },
   };
 

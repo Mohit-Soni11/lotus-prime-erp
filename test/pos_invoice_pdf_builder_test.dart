@@ -72,7 +72,47 @@ void main() {
 
       item.dispose();
     });
+
+    test('prints long policy copy on continuation pages', () async {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      final invoice = _invoice(saleItems: [item]);
+      final longTerms = List.generate(
+        80,
+        (index) =>
+            '${index + 1}. Goods are billed according to the final verified weight, purity and customer-approved settlement terms.',
+      ).join('\n');
+
+      final bytes = await const PosInvoicePdfBuilder().build(
+        invoice: invoice,
+        options: PosInvoicePdfBuildOptions(
+          format: PrintFormat.a4,
+          copies: 1,
+          includeDuplicateStamp: false,
+          metalPrintSettings: {
+            MetalType.gold: BillSettings(
+              termsAndConditions: longTerms,
+              printTermsAndConditions: true,
+            ),
+          },
+        ),
+      );
+
+      expect(_pdfPageCount(bytes), greaterThan(1));
+
+      item.dispose();
+    });
   });
+}
+
+int _pdfPageCount(List<int> bytes) {
+  final content = String.fromCharCodes(bytes);
+  return RegExp(r'/Type\s*/Page\b').allMatches(content).length;
 }
 
 SaleItemModel _saleItem({

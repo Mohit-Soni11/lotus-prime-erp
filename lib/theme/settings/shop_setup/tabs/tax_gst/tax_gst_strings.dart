@@ -12,7 +12,7 @@ class TaxGstStrings {
   // --- Page Headers ---
   static const String pageTitle = "Statutory & Tax Compliance";
   static const String pageSubtitle =
-      "Manage GSTIN, BIS License, and Tax Structure";
+      "Manage GSTIN, BIS Hallmarking, and Tax Structure";
   static const String badgeComplianceActive = "COMPLIANCE ACTIVE";
 
   // --- Section Titles & Labels ---
@@ -20,7 +20,7 @@ class TaxGstStrings {
   static const String secGstLabel = "REGISTRATION DATA";
 
   static const String secBisTitle = "Bureau of Indian Standards";
-  static const String secBisLabel = "LICENSE PARAMETERS";
+  static const String secBisLabel = "HALLMARKING REGISTRATION SCOPE";
 
   static const String secHsnTitle = "Applicable GST Structure";
   static const String secHsnSubtitle =
@@ -39,7 +39,11 @@ class TaxGstStrings {
   static const String lblTaxpayerType = "Taxpayer Type";
 
   static const String lblBisLic = "BIS License No. (HM/C)";
+  static const String lblGoldBisLic = "Gold BIS License No. (HM/C)";
+  static const String lblSilverBisLic = "Silver BIS License No. (HM/C)";
   static const String hintBisLic = "HM/C-XXXXXXXX";
+  static const String bisScopeNote =
+      "BIS hallmarking covers gold and silver. Keep the numbers separate when your registration scope differs; use the same number in both fields when one registration covers both.";
 
   static const String lblValidFrom = "Valid From";
   static const String lblValidUpto = "Valid Upto";

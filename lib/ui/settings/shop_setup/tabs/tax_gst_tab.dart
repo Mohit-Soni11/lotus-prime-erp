@@ -45,8 +45,15 @@ class _TaxGstTabState extends State<TaxGstTab> {
       logic.gstinCtrl.text = widget.initialData!['gstin']?.toString() ?? '';
       logic.legalNameCtrl.text =
           widget.initialData!['legal_name']?.toString() ?? '';
-      logic.bisLicCtrl.text =
+      final legacyBisLicense =
           widget.initialData!['bis_license_no']?.toString() ?? '';
+      final goldBisLicense =
+          widget.initialData!['gold_bis_license_no']?.toString() ?? '';
+      final silverBisLicense =
+          widget.initialData!['silver_bis_license_no']?.toString() ?? '';
+      logic.goldBisLicCtrl.text =
+          goldBisLicense.isNotEmpty ? goldBisLicense : legacyBisLicense;
+      logic.silverBisLicCtrl.text = silverBisLicense;
 
       if (widget.initialData!['reg_date'] != null) {
         logic.setRegDate(widget.initialData!['reg_date'].toString());
@@ -189,79 +196,132 @@ class _TaxGstTabState extends State<TaxGstTab> {
   }
 
   Widget _buildPageHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final statusBadge = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+      decoration: BoxDecoration(
+        color: TaxGstColors.statusActiveBg,
+        borderRadius: BorderRadius.circular(TaxGstStyles.rStatusPill),
+        border: Border.all(color: TaxGstColors.statusActiveText30),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(TaxGstIcons.statusShield,
+              size: 16, color: TaxGstColors.statusActiveText),
+          const SizedBox(width: 8),
+          Text(TaxGstStrings.badgeComplianceActive,
+              style: TaxGstStyles.statusPill),
+        ],
+      ),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stackHeader = constraints.maxWidth < 680;
+        final titleBlock = Row(
           children: [
-            Text(TaxGstStrings.pageTitle, style: TaxGstStyles.pageTitle),
-            const SizedBox(height: 4),
-            Text(TaxGstStrings.pageSubtitle, style: TaxGstStyles.pageSubtitle),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: TaxGstColors.goldAccent10,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: TaxGstColors.goldAccent30),
+              ),
+              child: const Icon(
+                TaxGstIcons.secGst,
+                color: TaxGstColors.goldAccent,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    TaxGstStrings.pageTitle,
+                    style: TaxGstStyles.pageTitle.copyWith(
+                      color: TaxGstColors.surfaceWhite,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    TaxGstStrings.pageSubtitle,
+                    style: TaxGstStyles.pageSubtitle.copyWith(
+                      color: TaxGstColors.textHint,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
           ],
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: TaxGstColors.statusActiveBg,
-            borderRadius: BorderRadius.circular(TaxGstStyles.rStatusPill),
-            border: Border.all(color: TaxGstColors.statusActiveText30),
-          ),
-          child: Row(
+        );
+
+        if (stackHeader) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(TaxGstIcons.statusShield,
-                  size: 16, color: TaxGstColors.statusActiveText),
-              const SizedBox(width: 8),
-              Text(TaxGstStrings.badgeComplianceActive,
-                  style: TaxGstStyles.statusPill),
+              titleBlock,
+              const SizedBox(height: 12),
+              statusBadge,
             ],
-          ),
-        )
-      ],
+          );
+        }
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(child: titleBlock),
+            const SizedBox(width: 16),
+            statusBadge,
+          ],
+        );
+      },
     );
   }
 
   Widget _buildDesktopLayout() {
     return Column(
       children: [
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(flex: 60, child: _buildGstCard()),
-              const SizedBox(width: TaxGstStyles.gapCard),
-              Expanded(
-                  flex: 40,
-                  child: EnterpriseDocumentWidget(
-                    title: TaxGstStrings.docGstTitle,
-                    subtitle: TaxGstStrings.docGstSub,
-                    icon: TaxGstIcons.secGst,
-                    currentFile: logic.gstCertFile,
-                    isInitiallyLocked: logic.isGstLocked,
-                    onImageSaved: logic.updateGstFile,
-                  )),
-            ],
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(flex: 60, child: _buildGstCard()),
+            const SizedBox(width: TaxGstStyles.gapCard),
+            Expanded(
+                flex: 40,
+                child: EnterpriseDocumentWidget(
+                  title: TaxGstStrings.docGstTitle,
+                  subtitle: TaxGstStrings.docGstSub,
+                  icon: TaxGstIcons.secGst,
+                  currentFile: logic.gstCertFile,
+                  isInitiallyLocked: logic.isGstLocked,
+                  onImageSaved: logic.updateGstFile,
+                )),
+          ],
         ),
         const SizedBox(height: TaxGstStyles.gapCard),
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(flex: 60, child: _buildBisCard()),
-              const SizedBox(width: TaxGstStyles.gapCard),
-              Expanded(
-                  flex: 40,
-                  child: EnterpriseDocumentWidget(
-                    title: TaxGstStrings.docBisTitle,
-                    subtitle: TaxGstStrings.docBisSub,
-                    icon: TaxGstIcons.secBis,
-                    currentFile: logic.bisLicenseFile,
-                    isInitiallyLocked: logic.isBisLocked,
-                    onImageSaved: logic.updateBisFile,
-                  )),
-            ],
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(flex: 60, child: _buildBisCard()),
+            const SizedBox(width: TaxGstStyles.gapCard),
+            Expanded(
+                flex: 40,
+                child: EnterpriseDocumentWidget(
+                  title: TaxGstStrings.docBisTitle,
+                  subtitle: TaxGstStrings.docBisSub,
+                  icon: TaxGstIcons.secBis,
+                  currentFile: logic.bisLicenseFile,
+                  isInitiallyLocked: logic.isBisLocked,
+                  onImageSaved: logic.updateBisFile,
+                )),
+          ],
         ),
         const SizedBox(height: TaxGstStyles.gapCard),
         Row(
@@ -389,15 +449,52 @@ class _TaxGstTabState extends State<TaxGstTab> {
               height: 40, thickness: 1, color: TaxGstColors.borderLight),
           _buildSectionLabel(TaxGstStrings.secBisLabel),
           const SizedBox(height: TaxGstStyles.gapInput),
-          _buildThemeInput(
-            label: TaxGstStrings.lblBisLic,
-            hint: TaxGstStrings.hintBisLic,
-            icon: TaxGstIcons.bisVerified,
-            ctrl: logic.bisLicCtrl,
-            isLocked: logic.isBisLocked,
-            focusNode: logic.bisLicFocus,
-            isCapital: true,
-            brandColor: TaxGstColors.brandBis,
+          _buildBisScopeCallout(),
+          const SizedBox(height: TaxGstStyles.gapInput),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final useColumns = constraints.maxWidth >= 680;
+              final goldField = _buildThemeInput(
+                label: TaxGstStrings.lblGoldBisLic,
+                hint: TaxGstStrings.hintBisLic,
+                icon: TaxGstIcons.bisVerified,
+                ctrl: logic.goldBisLicCtrl,
+                isLocked: logic.isBisLocked,
+                focusNode: logic.goldBisLicFocus,
+                nextFocus: logic.silverBisLicFocus,
+                isCapital: true,
+                brandColor: TaxGstColors.brandBis,
+              );
+              final silverField = _buildThemeInput(
+                label: TaxGstStrings.lblSilverBisLic,
+                hint: TaxGstStrings.hintBisLic,
+                icon: TaxGstIcons.bisVerified,
+                ctrl: logic.silverBisLicCtrl,
+                isLocked: logic.isBisLocked,
+                focusNode: logic.silverBisLicFocus,
+                nextFocus: logic.validFromFocus,
+                isCapital: true,
+                brandColor: TaxGstColors.brandBis,
+              );
+
+              if (!useColumns) {
+                return Column(
+                  children: [
+                    goldField,
+                    const SizedBox(height: TaxGstStyles.gapInput),
+                    silverField,
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(child: goldField),
+                  const SizedBox(width: 20),
+                  Expanded(child: silverField),
+                ],
+              );
+            },
           ),
           const SizedBox(height: TaxGstStyles.gapInput),
           Row(
@@ -558,6 +655,38 @@ class _TaxGstTabState extends State<TaxGstTab> {
                       TaxGstIcons.verifyCheck, true)),
             ],
           )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBisScopeCallout() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: TaxGstColors.goldAccent10,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: TaxGstColors.goldAccent30),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            TaxGstIcons.bisVerified,
+            size: 17,
+            color: TaxGstColors.brandBis,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              TaxGstStrings.bisScopeNote,
+              style: TaxGstStyles.fieldHint.copyWith(
+                color: TaxGstColors.textBody,
+                height: 1.35,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -785,20 +914,30 @@ class _TaxGstTabState extends State<TaxGstTab> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                  color: TaxGstColors.goldAccent10,
-                  borderRadius:
-                      BorderRadius.circular(TaxGstStyles.rHeaderIcon)),
-              child: Icon(icon, color: TaxGstColors.goldAccent, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Text(title, style: TaxGstStyles.sectionTitle),
-          ],
+        Expanded(
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                    color: TaxGstColors.goldAccent10,
+                    borderRadius:
+                        BorderRadius.circular(TaxGstStyles.rHeaderIcon)),
+                child: Icon(icon, color: TaxGstColors.goldAccent, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TaxGstStyles.sectionTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
+        const SizedBox(width: 12),
         Material(
           color: TaxGstColors.transparent,
           child: InkWell(
@@ -1161,11 +1300,14 @@ class _EnterpriseDocumentWidgetState extends State<EnterpriseDocumentWidget> {
   @override
   Widget build(BuildContext context) {
     bool hasFile = widget.currentFile != null;
+    final previewHeight =
+        MediaQuery.sizeOf(context).width >= 1000 ? 240.0 : 220.0;
 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: TaxGstStyles.cardDecoration,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
@@ -1237,7 +1379,8 @@ class _EnterpriseDocumentWidgetState extends State<EnterpriseDocumentWidget> {
             ],
           ),
           const Divider(height: 36, color: TaxGstColors.borderLight),
-          Expanded(
+          SizedBox(
+            height: previewHeight,
             child: Stack(
               alignment: Alignment.center,
               children: [

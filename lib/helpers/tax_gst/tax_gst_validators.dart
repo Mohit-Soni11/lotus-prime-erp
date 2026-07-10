@@ -47,6 +47,13 @@ class TaxGstValidators {
       return "BIS License number is required";
     }
 
+    return validateOptionalBisLicense(value);
+  }
+
+  /// Validates BIS license only when a value is provided.
+  static String? validateOptionalBisLicense(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+
     final String cleanValue = value.trim().toUpperCase();
 
     if (cleanValue.length < 5) {

@@ -15,6 +15,8 @@ class TaxGstModel {
   final String regDate;
   final TaxpayerType taxpayerType;
   final String bisLicenseNo;
+  final String goldBisLicenseNo;
+  final String silverBisLicenseNo;
   final String bisValidFrom;
   final String bisValidUpto;
   final String? gstCertPath; // 🚀 FIXED
@@ -26,6 +28,8 @@ class TaxGstModel {
     this.regDate = "",
     this.taxpayerType = TaxpayerType.regular,
     this.bisLicenseNo = "",
+    this.goldBisLicenseNo = "",
+    this.silverBisLicenseNo = "",
     this.bisValidFrom = "",
     this.bisValidUpto = "",
     this.gstCertPath,
@@ -33,12 +37,25 @@ class TaxGstModel {
   });
 
   factory TaxGstModel.fromJson(Map<String, dynamic> json) {
+    final legacyBisLicense = json['bis_license_no']?.toString().trim() ?? "";
+    final storedGoldBisLicense =
+        json['gold_bis_license_no']?.toString().trim() ?? "";
+    final goldBisLicense = storedGoldBisLicense.isNotEmpty
+        ? storedGoldBisLicense
+        : legacyBisLicense;
+    final silverBisLicense =
+        json['silver_bis_license_no']?.toString().trim() ?? "";
+
     return TaxGstModel(
       gstin: json['gstin']?.toString() ?? "",
       legalName: json['legal_name']?.toString() ?? "",
       regDate: json['reg_date']?.toString() ?? "",
       taxpayerType: TaxpayerType.fromString(json['taxpayer_type']?.toString()),
-      bisLicenseNo: json['bis_license_no']?.toString() ?? "",
+      bisLicenseNo: legacyBisLicense.isNotEmpty
+          ? legacyBisLicense
+          : _combinedBisLicense(goldBisLicense, silverBisLicense),
+      goldBisLicenseNo: goldBisLicense,
+      silverBisLicenseNo: silverBisLicense,
       bisValidFrom: json['bis_valid_from']?.toString() ?? "",
       bisValidUpto: json['bis_valid_upto']?.toString() ?? "",
       gstCertPath: json['gst_cert_path']?.toString(),
@@ -53,6 +70,8 @@ class TaxGstModel {
       'reg_date': regDate,
       'taxpayer_type': taxpayerType.displayName,
       'bis_license_no': bisLicenseNo,
+      'gold_bis_license_no': goldBisLicenseNo,
+      'silver_bis_license_no': silverBisLicenseNo,
       'bis_valid_from': bisValidFrom,
       'bis_valid_upto': bisValidUpto,
       'gst_cert_path': gstCertPath,
@@ -66,6 +85,8 @@ class TaxGstModel {
     String? regDate,
     TaxpayerType? taxpayerType,
     String? bisLicenseNo,
+    String? goldBisLicenseNo,
+    String? silverBisLicenseNo,
     String? bisValidFrom,
     String? bisValidUpto,
     String? gstCertPath,
@@ -77,6 +98,8 @@ class TaxGstModel {
       regDate: regDate ?? this.regDate,
       taxpayerType: taxpayerType ?? this.taxpayerType,
       bisLicenseNo: bisLicenseNo ?? this.bisLicenseNo,
+      goldBisLicenseNo: goldBisLicenseNo ?? this.goldBisLicenseNo,
+      silverBisLicenseNo: silverBisLicenseNo ?? this.silverBisLicenseNo,
       bisValidFrom: bisValidFrom ?? this.bisValidFrom,
       bisValidUpto: bisValidUpto ?? this.bisValidUpto,
       gstCertPath: gstCertPath ?? this.gstCertPath,
@@ -93,6 +116,8 @@ class TaxGstModel {
         other.regDate == regDate &&
         other.taxpayerType == taxpayerType &&
         other.bisLicenseNo == bisLicenseNo &&
+        other.goldBisLicenseNo == goldBisLicenseNo &&
+        other.silverBisLicenseNo == silverBisLicenseNo &&
         other.bisValidFrom == bisValidFrom &&
         other.bisValidUpto == bisValidUpto &&
         other.gstCertPath == gstCertPath &&
@@ -101,7 +126,29 @@ class TaxGstModel {
 
   @override
   int get hashCode {
-    return Object.hash(gstin, legalName, regDate, taxpayerType, bisLicenseNo,
-        bisValidFrom, bisValidUpto, gstCertPath, bisLicensePath);
+    return Object.hash(
+      gstin,
+      legalName,
+      regDate,
+      taxpayerType,
+      bisLicenseNo,
+      goldBisLicenseNo,
+      silverBisLicenseNo,
+      bisValidFrom,
+      bisValidUpto,
+      gstCertPath,
+      bisLicensePath,
+    );
+  }
+
+  static String _combinedBisLicense(String gold, String silver) {
+    final goldText = gold.trim();
+    final silverText = silver.trim();
+    if (goldText.isNotEmpty && silverText.isNotEmpty) {
+      if (goldText.toUpperCase() == silverText.toUpperCase()) return goldText;
+      return "Gold: $goldText | Silver: $silverText";
+    }
+    if (goldText.isNotEmpty) return goldText;
+    return silverText;
   }
 }

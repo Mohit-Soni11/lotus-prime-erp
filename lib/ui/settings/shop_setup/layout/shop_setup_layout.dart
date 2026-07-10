@@ -48,19 +48,14 @@ class ShopSetupLayout extends StatelessWidget {
             onJumpToStep: onJumpToStep, // 🔥 Added: Header ko pass kiya
           ),
 
-          // 2. SCROLLABLE BODY
+          // 2. BOUNDED BODY
+          // Each setup tab owns its own scroll view. Keeping another parent
+          // scroll view here gives IndexedStack children unbounded height and
+          // can leave the active tab's repaint boundary without layout.
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 40, horizontal: 50),
-                    child: child,
-                  ),
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 50),
+              child: child,
             ),
           ),
 

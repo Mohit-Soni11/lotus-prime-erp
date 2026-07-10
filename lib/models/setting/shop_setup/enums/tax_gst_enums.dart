@@ -21,9 +21,13 @@ enum TaxpayerType {
   /// Defaults to [TaxpayerType.regular] if the string doesn't match.
   static TaxpayerType fromString(String? value) {
     if (value == null || value.trim().isEmpty) return TaxpayerType.regular;
+    final normalized = value.trim().toLowerCase();
 
     return TaxpayerType.values.firstWhere(
-      (type) => type.displayName.toLowerCase() == value.toLowerCase(),
+      (type) =>
+          type.displayName.toLowerCase() == normalized ||
+          type.name.toLowerCase() == normalized ||
+          'taxpayertype.${type.name}' == normalized,
       orElse: () => TaxpayerType.regular,
     );
   }

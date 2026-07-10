@@ -168,16 +168,18 @@ class _PosInvoicePdfDocumentBuilder {
     PrintFormat format,
     PdfPageFormat pageFormat,
   ) {
+    if (format == PrintFormat.a4) {
+      _addA4InvoicePage(doc, invoice, pageFormat);
+      _addA4PolicyPages(doc, invoice, pageFormat);
+      return;
+    }
+
     doc.addPage(
       pw.Page(
         pageFormat: pageFormat,
-        margin: format == PrintFormat.a4
-            ? const pw.EdgeInsets.all(24)
-            : const pw.EdgeInsets.all(6),
+        margin: const pw.EdgeInsets.all(6),
         build: (pw.Context context) {
-          final layout = format == PrintFormat.a4
-              ? _buildA4Layout(invoice)
-              : _buildThermalLayout(invoice, format);
+          final layout = _buildThermalLayout(invoice, format);
           if (options.includeDuplicateStamp) {
             return pw.Stack(
               alignment: pw.Alignment.center,
@@ -205,13 +207,86 @@ class _PosInvoicePdfDocumentBuilder {
     );
   }
 
-  pw.Widget _buildA4Layout(PosInvoiceModel invoice) {
+  void _addA4InvoicePage(
+    pw.Document doc,
+    PosInvoiceModel invoice,
+    PdfPageFormat pageFormat,
+  ) {
+    doc.addPage(
+      pw.Page(
+        pageFormat: pageFormat,
+        margin: const pw.EdgeInsets.all(24),
+        build: (pw.Context context) {
+          final layout = _buildA4Layout(
+            invoice,
+            includePolicyBlock: false,
+          );
+          if (options.includeDuplicateStamp) {
+            return pw.Stack(
+              alignment: pw.Alignment.center,
+              children: [
+                _duplicateWatermark(fontSize: 60),
+                layout,
+              ],
+            );
+          }
+          return layout;
+        },
+      ),
+    );
+  }
+
+  void _addA4PolicyPages(
+    pw.Document doc,
+    PosInvoiceModel invoice,
+    PdfPageFormat pageFormat,
+  ) {
+    final entries = _policyEntries(invoice);
+    if (entries.isEmpty) return;
+
+    doc.addPage(
+      pw.MultiPage(
+        pageTheme: pw.PageTheme(
+          pageFormat: pageFormat,
+          margin: const pw.EdgeInsets.all(28),
+          buildBackground: options.includeDuplicateStamp
+              ? (_) => pw.Center(
+                    child: _duplicateWatermark(fontSize: 60),
+                  )
+              : null,
+        ),
+        header: (_) => _policyPageHeader(invoice),
+        footer: (context) => _policyPageFooter(context),
+        build: (_) => _policyPageContent(entries),
+      ),
+    );
+  }
+
+  pw.Widget _duplicateWatermark({required double fontSize}) {
+    return pw.Transform.rotate(
+      angle: 0.785,
+      child: pw.Text(
+        'DUPLICATE',
+        style: pw.TextStyle(
+          color: PdfColors.grey300,
+          fontSize: fontSize,
+          fontWeight: pw.FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _buildA4Layout(
+    PosInvoiceModel invoice, {
+    bool includePolicyBlock = true,
+  }) {
     final templateLayout = PosInvoiceTemplateRendererRegistry.tryBuildA4(
       templateId: options.templateId,
       invoice: invoice,
       context: PosInvoiceTemplateRenderContext(
         scopeService: scopeService,
         metalPrintSettings: options.metalPrintSettings,
+        includePolicyBlock: includePolicyBlock,
       ),
     );
     if (templateLayout != null) {
@@ -230,7 +305,7 @@ class _PosInvoicePdfDocumentBuilder {
         _pdfTotalsBlock(invoice),
         pw.SizedBox(height: 14),
         _pdfPaymentBlock(invoice),
-        _pdfPolicyBlock(invoice),
+        if (includePolicyBlock) _pdfPolicyBlock(invoice),
         pw.Spacer(),
         _pdfFooter(invoice),
       ],
@@ -1018,6 +1093,191 @@ class _PosInvoicePdfDocumentBuilder {
       case null:
         return '';
     }
+  }
+
+  List<({String title, String body})> _policyEntries(PosInvoiceModel invoice) {
+    final entries = <({String title, String body})>[];
+
+    for (final metal in scopeService.collectMetals(invoice)) {
+      final config = _getMetalConfig(metal);
+      if (config.printTermsAndConditions &&
+          _hasPrintableCopy(config.termsAndConditions)) {
+        entries.add((
+          title: '${metal.displayName} Terms & Conditions',
+          body: config.termsAndConditions.trim(),
+        ));
+      }
+      if (config.printReturnPolicy &&
+          _hasPrintableCopy(config.returnPolicyText)) {
+        entries.add((
+          title: '${metal.displayName} Return Policy',
+          body: config.returnPolicyText.trim(),
+        ));
+      }
+      if (config.printBuybackPolicy &&
+          _hasPrintableCopy(config.buybackPolicyText)) {
+        entries.add((
+          title: '${metal.displayName} Buyback Policy',
+          body: config.buybackPolicyText.trim(),
+        ));
+      }
+    }
+
+    return entries;
+  }
+
+  pw.Widget _policyPageHeader(PosInvoiceModel invoice) {
+    return pw.Container(
+      margin: const pw.EdgeInsets.only(bottom: 14),
+      padding: const pw.EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: pw.BoxDecoration(
+        color: _pdfHeaderFillColor,
+        border: pw.Border.all(color: _pdfLightBorderColor, width: 0.6),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+      ),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                'TERMS & POLICIES',
+                style: pw.TextStyle(
+                  fontSize: 12,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _pdfTextColor,
+                ),
+              ),
+              pw.SizedBox(height: 3),
+              pw.Text(
+                invoice.printShopName.trim().isEmpty
+                    ? _invoiceTitle(invoice)
+                    : '${invoice.printShopName} | ${_invoiceTitle(invoice)}',
+                style: const pw.TextStyle(
+                  fontSize: 8.5,
+                  color: _pdfMutedTextColor,
+                ),
+              ),
+            ],
+          ),
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.end,
+            children: [
+              pw.Text(
+                'Invoice No.',
+                style: const pw.TextStyle(
+                  fontSize: 7.5,
+                  color: _pdfMutedTextColor,
+                ),
+              ),
+              pw.Text(
+                invoice.invoiceNumber,
+                style: pw.TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _pdfTextColor,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _policyPageFooter(pw.Context context) {
+    return pw.Container(
+      margin: const pw.EdgeInsets.only(top: 10),
+      padding: const pw.EdgeInsets.only(top: 6),
+      decoration: const pw.BoxDecoration(
+        border: pw.Border(top: pw.BorderSide(color: _pdfLightBorderColor)),
+      ),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(
+            'This page is part of the invoice terms and policies.',
+            style: const pw.TextStyle(
+              fontSize: 7.5,
+              color: _pdfMutedTextColor,
+            ),
+          ),
+          pw.Text(
+            'Page ${context.pageNumber} of ${context.pagesCount}',
+            style: const pw.TextStyle(
+              fontSize: 7.5,
+              color: _pdfMutedTextColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<pw.Widget> _policyPageContent(
+    List<({String title, String body})> entries,
+  ) {
+    final widgets = <pw.Widget>[];
+
+    for (var index = 0; index < entries.length; index++) {
+      final entry = entries[index];
+      if (index > 0) {
+        widgets.add(pw.SizedBox(height: 12));
+      }
+      widgets.add(
+        pw.Container(
+          width: double.infinity,
+          padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+          decoration: pw.BoxDecoration(
+            color: _pdfSoftFillColor,
+            border: pw.Border.all(color: _pdfLightBorderColor, width: 0.5),
+            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+          ),
+          child: pw.Text(
+            entry.title.toUpperCase(),
+            style: pw.TextStyle(
+              fontSize: 9.5,
+              fontWeight: pw.FontWeight.bold,
+              color: _pdfTextColor,
+            ),
+          ),
+        ),
+      );
+      widgets.add(pw.SizedBox(height: 6));
+      widgets.addAll(_policyBodyLines(entry.body));
+    }
+
+    return widgets;
+  }
+
+  List<pw.Widget> _policyBodyLines(String body) {
+    final rawLines = body.replaceAll('\r\n', '\n').split('\n');
+    final widgets = <pw.Widget>[];
+
+    for (final rawLine in rawLines) {
+      final line = rawLine.trimRight();
+      if (line.trim().isEmpty) {
+        widgets.add(pw.SizedBox(height: 5));
+        continue;
+      }
+      widgets.add(
+        pw.Padding(
+          padding: const pw.EdgeInsets.only(bottom: 3),
+          child: pw.Text(
+            line,
+            style: const pw.TextStyle(
+              fontSize: _pdfPolicyBodySize,
+              color: _pdfTextColor,
+              lineSpacing: 1.2,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return widgets;
   }
 
   pw.Widget _pdfPolicyBlock(PosInvoiceModel invoice) {

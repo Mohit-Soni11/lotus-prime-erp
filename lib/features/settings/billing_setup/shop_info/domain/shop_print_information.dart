@@ -322,12 +322,30 @@ class ShopPrintInformationCatalog {
       ),
       ShopPrintField(
         id: 'bis_license',
-        label: 'BIS License Number',
-        description: 'Hallmarking license number for jewellery compliance.',
+        label: 'BIS License Scope',
+        description: 'Hallmarking registration scope for jewellery compliance.',
         sourceSection: 'GST & Legal',
-        value: _value(tax['bis_license_no']),
+        value: _bisScopeValue(tax),
         group: ShopPrintFieldGroup.statutory,
         defaultEnabled: true,
+      ),
+      ShopPrintField(
+        id: 'gold_bis_license',
+        label: 'Gold BIS License',
+        description: 'BIS hallmarking registration number for gold jewellery.',
+        sourceSection: 'GST & Legal',
+        value: _value(tax['gold_bis_license_no']),
+        group: ShopPrintFieldGroup.statutory,
+        defaultEnabled: false,
+      ),
+      ShopPrintField(
+        id: 'silver_bis_license',
+        label: 'Silver BIS License',
+        description: 'BIS hallmarking registration number for silver articles.',
+        sourceSection: 'GST & Legal',
+        value: _value(tax['silver_bis_license_no']),
+        group: ShopPrintFieldGroup.statutory,
+        defaultEnabled: false,
       ),
       ShopPrintField(
         id: 'taxpayer_type',
@@ -477,6 +495,20 @@ class ShopPrintInformationCatalog {
 
   static String _join(List<Object?> values) {
     return values.map(_value).where((value) => value.isNotEmpty).join(', ');
+  }
+
+  static String _bisScopeValue(Map<String, dynamic> tax) {
+    final legacy = _value(tax['bis_license_no']);
+    if (legacy.isNotEmpty) return legacy;
+
+    final gold = _value(tax['gold_bis_license_no']);
+    final silver = _value(tax['silver_bis_license_no']);
+    if (gold.isNotEmpty && silver.isNotEmpty) {
+      if (gold.toUpperCase() == silver.toUpperCase()) return gold;
+      return 'Gold: $gold | Silver: $silver';
+    }
+    if (gold.isNotEmpty) return gold;
+    return silver;
   }
 
   static String _pathStatus(Object? value) {

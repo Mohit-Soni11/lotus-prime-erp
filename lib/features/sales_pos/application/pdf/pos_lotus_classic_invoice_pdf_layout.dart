@@ -32,7 +32,10 @@ class PosLotusClassicInvoicePdfLayout {
     required this.metalPrintSettings,
   });
 
-  pw.Widget build(PosInvoiceModel invoice) {
+  pw.Widget build(
+    PosInvoiceModel invoice, {
+    bool includePolicyBlock = true,
+  }) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -60,7 +63,7 @@ class PosLotusClassicInvoicePdfLayout {
         pw.SizedBox(height: 10),
         _totalsAndPayment(invoice),
         pw.SizedBox(height: 10),
-        _policyBlock(invoice),
+        if (includePolicyBlock) _policyBlock(invoice),
         pw.Spacer(),
         _footer(invoice),
       ],

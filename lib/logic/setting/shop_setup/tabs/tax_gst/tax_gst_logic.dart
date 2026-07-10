@@ -32,9 +32,12 @@ class TaxGstLogic extends ChangeNotifier {
   final TextEditingController gstinCtrl = TextEditingController();
   final TextEditingController legalNameCtrl = TextEditingController();
   final TextEditingController regDateCtrl = TextEditingController();
-  final TextEditingController bisLicCtrl = TextEditingController();
+  final TextEditingController goldBisLicCtrl = TextEditingController();
+  final TextEditingController silverBisLicCtrl = TextEditingController();
   final TextEditingController validFromCtrl = TextEditingController();
   final TextEditingController validUptoCtrl = TextEditingController();
+
+  TextEditingController get bisLicCtrl => goldBisLicCtrl;
 
   // --- DROPDOWN STATE ---
   TaxpayerType selectedTaxpayer = TaxpayerType.regular;
@@ -69,15 +72,19 @@ class TaxGstLogic extends ChangeNotifier {
   final FocusNode gstinFocus = FocusNode();
   final FocusNode legalNameFocus = FocusNode();
   final FocusNode regDateFocus = FocusNode();
-  final FocusNode bisLicFocus = FocusNode();
+  final FocusNode goldBisLicFocus = FocusNode();
+  final FocusNode silverBisLicFocus = FocusNode();
   final FocusNode validFromFocus = FocusNode();
   final FocusNode validUptoFocus = FocusNode();
+
+  FocusNode get bisLicFocus => goldBisLicFocus;
 
   TaxGstLogic() {
     // Attach listeners safely
     gstinFocus.addListener(_onFocusChange);
     legalNameFocus.addListener(_onFocusChange);
-    bisLicFocus.addListener(_onFocusChange);
+    goldBisLicFocus.addListener(_onFocusChange);
+    silverBisLicFocus.addListener(_onFocusChange);
   }
 
   void _onFocusChange() => notifyListeners();
@@ -110,7 +117,7 @@ class TaxGstLogic extends ChangeNotifier {
       targetFocus = gstinFocus;
     } else if (sectionId == 'bis') {
       bisSectionState = SectionEditState.editing;
-      targetFocus = bisLicFocus;
+      targetFocus = goldBisLicFocus;
     }
     notifyListeners();
     return targetFocus;
@@ -134,19 +141,26 @@ class TaxGstLogic extends ChangeNotifier {
 
   List<FocusNode> _validateBisSection() {
     List<FocusNode> errors = [];
-    if (TaxGstValidators.validateBisLicense(bisLicCtrl.text) != null) {
-      errors.add(bisLicFocus);
-    }
-    if (TaxGstValidators.validateDate(validFromCtrl.text, "Valid From") !=
+    if (TaxGstValidators.validateOptionalBisLicense(goldBisLicCtrl.text) !=
         null) {
+      errors.add(goldBisLicFocus);
+    }
+    if (TaxGstValidators.validateOptionalBisLicense(silverBisLicCtrl.text) !=
+        null) {
+      errors.add(silverBisLicFocus);
+    }
+    if (_hasAnyBisData &&
+        TaxGstValidators.validateDate(
+                validFromCtrl.text, "Registration Date") !=
+            null) {
       errors.add(validFromFocus);
-    }
-    if (TaxGstValidators.validateDate(validUptoCtrl.text, "Valid Upto") !=
-        null) {
-      errors.add(validUptoFocus);
     }
     return errors;
   }
+
+  bool get _hasAnyBisData =>
+      goldBisLicCtrl.text.trim().isNotEmpty ||
+      silverBisLicCtrl.text.trim().isNotEmpty;
 
   // --- ASYNC SAVE LOGIC ---
   Future<bool> saveSection(String sectionId) async {
@@ -198,15 +212,54 @@ class TaxGstLogic extends ChangeNotifier {
 
   // --- DATA UPDATERS ---
   void _syncDataToModel() {
-    taxData = taxData.copyWith(
-      gstin: gstinCtrl.text.trim(),
-      legalName: legalNameCtrl.text.trim(),
-      regDate: regDateCtrl.text.trim(),
-      taxpayerType: selectedTaxpayer,
-      bisLicenseNo: bisLicCtrl.text.trim(),
-      bisValidFrom: validFromCtrl.text.trim(),
-      bisValidUpto: validUptoCtrl.text.trim(),
+    generateFinalModel();
+  }
+
+  // --- FINAL EXPORT ---
+  TaxGstModel generateFinalModel({
+    String? gstin,
+    String? legalName,
+    String? regDate,
+    String? taxpayerType,
+    String? bisLic,
+    String? goldBisLic,
+    String? silverBisLic,
+    String? validFrom,
+    String? validUpto,
+  }) {
+    final goldBis =
+        _normalizeUpper(goldBisLic ?? bisLic ?? goldBisLicCtrl.text);
+    final silverBis = _normalizeUpper(silverBisLic ?? silverBisLicCtrl.text);
+
+    taxData = TaxGstModel(
+      gstin: _normalizeUpper(gstin ?? gstinCtrl.text),
+      legalName: _normalizeText(legalName ?? legalNameCtrl.text),
+      regDate: _normalizeText(regDate ?? regDateCtrl.text),
+      taxpayerType: taxpayerType == null
+          ? selectedTaxpayer
+          : TaxpayerType.fromString(taxpayerType),
+      bisLicenseNo: _combinedBisLicense(goldBis, silverBis),
+      goldBisLicenseNo: goldBis,
+      silverBisLicenseNo: silverBis,
+      bisValidFrom: _normalizeText(validFrom ?? validFromCtrl.text),
+      bisValidUpto: _normalizeText(validUpto ?? validUptoCtrl.text),
+      gstCertPath: gstCertFile?.path,
+      bisLicensePath: bisLicenseFile?.path,
     );
+    return taxData;
+  }
+
+  String _normalizeText(String value) => value.trim();
+
+  String _normalizeUpper(String value) => value.trim().toUpperCase();
+
+  String _combinedBisLicense(String gold, String silver) {
+    if (gold.isNotEmpty && silver.isNotEmpty) {
+      if (gold == silver) return gold;
+      return "Gold: $gold | Silver: $silver";
+    }
+    if (gold.isNotEmpty) return gold;
+    return silver;
   }
 
   void setTaxpayer(String val) {
@@ -241,13 +294,15 @@ class TaxGstLogic extends ChangeNotifier {
     // 1. Remove listeners first to prevent zombie callbacks
     gstinFocus.removeListener(_onFocusChange);
     legalNameFocus.removeListener(_onFocusChange);
-    bisLicFocus.removeListener(_onFocusChange);
+    goldBisLicFocus.removeListener(_onFocusChange);
+    silverBisLicFocus.removeListener(_onFocusChange);
 
     // 2. Dispose Nodes
     gstinFocus.dispose();
     legalNameFocus.dispose();
     regDateFocus.dispose();
-    bisLicFocus.dispose();
+    goldBisLicFocus.dispose();
+    silverBisLicFocus.dispose();
     validFromFocus.dispose();
     validUptoFocus.dispose();
 
@@ -255,7 +310,8 @@ class TaxGstLogic extends ChangeNotifier {
     gstinCtrl.dispose();
     legalNameCtrl.dispose();
     regDateCtrl.dispose();
-    bisLicCtrl.dispose();
+    goldBisLicCtrl.dispose();
+    silverBisLicCtrl.dispose();
     validFromCtrl.dispose();
     validUptoCtrl.dispose();
 

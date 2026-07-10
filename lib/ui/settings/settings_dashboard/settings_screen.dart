@@ -23,9 +23,19 @@ class SettingsScreen extends StatelessWidget {
   void _handleTap(BuildContext context, SettingsModel item) {
     switch (item.id) {
       case 'shop_profile':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const ShopSetupWizard()),
+        Navigator.of(context, rootNavigator: true).push(
+          PageRouteBuilder(
+            fullscreenDialog: true,
+            pageBuilder: (_, animation, __) => const ShopSetupWizard(),
+            transitionsBuilder: (_, animation, __, child) => FadeTransition(
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              ),
+              child: child,
+            ),
+            transitionDuration: const Duration(milliseconds: 260),
+          ),
         );
         break;
 

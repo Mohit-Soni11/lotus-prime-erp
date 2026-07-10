@@ -64,6 +64,9 @@ void main() {
         },
         'tax_compliance': {
           'gstin': '10ABCDE1234F1Z5',
+          'bis_license_no': 'Gold: HM/C-GOLD | Silver: HM/C-SILVER',
+          'gold_bis_license_no': 'HM/C-GOLD',
+          'silver_bis_license_no': 'HM/C-SILVER',
         },
         'branding_social': {
           'instagram': '@lotusjewellers',
@@ -88,6 +91,9 @@ void main() {
           'gstin',
           'instagram',
           'upi_id',
+          'bis_license',
+          'gold_bis_license',
+          'silver_bis_license',
           'logo',
         },
       ),
@@ -108,6 +114,12 @@ void main() {
     expect(profile.logoPath, r'D:\Lotus\logo.png');
     expect(profile.headerLines, contains('Mobile Number: 9304479436'));
     expect(profile.headerLines, contains('GSTIN: 10ABCDE1234F1Z5'));
+    expect(
+      profile.headerLines,
+      contains('BIS License Scope: Gold: HM/C-GOLD | Silver: HM/C-SILVER'),
+    );
+    expect(profile.headerLines, contains('Gold BIS License: HM/C-GOLD'));
+    expect(profile.headerLines, contains('Silver BIS License: HM/C-SILVER'));
     expect(profile.headerLines, contains('Instagram Channel: @lotusjewellers'));
     expect(profile.headerLines, contains('UPI ID: lotus@upi'));
   });
