@@ -38,7 +38,6 @@ class AddressFormLogic {
   }) {
     List<String> errors = [];
     if (addr1.trim().isEmpty) errors.add('keyAddr1');
-    if (addr2.trim().isEmpty) errors.add('keyAddr2');
     if (city.trim().isEmpty) errors.add('keyCity');
     if (state.trim().isEmpty) errors.add('keyState');
     if (pin.trim().length != 6) errors.add('keyPin');

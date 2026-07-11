@@ -104,8 +104,13 @@ class _BrandingTabState extends State<BrandingTab> {
     // Agar humne auto-fill kiya hai, toh UI ko ek chhota push denge
     // taaki TextFields ke side mein green checkmarks turant render ho jayein
     if (isUpdated && mounted) {
+      logic.generateFinalModel();
       setState(() {});
     }
+  }
+
+  ShopBrandingModel? validateAndExport() {
+    return logic.validateAndGenerateFinalModel();
   }
 
   // --- SMART TOGGLE HANDLING ---

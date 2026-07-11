@@ -6,8 +6,6 @@
 //              Prevents duplicate store creations and ensures Upsert logic.
 // -----------------------------------------------------------------------------
 
-import 'dart:convert';
-
 // --- MODEL IMPORTS ---
 import '../../../models/setting/shop_setup/shop_profile_model.dart';
 import '../../../models/setting/shop_setup/tabs/tax_gst_model.dart';
@@ -52,11 +50,8 @@ class ShopSetupRepository {
       );
 
       final masterPayloadMap = masterModel.toJson();
-      final String prettyJson =
-          const JsonEncoder.withIndent('  ').convert(masterPayloadMap);
       AppLogger.debug(
           "🚀 [SHOP SETUP] SECURE MASTER PAYLOAD ROUTED TO DB WITH PERMANENT ID: $tenantId");
-      AppLogger.debug(prettyJson);
 
       // 1. Existing local DB mein save karo (unchanged)
       final bool isSaved =
@@ -64,17 +59,20 @@ class ShopSetupRepository {
 
       // ✅ 2. Drift ShopProfiles table mein bhi sync karo
       // Dashboard ShopCard yahan se padhta hai
+      bool isSynced = true;
       if (isSaved) {
-        await _syncToDriftShopProfiles(
+        final isProfileSynced = await _syncToDriftShopProfiles(
           basicInfo: basicInfo,
           addressData: addressData,
           taxGst: taxGst,
           banking: bankingList,
         );
-        await _syncBankingToFinanceAccounts(bankingList);
+        final isBankingSynced =
+            await _syncBankingToFinanceAccounts(bankingList);
+        isSynced = isProfileSynced && isBankingSynced;
       }
 
-      return isSaved;
+      return isSaved && isSynced;
     } catch (e, stacktrace) {
       AppLogger.error("❌ [SHOP SETUP] REPOSITORY ERROR: $e");
       AppLogger.debug(stacktrace.toString());
@@ -82,15 +80,22 @@ class ShopSetupRepository {
     }
   }
 
-  Future<void> _syncBankingToFinanceAccounts(
+  Future<bool> _syncBankingToFinanceAccounts(
       List<BankAccountModel> banking) async {
     try {
       final validAccounts = banking.where((bank) {
         return bank.acc.trim().isNotEmpty || bank.upi.trim().isNotEmpty;
       }).toList();
-      if (validAccounts.isEmpty) return;
+      if (validAccounts.isEmpty) return true;
 
-      await (_driftDb.update(_driftDb.bankAccounts))
+      final managedAccountNumbers = validAccounts
+          .map(_financeAccountNumberFor)
+          .where((number) => number.isNotEmpty)
+          .toList();
+      if (managedAccountNumbers.isEmpty) return true;
+
+      await (_driftDb.update(_driftDb.bankAccounts)
+            ..where((tbl) => tbl.accountNumber.isIn(managedAccountNumbers)))
           .write(const BankAccountsCompanion(isPrimary: Value(false)));
 
       for (var index = 0; index < validAccounts.length; index++) {
@@ -132,8 +137,10 @@ class ShopSetupRepository {
           await _driftDb.into(_driftDb.bankAccounts).insert(companion);
         }
       }
+      return true;
     } catch (e) {
       AppLogger.debug('⚠️ [BANKING SYNC] Failed (non-critical): $e');
+      return false;
     }
   }
 
@@ -162,7 +169,7 @@ class ShopSetupRepository {
   // ShopProfileModel (settings) ka data
   // Drift ShopProfiles table mein upsert karo
   // ==========================================
-  Future<void> _syncToDriftShopProfiles({
+  Future<bool> _syncToDriftShopProfiles({
     required ShopProfileModel basicInfo,
     required Map<String, dynamic> addressData,
     required TaxGstModel taxGst,
@@ -236,15 +243,18 @@ class ShopSetupRepository {
         await (_driftDb.update(_driftDb.shopProfiles)
               ..where((t) => t.id.equals(existing.id)))
             .write(companion);
-        AppLogger.debug('✅ [DRIFT SYNC] ShopProfiles updated (id: ${existing.id})');
+        AppLogger.debug(
+            '✅ [DRIFT SYNC] ShopProfiles updated (id: ${existing.id})');
       } else {
         // Insert
         await _driftDb.into(_driftDb.shopProfiles).insert(companion);
         AppLogger.debug('✅ [DRIFT SYNC] ShopProfiles inserted.');
       }
+      return true;
     } catch (e) {
       // Sync fail hone par crash mat karo — sirf log karo
       AppLogger.debug('⚠️ [DRIFT SYNC] Failed (non-critical): $e');
+      return false;
     }
   }
 

@@ -35,7 +35,7 @@ class BankingValidators {
     // Security Upgrade: Automatically handle accidental spaces from copy-pasting
     final sanitizedValue = value.replaceAll(RegExp(r'\s+'), '');
 
-    if (sanitizedValue.length < 6 || sanitizedValue.length > 18) {
+    if (sanitizedValue.length < 6 || sanitizedValue.length > 20) {
       return "Invalid account number length";
     }
 

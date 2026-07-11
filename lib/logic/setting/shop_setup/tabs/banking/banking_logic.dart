@@ -36,7 +36,7 @@ class BankingLogic {
   void addNewAccount() {
     final currentList = List<BankAccountModel>.from(accountsNotifier.value);
     currentList.add(BankAccountModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
       title: "Additional Account ${currentList.length + 1}",
       type: BankAccountType.savings,
     ));

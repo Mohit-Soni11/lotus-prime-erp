@@ -63,13 +63,13 @@ class BrandingStyles {
   static TextStyle get textPageTitle => GoogleFonts.manrope(
         fontSize: szPageTitle,
         fontWeight: FontWeight.w800,
-        color: BrandingColors.textDark,
+        color: BrandingColors.textWhite,
         letterSpacing: -0.5,
       );
 
   static TextStyle get textPageSub => GoogleFonts.inter(
         fontSize: szPageSub,
-        color: BrandingColors.textMuted,
+        color: BrandingColors.textWhite70,
       );
 
   static TextStyle get textSectionTitle => GoogleFonts.manrope(

@@ -42,6 +42,7 @@ class BankingTab extends StatefulWidget {
 
 class _BankingTabState extends State<BankingTab> {
   late BankingLogic logic;
+  final Map<String, GlobalKey<_BankAccountCardState>> _accountCardKeys = {};
 
   @override
   void initState() {
@@ -71,6 +72,38 @@ class _BankingTabState extends State<BankingTab> {
     super.dispose();
   }
 
+  List<BankAccountModel>? validateAndExport() {
+    final accounts = logic.accountsNotifier.value;
+    final exported = <BankAccountModel>[];
+
+    for (final account in accounts) {
+      final cardState = _accountCardKeys[account.id]?.currentState;
+      if (cardState == null) {
+        exported.add(account);
+        continue;
+      }
+
+      final updatedAccount = cardState.validateAndExport(syncParent: false);
+      if (updatedAccount == null) return null;
+      exported.add(updatedAccount);
+    }
+
+    logic.accountsNotifier.value = exported;
+    return exported;
+  }
+
+  GlobalKey<_BankAccountCardState> _cardKeyFor(String id) {
+    return _accountCardKeys.putIfAbsent(
+      id,
+      () => GlobalKey<_BankAccountCardState>(),
+    );
+  }
+
+  void _pruneAccountKeys(List<BankAccountModel> accounts) {
+    final activeIds = accounts.map((account) => account.id).toSet();
+    _accountCardKeys.removeWhere((id, _) => !activeIds.contains(id));
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
@@ -86,12 +119,13 @@ class _BankingTabState extends State<BankingTab> {
             ValueListenableBuilder<List<BankAccountModel>>(
                 valueListenable: logic.accountsNotifier,
                 builder: (context, accounts, child) {
+                  _pruneAccountKeys(accounts);
                   return Column(
                     children: List.generate(accounts.length, (index) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 24),
                         child: BankAccountCard(
-                          key: ValueKey(accounts[index].id),
+                          key: _cardKeyFor(accounts[index].id),
                           accountData: accounts[index],
                           isDesktop: isDesktop,
                           showDelete: index != 0,
@@ -310,6 +344,49 @@ class _BankAccountCardState extends State<BankAccountCard> {
     return errors;
   }
 
+  BankAccountModel? validateAndExport({
+    bool focusOnError = true,
+    bool syncParent = true,
+  }) {
+    if (_hasEditableContent && !(_formKey.currentState?.validate() ?? false)) {
+      final errors = _getInvalidNodes();
+      if (focusOnError && errors.isNotEmpty) {
+        errors.first.requestFocus();
+      }
+      return null;
+    }
+
+    final qrPath =
+        _qrImageFile?.existsSync() == true ? _qrImageFile!.path : null;
+
+    _currentData = _currentData.copyWith(
+      holder: _holderCtrl.text.trim(),
+      bank: _bankCtrl.text.trim(),
+      acc: _accCtrl.text.trim(),
+      ifsc: _ifscCtrl.text.trim().toUpperCase(),
+      branch: _branchCtrl.text.trim(),
+      upi: _upiCtrl.text.trim(),
+      qrImagePath: qrPath,
+      clearQrImage: qrPath == null,
+    );
+
+    if (syncParent) {
+      widget.onSave(_currentData);
+    }
+
+    return _currentData;
+  }
+
+  bool get _hasEditableContent {
+    return _holderCtrl.text.trim().isNotEmpty ||
+        _bankCtrl.text.trim().isNotEmpty ||
+        _accCtrl.text.trim().isNotEmpty ||
+        _ifscCtrl.text.trim().isNotEmpty ||
+        _branchCtrl.text.trim().isNotEmpty ||
+        _upiCtrl.text.trim().isNotEmpty ||
+        _qrImageFile != null;
+  }
+
   Future<void> _toggleLock() async {
     if (_isSaving) return;
 
@@ -319,26 +396,13 @@ class _BankAccountCardState extends State<BankAccountCard> {
         _holderFocus.requestFocus();
       });
     } else {
-      if (!_formKey.currentState!.validate()) {
-        List<FocusNode> errors = _getInvalidNodes();
-        if (errors.isNotEmpty) {
-          errors.first.requestFocus();
-        }
-        return;
-      }
+      final updatedAccount = validateAndExport(syncParent: false);
+      if (updatedAccount == null) return;
 
       setState(() => _isSaving = true);
       await Future.delayed(const Duration(milliseconds: 300));
 
-      _currentData = _currentData.copyWith(
-        holder: _holderCtrl.text.trim(),
-        bank: _bankCtrl.text.trim(),
-        acc: _accCtrl.text.trim(),
-        ifsc: _ifscCtrl.text.trim(),
-        branch: _branchCtrl.text.trim(),
-        upi: _upiCtrl.text.trim(),
-        qrImagePath: _qrImageFile?.path,
-      );
+      _currentData = updatedAccount;
 
       widget.onSave(_currentData);
 
@@ -634,11 +698,15 @@ class _BankAccountCardState extends State<BankAccountCard> {
             isInitiallyLocked: _isLocked,
             cropLogic: widget.logicCore.cropLogic,
             onImageSaved: (file) {
+              final updatedAccount = _currentData.copyWith(
+                qrImagePath: file?.path,
+                clearQrImage: file == null,
+              );
               setState(() {
                 _qrImageFile = file;
-                _currentData = _currentData.copyWith(
-                    qrImagePath: file?.path, clearQrImage: file == null);
+                _currentData = updatedAccount;
               });
+              widget.onSave(updatedAccount);
             },
           ),
         ),
@@ -1006,7 +1074,7 @@ class _QrDocumentWidgetState extends State<QrDocumentWidget> {
                       Navigator.pop(context);
                       _handleDocumentUpload();
                     }),
-                if (widget.currentFile != null)
+                if (_hasCurrentFile)
                   _buildOptionTile(
                       icon: BankingIcons.removeTrash,
                       label: BankingStrings.qrRemove,
@@ -1025,7 +1093,7 @@ class _QrDocumentWidgetState extends State<QrDocumentWidget> {
 
   @override
   Widget build(BuildContext context) {
-    bool hasFile = widget.currentFile != null;
+    bool hasFile = _hasCurrentFile;
     return Container(
       width: 220,
       height: 220,
@@ -1077,4 +1145,9 @@ class _QrDocumentWidgetState extends State<QrDocumentWidget> {
   }
 
   bool isActive() => !_isLocked;
+
+  bool get _hasCurrentFile {
+    final file = widget.currentFile;
+    return file != null && file.existsSync();
+  }
 }

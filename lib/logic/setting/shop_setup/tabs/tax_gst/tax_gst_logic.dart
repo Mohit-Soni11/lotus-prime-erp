@@ -146,6 +146,21 @@ class TaxGstLogic extends ChangeNotifier {
     return true;
   }
 
+  TaxGstModel? validateAndGenerateFinalModel() {
+    final errors = <FocusNode>[
+      ..._validateGstSection(),
+      ..._validateBisSection(),
+    ];
+
+    if (errors.isNotEmpty) {
+      errors.first.requestFocus();
+      notifyListeners();
+      return null;
+    }
+
+    return generateFinalModel();
+  }
+
   // --- DATA UPDATERS ---
   void _syncDataToModel() {
     generateFinalModel();
@@ -171,8 +186,9 @@ class TaxGstLogic extends ChangeNotifier {
       bisLicenseNo: bisRegistration,
       goldBisLicenseNo: bisRegistration,
       silverBisLicenseNo: bisRegistration,
-      gstCertPath: gstCertFile?.path,
-      bisLicensePath: bisLicenseFile?.path,
+      gstCertPath: gstCertFile?.existsSync() == true ? gstCertFile!.path : null,
+      bisLicensePath:
+          bisLicenseFile?.existsSync() == true ? bisLicenseFile!.path : null,
     );
     return taxData;
   }

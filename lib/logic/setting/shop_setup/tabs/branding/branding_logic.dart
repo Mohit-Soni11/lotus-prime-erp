@@ -98,38 +98,38 @@ class BrandingLogic extends ChangeNotifier {
 
   // --- LOGIC: ASYNC SAVE & SMART VALIDATION ---
   /// Validates, saves, and intelligently moves focus if an error occurs.
-  Future<void> saveSection(String sectionId) async {
+  Future<bool> saveSection(String sectionId) async {
     // 1. Validation & Auto-Focus Error Routing
     if (sectionId == 'social') {
       if (BrandingValidators.validateOptionalSocialLink(instaCtrl.text) !=
           null) {
         instaFocus.requestFocus();
-        return;
+        return false;
       }
       if (BrandingValidators.validateOptionalSocialLink(fbCtrl.text) != null) {
         fbFocus.requestFocus();
-        return;
+        return false;
       }
       if (BrandingValidators.validateOptionalSocialLink(ytCtrl.text) != null) {
         ytFocus.requestFocus();
-        return;
+        return false;
       }
       if (BrandingValidators.validateOptionalSocialLink(webCtrl.text) != null) {
         webFocus.requestFocus();
-        return;
+        return false;
       }
     } else if (sectionId == 'support') {
       if (BrandingValidators.validateOptionalPhone(waBizCtrl.text) != null) {
         waBizFocus.requestFocus();
-        return;
+        return false;
       }
       if (BrandingValidators.validateOptionalEmail(emailCtrl.text) != null) {
         emailFocus.requestFocus();
-        return;
+        return false;
       }
       if (BrandingValidators.validateOptionalPhone(phoneCtrl.text) != null) {
         phoneFocus.requestFocus();
-        return;
+        return false;
       }
     }
 
@@ -161,6 +161,55 @@ class BrandingLogic extends ChangeNotifier {
 
     loadingSection = null;
     notifyListeners();
+    return true;
+  }
+
+  ShopBrandingModel? validateAndGenerateFinalModel() {
+    if (BrandingValidators.validateOptionalSocialLink(instaCtrl.text) != null) {
+      instaFocus.requestFocus();
+      return null;
+    }
+    if (BrandingValidators.validateOptionalSocialLink(fbCtrl.text) != null) {
+      fbFocus.requestFocus();
+      return null;
+    }
+    if (BrandingValidators.validateOptionalSocialLink(ytCtrl.text) != null) {
+      ytFocus.requestFocus();
+      return null;
+    }
+    if (BrandingValidators.validateOptionalSocialLink(webCtrl.text) != null) {
+      webFocus.requestFocus();
+      return null;
+    }
+    if (BrandingValidators.validateOptionalPhone(waBizCtrl.text) != null) {
+      waBizFocus.requestFocus();
+      return null;
+    }
+    if (BrandingValidators.validateOptionalEmail(emailCtrl.text) != null) {
+      emailFocus.requestFocus();
+      return null;
+    }
+    if (BrandingValidators.validateOptionalPhone(phoneCtrl.text) != null) {
+      phoneFocus.requestFocus();
+      return null;
+    }
+
+    return generateFinalModel();
+  }
+
+  ShopBrandingModel generateFinalModel() {
+    brandingData = ShopBrandingModel(
+      instagram: instaCtrl.text.trim(),
+      facebook: fbCtrl.text.trim(),
+      youtube: ytCtrl.text.trim(),
+      website: webCtrl.text.trim(),
+      whatsappChannel: waChannelCtrl.text.trim(),
+      whatsappBusiness: waBizCtrl.text.trim(),
+      supportEmail: emailCtrl.text.trim(),
+      supportPhone: phoneCtrl.text.trim(),
+    );
+    notifyListeners();
+    return brandingData;
   }
 
   // --- ENUM-DRIVEN URL LAUNCHER ---
@@ -185,7 +234,11 @@ class BrandingLogic extends ChangeNotifier {
             cleanValue.startsWith('http') ? cleanValue : "https://$cleanValue";
         break;
       case SocialPlatform.whatsapp:
-        urlString = "https://wa.me/91$cleanValue";
+        final digits = cleanValue.replaceAll(RegExp(r'\D'), '');
+        final normalized = digits.length == 10
+            ? '91$digits'
+            : (digits.startsWith('91') ? digits : '91$digits');
+        urlString = "https://wa.me/$normalized";
         break;
       case SocialPlatform.email:
         urlString = "mailto:$cleanValue";

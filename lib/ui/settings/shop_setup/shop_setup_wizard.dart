@@ -157,6 +157,12 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
   }
 
   void _handleJumpToStep(int stepId) {
+    if (stepId > _currentStep && !_activatedSteps[stepId - 1]) {
+      _showErrorFeedback(
+          "Please complete the current step before jumping ahead.");
+      return;
+    }
+
     setState(() {
       _currentStep = stepId;
       _activatedSteps[stepId - 1] = true;
@@ -165,25 +171,10 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
   }
 
   Future<void> _handleNext() async {
+    if (_isLoading) return;
+
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    bool isValid = true;
-
-    if (_currentStep == 1) {
-      try {
-        if (_basicInfoKey.currentState != null) {
-          final data = _basicInfoKey.currentState!.validateAndSave();
-          if (data != null) {
-            _masterData = data;
-          } else {
-            isValid = false;
-          }
-        }
-      } catch (e) {
-        AppLogger.debug("Validation Crash Blocked: $e");
-      }
-    }
+    final isValid = await _validateCurrentStep();
 
     if (!isValid) {
       setState(() => _isLoading = false);
@@ -205,99 +196,71 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
   }
 
   // --- 🚀 THE WRITE CYCLE: Smart Data Extraction Engine ---
+  Future<bool> _validateCurrentStep() async {
+    try {
+      switch (_currentStep) {
+        case 1:
+          final data = _basicInfoKey.currentState?.validateAndSave();
+          if (data == null) return false;
+          _masterData = data;
+          _triggerSafeAutoFetch();
+          return true;
+        case 2:
+          return _addressKey.currentState?.validateAndExport() != null;
+        case 3:
+          return _gstKey.currentState?.validateAndExport() != null;
+        case 4:
+          return _bankingKey.currentState?.validateAndExport() != null;
+        case 5:
+          return _brandingKey.currentState?.validateAndExport() != null;
+        default:
+          return false;
+      }
+    } catch (e) {
+      AppLogger.debug("Step validation blocked a crash: $e");
+      return false;
+    }
+  }
+
   Future<void> _submitMasterConfiguration() async {
     try {
-      // 1. SMART ADDRESS EXTRACTION
-      Map<String, dynamic> addressData = {};
-      try {
-        final addressState = _addressKey.currentState;
-        final formLogic = addressState?.formLogic;
-        final mapLogic = addressState?.mapLogic;
+      final basicInfo = _basicInfoKey.currentState?.validateAndSave();
+      if (basicInfo == null) {
+        _failSubmitOnStep(1);
+        return;
+      }
+      _masterData = basicInfo;
 
-        String addrType = "Head Office";
-        if (formLogic != null) {
-          try {
-            addrType = (formLogic.selectedAddressType is ValueNotifier)
-                ? formLogic.selectedAddressType.value
-                : formLogic.selectedAddressType.toString();
-          } catch (_) {}
-        }
-
-        double? lat, lng;
-        if (mapLogic != null) {
-          try {
-            if (mapLogic.selectedLocation is ValueNotifier) {
-              lat = mapLogic.selectedLocation.value?.latitude;
-              lng = mapLogic.selectedLocation.value?.longitude;
-            } else {
-              lat = mapLogic.selectedLocation?.latitude;
-              lng = mapLogic.selectedLocation?.longitude;
-            }
-          } catch (_) {}
-        }
-
-        addressData = {
-          "type": addrType,
-          "addr1":
-              addressState?.addr1Ctrl?.text ?? formLogic?.addr1Ctrl?.text ?? "",
-          "addr2":
-              addressState?.addr2Ctrl?.text ?? formLogic?.addr2Ctrl?.text ?? "",
-          "city":
-              addressState?.cityCtrl?.text ?? formLogic?.cityCtrl?.text ?? "",
-          "state":
-              addressState?.stateCtrl?.text ?? formLogic?.stateCtrl?.text ?? "",
-          "pincode":
-              addressState?.pinCtrl?.text ?? formLogic?.pinCtrl?.text ?? "",
-          "country": addressState?.countryCtrl?.text ??
-              formLogic?.countryCtrl?.text ??
-              "India",
-          "latitude": lat,
-          "longitude": lng,
-        };
-      } catch (e) {
-        AppLogger.error("Address Extraction Error: $e");
+      final Map<String, dynamic>? addressData =
+          _addressKey.currentState?.validateAndExport();
+      if (addressData == null) {
+        _failSubmitOnStep(2);
+        return;
       }
 
-      // 2. SMART GST EXTRACTION
-      TaxGstModel gstData = const TaxGstModel();
-      try {
-        final gstLogic = _gstKey.currentState?.logic;
-        if (gstLogic != null) {
-          try {
-            gstData = gstLogic.generateFinalModel();
-          } catch (_) {
-            gstData = gstLogic.taxData ?? const TaxGstModel();
-          }
-        }
-      } catch (e) {
-        AppLogger.error("GST Extraction Error: $e");
+      final TaxGstModel? gstData = _gstKey.currentState?.validateAndExport();
+      if (gstData == null) {
+        _failSubmitOnStep(3);
+        return;
       }
 
-      // 3. SMART BANKING EXTRACTION
-      List<BankAccountModel> bankingList = [];
-      try {
-        final bankLogic = _bankingKey.currentState?.logic;
-        if (bankLogic?.accountsNotifier != null) {
-          bankingList = bankLogic!.accountsNotifier.value;
-        }
-      } catch (e) {
-        AppLogger.error("Banking Extraction Error: $e");
+      final List<BankAccountModel>? bankingList =
+          _bankingKey.currentState?.validateAndExport();
+      if (bankingList == null) {
+        _failSubmitOnStep(4);
+        return;
       }
 
-      // 4. SMART BRANDING EXTRACTION
-      ShopBrandingModel brandingData = const ShopBrandingModel();
-      try {
-        final brandLogic = _brandingKey.currentState?.logic;
-        if (brandLogic?.brandingData != null) {
-          brandingData = brandLogic!.brandingData;
-        }
-      } catch (e) {
-        AppLogger.error("Branding Extraction Error: $e");
+      final ShopBrandingModel? brandingData =
+          _brandingKey.currentState?.validateAndExport();
+      if (brandingData == null) {
+        _failSubmitOnStep(5);
+        return;
       }
 
       // 🎯 MASTER PAYLOAD SUBMISSION
       bool isSuccess = await _repository.submitMasterPayload(
-        basicInfo: _masterData,
+        basicInfo: basicInfo,
         addressData: addressData,
         taxGst: gstData,
         bankingList: bankingList,
@@ -316,6 +279,17 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
       _showErrorFeedback("System Error: Setup could not be saved.");
       AppLogger.debug("Master Submission Crash Log: $e");
     }
+  }
+
+  void _failSubmitOnStep(int stepId) {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      _currentStep = stepId;
+      _activatedSteps[stepId - 1] = true;
+    });
+    _showErrorFeedback(
+        "Please correct the highlighted details before saving setup.");
   }
 
   // --- THE AUTO-FETCH ENGINE ---
@@ -356,8 +330,14 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
     AppFeedback.show(
       context,
       type: AppFeedbackType.success,
-      message: "Setup Saved Securely! Redirecting...",
+      message: "Setup Saved Securely!",
     );
+
+    Future.delayed(const Duration(milliseconds: 700), () {
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(true);
+      }
+    });
   }
 
   void _showErrorFeedback(String msg) {

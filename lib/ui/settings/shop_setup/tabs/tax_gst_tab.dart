@@ -18,6 +18,7 @@ import '../../../../theme/settings/shop_setup/tabs/tax_gst/tax_gst_theme.dart';
 // --- LOGIC IMPORTS ---
 import '../../../../logic/setting/shop_setup/tabs/tax_gst/tax_gst_logic.dart';
 import '../../../../logic/setting/shop_setup/tabs/tax_gst/document_crop_logic.dart';
+import '../../../../models/setting/shop_setup/tabs/tax_gst_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
@@ -97,6 +98,10 @@ class _TaxGstTabState extends State<TaxGstTab> {
     final silverValue = silver.trim();
     if (goldValue.isNotEmpty) return goldValue;
     return silverValue;
+  }
+
+  TaxGstModel? validateAndExport() {
+    return logic.validateAndGenerateFinalModel();
   }
 
   // --- SMART TOGGLE HANDLING FOR FORM ---
@@ -906,7 +911,7 @@ class _EnterpriseDocumentWidgetState extends State<EnterpriseDocumentWidget> {
   }
 
   void _showPreviewDialog() {
-    if (widget.currentFile == null) return;
+    if (!_hasCurrentFile) return;
     showDialog(
       context: context,
       builder: (ctx) => GestureDetector(
@@ -958,7 +963,7 @@ class _EnterpriseDocumentWidgetState extends State<EnterpriseDocumentWidget> {
                       Navigator.pop(context);
                       _handleDocumentUpload();
                     }),
-                if (widget.currentFile != null)
+                if (_hasCurrentFile)
                   _buildOptionTile(
                       icon: TaxGstIcons.previewEye,
                       label: TaxGstStrings.optPreview,
@@ -967,7 +972,7 @@ class _EnterpriseDocumentWidgetState extends State<EnterpriseDocumentWidget> {
                         Navigator.pop(context);
                         _showPreviewDialog();
                       }),
-                if (widget.currentFile != null)
+                if (_hasCurrentFile)
                   _buildOptionTile(
                       icon: TaxGstIcons.removeTrash,
                       label: TaxGstStrings.optRemove,
@@ -1010,7 +1015,7 @@ class _EnterpriseDocumentWidgetState extends State<EnterpriseDocumentWidget> {
 
   @override
   Widget build(BuildContext context) {
-    bool hasFile = widget.currentFile != null;
+    bool hasFile = _hasCurrentFile;
     final isDesktop = MediaQuery.sizeOf(context).width >= 1000;
     final previewHeight = widget.useTallPreview && isDesktop ? 300.0 : 220.0;
 
@@ -1189,5 +1194,10 @@ class _EnterpriseDocumentWidgetState extends State<EnterpriseDocumentWidget> {
         ],
       ),
     );
+  }
+
+  bool get _hasCurrentFile {
+    final file = widget.currentFile;
+    return file != null && file.existsSync();
   }
 }

@@ -188,6 +188,35 @@ class AddressTabState extends State<AddressTab> {
     }
   }
 
+  Map<String, dynamic>? validateAndExport() {
+    final errors = formLogic.validateAddress(
+      addr1: addr1Ctrl.text,
+      addr2: addr2Ctrl.text,
+      city: cityCtrl.text,
+      state: stateCtrl.text,
+      pin: pinCtrl.text,
+    );
+
+    if (errors.isNotEmpty) {
+      _routeFocusToError(errors.first);
+      return null;
+    }
+
+    final selectedLocation = mapLogic.selectedLocation.value;
+    return {
+      "type": formLogic.selectedAddressType.value,
+      "addr1": addr1Ctrl.text.trim(),
+      "addr2": addr2Ctrl.text.trim(),
+      "city": cityCtrl.text.trim(),
+      "state": stateCtrl.text.trim(),
+      "pincode": pinCtrl.text.trim(),
+      "country":
+          countryCtrl.text.trim().isEmpty ? "India" : countryCtrl.text.trim(),
+      "latitude": selectedLocation?.latitude,
+      "longitude": selectedLocation?.longitude,
+    };
+  }
+
   // --- SMART MAP HANDLING ---
   void _handleMapTap(LatLng latLng) {
     if (mapLogic.isMapLocked.value) {
@@ -238,7 +267,6 @@ class AddressTabState extends State<AddressTab> {
   void _handleChipSelect(String type) {
     if (formLogic.isAddressLocked.value) return;
     formLogic.updateAddressType(type);
-    _handleAddressToggle();
   }
 
   @override
@@ -329,7 +357,6 @@ class AddressTabState extends State<AddressTab> {
                   focusNode: addr2Focus,
                   nextFocus: cityFocus,
                   isLocked: isLocked,
-                  isRequired: true,
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -836,7 +863,7 @@ class SmartInput extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         ListenableBuilder(
-            listenable: Listenable.merge([focusNode ?? ChangeNotifier(), ctrl]),
+            listenable: Listenable.merge([focusNode, ctrl]),
             builder: (context, _) {
               final hasFocus = focusNode?.hasFocus ?? false;
               BoxDecoration boxDecoration = (!isLocked && hasFocus)

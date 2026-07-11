@@ -67,7 +67,9 @@ class DocumentCropLogic {
         ],
       );
 
-      if (croppedFile != null) return File(croppedFile.path);
+      if (croppedFile != null) {
+        return persistDocumentFile(File(croppedFile.path));
+      }
       return null;
     } catch (e) {
       AppLogger.error("Crop Error: $e");
@@ -75,12 +77,30 @@ class DocumentCropLogic {
     }
   }
 
-  Future<File> saveCroppedBitmap(Uint8List bytes) async {
-    final tempDir = await getTemporaryDirectory();
-    final fileName = 'doc_crop_${DateTime.now().millisecondsSinceEpoch}.png';
-    final tempFile = File(p.join(tempDir.path, fileName));
-    await tempFile.writeAsBytes(bytes);
-    return tempFile;
+  Future<File> saveCroppedBitmap(
+    Uint8List bytes, {
+    String filePrefix = 'doc_crop',
+  }) async {
+    final storageDir = await _managedStorageDir();
+    final storedFile = File(
+      p.join(storageDir.path, _uniqueFileName(filePrefix, '.png')),
+    );
+    await storedFile.writeAsBytes(bytes, flush: true);
+    return storedFile;
+  }
+
+  Future<File> persistDocumentFile(
+    File source, {
+    String filePrefix = 'doc_upload',
+  }) async {
+    final storageDir = await _managedStorageDir();
+    final storedFile = File(
+      p.join(
+        storageDir.path,
+        _uniqueFileName(filePrefix, _safeExtension(source.path)),
+      ),
+    );
+    return source.copy(storedFile.path);
   }
 
   /// 🚀 UPGRADE: Hard memory cleanup to prevent device storage bloat
@@ -89,8 +109,8 @@ class DocumentCropLogic {
       // 1. Evict from Flutter RAM Cache
       FileImage(image).evict();
 
-      // 2. Delete physical temporary file from storage
-      if (await image.exists()) {
+      // 2. Delete only files owned by this module's managed storage.
+      if (await image.exists() && await _isManagedFile(image)) {
         try {
           await image.delete();
         } catch (e) {
@@ -98,5 +118,32 @@ class DocumentCropLogic {
         }
       }
     }
+  }
+
+  Future<Directory> _managedStorageDir() async {
+    final supportDir = await getApplicationSupportDirectory();
+    final storageDir = Directory(p.join(supportDir.path, 'shop_documents'));
+    await storageDir.create(recursive: true);
+    return storageDir;
+  }
+
+  Future<bool> _isManagedFile(File file) async {
+    final storageDir = await _managedStorageDir();
+    final directory = p.normalize(storageDir.path);
+    final filePath = p.normalize(file.path);
+    return p.equals(p.dirname(filePath), directory) ||
+        p.isWithin(directory, filePath);
+  }
+
+  String _safeExtension(String sourcePath) {
+    final extension = p.extension(sourcePath).toLowerCase();
+    return switch (extension) {
+      '.jpg' || '.jpeg' || '.png' || '.webp' => extension,
+      _ => '.png',
+    };
+  }
+
+  String _uniqueFileName(String prefix, String extension) {
+    return '${prefix}_${DateTime.now().microsecondsSinceEpoch}$extension';
   }
 }

@@ -4,6 +4,7 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../theme/settings/settings_dashboard/settings_theme.dart';
 import '../../../../models/setting/settings_model.dart';
 
@@ -44,121 +45,151 @@ class _SettingsCardState extends State<SettingsCard>
   }
 
   void _onEnter(_) {
-    setState(() => _hovered = true);
-    _ctrl.forward();
+    _setHovered(true);
   }
 
   void _onExit(_) {
-    setState(() => _hovered = false);
-    _ctrl.reverse();
+    _setHovered(false);
+  }
+
+  void _setHovered(bool value) {
+    if (_hovered == value) return;
+    setState(() => _hovered = value);
+    if (value) {
+      _ctrl.forward();
+    } else {
+      _ctrl.reverse();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final color = widget.item.accentColor;
 
-    return MouseRegion(
-      onEnter: _onEnter,
-      onExit: _onExit,
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: ScaleTransition(
-          scale: _scale,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: SettingsStyles.cardPadding,
-            decoration: BoxDecoration(
-              gradient: SettingsColors.cardGradient,
-              borderRadius: BorderRadius.circular(SettingsStyles.cardRadius),
-              border: Border.all(
-                color: _hovered
-                    ? color.withValues(alpha: 0.70)
-                    : SettingsColors.cardBorder,
-                width: _hovered ? 1.5 : 1.0,
-              ),
-              boxShadow: _hovered
-                  ? [
-                      BoxShadow(
-                        color: color.withValues(alpha: 0.22),
-                        blurRadius: 28,
-                        offset: const Offset(0, 10),
-                      ),
-                    ]
-                  : const [
-                      BoxShadow(
-                        color: Color(0x45000000),
-                        blurRadius: 14,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // â”€â”€ Top Row: Icon Box + Arrow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Semantics(
+      button: true,
+      label: widget.item.title,
+      child: FocusableActionDetector(
+        mouseCursor: SystemMouseCursors.click,
+        shortcuts: const {
+          SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+          SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+        },
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              widget.onTap();
+              return null;
+            },
+          ),
+        },
+        onShowHoverHighlight: _setHovered,
+        onShowFocusHighlight: _setHovered,
+        child: MouseRegion(
+          onEnter: _onEnter,
+          onExit: _onExit,
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: widget.onTap,
+            child: ScaleTransition(
+              scale: _scale,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: SettingsStyles.cardPadding,
+                decoration: BoxDecoration(
+                  gradient: SettingsColors.cardGradient,
+                  borderRadius:
+                      BorderRadius.circular(SettingsStyles.cardRadius),
+                  border: Border.all(
+                    color: _hovered
+                        ? color.withValues(alpha: 0.70)
+                        : SettingsColors.cardBorder,
+                    width: _hovered ? 1.5 : 1.0,
+                  ),
+                  boxShadow: _hovered
+                      ? [
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.22),
+                            blurRadius: 28,
+                            offset: const Offset(0, 10),
+                          ),
+                        ]
+                      : const [
+                          BoxShadow(
+                            color: Color(0x45000000),
+                            blurRadius: 14,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                ),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Colored icon box â€” larger
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: _hovered
-                            ? color.withValues(alpha: 0.22)
-                            : color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color:
-                              color.withValues(alpha: _hovered ? 0.45 : 0.20),
-                          width: 1,
+                    // â”€â”€ Top Row: Icon Box + Arrow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Colored icon box â€” larger
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: _hovered
+                                ? color.withValues(alpha: 0.22)
+                                : color.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: color.withValues(
+                                  alpha: _hovered ? 0.45 : 0.20),
+                              width: 1,
+                            ),
+                          ),
+                          child: Icon(widget.item.icon, size: 26, color: color),
                         ),
-                      ),
-                      child: Icon(widget.item.icon, size: 26, color: color),
-                    ),
 
-                    // Arrow slides in on hover
-                    AnimatedBuilder(
-                      animation: _arrowSlide,
-                      builder: (_, __) => Transform.translate(
-                        offset: Offset((-1 + _arrowSlide.value) * 8, 0),
-                        child: Opacity(
-                          opacity: _arrowSlide.value,
-                          child: Icon(
-                            SettingsIcons.navArrow,
-                            size: 16,
-                            color: color,
+                        // Arrow slides in on hover
+                        AnimatedBuilder(
+                          animation: _arrowSlide,
+                          builder: (_, __) => Transform.translate(
+                            offset: Offset((-1 + _arrowSlide.value) * 8, 0),
+                            child: Opacity(
+                              opacity: _arrowSlide.value,
+                              child: Icon(
+                                SettingsIcons.navArrow,
+                                size: 16,
+                                color: color,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
 
-                // â”€â”€ Bottom: Title + Subtitle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AnimatedDefaultTextStyle(
-                      duration: const Duration(milliseconds: 150),
-                      style: SettingsStyles.cardTitle.copyWith(
-                        color: _hovered ? color : SettingsColors.textTitle,
-                      ),
-                      child: Text(widget.item.title, maxLines: 1),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      widget.item.subtitle,
-                      style: SettingsStyles.cardSubtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    // â”€â”€ Bottom: Title + Subtitle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 150),
+                          style: SettingsStyles.cardTitle.copyWith(
+                            color: _hovered ? color : SettingsColors.textTitle,
+                          ),
+                          child: Text(widget.item.title, maxLines: 1),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          widget.item.subtitle,
+                          style: SettingsStyles.cardSubtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
