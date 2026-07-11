@@ -107,11 +107,17 @@ class BasicInfoLogic {
 
   // --- 🚀 UPGRADE: PURE VALIDATION (Returns Field Keys, Not FocusNodes) ---
   List<String> validateEnterprise(
-      {required String displayName,
+      {required String legalName,
+      required String displayName,
       required String ownerName,
       required String ownerPhone,
       required String ownerWa}) {
     List<String> errors = [];
+    if (BasicInfoValidators.required(
+            legalName, BasicInfoStrings.lblLegalName) !=
+        null) {
+      errors.add(BasicInfoStrings.keyLegalName);
+    }
     if (BasicInfoValidators.required(
             displayName, BasicInfoStrings.lblDisplayName) !=
         null) {
@@ -140,6 +146,14 @@ class BasicInfoLogic {
     if (BasicInfoValidators.required(
             closeTime, BasicInfoStrings.lblCloseTime) !=
         null) {
+      errors.add(BasicInfoStrings.keyCloseTime);
+    }
+    if (errors.isEmpty &&
+        BasicInfoValidators.businessHours(
+              openTime: openTime,
+              closeTime: closeTime,
+            ) !=
+            null) {
       errors.add(BasicInfoStrings.keyCloseTime);
     }
     return errors;
@@ -244,11 +258,15 @@ class BasicInfoLogic {
       shopWhatsapp: shopWhatsapp.trim(),
       // 🚀 FIXED: Mapping to logoPath and signaturePath instead of Base64
       // Yeh check karega ki naya file select hua hai ya nahi, warna initial data se le lega
-      logoPath:
-          _logoRemoved ? null : logoFile.value?.path ?? _initialData?.logoPath,
+      logoPath: _logoRemoved
+          ? null
+          : _existingPath(logoFile.value?.path, _initialData?.logoPath),
       signaturePath: _signatureRemoved
           ? null
-          : signatureFile.value?.path ?? _initialData?.signaturePath,
+          : _existingPath(
+              signatureFile.value?.path,
+              _initialData?.signaturePath,
+            ),
       logoShape: logoShape.value,
       signatureShape: signatureShape.value,
     );
@@ -259,6 +277,12 @@ class BasicInfoLogic {
     return normalized == "square" || normalized == "circle"
         ? normalized
         : fallback;
+  }
+
+  String? _existingPath(String? path, String? fallbackPath) {
+    final candidate = path ?? fallbackPath;
+    if (candidate == null || candidate.trim().isEmpty) return null;
+    return File(candidate).existsSync() ? candidate : null;
   }
 
   Future<File> _persistIdentityImage(File source, String fileStem) async {

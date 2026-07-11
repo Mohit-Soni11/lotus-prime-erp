@@ -25,6 +25,7 @@ import '../../../core/logging/app_logger.dart';
 
 class ShopSetupRepository {
   final ShopDatabaseHelper _dbHelper = ShopDatabaseHelper();
+  static const String _shopSetupFinanceAccent = '#D4AF37';
 
   // ✅ Drift DB instance — Dashboard ke liye
   final AppDatabase _driftDb = AppDatabase();
@@ -86,13 +87,21 @@ class ShopSetupRepository {
       final validAccounts = banking.where((bank) {
         return bank.acc.trim().isNotEmpty || bank.upi.trim().isNotEmpty;
       }).toList();
-      if (validAccounts.isEmpty) return true;
+      if (validAccounts.isEmpty) {
+        await _deactivateRemovedFinanceAccounts(const []);
+        return true;
+      }
 
       final managedAccountNumbers = validAccounts
           .map(_financeAccountNumberFor)
           .where((number) => number.isNotEmpty)
           .toList();
-      if (managedAccountNumbers.isEmpty) return true;
+      if (managedAccountNumbers.isEmpty) {
+        await _deactivateRemovedFinanceAccounts(const []);
+        return true;
+      }
+
+      await _deactivateRemovedFinanceAccounts(managedAccountNumbers);
 
       await (_driftDb.update(_driftDb.bankAccounts)
             ..where((tbl) => tbl.accountNumber.isIn(managedAccountNumbers)))
@@ -125,7 +134,7 @@ class ShopSetupRepository {
           openingBalance: const Value(0),
           isActive: const Value(true),
           isPrimary: Value(isPrimary),
-          colorHex: const Value('#D4AF37'),
+          colorHex: const Value(_shopSetupFinanceAccent),
           activeSince: Value(DateTime.now()),
         );
 
@@ -142,6 +151,19 @@ class ShopSetupRepository {
       AppLogger.debug('⚠️ [BANKING SYNC] Failed (non-critical): $e');
       return false;
     }
+  }
+
+  Future<void> _deactivateRemovedFinanceAccounts(
+    List<String> activeAccountNumbers,
+  ) async {
+    await (_driftDb.update(_driftDb.bankAccounts)
+          ..where((tbl) =>
+              tbl.colorHex.equals(_shopSetupFinanceAccent) &
+              tbl.accountNumber.isNotIn(activeAccountNumbers)))
+        .write(const BankAccountsCompanion(
+      isActive: Value(false),
+      isPrimary: Value(false),
+    ));
   }
 
   String _financeAccountNumberFor(BankAccountModel bank) {

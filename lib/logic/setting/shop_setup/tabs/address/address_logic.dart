@@ -40,7 +40,7 @@ class AddressFormLogic {
     if (addr1.trim().isEmpty) errors.add('keyAddr1');
     if (city.trim().isEmpty) errors.add('keyCity');
     if (state.trim().isEmpty) errors.add('keyState');
-    if (pin.trim().length != 6) errors.add('keyPin');
+    if (!RegExp(r'^\d{6}$').hasMatch(pin.trim())) errors.add('keyPin');
     return errors;
   }
 

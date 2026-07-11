@@ -65,6 +65,7 @@ void main() {
         'tax_compliance': {
           'gstin': '10ABCDE1234F1Z5',
           'bis_license_no': 'BIS-REG-123',
+          'hallmarking_scope': 'Gold & Silver',
           'gold_bis_license_no': 'BIS-REG-123',
           'silver_bis_license_no': 'BIS-REG-123',
         },
@@ -92,6 +93,7 @@ void main() {
           'instagram',
           'upi_id',
           'bis_license',
+          'bis_hallmarking_scope',
           'logo',
         },
       ),
@@ -113,6 +115,8 @@ void main() {
     expect(profile.headerLines, contains('Mobile Number: 9304479436'));
     expect(profile.headerLines, contains('GSTIN: 10ABCDE1234F1Z5'));
     expect(profile.headerLines, contains('BIS Registration No.: BIS-REG-123'));
+    expect(
+        profile.headerLines, contains('BIS Hallmarking Scope: Gold & Silver'));
     expect(
       profile.headerLines.any((line) => line.startsWith('Gold BIS License:')),
       isFalse,

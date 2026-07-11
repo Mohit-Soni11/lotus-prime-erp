@@ -27,7 +27,7 @@ class BasicInfoStrings {
 
   // --- LABELS & HINTS ---
   static const String lblLegalName = "Registered Legal Entity Name";
-  static const String hintLegalName = "Enter Registered Name (Optional)";
+  static const String hintLegalName = "Enter Registered Name";
 
   static const String lblDisplayName = "Trade / Display Name";
   static const String hintDisplayName = "Enter Shop Name";
@@ -92,6 +92,7 @@ class BasicInfoStrings {
   ];
 
   // Field Keys for Validation Tracking
+  static const String keyLegalName = "legalName";
   static const String keyDisplayName = "displayName";
   static const String keyOwnerName = "ownerName";
   static const String keyOwnerPhone = "ownerPhone";

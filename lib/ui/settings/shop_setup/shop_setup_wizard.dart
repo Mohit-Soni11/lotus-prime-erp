@@ -57,13 +57,14 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
   // SMART LAZY LOADING TRACKER
   final List<bool> _activatedSteps = List.generate(5, (index) => index == 0);
 
-  // DYNAMIC GLOBAL KEYS FOR DATA EXTRACTION
+  // Typed keys keep each tab's export contract analyzer-checked.
   final GlobalKey<BasicInfoTabState> _basicInfoKey =
       GlobalKey<BasicInfoTabState>();
-  final GlobalKey<dynamic> _addressKey = GlobalKey();
-  final GlobalKey<dynamic> _gstKey = GlobalKey();
-  final GlobalKey<dynamic> _bankingKey = GlobalKey();
-  final GlobalKey<dynamic> _brandingKey = GlobalKey();
+  final GlobalKey<AddressTabState> _addressKey = GlobalKey<AddressTabState>();
+  final GlobalKey<TaxGstTabState> _gstKey = GlobalKey<TaxGstTabState>();
+  final GlobalKey<BankingTabState> _bankingKey = GlobalKey<BankingTabState>();
+  final GlobalKey<BrandingTabState> _brandingKey =
+      GlobalKey<BrandingTabState>();
 
   // --- STEPS DEFINITION ---
   final List<ShopStepModel> _allSteps = [
@@ -267,6 +268,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
         branding: brandingData,
       );
 
+      if (!mounted) return;
       setState(() => _isLoading = false);
 
       if (isSuccess) {
@@ -275,6 +277,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
         _showErrorFeedback("Failed to sync configuration with the database.");
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
       _showErrorFeedback("System Error: Setup could not be saved.");
       AppLogger.debug("Master Submission Crash Log: $e");
@@ -304,19 +307,13 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
           final brandState = _brandingKey.currentState;
           if (brandState != null) {
             try {
-              brandState.logic?.autoSyncData(
-                  phone: fetchedPhone,
-                  whatsapp: fetchedWa,
-                  email: fetchedEmail);
-            } catch (_) {
-              try {
-                brandState.autoSyncData(
-                    phone: fetchedPhone,
-                    whatsapp: fetchedWa,
-                    email: fetchedEmail);
-              } catch (e) {
-                AppLogger.debug("Auto Sync Ignored: $e");
-              }
+              brandState.autoSyncData(
+                phone: fetchedPhone,
+                whatsapp: fetchedWa,
+                email: fetchedEmail,
+              );
+            } catch (e) {
+              AppLogger.debug("Auto Sync Ignored: $e");
             }
           }
         }

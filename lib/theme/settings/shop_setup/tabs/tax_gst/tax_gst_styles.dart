@@ -47,7 +47,7 @@ class TaxGstStyles {
       fontSize: szPageTitle,
       fontWeight: FontWeight.w800,
       color: TaxGstColors.textDark,
-      letterSpacing: -0.5);
+      letterSpacing: 0);
   static TextStyle get pageSubtitle =>
       GoogleFonts.inter(fontSize: 14.0, color: TaxGstColors.textMuted);
   static TextStyle get sectionTitle => GoogleFonts.manrope(

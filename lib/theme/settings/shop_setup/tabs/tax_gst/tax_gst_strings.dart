@@ -36,6 +36,11 @@ class TaxGstStrings {
 
   static const String lblBisLic = "BIS Registration No.";
   static const String hintBisLic = "Enter BIS registration number";
+  static const String lblGoldBisLic = "Gold BIS Registration No.";
+  static const String hintGoldBisLic = "Enter gold registration number";
+  static const String lblSilverBisLic = "Silver BIS Registration No.";
+  static const String hintSilverBisLic = "Enter silver registration number";
+  static const String lblHallmarkingScope = "Hallmarking Scope";
 
   // --- Documents & Uploads ---
   static const String docGstTitle = "GST Certificate";
@@ -78,4 +83,6 @@ class TaxGstStrings {
   static const String errBisEmpty = "BIS registration number is required";
   static const String errBisInvalid = "Invalid BIS registration number";
   static const String errFileTooLarge = "File too large. Max 10MB.";
+  static const String errUnsupportedDocument =
+      "Upload a PDF, JPG, PNG, or WEBP document.";
 }

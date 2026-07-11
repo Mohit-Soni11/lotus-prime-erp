@@ -51,7 +51,7 @@ class SetupFooter extends StatelessWidget {
             color: LayoutColors.textPlaceholder, size: 16),
         const SizedBox(width: 8),
         Text(
-          "Secured by 256-bit Encryption",
+          "Protected local configuration",
           style: GoogleFonts.inter(
               // âœ… Updated: Uses 'textPlaceholder'
               color: LayoutColors.textPlaceholder,

@@ -47,4 +47,44 @@ class BasicInfoValidators {
     if (!_emailRegex.hasMatch(val.trim())) return 'Invalid Email Format';
     return null;
   }
+
+  static String? businessHours({
+    required String openTime,
+    required String closeTime,
+  }) {
+    final openMinutes = _parseClockMinutes(openTime);
+    final closeMinutes = _parseClockMinutes(closeTime);
+    if (openMinutes == null || closeMinutes == null) {
+      return 'Use a valid time format';
+    }
+    if (closeMinutes <= openMinutes) {
+      return 'Closing time must be after opening time';
+    }
+    return null;
+  }
+
+  static int? _parseClockMinutes(String value) {
+    final text = value.trim().toUpperCase();
+    final match = RegExp(r'^(\d{1,2}):(\d{2})\s*(AM|PM)$').firstMatch(text);
+    if (match == null) return null;
+
+    final hour = int.tryParse(match.group(1)!);
+    final minute = int.tryParse(match.group(2)!);
+    final meridiem = match.group(3)!;
+    if (hour == null ||
+        minute == null ||
+        hour < 1 ||
+        hour > 12 ||
+        minute < 0 ||
+        minute > 59) {
+      return null;
+    }
+
+    final normalizedHour = switch (meridiem) {
+      'AM' => hour == 12 ? 0 : hour,
+      'PM' => hour == 12 ? 12 : hour + 12,
+      _ => hour,
+    };
+    return normalizedHour * 60 + minute;
+  }
 }

@@ -64,7 +64,7 @@ class BrandingStyles {
         fontSize: szPageTitle,
         fontWeight: FontWeight.w800,
         color: BrandingColors.textWhite,
-        letterSpacing: -0.5,
+        letterSpacing: 0,
       );
 
   static TextStyle get textPageSub => GoogleFonts.inter(

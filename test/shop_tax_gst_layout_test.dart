@@ -27,7 +27,11 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Statutory & Tax Compliance'), findsOneWidget);
     expect(find.text('Bureau of Indian Standards'), findsOneWidget);
-    expect(find.text('BIS Registration No.'), findsOneWidget);
+    expect(find.text('Gold BIS Registration No.'), findsOneWidget);
+    expect(find.text('Silver BIS Registration No.'), findsOneWidget);
+    expect(find.text('Hallmarking Scope'), findsOneWidget);
+    expect(find.text('Gold'), findsOneWidget);
+    expect(find.text('Silver'), findsOneWidget);
     expect(find.text('Applicable GST Structure'), findsNothing);
     expect(find.textContaining('BIS hallmarking covers'), findsNothing);
     expect(find.text('Valid From'), findsNothing);

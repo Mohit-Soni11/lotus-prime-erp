@@ -33,6 +33,38 @@ enum TaxpayerType {
   }
 }
 
+/// Scope covered by the jeweller's BIS hallmarking registration.
+enum HallmarkingScope {
+  gold('Gold'),
+  silver('Silver'),
+  goldAndSilver('Gold & Silver');
+
+  final String displayName;
+
+  const HallmarkingScope(this.displayName);
+
+  bool get coversGold => this == gold || this == goldAndSilver;
+  bool get coversSilver => this == silver || this == goldAndSilver;
+
+  static HallmarkingScope fromString(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return HallmarkingScope.goldAndSilver;
+    }
+
+    final normalized = value.trim().toLowerCase();
+    if (normalized == 'gold') return HallmarkingScope.gold;
+    if (normalized == 'silver') return HallmarkingScope.silver;
+    if (normalized == 'both' ||
+        normalized == 'gold & silver' ||
+        normalized == 'gold and silver' ||
+        normalized == 'gold/silver' ||
+        normalized == 'hallmarkingscope.goldandsilver') {
+      return HallmarkingScope.goldAndSilver;
+    }
+    return HallmarkingScope.goldAndSilver;
+  }
+}
+
 /// Defines the current interaction state of a specific form section.
 /// This eliminates the need for multiple confusing boolean flags.
 enum SectionEditState {

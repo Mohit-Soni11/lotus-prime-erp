@@ -330,6 +330,15 @@ class ShopPrintInformationCatalog {
         defaultEnabled: false,
       ),
       ShopPrintField(
+        id: 'bis_hallmarking_scope',
+        label: 'BIS Hallmarking Scope',
+        description: 'Gold, silver, or both as covered by registration.',
+        sourceSection: 'GST & Legal',
+        value: _value(tax['hallmarking_scope']),
+        group: ShopPrintFieldGroup.statutory,
+        defaultEnabled: false,
+      ),
+      ShopPrintField(
         id: 'taxpayer_type',
         label: 'Taxpayer Type',
         description: 'GST taxpayer category such as regular or composition.',

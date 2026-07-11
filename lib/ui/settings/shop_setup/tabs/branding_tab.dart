@@ -25,10 +25,10 @@ class BrandingTab extends StatefulWidget {
   const BrandingTab({super.key, this.initialData, this.brandingData});
 
   @override
-  State<BrandingTab> createState() => _BrandingTabState();
+  State<BrandingTab> createState() => BrandingTabState();
 }
 
-class _BrandingTabState extends State<BrandingTab> {
+class BrandingTabState extends State<BrandingTab> {
   late BrandingLogic logic;
 
   @override
@@ -269,7 +269,7 @@ class _BrandingTabState extends State<BrandingTab> {
           focusNode: logic.waBizFocus,
           nextFocus: logic.emailFocus,
           inputType: TextInputType.phone,
-          maxLength: 10,
+          maxLength: 15,
           brandColor: BrandingColors.brandWhatsapp,
           platformType: 'whatsapp',
           onLaunchUrl: logic.launchPlatformUrl,
@@ -298,7 +298,7 @@ class _BrandingTabState extends State<BrandingTab> {
           focusNode: logic.phoneFocus,
           inputType: TextInputType.phone,
           isLastField: true,
-          maxLength: 10,
+          maxLength: 15,
           brandColor: BrandingColors.brandPhone,
           platformType: 'phone',
           onLaunchUrl: logic.launchPlatformUrl,

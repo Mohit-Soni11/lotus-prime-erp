@@ -63,7 +63,19 @@ class _SetupHeaderState extends State<SetupHeader>
                   const SizedBox(height: 6),
 
                   // ðŸ”¥ THE RADAR PULSE WIDGET
-                  const RadarStatusWidget(),
+                  Row(
+                    children: [
+                      const RadarStatusWidget(),
+                      const SizedBox(width: 14),
+                      Text(
+                        "${widget.title}  /  ${widget.subTitle}",
+                        style: LayoutStyles.stepTitle.copyWith(
+                          color: LayoutColors.textBody,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
 

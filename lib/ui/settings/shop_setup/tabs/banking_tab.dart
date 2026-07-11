@@ -37,10 +37,10 @@ class BankingTab extends StatefulWidget {
   const BankingTab({super.key, this.initialData});
 
   @override
-  State<BankingTab> createState() => _BankingTabState();
+  State<BankingTab> createState() => BankingTabState();
 }
 
-class _BankingTabState extends State<BankingTab> {
+class BankingTabState extends State<BankingTab> {
   late BankingLogic logic;
   final Map<String, GlobalKey<_BankAccountCardState>> _accountCardKeys = {};
 
@@ -89,7 +89,30 @@ class _BankingTabState extends State<BankingTab> {
     }
 
     logic.accountsNotifier.value = exported;
+    if (_hasDuplicatePaymentIdentity(exported)) {
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.error,
+        message: "Duplicate bank account or UPI details are not allowed.",
+      );
+      return null;
+    }
     return exported;
+  }
+
+  bool _hasDuplicatePaymentIdentity(List<BankAccountModel> accounts) {
+    final seen = <String>{};
+    for (final account in accounts) {
+      final accountNumber = account.acc.trim();
+      if (accountNumber.isNotEmpty &&
+          !seen.add('ACC:${accountNumber.toUpperCase()}')) {
+        return true;
+      }
+
+      final upi = account.upi.trim().toLowerCase();
+      if (upi.isNotEmpty && !seen.add('UPI:$upi')) return true;
+    }
+    return false;
   }
 
   GlobalKey<_BankAccountCardState> _cardKeyFor(String id) {

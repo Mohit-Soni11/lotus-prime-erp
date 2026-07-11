@@ -15,7 +15,7 @@ class ShopDatabaseHelper {
   static Database? _database;
 
   // 🚀 AUTO-UPDATE ENGINE: Future mein naya column add karna ho, toh ise '3' kar dena
-  static const int _dbVersion = 4;
+  static const int _dbVersion = 5;
 
   factory ShopDatabaseHelper() => _instance;
 
@@ -34,6 +34,9 @@ class ShopDatabaseHelper {
     return await openDatabase(
       path,
       version: _dbVersion,
+      onConfigure: (db) async {
+        await db.execute('PRAGMA foreign_keys = ON');
+      },
       onCreate: _createSchema,
       onUpgrade: _onUpgrade, // 🚀 Ye automatically handle karega future updates
     );
@@ -75,6 +78,7 @@ class ShopDatabaseHelper {
         tenant_id TEXT PRIMARY KEY,
         gstin TEXT, legal_name TEXT, reg_date TEXT, taxpayer_type TEXT,
         bis_license_no TEXT, gold_bis_license_no TEXT, silver_bis_license_no TEXT,
+        hallmarking_scope TEXT DEFAULT 'Gold & Silver',
         bis_valid_from TEXT, bis_valid_upto TEXT,
         gst_cert_path TEXT, bis_license_path TEXT,
         FOREIGN KEY (tenant_id) REFERENCES shop_profile (tenant_id) ON DELETE CASCADE
@@ -136,6 +140,14 @@ class ShopDatabaseHelper {
         'shop_tax_gst',
         'silver_bis_license_no',
         'TEXT',
+      );
+    }
+    if (oldVersion < 5) {
+      await _addColumnIfMissing(
+        db,
+        'shop_tax_gst',
+        'hallmarking_scope',
+        "TEXT DEFAULT 'Gold & Silver'",
       );
     }
   }

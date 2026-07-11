@@ -23,6 +23,7 @@ class TaxGstIcons {
   static const IconData taxpayer = Icons.person_pin_rounded;
 
   static const IconData bisVerified = Icons.verified_user_rounded;
+  static const IconData hallmarkingScope = Icons.category_rounded;
 
   // --- Actions ---
   static const IconData edit = Icons.edit_rounded;

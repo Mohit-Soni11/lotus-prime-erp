@@ -25,7 +25,7 @@ class BankingStyles {
       fontSize: 24.0,
       fontWeight: FontWeight.w800,
       color: BankingColors.textWhite,
-      letterSpacing: -0.5);
+      letterSpacing: 0);
   static TextStyle pageSub =
       GoogleFonts.inter(fontSize: 14.0, color: BankingColors.textWhite70);
   static TextStyle statusPillText = GoogleFonts.inter(

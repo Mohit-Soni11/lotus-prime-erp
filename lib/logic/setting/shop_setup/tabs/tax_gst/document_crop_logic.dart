@@ -8,8 +8,8 @@
 
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart' as native_crop;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -17,27 +17,46 @@ import '../../../../../core/logging/app_logger.dart';
 import 'package:flutter/foundation.dart';
 
 class DocumentCropLogic {
-  final ImagePicker _picker = ImagePicker();
   static const int maxFileSizeMb = 10;
+  static const Set<String> _allowedExtensions = {
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.webp',
+    '.pdf',
+  };
 
   /// 🚀 UPGRADE: Removed BuildContext. Throws FormatException on error,
   /// allowing the UI layer to catch it and show a feedback overlay cleanly.
   Future<File?> pickDocumentFromGallery() async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85, // Optimized quality for fast processing
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
+        allowMultiple: false,
+        withData: false,
       );
 
-      if (pickedFile == null) return null;
+      if (result == null || result.files.isEmpty) return null;
 
-      File file = File(pickedFile.path);
+      final pickedPath = result.files.single.path;
+      if (pickedPath == null || pickedPath.trim().isEmpty) return null;
+
+      final file = File(pickedPath);
       int sizeInBytes = await file.length();
       double sizeInMb = sizeInBytes / (1024 * 1024);
 
       if (sizeInMb > maxFileSizeMb) {
         throw const FormatException("FILE_TOO_LARGE");
       }
+      if (!_allowedExtensions.contains(p.extension(file.path).toLowerCase())) {
+        throw const FormatException("UNSUPPORTED_FILE");
+      }
+
+      if (isPdfDocument(file)) {
+        return persistDocumentFile(file, filePrefix: 'doc_pdf');
+      }
+
       return file;
     } catch (e) {
       AppLogger.error("Picker Error: $e");
@@ -103,6 +122,10 @@ class DocumentCropLogic {
     return source.copy(storedFile.path);
   }
 
+  bool isPdfDocument(File file) {
+    return p.extension(file.path).toLowerCase() == '.pdf';
+  }
+
   /// 🚀 UPGRADE: Hard memory cleanup to prevent device storage bloat
   Future<void> clearCache(File? image) async {
     if (image != null) {
@@ -138,7 +161,7 @@ class DocumentCropLogic {
   String _safeExtension(String sourcePath) {
     final extension = p.extension(sourcePath).toLowerCase();
     return switch (extension) {
-      '.jpg' || '.jpeg' || '.png' || '.webp' => extension,
+      '.jpg' || '.jpeg' || '.png' || '.webp' || '.pdf' => extension,
       _ => '.png',
     };
   }

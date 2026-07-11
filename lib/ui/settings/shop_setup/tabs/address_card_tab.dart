@@ -679,7 +679,7 @@ class _PageHeader extends StatelessWidget {
                       fontSize: AddressStyles.szPageTitle,
                       fontWeight: FontWeight.w800,
                       color: AddressColors.surfaceWhite,
-                      letterSpacing: -0.5)),
+                      letterSpacing: 0)),
               const SizedBox(height: 4),
               Text(AddressStrings.pageSub,
                   style: GoogleFonts.inter(

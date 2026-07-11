@@ -114,11 +114,17 @@ class BrandingLogic extends ChangeNotifier {
         ytFocus.requestFocus();
         return false;
       }
-      if (BrandingValidators.validateOptionalSocialLink(webCtrl.text) != null) {
+      if (BrandingValidators.validateOptionalWebsite(webCtrl.text) != null) {
         webFocus.requestFocus();
         return false;
       }
     } else if (sectionId == 'support') {
+      if (BrandingValidators.validateOptionalWhatsAppChannel(
+              waChannelCtrl.text) !=
+          null) {
+        waChannelFocus.requestFocus();
+        return false;
+      }
       if (BrandingValidators.validateOptionalPhone(waBizCtrl.text) != null) {
         waBizFocus.requestFocus();
         return false;
@@ -177,8 +183,14 @@ class BrandingLogic extends ChangeNotifier {
       ytFocus.requestFocus();
       return null;
     }
-    if (BrandingValidators.validateOptionalSocialLink(webCtrl.text) != null) {
+    if (BrandingValidators.validateOptionalWebsite(webCtrl.text) != null) {
       webFocus.requestFocus();
+      return null;
+    }
+    if (BrandingValidators.validateOptionalWhatsAppChannel(
+            waChannelCtrl.text) !=
+        null) {
+      waChannelFocus.requestFocus();
       return null;
     }
     if (BrandingValidators.validateOptionalPhone(waBizCtrl.text) != null) {

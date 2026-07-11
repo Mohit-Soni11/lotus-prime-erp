@@ -146,6 +146,8 @@ class BasicInfoTabState extends State<BasicInfoTab> {
   // --- ðŸš€ UPGRADE: SAFE FOCUS MAPPING ---
   FocusNode? _getNodeByKey(String key) {
     switch (key) {
+      case BasicInfoStrings.keyLegalName:
+        return legalNameFocus;
       case BasicInfoStrings.keyDisplayName:
         return displayNameFocus;
       case BasicInfoStrings.keyOwnerName:
@@ -203,6 +205,7 @@ class BasicInfoTabState extends State<BasicInfoTab> {
 
       if (section == FormSection.enterprise) {
         errors = logic.validateEnterprise(
+            legalName: legalNameCtrl.text,
             displayName: displayNameCtrl.text,
             ownerName: ownerNameCtrl.text,
             ownerPhone: ownerPhoneCtrl.text,
@@ -246,6 +249,7 @@ class BasicInfoTabState extends State<BasicInfoTab> {
 
   ShopProfileModel? validateAndSave() {
     final entErrs = logic.validateEnterprise(
+        legalName: legalNameCtrl.text,
         displayName: displayNameCtrl.text,
         ownerName: ownerNameCtrl.text,
         ownerPhone: ownerPhoneCtrl.text,
@@ -393,7 +397,7 @@ class BasicInfoTabState extends State<BasicInfoTab> {
                   fontWeight: FontWeight.w800,
                   color: BasicInfoColors
                       .surfaceWhite, // ðŸš€ FIX: Updated to White
-                  letterSpacing: -0.5),
+                  letterSpacing: 0),
             ),
             const SizedBox(height: 4),
             Text(
@@ -460,6 +464,7 @@ class BasicInfoTabState extends State<BasicInfoTab> {
                 icon: BasicInfoIcons.legalName,
                 ctrl: legalNameCtrl,
                 isLocked: isLocked,
+                isRequired: true,
                 focusNode: legalNameFocus,
                 nextFocus: displayNameFocus,
                 brandColor: BasicInfoColors.brandIdentity,
@@ -971,6 +976,7 @@ class _ThemeInputField extends StatefulWidget {
   final Function(String)? onFieldSubmitted;
   final int? maxLength;
   final Function(String)? onChanged;
+  final bool isRequired;
 
   const _ThemeInputField({
     required this.label,
@@ -986,6 +992,7 @@ class _ThemeInputField extends StatefulWidget {
     this.onFieldSubmitted,
     this.maxLength,
     this.onChanged,
+    this.isRequired = false,
   });
 
   @override
@@ -1036,11 +1043,23 @@ class _ThemeInputFieldState extends State<_ThemeInputField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label,
-            style: GoogleFonts.manrope(
-                fontSize: BasicInfoStyles.szFieldLabel,
-                fontWeight: FontWeight.w700,
-                color: BasicInfoColors.textBody)),
+        Row(
+          children: [
+            Text(widget.label,
+                style: GoogleFonts.manrope(
+                    fontSize: BasicInfoStyles.szFieldLabel,
+                    fontWeight: FontWeight.w700,
+                    color: BasicInfoColors.textBody)),
+            if (widget.isRequired) ...[
+              const SizedBox(width: 4),
+              Text('*',
+                  style: GoogleFonts.manrope(
+                      fontSize: BasicInfoStyles.szFieldLabel,
+                      fontWeight: FontWeight.w800,
+                      color: BasicInfoColors.goldAccent)),
+            ],
+          ],
+        ),
         const SizedBox(height: 8),
         Container(
           height: BasicInfoStyles.hInputField,

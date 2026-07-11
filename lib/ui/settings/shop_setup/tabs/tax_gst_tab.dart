@@ -10,6 +10,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:crop_your_image/crop_your_image.dart';
+import 'package:path/path.dart' as p;
 
 // --- THEME IMPORTS ---
 // NOTE: Adjust paths according to your structure.
@@ -18,6 +19,7 @@ import '../../../../theme/settings/shop_setup/tabs/tax_gst/tax_gst_theme.dart';
 // --- LOGIC IMPORTS ---
 import '../../../../logic/setting/shop_setup/tabs/tax_gst/tax_gst_logic.dart';
 import '../../../../logic/setting/shop_setup/tabs/tax_gst/document_crop_logic.dart';
+import '../../../../models/setting/shop_setup/enums/tax_gst_enums.dart';
 import '../../../../models/setting/shop_setup/tabs/tax_gst_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
@@ -29,10 +31,10 @@ class TaxGstTab extends StatefulWidget {
   const TaxGstTab({super.key, this.initialData});
 
   @override
-  State<TaxGstTab> createState() => _TaxGstTabState();
+  State<TaxGstTab> createState() => TaxGstTabState();
 }
 
-class _TaxGstTabState extends State<TaxGstTab> {
+class TaxGstTabState extends State<TaxGstTab> {
   late TaxGstLogic logic;
 
   @override
@@ -43,20 +45,18 @@ class _TaxGstTabState extends State<TaxGstTab> {
     // ðŸš€ NEW: AUTO-FILL LOGIC
     // Agar database se data mila hai, toh usko controllers aur logic mein set kar do
     if (widget.initialData != null && widget.initialData!.isNotEmpty) {
+      final parsedTaxData = TaxGstModel.fromJson(widget.initialData!);
       logic.gstinCtrl.text = widget.initialData!['gstin']?.toString() ?? '';
       logic.legalNameCtrl.text =
           widget.initialData!['legal_name']?.toString() ?? '';
       final legacyBisLicense =
           widget.initialData!['bis_license_no']?.toString() ?? '';
-      final goldBisLicense =
-          widget.initialData!['gold_bis_license_no']?.toString() ?? '';
-      final silverBisLicense =
-          widget.initialData!['silver_bis_license_no']?.toString() ?? '';
-      logic.bisLicCtrl.text = _resolveBisRegistrationNumber(
-        legacyBisLicense,
-        goldBisLicense,
-        silverBisLicense,
-      );
+      logic.bisLicCtrl.text = parsedTaxData.bisLicenseNo.isNotEmpty
+          ? parsedTaxData.bisLicenseNo
+          : legacyBisLicense.trim();
+      logic.goldBisLicCtrl.text = parsedTaxData.goldBisLicenseNo;
+      logic.silverBisLicCtrl.text = parsedTaxData.silverBisLicenseNo;
+      logic.setHallmarkingScope(parsedTaxData.hallmarkingScope.displayName);
 
       if (widget.initialData!['reg_date'] != null) {
         logic.setRegDate(widget.initialData!['reg_date'].toString());
@@ -84,20 +84,6 @@ class _TaxGstTabState extends State<TaxGstTab> {
   void dispose() {
     logic.dispose();
     super.dispose();
-  }
-
-  String _resolveBisRegistrationNumber(
-    String legacy,
-    String gold,
-    String silver,
-  ) {
-    final legacyValue = legacy.trim();
-    if (legacyValue.isNotEmpty) return legacyValue;
-
-    final goldValue = gold.trim();
-    final silverValue = silver.trim();
-    if (goldValue.isNotEmpty) return goldValue;
-    return silverValue;
   }
 
   TaxGstModel? validateAndExport() {
@@ -449,16 +435,34 @@ class _TaxGstTabState extends State<TaxGstTab> {
               height: 40, thickness: 1, color: TaxGstColors.borderLight),
           _buildSectionLabel(TaxGstStrings.secBisLabel),
           const SizedBox(height: TaxGstStyles.gapInput),
-          _buildThemeInput(
-            label: TaxGstStrings.lblBisLic,
-            hint: TaxGstStrings.hintBisLic,
-            icon: TaxGstIcons.bisVerified,
-            ctrl: logic.bisLicCtrl,
-            isLocked: logic.isBisLocked,
-            focusNode: logic.bisLicFocus,
-            isCapital: true,
-            brandColor: TaxGstColors.brandBis,
-          ),
+          _buildHallmarkingScopeSelector(isLocked: logic.isBisLocked),
+          if (logic.coversGold) ...[
+            const SizedBox(height: TaxGstStyles.gapInput),
+            _buildThemeInput(
+              label: TaxGstStrings.lblGoldBisLic,
+              hint: TaxGstStrings.hintGoldBisLic,
+              icon: TaxGstIcons.bisVerified,
+              ctrl: logic.goldBisLicCtrl,
+              isLocked: logic.isBisLocked,
+              focusNode: logic.goldBisLicFocus,
+              nextFocus: logic.coversSilver ? logic.silverBisLicFocus : null,
+              isCapital: true,
+              brandColor: TaxGstColors.goldAccent,
+            ),
+          ],
+          if (logic.coversSilver) ...[
+            const SizedBox(height: TaxGstStyles.gapInput),
+            _buildThemeInput(
+              label: TaxGstStrings.lblSilverBisLic,
+              hint: TaxGstStrings.hintSilverBisLic,
+              icon: TaxGstIcons.bisVerified,
+              ctrl: logic.silverBisLicCtrl,
+              isLocked: logic.isBisLocked,
+              focusNode: logic.silverBisLicFocus,
+              isCapital: true,
+              brandColor: TaxGstColors.textMuted,
+            ),
+          ],
         ],
       ),
     );
@@ -652,6 +656,114 @@ class _TaxGstTabState extends State<TaxGstTab> {
     );
   }
 
+  Widget _buildHallmarkingScopeSelector({required bool isLocked}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(TaxGstStrings.lblHallmarkingScope, style: TaxGstStyles.fieldLabel),
+        const SizedBox(height: 8),
+        Container(
+          constraints:
+              const BoxConstraints(minHeight: TaxGstStyles.hInputField),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: TaxGstStyles.inputDecoration(isLocked),
+          child: Row(
+            children: [
+              Icon(
+                TaxGstIcons.hallmarkingScope,
+                size: 20,
+                color:
+                    isLocked ? TaxGstColors.textHint : TaxGstColors.iconSuccess,
+              ),
+              const SizedBox(width: 12),
+              Container(width: 1, height: 24, color: TaxGstColors.borderLight),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  children: [
+                    _buildScopeChip(
+                      label: 'Gold',
+                      selected: logic.coversGold,
+                      isLocked: isLocked,
+                      color: TaxGstColors.goldAccent,
+                      onTap: () => logic.setHallmarkingMetal(
+                        metal: HallmarkingScope.gold,
+                        selected: !logic.coversGold,
+                      ),
+                    ),
+                    _buildScopeChip(
+                      label: 'Silver',
+                      selected: logic.coversSilver,
+                      isLocked: isLocked,
+                      color: TaxGstColors.textMuted,
+                      onTap: () => logic.setHallmarkingMetal(
+                        metal: HallmarkingScope.silver,
+                        selected: !logic.coversSilver,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            ],
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget _buildScopeChip({
+    required String label,
+    required bool selected,
+    required bool isLocked,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final textColor =
+        selected ? TaxGstColors.surfaceWhite : TaxGstColors.textBody;
+    return Tooltip(
+      message: label,
+      child: InkWell(
+        onTap: isLocked ? null : onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: selected ? color : TaxGstColors.cardBg,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: selected ? color : TaxGstColors.borderLight,
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (selected) ...[
+                const Icon(
+                  TaxGstIcons.check,
+                  size: 14,
+                  color: TaxGstColors.surfaceWhite,
+                ),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: textColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCardHeader(String sectionId, String title, IconData icon,
       bool isLocked, VoidCallback onToggle) {
     bool isSaving = logic.loadingSection == sectionId;
@@ -800,6 +912,14 @@ class _EnterpriseDocumentWidgetState extends State<EnterpriseDocumentWidget> {
         return;
       }
 
+      if (_logic.isPdfDocument(originalFile)) {
+        if (mounted) {
+          setState(() => _isProcessing = false);
+          widget.onImageSaved(originalFile);
+        }
+        return;
+      }
+
       bool isDesktop =
           Platform.isWindows || Platform.isMacOS || Platform.isLinux;
 
@@ -825,6 +945,12 @@ class _EnterpriseDocumentWidgetState extends State<EnterpriseDocumentWidget> {
             context,
             type: AppFeedbackType.error,
             message: TaxGstStrings.errFileTooLarge,
+          );
+        } else if (e.message == "UNSUPPORTED_FILE") {
+          AppFeedback.show(
+            context,
+            type: AppFeedbackType.error,
+            message: TaxGstStrings.errUnsupportedDocument,
           );
         }
       }
@@ -912,6 +1038,35 @@ class _EnterpriseDocumentWidgetState extends State<EnterpriseDocumentWidget> {
 
   void _showPreviewDialog() {
     if (!_hasCurrentFile) return;
+    if (_isCurrentPdf) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: TaxGstColors.cardBg,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(TaxGstIcons.filePdf,
+                  size: 48, color: TaxGstColors.goldAccent),
+              const SizedBox(height: 14),
+              Text(
+                _documentFileName,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: TaxGstColors.textDark,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (ctx) => GestureDetector(
@@ -1016,6 +1171,7 @@ class _EnterpriseDocumentWidgetState extends State<EnterpriseDocumentWidget> {
   @override
   Widget build(BuildContext context) {
     bool hasFile = _hasCurrentFile;
+    final hasPdf = _isCurrentPdf;
     final isDesktop = MediaQuery.sizeOf(context).width >= 1000;
     final previewHeight = widget.useTallPreview && isDesktop ? 300.0 : 220.0;
 
@@ -1114,7 +1270,7 @@ class _EnterpriseDocumentWidgetState extends State<EnterpriseDocumentWidget> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                             color: TaxGstColors.borderLight, width: 1),
-                        image: hasFile
+                        image: hasFile && !hasPdf
                             ? DecorationImage(
                                 image: FileImage(widget.currentFile!),
                                 fit: BoxFit.contain)
@@ -1134,7 +1290,28 @@ class _EnterpriseDocumentWidgetState extends State<EnterpriseDocumentWidget> {
                                         color: TaxGstColors.textHint))
                               ],
                             )
-                          : null,
+                          : hasPdf
+                              ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(TaxGstIcons.filePdf,
+                                        size: 42,
+                                        color: TaxGstColors.goldAccent),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      _documentFileName,
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: TaxGstColors.textBody,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : null,
                     ),
                   ),
                 ),
@@ -1199,5 +1376,16 @@ class _EnterpriseDocumentWidgetState extends State<EnterpriseDocumentWidget> {
   bool get _hasCurrentFile {
     final file = widget.currentFile;
     return file != null && file.existsSync();
+  }
+
+  bool get _isCurrentPdf {
+    final file = widget.currentFile;
+    return file != null && _logic.isPdfDocument(file);
+  }
+
+  String get _documentFileName {
+    final path = widget.currentFile?.path;
+    if (path == null || path.trim().isEmpty) return 'PDF Document';
+    return p.basename(path);
   }
 }
