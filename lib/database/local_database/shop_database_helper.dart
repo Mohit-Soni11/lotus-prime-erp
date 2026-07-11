@@ -15,7 +15,7 @@ class ShopDatabaseHelper {
   static Database? _database;
 
   // 🚀 AUTO-UPDATE ENGINE: Future mein naya column add karna ho, toh ise '3' kar dena
-  static const int _dbVersion = 5;
+  static const int _dbVersion = 6;
 
   factory ShopDatabaseHelper() => _instance;
 
@@ -79,6 +79,7 @@ class ShopDatabaseHelper {
         gstin TEXT, legal_name TEXT, reg_date TEXT, taxpayer_type TEXT,
         bis_license_no TEXT, gold_bis_license_no TEXT, silver_bis_license_no TEXT,
         hallmarking_scope TEXT DEFAULT 'Gold & Silver',
+        bis_registration_mode TEXT DEFAULT 'Single Registration',
         bis_valid_from TEXT, bis_valid_upto TEXT,
         gst_cert_path TEXT, bis_license_path TEXT,
         FOREIGN KEY (tenant_id) REFERENCES shop_profile (tenant_id) ON DELETE CASCADE
@@ -148,6 +149,14 @@ class ShopDatabaseHelper {
         'shop_tax_gst',
         'hallmarking_scope',
         "TEXT DEFAULT 'Gold & Silver'",
+      );
+    }
+    if (oldVersion < 6) {
+      await _addColumnIfMissing(
+        db,
+        'shop_tax_gst',
+        'bis_registration_mode',
+        "TEXT DEFAULT 'Single Registration'",
       );
     }
   }

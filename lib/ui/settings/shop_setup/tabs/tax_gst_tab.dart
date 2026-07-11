@@ -56,7 +56,10 @@ class TaxGstTabState extends State<TaxGstTab> {
           : legacyBisLicense.trim();
       logic.goldBisLicCtrl.text = parsedTaxData.goldBisLicenseNo;
       logic.silverBisLicCtrl.text = parsedTaxData.silverBisLicenseNo;
-      logic.setHallmarkingScope(parsedTaxData.hallmarkingScope.displayName);
+      logic.setHallmarkingSelection(
+        scope: parsedTaxData.hallmarkingScope,
+        registrationMode: parsedTaxData.bisRegistrationMode,
+      );
 
       if (widget.initialData!['reg_date'] != null) {
         logic.setRegDate(widget.initialData!['reg_date'].toString());
@@ -436,7 +439,20 @@ class TaxGstTabState extends State<TaxGstTab> {
           _buildSectionLabel(TaxGstStrings.secBisLabel),
           const SizedBox(height: TaxGstStyles.gapInput),
           _buildHallmarkingScopeSelector(isLocked: logic.isBisLocked),
-          if (logic.coversGold) ...[
+          if (logic.usesSharedBisRegistration) ...[
+            const SizedBox(height: TaxGstStyles.gapInput),
+            _buildThemeInput(
+              label: TaxGstStrings.lblBisLic,
+              hint: TaxGstStrings.hintBisLic,
+              icon: TaxGstIcons.bisVerified,
+              ctrl: logic.bisLicCtrl,
+              isLocked: logic.isBisLocked,
+              focusNode: logic.bisLicFocus,
+              isCapital: true,
+              brandColor: TaxGstColors.brandBis,
+            ),
+          ],
+          if (logic.showsGoldBisRegistration) ...[
             const SizedBox(height: TaxGstStyles.gapInput),
             _buildThemeInput(
               label: TaxGstStrings.lblGoldBisLic,
@@ -445,12 +461,14 @@ class TaxGstTabState extends State<TaxGstTab> {
               ctrl: logic.goldBisLicCtrl,
               isLocked: logic.isBisLocked,
               focusNode: logic.goldBisLicFocus,
-              nextFocus: logic.coversSilver ? logic.silverBisLicFocus : null,
+              nextFocus: logic.showsSilverBisRegistration
+                  ? logic.silverBisLicFocus
+                  : null,
               isCapital: true,
               brandColor: TaxGstColors.goldAccent,
             ),
           ],
-          if (logic.coversSilver) ...[
+          if (logic.showsSilverBisRegistration) ...[
             const SizedBox(height: TaxGstStyles.gapInput),
             _buildThemeInput(
               label: TaxGstStrings.lblSilverBisLic,
@@ -657,6 +675,35 @@ class TaxGstTabState extends State<TaxGstTab> {
   }
 
   Widget _buildHallmarkingScopeSelector({required bool isLocked}) {
+    final choices = isLocked
+        ? [_selectedHallmarkingChoice()]
+        : const [
+            _HallmarkingChoice(
+              label: TaxGstStrings.scopeGold,
+              scope: HallmarkingScope.gold,
+              mode: BisRegistrationMode.single,
+              color: TaxGstColors.goldAccent,
+            ),
+            _HallmarkingChoice(
+              label: TaxGstStrings.scopeSilver,
+              scope: HallmarkingScope.silver,
+              mode: BisRegistrationMode.single,
+              color: TaxGstColors.textMuted,
+            ),
+            _HallmarkingChoice(
+              label: TaxGstStrings.scopeBoth,
+              scope: HallmarkingScope.goldAndSilver,
+              mode: BisRegistrationMode.single,
+              color: TaxGstColors.iconSuccess,
+            ),
+            _HallmarkingChoice(
+              label: TaxGstStrings.scopeSeparate,
+              scope: HallmarkingScope.goldAndSilver,
+              mode: BisRegistrationMode.separate,
+              color: TaxGstColors.brandBis,
+            ),
+          ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -682,28 +729,20 @@ class TaxGstTabState extends State<TaxGstTab> {
                 child: Wrap(
                   spacing: 10,
                   runSpacing: 8,
-                  children: [
-                    _buildScopeChip(
-                      label: 'Gold',
-                      selected: logic.coversGold,
-                      isLocked: isLocked,
-                      color: TaxGstColors.goldAccent,
-                      onTap: () => logic.setHallmarkingMetal(
-                        metal: HallmarkingScope.gold,
-                        selected: !logic.coversGold,
-                      ),
-                    ),
-                    _buildScopeChip(
-                      label: 'Silver',
-                      selected: logic.coversSilver,
-                      isLocked: isLocked,
-                      color: TaxGstColors.textMuted,
-                      onTap: () => logic.setHallmarkingMetal(
-                        metal: HallmarkingScope.silver,
-                        selected: !logic.coversSilver,
-                      ),
-                    ),
-                  ],
+                  children: choices
+                      .map(
+                        (choice) => _buildScopeChip(
+                          label: choice.label,
+                          selected: _isHallmarkingChoiceSelected(choice),
+                          isLocked: isLocked,
+                          color: choice.color,
+                          onTap: () => logic.setHallmarkingSelection(
+                            scope: choice.scope,
+                            registrationMode: choice.mode,
+                          ),
+                        ),
+                      )
+                      .toList(growable: false),
                 ),
               )
             ],
@@ -711,6 +750,44 @@ class TaxGstTabState extends State<TaxGstTab> {
         )
       ],
     );
+  }
+
+  _HallmarkingChoice _selectedHallmarkingChoice() {
+    if (logic.selectedHallmarkingScope == HallmarkingScope.gold) {
+      return const _HallmarkingChoice(
+        label: TaxGstStrings.scopeGold,
+        scope: HallmarkingScope.gold,
+        mode: BisRegistrationMode.single,
+        color: TaxGstColors.goldAccent,
+      );
+    }
+    if (logic.selectedHallmarkingScope == HallmarkingScope.silver) {
+      return const _HallmarkingChoice(
+        label: TaxGstStrings.scopeSilver,
+        scope: HallmarkingScope.silver,
+        mode: BisRegistrationMode.single,
+        color: TaxGstColors.textMuted,
+      );
+    }
+    if (logic.selectedBisRegistrationMode == BisRegistrationMode.separate) {
+      return const _HallmarkingChoice(
+        label: TaxGstStrings.scopeSeparate,
+        scope: HallmarkingScope.goldAndSilver,
+        mode: BisRegistrationMode.separate,
+        color: TaxGstColors.brandBis,
+      );
+    }
+    return const _HallmarkingChoice(
+      label: TaxGstStrings.scopeBoth,
+      scope: HallmarkingScope.goldAndSilver,
+      mode: BisRegistrationMode.single,
+      color: TaxGstColors.iconSuccess,
+    );
+  }
+
+  bool _isHallmarkingChoiceSelected(_HallmarkingChoice choice) {
+    return logic.selectedHallmarkingScope == choice.scope &&
+        logic.selectedBisRegistrationMode == choice.mode;
   }
 
   Widget _buildScopeChip({
@@ -852,6 +929,20 @@ class TaxGstTabState extends State<TaxGstTab> {
   Widget _buildSectionLabel(String text) {
     return Text(text, style: TaxGstStyles.sectionSub);
   }
+}
+
+class _HallmarkingChoice {
+  final String label;
+  final HallmarkingScope scope;
+  final BisRegistrationMode mode;
+  final Color color;
+
+  const _HallmarkingChoice({
+    required this.label,
+    required this.scope,
+    required this.mode,
+    required this.color,
+  });
 }
 
 // =========================================================================

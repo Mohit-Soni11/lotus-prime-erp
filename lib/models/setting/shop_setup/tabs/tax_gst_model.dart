@@ -16,6 +16,7 @@ class TaxGstModel {
   final TaxpayerType taxpayerType;
   final String bisLicenseNo;
   final HallmarkingScope hallmarkingScope;
+  final BisRegistrationMode bisRegistrationMode;
   final String goldBisLicenseNo;
   final String silverBisLicenseNo;
   final String? gstCertPath; // 🚀 FIXED
@@ -28,6 +29,7 @@ class TaxGstModel {
     this.taxpayerType = TaxpayerType.regular,
     this.bisLicenseNo = "",
     this.hallmarkingScope = HallmarkingScope.goldAndSilver,
+    this.bisRegistrationMode = BisRegistrationMode.single,
     this.goldBisLicenseNo = "",
     this.silverBisLicenseNo = "",
     this.gstCertPath,
@@ -59,6 +61,13 @@ class TaxGstModel {
     final silverBisLicense = silverSource.isNotEmpty
         ? silverSource
         : (scope.coversSilver ? legacyBisLicense : "");
+    final registrationMode = _resolveRegistrationMode(
+      json['bis_registration_mode']?.toString(),
+      scope,
+      goldBisLicense,
+      silverBisLicense,
+      legacyMetalLicenses,
+    );
 
     return TaxGstModel(
       gstin: json['gstin']?.toString() ?? "",
@@ -69,6 +78,7 @@ class TaxGstModel {
           ? legacyBisLicense
           : _combinedBisLicense(goldBisLicense, silverBisLicense),
       hallmarkingScope: scope,
+      bisRegistrationMode: registrationMode,
       goldBisLicenseNo: goldBisLicense,
       silverBisLicenseNo: silverBisLicense,
       gstCertPath: json['gst_cert_path']?.toString(),
@@ -84,6 +94,7 @@ class TaxGstModel {
       'taxpayer_type': taxpayerType.displayName,
       'bis_license_no': bisLicenseNo,
       'hallmarking_scope': hallmarkingScope.displayName,
+      'bis_registration_mode': bisRegistrationMode.displayName,
       'gold_bis_license_no': goldBisLicenseNo,
       'silver_bis_license_no': silverBisLicenseNo,
       'gst_cert_path': gstCertPath,
@@ -98,6 +109,7 @@ class TaxGstModel {
     TaxpayerType? taxpayerType,
     String? bisLicenseNo,
     HallmarkingScope? hallmarkingScope,
+    BisRegistrationMode? bisRegistrationMode,
     String? goldBisLicenseNo,
     String? silverBisLicenseNo,
     String? gstCertPath,
@@ -110,6 +122,7 @@ class TaxGstModel {
       taxpayerType: taxpayerType ?? this.taxpayerType,
       bisLicenseNo: bisLicenseNo ?? this.bisLicenseNo,
       hallmarkingScope: hallmarkingScope ?? this.hallmarkingScope,
+      bisRegistrationMode: bisRegistrationMode ?? this.bisRegistrationMode,
       goldBisLicenseNo: goldBisLicenseNo ?? this.goldBisLicenseNo,
       silverBisLicenseNo: silverBisLicenseNo ?? this.silverBisLicenseNo,
       gstCertPath: gstCertPath ?? this.gstCertPath,
@@ -127,6 +140,7 @@ class TaxGstModel {
         other.taxpayerType == taxpayerType &&
         other.bisLicenseNo == bisLicenseNo &&
         other.hallmarkingScope == hallmarkingScope &&
+        other.bisRegistrationMode == bisRegistrationMode &&
         other.goldBisLicenseNo == goldBisLicenseNo &&
         other.silverBisLicenseNo == silverBisLicenseNo &&
         other.gstCertPath == gstCertPath &&
@@ -142,6 +156,7 @@ class TaxGstModel {
       taxpayerType,
       bisLicenseNo,
       hallmarkingScope,
+      bisRegistrationMode,
       goldBisLicenseNo,
       silverBisLicenseNo,
       gstCertPath,
@@ -194,5 +209,36 @@ class TaxGstModel {
     if (hasSilver) return HallmarkingScope.silver;
     if (legacy.trim().isNotEmpty) return HallmarkingScope.goldAndSilver;
     return HallmarkingScope.goldAndSilver;
+  }
+
+  static BisRegistrationMode _resolveRegistrationMode(
+    String? storedMode,
+    HallmarkingScope scope,
+    String gold,
+    String silver,
+    ({String gold, String silver}) parsedLegacy,
+  ) {
+    if (scope != HallmarkingScope.goldAndSilver) {
+      return BisRegistrationMode.single;
+    }
+
+    final explicitMode = storedMode?.trim();
+    if (explicitMode != null && explicitMode.isNotEmpty) {
+      return BisRegistrationMode.fromString(explicitMode);
+    }
+
+    final goldText = gold.trim();
+    final silverText = silver.trim();
+    if (goldText.isNotEmpty &&
+        silverText.isNotEmpty &&
+        goldText.toUpperCase() != silverText.toUpperCase()) {
+      return BisRegistrationMode.separate;
+    }
+    if (parsedLegacy.gold.isNotEmpty &&
+        parsedLegacy.silver.isNotEmpty &&
+        parsedLegacy.gold.toUpperCase() != parsedLegacy.silver.toUpperCase()) {
+      return BisRegistrationMode.separate;
+    }
+    return BisRegistrationMode.single;
   }
 }

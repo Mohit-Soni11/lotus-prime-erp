@@ -26,6 +26,7 @@ class BrandingLogic extends ChangeNotifier {
 
   // 🚀 UPGRADE: Changed to String to perfectly match UI requirements
   String? loadingSection;
+  String? lastValidationError;
 
   // 🚀 UPGRADE: Added Missing GlobalKeys to prevent UI runtime crashes
   final GlobalKey<FormState> socialKey = GlobalKey<FormState>();
@@ -100,46 +101,14 @@ class BrandingLogic extends ChangeNotifier {
   /// Validates, saves, and intelligently moves focus if an error occurs.
   Future<bool> saveSection(String sectionId) async {
     // 1. Validation & Auto-Focus Error Routing
-    if (sectionId == 'social') {
-      if (BrandingValidators.validateOptionalSocialLink(instaCtrl.text) !=
-          null) {
-        instaFocus.requestFocus();
-        return false;
-      }
-      if (BrandingValidators.validateOptionalSocialLink(fbCtrl.text) != null) {
-        fbFocus.requestFocus();
-        return false;
-      }
-      if (BrandingValidators.validateOptionalSocialLink(ytCtrl.text) != null) {
-        ytFocus.requestFocus();
-        return false;
-      }
-      if (BrandingValidators.validateOptionalWebsite(webCtrl.text) != null) {
-        webFocus.requestFocus();
-        return false;
-      }
-    } else if (sectionId == 'support') {
-      if (BrandingValidators.validateOptionalWhatsAppChannel(
-              waChannelCtrl.text) !=
-          null) {
-        waChannelFocus.requestFocus();
-        return false;
-      }
-      if (BrandingValidators.validateOptionalPhone(waBizCtrl.text) != null) {
-        waBizFocus.requestFocus();
-        return false;
-      }
-      if (BrandingValidators.validateOptionalEmail(emailCtrl.text) != null) {
-        emailFocus.requestFocus();
-        return false;
-      }
-      if (BrandingValidators.validateOptionalPhone(phoneCtrl.text) != null) {
-        phoneFocus.requestFocus();
-        return false;
-      }
+    final failures = _validationFailures(sectionId: sectionId);
+    if (failures.isNotEmpty) {
+      _handleValidationFailures(failures);
+      return false;
     }
 
     // 2. Start Loading State
+    lastValidationError = null;
     loadingSection = sectionId;
     notifyListeners();
 
@@ -171,41 +140,13 @@ class BrandingLogic extends ChangeNotifier {
   }
 
   ShopBrandingModel? validateAndGenerateFinalModel() {
-    if (BrandingValidators.validateOptionalSocialLink(instaCtrl.text) != null) {
-      instaFocus.requestFocus();
-      return null;
-    }
-    if (BrandingValidators.validateOptionalSocialLink(fbCtrl.text) != null) {
-      fbFocus.requestFocus();
-      return null;
-    }
-    if (BrandingValidators.validateOptionalSocialLink(ytCtrl.text) != null) {
-      ytFocus.requestFocus();
-      return null;
-    }
-    if (BrandingValidators.validateOptionalWebsite(webCtrl.text) != null) {
-      webFocus.requestFocus();
-      return null;
-    }
-    if (BrandingValidators.validateOptionalWhatsAppChannel(
-            waChannelCtrl.text) !=
-        null) {
-      waChannelFocus.requestFocus();
-      return null;
-    }
-    if (BrandingValidators.validateOptionalPhone(waBizCtrl.text) != null) {
-      waBizFocus.requestFocus();
-      return null;
-    }
-    if (BrandingValidators.validateOptionalEmail(emailCtrl.text) != null) {
-      emailFocus.requestFocus();
-      return null;
-    }
-    if (BrandingValidators.validateOptionalPhone(phoneCtrl.text) != null) {
-      phoneFocus.requestFocus();
+    final failures = _validationFailures();
+    if (failures.isNotEmpty) {
+      _handleValidationFailures(failures);
       return null;
     }
 
+    lastValidationError = null;
     return generateFinalModel();
   }
 
@@ -222,6 +163,137 @@ class BrandingLogic extends ChangeNotifier {
     );
     notifyListeners();
     return brandingData;
+  }
+
+  List<_BrandingValidationFailure> _validationFailures({String? sectionId}) {
+    final failures = <_BrandingValidationFailure>[];
+    final includeSocial = sectionId == null || sectionId == 'social';
+    final includeSupport = sectionId == null || sectionId == 'support';
+
+    if (includeSocial) {
+      _addFailure(
+        failures,
+        fieldLabel: 'Instagram Handle',
+        sectionId: 'social',
+        focusNode: instaFocus,
+        error: BrandingValidators.validateOptionalSocialLink(instaCtrl.text),
+        fallbackMessage: 'remove spaces from the handle or link.',
+      );
+      _addFailure(
+        failures,
+        fieldLabel: 'Facebook Page',
+        sectionId: 'social',
+        focusNode: fbFocus,
+        error: BrandingValidators.validateOptionalSocialLink(fbCtrl.text),
+        fallbackMessage: 'remove spaces from the page link.',
+      );
+      _addFailure(
+        failures,
+        fieldLabel: 'YouTube Channel',
+        sectionId: 'social',
+        focusNode: ytFocus,
+        error: BrandingValidators.validateOptionalSocialLink(ytCtrl.text),
+        fallbackMessage: 'remove spaces from the channel link.',
+      );
+      _addFailure(
+        failures,
+        fieldLabel: 'Official Website',
+        sectionId: 'social',
+        focusNode: webFocus,
+        error: BrandingValidators.validateOptionalWebsite(webCtrl.text),
+        fallbackMessage: 'enter a domain like lotusjewellers.com.',
+      );
+    }
+
+    if (includeSupport) {
+      _addFailure(
+        failures,
+        fieldLabel: 'WhatsApp Channel Link',
+        sectionId: 'support',
+        focusNode: waChannelFocus,
+        error: BrandingValidators.validateOptionalWhatsAppChannel(
+          waChannelCtrl.text,
+        ),
+        fallbackMessage: 'paste a link like whatsapp.com/channel/...',
+      );
+      _addFailure(
+        failures,
+        fieldLabel: 'WhatsApp Business API',
+        sectionId: 'support',
+        focusNode: waBizFocus,
+        error: BrandingValidators.validateOptionalPhone(waBizCtrl.text),
+        fallbackMessage: 'enter 10-15 digits only.',
+      );
+      _addFailure(
+        failures,
+        fieldLabel: 'Official Support Email',
+        sectionId: 'support',
+        focusNode: emailFocus,
+        error: BrandingValidators.validateOptionalEmail(emailCtrl.text),
+        fallbackMessage: 'enter an email like help@brand.com.',
+      );
+      _addFailure(
+        failures,
+        fieldLabel: 'Helpline / Toll Free',
+        sectionId: 'support',
+        focusNode: phoneFocus,
+        error: BrandingValidators.validateOptionalPhone(phoneCtrl.text),
+        fallbackMessage: 'enter 10-15 digits only.',
+      );
+    }
+
+    return failures;
+  }
+
+  void _addFailure(
+    List<_BrandingValidationFailure> failures, {
+    required String fieldLabel,
+    required String sectionId,
+    required FocusNode focusNode,
+    required String? error,
+    required String fallbackMessage,
+  }) {
+    if (error == null) return;
+    failures.add(
+      _BrandingValidationFailure(
+        sectionId: sectionId,
+        focusNode: focusNode,
+        message:
+            '$fieldLabel: ${_friendlyValidationMessage(error, fallbackMessage)}',
+      ),
+    );
+  }
+
+  String _friendlyValidationMessage(String error, String fallbackMessage) {
+    final normalized = error.toLowerCase();
+    if (normalized.contains('website')) {
+      return 'enter a domain like lotusjewellers.com.';
+    }
+    if (normalized.contains('whatsapp channel')) {
+      return 'paste a link like whatsapp.com/channel/...';
+    }
+    if (normalized.contains('email')) {
+      return 'enter an email like help@brand.com.';
+    }
+    if (normalized.contains('digit') || normalized.contains('number')) {
+      return 'enter 10-15 digits only.';
+    }
+    if (normalized.contains('space')) {
+      return 'remove spaces from the handle or link.';
+    }
+    return fallbackMessage;
+  }
+
+  void _handleValidationFailures(List<_BrandingValidationFailure> failures) {
+    final invalidSections =
+        failures.map((failure) => failure.sectionId).toSet();
+    if (invalidSections.contains('social')) isSocialLocked = false;
+    if (invalidSections.contains('support')) isSupportLocked = false;
+
+    lastValidationError =
+        failures.take(3).map((failure) => failure.message).join('\n');
+    failures.first.focusNode.requestFocus();
+    notifyListeners();
   }
 
   // --- ENUM-DRIVEN URL LAUNCHER ---
@@ -292,4 +364,16 @@ class BrandingLogic extends ChangeNotifier {
 
     super.dispose();
   }
+}
+
+class _BrandingValidationFailure {
+  final String sectionId;
+  final FocusNode focusNode;
+  final String message;
+
+  const _BrandingValidationFailure({
+    required this.sectionId,
+    required this.focusNode,
+    required this.message,
+  });
 }

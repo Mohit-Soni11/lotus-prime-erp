@@ -65,6 +65,33 @@ enum HallmarkingScope {
   }
 }
 
+/// Describes whether gold and silver share one BIS registration number
+/// or need separate registration numbers in the profile.
+enum BisRegistrationMode {
+  single('Single Registration'),
+  separate('Separate Registrations');
+
+  final String displayName;
+
+  const BisRegistrationMode(this.displayName);
+
+  static BisRegistrationMode fromString(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return BisRegistrationMode.single;
+    }
+
+    final normalized = value.trim().toLowerCase();
+    if (normalized == 'separate' ||
+        normalized == 'separate registrations' ||
+        normalized == 'separate registration' ||
+        normalized == 'gold + silver separate' ||
+        normalized == 'bisregistrationmode.separate') {
+      return BisRegistrationMode.separate;
+    }
+    return BisRegistrationMode.single;
+  }
+}
+
 /// Defines the current interaction state of a specific form section.
 /// This eliminates the need for multiple confusing boolean flags.
 enum SectionEditState {

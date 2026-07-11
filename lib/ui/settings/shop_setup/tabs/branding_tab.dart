@@ -16,6 +16,7 @@ import '../../../../theme/settings/shop_setup/tabs/branding/branding_theme.dart'
 import '../../../../../../models/setting/shop_setup/shop_profile_model.dart';
 // 🚀 UPGRADE: ShopBrandingModel imported for auto-fill logic
 import '../../../../../../models/setting/shop_setup/tabs/shop_branding_model.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class BrandingTab extends StatefulWidget {
   final ShopProfileModel? initialData;
@@ -113,6 +114,8 @@ class BrandingTabState extends State<BrandingTab> {
     return logic.validateAndGenerateFinalModel();
   }
 
+  String? get validationMessage => logic.lastValidationError;
+
   // --- SMART TOGGLE HANDLING ---
   void _handleSectionToggle(String sectionId, String sectionName) async {
     if (logic.loadingSection == sectionId) return;
@@ -127,7 +130,14 @@ class BrandingTabState extends State<BrandingTab> {
       }
     } else {
       // SAVE MODE
-      await logic.saveSection(sectionId);
+      final saved = await logic.saveSection(sectionId);
+      if (!saved && mounted) {
+        AppFeedback.error(
+          context,
+          message: logic.lastValidationError ??
+              "Please correct the highlighted branding fields.",
+        );
+      }
     }
   }
 

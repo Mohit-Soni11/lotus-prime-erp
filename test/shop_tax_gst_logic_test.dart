@@ -13,6 +13,10 @@ void main() {
     logic.legalNameCtrl.text = '  Lotus Jewellers Pvt Ltd  ';
     logic.regDateCtrl.text = '05/07/2026';
     logic.selectedTaxpayer = TaxpayerType.composition;
+    logic.setHallmarkingSelection(
+      scope: HallmarkingScope.goldAndSilver,
+      registrationMode: BisRegistrationMode.separate,
+    );
     logic.goldBisLicCtrl.text = ' bis-gold-123 ';
     logic.silverBisLicCtrl.text = ' bis-silver-456 ';
 
@@ -23,9 +27,31 @@ void main() {
     expect(model.taxpayerType, TaxpayerType.composition);
     expect(model.bisLicenseNo, 'Gold: BIS-GOLD-123 | Silver: BIS-SILVER-456');
     expect(model.hallmarkingScope, HallmarkingScope.goldAndSilver);
+    expect(model.bisRegistrationMode, BisRegistrationMode.separate);
     expect(model.goldBisLicenseNo, 'BIS-GOLD-123');
     expect(model.silverBisLicenseNo, 'BIS-SILVER-456');
     expect(logic.taxData, model);
+  });
+
+  test('both scope uses one shared BIS registration number', () {
+    final logic = TaxGstLogic();
+    addTearDown(logic.dispose);
+
+    logic.setHallmarkingSelection(
+      scope: HallmarkingScope.goldAndSilver,
+      registrationMode: BisRegistrationMode.single,
+    );
+    logic.bisLicCtrl.text = ' bis-both-123 ';
+    logic.goldBisLicCtrl.text = ' stale-gold ';
+    logic.silverBisLicCtrl.text = ' stale-silver ';
+
+    final model = logic.generateFinalModel();
+
+    expect(model.bisLicenseNo, 'BIS-BOTH-123');
+    expect(model.hallmarkingScope, HallmarkingScope.goldAndSilver);
+    expect(model.bisRegistrationMode, BisRegistrationMode.single);
+    expect(model.goldBisLicenseNo, 'BIS-BOTH-123');
+    expect(model.silverBisLicenseNo, 'BIS-BOTH-123');
   });
 
   test(
@@ -40,6 +66,7 @@ void main() {
 
     expect(model.bisLicenseNo, 'BIS-REG-123');
     expect(model.hallmarkingScope, HallmarkingScope.goldAndSilver);
+    expect(model.bisRegistrationMode, BisRegistrationMode.single);
     expect(model.goldBisLicenseNo, 'BIS-REG-123');
     expect(model.silverBisLicenseNo, 'BIS-REG-123');
   });
@@ -48,6 +75,7 @@ void main() {
     const model = TaxGstModel(
       bisLicenseNo: 'BIS-REG-123',
       hallmarkingScope: HallmarkingScope.goldAndSilver,
+      bisRegistrationMode: BisRegistrationMode.single,
       goldBisLicenseNo: 'BIS-REG-123',
       silverBisLicenseNo: 'BIS-REG-123',
     );
@@ -58,6 +86,8 @@ void main() {
     expect(restored.bisLicenseNo, 'BIS-REG-123');
     expect(restored.hallmarkingScope, HallmarkingScope.goldAndSilver);
     expect(json['hallmarking_scope'], 'Gold & Silver');
+    expect(json['bis_registration_mode'], 'Single Registration');
+    expect(restored.bisRegistrationMode, BisRegistrationMode.single);
     expect(restored.goldBisLicenseNo, 'BIS-REG-123');
     expect(restored.silverBisLicenseNo, 'BIS-REG-123');
     expect(json.containsKey('bis_valid_from'), isFalse);
@@ -74,6 +104,7 @@ void main() {
     expect(restored.silverBisLicenseNo, 'HM/C-LEGACY');
     expect(restored.bisLicenseNo, 'HM/C-LEGACY');
     expect(restored.hallmarkingScope, HallmarkingScope.goldAndSilver);
+    expect(restored.bisRegistrationMode, BisRegistrationMode.single);
   });
 
   test('combined BIS registration restores separate gold and silver numbers',
@@ -86,6 +117,7 @@ void main() {
     expect(restored.silverBisLicenseNo, 'HM/C-SILVER');
     expect(restored.bisLicenseNo, 'Gold: HM/C-GOLD | Silver: HM/C-SILVER');
     expect(restored.hallmarkingScope, HallmarkingScope.goldAndSilver);
+    expect(restored.bisRegistrationMode, BisRegistrationMode.separate);
   });
 
   test('BIS scope controls legacy gold and silver compatibility fields', () {
@@ -98,6 +130,7 @@ void main() {
     final model = logic.generateFinalModel();
 
     expect(model.hallmarkingScope, HallmarkingScope.silver);
+    expect(model.bisRegistrationMode, BisRegistrationMode.single);
     expect(model.goldBisLicenseNo, isEmpty);
     expect(model.silverBisLicenseNo, 'HM/C-SILVER');
   });
@@ -114,12 +147,14 @@ void main() {
       selected: true,
     );
     expect(logic.selectedHallmarkingScope, HallmarkingScope.goldAndSilver);
+    expect(logic.selectedBisRegistrationMode, BisRegistrationMode.separate);
 
     logic.setHallmarkingMetal(
       metal: HallmarkingScope.silver,
       selected: false,
     );
     expect(logic.selectedHallmarkingScope, HallmarkingScope.gold);
+    expect(logic.selectedBisRegistrationMode, BisRegistrationMode.single);
 
     logic.setHallmarkingMetal(
       metal: HallmarkingScope.gold,
@@ -144,6 +179,17 @@ void main() {
     expect(
       HallmarkingScope.fromString('Gold and Silver'),
       HallmarkingScope.goldAndSilver,
+    );
+  });
+
+  test('BIS registration mode parser accepts stored values', () {
+    expect(
+      BisRegistrationMode.fromString('Single Registration'),
+      BisRegistrationMode.single,
+    );
+    expect(
+      BisRegistrationMode.fromString('Separate Registrations'),
+      BisRegistrationMode.separate,
     );
   });
 }

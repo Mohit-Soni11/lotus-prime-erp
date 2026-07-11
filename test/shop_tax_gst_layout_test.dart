@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/models/setting/shop_setup/enums/basic_info_enums.dart';
+import 'package:lotus_erp/models/setting/shop_setup/enums/tax_gst_enums.dart';
 import 'package:lotus_erp/models/setting/shop_setup/shop_step_model.dart';
 import 'package:lotus_erp/ui/settings/shop_setup/layout/shop_setup_layout.dart';
 import 'package:lotus_erp/ui/settings/shop_setup/tabs/tax_gst_tab.dart';
@@ -27,15 +28,50 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Statutory & Tax Compliance'), findsOneWidget);
     expect(find.text('Bureau of Indian Standards'), findsOneWidget);
-    expect(find.text('Gold BIS Registration No.'), findsOneWidget);
-    expect(find.text('Silver BIS Registration No.'), findsOneWidget);
     expect(find.text('Hallmarking Scope'), findsOneWidget);
-    expect(find.text('Gold'), findsOneWidget);
-    expect(find.text('Silver'), findsOneWidget);
+    expect(find.text('Both'), findsOneWidget);
+    expect(find.text('BIS Registration No.'), findsOneWidget);
+    expect(find.text('Gold'), findsNothing);
+    expect(find.text('Silver'), findsNothing);
+    expect(find.text('Gold BIS Registration No.'), findsNothing);
+    expect(find.text('Silver BIS Registration No.'), findsNothing);
     expect(find.text('Applicable GST Structure'), findsNothing);
     expect(find.textContaining('BIS hallmarking covers'), findsNothing);
     expect(find.text('Valid From'), findsNothing);
     expect(find.text('Valid Upto'), findsNothing);
+  });
+
+  testWidgets('Tax GST tab shows separate BIS fields only for separate scope',
+      (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1100, 900);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SizedBox.expand(
+            child: TaxGstTab(),
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final state = tester.state<TaxGstTabState>(find.byType(TaxGstTab));
+    state.logic.unlockSection('bis');
+    state.logic.setHallmarkingSelection(
+      scope: HallmarkingScope.goldAndSilver,
+      registrationMode: BisRegistrationMode.separate,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Separate'), findsOneWidget);
+    expect(find.text('Gold BIS Registration No.'), findsOneWidget);
+    expect(find.text('Silver BIS Registration No.'), findsOneWidget);
+    expect(find.text('BIS Registration No.'), findsNothing);
   });
 
   testWidgets('Shop setup shell gives GST step a bounded layout',

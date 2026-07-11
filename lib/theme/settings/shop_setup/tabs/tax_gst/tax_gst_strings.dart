@@ -41,6 +41,10 @@ class TaxGstStrings {
   static const String lblSilverBisLic = "Silver BIS Registration No.";
   static const String hintSilverBisLic = "Enter silver registration number";
   static const String lblHallmarkingScope = "Hallmarking Scope";
+  static const String scopeGold = "Gold";
+  static const String scopeSilver = "Silver";
+  static const String scopeBoth = "Both";
+  static const String scopeSeparate = "Separate";
 
   // --- Documents & Uploads ---
   static const String docGstTitle = "GST Certificate";

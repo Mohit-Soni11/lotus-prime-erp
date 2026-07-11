@@ -179,7 +179,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
 
     if (!isValid) {
       setState(() => _isLoading = false);
-      _showErrorFeedback(
+      _showErrorFeedback(_validationMessageForStep(_currentStep) ??
           "Please correct the errors in the form before proceeding.");
       return;
     }
@@ -291,8 +291,21 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
       _currentStep = stepId;
       _activatedSteps[stepId - 1] = true;
     });
-    _showErrorFeedback(
+    _showErrorFeedback(_validationMessageForStep(stepId) ??
         "Please correct the highlighted details before saving setup.");
+  }
+
+  String? _validationMessageForStep(int stepId) {
+    switch (stepId) {
+      case 5:
+        final message = _brandingKey.currentState?.validationMessage;
+        if (message != null && message.trim().isNotEmpty) {
+          return message;
+        }
+        return null;
+      default:
+        return null;
+    }
   }
 
   // --- THE AUTO-FETCH ENGINE ---
@@ -342,6 +355,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
       context,
       type: AppFeedbackType.error,
       message: msg,
+      duration: const Duration(milliseconds: 4200),
     );
   }
 

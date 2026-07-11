@@ -37,6 +37,23 @@ void main() {
     expect(logic.brandingData, model);
   });
 
+  test('branding validation reports exact invalid fields and unlocks them', () {
+    final logic = BrandingLogic();
+    addTearDown(logic.dispose);
+
+    logic.webCtrl.text = 'dsaascs';
+    logic.waChannelCtrl.text = 'dascasadc';
+
+    expect(logic.validateAndGenerateFinalModel(), isNull);
+
+    expect(logic.isSocialLocked, isFalse);
+    expect(logic.isSupportLocked, isFalse);
+    expect(logic.lastValidationError, contains('Official Website'));
+    expect(logic.lastValidationError, contains('lotusjewellers.com'));
+    expect(logic.lastValidationError, contains('WhatsApp Channel Link'));
+    expect(logic.lastValidationError, contains('whatsapp.com/channel'));
+  });
+
   test('tax GST final validation rejects invalid controller values', () {
     final logic = TaxGstLogic();
     addTearDown(logic.dispose);

@@ -169,7 +169,7 @@ class _AppFeedbackOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = _AppFeedbackTheme.forType(type);
     final media = MediaQuery.of(context);
-    final maxWidth = media.size.width < 420 ? media.size.width - 36 : 360.0;
+    final maxWidth = media.size.width < 460 ? media.size.width - 36 : 420.0;
     final hasAction = action != null;
 
     final overlay = Material(
@@ -239,7 +239,7 @@ class _AppFeedbackOverlay extends StatelessWidget {
                   Text(
                     message,
                     textAlign: TextAlign.center,
-                    maxLines: 4,
+                    maxLines: 6,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       color: const Color(0xFF374151),

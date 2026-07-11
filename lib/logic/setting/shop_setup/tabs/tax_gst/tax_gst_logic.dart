@@ -38,12 +38,25 @@ class TaxGstLogic extends ChangeNotifier {
   // --- DROPDOWN STATE ---
   TaxpayerType selectedTaxpayer = TaxpayerType.regular;
   HallmarkingScope selectedHallmarkingScope = HallmarkingScope.goldAndSilver;
+  BisRegistrationMode selectedBisRegistrationMode = BisRegistrationMode.single;
 
   // Exposing enum values for the UI dropdown
   List<String> get taxpayerTypes =>
       TaxpayerType.values.map((e) => e.displayName).toList();
   bool get coversGold => selectedHallmarkingScope.coversGold;
   bool get coversSilver => selectedHallmarkingScope.coversSilver;
+  bool get usesSharedBisRegistration =>
+      selectedHallmarkingScope == HallmarkingScope.goldAndSilver &&
+      selectedBisRegistrationMode == BisRegistrationMode.single;
+  bool get usesSeparateBisRegistration =>
+      selectedHallmarkingScope == HallmarkingScope.goldAndSilver &&
+      selectedBisRegistrationMode == BisRegistrationMode.separate;
+  bool get showsGoldBisRegistration =>
+      selectedHallmarkingScope == HallmarkingScope.gold ||
+      usesSeparateBisRegistration;
+  bool get showsSilverBisRegistration =>
+      selectedHallmarkingScope == HallmarkingScope.silver ||
+      usesSeparateBisRegistration;
 
   // --- FOCUS NODES ---
   final FocusNode gstinFocus = FocusNode();
@@ -89,7 +102,13 @@ class TaxGstLogic extends ChangeNotifier {
       targetFocus = gstinFocus;
     } else if (sectionId == 'bis') {
       bisSectionState = SectionEditState.editing;
-      targetFocus = coversGold ? goldBisLicFocus : silverBisLicFocus;
+      if (usesSharedBisRegistration) {
+        targetFocus = bisLicFocus;
+      } else if (showsGoldBisRegistration) {
+        targetFocus = goldBisLicFocus;
+      } else {
+        targetFocus = silverBisLicFocus;
+      }
     }
     notifyListeners();
     return targetFocus;
@@ -113,12 +132,16 @@ class TaxGstLogic extends ChangeNotifier {
 
   List<FocusNode> _validateBisSection() {
     List<FocusNode> errors = [];
-    if (coversGold &&
+    if (usesSharedBisRegistration &&
+        TaxGstValidators.validateOptionalBisLicense(bisLicCtrl.text) != null) {
+      errors.add(bisLicFocus);
+    }
+    if (showsGoldBisRegistration &&
         TaxGstValidators.validateOptionalBisLicense(goldBisLicCtrl.text) !=
             null) {
       errors.add(goldBisLicFocus);
     }
-    if (coversSilver &&
+    if (showsSilverBisRegistration &&
         TaxGstValidators.validateOptionalBisLicense(silverBisLicCtrl.text) !=
             null) {
       errors.add(silverBisLicFocus);
@@ -192,28 +215,28 @@ class TaxGstLogic extends ChangeNotifier {
     String? goldBisLic,
     String? silverBisLic,
     HallmarkingScope? hallmarkingScope,
+    BisRegistrationMode? bisRegistrationMode,
   }) {
     final scope = hallmarkingScope ?? selectedHallmarkingScope;
-    final rawGoldRegistration = goldBisLic ?? goldBisLicCtrl.text;
-    final rawSilverRegistration = silverBisLic ?? silverBisLicCtrl.text;
-    final hasExplicitMetalRegistration =
-        rawGoldRegistration.trim().isNotEmpty ||
-            rawSilverRegistration.trim().isNotEmpty;
-    final fallbackBisRegistration = hasExplicitMetalRegistration
-        ? ''
-        : _normalizeUpper(bisLic ?? bisLicCtrl.text);
-    final goldRegistration = scope.coversGold
-        ? _resolveMetalRegistration(
-            rawGoldRegistration,
-            fallbackBisRegistration,
-          )
-        : '';
-    final silverRegistration = scope.coversSilver
-        ? _resolveMetalRegistration(
-            rawSilverRegistration,
-            fallbackBisRegistration,
-          )
-        : '';
+    final mode = scope == HallmarkingScope.goldAndSilver
+        ? (bisRegistrationMode ?? selectedBisRegistrationMode)
+        : BisRegistrationMode.single;
+    final commonRegistration = _normalizeUpper(bisLic ?? bisLicCtrl.text);
+    final rawGoldRegistration =
+        _normalizeUpper(goldBisLic ?? goldBisLicCtrl.text);
+    final rawSilverRegistration =
+        _normalizeUpper(silverBisLic ?? silverBisLicCtrl.text);
+
+    final String goldRegistration;
+    final String silverRegistration;
+    if (scope == HallmarkingScope.goldAndSilver &&
+        mode == BisRegistrationMode.single) {
+      goldRegistration = commonRegistration;
+      silverRegistration = commonRegistration;
+    } else {
+      goldRegistration = scope.coversGold ? rawGoldRegistration : '';
+      silverRegistration = scope.coversSilver ? rawSilverRegistration : '';
+    }
     final bisRegistration =
         _combinedBisRegistration(goldRegistration, silverRegistration);
 
@@ -226,6 +249,7 @@ class TaxGstLogic extends ChangeNotifier {
           : TaxpayerType.fromString(taxpayerType),
       bisLicenseNo: bisRegistration,
       hallmarkingScope: scope,
+      bisRegistrationMode: mode,
       goldBisLicenseNo: goldRegistration,
       silverBisLicenseNo: silverRegistration,
       gstCertPath: gstCertFile?.existsSync() == true ? gstCertFile!.path : null,
@@ -238,11 +262,6 @@ class TaxGstLogic extends ChangeNotifier {
   String _normalizeText(String value) => value.trim();
 
   String _normalizeUpper(String value) => value.trim().toUpperCase();
-
-  String _resolveMetalRegistration(String value, String fallback) {
-    final normalized = _normalizeUpper(value);
-    return normalized.isNotEmpty ? normalized : fallback;
-  }
 
   String _combinedBisRegistration(String gold, String silver) {
     if (gold.isNotEmpty && silver.isNotEmpty) {
@@ -259,7 +278,30 @@ class TaxGstLogic extends ChangeNotifier {
   }
 
   void setHallmarkingScope(String val) {
-    selectedHallmarkingScope = HallmarkingScope.fromString(val);
+    setHallmarkingSelection(
+      scope: HallmarkingScope.fromString(val),
+      registrationMode: BisRegistrationMode.single,
+    );
+  }
+
+  void setBisRegistrationMode(String val) {
+    setHallmarkingSelection(
+      scope: selectedHallmarkingScope,
+      registrationMode: BisRegistrationMode.fromString(val),
+    );
+  }
+
+  void setHallmarkingSelection({
+    required HallmarkingScope scope,
+    required BisRegistrationMode registrationMode,
+  }) {
+    final mode = scope == HallmarkingScope.goldAndSilver
+        ? registrationMode
+        : BisRegistrationMode.single;
+
+    _carryRegistrationToSelection(scope, mode);
+    selectedHallmarkingScope = scope;
+    selectedBisRegistrationMode = mode;
     notifyListeners();
   }
 
@@ -278,7 +320,56 @@ class TaxGstLogic extends ChangeNotifier {
       (false, true) => HallmarkingScope.silver,
       _ => selectedHallmarkingScope,
     };
+    selectedBisRegistrationMode = nextGold && nextSilver
+        ? BisRegistrationMode.separate
+        : BisRegistrationMode.single;
+    _carryRegistrationToSelection(
+      selectedHallmarkingScope,
+      selectedBisRegistrationMode,
+    );
     notifyListeners();
+  }
+
+  void _carryRegistrationToSelection(
+    HallmarkingScope scope,
+    BisRegistrationMode mode,
+  ) {
+    final common = _normalizeUpper(bisLicCtrl.text);
+    final gold = _normalizeUpper(goldBisLicCtrl.text);
+    final silver = _normalizeUpper(silverBisLicCtrl.text);
+
+    if (scope == HallmarkingScope.goldAndSilver &&
+        mode == BisRegistrationMode.single) {
+      if (common.isNotEmpty) return;
+      if (gold.isNotEmpty &&
+          silver.isNotEmpty &&
+          gold.toUpperCase() == silver.toUpperCase()) {
+        bisLicCtrl.text = gold;
+      } else if (gold.isNotEmpty && silver.isEmpty) {
+        bisLicCtrl.text = gold;
+      } else if (silver.isNotEmpty && gold.isEmpty) {
+        bisLicCtrl.text = silver;
+      }
+      return;
+    }
+
+    if (scope == HallmarkingScope.goldAndSilver &&
+        mode == BisRegistrationMode.separate) {
+      if (common.isNotEmpty) {
+        if (gold.isEmpty) goldBisLicCtrl.text = common;
+        if (silver.isEmpty) silverBisLicCtrl.text = common;
+      }
+      return;
+    }
+
+    if (scope == HallmarkingScope.gold && gold.isEmpty && common.isNotEmpty) {
+      goldBisLicCtrl.text = common;
+    }
+    if (scope == HallmarkingScope.silver &&
+        silver.isEmpty &&
+        common.isNotEmpty) {
+      silverBisLicCtrl.text = common;
+    }
   }
 
   void setRegDate(String val) {
