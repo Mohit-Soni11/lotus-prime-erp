@@ -298,6 +298,12 @@ GoRouter createAppRouter() {
           );
         },
       ),
+      GoRoute(
+        path: RoutePaths.stockAdd,
+        builder: (context, _) => AddStockHubScreen(
+          onBack: () => context.go(RoutePaths.dashboard),
+        ),
+      ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
@@ -454,10 +460,6 @@ GoRouter createAppRouter() {
             builder: (context, state) => InventoryScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
-          ),
-          GoRoute(
-            path: RoutePaths.stockAdd,
-            builder: (_, __) => const AddStockHubScreen(),
           ),
           GoRoute(
             path: RoutePaths.stockBarcode,

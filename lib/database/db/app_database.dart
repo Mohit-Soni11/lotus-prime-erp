@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../config/db_config.dart';
 import '../../config/env_config.dart';
 import '../../core/logging/app_logger.dart';
+import '../../features/gold_stock_receipts/data/drift/gold_stock_receipt_tables.dart';
 import '../tables/bill_items.dart';
 import '../tables/bill_old_gold_items.dart';
 import '../tables/bills.dart';
@@ -78,6 +79,11 @@ part 'app_database.g.dart';
     PurchaseBillingSettings,
     GirviBillingSettings,
     ShopPrintInformationSettings,
+    GoldStockReceipts,
+    GoldStockReceiptLines,
+    GoldReceiptSettlements,
+    GoldReceiptAttachments,
+    GoldReceiptAuditEvents,
     TaxGstConfigs, // ✅ v16
   ],
 )
@@ -655,6 +661,15 @@ class AppDatabase extends _$AppDatabase {
             AppLogger.info(
               'v32 shop print information settings applied.',
             );
+          }
+
+          if (from < 33) {
+            await m.createTable(goldStockReceipts);
+            await m.createTable(goldStockReceiptLines);
+            await m.createTable(goldReceiptSettlements);
+            await m.createTable(goldReceiptAttachments);
+            await m.createTable(goldReceiptAuditEvents);
+            AppLogger.info('v33 Gold stock receipt schema applied.');
           }
         },
         beforeOpen: (details) async {

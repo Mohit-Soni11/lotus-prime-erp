@@ -11,7 +11,9 @@ import 'platinum_stock_card.dart';
 import '../add_stock/add_stock_silver/silver_stock_card.dart';
 
 class AddStockHubScreen extends StatefulWidget {
-  const AddStockHubScreen({super.key});
+  final VoidCallback? onBack;
+
+  const AddStockHubScreen({super.key, this.onBack});
 
   @override
   State<AddStockHubScreen> createState() => _AddStockHubScreenState();
@@ -79,7 +81,9 @@ class _AddStockHubScreenState extends State<AddStockHubScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AddStockColors.bodyBg,
-      appBar: AddStockHubAppBar(onBack: () => Navigator.maybePop(context)),
+      appBar: AddStockHubAppBar(
+        onBack: widget.onBack ?? () => Navigator.maybePop(context),
+      ),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(

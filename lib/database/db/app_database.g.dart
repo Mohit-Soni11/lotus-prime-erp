@@ -29925,6 +29925,3659 @@ class ShopPrintInformationSettingsCompanion
   }
 }
 
+class $GoldStockReceiptsTable extends GoldStockReceipts
+    with TableInfo<$GoldStockReceiptsTable, GoldStockReceiptRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GoldStockReceiptsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _receiptNumberMeta =
+      const VerificationMeta('receiptNumber');
+  @override
+  late final GeneratedColumn<String> receiptNumber = GeneratedColumn<String>(
+      'receipt_number', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+      'source', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _supplierIdMeta =
+      const VerificationMeta('supplierId');
+  @override
+  late final GeneratedColumn<int> supplierId = GeneratedColumn<int>(
+      'supplier_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES suppliers (id)'));
+  static const VerificationMeta _supplierNameMeta =
+      const VerificationMeta('supplierName');
+  @override
+  late final GeneratedColumn<String> supplierName = GeneratedColumn<String>(
+      'supplier_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _supplierInvoiceNumberMeta =
+      const VerificationMeta('supplierInvoiceNumber');
+  @override
+  late final GeneratedColumn<String> supplierInvoiceNumber =
+      GeneratedColumn<String>('supplier_invoice_number', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+      'status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('POSTED'));
+  static const VerificationMeta _totalGrossWeightMilligramsMeta =
+      const VerificationMeta('totalGrossWeightMilligrams');
+  @override
+  late final GeneratedColumn<int> totalGrossWeightMilligrams =
+      GeneratedColumn<int>('total_gross_weight_milligrams', aliasedName, false,
+          type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _totalFineWeightMilligramsMeta =
+      const VerificationMeta('totalFineWeightMilligrams');
+  @override
+  late final GeneratedColumn<int> totalFineWeightMilligrams =
+      GeneratedColumn<int>('total_fine_weight_milligrams', aliasedName, false,
+          type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _totalCostPaiseMeta =
+      const VerificationMeta('totalCostPaise');
+  @override
+  late final GeneratedColumn<int> totalCostPaise = GeneratedColumn<int>(
+      'total_cost_paise', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _currencyCodeMeta =
+      const VerificationMeta('currencyCode');
+  @override
+  late final GeneratedColumn<String> currencyCode = GeneratedColumn<String>(
+      'currency_code', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('INR'));
+  static const VerificationMeta _receivedAtMeta =
+      const VerificationMeta('receivedAt');
+  @override
+  late final GeneratedColumn<DateTime> receivedAt = GeneratedColumn<DateTime>(
+      'received_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _createdByUserIdMeta =
+      const VerificationMeta('createdByUserId');
+  @override
+  late final GeneratedColumn<String> createdByUserId = GeneratedColumn<String>(
+      'created_by_user_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        receiptNumber,
+        source,
+        supplierId,
+        supplierName,
+        supplierInvoiceNumber,
+        status,
+        totalGrossWeightMilligrams,
+        totalFineWeightMilligrams,
+        totalCostPaise,
+        currencyCode,
+        receivedAt,
+        createdByUserId
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'gold_stock_receipts';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<GoldStockReceiptRecord> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('receipt_number')) {
+      context.handle(
+          _receiptNumberMeta,
+          receiptNumber.isAcceptableOrUnknown(
+              data['receipt_number']!, _receiptNumberMeta));
+    } else if (isInserting) {
+      context.missing(_receiptNumberMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(_sourceMeta,
+          source.isAcceptableOrUnknown(data['source']!, _sourceMeta));
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('supplier_id')) {
+      context.handle(
+          _supplierIdMeta,
+          supplierId.isAcceptableOrUnknown(
+              data['supplier_id']!, _supplierIdMeta));
+    } else if (isInserting) {
+      context.missing(_supplierIdMeta);
+    }
+    if (data.containsKey('supplier_name')) {
+      context.handle(
+          _supplierNameMeta,
+          supplierName.isAcceptableOrUnknown(
+              data['supplier_name']!, _supplierNameMeta));
+    } else if (isInserting) {
+      context.missing(_supplierNameMeta);
+    }
+    if (data.containsKey('supplier_invoice_number')) {
+      context.handle(
+          _supplierInvoiceNumberMeta,
+          supplierInvoiceNumber.isAcceptableOrUnknown(
+              data['supplier_invoice_number']!, _supplierInvoiceNumberMeta));
+    }
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    }
+    if (data.containsKey('total_gross_weight_milligrams')) {
+      context.handle(
+          _totalGrossWeightMilligramsMeta,
+          totalGrossWeightMilligrams.isAcceptableOrUnknown(
+              data['total_gross_weight_milligrams']!,
+              _totalGrossWeightMilligramsMeta));
+    } else if (isInserting) {
+      context.missing(_totalGrossWeightMilligramsMeta);
+    }
+    if (data.containsKey('total_fine_weight_milligrams')) {
+      context.handle(
+          _totalFineWeightMilligramsMeta,
+          totalFineWeightMilligrams.isAcceptableOrUnknown(
+              data['total_fine_weight_milligrams']!,
+              _totalFineWeightMilligramsMeta));
+    } else if (isInserting) {
+      context.missing(_totalFineWeightMilligramsMeta);
+    }
+    if (data.containsKey('total_cost_paise')) {
+      context.handle(
+          _totalCostPaiseMeta,
+          totalCostPaise.isAcceptableOrUnknown(
+              data['total_cost_paise']!, _totalCostPaiseMeta));
+    } else if (isInserting) {
+      context.missing(_totalCostPaiseMeta);
+    }
+    if (data.containsKey('currency_code')) {
+      context.handle(
+          _currencyCodeMeta,
+          currencyCode.isAcceptableOrUnknown(
+              data['currency_code']!, _currencyCodeMeta));
+    }
+    if (data.containsKey('received_at')) {
+      context.handle(
+          _receivedAtMeta,
+          receivedAt.isAcceptableOrUnknown(
+              data['received_at']!, _receivedAtMeta));
+    } else if (isInserting) {
+      context.missing(_receivedAtMeta);
+    }
+    if (data.containsKey('created_by_user_id')) {
+      context.handle(
+          _createdByUserIdMeta,
+          createdByUserId.isAcceptableOrUnknown(
+              data['created_by_user_id']!, _createdByUserIdMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GoldStockReceiptRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GoldStockReceiptRecord(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      receiptNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}receipt_number'])!,
+      source: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source'])!,
+      supplierId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}supplier_id'])!,
+      supplierName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}supplier_name'])!,
+      supplierInvoiceNumber: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}supplier_invoice_number']),
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
+      totalGrossWeightMilligrams: attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}total_gross_weight_milligrams'])!,
+      totalFineWeightMilligrams: attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}total_fine_weight_milligrams'])!,
+      totalCostPaise: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}total_cost_paise'])!,
+      currencyCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}currency_code'])!,
+      receivedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}received_at'])!,
+      createdByUserId: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}created_by_user_id']),
+    );
+  }
+
+  @override
+  $GoldStockReceiptsTable createAlias(String alias) {
+    return $GoldStockReceiptsTable(attachedDatabase, alias);
+  }
+}
+
+class GoldStockReceiptRecord extends DataClass
+    implements Insertable<GoldStockReceiptRecord> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final String receiptNumber;
+  final String source;
+  final int supplierId;
+  final String supplierName;
+  final String? supplierInvoiceNumber;
+  final String status;
+  final int totalGrossWeightMilligrams;
+  final int totalFineWeightMilligrams;
+  final int totalCostPaise;
+  final String currencyCode;
+  final DateTime receivedAt;
+  final String? createdByUserId;
+  const GoldStockReceiptRecord(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.receiptNumber,
+      required this.source,
+      required this.supplierId,
+      required this.supplierName,
+      this.supplierInvoiceNumber,
+      required this.status,
+      required this.totalGrossWeightMilligrams,
+      required this.totalFineWeightMilligrams,
+      required this.totalCostPaise,
+      required this.currencyCode,
+      required this.receivedAt,
+      this.createdByUserId});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['receipt_number'] = Variable<String>(receiptNumber);
+    map['source'] = Variable<String>(source);
+    map['supplier_id'] = Variable<int>(supplierId);
+    map['supplier_name'] = Variable<String>(supplierName);
+    if (!nullToAbsent || supplierInvoiceNumber != null) {
+      map['supplier_invoice_number'] = Variable<String>(supplierInvoiceNumber);
+    }
+    map['status'] = Variable<String>(status);
+    map['total_gross_weight_milligrams'] =
+        Variable<int>(totalGrossWeightMilligrams);
+    map['total_fine_weight_milligrams'] =
+        Variable<int>(totalFineWeightMilligrams);
+    map['total_cost_paise'] = Variable<int>(totalCostPaise);
+    map['currency_code'] = Variable<String>(currencyCode);
+    map['received_at'] = Variable<DateTime>(receivedAt);
+    if (!nullToAbsent || createdByUserId != null) {
+      map['created_by_user_id'] = Variable<String>(createdByUserId);
+    }
+    return map;
+  }
+
+  GoldStockReceiptsCompanion toCompanion(bool nullToAbsent) {
+    return GoldStockReceiptsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      receiptNumber: Value(receiptNumber),
+      source: Value(source),
+      supplierId: Value(supplierId),
+      supplierName: Value(supplierName),
+      supplierInvoiceNumber: supplierInvoiceNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(supplierInvoiceNumber),
+      status: Value(status),
+      totalGrossWeightMilligrams: Value(totalGrossWeightMilligrams),
+      totalFineWeightMilligrams: Value(totalFineWeightMilligrams),
+      totalCostPaise: Value(totalCostPaise),
+      currencyCode: Value(currencyCode),
+      receivedAt: Value(receivedAt),
+      createdByUserId: createdByUserId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdByUserId),
+    );
+  }
+
+  factory GoldStockReceiptRecord.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GoldStockReceiptRecord(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      receiptNumber: serializer.fromJson<String>(json['receiptNumber']),
+      source: serializer.fromJson<String>(json['source']),
+      supplierId: serializer.fromJson<int>(json['supplierId']),
+      supplierName: serializer.fromJson<String>(json['supplierName']),
+      supplierInvoiceNumber:
+          serializer.fromJson<String?>(json['supplierInvoiceNumber']),
+      status: serializer.fromJson<String>(json['status']),
+      totalGrossWeightMilligrams:
+          serializer.fromJson<int>(json['totalGrossWeightMilligrams']),
+      totalFineWeightMilligrams:
+          serializer.fromJson<int>(json['totalFineWeightMilligrams']),
+      totalCostPaise: serializer.fromJson<int>(json['totalCostPaise']),
+      currencyCode: serializer.fromJson<String>(json['currencyCode']),
+      receivedAt: serializer.fromJson<DateTime>(json['receivedAt']),
+      createdByUserId: serializer.fromJson<String?>(json['createdByUserId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'receiptNumber': serializer.toJson<String>(receiptNumber),
+      'source': serializer.toJson<String>(source),
+      'supplierId': serializer.toJson<int>(supplierId),
+      'supplierName': serializer.toJson<String>(supplierName),
+      'supplierInvoiceNumber':
+          serializer.toJson<String?>(supplierInvoiceNumber),
+      'status': serializer.toJson<String>(status),
+      'totalGrossWeightMilligrams':
+          serializer.toJson<int>(totalGrossWeightMilligrams),
+      'totalFineWeightMilligrams':
+          serializer.toJson<int>(totalFineWeightMilligrams),
+      'totalCostPaise': serializer.toJson<int>(totalCostPaise),
+      'currencyCode': serializer.toJson<String>(currencyCode),
+      'receivedAt': serializer.toJson<DateTime>(receivedAt),
+      'createdByUserId': serializer.toJson<String?>(createdByUserId),
+    };
+  }
+
+  GoldStockReceiptRecord copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          String? receiptNumber,
+          String? source,
+          int? supplierId,
+          String? supplierName,
+          Value<String?> supplierInvoiceNumber = const Value.absent(),
+          String? status,
+          int? totalGrossWeightMilligrams,
+          int? totalFineWeightMilligrams,
+          int? totalCostPaise,
+          String? currencyCode,
+          DateTime? receivedAt,
+          Value<String?> createdByUserId = const Value.absent()}) =>
+      GoldStockReceiptRecord(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        receiptNumber: receiptNumber ?? this.receiptNumber,
+        source: source ?? this.source,
+        supplierId: supplierId ?? this.supplierId,
+        supplierName: supplierName ?? this.supplierName,
+        supplierInvoiceNumber: supplierInvoiceNumber.present
+            ? supplierInvoiceNumber.value
+            : this.supplierInvoiceNumber,
+        status: status ?? this.status,
+        totalGrossWeightMilligrams:
+            totalGrossWeightMilligrams ?? this.totalGrossWeightMilligrams,
+        totalFineWeightMilligrams:
+            totalFineWeightMilligrams ?? this.totalFineWeightMilligrams,
+        totalCostPaise: totalCostPaise ?? this.totalCostPaise,
+        currencyCode: currencyCode ?? this.currencyCode,
+        receivedAt: receivedAt ?? this.receivedAt,
+        createdByUserId: createdByUserId.present
+            ? createdByUserId.value
+            : this.createdByUserId,
+      );
+  GoldStockReceiptRecord copyWithCompanion(GoldStockReceiptsCompanion data) {
+    return GoldStockReceiptRecord(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      receiptNumber: data.receiptNumber.present
+          ? data.receiptNumber.value
+          : this.receiptNumber,
+      source: data.source.present ? data.source.value : this.source,
+      supplierId:
+          data.supplierId.present ? data.supplierId.value : this.supplierId,
+      supplierName: data.supplierName.present
+          ? data.supplierName.value
+          : this.supplierName,
+      supplierInvoiceNumber: data.supplierInvoiceNumber.present
+          ? data.supplierInvoiceNumber.value
+          : this.supplierInvoiceNumber,
+      status: data.status.present ? data.status.value : this.status,
+      totalGrossWeightMilligrams: data.totalGrossWeightMilligrams.present
+          ? data.totalGrossWeightMilligrams.value
+          : this.totalGrossWeightMilligrams,
+      totalFineWeightMilligrams: data.totalFineWeightMilligrams.present
+          ? data.totalFineWeightMilligrams.value
+          : this.totalFineWeightMilligrams,
+      totalCostPaise: data.totalCostPaise.present
+          ? data.totalCostPaise.value
+          : this.totalCostPaise,
+      currencyCode: data.currencyCode.present
+          ? data.currencyCode.value
+          : this.currencyCode,
+      receivedAt:
+          data.receivedAt.present ? data.receivedAt.value : this.receivedAt,
+      createdByUserId: data.createdByUserId.present
+          ? data.createdByUserId.value
+          : this.createdByUserId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GoldStockReceiptRecord(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('receiptNumber: $receiptNumber, ')
+          ..write('source: $source, ')
+          ..write('supplierId: $supplierId, ')
+          ..write('supplierName: $supplierName, ')
+          ..write('supplierInvoiceNumber: $supplierInvoiceNumber, ')
+          ..write('status: $status, ')
+          ..write('totalGrossWeightMilligrams: $totalGrossWeightMilligrams, ')
+          ..write('totalFineWeightMilligrams: $totalFineWeightMilligrams, ')
+          ..write('totalCostPaise: $totalCostPaise, ')
+          ..write('currencyCode: $currencyCode, ')
+          ..write('receivedAt: $receivedAt, ')
+          ..write('createdByUserId: $createdByUserId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      createdAt,
+      updatedAt,
+      receiptNumber,
+      source,
+      supplierId,
+      supplierName,
+      supplierInvoiceNumber,
+      status,
+      totalGrossWeightMilligrams,
+      totalFineWeightMilligrams,
+      totalCostPaise,
+      currencyCode,
+      receivedAt,
+      createdByUserId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GoldStockReceiptRecord &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.receiptNumber == this.receiptNumber &&
+          other.source == this.source &&
+          other.supplierId == this.supplierId &&
+          other.supplierName == this.supplierName &&
+          other.supplierInvoiceNumber == this.supplierInvoiceNumber &&
+          other.status == this.status &&
+          other.totalGrossWeightMilligrams == this.totalGrossWeightMilligrams &&
+          other.totalFineWeightMilligrams == this.totalFineWeightMilligrams &&
+          other.totalCostPaise == this.totalCostPaise &&
+          other.currencyCode == this.currencyCode &&
+          other.receivedAt == this.receivedAt &&
+          other.createdByUserId == this.createdByUserId);
+}
+
+class GoldStockReceiptsCompanion
+    extends UpdateCompanion<GoldStockReceiptRecord> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<String> receiptNumber;
+  final Value<String> source;
+  final Value<int> supplierId;
+  final Value<String> supplierName;
+  final Value<String?> supplierInvoiceNumber;
+  final Value<String> status;
+  final Value<int> totalGrossWeightMilligrams;
+  final Value<int> totalFineWeightMilligrams;
+  final Value<int> totalCostPaise;
+  final Value<String> currencyCode;
+  final Value<DateTime> receivedAt;
+  final Value<String?> createdByUserId;
+  const GoldStockReceiptsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.receiptNumber = const Value.absent(),
+    this.source = const Value.absent(),
+    this.supplierId = const Value.absent(),
+    this.supplierName = const Value.absent(),
+    this.supplierInvoiceNumber = const Value.absent(),
+    this.status = const Value.absent(),
+    this.totalGrossWeightMilligrams = const Value.absent(),
+    this.totalFineWeightMilligrams = const Value.absent(),
+    this.totalCostPaise = const Value.absent(),
+    this.currencyCode = const Value.absent(),
+    this.receivedAt = const Value.absent(),
+    this.createdByUserId = const Value.absent(),
+  });
+  GoldStockReceiptsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required String receiptNumber,
+    required String source,
+    required int supplierId,
+    required String supplierName,
+    this.supplierInvoiceNumber = const Value.absent(),
+    this.status = const Value.absent(),
+    required int totalGrossWeightMilligrams,
+    required int totalFineWeightMilligrams,
+    required int totalCostPaise,
+    this.currencyCode = const Value.absent(),
+    required DateTime receivedAt,
+    this.createdByUserId = const Value.absent(),
+  })  : receiptNumber = Value(receiptNumber),
+        source = Value(source),
+        supplierId = Value(supplierId),
+        supplierName = Value(supplierName),
+        totalGrossWeightMilligrams = Value(totalGrossWeightMilligrams),
+        totalFineWeightMilligrams = Value(totalFineWeightMilligrams),
+        totalCostPaise = Value(totalCostPaise),
+        receivedAt = Value(receivedAt);
+  static Insertable<GoldStockReceiptRecord> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? receiptNumber,
+    Expression<String>? source,
+    Expression<int>? supplierId,
+    Expression<String>? supplierName,
+    Expression<String>? supplierInvoiceNumber,
+    Expression<String>? status,
+    Expression<int>? totalGrossWeightMilligrams,
+    Expression<int>? totalFineWeightMilligrams,
+    Expression<int>? totalCostPaise,
+    Expression<String>? currencyCode,
+    Expression<DateTime>? receivedAt,
+    Expression<String>? createdByUserId,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (receiptNumber != null) 'receipt_number': receiptNumber,
+      if (source != null) 'source': source,
+      if (supplierId != null) 'supplier_id': supplierId,
+      if (supplierName != null) 'supplier_name': supplierName,
+      if (supplierInvoiceNumber != null)
+        'supplier_invoice_number': supplierInvoiceNumber,
+      if (status != null) 'status': status,
+      if (totalGrossWeightMilligrams != null)
+        'total_gross_weight_milligrams': totalGrossWeightMilligrams,
+      if (totalFineWeightMilligrams != null)
+        'total_fine_weight_milligrams': totalFineWeightMilligrams,
+      if (totalCostPaise != null) 'total_cost_paise': totalCostPaise,
+      if (currencyCode != null) 'currency_code': currencyCode,
+      if (receivedAt != null) 'received_at': receivedAt,
+      if (createdByUserId != null) 'created_by_user_id': createdByUserId,
+    });
+  }
+
+  GoldStockReceiptsCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<String>? receiptNumber,
+      Value<String>? source,
+      Value<int>? supplierId,
+      Value<String>? supplierName,
+      Value<String?>? supplierInvoiceNumber,
+      Value<String>? status,
+      Value<int>? totalGrossWeightMilligrams,
+      Value<int>? totalFineWeightMilligrams,
+      Value<int>? totalCostPaise,
+      Value<String>? currencyCode,
+      Value<DateTime>? receivedAt,
+      Value<String?>? createdByUserId}) {
+    return GoldStockReceiptsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      receiptNumber: receiptNumber ?? this.receiptNumber,
+      source: source ?? this.source,
+      supplierId: supplierId ?? this.supplierId,
+      supplierName: supplierName ?? this.supplierName,
+      supplierInvoiceNumber:
+          supplierInvoiceNumber ?? this.supplierInvoiceNumber,
+      status: status ?? this.status,
+      totalGrossWeightMilligrams:
+          totalGrossWeightMilligrams ?? this.totalGrossWeightMilligrams,
+      totalFineWeightMilligrams:
+          totalFineWeightMilligrams ?? this.totalFineWeightMilligrams,
+      totalCostPaise: totalCostPaise ?? this.totalCostPaise,
+      currencyCode: currencyCode ?? this.currencyCode,
+      receivedAt: receivedAt ?? this.receivedAt,
+      createdByUserId: createdByUserId ?? this.createdByUserId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (receiptNumber.present) {
+      map['receipt_number'] = Variable<String>(receiptNumber.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (supplierId.present) {
+      map['supplier_id'] = Variable<int>(supplierId.value);
+    }
+    if (supplierName.present) {
+      map['supplier_name'] = Variable<String>(supplierName.value);
+    }
+    if (supplierInvoiceNumber.present) {
+      map['supplier_invoice_number'] =
+          Variable<String>(supplierInvoiceNumber.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (totalGrossWeightMilligrams.present) {
+      map['total_gross_weight_milligrams'] =
+          Variable<int>(totalGrossWeightMilligrams.value);
+    }
+    if (totalFineWeightMilligrams.present) {
+      map['total_fine_weight_milligrams'] =
+          Variable<int>(totalFineWeightMilligrams.value);
+    }
+    if (totalCostPaise.present) {
+      map['total_cost_paise'] = Variable<int>(totalCostPaise.value);
+    }
+    if (currencyCode.present) {
+      map['currency_code'] = Variable<String>(currencyCode.value);
+    }
+    if (receivedAt.present) {
+      map['received_at'] = Variable<DateTime>(receivedAt.value);
+    }
+    if (createdByUserId.present) {
+      map['created_by_user_id'] = Variable<String>(createdByUserId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GoldStockReceiptsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('receiptNumber: $receiptNumber, ')
+          ..write('source: $source, ')
+          ..write('supplierId: $supplierId, ')
+          ..write('supplierName: $supplierName, ')
+          ..write('supplierInvoiceNumber: $supplierInvoiceNumber, ')
+          ..write('status: $status, ')
+          ..write('totalGrossWeightMilligrams: $totalGrossWeightMilligrams, ')
+          ..write('totalFineWeightMilligrams: $totalFineWeightMilligrams, ')
+          ..write('totalCostPaise: $totalCostPaise, ')
+          ..write('currencyCode: $currencyCode, ')
+          ..write('receivedAt: $receivedAt, ')
+          ..write('createdByUserId: $createdByUserId')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $GoldStockReceiptLinesTable extends GoldStockReceiptLines
+    with TableInfo<$GoldStockReceiptLinesTable, GoldStockReceiptLineRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GoldStockReceiptLinesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _receiptIdMeta =
+      const VerificationMeta('receiptId');
+  @override
+  late final GeneratedColumn<int> receiptId = GeneratedColumn<int>(
+      'receipt_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES gold_stock_receipts (id) ON DELETE CASCADE'));
+  static const VerificationMeta _lineNumberMeta =
+      const VerificationMeta('lineNumber');
+  @override
+  late final GeneratedColumn<int> lineNumber = GeneratedColumn<int>(
+      'line_number', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _lineIdentifierMeta =
+      const VerificationMeta('lineIdentifier');
+  @override
+  late final GeneratedColumn<String> lineIdentifier = GeneratedColumn<String>(
+      'line_identifier', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _categoryMeta =
+      const VerificationMeta('category');
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+      'category', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _itemNameMeta =
+      const VerificationMeta('itemName');
+  @override
+  late final GeneratedColumn<String> itemName = GeneratedColumn<String>(
+      'item_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _quantityMeta =
+      const VerificationMeta('quantity');
+  @override
+  late final GeneratedColumn<int> quantity = GeneratedColumn<int>(
+      'quantity', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _grossWeightMilligramsMeta =
+      const VerificationMeta('grossWeightMilligrams');
+  @override
+  late final GeneratedColumn<int> grossWeightMilligrams = GeneratedColumn<int>(
+      'gross_weight_milligrams', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _stoneWeightMilligramsMeta =
+      const VerificationMeta('stoneWeightMilligrams');
+  @override
+  late final GeneratedColumn<int> stoneWeightMilligrams = GeneratedColumn<int>(
+      'stone_weight_milligrams', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _netWeightMilligramsMeta =
+      const VerificationMeta('netWeightMilligrams');
+  @override
+  late final GeneratedColumn<int> netWeightMilligrams = GeneratedColumn<int>(
+      'net_weight_milligrams', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _fineWeightMilligramsMeta =
+      const VerificationMeta('fineWeightMilligrams');
+  @override
+  late final GeneratedColumn<int> fineWeightMilligrams = GeneratedColumn<int>(
+      'fine_weight_milligrams', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _purityPartsPerThousandMeta =
+      const VerificationMeta('purityPartsPerThousand');
+  @override
+  late final GeneratedColumn<int> purityPartsPerThousand = GeneratedColumn<int>(
+      'purity_parts_per_thousand', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _ratePerGramPaiseMeta =
+      const VerificationMeta('ratePerGramPaise');
+  @override
+  late final GeneratedColumn<int> ratePerGramPaise = GeneratedColumn<int>(
+      'rate_per_gram_paise', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _makingChargePaiseMeta =
+      const VerificationMeta('makingChargePaise');
+  @override
+  late final GeneratedColumn<int> makingChargePaise = GeneratedColumn<int>(
+      'making_charge_paise', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _makingChargeMethodMeta =
+      const VerificationMeta('makingChargeMethod');
+  @override
+  late final GeneratedColumn<String> makingChargeMethod =
+      GeneratedColumn<String>('making_charge_method', aliasedName, false,
+          type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _metalValuePaiseMeta =
+      const VerificationMeta('metalValuePaise');
+  @override
+  late final GeneratedColumn<int> metalValuePaise = GeneratedColumn<int>(
+      'metal_value_paise', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _makingValuePaiseMeta =
+      const VerificationMeta('makingValuePaise');
+  @override
+  late final GeneratedColumn<int> makingValuePaise = GeneratedColumn<int>(
+      'making_value_paise', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _stoneValuePaiseMeta =
+      const VerificationMeta('stoneValuePaise');
+  @override
+  late final GeneratedColumn<int> stoneValuePaise = GeneratedColumn<int>(
+      'stone_value_paise', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _totalCostPaiseMeta =
+      const VerificationMeta('totalCostPaise');
+  @override
+  late final GeneratedColumn<int> totalCostPaise = GeneratedColumn<int>(
+      'total_cost_paise', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _hallmarkUniqueIdMeta =
+      const VerificationMeta('hallmarkUniqueId');
+  @override
+  late final GeneratedColumn<String> hallmarkUniqueId = GeneratedColumn<String>(
+      'hallmark_unique_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _stoneTypeMeta =
+      const VerificationMeta('stoneType');
+  @override
+  late final GeneratedColumn<String> stoneType = GeneratedColumn<String>(
+      'stone_type', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _stoneQuantityMeta =
+      const VerificationMeta('stoneQuantity');
+  @override
+  late final GeneratedColumn<int> stoneQuantity = GeneratedColumn<int>(
+      'stone_quantity', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _stoneCaratPointsMeta =
+      const VerificationMeta('stoneCaratPoints');
+  @override
+  late final GeneratedColumn<int> stoneCaratPoints = GeneratedColumn<int>(
+      'stone_carat_points', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _stoneCertificateNumberMeta =
+      const VerificationMeta('stoneCertificateNumber');
+  @override
+  late final GeneratedColumn<String> stoneCertificateNumber =
+      GeneratedColumn<String>('stone_certificate_number', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        receiptId,
+        lineNumber,
+        lineIdentifier,
+        category,
+        itemName,
+        quantity,
+        grossWeightMilligrams,
+        stoneWeightMilligrams,
+        netWeightMilligrams,
+        fineWeightMilligrams,
+        purityPartsPerThousand,
+        ratePerGramPaise,
+        makingChargePaise,
+        makingChargeMethod,
+        metalValuePaise,
+        makingValuePaise,
+        stoneValuePaise,
+        totalCostPaise,
+        hallmarkUniqueId,
+        stoneType,
+        stoneQuantity,
+        stoneCaratPoints,
+        stoneCertificateNumber
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'gold_stock_receipt_lines';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<GoldStockReceiptLineRecord> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('receipt_id')) {
+      context.handle(_receiptIdMeta,
+          receiptId.isAcceptableOrUnknown(data['receipt_id']!, _receiptIdMeta));
+    } else if (isInserting) {
+      context.missing(_receiptIdMeta);
+    }
+    if (data.containsKey('line_number')) {
+      context.handle(
+          _lineNumberMeta,
+          lineNumber.isAcceptableOrUnknown(
+              data['line_number']!, _lineNumberMeta));
+    } else if (isInserting) {
+      context.missing(_lineNumberMeta);
+    }
+    if (data.containsKey('line_identifier')) {
+      context.handle(
+          _lineIdentifierMeta,
+          lineIdentifier.isAcceptableOrUnknown(
+              data['line_identifier']!, _lineIdentifierMeta));
+    } else if (isInserting) {
+      context.missing(_lineIdentifierMeta);
+    }
+    if (data.containsKey('category')) {
+      context.handle(_categoryMeta,
+          category.isAcceptableOrUnknown(data['category']!, _categoryMeta));
+    } else if (isInserting) {
+      context.missing(_categoryMeta);
+    }
+    if (data.containsKey('item_name')) {
+      context.handle(_itemNameMeta,
+          itemName.isAcceptableOrUnknown(data['item_name']!, _itemNameMeta));
+    } else if (isInserting) {
+      context.missing(_itemNameMeta);
+    }
+    if (data.containsKey('quantity')) {
+      context.handle(_quantityMeta,
+          quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta));
+    } else if (isInserting) {
+      context.missing(_quantityMeta);
+    }
+    if (data.containsKey('gross_weight_milligrams')) {
+      context.handle(
+          _grossWeightMilligramsMeta,
+          grossWeightMilligrams.isAcceptableOrUnknown(
+              data['gross_weight_milligrams']!, _grossWeightMilligramsMeta));
+    } else if (isInserting) {
+      context.missing(_grossWeightMilligramsMeta);
+    }
+    if (data.containsKey('stone_weight_milligrams')) {
+      context.handle(
+          _stoneWeightMilligramsMeta,
+          stoneWeightMilligrams.isAcceptableOrUnknown(
+              data['stone_weight_milligrams']!, _stoneWeightMilligramsMeta));
+    } else if (isInserting) {
+      context.missing(_stoneWeightMilligramsMeta);
+    }
+    if (data.containsKey('net_weight_milligrams')) {
+      context.handle(
+          _netWeightMilligramsMeta,
+          netWeightMilligrams.isAcceptableOrUnknown(
+              data['net_weight_milligrams']!, _netWeightMilligramsMeta));
+    } else if (isInserting) {
+      context.missing(_netWeightMilligramsMeta);
+    }
+    if (data.containsKey('fine_weight_milligrams')) {
+      context.handle(
+          _fineWeightMilligramsMeta,
+          fineWeightMilligrams.isAcceptableOrUnknown(
+              data['fine_weight_milligrams']!, _fineWeightMilligramsMeta));
+    } else if (isInserting) {
+      context.missing(_fineWeightMilligramsMeta);
+    }
+    if (data.containsKey('purity_parts_per_thousand')) {
+      context.handle(
+          _purityPartsPerThousandMeta,
+          purityPartsPerThousand.isAcceptableOrUnknown(
+              data['purity_parts_per_thousand']!, _purityPartsPerThousandMeta));
+    } else if (isInserting) {
+      context.missing(_purityPartsPerThousandMeta);
+    }
+    if (data.containsKey('rate_per_gram_paise')) {
+      context.handle(
+          _ratePerGramPaiseMeta,
+          ratePerGramPaise.isAcceptableOrUnknown(
+              data['rate_per_gram_paise']!, _ratePerGramPaiseMeta));
+    } else if (isInserting) {
+      context.missing(_ratePerGramPaiseMeta);
+    }
+    if (data.containsKey('making_charge_paise')) {
+      context.handle(
+          _makingChargePaiseMeta,
+          makingChargePaise.isAcceptableOrUnknown(
+              data['making_charge_paise']!, _makingChargePaiseMeta));
+    } else if (isInserting) {
+      context.missing(_makingChargePaiseMeta);
+    }
+    if (data.containsKey('making_charge_method')) {
+      context.handle(
+          _makingChargeMethodMeta,
+          makingChargeMethod.isAcceptableOrUnknown(
+              data['making_charge_method']!, _makingChargeMethodMeta));
+    } else if (isInserting) {
+      context.missing(_makingChargeMethodMeta);
+    }
+    if (data.containsKey('metal_value_paise')) {
+      context.handle(
+          _metalValuePaiseMeta,
+          metalValuePaise.isAcceptableOrUnknown(
+              data['metal_value_paise']!, _metalValuePaiseMeta));
+    } else if (isInserting) {
+      context.missing(_metalValuePaiseMeta);
+    }
+    if (data.containsKey('making_value_paise')) {
+      context.handle(
+          _makingValuePaiseMeta,
+          makingValuePaise.isAcceptableOrUnknown(
+              data['making_value_paise']!, _makingValuePaiseMeta));
+    } else if (isInserting) {
+      context.missing(_makingValuePaiseMeta);
+    }
+    if (data.containsKey('stone_value_paise')) {
+      context.handle(
+          _stoneValuePaiseMeta,
+          stoneValuePaise.isAcceptableOrUnknown(
+              data['stone_value_paise']!, _stoneValuePaiseMeta));
+    }
+    if (data.containsKey('total_cost_paise')) {
+      context.handle(
+          _totalCostPaiseMeta,
+          totalCostPaise.isAcceptableOrUnknown(
+              data['total_cost_paise']!, _totalCostPaiseMeta));
+    } else if (isInserting) {
+      context.missing(_totalCostPaiseMeta);
+    }
+    if (data.containsKey('hallmark_unique_id')) {
+      context.handle(
+          _hallmarkUniqueIdMeta,
+          hallmarkUniqueId.isAcceptableOrUnknown(
+              data['hallmark_unique_id']!, _hallmarkUniqueIdMeta));
+    }
+    if (data.containsKey('stone_type')) {
+      context.handle(_stoneTypeMeta,
+          stoneType.isAcceptableOrUnknown(data['stone_type']!, _stoneTypeMeta));
+    }
+    if (data.containsKey('stone_quantity')) {
+      context.handle(
+          _stoneQuantityMeta,
+          stoneQuantity.isAcceptableOrUnknown(
+              data['stone_quantity']!, _stoneQuantityMeta));
+    }
+    if (data.containsKey('stone_carat_points')) {
+      context.handle(
+          _stoneCaratPointsMeta,
+          stoneCaratPoints.isAcceptableOrUnknown(
+              data['stone_carat_points']!, _stoneCaratPointsMeta));
+    }
+    if (data.containsKey('stone_certificate_number')) {
+      context.handle(
+          _stoneCertificateNumberMeta,
+          stoneCertificateNumber.isAcceptableOrUnknown(
+              data['stone_certificate_number']!, _stoneCertificateNumberMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GoldStockReceiptLineRecord map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GoldStockReceiptLineRecord(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      receiptId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}receipt_id'])!,
+      lineNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}line_number'])!,
+      lineIdentifier: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}line_identifier'])!,
+      category: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}category'])!,
+      itemName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}item_name'])!,
+      quantity: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}quantity'])!,
+      grossWeightMilligrams: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}gross_weight_milligrams'])!,
+      stoneWeightMilligrams: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}stone_weight_milligrams'])!,
+      netWeightMilligrams: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}net_weight_milligrams'])!,
+      fineWeightMilligrams: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}fine_weight_milligrams'])!,
+      purityPartsPerThousand: attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}purity_parts_per_thousand'])!,
+      ratePerGramPaise: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}rate_per_gram_paise'])!,
+      makingChargePaise: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}making_charge_paise'])!,
+      makingChargeMethod: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}making_charge_method'])!,
+      metalValuePaise: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}metal_value_paise'])!,
+      makingValuePaise: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}making_value_paise'])!,
+      stoneValuePaise: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}stone_value_paise'])!,
+      totalCostPaise: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}total_cost_paise'])!,
+      hallmarkUniqueId: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}hallmark_unique_id']),
+      stoneType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}stone_type']),
+      stoneQuantity: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}stone_quantity'])!,
+      stoneCaratPoints: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}stone_carat_points'])!,
+      stoneCertificateNumber: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}stone_certificate_number']),
+    );
+  }
+
+  @override
+  $GoldStockReceiptLinesTable createAlias(String alias) {
+    return $GoldStockReceiptLinesTable(attachedDatabase, alias);
+  }
+}
+
+class GoldStockReceiptLineRecord extends DataClass
+    implements Insertable<GoldStockReceiptLineRecord> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final int receiptId;
+  final int lineNumber;
+  final String lineIdentifier;
+  final String category;
+  final String itemName;
+  final int quantity;
+  final int grossWeightMilligrams;
+  final int stoneWeightMilligrams;
+  final int netWeightMilligrams;
+  final int fineWeightMilligrams;
+  final int purityPartsPerThousand;
+  final int ratePerGramPaise;
+  final int makingChargePaise;
+  final String makingChargeMethod;
+  final int metalValuePaise;
+  final int makingValuePaise;
+  final int stoneValuePaise;
+  final int totalCostPaise;
+  final String? hallmarkUniqueId;
+  final String? stoneType;
+  final int stoneQuantity;
+  final int stoneCaratPoints;
+  final String? stoneCertificateNumber;
+  const GoldStockReceiptLineRecord(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.receiptId,
+      required this.lineNumber,
+      required this.lineIdentifier,
+      required this.category,
+      required this.itemName,
+      required this.quantity,
+      required this.grossWeightMilligrams,
+      required this.stoneWeightMilligrams,
+      required this.netWeightMilligrams,
+      required this.fineWeightMilligrams,
+      required this.purityPartsPerThousand,
+      required this.ratePerGramPaise,
+      required this.makingChargePaise,
+      required this.makingChargeMethod,
+      required this.metalValuePaise,
+      required this.makingValuePaise,
+      required this.stoneValuePaise,
+      required this.totalCostPaise,
+      this.hallmarkUniqueId,
+      this.stoneType,
+      required this.stoneQuantity,
+      required this.stoneCaratPoints,
+      this.stoneCertificateNumber});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['receipt_id'] = Variable<int>(receiptId);
+    map['line_number'] = Variable<int>(lineNumber);
+    map['line_identifier'] = Variable<String>(lineIdentifier);
+    map['category'] = Variable<String>(category);
+    map['item_name'] = Variable<String>(itemName);
+    map['quantity'] = Variable<int>(quantity);
+    map['gross_weight_milligrams'] = Variable<int>(grossWeightMilligrams);
+    map['stone_weight_milligrams'] = Variable<int>(stoneWeightMilligrams);
+    map['net_weight_milligrams'] = Variable<int>(netWeightMilligrams);
+    map['fine_weight_milligrams'] = Variable<int>(fineWeightMilligrams);
+    map['purity_parts_per_thousand'] = Variable<int>(purityPartsPerThousand);
+    map['rate_per_gram_paise'] = Variable<int>(ratePerGramPaise);
+    map['making_charge_paise'] = Variable<int>(makingChargePaise);
+    map['making_charge_method'] = Variable<String>(makingChargeMethod);
+    map['metal_value_paise'] = Variable<int>(metalValuePaise);
+    map['making_value_paise'] = Variable<int>(makingValuePaise);
+    map['stone_value_paise'] = Variable<int>(stoneValuePaise);
+    map['total_cost_paise'] = Variable<int>(totalCostPaise);
+    if (!nullToAbsent || hallmarkUniqueId != null) {
+      map['hallmark_unique_id'] = Variable<String>(hallmarkUniqueId);
+    }
+    if (!nullToAbsent || stoneType != null) {
+      map['stone_type'] = Variable<String>(stoneType);
+    }
+    map['stone_quantity'] = Variable<int>(stoneQuantity);
+    map['stone_carat_points'] = Variable<int>(stoneCaratPoints);
+    if (!nullToAbsent || stoneCertificateNumber != null) {
+      map['stone_certificate_number'] =
+          Variable<String>(stoneCertificateNumber);
+    }
+    return map;
+  }
+
+  GoldStockReceiptLinesCompanion toCompanion(bool nullToAbsent) {
+    return GoldStockReceiptLinesCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      receiptId: Value(receiptId),
+      lineNumber: Value(lineNumber),
+      lineIdentifier: Value(lineIdentifier),
+      category: Value(category),
+      itemName: Value(itemName),
+      quantity: Value(quantity),
+      grossWeightMilligrams: Value(grossWeightMilligrams),
+      stoneWeightMilligrams: Value(stoneWeightMilligrams),
+      netWeightMilligrams: Value(netWeightMilligrams),
+      fineWeightMilligrams: Value(fineWeightMilligrams),
+      purityPartsPerThousand: Value(purityPartsPerThousand),
+      ratePerGramPaise: Value(ratePerGramPaise),
+      makingChargePaise: Value(makingChargePaise),
+      makingChargeMethod: Value(makingChargeMethod),
+      metalValuePaise: Value(metalValuePaise),
+      makingValuePaise: Value(makingValuePaise),
+      stoneValuePaise: Value(stoneValuePaise),
+      totalCostPaise: Value(totalCostPaise),
+      hallmarkUniqueId: hallmarkUniqueId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hallmarkUniqueId),
+      stoneType: stoneType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stoneType),
+      stoneQuantity: Value(stoneQuantity),
+      stoneCaratPoints: Value(stoneCaratPoints),
+      stoneCertificateNumber: stoneCertificateNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stoneCertificateNumber),
+    );
+  }
+
+  factory GoldStockReceiptLineRecord.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GoldStockReceiptLineRecord(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      receiptId: serializer.fromJson<int>(json['receiptId']),
+      lineNumber: serializer.fromJson<int>(json['lineNumber']),
+      lineIdentifier: serializer.fromJson<String>(json['lineIdentifier']),
+      category: serializer.fromJson<String>(json['category']),
+      itemName: serializer.fromJson<String>(json['itemName']),
+      quantity: serializer.fromJson<int>(json['quantity']),
+      grossWeightMilligrams:
+          serializer.fromJson<int>(json['grossWeightMilligrams']),
+      stoneWeightMilligrams:
+          serializer.fromJson<int>(json['stoneWeightMilligrams']),
+      netWeightMilligrams:
+          serializer.fromJson<int>(json['netWeightMilligrams']),
+      fineWeightMilligrams:
+          serializer.fromJson<int>(json['fineWeightMilligrams']),
+      purityPartsPerThousand:
+          serializer.fromJson<int>(json['purityPartsPerThousand']),
+      ratePerGramPaise: serializer.fromJson<int>(json['ratePerGramPaise']),
+      makingChargePaise: serializer.fromJson<int>(json['makingChargePaise']),
+      makingChargeMethod:
+          serializer.fromJson<String>(json['makingChargeMethod']),
+      metalValuePaise: serializer.fromJson<int>(json['metalValuePaise']),
+      makingValuePaise: serializer.fromJson<int>(json['makingValuePaise']),
+      stoneValuePaise: serializer.fromJson<int>(json['stoneValuePaise']),
+      totalCostPaise: serializer.fromJson<int>(json['totalCostPaise']),
+      hallmarkUniqueId: serializer.fromJson<String?>(json['hallmarkUniqueId']),
+      stoneType: serializer.fromJson<String?>(json['stoneType']),
+      stoneQuantity: serializer.fromJson<int>(json['stoneQuantity']),
+      stoneCaratPoints: serializer.fromJson<int>(json['stoneCaratPoints']),
+      stoneCertificateNumber:
+          serializer.fromJson<String?>(json['stoneCertificateNumber']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'receiptId': serializer.toJson<int>(receiptId),
+      'lineNumber': serializer.toJson<int>(lineNumber),
+      'lineIdentifier': serializer.toJson<String>(lineIdentifier),
+      'category': serializer.toJson<String>(category),
+      'itemName': serializer.toJson<String>(itemName),
+      'quantity': serializer.toJson<int>(quantity),
+      'grossWeightMilligrams': serializer.toJson<int>(grossWeightMilligrams),
+      'stoneWeightMilligrams': serializer.toJson<int>(stoneWeightMilligrams),
+      'netWeightMilligrams': serializer.toJson<int>(netWeightMilligrams),
+      'fineWeightMilligrams': serializer.toJson<int>(fineWeightMilligrams),
+      'purityPartsPerThousand': serializer.toJson<int>(purityPartsPerThousand),
+      'ratePerGramPaise': serializer.toJson<int>(ratePerGramPaise),
+      'makingChargePaise': serializer.toJson<int>(makingChargePaise),
+      'makingChargeMethod': serializer.toJson<String>(makingChargeMethod),
+      'metalValuePaise': serializer.toJson<int>(metalValuePaise),
+      'makingValuePaise': serializer.toJson<int>(makingValuePaise),
+      'stoneValuePaise': serializer.toJson<int>(stoneValuePaise),
+      'totalCostPaise': serializer.toJson<int>(totalCostPaise),
+      'hallmarkUniqueId': serializer.toJson<String?>(hallmarkUniqueId),
+      'stoneType': serializer.toJson<String?>(stoneType),
+      'stoneQuantity': serializer.toJson<int>(stoneQuantity),
+      'stoneCaratPoints': serializer.toJson<int>(stoneCaratPoints),
+      'stoneCertificateNumber':
+          serializer.toJson<String?>(stoneCertificateNumber),
+    };
+  }
+
+  GoldStockReceiptLineRecord copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          int? receiptId,
+          int? lineNumber,
+          String? lineIdentifier,
+          String? category,
+          String? itemName,
+          int? quantity,
+          int? grossWeightMilligrams,
+          int? stoneWeightMilligrams,
+          int? netWeightMilligrams,
+          int? fineWeightMilligrams,
+          int? purityPartsPerThousand,
+          int? ratePerGramPaise,
+          int? makingChargePaise,
+          String? makingChargeMethod,
+          int? metalValuePaise,
+          int? makingValuePaise,
+          int? stoneValuePaise,
+          int? totalCostPaise,
+          Value<String?> hallmarkUniqueId = const Value.absent(),
+          Value<String?> stoneType = const Value.absent(),
+          int? stoneQuantity,
+          int? stoneCaratPoints,
+          Value<String?> stoneCertificateNumber = const Value.absent()}) =>
+      GoldStockReceiptLineRecord(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        receiptId: receiptId ?? this.receiptId,
+        lineNumber: lineNumber ?? this.lineNumber,
+        lineIdentifier: lineIdentifier ?? this.lineIdentifier,
+        category: category ?? this.category,
+        itemName: itemName ?? this.itemName,
+        quantity: quantity ?? this.quantity,
+        grossWeightMilligrams:
+            grossWeightMilligrams ?? this.grossWeightMilligrams,
+        stoneWeightMilligrams:
+            stoneWeightMilligrams ?? this.stoneWeightMilligrams,
+        netWeightMilligrams: netWeightMilligrams ?? this.netWeightMilligrams,
+        fineWeightMilligrams: fineWeightMilligrams ?? this.fineWeightMilligrams,
+        purityPartsPerThousand:
+            purityPartsPerThousand ?? this.purityPartsPerThousand,
+        ratePerGramPaise: ratePerGramPaise ?? this.ratePerGramPaise,
+        makingChargePaise: makingChargePaise ?? this.makingChargePaise,
+        makingChargeMethod: makingChargeMethod ?? this.makingChargeMethod,
+        metalValuePaise: metalValuePaise ?? this.metalValuePaise,
+        makingValuePaise: makingValuePaise ?? this.makingValuePaise,
+        stoneValuePaise: stoneValuePaise ?? this.stoneValuePaise,
+        totalCostPaise: totalCostPaise ?? this.totalCostPaise,
+        hallmarkUniqueId: hallmarkUniqueId.present
+            ? hallmarkUniqueId.value
+            : this.hallmarkUniqueId,
+        stoneType: stoneType.present ? stoneType.value : this.stoneType,
+        stoneQuantity: stoneQuantity ?? this.stoneQuantity,
+        stoneCaratPoints: stoneCaratPoints ?? this.stoneCaratPoints,
+        stoneCertificateNumber: stoneCertificateNumber.present
+            ? stoneCertificateNumber.value
+            : this.stoneCertificateNumber,
+      );
+  GoldStockReceiptLineRecord copyWithCompanion(
+      GoldStockReceiptLinesCompanion data) {
+    return GoldStockReceiptLineRecord(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      receiptId: data.receiptId.present ? data.receiptId.value : this.receiptId,
+      lineNumber:
+          data.lineNumber.present ? data.lineNumber.value : this.lineNumber,
+      lineIdentifier: data.lineIdentifier.present
+          ? data.lineIdentifier.value
+          : this.lineIdentifier,
+      category: data.category.present ? data.category.value : this.category,
+      itemName: data.itemName.present ? data.itemName.value : this.itemName,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      grossWeightMilligrams: data.grossWeightMilligrams.present
+          ? data.grossWeightMilligrams.value
+          : this.grossWeightMilligrams,
+      stoneWeightMilligrams: data.stoneWeightMilligrams.present
+          ? data.stoneWeightMilligrams.value
+          : this.stoneWeightMilligrams,
+      netWeightMilligrams: data.netWeightMilligrams.present
+          ? data.netWeightMilligrams.value
+          : this.netWeightMilligrams,
+      fineWeightMilligrams: data.fineWeightMilligrams.present
+          ? data.fineWeightMilligrams.value
+          : this.fineWeightMilligrams,
+      purityPartsPerThousand: data.purityPartsPerThousand.present
+          ? data.purityPartsPerThousand.value
+          : this.purityPartsPerThousand,
+      ratePerGramPaise: data.ratePerGramPaise.present
+          ? data.ratePerGramPaise.value
+          : this.ratePerGramPaise,
+      makingChargePaise: data.makingChargePaise.present
+          ? data.makingChargePaise.value
+          : this.makingChargePaise,
+      makingChargeMethod: data.makingChargeMethod.present
+          ? data.makingChargeMethod.value
+          : this.makingChargeMethod,
+      metalValuePaise: data.metalValuePaise.present
+          ? data.metalValuePaise.value
+          : this.metalValuePaise,
+      makingValuePaise: data.makingValuePaise.present
+          ? data.makingValuePaise.value
+          : this.makingValuePaise,
+      stoneValuePaise: data.stoneValuePaise.present
+          ? data.stoneValuePaise.value
+          : this.stoneValuePaise,
+      totalCostPaise: data.totalCostPaise.present
+          ? data.totalCostPaise.value
+          : this.totalCostPaise,
+      hallmarkUniqueId: data.hallmarkUniqueId.present
+          ? data.hallmarkUniqueId.value
+          : this.hallmarkUniqueId,
+      stoneType: data.stoneType.present ? data.stoneType.value : this.stoneType,
+      stoneQuantity: data.stoneQuantity.present
+          ? data.stoneQuantity.value
+          : this.stoneQuantity,
+      stoneCaratPoints: data.stoneCaratPoints.present
+          ? data.stoneCaratPoints.value
+          : this.stoneCaratPoints,
+      stoneCertificateNumber: data.stoneCertificateNumber.present
+          ? data.stoneCertificateNumber.value
+          : this.stoneCertificateNumber,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GoldStockReceiptLineRecord(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('receiptId: $receiptId, ')
+          ..write('lineNumber: $lineNumber, ')
+          ..write('lineIdentifier: $lineIdentifier, ')
+          ..write('category: $category, ')
+          ..write('itemName: $itemName, ')
+          ..write('quantity: $quantity, ')
+          ..write('grossWeightMilligrams: $grossWeightMilligrams, ')
+          ..write('stoneWeightMilligrams: $stoneWeightMilligrams, ')
+          ..write('netWeightMilligrams: $netWeightMilligrams, ')
+          ..write('fineWeightMilligrams: $fineWeightMilligrams, ')
+          ..write('purityPartsPerThousand: $purityPartsPerThousand, ')
+          ..write('ratePerGramPaise: $ratePerGramPaise, ')
+          ..write('makingChargePaise: $makingChargePaise, ')
+          ..write('makingChargeMethod: $makingChargeMethod, ')
+          ..write('metalValuePaise: $metalValuePaise, ')
+          ..write('makingValuePaise: $makingValuePaise, ')
+          ..write('stoneValuePaise: $stoneValuePaise, ')
+          ..write('totalCostPaise: $totalCostPaise, ')
+          ..write('hallmarkUniqueId: $hallmarkUniqueId, ')
+          ..write('stoneType: $stoneType, ')
+          ..write('stoneQuantity: $stoneQuantity, ')
+          ..write('stoneCaratPoints: $stoneCaratPoints, ')
+          ..write('stoneCertificateNumber: $stoneCertificateNumber')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+        id,
+        createdAt,
+        updatedAt,
+        receiptId,
+        lineNumber,
+        lineIdentifier,
+        category,
+        itemName,
+        quantity,
+        grossWeightMilligrams,
+        stoneWeightMilligrams,
+        netWeightMilligrams,
+        fineWeightMilligrams,
+        purityPartsPerThousand,
+        ratePerGramPaise,
+        makingChargePaise,
+        makingChargeMethod,
+        metalValuePaise,
+        makingValuePaise,
+        stoneValuePaise,
+        totalCostPaise,
+        hallmarkUniqueId,
+        stoneType,
+        stoneQuantity,
+        stoneCaratPoints,
+        stoneCertificateNumber
+      ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GoldStockReceiptLineRecord &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.receiptId == this.receiptId &&
+          other.lineNumber == this.lineNumber &&
+          other.lineIdentifier == this.lineIdentifier &&
+          other.category == this.category &&
+          other.itemName == this.itemName &&
+          other.quantity == this.quantity &&
+          other.grossWeightMilligrams == this.grossWeightMilligrams &&
+          other.stoneWeightMilligrams == this.stoneWeightMilligrams &&
+          other.netWeightMilligrams == this.netWeightMilligrams &&
+          other.fineWeightMilligrams == this.fineWeightMilligrams &&
+          other.purityPartsPerThousand == this.purityPartsPerThousand &&
+          other.ratePerGramPaise == this.ratePerGramPaise &&
+          other.makingChargePaise == this.makingChargePaise &&
+          other.makingChargeMethod == this.makingChargeMethod &&
+          other.metalValuePaise == this.metalValuePaise &&
+          other.makingValuePaise == this.makingValuePaise &&
+          other.stoneValuePaise == this.stoneValuePaise &&
+          other.totalCostPaise == this.totalCostPaise &&
+          other.hallmarkUniqueId == this.hallmarkUniqueId &&
+          other.stoneType == this.stoneType &&
+          other.stoneQuantity == this.stoneQuantity &&
+          other.stoneCaratPoints == this.stoneCaratPoints &&
+          other.stoneCertificateNumber == this.stoneCertificateNumber);
+}
+
+class GoldStockReceiptLinesCompanion
+    extends UpdateCompanion<GoldStockReceiptLineRecord> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<int> receiptId;
+  final Value<int> lineNumber;
+  final Value<String> lineIdentifier;
+  final Value<String> category;
+  final Value<String> itemName;
+  final Value<int> quantity;
+  final Value<int> grossWeightMilligrams;
+  final Value<int> stoneWeightMilligrams;
+  final Value<int> netWeightMilligrams;
+  final Value<int> fineWeightMilligrams;
+  final Value<int> purityPartsPerThousand;
+  final Value<int> ratePerGramPaise;
+  final Value<int> makingChargePaise;
+  final Value<String> makingChargeMethod;
+  final Value<int> metalValuePaise;
+  final Value<int> makingValuePaise;
+  final Value<int> stoneValuePaise;
+  final Value<int> totalCostPaise;
+  final Value<String?> hallmarkUniqueId;
+  final Value<String?> stoneType;
+  final Value<int> stoneQuantity;
+  final Value<int> stoneCaratPoints;
+  final Value<String?> stoneCertificateNumber;
+  const GoldStockReceiptLinesCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.receiptId = const Value.absent(),
+    this.lineNumber = const Value.absent(),
+    this.lineIdentifier = const Value.absent(),
+    this.category = const Value.absent(),
+    this.itemName = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.grossWeightMilligrams = const Value.absent(),
+    this.stoneWeightMilligrams = const Value.absent(),
+    this.netWeightMilligrams = const Value.absent(),
+    this.fineWeightMilligrams = const Value.absent(),
+    this.purityPartsPerThousand = const Value.absent(),
+    this.ratePerGramPaise = const Value.absent(),
+    this.makingChargePaise = const Value.absent(),
+    this.makingChargeMethod = const Value.absent(),
+    this.metalValuePaise = const Value.absent(),
+    this.makingValuePaise = const Value.absent(),
+    this.stoneValuePaise = const Value.absent(),
+    this.totalCostPaise = const Value.absent(),
+    this.hallmarkUniqueId = const Value.absent(),
+    this.stoneType = const Value.absent(),
+    this.stoneQuantity = const Value.absent(),
+    this.stoneCaratPoints = const Value.absent(),
+    this.stoneCertificateNumber = const Value.absent(),
+  });
+  GoldStockReceiptLinesCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required int receiptId,
+    required int lineNumber,
+    required String lineIdentifier,
+    required String category,
+    required String itemName,
+    required int quantity,
+    required int grossWeightMilligrams,
+    required int stoneWeightMilligrams,
+    required int netWeightMilligrams,
+    required int fineWeightMilligrams,
+    required int purityPartsPerThousand,
+    required int ratePerGramPaise,
+    required int makingChargePaise,
+    required String makingChargeMethod,
+    required int metalValuePaise,
+    required int makingValuePaise,
+    this.stoneValuePaise = const Value.absent(),
+    required int totalCostPaise,
+    this.hallmarkUniqueId = const Value.absent(),
+    this.stoneType = const Value.absent(),
+    this.stoneQuantity = const Value.absent(),
+    this.stoneCaratPoints = const Value.absent(),
+    this.stoneCertificateNumber = const Value.absent(),
+  })  : receiptId = Value(receiptId),
+        lineNumber = Value(lineNumber),
+        lineIdentifier = Value(lineIdentifier),
+        category = Value(category),
+        itemName = Value(itemName),
+        quantity = Value(quantity),
+        grossWeightMilligrams = Value(grossWeightMilligrams),
+        stoneWeightMilligrams = Value(stoneWeightMilligrams),
+        netWeightMilligrams = Value(netWeightMilligrams),
+        fineWeightMilligrams = Value(fineWeightMilligrams),
+        purityPartsPerThousand = Value(purityPartsPerThousand),
+        ratePerGramPaise = Value(ratePerGramPaise),
+        makingChargePaise = Value(makingChargePaise),
+        makingChargeMethod = Value(makingChargeMethod),
+        metalValuePaise = Value(metalValuePaise),
+        makingValuePaise = Value(makingValuePaise),
+        totalCostPaise = Value(totalCostPaise);
+  static Insertable<GoldStockReceiptLineRecord> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? receiptId,
+    Expression<int>? lineNumber,
+    Expression<String>? lineIdentifier,
+    Expression<String>? category,
+    Expression<String>? itemName,
+    Expression<int>? quantity,
+    Expression<int>? grossWeightMilligrams,
+    Expression<int>? stoneWeightMilligrams,
+    Expression<int>? netWeightMilligrams,
+    Expression<int>? fineWeightMilligrams,
+    Expression<int>? purityPartsPerThousand,
+    Expression<int>? ratePerGramPaise,
+    Expression<int>? makingChargePaise,
+    Expression<String>? makingChargeMethod,
+    Expression<int>? metalValuePaise,
+    Expression<int>? makingValuePaise,
+    Expression<int>? stoneValuePaise,
+    Expression<int>? totalCostPaise,
+    Expression<String>? hallmarkUniqueId,
+    Expression<String>? stoneType,
+    Expression<int>? stoneQuantity,
+    Expression<int>? stoneCaratPoints,
+    Expression<String>? stoneCertificateNumber,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (receiptId != null) 'receipt_id': receiptId,
+      if (lineNumber != null) 'line_number': lineNumber,
+      if (lineIdentifier != null) 'line_identifier': lineIdentifier,
+      if (category != null) 'category': category,
+      if (itemName != null) 'item_name': itemName,
+      if (quantity != null) 'quantity': quantity,
+      if (grossWeightMilligrams != null)
+        'gross_weight_milligrams': grossWeightMilligrams,
+      if (stoneWeightMilligrams != null)
+        'stone_weight_milligrams': stoneWeightMilligrams,
+      if (netWeightMilligrams != null)
+        'net_weight_milligrams': netWeightMilligrams,
+      if (fineWeightMilligrams != null)
+        'fine_weight_milligrams': fineWeightMilligrams,
+      if (purityPartsPerThousand != null)
+        'purity_parts_per_thousand': purityPartsPerThousand,
+      if (ratePerGramPaise != null) 'rate_per_gram_paise': ratePerGramPaise,
+      if (makingChargePaise != null) 'making_charge_paise': makingChargePaise,
+      if (makingChargeMethod != null)
+        'making_charge_method': makingChargeMethod,
+      if (metalValuePaise != null) 'metal_value_paise': metalValuePaise,
+      if (makingValuePaise != null) 'making_value_paise': makingValuePaise,
+      if (stoneValuePaise != null) 'stone_value_paise': stoneValuePaise,
+      if (totalCostPaise != null) 'total_cost_paise': totalCostPaise,
+      if (hallmarkUniqueId != null) 'hallmark_unique_id': hallmarkUniqueId,
+      if (stoneType != null) 'stone_type': stoneType,
+      if (stoneQuantity != null) 'stone_quantity': stoneQuantity,
+      if (stoneCaratPoints != null) 'stone_carat_points': stoneCaratPoints,
+      if (stoneCertificateNumber != null)
+        'stone_certificate_number': stoneCertificateNumber,
+    });
+  }
+
+  GoldStockReceiptLinesCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<int>? receiptId,
+      Value<int>? lineNumber,
+      Value<String>? lineIdentifier,
+      Value<String>? category,
+      Value<String>? itemName,
+      Value<int>? quantity,
+      Value<int>? grossWeightMilligrams,
+      Value<int>? stoneWeightMilligrams,
+      Value<int>? netWeightMilligrams,
+      Value<int>? fineWeightMilligrams,
+      Value<int>? purityPartsPerThousand,
+      Value<int>? ratePerGramPaise,
+      Value<int>? makingChargePaise,
+      Value<String>? makingChargeMethod,
+      Value<int>? metalValuePaise,
+      Value<int>? makingValuePaise,
+      Value<int>? stoneValuePaise,
+      Value<int>? totalCostPaise,
+      Value<String?>? hallmarkUniqueId,
+      Value<String?>? stoneType,
+      Value<int>? stoneQuantity,
+      Value<int>? stoneCaratPoints,
+      Value<String?>? stoneCertificateNumber}) {
+    return GoldStockReceiptLinesCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      receiptId: receiptId ?? this.receiptId,
+      lineNumber: lineNumber ?? this.lineNumber,
+      lineIdentifier: lineIdentifier ?? this.lineIdentifier,
+      category: category ?? this.category,
+      itemName: itemName ?? this.itemName,
+      quantity: quantity ?? this.quantity,
+      grossWeightMilligrams:
+          grossWeightMilligrams ?? this.grossWeightMilligrams,
+      stoneWeightMilligrams:
+          stoneWeightMilligrams ?? this.stoneWeightMilligrams,
+      netWeightMilligrams: netWeightMilligrams ?? this.netWeightMilligrams,
+      fineWeightMilligrams: fineWeightMilligrams ?? this.fineWeightMilligrams,
+      purityPartsPerThousand:
+          purityPartsPerThousand ?? this.purityPartsPerThousand,
+      ratePerGramPaise: ratePerGramPaise ?? this.ratePerGramPaise,
+      makingChargePaise: makingChargePaise ?? this.makingChargePaise,
+      makingChargeMethod: makingChargeMethod ?? this.makingChargeMethod,
+      metalValuePaise: metalValuePaise ?? this.metalValuePaise,
+      makingValuePaise: makingValuePaise ?? this.makingValuePaise,
+      stoneValuePaise: stoneValuePaise ?? this.stoneValuePaise,
+      totalCostPaise: totalCostPaise ?? this.totalCostPaise,
+      hallmarkUniqueId: hallmarkUniqueId ?? this.hallmarkUniqueId,
+      stoneType: stoneType ?? this.stoneType,
+      stoneQuantity: stoneQuantity ?? this.stoneQuantity,
+      stoneCaratPoints: stoneCaratPoints ?? this.stoneCaratPoints,
+      stoneCertificateNumber:
+          stoneCertificateNumber ?? this.stoneCertificateNumber,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (receiptId.present) {
+      map['receipt_id'] = Variable<int>(receiptId.value);
+    }
+    if (lineNumber.present) {
+      map['line_number'] = Variable<int>(lineNumber.value);
+    }
+    if (lineIdentifier.present) {
+      map['line_identifier'] = Variable<String>(lineIdentifier.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
+    if (itemName.present) {
+      map['item_name'] = Variable<String>(itemName.value);
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<int>(quantity.value);
+    }
+    if (grossWeightMilligrams.present) {
+      map['gross_weight_milligrams'] =
+          Variable<int>(grossWeightMilligrams.value);
+    }
+    if (stoneWeightMilligrams.present) {
+      map['stone_weight_milligrams'] =
+          Variable<int>(stoneWeightMilligrams.value);
+    }
+    if (netWeightMilligrams.present) {
+      map['net_weight_milligrams'] = Variable<int>(netWeightMilligrams.value);
+    }
+    if (fineWeightMilligrams.present) {
+      map['fine_weight_milligrams'] = Variable<int>(fineWeightMilligrams.value);
+    }
+    if (purityPartsPerThousand.present) {
+      map['purity_parts_per_thousand'] =
+          Variable<int>(purityPartsPerThousand.value);
+    }
+    if (ratePerGramPaise.present) {
+      map['rate_per_gram_paise'] = Variable<int>(ratePerGramPaise.value);
+    }
+    if (makingChargePaise.present) {
+      map['making_charge_paise'] = Variable<int>(makingChargePaise.value);
+    }
+    if (makingChargeMethod.present) {
+      map['making_charge_method'] = Variable<String>(makingChargeMethod.value);
+    }
+    if (metalValuePaise.present) {
+      map['metal_value_paise'] = Variable<int>(metalValuePaise.value);
+    }
+    if (makingValuePaise.present) {
+      map['making_value_paise'] = Variable<int>(makingValuePaise.value);
+    }
+    if (stoneValuePaise.present) {
+      map['stone_value_paise'] = Variable<int>(stoneValuePaise.value);
+    }
+    if (totalCostPaise.present) {
+      map['total_cost_paise'] = Variable<int>(totalCostPaise.value);
+    }
+    if (hallmarkUniqueId.present) {
+      map['hallmark_unique_id'] = Variable<String>(hallmarkUniqueId.value);
+    }
+    if (stoneType.present) {
+      map['stone_type'] = Variable<String>(stoneType.value);
+    }
+    if (stoneQuantity.present) {
+      map['stone_quantity'] = Variable<int>(stoneQuantity.value);
+    }
+    if (stoneCaratPoints.present) {
+      map['stone_carat_points'] = Variable<int>(stoneCaratPoints.value);
+    }
+    if (stoneCertificateNumber.present) {
+      map['stone_certificate_number'] =
+          Variable<String>(stoneCertificateNumber.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GoldStockReceiptLinesCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('receiptId: $receiptId, ')
+          ..write('lineNumber: $lineNumber, ')
+          ..write('lineIdentifier: $lineIdentifier, ')
+          ..write('category: $category, ')
+          ..write('itemName: $itemName, ')
+          ..write('quantity: $quantity, ')
+          ..write('grossWeightMilligrams: $grossWeightMilligrams, ')
+          ..write('stoneWeightMilligrams: $stoneWeightMilligrams, ')
+          ..write('netWeightMilligrams: $netWeightMilligrams, ')
+          ..write('fineWeightMilligrams: $fineWeightMilligrams, ')
+          ..write('purityPartsPerThousand: $purityPartsPerThousand, ')
+          ..write('ratePerGramPaise: $ratePerGramPaise, ')
+          ..write('makingChargePaise: $makingChargePaise, ')
+          ..write('makingChargeMethod: $makingChargeMethod, ')
+          ..write('metalValuePaise: $metalValuePaise, ')
+          ..write('makingValuePaise: $makingValuePaise, ')
+          ..write('stoneValuePaise: $stoneValuePaise, ')
+          ..write('totalCostPaise: $totalCostPaise, ')
+          ..write('hallmarkUniqueId: $hallmarkUniqueId, ')
+          ..write('stoneType: $stoneType, ')
+          ..write('stoneQuantity: $stoneQuantity, ')
+          ..write('stoneCaratPoints: $stoneCaratPoints, ')
+          ..write('stoneCertificateNumber: $stoneCertificateNumber')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $GoldReceiptSettlementsTable extends GoldReceiptSettlements
+    with TableInfo<$GoldReceiptSettlementsTable, GoldReceiptSettlementRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GoldReceiptSettlementsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _receiptIdMeta =
+      const VerificationMeta('receiptId');
+  @override
+  late final GeneratedColumn<int> receiptId = GeneratedColumn<int>(
+      'receipt_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES gold_stock_receipts (id) ON DELETE CASCADE'));
+  static const VerificationMeta _sequenceNumberMeta =
+      const VerificationMeta('sequenceNumber');
+  @override
+  late final GeneratedColumn<int> sequenceNumber = GeneratedColumn<int>(
+      'sequence_number', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _settlementMethodMeta =
+      const VerificationMeta('settlementMethod');
+  @override
+  late final GeneratedColumn<String> settlementMethod = GeneratedColumn<String>(
+      'settlement_method', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _amountPaiseMeta =
+      const VerificationMeta('amountPaise');
+  @override
+  late final GeneratedColumn<int> amountPaise = GeneratedColumn<int>(
+      'amount_paise', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _metalWeightMilligramsMeta =
+      const VerificationMeta('metalWeightMilligrams');
+  @override
+  late final GeneratedColumn<int> metalWeightMilligrams = GeneratedColumn<int>(
+      'metal_weight_milligrams', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _metalPurityPartsPerThousandMeta =
+      const VerificationMeta('metalPurityPartsPerThousand');
+  @override
+  late final GeneratedColumn<int> metalPurityPartsPerThousand =
+      GeneratedColumn<int>(
+          'metal_purity_parts_per_thousand', aliasedName, false,
+          type: DriftSqlType.int,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0));
+  static const VerificationMeta _metalFineWeightMilligramsMeta =
+      const VerificationMeta('metalFineWeightMilligrams');
+  @override
+  late final GeneratedColumn<int> metalFineWeightMilligrams =
+      GeneratedColumn<int>('metal_fine_weight_milligrams', aliasedName, false,
+          type: DriftSqlType.int,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0));
+  static const VerificationMeta _bankAccountIdMeta =
+      const VerificationMeta('bankAccountId');
+  @override
+  late final GeneratedColumn<int> bankAccountId = GeneratedColumn<int>(
+      'bank_account_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _referenceNumberMeta =
+      const VerificationMeta('referenceNumber');
+  @override
+  late final GeneratedColumn<String> referenceNumber = GeneratedColumn<String>(
+      'reference_number', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _settledAtMeta =
+      const VerificationMeta('settledAt');
+  @override
+  late final GeneratedColumn<DateTime> settledAt = GeneratedColumn<DateTime>(
+      'settled_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        receiptId,
+        sequenceNumber,
+        settlementMethod,
+        amountPaise,
+        metalWeightMilligrams,
+        metalPurityPartsPerThousand,
+        metalFineWeightMilligrams,
+        bankAccountId,
+        referenceNumber,
+        settledAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'gold_receipt_settlements';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<GoldReceiptSettlementRecord> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('receipt_id')) {
+      context.handle(_receiptIdMeta,
+          receiptId.isAcceptableOrUnknown(data['receipt_id']!, _receiptIdMeta));
+    } else if (isInserting) {
+      context.missing(_receiptIdMeta);
+    }
+    if (data.containsKey('sequence_number')) {
+      context.handle(
+          _sequenceNumberMeta,
+          sequenceNumber.isAcceptableOrUnknown(
+              data['sequence_number']!, _sequenceNumberMeta));
+    } else if (isInserting) {
+      context.missing(_sequenceNumberMeta);
+    }
+    if (data.containsKey('settlement_method')) {
+      context.handle(
+          _settlementMethodMeta,
+          settlementMethod.isAcceptableOrUnknown(
+              data['settlement_method']!, _settlementMethodMeta));
+    } else if (isInserting) {
+      context.missing(_settlementMethodMeta);
+    }
+    if (data.containsKey('amount_paise')) {
+      context.handle(
+          _amountPaiseMeta,
+          amountPaise.isAcceptableOrUnknown(
+              data['amount_paise']!, _amountPaiseMeta));
+    }
+    if (data.containsKey('metal_weight_milligrams')) {
+      context.handle(
+          _metalWeightMilligramsMeta,
+          metalWeightMilligrams.isAcceptableOrUnknown(
+              data['metal_weight_milligrams']!, _metalWeightMilligramsMeta));
+    }
+    if (data.containsKey('metal_purity_parts_per_thousand')) {
+      context.handle(
+          _metalPurityPartsPerThousandMeta,
+          metalPurityPartsPerThousand.isAcceptableOrUnknown(
+              data['metal_purity_parts_per_thousand']!,
+              _metalPurityPartsPerThousandMeta));
+    }
+    if (data.containsKey('metal_fine_weight_milligrams')) {
+      context.handle(
+          _metalFineWeightMilligramsMeta,
+          metalFineWeightMilligrams.isAcceptableOrUnknown(
+              data['metal_fine_weight_milligrams']!,
+              _metalFineWeightMilligramsMeta));
+    }
+    if (data.containsKey('bank_account_id')) {
+      context.handle(
+          _bankAccountIdMeta,
+          bankAccountId.isAcceptableOrUnknown(
+              data['bank_account_id']!, _bankAccountIdMeta));
+    }
+    if (data.containsKey('reference_number')) {
+      context.handle(
+          _referenceNumberMeta,
+          referenceNumber.isAcceptableOrUnknown(
+              data['reference_number']!, _referenceNumberMeta));
+    }
+    if (data.containsKey('settled_at')) {
+      context.handle(_settledAtMeta,
+          settledAt.isAcceptableOrUnknown(data['settled_at']!, _settledAtMeta));
+    } else if (isInserting) {
+      context.missing(_settledAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GoldReceiptSettlementRecord map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GoldReceiptSettlementRecord(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      receiptId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}receipt_id'])!,
+      sequenceNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}sequence_number'])!,
+      settlementMethod: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}settlement_method'])!,
+      amountPaise: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}amount_paise'])!,
+      metalWeightMilligrams: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}metal_weight_milligrams'])!,
+      metalPurityPartsPerThousand: attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}metal_purity_parts_per_thousand'])!,
+      metalFineWeightMilligrams: attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}metal_fine_weight_milligrams'])!,
+      bankAccountId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}bank_account_id']),
+      referenceNumber: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}reference_number']),
+      settledAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}settled_at'])!,
+    );
+  }
+
+  @override
+  $GoldReceiptSettlementsTable createAlias(String alias) {
+    return $GoldReceiptSettlementsTable(attachedDatabase, alias);
+  }
+}
+
+class GoldReceiptSettlementRecord extends DataClass
+    implements Insertable<GoldReceiptSettlementRecord> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final int receiptId;
+  final int sequenceNumber;
+  final String settlementMethod;
+  final int amountPaise;
+  final int metalWeightMilligrams;
+  final int metalPurityPartsPerThousand;
+  final int metalFineWeightMilligrams;
+  final int? bankAccountId;
+  final String? referenceNumber;
+  final DateTime settledAt;
+  const GoldReceiptSettlementRecord(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.receiptId,
+      required this.sequenceNumber,
+      required this.settlementMethod,
+      required this.amountPaise,
+      required this.metalWeightMilligrams,
+      required this.metalPurityPartsPerThousand,
+      required this.metalFineWeightMilligrams,
+      this.bankAccountId,
+      this.referenceNumber,
+      required this.settledAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['receipt_id'] = Variable<int>(receiptId);
+    map['sequence_number'] = Variable<int>(sequenceNumber);
+    map['settlement_method'] = Variable<String>(settlementMethod);
+    map['amount_paise'] = Variable<int>(amountPaise);
+    map['metal_weight_milligrams'] = Variable<int>(metalWeightMilligrams);
+    map['metal_purity_parts_per_thousand'] =
+        Variable<int>(metalPurityPartsPerThousand);
+    map['metal_fine_weight_milligrams'] =
+        Variable<int>(metalFineWeightMilligrams);
+    if (!nullToAbsent || bankAccountId != null) {
+      map['bank_account_id'] = Variable<int>(bankAccountId);
+    }
+    if (!nullToAbsent || referenceNumber != null) {
+      map['reference_number'] = Variable<String>(referenceNumber);
+    }
+    map['settled_at'] = Variable<DateTime>(settledAt);
+    return map;
+  }
+
+  GoldReceiptSettlementsCompanion toCompanion(bool nullToAbsent) {
+    return GoldReceiptSettlementsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      receiptId: Value(receiptId),
+      sequenceNumber: Value(sequenceNumber),
+      settlementMethod: Value(settlementMethod),
+      amountPaise: Value(amountPaise),
+      metalWeightMilligrams: Value(metalWeightMilligrams),
+      metalPurityPartsPerThousand: Value(metalPurityPartsPerThousand),
+      metalFineWeightMilligrams: Value(metalFineWeightMilligrams),
+      bankAccountId: bankAccountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bankAccountId),
+      referenceNumber: referenceNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(referenceNumber),
+      settledAt: Value(settledAt),
+    );
+  }
+
+  factory GoldReceiptSettlementRecord.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GoldReceiptSettlementRecord(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      receiptId: serializer.fromJson<int>(json['receiptId']),
+      sequenceNumber: serializer.fromJson<int>(json['sequenceNumber']),
+      settlementMethod: serializer.fromJson<String>(json['settlementMethod']),
+      amountPaise: serializer.fromJson<int>(json['amountPaise']),
+      metalWeightMilligrams:
+          serializer.fromJson<int>(json['metalWeightMilligrams']),
+      metalPurityPartsPerThousand:
+          serializer.fromJson<int>(json['metalPurityPartsPerThousand']),
+      metalFineWeightMilligrams:
+          serializer.fromJson<int>(json['metalFineWeightMilligrams']),
+      bankAccountId: serializer.fromJson<int?>(json['bankAccountId']),
+      referenceNumber: serializer.fromJson<String?>(json['referenceNumber']),
+      settledAt: serializer.fromJson<DateTime>(json['settledAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'receiptId': serializer.toJson<int>(receiptId),
+      'sequenceNumber': serializer.toJson<int>(sequenceNumber),
+      'settlementMethod': serializer.toJson<String>(settlementMethod),
+      'amountPaise': serializer.toJson<int>(amountPaise),
+      'metalWeightMilligrams': serializer.toJson<int>(metalWeightMilligrams),
+      'metalPurityPartsPerThousand':
+          serializer.toJson<int>(metalPurityPartsPerThousand),
+      'metalFineWeightMilligrams':
+          serializer.toJson<int>(metalFineWeightMilligrams),
+      'bankAccountId': serializer.toJson<int?>(bankAccountId),
+      'referenceNumber': serializer.toJson<String?>(referenceNumber),
+      'settledAt': serializer.toJson<DateTime>(settledAt),
+    };
+  }
+
+  GoldReceiptSettlementRecord copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          int? receiptId,
+          int? sequenceNumber,
+          String? settlementMethod,
+          int? amountPaise,
+          int? metalWeightMilligrams,
+          int? metalPurityPartsPerThousand,
+          int? metalFineWeightMilligrams,
+          Value<int?> bankAccountId = const Value.absent(),
+          Value<String?> referenceNumber = const Value.absent(),
+          DateTime? settledAt}) =>
+      GoldReceiptSettlementRecord(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        receiptId: receiptId ?? this.receiptId,
+        sequenceNumber: sequenceNumber ?? this.sequenceNumber,
+        settlementMethod: settlementMethod ?? this.settlementMethod,
+        amountPaise: amountPaise ?? this.amountPaise,
+        metalWeightMilligrams:
+            metalWeightMilligrams ?? this.metalWeightMilligrams,
+        metalPurityPartsPerThousand:
+            metalPurityPartsPerThousand ?? this.metalPurityPartsPerThousand,
+        metalFineWeightMilligrams:
+            metalFineWeightMilligrams ?? this.metalFineWeightMilligrams,
+        bankAccountId:
+            bankAccountId.present ? bankAccountId.value : this.bankAccountId,
+        referenceNumber: referenceNumber.present
+            ? referenceNumber.value
+            : this.referenceNumber,
+        settledAt: settledAt ?? this.settledAt,
+      );
+  GoldReceiptSettlementRecord copyWithCompanion(
+      GoldReceiptSettlementsCompanion data) {
+    return GoldReceiptSettlementRecord(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      receiptId: data.receiptId.present ? data.receiptId.value : this.receiptId,
+      sequenceNumber: data.sequenceNumber.present
+          ? data.sequenceNumber.value
+          : this.sequenceNumber,
+      settlementMethod: data.settlementMethod.present
+          ? data.settlementMethod.value
+          : this.settlementMethod,
+      amountPaise:
+          data.amountPaise.present ? data.amountPaise.value : this.amountPaise,
+      metalWeightMilligrams: data.metalWeightMilligrams.present
+          ? data.metalWeightMilligrams.value
+          : this.metalWeightMilligrams,
+      metalPurityPartsPerThousand: data.metalPurityPartsPerThousand.present
+          ? data.metalPurityPartsPerThousand.value
+          : this.metalPurityPartsPerThousand,
+      metalFineWeightMilligrams: data.metalFineWeightMilligrams.present
+          ? data.metalFineWeightMilligrams.value
+          : this.metalFineWeightMilligrams,
+      bankAccountId: data.bankAccountId.present
+          ? data.bankAccountId.value
+          : this.bankAccountId,
+      referenceNumber: data.referenceNumber.present
+          ? data.referenceNumber.value
+          : this.referenceNumber,
+      settledAt: data.settledAt.present ? data.settledAt.value : this.settledAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GoldReceiptSettlementRecord(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('receiptId: $receiptId, ')
+          ..write('sequenceNumber: $sequenceNumber, ')
+          ..write('settlementMethod: $settlementMethod, ')
+          ..write('amountPaise: $amountPaise, ')
+          ..write('metalWeightMilligrams: $metalWeightMilligrams, ')
+          ..write('metalPurityPartsPerThousand: $metalPurityPartsPerThousand, ')
+          ..write('metalFineWeightMilligrams: $metalFineWeightMilligrams, ')
+          ..write('bankAccountId: $bankAccountId, ')
+          ..write('referenceNumber: $referenceNumber, ')
+          ..write('settledAt: $settledAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      createdAt,
+      updatedAt,
+      receiptId,
+      sequenceNumber,
+      settlementMethod,
+      amountPaise,
+      metalWeightMilligrams,
+      metalPurityPartsPerThousand,
+      metalFineWeightMilligrams,
+      bankAccountId,
+      referenceNumber,
+      settledAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GoldReceiptSettlementRecord &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.receiptId == this.receiptId &&
+          other.sequenceNumber == this.sequenceNumber &&
+          other.settlementMethod == this.settlementMethod &&
+          other.amountPaise == this.amountPaise &&
+          other.metalWeightMilligrams == this.metalWeightMilligrams &&
+          other.metalPurityPartsPerThousand ==
+              this.metalPurityPartsPerThousand &&
+          other.metalFineWeightMilligrams == this.metalFineWeightMilligrams &&
+          other.bankAccountId == this.bankAccountId &&
+          other.referenceNumber == this.referenceNumber &&
+          other.settledAt == this.settledAt);
+}
+
+class GoldReceiptSettlementsCompanion
+    extends UpdateCompanion<GoldReceiptSettlementRecord> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<int> receiptId;
+  final Value<int> sequenceNumber;
+  final Value<String> settlementMethod;
+  final Value<int> amountPaise;
+  final Value<int> metalWeightMilligrams;
+  final Value<int> metalPurityPartsPerThousand;
+  final Value<int> metalFineWeightMilligrams;
+  final Value<int?> bankAccountId;
+  final Value<String?> referenceNumber;
+  final Value<DateTime> settledAt;
+  const GoldReceiptSettlementsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.receiptId = const Value.absent(),
+    this.sequenceNumber = const Value.absent(),
+    this.settlementMethod = const Value.absent(),
+    this.amountPaise = const Value.absent(),
+    this.metalWeightMilligrams = const Value.absent(),
+    this.metalPurityPartsPerThousand = const Value.absent(),
+    this.metalFineWeightMilligrams = const Value.absent(),
+    this.bankAccountId = const Value.absent(),
+    this.referenceNumber = const Value.absent(),
+    this.settledAt = const Value.absent(),
+  });
+  GoldReceiptSettlementsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required int receiptId,
+    required int sequenceNumber,
+    required String settlementMethod,
+    this.amountPaise = const Value.absent(),
+    this.metalWeightMilligrams = const Value.absent(),
+    this.metalPurityPartsPerThousand = const Value.absent(),
+    this.metalFineWeightMilligrams = const Value.absent(),
+    this.bankAccountId = const Value.absent(),
+    this.referenceNumber = const Value.absent(),
+    required DateTime settledAt,
+  })  : receiptId = Value(receiptId),
+        sequenceNumber = Value(sequenceNumber),
+        settlementMethod = Value(settlementMethod),
+        settledAt = Value(settledAt);
+  static Insertable<GoldReceiptSettlementRecord> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? receiptId,
+    Expression<int>? sequenceNumber,
+    Expression<String>? settlementMethod,
+    Expression<int>? amountPaise,
+    Expression<int>? metalWeightMilligrams,
+    Expression<int>? metalPurityPartsPerThousand,
+    Expression<int>? metalFineWeightMilligrams,
+    Expression<int>? bankAccountId,
+    Expression<String>? referenceNumber,
+    Expression<DateTime>? settledAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (receiptId != null) 'receipt_id': receiptId,
+      if (sequenceNumber != null) 'sequence_number': sequenceNumber,
+      if (settlementMethod != null) 'settlement_method': settlementMethod,
+      if (amountPaise != null) 'amount_paise': amountPaise,
+      if (metalWeightMilligrams != null)
+        'metal_weight_milligrams': metalWeightMilligrams,
+      if (metalPurityPartsPerThousand != null)
+        'metal_purity_parts_per_thousand': metalPurityPartsPerThousand,
+      if (metalFineWeightMilligrams != null)
+        'metal_fine_weight_milligrams': metalFineWeightMilligrams,
+      if (bankAccountId != null) 'bank_account_id': bankAccountId,
+      if (referenceNumber != null) 'reference_number': referenceNumber,
+      if (settledAt != null) 'settled_at': settledAt,
+    });
+  }
+
+  GoldReceiptSettlementsCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<int>? receiptId,
+      Value<int>? sequenceNumber,
+      Value<String>? settlementMethod,
+      Value<int>? amountPaise,
+      Value<int>? metalWeightMilligrams,
+      Value<int>? metalPurityPartsPerThousand,
+      Value<int>? metalFineWeightMilligrams,
+      Value<int?>? bankAccountId,
+      Value<String?>? referenceNumber,
+      Value<DateTime>? settledAt}) {
+    return GoldReceiptSettlementsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      receiptId: receiptId ?? this.receiptId,
+      sequenceNumber: sequenceNumber ?? this.sequenceNumber,
+      settlementMethod: settlementMethod ?? this.settlementMethod,
+      amountPaise: amountPaise ?? this.amountPaise,
+      metalWeightMilligrams:
+          metalWeightMilligrams ?? this.metalWeightMilligrams,
+      metalPurityPartsPerThousand:
+          metalPurityPartsPerThousand ?? this.metalPurityPartsPerThousand,
+      metalFineWeightMilligrams:
+          metalFineWeightMilligrams ?? this.metalFineWeightMilligrams,
+      bankAccountId: bankAccountId ?? this.bankAccountId,
+      referenceNumber: referenceNumber ?? this.referenceNumber,
+      settledAt: settledAt ?? this.settledAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (receiptId.present) {
+      map['receipt_id'] = Variable<int>(receiptId.value);
+    }
+    if (sequenceNumber.present) {
+      map['sequence_number'] = Variable<int>(sequenceNumber.value);
+    }
+    if (settlementMethod.present) {
+      map['settlement_method'] = Variable<String>(settlementMethod.value);
+    }
+    if (amountPaise.present) {
+      map['amount_paise'] = Variable<int>(amountPaise.value);
+    }
+    if (metalWeightMilligrams.present) {
+      map['metal_weight_milligrams'] =
+          Variable<int>(metalWeightMilligrams.value);
+    }
+    if (metalPurityPartsPerThousand.present) {
+      map['metal_purity_parts_per_thousand'] =
+          Variable<int>(metalPurityPartsPerThousand.value);
+    }
+    if (metalFineWeightMilligrams.present) {
+      map['metal_fine_weight_milligrams'] =
+          Variable<int>(metalFineWeightMilligrams.value);
+    }
+    if (bankAccountId.present) {
+      map['bank_account_id'] = Variable<int>(bankAccountId.value);
+    }
+    if (referenceNumber.present) {
+      map['reference_number'] = Variable<String>(referenceNumber.value);
+    }
+    if (settledAt.present) {
+      map['settled_at'] = Variable<DateTime>(settledAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GoldReceiptSettlementsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('receiptId: $receiptId, ')
+          ..write('sequenceNumber: $sequenceNumber, ')
+          ..write('settlementMethod: $settlementMethod, ')
+          ..write('amountPaise: $amountPaise, ')
+          ..write('metalWeightMilligrams: $metalWeightMilligrams, ')
+          ..write('metalPurityPartsPerThousand: $metalPurityPartsPerThousand, ')
+          ..write('metalFineWeightMilligrams: $metalFineWeightMilligrams, ')
+          ..write('bankAccountId: $bankAccountId, ')
+          ..write('referenceNumber: $referenceNumber, ')
+          ..write('settledAt: $settledAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $GoldReceiptAttachmentsTable extends GoldReceiptAttachments
+    with TableInfo<$GoldReceiptAttachmentsTable, GoldReceiptAttachmentRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GoldReceiptAttachmentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _receiptIdMeta =
+      const VerificationMeta('receiptId');
+  @override
+  late final GeneratedColumn<int> receiptId = GeneratedColumn<int>(
+      'receipt_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES gold_stock_receipts (id) ON DELETE CASCADE'));
+  static const VerificationMeta _storagePathMeta =
+      const VerificationMeta('storagePath');
+  @override
+  late final GeneratedColumn<String> storagePath = GeneratedColumn<String>(
+      'storage_path', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _originalFileNameMeta =
+      const VerificationMeta('originalFileName');
+  @override
+  late final GeneratedColumn<String> originalFileName = GeneratedColumn<String>(
+      'original_file_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _contentTypeMeta =
+      const VerificationMeta('contentType');
+  @override
+  late final GeneratedColumn<String> contentType = GeneratedColumn<String>(
+      'content_type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _contentChecksumMeta =
+      const VerificationMeta('contentChecksum');
+  @override
+  late final GeneratedColumn<String> contentChecksum = GeneratedColumn<String>(
+      'content_checksum', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _byteSizeMeta =
+      const VerificationMeta('byteSize');
+  @override
+  late final GeneratedColumn<int> byteSize = GeneratedColumn<int>(
+      'byte_size', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        receiptId,
+        storagePath,
+        originalFileName,
+        contentType,
+        contentChecksum,
+        byteSize
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'gold_receipt_attachments';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<GoldReceiptAttachmentRecord> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('receipt_id')) {
+      context.handle(_receiptIdMeta,
+          receiptId.isAcceptableOrUnknown(data['receipt_id']!, _receiptIdMeta));
+    } else if (isInserting) {
+      context.missing(_receiptIdMeta);
+    }
+    if (data.containsKey('storage_path')) {
+      context.handle(
+          _storagePathMeta,
+          storagePath.isAcceptableOrUnknown(
+              data['storage_path']!, _storagePathMeta));
+    } else if (isInserting) {
+      context.missing(_storagePathMeta);
+    }
+    if (data.containsKey('original_file_name')) {
+      context.handle(
+          _originalFileNameMeta,
+          originalFileName.isAcceptableOrUnknown(
+              data['original_file_name']!, _originalFileNameMeta));
+    } else if (isInserting) {
+      context.missing(_originalFileNameMeta);
+    }
+    if (data.containsKey('content_type')) {
+      context.handle(
+          _contentTypeMeta,
+          contentType.isAcceptableOrUnknown(
+              data['content_type']!, _contentTypeMeta));
+    } else if (isInserting) {
+      context.missing(_contentTypeMeta);
+    }
+    if (data.containsKey('content_checksum')) {
+      context.handle(
+          _contentChecksumMeta,
+          contentChecksum.isAcceptableOrUnknown(
+              data['content_checksum']!, _contentChecksumMeta));
+    }
+    if (data.containsKey('byte_size')) {
+      context.handle(_byteSizeMeta,
+          byteSize.isAcceptableOrUnknown(data['byte_size']!, _byteSizeMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GoldReceiptAttachmentRecord map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GoldReceiptAttachmentRecord(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      receiptId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}receipt_id'])!,
+      storagePath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}storage_path'])!,
+      originalFileName: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}original_file_name'])!,
+      contentType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}content_type'])!,
+      contentChecksum: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}content_checksum']),
+      byteSize: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}byte_size']),
+    );
+  }
+
+  @override
+  $GoldReceiptAttachmentsTable createAlias(String alias) {
+    return $GoldReceiptAttachmentsTable(attachedDatabase, alias);
+  }
+}
+
+class GoldReceiptAttachmentRecord extends DataClass
+    implements Insertable<GoldReceiptAttachmentRecord> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final int receiptId;
+  final String storagePath;
+  final String originalFileName;
+  final String contentType;
+  final String? contentChecksum;
+  final int? byteSize;
+  const GoldReceiptAttachmentRecord(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.receiptId,
+      required this.storagePath,
+      required this.originalFileName,
+      required this.contentType,
+      this.contentChecksum,
+      this.byteSize});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['receipt_id'] = Variable<int>(receiptId);
+    map['storage_path'] = Variable<String>(storagePath);
+    map['original_file_name'] = Variable<String>(originalFileName);
+    map['content_type'] = Variable<String>(contentType);
+    if (!nullToAbsent || contentChecksum != null) {
+      map['content_checksum'] = Variable<String>(contentChecksum);
+    }
+    if (!nullToAbsent || byteSize != null) {
+      map['byte_size'] = Variable<int>(byteSize);
+    }
+    return map;
+  }
+
+  GoldReceiptAttachmentsCompanion toCompanion(bool nullToAbsent) {
+    return GoldReceiptAttachmentsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      receiptId: Value(receiptId),
+      storagePath: Value(storagePath),
+      originalFileName: Value(originalFileName),
+      contentType: Value(contentType),
+      contentChecksum: contentChecksum == null && nullToAbsent
+          ? const Value.absent()
+          : Value(contentChecksum),
+      byteSize: byteSize == null && nullToAbsent
+          ? const Value.absent()
+          : Value(byteSize),
+    );
+  }
+
+  factory GoldReceiptAttachmentRecord.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GoldReceiptAttachmentRecord(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      receiptId: serializer.fromJson<int>(json['receiptId']),
+      storagePath: serializer.fromJson<String>(json['storagePath']),
+      originalFileName: serializer.fromJson<String>(json['originalFileName']),
+      contentType: serializer.fromJson<String>(json['contentType']),
+      contentChecksum: serializer.fromJson<String?>(json['contentChecksum']),
+      byteSize: serializer.fromJson<int?>(json['byteSize']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'receiptId': serializer.toJson<int>(receiptId),
+      'storagePath': serializer.toJson<String>(storagePath),
+      'originalFileName': serializer.toJson<String>(originalFileName),
+      'contentType': serializer.toJson<String>(contentType),
+      'contentChecksum': serializer.toJson<String?>(contentChecksum),
+      'byteSize': serializer.toJson<int?>(byteSize),
+    };
+  }
+
+  GoldReceiptAttachmentRecord copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          int? receiptId,
+          String? storagePath,
+          String? originalFileName,
+          String? contentType,
+          Value<String?> contentChecksum = const Value.absent(),
+          Value<int?> byteSize = const Value.absent()}) =>
+      GoldReceiptAttachmentRecord(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        receiptId: receiptId ?? this.receiptId,
+        storagePath: storagePath ?? this.storagePath,
+        originalFileName: originalFileName ?? this.originalFileName,
+        contentType: contentType ?? this.contentType,
+        contentChecksum: contentChecksum.present
+            ? contentChecksum.value
+            : this.contentChecksum,
+        byteSize: byteSize.present ? byteSize.value : this.byteSize,
+      );
+  GoldReceiptAttachmentRecord copyWithCompanion(
+      GoldReceiptAttachmentsCompanion data) {
+    return GoldReceiptAttachmentRecord(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      receiptId: data.receiptId.present ? data.receiptId.value : this.receiptId,
+      storagePath:
+          data.storagePath.present ? data.storagePath.value : this.storagePath,
+      originalFileName: data.originalFileName.present
+          ? data.originalFileName.value
+          : this.originalFileName,
+      contentType:
+          data.contentType.present ? data.contentType.value : this.contentType,
+      contentChecksum: data.contentChecksum.present
+          ? data.contentChecksum.value
+          : this.contentChecksum,
+      byteSize: data.byteSize.present ? data.byteSize.value : this.byteSize,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GoldReceiptAttachmentRecord(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('receiptId: $receiptId, ')
+          ..write('storagePath: $storagePath, ')
+          ..write('originalFileName: $originalFileName, ')
+          ..write('contentType: $contentType, ')
+          ..write('contentChecksum: $contentChecksum, ')
+          ..write('byteSize: $byteSize')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, createdAt, updatedAt, receiptId,
+      storagePath, originalFileName, contentType, contentChecksum, byteSize);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GoldReceiptAttachmentRecord &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.receiptId == this.receiptId &&
+          other.storagePath == this.storagePath &&
+          other.originalFileName == this.originalFileName &&
+          other.contentType == this.contentType &&
+          other.contentChecksum == this.contentChecksum &&
+          other.byteSize == this.byteSize);
+}
+
+class GoldReceiptAttachmentsCompanion
+    extends UpdateCompanion<GoldReceiptAttachmentRecord> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<int> receiptId;
+  final Value<String> storagePath;
+  final Value<String> originalFileName;
+  final Value<String> contentType;
+  final Value<String?> contentChecksum;
+  final Value<int?> byteSize;
+  const GoldReceiptAttachmentsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.receiptId = const Value.absent(),
+    this.storagePath = const Value.absent(),
+    this.originalFileName = const Value.absent(),
+    this.contentType = const Value.absent(),
+    this.contentChecksum = const Value.absent(),
+    this.byteSize = const Value.absent(),
+  });
+  GoldReceiptAttachmentsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required int receiptId,
+    required String storagePath,
+    required String originalFileName,
+    required String contentType,
+    this.contentChecksum = const Value.absent(),
+    this.byteSize = const Value.absent(),
+  })  : receiptId = Value(receiptId),
+        storagePath = Value(storagePath),
+        originalFileName = Value(originalFileName),
+        contentType = Value(contentType);
+  static Insertable<GoldReceiptAttachmentRecord> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? receiptId,
+    Expression<String>? storagePath,
+    Expression<String>? originalFileName,
+    Expression<String>? contentType,
+    Expression<String>? contentChecksum,
+    Expression<int>? byteSize,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (receiptId != null) 'receipt_id': receiptId,
+      if (storagePath != null) 'storage_path': storagePath,
+      if (originalFileName != null) 'original_file_name': originalFileName,
+      if (contentType != null) 'content_type': contentType,
+      if (contentChecksum != null) 'content_checksum': contentChecksum,
+      if (byteSize != null) 'byte_size': byteSize,
+    });
+  }
+
+  GoldReceiptAttachmentsCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<int>? receiptId,
+      Value<String>? storagePath,
+      Value<String>? originalFileName,
+      Value<String>? contentType,
+      Value<String?>? contentChecksum,
+      Value<int?>? byteSize}) {
+    return GoldReceiptAttachmentsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      receiptId: receiptId ?? this.receiptId,
+      storagePath: storagePath ?? this.storagePath,
+      originalFileName: originalFileName ?? this.originalFileName,
+      contentType: contentType ?? this.contentType,
+      contentChecksum: contentChecksum ?? this.contentChecksum,
+      byteSize: byteSize ?? this.byteSize,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (receiptId.present) {
+      map['receipt_id'] = Variable<int>(receiptId.value);
+    }
+    if (storagePath.present) {
+      map['storage_path'] = Variable<String>(storagePath.value);
+    }
+    if (originalFileName.present) {
+      map['original_file_name'] = Variable<String>(originalFileName.value);
+    }
+    if (contentType.present) {
+      map['content_type'] = Variable<String>(contentType.value);
+    }
+    if (contentChecksum.present) {
+      map['content_checksum'] = Variable<String>(contentChecksum.value);
+    }
+    if (byteSize.present) {
+      map['byte_size'] = Variable<int>(byteSize.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GoldReceiptAttachmentsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('receiptId: $receiptId, ')
+          ..write('storagePath: $storagePath, ')
+          ..write('originalFileName: $originalFileName, ')
+          ..write('contentType: $contentType, ')
+          ..write('contentChecksum: $contentChecksum, ')
+          ..write('byteSize: $byteSize')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $GoldReceiptAuditEventsTable extends GoldReceiptAuditEvents
+    with TableInfo<$GoldReceiptAuditEventsTable, GoldReceiptAuditEventRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GoldReceiptAuditEventsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _receiptIdMeta =
+      const VerificationMeta('receiptId');
+  @override
+  late final GeneratedColumn<int> receiptId = GeneratedColumn<int>(
+      'receipt_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES gold_stock_receipts (id) ON DELETE CASCADE'));
+  static const VerificationMeta _eventTypeMeta =
+      const VerificationMeta('eventType');
+  @override
+  late final GeneratedColumn<String> eventType = GeneratedColumn<String>(
+      'event_type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _actorUserIdMeta =
+      const VerificationMeta('actorUserId');
+  @override
+  late final GeneratedColumn<String> actorUserId = GeneratedColumn<String>(
+      'actor_user_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _reasonMeta = const VerificationMeta('reason');
+  @override
+  late final GeneratedColumn<String> reason = GeneratedColumn<String>(
+      'reason', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _metadataMeta =
+      const VerificationMeta('metadata');
+  @override
+  late final GeneratedColumn<String> metadata = GeneratedColumn<String>(
+      'metadata', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _occurredAtMeta =
+      const VerificationMeta('occurredAt');
+  @override
+  late final GeneratedColumn<DateTime> occurredAt = GeneratedColumn<DateTime>(
+      'occurred_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        receiptId,
+        eventType,
+        actorUserId,
+        reason,
+        metadata,
+        occurredAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'gold_receipt_audit_events';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<GoldReceiptAuditEventRecord> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('receipt_id')) {
+      context.handle(_receiptIdMeta,
+          receiptId.isAcceptableOrUnknown(data['receipt_id']!, _receiptIdMeta));
+    } else if (isInserting) {
+      context.missing(_receiptIdMeta);
+    }
+    if (data.containsKey('event_type')) {
+      context.handle(_eventTypeMeta,
+          eventType.isAcceptableOrUnknown(data['event_type']!, _eventTypeMeta));
+    } else if (isInserting) {
+      context.missing(_eventTypeMeta);
+    }
+    if (data.containsKey('actor_user_id')) {
+      context.handle(
+          _actorUserIdMeta,
+          actorUserId.isAcceptableOrUnknown(
+              data['actor_user_id']!, _actorUserIdMeta));
+    }
+    if (data.containsKey('reason')) {
+      context.handle(_reasonMeta,
+          reason.isAcceptableOrUnknown(data['reason']!, _reasonMeta));
+    }
+    if (data.containsKey('metadata')) {
+      context.handle(_metadataMeta,
+          metadata.isAcceptableOrUnknown(data['metadata']!, _metadataMeta));
+    }
+    if (data.containsKey('occurred_at')) {
+      context.handle(
+          _occurredAtMeta,
+          occurredAt.isAcceptableOrUnknown(
+              data['occurred_at']!, _occurredAtMeta));
+    } else if (isInserting) {
+      context.missing(_occurredAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GoldReceiptAuditEventRecord map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GoldReceiptAuditEventRecord(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      receiptId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}receipt_id'])!,
+      eventType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}event_type'])!,
+      actorUserId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}actor_user_id']),
+      reason: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}reason']),
+      metadata: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}metadata']),
+      occurredAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}occurred_at'])!,
+    );
+  }
+
+  @override
+  $GoldReceiptAuditEventsTable createAlias(String alias) {
+    return $GoldReceiptAuditEventsTable(attachedDatabase, alias);
+  }
+}
+
+class GoldReceiptAuditEventRecord extends DataClass
+    implements Insertable<GoldReceiptAuditEventRecord> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final int receiptId;
+  final String eventType;
+  final String? actorUserId;
+  final String? reason;
+  final String? metadata;
+  final DateTime occurredAt;
+  const GoldReceiptAuditEventRecord(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.receiptId,
+      required this.eventType,
+      this.actorUserId,
+      this.reason,
+      this.metadata,
+      required this.occurredAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['receipt_id'] = Variable<int>(receiptId);
+    map['event_type'] = Variable<String>(eventType);
+    if (!nullToAbsent || actorUserId != null) {
+      map['actor_user_id'] = Variable<String>(actorUserId);
+    }
+    if (!nullToAbsent || reason != null) {
+      map['reason'] = Variable<String>(reason);
+    }
+    if (!nullToAbsent || metadata != null) {
+      map['metadata'] = Variable<String>(metadata);
+    }
+    map['occurred_at'] = Variable<DateTime>(occurredAt);
+    return map;
+  }
+
+  GoldReceiptAuditEventsCompanion toCompanion(bool nullToAbsent) {
+    return GoldReceiptAuditEventsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      receiptId: Value(receiptId),
+      eventType: Value(eventType),
+      actorUserId: actorUserId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(actorUserId),
+      reason:
+          reason == null && nullToAbsent ? const Value.absent() : Value(reason),
+      metadata: metadata == null && nullToAbsent
+          ? const Value.absent()
+          : Value(metadata),
+      occurredAt: Value(occurredAt),
+    );
+  }
+
+  factory GoldReceiptAuditEventRecord.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GoldReceiptAuditEventRecord(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      receiptId: serializer.fromJson<int>(json['receiptId']),
+      eventType: serializer.fromJson<String>(json['eventType']),
+      actorUserId: serializer.fromJson<String?>(json['actorUserId']),
+      reason: serializer.fromJson<String?>(json['reason']),
+      metadata: serializer.fromJson<String?>(json['metadata']),
+      occurredAt: serializer.fromJson<DateTime>(json['occurredAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'receiptId': serializer.toJson<int>(receiptId),
+      'eventType': serializer.toJson<String>(eventType),
+      'actorUserId': serializer.toJson<String?>(actorUserId),
+      'reason': serializer.toJson<String?>(reason),
+      'metadata': serializer.toJson<String?>(metadata),
+      'occurredAt': serializer.toJson<DateTime>(occurredAt),
+    };
+  }
+
+  GoldReceiptAuditEventRecord copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          int? receiptId,
+          String? eventType,
+          Value<String?> actorUserId = const Value.absent(),
+          Value<String?> reason = const Value.absent(),
+          Value<String?> metadata = const Value.absent(),
+          DateTime? occurredAt}) =>
+      GoldReceiptAuditEventRecord(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        receiptId: receiptId ?? this.receiptId,
+        eventType: eventType ?? this.eventType,
+        actorUserId: actorUserId.present ? actorUserId.value : this.actorUserId,
+        reason: reason.present ? reason.value : this.reason,
+        metadata: metadata.present ? metadata.value : this.metadata,
+        occurredAt: occurredAt ?? this.occurredAt,
+      );
+  GoldReceiptAuditEventRecord copyWithCompanion(
+      GoldReceiptAuditEventsCompanion data) {
+    return GoldReceiptAuditEventRecord(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      receiptId: data.receiptId.present ? data.receiptId.value : this.receiptId,
+      eventType: data.eventType.present ? data.eventType.value : this.eventType,
+      actorUserId:
+          data.actorUserId.present ? data.actorUserId.value : this.actorUserId,
+      reason: data.reason.present ? data.reason.value : this.reason,
+      metadata: data.metadata.present ? data.metadata.value : this.metadata,
+      occurredAt:
+          data.occurredAt.present ? data.occurredAt.value : this.occurredAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GoldReceiptAuditEventRecord(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('receiptId: $receiptId, ')
+          ..write('eventType: $eventType, ')
+          ..write('actorUserId: $actorUserId, ')
+          ..write('reason: $reason, ')
+          ..write('metadata: $metadata, ')
+          ..write('occurredAt: $occurredAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, createdAt, updatedAt, receiptId,
+      eventType, actorUserId, reason, metadata, occurredAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GoldReceiptAuditEventRecord &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.receiptId == this.receiptId &&
+          other.eventType == this.eventType &&
+          other.actorUserId == this.actorUserId &&
+          other.reason == this.reason &&
+          other.metadata == this.metadata &&
+          other.occurredAt == this.occurredAt);
+}
+
+class GoldReceiptAuditEventsCompanion
+    extends UpdateCompanion<GoldReceiptAuditEventRecord> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<int> receiptId;
+  final Value<String> eventType;
+  final Value<String?> actorUserId;
+  final Value<String?> reason;
+  final Value<String?> metadata;
+  final Value<DateTime> occurredAt;
+  const GoldReceiptAuditEventsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.receiptId = const Value.absent(),
+    this.eventType = const Value.absent(),
+    this.actorUserId = const Value.absent(),
+    this.reason = const Value.absent(),
+    this.metadata = const Value.absent(),
+    this.occurredAt = const Value.absent(),
+  });
+  GoldReceiptAuditEventsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required int receiptId,
+    required String eventType,
+    this.actorUserId = const Value.absent(),
+    this.reason = const Value.absent(),
+    this.metadata = const Value.absent(),
+    required DateTime occurredAt,
+  })  : receiptId = Value(receiptId),
+        eventType = Value(eventType),
+        occurredAt = Value(occurredAt);
+  static Insertable<GoldReceiptAuditEventRecord> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? receiptId,
+    Expression<String>? eventType,
+    Expression<String>? actorUserId,
+    Expression<String>? reason,
+    Expression<String>? metadata,
+    Expression<DateTime>? occurredAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (receiptId != null) 'receipt_id': receiptId,
+      if (eventType != null) 'event_type': eventType,
+      if (actorUserId != null) 'actor_user_id': actorUserId,
+      if (reason != null) 'reason': reason,
+      if (metadata != null) 'metadata': metadata,
+      if (occurredAt != null) 'occurred_at': occurredAt,
+    });
+  }
+
+  GoldReceiptAuditEventsCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<int>? receiptId,
+      Value<String>? eventType,
+      Value<String?>? actorUserId,
+      Value<String?>? reason,
+      Value<String?>? metadata,
+      Value<DateTime>? occurredAt}) {
+    return GoldReceiptAuditEventsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      receiptId: receiptId ?? this.receiptId,
+      eventType: eventType ?? this.eventType,
+      actorUserId: actorUserId ?? this.actorUserId,
+      reason: reason ?? this.reason,
+      metadata: metadata ?? this.metadata,
+      occurredAt: occurredAt ?? this.occurredAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (receiptId.present) {
+      map['receipt_id'] = Variable<int>(receiptId.value);
+    }
+    if (eventType.present) {
+      map['event_type'] = Variable<String>(eventType.value);
+    }
+    if (actorUserId.present) {
+      map['actor_user_id'] = Variable<String>(actorUserId.value);
+    }
+    if (reason.present) {
+      map['reason'] = Variable<String>(reason.value);
+    }
+    if (metadata.present) {
+      map['metadata'] = Variable<String>(metadata.value);
+    }
+    if (occurredAt.present) {
+      map['occurred_at'] = Variable<DateTime>(occurredAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GoldReceiptAuditEventsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('receiptId: $receiptId, ')
+          ..write('eventType: $eventType, ')
+          ..write('actorUserId: $actorUserId, ')
+          ..write('reason: $reason, ')
+          ..write('metadata: $metadata, ')
+          ..write('occurredAt: $occurredAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $TaxGstConfigsTable extends TaxGstConfigs
     with TableInfo<$TaxGstConfigsTable, TaxGstConfigData> {
   @override
@@ -31579,6 +35232,16 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $GirviBillingSettingsTable(this);
   late final $ShopPrintInformationSettingsTable shopPrintInformationSettings =
       $ShopPrintInformationSettingsTable(this);
+  late final $GoldStockReceiptsTable goldStockReceipts =
+      $GoldStockReceiptsTable(this);
+  late final $GoldStockReceiptLinesTable goldStockReceiptLines =
+      $GoldStockReceiptLinesTable(this);
+  late final $GoldReceiptSettlementsTable goldReceiptSettlements =
+      $GoldReceiptSettlementsTable(this);
+  late final $GoldReceiptAttachmentsTable goldReceiptAttachments =
+      $GoldReceiptAttachmentsTable(this);
+  late final $GoldReceiptAuditEventsTable goldReceiptAuditEvents =
+      $GoldReceiptAuditEventsTable(this);
   late final $TaxGstConfigsTable taxGstConfigs = $TaxGstConfigsTable(this);
   late final Index idxCustomersName = Index('idx_customers_name',
       'CREATE INDEX idx_customers_name ON customers (name)');
@@ -31728,6 +35391,25 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final Index idxShopPrintInformationTenant = Index(
       'idx_shop_print_information_tenant',
       'CREATE UNIQUE INDEX idx_shop_print_information_tenant ON shop_print_information_settings (tenant_id)');
+  late final Index idxGoldReceiptSupplier = Index('idx_gold_receipt_supplier',
+      'CREATE INDEX idx_gold_receipt_supplier ON gold_stock_receipts (supplier_id)');
+  late final Index idxGoldReceiptReceivedAt = Index(
+      'idx_gold_receipt_received_at',
+      'CREATE INDEX idx_gold_receipt_received_at ON gold_stock_receipts (received_at)');
+  late final Index idxGoldReceiptLineOrder = Index(
+      'idx_gold_receipt_line_order',
+      'CREATE UNIQUE INDEX idx_gold_receipt_line_order ON gold_stock_receipt_lines (receipt_id, line_number)');
+  late final Index idxGoldReceiptLineHuid = Index('idx_gold_receipt_line_huid',
+      'CREATE UNIQUE INDEX idx_gold_receipt_line_huid ON gold_stock_receipt_lines (hallmark_unique_id)');
+  late final Index idxGoldReceiptSettlementOrder = Index(
+      'idx_gold_receipt_settlement_order',
+      'CREATE UNIQUE INDEX idx_gold_receipt_settlement_order ON gold_receipt_settlements (receipt_id, sequence_number)');
+  late final Index idxGoldReceiptAttachmentReceipt = Index(
+      'idx_gold_receipt_attachment_receipt',
+      'CREATE INDEX idx_gold_receipt_attachment_receipt ON gold_receipt_attachments (receipt_id)');
+  late final Index idxGoldReceiptAuditOrder = Index(
+      'idx_gold_receipt_audit_order',
+      'CREATE INDEX idx_gold_receipt_audit_order ON gold_receipt_audit_events (receipt_id, occurred_at)');
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -31764,6 +35446,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         purchaseBillingSettings,
         girviBillingSettings,
         shopPrintInformationSettings,
+        goldStockReceipts,
+        goldStockReceiptLines,
+        goldReceiptSettlements,
+        goldReceiptAttachments,
+        goldReceiptAuditEvents,
         taxGstConfigs,
         idxCustomersName,
         idxCustomersMobile,
@@ -31834,7 +35521,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         idxDitemStatus,
         idxSalesBillingMetal,
         idxPurchaseBillingMetal,
-        idxShopPrintInformationTenant
+        idxShopPrintInformationTenant,
+        idxGoldReceiptSupplier,
+        idxGoldReceiptReceivedAt,
+        idxGoldReceiptLineOrder,
+        idxGoldReceiptLineHuid,
+        idxGoldReceiptSettlementOrder,
+        idxGoldReceiptAttachmentReceipt,
+        idxGoldReceiptAuditOrder
       ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules(
@@ -31942,6 +35636,34 @@ abstract class _$AppDatabase extends GeneratedDatabase {
                 limitUpdateKind: UpdateKind.delete),
             result: [
               TableUpdate('delivery_items', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('gold_stock_receipts',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('gold_stock_receipt_lines', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('gold_stock_receipts',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('gold_receipt_settlements', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('gold_stock_receipts',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('gold_receipt_attachments', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('gold_stock_receipts',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('gold_receipt_audit_events', kind: UpdateKind.delete),
             ],
           ),
         ],
@@ -33149,6 +36871,24 @@ final class $$SuppliersTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$GoldStockReceiptsTable,
+      List<GoldStockReceiptRecord>> _goldStockReceiptsRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.goldStockReceipts,
+          aliasName: $_aliasNameGenerator(
+              db.suppliers.id, db.goldStockReceipts.supplierId));
+
+  $$GoldStockReceiptsTableProcessedTableManager get goldStockReceiptsRefs {
+    final manager =
+        $$GoldStockReceiptsTableTableManager($_db, $_db.goldStockReceipts)
+            .filter((f) => f.supplierId.id($_item.id));
+
+    final cache =
+        $_typedResult.readTableOrNull(_goldStockReceiptsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$SuppliersTableFilterComposer
@@ -33236,6 +36976,27 @@ class $$SuppliersTableFilterComposer
             $$StockItemsTableFilterComposer(
               $db: $db,
               $table: $db.stockItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> goldStockReceiptsRefs(
+      Expression<bool> Function($$GoldStockReceiptsTableFilterComposer f) f) {
+    final $$GoldStockReceiptsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.goldStockReceipts,
+        getReferencedColumn: (t) => t.supplierId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GoldStockReceiptsTableFilterComposer(
+              $db: $db,
+              $table: $db.goldStockReceipts,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -33411,6 +37172,28 @@ class $$SuppliersTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> goldStockReceiptsRefs<T extends Object>(
+      Expression<T> Function($$GoldStockReceiptsTableAnnotationComposer a) f) {
+    final $$GoldStockReceiptsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.goldStockReceipts,
+            getReferencedColumn: (t) => t.supplierId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GoldStockReceiptsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.goldStockReceipts,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
 }
 
 class $$SuppliersTableTableManager extends RootTableManager<
@@ -33424,7 +37207,7 @@ class $$SuppliersTableTableManager extends RootTableManager<
     $$SuppliersTableUpdateCompanionBuilder,
     (Supplier, $$SuppliersTableReferences),
     Supplier,
-    PrefetchHooks Function({bool stockItemsRefs})> {
+    PrefetchHooks Function({bool stockItemsRefs, bool goldStockReceiptsRefs})> {
   $$SuppliersTableTableManager(_$AppDatabase db, $SuppliersTable table)
       : super(TableManagerState(
           db: db,
@@ -33529,10 +37312,14 @@ class $$SuppliersTableTableManager extends RootTableManager<
                     $$SuppliersTableReferences(db, table, e)
                   ))
               .toList(),
-          prefetchHooksCallback: ({stockItemsRefs = false}) {
+          prefetchHooksCallback: (
+              {stockItemsRefs = false, goldStockReceiptsRefs = false}) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [if (stockItemsRefs) db.stockItems],
+              explicitlyWatchedTables: [
+                if (stockItemsRefs) db.stockItems,
+                if (goldStockReceiptsRefs) db.goldStockReceipts
+              ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
                 return [
@@ -33544,6 +37331,18 @@ class $$SuppliersTableTableManager extends RootTableManager<
                         managerFromTypedResult: (p0) =>
                             $$SuppliersTableReferences(db, table, p0)
                                 .stockItemsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.supplierId == item.id),
+                        typedResults: items),
+                  if (goldStockReceiptsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$SuppliersTableReferences
+                            ._goldStockReceiptsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$SuppliersTableReferences(db, table, p0)
+                                .goldStockReceiptsRefs,
                         referencedItemsForCurrentItem:
                             (item, referencedItems) => referencedItems
                                 .where((e) => e.supplierId == item.id),
@@ -33566,7 +37365,7 @@ typedef $$SuppliersTableProcessedTableManager = ProcessedTableManager<
     $$SuppliersTableUpdateCompanionBuilder,
     (Supplier, $$SuppliersTableReferences),
     Supplier,
-    PrefetchHooks Function({bool stockItemsRefs})>;
+    PrefetchHooks Function({bool stockItemsRefs, bool goldStockReceiptsRefs})>;
 typedef $$ShopProfilesTableCreateCompanionBuilder = ShopProfilesCompanion
     Function({
   Value<int> id,
@@ -48499,6 +52298,2483 @@ typedef $$ShopPrintInformationSettingsTableProcessedTableManager
         ),
         ShopPrintInformationSetting,
         PrefetchHooks Function()>;
+typedef $$GoldStockReceiptsTableCreateCompanionBuilder
+    = GoldStockReceiptsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required String receiptNumber,
+  required String source,
+  required int supplierId,
+  required String supplierName,
+  Value<String?> supplierInvoiceNumber,
+  Value<String> status,
+  required int totalGrossWeightMilligrams,
+  required int totalFineWeightMilligrams,
+  required int totalCostPaise,
+  Value<String> currencyCode,
+  required DateTime receivedAt,
+  Value<String?> createdByUserId,
+});
+typedef $$GoldStockReceiptsTableUpdateCompanionBuilder
+    = GoldStockReceiptsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<String> receiptNumber,
+  Value<String> source,
+  Value<int> supplierId,
+  Value<String> supplierName,
+  Value<String?> supplierInvoiceNumber,
+  Value<String> status,
+  Value<int> totalGrossWeightMilligrams,
+  Value<int> totalFineWeightMilligrams,
+  Value<int> totalCostPaise,
+  Value<String> currencyCode,
+  Value<DateTime> receivedAt,
+  Value<String?> createdByUserId,
+});
+
+final class $$GoldStockReceiptsTableReferences extends BaseReferences<
+    _$AppDatabase, $GoldStockReceiptsTable, GoldStockReceiptRecord> {
+  $$GoldStockReceiptsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $SuppliersTable _supplierIdTable(_$AppDatabase db) =>
+      db.suppliers.createAlias($_aliasNameGenerator(
+          db.goldStockReceipts.supplierId, db.suppliers.id));
+
+  $$SuppliersTableProcessedTableManager? get supplierId {
+    if ($_item.supplierId == null) return null;
+    final manager = $$SuppliersTableTableManager($_db, $_db.suppliers)
+        .filter((f) => f.id($_item.supplierId!));
+    final item = $_typedResult.readTableOrNull(_supplierIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static MultiTypedResultKey<$GoldStockReceiptLinesTable,
+      List<GoldStockReceiptLineRecord>> _goldStockReceiptLinesRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.goldStockReceiptLines,
+          aliasName: $_aliasNameGenerator(
+              db.goldStockReceipts.id, db.goldStockReceiptLines.receiptId));
+
+  $$GoldStockReceiptLinesTableProcessedTableManager
+      get goldStockReceiptLinesRefs {
+    final manager = $$GoldStockReceiptLinesTableTableManager(
+            $_db, $_db.goldStockReceiptLines)
+        .filter((f) => f.receiptId.id($_item.id));
+
+    final cache =
+        $_typedResult.readTableOrNull(_goldStockReceiptLinesRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$GoldReceiptSettlementsTable,
+      List<GoldReceiptSettlementRecord>> _goldReceiptSettlementsRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.goldReceiptSettlements,
+          aliasName: $_aliasNameGenerator(
+              db.goldStockReceipts.id, db.goldReceiptSettlements.receiptId));
+
+  $$GoldReceiptSettlementsTableProcessedTableManager
+      get goldReceiptSettlementsRefs {
+    final manager = $$GoldReceiptSettlementsTableTableManager(
+            $_db, $_db.goldReceiptSettlements)
+        .filter((f) => f.receiptId.id($_item.id));
+
+    final cache =
+        $_typedResult.readTableOrNull(_goldReceiptSettlementsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$GoldReceiptAttachmentsTable,
+      List<GoldReceiptAttachmentRecord>> _goldReceiptAttachmentsRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.goldReceiptAttachments,
+          aliasName: $_aliasNameGenerator(
+              db.goldStockReceipts.id, db.goldReceiptAttachments.receiptId));
+
+  $$GoldReceiptAttachmentsTableProcessedTableManager
+      get goldReceiptAttachmentsRefs {
+    final manager = $$GoldReceiptAttachmentsTableTableManager(
+            $_db, $_db.goldReceiptAttachments)
+        .filter((f) => f.receiptId.id($_item.id));
+
+    final cache =
+        $_typedResult.readTableOrNull(_goldReceiptAttachmentsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$GoldReceiptAuditEventsTable,
+      List<GoldReceiptAuditEventRecord>> _goldReceiptAuditEventsRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.goldReceiptAuditEvents,
+          aliasName: $_aliasNameGenerator(
+              db.goldStockReceipts.id, db.goldReceiptAuditEvents.receiptId));
+
+  $$GoldReceiptAuditEventsTableProcessedTableManager
+      get goldReceiptAuditEventsRefs {
+    final manager = $$GoldReceiptAuditEventsTableTableManager(
+            $_db, $_db.goldReceiptAuditEvents)
+        .filter((f) => f.receiptId.id($_item.id));
+
+    final cache =
+        $_typedResult.readTableOrNull(_goldReceiptAuditEventsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$GoldStockReceiptsTableFilterComposer
+    extends Composer<_$AppDatabase, $GoldStockReceiptsTable> {
+  $$GoldStockReceiptsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get receiptNumber => $composableBuilder(
+      column: $table.receiptNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get supplierName => $composableBuilder(
+      column: $table.supplierName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get supplierInvoiceNumber => $composableBuilder(
+      column: $table.supplierInvoiceNumber,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get totalGrossWeightMilligrams => $composableBuilder(
+      column: $table.totalGrossWeightMilligrams,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get totalFineWeightMilligrams => $composableBuilder(
+      column: $table.totalFineWeightMilligrams,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get totalCostPaise => $composableBuilder(
+      column: $table.totalCostPaise,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get currencyCode => $composableBuilder(
+      column: $table.currencyCode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get receivedAt => $composableBuilder(
+      column: $table.receivedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get createdByUserId => $composableBuilder(
+      column: $table.createdByUserId,
+      builder: (column) => ColumnFilters(column));
+
+  $$SuppliersTableFilterComposer get supplierId {
+    final $$SuppliersTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.supplierId,
+        referencedTable: $db.suppliers,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SuppliersTableFilterComposer(
+              $db: $db,
+              $table: $db.suppliers,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  Expression<bool> goldStockReceiptLinesRefs(
+      Expression<bool> Function($$GoldStockReceiptLinesTableFilterComposer f)
+          f) {
+    final $$GoldStockReceiptLinesTableFilterComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.goldStockReceiptLines,
+            getReferencedColumn: (t) => t.receiptId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GoldStockReceiptLinesTableFilterComposer(
+                  $db: $db,
+                  $table: $db.goldStockReceiptLines,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
+
+  Expression<bool> goldReceiptSettlementsRefs(
+      Expression<bool> Function($$GoldReceiptSettlementsTableFilterComposer f)
+          f) {
+    final $$GoldReceiptSettlementsTableFilterComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.goldReceiptSettlements,
+            getReferencedColumn: (t) => t.receiptId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GoldReceiptSettlementsTableFilterComposer(
+                  $db: $db,
+                  $table: $db.goldReceiptSettlements,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
+
+  Expression<bool> goldReceiptAttachmentsRefs(
+      Expression<bool> Function($$GoldReceiptAttachmentsTableFilterComposer f)
+          f) {
+    final $$GoldReceiptAttachmentsTableFilterComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.goldReceiptAttachments,
+            getReferencedColumn: (t) => t.receiptId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GoldReceiptAttachmentsTableFilterComposer(
+                  $db: $db,
+                  $table: $db.goldReceiptAttachments,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
+
+  Expression<bool> goldReceiptAuditEventsRefs(
+      Expression<bool> Function($$GoldReceiptAuditEventsTableFilterComposer f)
+          f) {
+    final $$GoldReceiptAuditEventsTableFilterComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.goldReceiptAuditEvents,
+            getReferencedColumn: (t) => t.receiptId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GoldReceiptAuditEventsTableFilterComposer(
+                  $db: $db,
+                  $table: $db.goldReceiptAuditEvents,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
+}
+
+class $$GoldStockReceiptsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GoldStockReceiptsTable> {
+  $$GoldStockReceiptsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get receiptNumber => $composableBuilder(
+      column: $table.receiptNumber,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get supplierName => $composableBuilder(
+      column: $table.supplierName,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get supplierInvoiceNumber => $composableBuilder(
+      column: $table.supplierInvoiceNumber,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get totalGrossWeightMilligrams => $composableBuilder(
+      column: $table.totalGrossWeightMilligrams,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get totalFineWeightMilligrams => $composableBuilder(
+      column: $table.totalFineWeightMilligrams,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get totalCostPaise => $composableBuilder(
+      column: $table.totalCostPaise,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get currencyCode => $composableBuilder(
+      column: $table.currencyCode,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get receivedAt => $composableBuilder(
+      column: $table.receivedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get createdByUserId => $composableBuilder(
+      column: $table.createdByUserId,
+      builder: (column) => ColumnOrderings(column));
+
+  $$SuppliersTableOrderingComposer get supplierId {
+    final $$SuppliersTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.supplierId,
+        referencedTable: $db.suppliers,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SuppliersTableOrderingComposer(
+              $db: $db,
+              $table: $db.suppliers,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GoldStockReceiptsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GoldStockReceiptsTable> {
+  $$GoldStockReceiptsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get receiptNumber => $composableBuilder(
+      column: $table.receiptNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<String> get supplierName => $composableBuilder(
+      column: $table.supplierName, builder: (column) => column);
+
+  GeneratedColumn<String> get supplierInvoiceNumber => $composableBuilder(
+      column: $table.supplierInvoiceNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<int> get totalGrossWeightMilligrams => $composableBuilder(
+      column: $table.totalGrossWeightMilligrams, builder: (column) => column);
+
+  GeneratedColumn<int> get totalFineWeightMilligrams => $composableBuilder(
+      column: $table.totalFineWeightMilligrams, builder: (column) => column);
+
+  GeneratedColumn<int> get totalCostPaise => $composableBuilder(
+      column: $table.totalCostPaise, builder: (column) => column);
+
+  GeneratedColumn<String> get currencyCode => $composableBuilder(
+      column: $table.currencyCode, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get receivedAt => $composableBuilder(
+      column: $table.receivedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get createdByUserId => $composableBuilder(
+      column: $table.createdByUserId, builder: (column) => column);
+
+  $$SuppliersTableAnnotationComposer get supplierId {
+    final $$SuppliersTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.supplierId,
+        referencedTable: $db.suppliers,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$SuppliersTableAnnotationComposer(
+              $db: $db,
+              $table: $db.suppliers,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  Expression<T> goldStockReceiptLinesRefs<T extends Object>(
+      Expression<T> Function($$GoldStockReceiptLinesTableAnnotationComposer a)
+          f) {
+    final $$GoldStockReceiptLinesTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.goldStockReceiptLines,
+            getReferencedColumn: (t) => t.receiptId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GoldStockReceiptLinesTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.goldStockReceiptLines,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
+
+  Expression<T> goldReceiptSettlementsRefs<T extends Object>(
+      Expression<T> Function($$GoldReceiptSettlementsTableAnnotationComposer a)
+          f) {
+    final $$GoldReceiptSettlementsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.goldReceiptSettlements,
+            getReferencedColumn: (t) => t.receiptId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GoldReceiptSettlementsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.goldReceiptSettlements,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
+
+  Expression<T> goldReceiptAttachmentsRefs<T extends Object>(
+      Expression<T> Function($$GoldReceiptAttachmentsTableAnnotationComposer a)
+          f) {
+    final $$GoldReceiptAttachmentsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.goldReceiptAttachments,
+            getReferencedColumn: (t) => t.receiptId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GoldReceiptAttachmentsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.goldReceiptAttachments,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
+
+  Expression<T> goldReceiptAuditEventsRefs<T extends Object>(
+      Expression<T> Function($$GoldReceiptAuditEventsTableAnnotationComposer a)
+          f) {
+    final $$GoldReceiptAuditEventsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.goldReceiptAuditEvents,
+            getReferencedColumn: (t) => t.receiptId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GoldReceiptAuditEventsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.goldReceiptAuditEvents,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
+}
+
+class $$GoldStockReceiptsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $GoldStockReceiptsTable,
+    GoldStockReceiptRecord,
+    $$GoldStockReceiptsTableFilterComposer,
+    $$GoldStockReceiptsTableOrderingComposer,
+    $$GoldStockReceiptsTableAnnotationComposer,
+    $$GoldStockReceiptsTableCreateCompanionBuilder,
+    $$GoldStockReceiptsTableUpdateCompanionBuilder,
+    (GoldStockReceiptRecord, $$GoldStockReceiptsTableReferences),
+    GoldStockReceiptRecord,
+    PrefetchHooks Function(
+        {bool supplierId,
+        bool goldStockReceiptLinesRefs,
+        bool goldReceiptSettlementsRefs,
+        bool goldReceiptAttachmentsRefs,
+        bool goldReceiptAuditEventsRefs})> {
+  $$GoldStockReceiptsTableTableManager(
+      _$AppDatabase db, $GoldStockReceiptsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GoldStockReceiptsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GoldStockReceiptsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GoldStockReceiptsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<String> receiptNumber = const Value.absent(),
+            Value<String> source = const Value.absent(),
+            Value<int> supplierId = const Value.absent(),
+            Value<String> supplierName = const Value.absent(),
+            Value<String?> supplierInvoiceNumber = const Value.absent(),
+            Value<String> status = const Value.absent(),
+            Value<int> totalGrossWeightMilligrams = const Value.absent(),
+            Value<int> totalFineWeightMilligrams = const Value.absent(),
+            Value<int> totalCostPaise = const Value.absent(),
+            Value<String> currencyCode = const Value.absent(),
+            Value<DateTime> receivedAt = const Value.absent(),
+            Value<String?> createdByUserId = const Value.absent(),
+          }) =>
+              GoldStockReceiptsCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            receiptNumber: receiptNumber,
+            source: source,
+            supplierId: supplierId,
+            supplierName: supplierName,
+            supplierInvoiceNumber: supplierInvoiceNumber,
+            status: status,
+            totalGrossWeightMilligrams: totalGrossWeightMilligrams,
+            totalFineWeightMilligrams: totalFineWeightMilligrams,
+            totalCostPaise: totalCostPaise,
+            currencyCode: currencyCode,
+            receivedAt: receivedAt,
+            createdByUserId: createdByUserId,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required String receiptNumber,
+            required String source,
+            required int supplierId,
+            required String supplierName,
+            Value<String?> supplierInvoiceNumber = const Value.absent(),
+            Value<String> status = const Value.absent(),
+            required int totalGrossWeightMilligrams,
+            required int totalFineWeightMilligrams,
+            required int totalCostPaise,
+            Value<String> currencyCode = const Value.absent(),
+            required DateTime receivedAt,
+            Value<String?> createdByUserId = const Value.absent(),
+          }) =>
+              GoldStockReceiptsCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            receiptNumber: receiptNumber,
+            source: source,
+            supplierId: supplierId,
+            supplierName: supplierName,
+            supplierInvoiceNumber: supplierInvoiceNumber,
+            status: status,
+            totalGrossWeightMilligrams: totalGrossWeightMilligrams,
+            totalFineWeightMilligrams: totalFineWeightMilligrams,
+            totalCostPaise: totalCostPaise,
+            currencyCode: currencyCode,
+            receivedAt: receivedAt,
+            createdByUserId: createdByUserId,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$GoldStockReceiptsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: (
+              {supplierId = false,
+              goldStockReceiptLinesRefs = false,
+              goldReceiptSettlementsRefs = false,
+              goldReceiptAttachmentsRefs = false,
+              goldReceiptAuditEventsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (goldStockReceiptLinesRefs) db.goldStockReceiptLines,
+                if (goldReceiptSettlementsRefs) db.goldReceiptSettlements,
+                if (goldReceiptAttachmentsRefs) db.goldReceiptAttachments,
+                if (goldReceiptAuditEventsRefs) db.goldReceiptAuditEvents
+              ],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (supplierId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.supplierId,
+                    referencedTable:
+                        $$GoldStockReceiptsTableReferences._supplierIdTable(db),
+                    referencedColumn: $$GoldStockReceiptsTableReferences
+                        ._supplierIdTable(db)
+                        .id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (goldStockReceiptLinesRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$GoldStockReceiptsTableReferences
+                            ._goldStockReceiptLinesRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$GoldStockReceiptsTableReferences(db, table, p0)
+                                .goldStockReceiptLinesRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.receiptId == item.id),
+                        typedResults: items),
+                  if (goldReceiptSettlementsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$GoldStockReceiptsTableReferences
+                            ._goldReceiptSettlementsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$GoldStockReceiptsTableReferences(db, table, p0)
+                                .goldReceiptSettlementsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.receiptId == item.id),
+                        typedResults: items),
+                  if (goldReceiptAttachmentsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$GoldStockReceiptsTableReferences
+                            ._goldReceiptAttachmentsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$GoldStockReceiptsTableReferences(db, table, p0)
+                                .goldReceiptAttachmentsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.receiptId == item.id),
+                        typedResults: items),
+                  if (goldReceiptAuditEventsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$GoldStockReceiptsTableReferences
+                            ._goldReceiptAuditEventsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$GoldStockReceiptsTableReferences(db, table, p0)
+                                .goldReceiptAuditEventsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.receiptId == item.id),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$GoldStockReceiptsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $GoldStockReceiptsTable,
+    GoldStockReceiptRecord,
+    $$GoldStockReceiptsTableFilterComposer,
+    $$GoldStockReceiptsTableOrderingComposer,
+    $$GoldStockReceiptsTableAnnotationComposer,
+    $$GoldStockReceiptsTableCreateCompanionBuilder,
+    $$GoldStockReceiptsTableUpdateCompanionBuilder,
+    (GoldStockReceiptRecord, $$GoldStockReceiptsTableReferences),
+    GoldStockReceiptRecord,
+    PrefetchHooks Function(
+        {bool supplierId,
+        bool goldStockReceiptLinesRefs,
+        bool goldReceiptSettlementsRefs,
+        bool goldReceiptAttachmentsRefs,
+        bool goldReceiptAuditEventsRefs})>;
+typedef $$GoldStockReceiptLinesTableCreateCompanionBuilder
+    = GoldStockReceiptLinesCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required int receiptId,
+  required int lineNumber,
+  required String lineIdentifier,
+  required String category,
+  required String itemName,
+  required int quantity,
+  required int grossWeightMilligrams,
+  required int stoneWeightMilligrams,
+  required int netWeightMilligrams,
+  required int fineWeightMilligrams,
+  required int purityPartsPerThousand,
+  required int ratePerGramPaise,
+  required int makingChargePaise,
+  required String makingChargeMethod,
+  required int metalValuePaise,
+  required int makingValuePaise,
+  Value<int> stoneValuePaise,
+  required int totalCostPaise,
+  Value<String?> hallmarkUniqueId,
+  Value<String?> stoneType,
+  Value<int> stoneQuantity,
+  Value<int> stoneCaratPoints,
+  Value<String?> stoneCertificateNumber,
+});
+typedef $$GoldStockReceiptLinesTableUpdateCompanionBuilder
+    = GoldStockReceiptLinesCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<int> receiptId,
+  Value<int> lineNumber,
+  Value<String> lineIdentifier,
+  Value<String> category,
+  Value<String> itemName,
+  Value<int> quantity,
+  Value<int> grossWeightMilligrams,
+  Value<int> stoneWeightMilligrams,
+  Value<int> netWeightMilligrams,
+  Value<int> fineWeightMilligrams,
+  Value<int> purityPartsPerThousand,
+  Value<int> ratePerGramPaise,
+  Value<int> makingChargePaise,
+  Value<String> makingChargeMethod,
+  Value<int> metalValuePaise,
+  Value<int> makingValuePaise,
+  Value<int> stoneValuePaise,
+  Value<int> totalCostPaise,
+  Value<String?> hallmarkUniqueId,
+  Value<String?> stoneType,
+  Value<int> stoneQuantity,
+  Value<int> stoneCaratPoints,
+  Value<String?> stoneCertificateNumber,
+});
+
+final class $$GoldStockReceiptLinesTableReferences extends BaseReferences<
+    _$AppDatabase, $GoldStockReceiptLinesTable, GoldStockReceiptLineRecord> {
+  $$GoldStockReceiptLinesTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $GoldStockReceiptsTable _receiptIdTable(_$AppDatabase db) =>
+      db.goldStockReceipts.createAlias($_aliasNameGenerator(
+          db.goldStockReceiptLines.receiptId, db.goldStockReceipts.id));
+
+  $$GoldStockReceiptsTableProcessedTableManager? get receiptId {
+    if ($_item.receiptId == null) return null;
+    final manager =
+        $$GoldStockReceiptsTableTableManager($_db, $_db.goldStockReceipts)
+            .filter((f) => f.id($_item.receiptId!));
+    final item = $_typedResult.readTableOrNull(_receiptIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$GoldStockReceiptLinesTableFilterComposer
+    extends Composer<_$AppDatabase, $GoldStockReceiptLinesTable> {
+  $$GoldStockReceiptLinesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get lineNumber => $composableBuilder(
+      column: $table.lineNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get lineIdentifier => $composableBuilder(
+      column: $table.lineIdentifier,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get itemName => $composableBuilder(
+      column: $table.itemName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get grossWeightMilligrams => $composableBuilder(
+      column: $table.grossWeightMilligrams,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get stoneWeightMilligrams => $composableBuilder(
+      column: $table.stoneWeightMilligrams,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get netWeightMilligrams => $composableBuilder(
+      column: $table.netWeightMilligrams,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get fineWeightMilligrams => $composableBuilder(
+      column: $table.fineWeightMilligrams,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get purityPartsPerThousand => $composableBuilder(
+      column: $table.purityPartsPerThousand,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get ratePerGramPaise => $composableBuilder(
+      column: $table.ratePerGramPaise,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get makingChargePaise => $composableBuilder(
+      column: $table.makingChargePaise,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get makingChargeMethod => $composableBuilder(
+      column: $table.makingChargeMethod,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get metalValuePaise => $composableBuilder(
+      column: $table.metalValuePaise,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get makingValuePaise => $composableBuilder(
+      column: $table.makingValuePaise,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get stoneValuePaise => $composableBuilder(
+      column: $table.stoneValuePaise,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get totalCostPaise => $composableBuilder(
+      column: $table.totalCostPaise,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get hallmarkUniqueId => $composableBuilder(
+      column: $table.hallmarkUniqueId,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get stoneType => $composableBuilder(
+      column: $table.stoneType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get stoneQuantity => $composableBuilder(
+      column: $table.stoneQuantity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get stoneCaratPoints => $composableBuilder(
+      column: $table.stoneCaratPoints,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get stoneCertificateNumber => $composableBuilder(
+      column: $table.stoneCertificateNumber,
+      builder: (column) => ColumnFilters(column));
+
+  $$GoldStockReceiptsTableFilterComposer get receiptId {
+    final $$GoldStockReceiptsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.receiptId,
+        referencedTable: $db.goldStockReceipts,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GoldStockReceiptsTableFilterComposer(
+              $db: $db,
+              $table: $db.goldStockReceipts,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GoldStockReceiptLinesTableOrderingComposer
+    extends Composer<_$AppDatabase, $GoldStockReceiptLinesTable> {
+  $$GoldStockReceiptLinesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get lineNumber => $composableBuilder(
+      column: $table.lineNumber, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get lineIdentifier => $composableBuilder(
+      column: $table.lineIdentifier,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get category => $composableBuilder(
+      column: $table.category, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get itemName => $composableBuilder(
+      column: $table.itemName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get quantity => $composableBuilder(
+      column: $table.quantity, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get grossWeightMilligrams => $composableBuilder(
+      column: $table.grossWeightMilligrams,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get stoneWeightMilligrams => $composableBuilder(
+      column: $table.stoneWeightMilligrams,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get netWeightMilligrams => $composableBuilder(
+      column: $table.netWeightMilligrams,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get fineWeightMilligrams => $composableBuilder(
+      column: $table.fineWeightMilligrams,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get purityPartsPerThousand => $composableBuilder(
+      column: $table.purityPartsPerThousand,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get ratePerGramPaise => $composableBuilder(
+      column: $table.ratePerGramPaise,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get makingChargePaise => $composableBuilder(
+      column: $table.makingChargePaise,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get makingChargeMethod => $composableBuilder(
+      column: $table.makingChargeMethod,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get metalValuePaise => $composableBuilder(
+      column: $table.metalValuePaise,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get makingValuePaise => $composableBuilder(
+      column: $table.makingValuePaise,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get stoneValuePaise => $composableBuilder(
+      column: $table.stoneValuePaise,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get totalCostPaise => $composableBuilder(
+      column: $table.totalCostPaise,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get hallmarkUniqueId => $composableBuilder(
+      column: $table.hallmarkUniqueId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get stoneType => $composableBuilder(
+      column: $table.stoneType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get stoneQuantity => $composableBuilder(
+      column: $table.stoneQuantity,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get stoneCaratPoints => $composableBuilder(
+      column: $table.stoneCaratPoints,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get stoneCertificateNumber => $composableBuilder(
+      column: $table.stoneCertificateNumber,
+      builder: (column) => ColumnOrderings(column));
+
+  $$GoldStockReceiptsTableOrderingComposer get receiptId {
+    final $$GoldStockReceiptsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.receiptId,
+        referencedTable: $db.goldStockReceipts,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GoldStockReceiptsTableOrderingComposer(
+              $db: $db,
+              $table: $db.goldStockReceipts,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GoldStockReceiptLinesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GoldStockReceiptLinesTable> {
+  $$GoldStockReceiptLinesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get lineNumber => $composableBuilder(
+      column: $table.lineNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get lineIdentifier => $composableBuilder(
+      column: $table.lineIdentifier, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<String> get itemName =>
+      $composableBuilder(column: $table.itemName, builder: (column) => column);
+
+  GeneratedColumn<int> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+
+  GeneratedColumn<int> get grossWeightMilligrams => $composableBuilder(
+      column: $table.grossWeightMilligrams, builder: (column) => column);
+
+  GeneratedColumn<int> get stoneWeightMilligrams => $composableBuilder(
+      column: $table.stoneWeightMilligrams, builder: (column) => column);
+
+  GeneratedColumn<int> get netWeightMilligrams => $composableBuilder(
+      column: $table.netWeightMilligrams, builder: (column) => column);
+
+  GeneratedColumn<int> get fineWeightMilligrams => $composableBuilder(
+      column: $table.fineWeightMilligrams, builder: (column) => column);
+
+  GeneratedColumn<int> get purityPartsPerThousand => $composableBuilder(
+      column: $table.purityPartsPerThousand, builder: (column) => column);
+
+  GeneratedColumn<int> get ratePerGramPaise => $composableBuilder(
+      column: $table.ratePerGramPaise, builder: (column) => column);
+
+  GeneratedColumn<int> get makingChargePaise => $composableBuilder(
+      column: $table.makingChargePaise, builder: (column) => column);
+
+  GeneratedColumn<String> get makingChargeMethod => $composableBuilder(
+      column: $table.makingChargeMethod, builder: (column) => column);
+
+  GeneratedColumn<int> get metalValuePaise => $composableBuilder(
+      column: $table.metalValuePaise, builder: (column) => column);
+
+  GeneratedColumn<int> get makingValuePaise => $composableBuilder(
+      column: $table.makingValuePaise, builder: (column) => column);
+
+  GeneratedColumn<int> get stoneValuePaise => $composableBuilder(
+      column: $table.stoneValuePaise, builder: (column) => column);
+
+  GeneratedColumn<int> get totalCostPaise => $composableBuilder(
+      column: $table.totalCostPaise, builder: (column) => column);
+
+  GeneratedColumn<String> get hallmarkUniqueId => $composableBuilder(
+      column: $table.hallmarkUniqueId, builder: (column) => column);
+
+  GeneratedColumn<String> get stoneType =>
+      $composableBuilder(column: $table.stoneType, builder: (column) => column);
+
+  GeneratedColumn<int> get stoneQuantity => $composableBuilder(
+      column: $table.stoneQuantity, builder: (column) => column);
+
+  GeneratedColumn<int> get stoneCaratPoints => $composableBuilder(
+      column: $table.stoneCaratPoints, builder: (column) => column);
+
+  GeneratedColumn<String> get stoneCertificateNumber => $composableBuilder(
+      column: $table.stoneCertificateNumber, builder: (column) => column);
+
+  $$GoldStockReceiptsTableAnnotationComposer get receiptId {
+    final $$GoldStockReceiptsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.receiptId,
+            referencedTable: $db.goldStockReceipts,
+            getReferencedColumn: (t) => t.id,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GoldStockReceiptsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.goldStockReceipts,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return composer;
+  }
+}
+
+class $$GoldStockReceiptLinesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $GoldStockReceiptLinesTable,
+    GoldStockReceiptLineRecord,
+    $$GoldStockReceiptLinesTableFilterComposer,
+    $$GoldStockReceiptLinesTableOrderingComposer,
+    $$GoldStockReceiptLinesTableAnnotationComposer,
+    $$GoldStockReceiptLinesTableCreateCompanionBuilder,
+    $$GoldStockReceiptLinesTableUpdateCompanionBuilder,
+    (GoldStockReceiptLineRecord, $$GoldStockReceiptLinesTableReferences),
+    GoldStockReceiptLineRecord,
+    PrefetchHooks Function({bool receiptId})> {
+  $$GoldStockReceiptLinesTableTableManager(
+      _$AppDatabase db, $GoldStockReceiptLinesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GoldStockReceiptLinesTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GoldStockReceiptLinesTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GoldStockReceiptLinesTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<int> receiptId = const Value.absent(),
+            Value<int> lineNumber = const Value.absent(),
+            Value<String> lineIdentifier = const Value.absent(),
+            Value<String> category = const Value.absent(),
+            Value<String> itemName = const Value.absent(),
+            Value<int> quantity = const Value.absent(),
+            Value<int> grossWeightMilligrams = const Value.absent(),
+            Value<int> stoneWeightMilligrams = const Value.absent(),
+            Value<int> netWeightMilligrams = const Value.absent(),
+            Value<int> fineWeightMilligrams = const Value.absent(),
+            Value<int> purityPartsPerThousand = const Value.absent(),
+            Value<int> ratePerGramPaise = const Value.absent(),
+            Value<int> makingChargePaise = const Value.absent(),
+            Value<String> makingChargeMethod = const Value.absent(),
+            Value<int> metalValuePaise = const Value.absent(),
+            Value<int> makingValuePaise = const Value.absent(),
+            Value<int> stoneValuePaise = const Value.absent(),
+            Value<int> totalCostPaise = const Value.absent(),
+            Value<String?> hallmarkUniqueId = const Value.absent(),
+            Value<String?> stoneType = const Value.absent(),
+            Value<int> stoneQuantity = const Value.absent(),
+            Value<int> stoneCaratPoints = const Value.absent(),
+            Value<String?> stoneCertificateNumber = const Value.absent(),
+          }) =>
+              GoldStockReceiptLinesCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            receiptId: receiptId,
+            lineNumber: lineNumber,
+            lineIdentifier: lineIdentifier,
+            category: category,
+            itemName: itemName,
+            quantity: quantity,
+            grossWeightMilligrams: grossWeightMilligrams,
+            stoneWeightMilligrams: stoneWeightMilligrams,
+            netWeightMilligrams: netWeightMilligrams,
+            fineWeightMilligrams: fineWeightMilligrams,
+            purityPartsPerThousand: purityPartsPerThousand,
+            ratePerGramPaise: ratePerGramPaise,
+            makingChargePaise: makingChargePaise,
+            makingChargeMethod: makingChargeMethod,
+            metalValuePaise: metalValuePaise,
+            makingValuePaise: makingValuePaise,
+            stoneValuePaise: stoneValuePaise,
+            totalCostPaise: totalCostPaise,
+            hallmarkUniqueId: hallmarkUniqueId,
+            stoneType: stoneType,
+            stoneQuantity: stoneQuantity,
+            stoneCaratPoints: stoneCaratPoints,
+            stoneCertificateNumber: stoneCertificateNumber,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required int receiptId,
+            required int lineNumber,
+            required String lineIdentifier,
+            required String category,
+            required String itemName,
+            required int quantity,
+            required int grossWeightMilligrams,
+            required int stoneWeightMilligrams,
+            required int netWeightMilligrams,
+            required int fineWeightMilligrams,
+            required int purityPartsPerThousand,
+            required int ratePerGramPaise,
+            required int makingChargePaise,
+            required String makingChargeMethod,
+            required int metalValuePaise,
+            required int makingValuePaise,
+            Value<int> stoneValuePaise = const Value.absent(),
+            required int totalCostPaise,
+            Value<String?> hallmarkUniqueId = const Value.absent(),
+            Value<String?> stoneType = const Value.absent(),
+            Value<int> stoneQuantity = const Value.absent(),
+            Value<int> stoneCaratPoints = const Value.absent(),
+            Value<String?> stoneCertificateNumber = const Value.absent(),
+          }) =>
+              GoldStockReceiptLinesCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            receiptId: receiptId,
+            lineNumber: lineNumber,
+            lineIdentifier: lineIdentifier,
+            category: category,
+            itemName: itemName,
+            quantity: quantity,
+            grossWeightMilligrams: grossWeightMilligrams,
+            stoneWeightMilligrams: stoneWeightMilligrams,
+            netWeightMilligrams: netWeightMilligrams,
+            fineWeightMilligrams: fineWeightMilligrams,
+            purityPartsPerThousand: purityPartsPerThousand,
+            ratePerGramPaise: ratePerGramPaise,
+            makingChargePaise: makingChargePaise,
+            makingChargeMethod: makingChargeMethod,
+            metalValuePaise: metalValuePaise,
+            makingValuePaise: makingValuePaise,
+            stoneValuePaise: stoneValuePaise,
+            totalCostPaise: totalCostPaise,
+            hallmarkUniqueId: hallmarkUniqueId,
+            stoneType: stoneType,
+            stoneQuantity: stoneQuantity,
+            stoneCaratPoints: stoneCaratPoints,
+            stoneCertificateNumber: stoneCertificateNumber,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$GoldStockReceiptLinesTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({receiptId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (receiptId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.receiptId,
+                    referencedTable: $$GoldStockReceiptLinesTableReferences
+                        ._receiptIdTable(db),
+                    referencedColumn: $$GoldStockReceiptLinesTableReferences
+                        ._receiptIdTable(db)
+                        .id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$GoldStockReceiptLinesTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $GoldStockReceiptLinesTable,
+        GoldStockReceiptLineRecord,
+        $$GoldStockReceiptLinesTableFilterComposer,
+        $$GoldStockReceiptLinesTableOrderingComposer,
+        $$GoldStockReceiptLinesTableAnnotationComposer,
+        $$GoldStockReceiptLinesTableCreateCompanionBuilder,
+        $$GoldStockReceiptLinesTableUpdateCompanionBuilder,
+        (GoldStockReceiptLineRecord, $$GoldStockReceiptLinesTableReferences),
+        GoldStockReceiptLineRecord,
+        PrefetchHooks Function({bool receiptId})>;
+typedef $$GoldReceiptSettlementsTableCreateCompanionBuilder
+    = GoldReceiptSettlementsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required int receiptId,
+  required int sequenceNumber,
+  required String settlementMethod,
+  Value<int> amountPaise,
+  Value<int> metalWeightMilligrams,
+  Value<int> metalPurityPartsPerThousand,
+  Value<int> metalFineWeightMilligrams,
+  Value<int?> bankAccountId,
+  Value<String?> referenceNumber,
+  required DateTime settledAt,
+});
+typedef $$GoldReceiptSettlementsTableUpdateCompanionBuilder
+    = GoldReceiptSettlementsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<int> receiptId,
+  Value<int> sequenceNumber,
+  Value<String> settlementMethod,
+  Value<int> amountPaise,
+  Value<int> metalWeightMilligrams,
+  Value<int> metalPurityPartsPerThousand,
+  Value<int> metalFineWeightMilligrams,
+  Value<int?> bankAccountId,
+  Value<String?> referenceNumber,
+  Value<DateTime> settledAt,
+});
+
+final class $$GoldReceiptSettlementsTableReferences extends BaseReferences<
+    _$AppDatabase, $GoldReceiptSettlementsTable, GoldReceiptSettlementRecord> {
+  $$GoldReceiptSettlementsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $GoldStockReceiptsTable _receiptIdTable(_$AppDatabase db) =>
+      db.goldStockReceipts.createAlias($_aliasNameGenerator(
+          db.goldReceiptSettlements.receiptId, db.goldStockReceipts.id));
+
+  $$GoldStockReceiptsTableProcessedTableManager? get receiptId {
+    if ($_item.receiptId == null) return null;
+    final manager =
+        $$GoldStockReceiptsTableTableManager($_db, $_db.goldStockReceipts)
+            .filter((f) => f.id($_item.receiptId!));
+    final item = $_typedResult.readTableOrNull(_receiptIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$GoldReceiptSettlementsTableFilterComposer
+    extends Composer<_$AppDatabase, $GoldReceiptSettlementsTable> {
+  $$GoldReceiptSettlementsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sequenceNumber => $composableBuilder(
+      column: $table.sequenceNumber,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get settlementMethod => $composableBuilder(
+      column: $table.settlementMethod,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get amountPaise => $composableBuilder(
+      column: $table.amountPaise, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get metalWeightMilligrams => $composableBuilder(
+      column: $table.metalWeightMilligrams,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get metalPurityPartsPerThousand => $composableBuilder(
+      column: $table.metalPurityPartsPerThousand,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get metalFineWeightMilligrams => $composableBuilder(
+      column: $table.metalFineWeightMilligrams,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get bankAccountId => $composableBuilder(
+      column: $table.bankAccountId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get referenceNumber => $composableBuilder(
+      column: $table.referenceNumber,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get settledAt => $composableBuilder(
+      column: $table.settledAt, builder: (column) => ColumnFilters(column));
+
+  $$GoldStockReceiptsTableFilterComposer get receiptId {
+    final $$GoldStockReceiptsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.receiptId,
+        referencedTable: $db.goldStockReceipts,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GoldStockReceiptsTableFilterComposer(
+              $db: $db,
+              $table: $db.goldStockReceipts,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GoldReceiptSettlementsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GoldReceiptSettlementsTable> {
+  $$GoldReceiptSettlementsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sequenceNumber => $composableBuilder(
+      column: $table.sequenceNumber,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get settlementMethod => $composableBuilder(
+      column: $table.settlementMethod,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get amountPaise => $composableBuilder(
+      column: $table.amountPaise, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get metalWeightMilligrams => $composableBuilder(
+      column: $table.metalWeightMilligrams,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get metalPurityPartsPerThousand => $composableBuilder(
+      column: $table.metalPurityPartsPerThousand,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get metalFineWeightMilligrams => $composableBuilder(
+      column: $table.metalFineWeightMilligrams,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get bankAccountId => $composableBuilder(
+      column: $table.bankAccountId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get referenceNumber => $composableBuilder(
+      column: $table.referenceNumber,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get settledAt => $composableBuilder(
+      column: $table.settledAt, builder: (column) => ColumnOrderings(column));
+
+  $$GoldStockReceiptsTableOrderingComposer get receiptId {
+    final $$GoldStockReceiptsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.receiptId,
+        referencedTable: $db.goldStockReceipts,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GoldStockReceiptsTableOrderingComposer(
+              $db: $db,
+              $table: $db.goldStockReceipts,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GoldReceiptSettlementsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GoldReceiptSettlementsTable> {
+  $$GoldReceiptSettlementsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get sequenceNumber => $composableBuilder(
+      column: $table.sequenceNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get settlementMethod => $composableBuilder(
+      column: $table.settlementMethod, builder: (column) => column);
+
+  GeneratedColumn<int> get amountPaise => $composableBuilder(
+      column: $table.amountPaise, builder: (column) => column);
+
+  GeneratedColumn<int> get metalWeightMilligrams => $composableBuilder(
+      column: $table.metalWeightMilligrams, builder: (column) => column);
+
+  GeneratedColumn<int> get metalPurityPartsPerThousand => $composableBuilder(
+      column: $table.metalPurityPartsPerThousand, builder: (column) => column);
+
+  GeneratedColumn<int> get metalFineWeightMilligrams => $composableBuilder(
+      column: $table.metalFineWeightMilligrams, builder: (column) => column);
+
+  GeneratedColumn<int> get bankAccountId => $composableBuilder(
+      column: $table.bankAccountId, builder: (column) => column);
+
+  GeneratedColumn<String> get referenceNumber => $composableBuilder(
+      column: $table.referenceNumber, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get settledAt =>
+      $composableBuilder(column: $table.settledAt, builder: (column) => column);
+
+  $$GoldStockReceiptsTableAnnotationComposer get receiptId {
+    final $$GoldStockReceiptsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.receiptId,
+            referencedTable: $db.goldStockReceipts,
+            getReferencedColumn: (t) => t.id,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GoldStockReceiptsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.goldStockReceipts,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return composer;
+  }
+}
+
+class $$GoldReceiptSettlementsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $GoldReceiptSettlementsTable,
+    GoldReceiptSettlementRecord,
+    $$GoldReceiptSettlementsTableFilterComposer,
+    $$GoldReceiptSettlementsTableOrderingComposer,
+    $$GoldReceiptSettlementsTableAnnotationComposer,
+    $$GoldReceiptSettlementsTableCreateCompanionBuilder,
+    $$GoldReceiptSettlementsTableUpdateCompanionBuilder,
+    (GoldReceiptSettlementRecord, $$GoldReceiptSettlementsTableReferences),
+    GoldReceiptSettlementRecord,
+    PrefetchHooks Function({bool receiptId})> {
+  $$GoldReceiptSettlementsTableTableManager(
+      _$AppDatabase db, $GoldReceiptSettlementsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GoldReceiptSettlementsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GoldReceiptSettlementsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GoldReceiptSettlementsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<int> receiptId = const Value.absent(),
+            Value<int> sequenceNumber = const Value.absent(),
+            Value<String> settlementMethod = const Value.absent(),
+            Value<int> amountPaise = const Value.absent(),
+            Value<int> metalWeightMilligrams = const Value.absent(),
+            Value<int> metalPurityPartsPerThousand = const Value.absent(),
+            Value<int> metalFineWeightMilligrams = const Value.absent(),
+            Value<int?> bankAccountId = const Value.absent(),
+            Value<String?> referenceNumber = const Value.absent(),
+            Value<DateTime> settledAt = const Value.absent(),
+          }) =>
+              GoldReceiptSettlementsCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            receiptId: receiptId,
+            sequenceNumber: sequenceNumber,
+            settlementMethod: settlementMethod,
+            amountPaise: amountPaise,
+            metalWeightMilligrams: metalWeightMilligrams,
+            metalPurityPartsPerThousand: metalPurityPartsPerThousand,
+            metalFineWeightMilligrams: metalFineWeightMilligrams,
+            bankAccountId: bankAccountId,
+            referenceNumber: referenceNumber,
+            settledAt: settledAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required int receiptId,
+            required int sequenceNumber,
+            required String settlementMethod,
+            Value<int> amountPaise = const Value.absent(),
+            Value<int> metalWeightMilligrams = const Value.absent(),
+            Value<int> metalPurityPartsPerThousand = const Value.absent(),
+            Value<int> metalFineWeightMilligrams = const Value.absent(),
+            Value<int?> bankAccountId = const Value.absent(),
+            Value<String?> referenceNumber = const Value.absent(),
+            required DateTime settledAt,
+          }) =>
+              GoldReceiptSettlementsCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            receiptId: receiptId,
+            sequenceNumber: sequenceNumber,
+            settlementMethod: settlementMethod,
+            amountPaise: amountPaise,
+            metalWeightMilligrams: metalWeightMilligrams,
+            metalPurityPartsPerThousand: metalPurityPartsPerThousand,
+            metalFineWeightMilligrams: metalFineWeightMilligrams,
+            bankAccountId: bankAccountId,
+            referenceNumber: referenceNumber,
+            settledAt: settledAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$GoldReceiptSettlementsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({receiptId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (receiptId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.receiptId,
+                    referencedTable: $$GoldReceiptSettlementsTableReferences
+                        ._receiptIdTable(db),
+                    referencedColumn: $$GoldReceiptSettlementsTableReferences
+                        ._receiptIdTable(db)
+                        .id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$GoldReceiptSettlementsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $GoldReceiptSettlementsTable,
+        GoldReceiptSettlementRecord,
+        $$GoldReceiptSettlementsTableFilterComposer,
+        $$GoldReceiptSettlementsTableOrderingComposer,
+        $$GoldReceiptSettlementsTableAnnotationComposer,
+        $$GoldReceiptSettlementsTableCreateCompanionBuilder,
+        $$GoldReceiptSettlementsTableUpdateCompanionBuilder,
+        (GoldReceiptSettlementRecord, $$GoldReceiptSettlementsTableReferences),
+        GoldReceiptSettlementRecord,
+        PrefetchHooks Function({bool receiptId})>;
+typedef $$GoldReceiptAttachmentsTableCreateCompanionBuilder
+    = GoldReceiptAttachmentsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required int receiptId,
+  required String storagePath,
+  required String originalFileName,
+  required String contentType,
+  Value<String?> contentChecksum,
+  Value<int?> byteSize,
+});
+typedef $$GoldReceiptAttachmentsTableUpdateCompanionBuilder
+    = GoldReceiptAttachmentsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<int> receiptId,
+  Value<String> storagePath,
+  Value<String> originalFileName,
+  Value<String> contentType,
+  Value<String?> contentChecksum,
+  Value<int?> byteSize,
+});
+
+final class $$GoldReceiptAttachmentsTableReferences extends BaseReferences<
+    _$AppDatabase, $GoldReceiptAttachmentsTable, GoldReceiptAttachmentRecord> {
+  $$GoldReceiptAttachmentsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $GoldStockReceiptsTable _receiptIdTable(_$AppDatabase db) =>
+      db.goldStockReceipts.createAlias($_aliasNameGenerator(
+          db.goldReceiptAttachments.receiptId, db.goldStockReceipts.id));
+
+  $$GoldStockReceiptsTableProcessedTableManager? get receiptId {
+    if ($_item.receiptId == null) return null;
+    final manager =
+        $$GoldStockReceiptsTableTableManager($_db, $_db.goldStockReceipts)
+            .filter((f) => f.id($_item.receiptId!));
+    final item = $_typedResult.readTableOrNull(_receiptIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$GoldReceiptAttachmentsTableFilterComposer
+    extends Composer<_$AppDatabase, $GoldReceiptAttachmentsTable> {
+  $$GoldReceiptAttachmentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get storagePath => $composableBuilder(
+      column: $table.storagePath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get originalFileName => $composableBuilder(
+      column: $table.originalFileName,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get contentType => $composableBuilder(
+      column: $table.contentType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get contentChecksum => $composableBuilder(
+      column: $table.contentChecksum,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get byteSize => $composableBuilder(
+      column: $table.byteSize, builder: (column) => ColumnFilters(column));
+
+  $$GoldStockReceiptsTableFilterComposer get receiptId {
+    final $$GoldStockReceiptsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.receiptId,
+        referencedTable: $db.goldStockReceipts,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GoldStockReceiptsTableFilterComposer(
+              $db: $db,
+              $table: $db.goldStockReceipts,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GoldReceiptAttachmentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GoldReceiptAttachmentsTable> {
+  $$GoldReceiptAttachmentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get storagePath => $composableBuilder(
+      column: $table.storagePath, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get originalFileName => $composableBuilder(
+      column: $table.originalFileName,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get contentType => $composableBuilder(
+      column: $table.contentType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get contentChecksum => $composableBuilder(
+      column: $table.contentChecksum,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get byteSize => $composableBuilder(
+      column: $table.byteSize, builder: (column) => ColumnOrderings(column));
+
+  $$GoldStockReceiptsTableOrderingComposer get receiptId {
+    final $$GoldStockReceiptsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.receiptId,
+        referencedTable: $db.goldStockReceipts,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GoldStockReceiptsTableOrderingComposer(
+              $db: $db,
+              $table: $db.goldStockReceipts,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GoldReceiptAttachmentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GoldReceiptAttachmentsTable> {
+  $$GoldReceiptAttachmentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get storagePath => $composableBuilder(
+      column: $table.storagePath, builder: (column) => column);
+
+  GeneratedColumn<String> get originalFileName => $composableBuilder(
+      column: $table.originalFileName, builder: (column) => column);
+
+  GeneratedColumn<String> get contentType => $composableBuilder(
+      column: $table.contentType, builder: (column) => column);
+
+  GeneratedColumn<String> get contentChecksum => $composableBuilder(
+      column: $table.contentChecksum, builder: (column) => column);
+
+  GeneratedColumn<int> get byteSize =>
+      $composableBuilder(column: $table.byteSize, builder: (column) => column);
+
+  $$GoldStockReceiptsTableAnnotationComposer get receiptId {
+    final $$GoldStockReceiptsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.receiptId,
+            referencedTable: $db.goldStockReceipts,
+            getReferencedColumn: (t) => t.id,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GoldStockReceiptsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.goldStockReceipts,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return composer;
+  }
+}
+
+class $$GoldReceiptAttachmentsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $GoldReceiptAttachmentsTable,
+    GoldReceiptAttachmentRecord,
+    $$GoldReceiptAttachmentsTableFilterComposer,
+    $$GoldReceiptAttachmentsTableOrderingComposer,
+    $$GoldReceiptAttachmentsTableAnnotationComposer,
+    $$GoldReceiptAttachmentsTableCreateCompanionBuilder,
+    $$GoldReceiptAttachmentsTableUpdateCompanionBuilder,
+    (GoldReceiptAttachmentRecord, $$GoldReceiptAttachmentsTableReferences),
+    GoldReceiptAttachmentRecord,
+    PrefetchHooks Function({bool receiptId})> {
+  $$GoldReceiptAttachmentsTableTableManager(
+      _$AppDatabase db, $GoldReceiptAttachmentsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GoldReceiptAttachmentsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GoldReceiptAttachmentsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GoldReceiptAttachmentsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<int> receiptId = const Value.absent(),
+            Value<String> storagePath = const Value.absent(),
+            Value<String> originalFileName = const Value.absent(),
+            Value<String> contentType = const Value.absent(),
+            Value<String?> contentChecksum = const Value.absent(),
+            Value<int?> byteSize = const Value.absent(),
+          }) =>
+              GoldReceiptAttachmentsCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            receiptId: receiptId,
+            storagePath: storagePath,
+            originalFileName: originalFileName,
+            contentType: contentType,
+            contentChecksum: contentChecksum,
+            byteSize: byteSize,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required int receiptId,
+            required String storagePath,
+            required String originalFileName,
+            required String contentType,
+            Value<String?> contentChecksum = const Value.absent(),
+            Value<int?> byteSize = const Value.absent(),
+          }) =>
+              GoldReceiptAttachmentsCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            receiptId: receiptId,
+            storagePath: storagePath,
+            originalFileName: originalFileName,
+            contentType: contentType,
+            contentChecksum: contentChecksum,
+            byteSize: byteSize,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$GoldReceiptAttachmentsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({receiptId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (receiptId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.receiptId,
+                    referencedTable: $$GoldReceiptAttachmentsTableReferences
+                        ._receiptIdTable(db),
+                    referencedColumn: $$GoldReceiptAttachmentsTableReferences
+                        ._receiptIdTable(db)
+                        .id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$GoldReceiptAttachmentsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $GoldReceiptAttachmentsTable,
+        GoldReceiptAttachmentRecord,
+        $$GoldReceiptAttachmentsTableFilterComposer,
+        $$GoldReceiptAttachmentsTableOrderingComposer,
+        $$GoldReceiptAttachmentsTableAnnotationComposer,
+        $$GoldReceiptAttachmentsTableCreateCompanionBuilder,
+        $$GoldReceiptAttachmentsTableUpdateCompanionBuilder,
+        (GoldReceiptAttachmentRecord, $$GoldReceiptAttachmentsTableReferences),
+        GoldReceiptAttachmentRecord,
+        PrefetchHooks Function({bool receiptId})>;
+typedef $$GoldReceiptAuditEventsTableCreateCompanionBuilder
+    = GoldReceiptAuditEventsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required int receiptId,
+  required String eventType,
+  Value<String?> actorUserId,
+  Value<String?> reason,
+  Value<String?> metadata,
+  required DateTime occurredAt,
+});
+typedef $$GoldReceiptAuditEventsTableUpdateCompanionBuilder
+    = GoldReceiptAuditEventsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<int> receiptId,
+  Value<String> eventType,
+  Value<String?> actorUserId,
+  Value<String?> reason,
+  Value<String?> metadata,
+  Value<DateTime> occurredAt,
+});
+
+final class $$GoldReceiptAuditEventsTableReferences extends BaseReferences<
+    _$AppDatabase, $GoldReceiptAuditEventsTable, GoldReceiptAuditEventRecord> {
+  $$GoldReceiptAuditEventsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $GoldStockReceiptsTable _receiptIdTable(_$AppDatabase db) =>
+      db.goldStockReceipts.createAlias($_aliasNameGenerator(
+          db.goldReceiptAuditEvents.receiptId, db.goldStockReceipts.id));
+
+  $$GoldStockReceiptsTableProcessedTableManager? get receiptId {
+    if ($_item.receiptId == null) return null;
+    final manager =
+        $$GoldStockReceiptsTableTableManager($_db, $_db.goldStockReceipts)
+            .filter((f) => f.id($_item.receiptId!));
+    final item = $_typedResult.readTableOrNull(_receiptIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$GoldReceiptAuditEventsTableFilterComposer
+    extends Composer<_$AppDatabase, $GoldReceiptAuditEventsTable> {
+  $$GoldReceiptAuditEventsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get eventType => $composableBuilder(
+      column: $table.eventType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get actorUserId => $composableBuilder(
+      column: $table.actorUserId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get reason => $composableBuilder(
+      column: $table.reason, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get metadata => $composableBuilder(
+      column: $table.metadata, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get occurredAt => $composableBuilder(
+      column: $table.occurredAt, builder: (column) => ColumnFilters(column));
+
+  $$GoldStockReceiptsTableFilterComposer get receiptId {
+    final $$GoldStockReceiptsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.receiptId,
+        referencedTable: $db.goldStockReceipts,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GoldStockReceiptsTableFilterComposer(
+              $db: $db,
+              $table: $db.goldStockReceipts,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GoldReceiptAuditEventsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GoldReceiptAuditEventsTable> {
+  $$GoldReceiptAuditEventsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get eventType => $composableBuilder(
+      column: $table.eventType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get actorUserId => $composableBuilder(
+      column: $table.actorUserId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get reason => $composableBuilder(
+      column: $table.reason, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get metadata => $composableBuilder(
+      column: $table.metadata, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get occurredAt => $composableBuilder(
+      column: $table.occurredAt, builder: (column) => ColumnOrderings(column));
+
+  $$GoldStockReceiptsTableOrderingComposer get receiptId {
+    final $$GoldStockReceiptsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.receiptId,
+        referencedTable: $db.goldStockReceipts,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GoldStockReceiptsTableOrderingComposer(
+              $db: $db,
+              $table: $db.goldStockReceipts,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GoldReceiptAuditEventsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GoldReceiptAuditEventsTable> {
+  $$GoldReceiptAuditEventsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get eventType =>
+      $composableBuilder(column: $table.eventType, builder: (column) => column);
+
+  GeneratedColumn<String> get actorUserId => $composableBuilder(
+      column: $table.actorUserId, builder: (column) => column);
+
+  GeneratedColumn<String> get reason =>
+      $composableBuilder(column: $table.reason, builder: (column) => column);
+
+  GeneratedColumn<String> get metadata =>
+      $composableBuilder(column: $table.metadata, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get occurredAt => $composableBuilder(
+      column: $table.occurredAt, builder: (column) => column);
+
+  $$GoldStockReceiptsTableAnnotationComposer get receiptId {
+    final $$GoldStockReceiptsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.receiptId,
+            referencedTable: $db.goldStockReceipts,
+            getReferencedColumn: (t) => t.id,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GoldStockReceiptsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.goldStockReceipts,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return composer;
+  }
+}
+
+class $$GoldReceiptAuditEventsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $GoldReceiptAuditEventsTable,
+    GoldReceiptAuditEventRecord,
+    $$GoldReceiptAuditEventsTableFilterComposer,
+    $$GoldReceiptAuditEventsTableOrderingComposer,
+    $$GoldReceiptAuditEventsTableAnnotationComposer,
+    $$GoldReceiptAuditEventsTableCreateCompanionBuilder,
+    $$GoldReceiptAuditEventsTableUpdateCompanionBuilder,
+    (GoldReceiptAuditEventRecord, $$GoldReceiptAuditEventsTableReferences),
+    GoldReceiptAuditEventRecord,
+    PrefetchHooks Function({bool receiptId})> {
+  $$GoldReceiptAuditEventsTableTableManager(
+      _$AppDatabase db, $GoldReceiptAuditEventsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GoldReceiptAuditEventsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GoldReceiptAuditEventsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GoldReceiptAuditEventsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<int> receiptId = const Value.absent(),
+            Value<String> eventType = const Value.absent(),
+            Value<String?> actorUserId = const Value.absent(),
+            Value<String?> reason = const Value.absent(),
+            Value<String?> metadata = const Value.absent(),
+            Value<DateTime> occurredAt = const Value.absent(),
+          }) =>
+              GoldReceiptAuditEventsCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            receiptId: receiptId,
+            eventType: eventType,
+            actorUserId: actorUserId,
+            reason: reason,
+            metadata: metadata,
+            occurredAt: occurredAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required int receiptId,
+            required String eventType,
+            Value<String?> actorUserId = const Value.absent(),
+            Value<String?> reason = const Value.absent(),
+            Value<String?> metadata = const Value.absent(),
+            required DateTime occurredAt,
+          }) =>
+              GoldReceiptAuditEventsCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            receiptId: receiptId,
+            eventType: eventType,
+            actorUserId: actorUserId,
+            reason: reason,
+            metadata: metadata,
+            occurredAt: occurredAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$GoldReceiptAuditEventsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({receiptId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (receiptId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.receiptId,
+                    referencedTable: $$GoldReceiptAuditEventsTableReferences
+                        ._receiptIdTable(db),
+                    referencedColumn: $$GoldReceiptAuditEventsTableReferences
+                        ._receiptIdTable(db)
+                        .id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$GoldReceiptAuditEventsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $GoldReceiptAuditEventsTable,
+        GoldReceiptAuditEventRecord,
+        $$GoldReceiptAuditEventsTableFilterComposer,
+        $$GoldReceiptAuditEventsTableOrderingComposer,
+        $$GoldReceiptAuditEventsTableAnnotationComposer,
+        $$GoldReceiptAuditEventsTableCreateCompanionBuilder,
+        $$GoldReceiptAuditEventsTableUpdateCompanionBuilder,
+        (GoldReceiptAuditEventRecord, $$GoldReceiptAuditEventsTableReferences),
+        GoldReceiptAuditEventRecord,
+        PrefetchHooks Function({bool receiptId})>;
 typedef $$TaxGstConfigsTableCreateCompanionBuilder = TaxGstConfigsCompanion
     Function({
   Value<int> id,
@@ -49207,6 +55483,19 @@ class $AppDatabaseManager {
       get shopPrintInformationSettings =>
           $$ShopPrintInformationSettingsTableTableManager(
               _db, _db.shopPrintInformationSettings);
+  $$GoldStockReceiptsTableTableManager get goldStockReceipts =>
+      $$GoldStockReceiptsTableTableManager(_db, _db.goldStockReceipts);
+  $$GoldStockReceiptLinesTableTableManager get goldStockReceiptLines =>
+      $$GoldStockReceiptLinesTableTableManager(_db, _db.goldStockReceiptLines);
+  $$GoldReceiptSettlementsTableTableManager get goldReceiptSettlements =>
+      $$GoldReceiptSettlementsTableTableManager(
+          _db, _db.goldReceiptSettlements);
+  $$GoldReceiptAttachmentsTableTableManager get goldReceiptAttachments =>
+      $$GoldReceiptAttachmentsTableTableManager(
+          _db, _db.goldReceiptAttachments);
+  $$GoldReceiptAuditEventsTableTableManager get goldReceiptAuditEvents =>
+      $$GoldReceiptAuditEventsTableTableManager(
+          _db, _db.goldReceiptAuditEvents);
   $$TaxGstConfigsTableTableManager get taxGstConfigs =>
       $$TaxGstConfigsTableTableManager(_db, _db.taxGstConfigs);
 }
