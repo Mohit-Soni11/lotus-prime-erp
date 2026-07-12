@@ -171,37 +171,71 @@ class BankingTabState extends State<BankingTab> {
   }
 
   Widget _buildPageHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return LayoutBuilder(builder: (context, constraints) {
+      final isCompact = constraints.maxWidth < 960;
+      final identity = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            BankingStrings.pageTitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: BankingStyles.pageTitle,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            BankingStrings.pageSubtitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: BankingStyles.pageSub,
+          ),
+        ],
+      );
+      final status = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: BankingColors.statusActiveBg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: BankingColors.statusActiveText.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(BankingStrings.pageTitle, style: BankingStyles.pageTitle),
-            const SizedBox(height: 4),
-            Text(BankingStrings.pageSubtitle, style: BankingStyles.pageSub),
+            const Icon(
+              BankingIcons.statusSecure,
+              size: 16,
+              color: BankingColors.statusActiveText,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              BankingStrings.statusActive,
+              style: BankingStyles.statusPillText,
+            ),
           ],
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: BankingColors.statusActiveBg,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-                color: BankingColors.statusActiveText.withValues(alpha: 0.3)),
-          ),
-          child: Row(
-            children: [
-              const Icon(BankingIcons.statusSecure,
-                  size: 16, color: BankingColors.statusActiveText),
-              const SizedBox(width: 8),
-              Text(BankingStrings.statusActive,
-                  style: BankingStyles.statusPillText),
-            ],
-          ),
-        )
-      ],
-    );
+      );
+
+      if (isCompact) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(width: double.infinity, child: identity),
+            const SizedBox(height: 12),
+            status,
+          ],
+        );
+      }
+
+      return Row(
+        children: [
+          Expanded(child: identity),
+          const SizedBox(width: 24),
+          status,
+        ],
+      );
+    });
   }
 
   Widget _buildAddAccountBtn() {

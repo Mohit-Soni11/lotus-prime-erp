@@ -384,58 +384,84 @@ class BasicInfoTabState extends State<BasicInfoTab> {
   }
 
   Widget _buildPageHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              BasicInfoStrings.pageTitle,
-              style: GoogleFonts.manrope(
-                  fontSize: BasicInfoStyles.szPageTitle,
-                  fontWeight: FontWeight.w800,
-                  color: BasicInfoColors
-                      .surfaceWhite, // ðŸš€ FIX: Updated to White
-                  letterSpacing: 0),
+    return LayoutBuilder(builder: (context, constraints) {
+      final isCompact = constraints.maxWidth < 960;
+      final identity = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            BasicInfoStrings.pageTitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.manrope(
+              fontSize: BasicInfoStyles.szPageTitle,
+              fontWeight: FontWeight.w800,
+              color: BasicInfoColors.surfaceWhite,
+              letterSpacing: 0,
             ),
-            const SizedBox(height: 4),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            BasicInfoStrings.pageSub,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: BasicInfoStyles.szPageSub,
+              color: BasicInfoColors.surfaceWhite.withValues(alpha: 0.7),
+            ),
+          ),
+        ],
+      );
+      final status = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: BasicInfoColors.statusActiveBg,
+          borderRadius: BorderRadius.circular(BasicInfoStyles.rStatusPill),
+          border: Border.all(
+            color: BasicInfoColors.statusActiveText.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              BasicInfoIcons.statusActive,
+              size: 16,
+              color: BasicInfoColors.statusActiveText,
+            ),
+            const SizedBox(width: 8),
             Text(
-              BasicInfoStrings.pageSub,
+              BasicInfoStrings.statusActive,
               style: GoogleFonts.inter(
-                  fontSize: BasicInfoStyles.szPageSub,
-                  color: BasicInfoColors.surfaceWhite.withValues(
-                      alpha: 0.7) // ðŸš€ FIX: Updated to White with opacity
-                  ),
+                color: BasicInfoColors.statusActiveText,
+                fontWeight: FontWeight.w700,
+                fontSize: BasicInfoStyles.szBadgeText,
+                letterSpacing: 0.5,
+              ),
             ),
           ],
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: BasicInfoColors.statusActiveBg,
-            borderRadius: BorderRadius.circular(BasicInfoStyles.rStatusPill),
-            border: Border.all(
-                color: BasicInfoColors.statusActiveText.withValues(alpha: 0.3)),
-          ),
-          child: Row(
-            children: [
-              const Icon(BasicInfoIcons.statusActive,
-                  size: 16, color: BasicInfoColors.statusActiveText),
-              const SizedBox(width: 8),
-              Text(
-                BasicInfoStrings.statusActive,
-                style: GoogleFonts.inter(
-                    color: BasicInfoColors.statusActiveText,
-                    fontWeight: FontWeight.w700,
-                    fontSize: BasicInfoStyles.szBadgeText,
-                    letterSpacing: 0.5),
-              ),
-            ],
-          ),
-        )
-      ],
-    );
+      );
+
+      if (isCompact) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(width: double.infinity, child: identity),
+            const SizedBox(height: 12),
+            status,
+          ],
+        );
+      }
+
+      return Row(
+        children: [
+          Expanded(child: identity),
+          const SizedBox(width: 24),
+          status,
+        ],
+      );
+    });
   }
 
   // ðŸš€ UPGRADE: GRANULAR LISTENABLE BUILDERS

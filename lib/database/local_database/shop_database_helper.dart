@@ -1,267 +1,151 @@
-// -----------------------------------------------------------------------------
-// FILE: shop_database_helper.dart
-// TYPE: Local Database / Data Layer
-// AUTHOR: Senior System Architect
-// DESCRIPTION: 🚀 UPGRADED: Fixed CamelCase vs Snake_Case mismatch.
-//              Added Auto-Update Engine (Migration) for future updates.
-// -----------------------------------------------------------------------------
-
-import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:sqflite/sqflite.dart';
 
+import '../../core/logging/app_logger.dart';
+import 'shop_database_schema.dart';
+
+/// Data access for the Shop Profile master configuration.
 class ShopDatabaseHelper {
   static final ShopDatabaseHelper _instance = ShopDatabaseHelper._internal();
   static Database? _database;
 
-  // 🚀 AUTO-UPDATE ENGINE: Future mein naya column add karna ho, toh ise '3' kar dena
-  static const int _dbVersion = 6;
+  final Database? _databaseOverride;
+
+  static const int _dbVersion = ShopDatabaseSchema.currentVersion;
 
   factory ShopDatabaseHelper() => _instance;
 
-  ShopDatabaseHelper._internal();
+  ShopDatabaseHelper._internal() : _databaseOverride = null;
+
+  /// Creates an isolated helper for migration and persistence tests.
+  ShopDatabaseHelper.forTesting(Database database)
+      : _databaseOverride = database;
 
   Future<Database> get database async {
+    if (_databaseOverride != null) return _databaseOverride;
     if (_database != null) return _database!;
+
     _database = await _initDB('erp_master_db.db');
     return _database!;
   }
 
   Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
+    final databasePath = await getDatabasesPath();
+    final path = join(databasePath, filePath);
 
-    return await openDatabase(
+    return openDatabase(
       path,
       version: _dbVersion,
-      onConfigure: (db) async {
-        await db.execute('PRAGMA foreign_keys = ON');
-      },
-      onCreate: _createSchema,
-      onUpgrade: _onUpgrade, // 🚀 Ye automatically handle karega future updates
+      onConfigure: ShopDatabaseSchema.configure,
+      onCreate: ShopDatabaseSchema.create,
+      onUpgrade: ShopDatabaseSchema.upgrade,
     );
   }
 
-  // --- 1. SCHEMA CREATION (Normalized Tables with EXACT Snake_Case Match) ---
-  Future<void> _createSchema(Database db, int version) async {
-    AppLogger.debug(
-        "🚀 [DB] Creating Enterprise Normalized Schema (v$_dbVersion)...");
-
-    // Table 1: Basic Info (Names strictly matched with payload)
-    await db.execute('''
-      CREATE TABLE shop_profile (
-        tenant_id TEXT PRIMARY KEY,
-        legal_name TEXT, display_name TEXT, tagline TEXT,
-        owner_name TEXT, owner_phone TEXT, owner_whatsapp TEXT,
-        est_year TEXT, branch_code TEXT, open_time TEXT, close_time TEXT,
-        weekly_off TEXT, brand_display_name TEXT, business_email TEXT,
-        shop_phone TEXT, shop_whatsapp TEXT,
-        logo_path TEXT, logo_shape TEXT DEFAULT 'circle',
-        signature_path TEXT, signature_shape TEXT DEFAULT 'square'
-      )
-    ''');
-
-    // Table 2: Address Details
-    await db.execute('''
-      CREATE TABLE shop_address (
-        tenant_id TEXT PRIMARY KEY,
-        type TEXT, addr1 TEXT, addr2 TEXT, city TEXT,
-        state TEXT, pincode TEXT, country TEXT,
-        latitude REAL, longitude REAL,
-        FOREIGN KEY (tenant_id) REFERENCES shop_profile (tenant_id) ON DELETE CASCADE
-      )
-    ''');
-
-    // Table 3: Tax & GST Compliance (Names explicitly fixed)
-    await db.execute('''
-      CREATE TABLE shop_tax_gst (
-        tenant_id TEXT PRIMARY KEY,
-        gstin TEXT, legal_name TEXT, reg_date TEXT, taxpayer_type TEXT,
-        bis_license_no TEXT, gold_bis_license_no TEXT, silver_bis_license_no TEXT,
-        hallmarking_scope TEXT DEFAULT 'Gold & Silver',
-        bis_registration_mode TEXT DEFAULT 'Single Registration',
-        bis_valid_from TEXT, bis_valid_upto TEXT,
-        gst_cert_path TEXT, bis_license_path TEXT,
-        FOREIGN KEY (tenant_id) REFERENCES shop_profile (tenant_id) ON DELETE CASCADE
-      )
-    ''');
-
-    // Table 4: Branding & Social (Names explicitly fixed)
-    await db.execute('''
-      CREATE TABLE shop_branding (
-        tenant_id TEXT PRIMARY KEY,
-        instagram TEXT, facebook TEXT, youtube TEXT, website TEXT,
-        whatsapp_channel TEXT, whatsapp_business TEXT, support_email TEXT, support_phone TEXT,
-        FOREIGN KEY (tenant_id) REFERENCES shop_profile (tenant_id) ON DELETE CASCADE
-      )
-    ''');
-
-    // Table 5: Bank Accounts (Names explicitly fixed)
-    await db.execute('''
-      CREATE TABLE shop_bank_accounts (
-        id TEXT PRIMARY KEY,
-        tenant_id TEXT,
-        title TEXT, holder TEXT, bank TEXT, type TEXT,
-        acc TEXT, ifsc TEXT, branch TEXT, upi TEXT, qr_image_path TEXT,
-        is_active INTEGER DEFAULT 1,
-        FOREIGN KEY (tenant_id) REFERENCES shop_profile (tenant_id) ON DELETE CASCADE
-      )
-    ''');
-
-    AppLogger.debug("✅ [DB] Schema Created Successfully.");
-  }
-
-  // --- 🚀 AUTO-UPDATE LOGIC (MIGRATIONS) ---
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    AppLogger.debug(
-        "🔄 [DB] Upgrading database from v$oldVersion to v$newVersion...");
-    if (oldVersion < 3) {
-      await _addColumnIfMissing(
-        db,
-        'shop_profile',
-        'logo_shape',
-        "TEXT DEFAULT 'circle'",
-      );
-      await _addColumnIfMissing(
-        db,
-        'shop_profile',
-        'signature_shape',
-        "TEXT DEFAULT 'square'",
-      );
-    }
-    if (oldVersion < 4) {
-      await _addColumnIfMissing(
-        db,
-        'shop_tax_gst',
-        'gold_bis_license_no',
-        'TEXT',
-      );
-      await _addColumnIfMissing(
-        db,
-        'shop_tax_gst',
-        'silver_bis_license_no',
-        'TEXT',
-      );
-    }
-    if (oldVersion < 5) {
-      await _addColumnIfMissing(
-        db,
-        'shop_tax_gst',
-        'hallmarking_scope',
-        "TEXT DEFAULT 'Gold & Silver'",
-      );
-    }
-    if (oldVersion < 6) {
-      await _addColumnIfMissing(
-        db,
-        'shop_tax_gst',
-        'bis_registration_mode',
-        "TEXT DEFAULT 'Single Registration'",
-      );
-    }
-  }
-
-  Future<void> _addColumnIfMissing(
-    Database db,
-    String table,
-    String column,
-    String declaration,
-  ) async {
-    final columns = await db.rawQuery('PRAGMA table_info($table)');
-    final exists = columns.any((row) => row['name'] == column);
-    if (!exists) {
-      await db.execute('ALTER TABLE $table ADD COLUMN $column $declaration');
-    }
-  }
-
-  // --- 2. MASTER UPSERT ENGINE (Atomic Transaction) ---
+  /// Saves all Shop Profile sections in one transaction.
   Future<bool> upsertMasterPayload(Map<String, dynamic> payload) async {
     final db = await database;
-    final String tenantId = payload['tenant_id'];
+    final tenantId = payload['tenant_id']?.toString();
+    if (tenantId == null || tenantId.isEmpty) {
+      AppLogger.error('[SHOP PROFILE DB] Missing tenant ID in master payload.');
+      return false;
+    }
 
     try {
-      await db.transaction((txn) async {
-        // 1. Upsert Basic Info
-        await txn.insert(
+      await db.transaction((transaction) async {
+        await transaction.insert(
           'shop_profile',
           {...payload['basic_info'], 'tenant_id': tenantId},
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
-
-        // 2. Upsert Address
-        await txn.insert(
+        await transaction.insert(
           'shop_address',
           {...payload['address'], 'tenant_id': tenantId},
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
-
-        // 3. Upsert Tax & GST
-        await txn.insert(
+        await transaction.insert(
           'shop_tax_gst',
           {...payload['tax_compliance'], 'tenant_id': tenantId},
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
-
-        // 4. Upsert Branding
-        await txn.insert(
+        await transaction.insert(
           'shop_branding',
           {...payload['branding_social'], 'tenant_id': tenantId},
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
 
-        // 5. Upsert Banking (Soft Delete Logic)
-        await txn.update(
+        await transaction.update(
           'shop_bank_accounts',
           {'is_active': 0},
           where: 'tenant_id = ?',
           whereArgs: [tenantId],
         );
 
-        List<dynamic> bankingList = payload['banking_details'] ?? [];
-        for (var bank in bankingList) {
-          await txn.insert(
+        final bankingList = payload['banking_details'] as List<dynamic>? ?? [];
+        for (final bank in bankingList) {
+          await transaction.insert(
             'shop_bank_accounts',
-            {...bank, 'tenant_id': tenantId, 'is_active': 1},
+            {
+              ...Map<String, dynamic>.from(bank as Map),
+              'tenant_id': tenantId,
+              'is_active': 1
+            },
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
         }
       });
 
       AppLogger.debug(
-          "🚀 [DB] Master Payload Saved Successfully for Tenant: $tenantId");
+        '[SHOP PROFILE DB] Master payload saved for tenant $tenantId.',
+      );
       return true;
-    } catch (e, stacktrace) {
-      AppLogger.error("❌ [DB TRANSACTION ERROR]: $e");
-      AppLogger.debug(stacktrace.toString());
+    } catch (error, stackTrace) {
+      AppLogger.error('[SHOP PROFILE DB] Transaction failed: $error');
+      AppLogger.debug(stackTrace.toString());
       return false;
     }
   }
 
-  // --- 3. FETCH CONFIGURATION ---
+  /// Returns the complete saved Shop Profile, or null when setup has not run.
   Future<Map<String, dynamic>?> getMasterPayload(String tenantId) async {
     final db = await database;
 
-    final basicInfo = await db
-        .query('shop_profile', where: 'tenant_id = ?', whereArgs: [tenantId]);
+    final basicInfo = await db.query(
+      'shop_profile',
+      where: 'tenant_id = ?',
+      whereArgs: [tenantId],
+    );
     if (basicInfo.isEmpty) return null;
 
-    final address = await db
-        .query('shop_address', where: 'tenant_id = ?', whereArgs: [tenantId]);
-    final tax = await db
-        .query('shop_tax_gst', where: 'tenant_id = ?', whereArgs: [tenantId]);
-    final branding = await db
-        .query('shop_branding', where: 'tenant_id = ?', whereArgs: [tenantId]);
+    final address = await db.query(
+      'shop_address',
+      where: 'tenant_id = ?',
+      whereArgs: [tenantId],
+    );
+    final tax = await db.query(
+      'shop_tax_gst',
+      where: 'tenant_id = ?',
+      whereArgs: [tenantId],
+    );
+    final branding = await db.query(
+      'shop_branding',
+      where: 'tenant_id = ?',
+      whereArgs: [tenantId],
+    );
+    final banks = await db.query(
+      'shop_bank_accounts',
+      where: 'tenant_id = ? AND is_active = 1',
+      whereArgs: [tenantId],
+    );
 
-    final banks = await db.query('shop_bank_accounts',
-        where: 'tenant_id = ? AND is_active = 1', whereArgs: [tenantId]);
-
-    return {
-      "tenant_id": tenantId,
-      "basic_info": basicInfo.first,
-      "address": address.isNotEmpty ? address.first : {},
-      "tax_compliance": tax.isNotEmpty ? tax.first : {},
-      "branding_social": branding.isNotEmpty ? branding.first : {},
-      "banking_details": banks,
+    return <String, dynamic>{
+      'tenant_id': tenantId,
+      'basic_info': basicInfo.first,
+      'address': address.isNotEmpty ? address.first : <String, dynamic>{},
+      'tax_compliance': tax.isNotEmpty ? tax.first : <String, dynamic>{},
+      'branding_social':
+          branding.isNotEmpty ? branding.first : <String, dynamic>{},
+      'banking_details': banks,
     };
   }
 }

@@ -442,24 +442,26 @@ class BrandingTabState extends State<BrandingTab> {
 
   // --- PAGE HEADER ---
   Widget _buildPageHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              BrandingStrings.pageTitle,
-              style: BrandingStyles.textPageTitle,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              BrandingStrings.pageSubtitle,
-              style: BrandingStyles.textPageSub,
-            ),
-          ],
-        ),
-      ],
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            BrandingStrings.pageTitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: BrandingStyles.textPageTitle,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            BrandingStrings.pageSubtitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: BrandingStyles.textPageSub,
+          ),
+        ],
+      ),
     );
   }
 }
