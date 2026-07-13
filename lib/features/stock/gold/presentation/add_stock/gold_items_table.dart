@@ -7,7 +7,7 @@ import 'package:lotus_erp/theme/stock/add_stock/add_stock_gold/gold_stock_colors
 import 'gold_item_row.dart';
 
 class GoldItemsTable extends StatelessWidget {
-  static const double _minTableWidth = 1660;
+  static const double _minTableWidth = 1780;
 
   final GoldStockController ctrl;
 
@@ -224,7 +224,9 @@ class GoldItemsTable extends StatelessWidget {
           const SizedBox(width: 6),
           _h('ITEM NAME', flex: 4),
           const SizedBox(width: 6),
-          _h('HUID / SERIAL NO.', flex: 3),
+          _h('PCS', flex: 2, center: true),
+          const SizedBox(width: 6),
+          _h('HUID / SERIAL NO.', flex: 5),
           const SizedBox(width: 6),
           _h('GROSS WT (g)', flex: 2, center: true),
           const SizedBox(width: 6),

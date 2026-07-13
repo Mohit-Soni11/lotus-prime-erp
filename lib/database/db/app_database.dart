@@ -143,6 +143,7 @@ class AppDatabase extends _$AppDatabase {
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (Migrator m) async {
           await m.createAll();
+          await _ensurePurchaseItemHuidSchema();
           await _ensureGirviPaymentReceiptIndex();
           await ensureGirviNoticeActionSchema();
         },
@@ -682,6 +683,11 @@ class AppDatabase extends _$AppDatabase {
             }
             AppLogger.info('v34 stock movement ledger applied.');
           }
+
+          if (from < 35) {
+            await _ensurePurchaseItemHuidSchema();
+            AppLogger.info('v35 purchase item HUID serial schema applied.');
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -695,6 +701,7 @@ class AppDatabase extends _$AppDatabase {
           await _ensureGirviPaymentReceiptIndex();
           await ensureGirviNoticeActionSchema();
           await _ensureCustomerAccountLedgerSchema();
+          await _ensurePurchaseItemHuidSchema();
 
           await customStatement('''
             CREATE TABLE IF NOT EXISTS "bank_accounts" (
@@ -780,6 +787,7 @@ class AppDatabase extends _$AppDatabase {
           ''');
           await customStatement(_createPurchaseVouchersTableSql);
           await customStatement(_createPurchaseVoucherItemsTableSql);
+          await _ensurePurchaseItemHuidSchema();
           for (final s in _purchaseVoucherIndexSql) {
             await customStatement(s);
           }
@@ -808,6 +816,13 @@ class AppDatabase extends _$AppDatabase {
   Future<void> _ensureCustomerAccountLedgerSchema() async {
     await customStatement(_createCustomerAccountLedgerTableSql);
     for (final statement in _customerAccountLedgerIndexSql) {
+      await customStatement(statement);
+    }
+  }
+
+  Future<void> _ensurePurchaseItemHuidSchema() async {
+    await customStatement(_createPurchaseItemHuidTableSql);
+    for (final statement in _purchaseItemHuidIndexSql) {
       await customStatement(statement);
     }
   }
@@ -1465,6 +1480,26 @@ const List<String> _purchaseVoucherIndexSql = [
   'CREATE INDEX IF NOT EXISTS "idx_purchase_vouchers_customer_id" ON "purchase_vouchers" ("customer_id")',
   'CREATE INDEX IF NOT EXISTS "idx_purchase_vouchers_supplier_id" ON "purchase_vouchers" ("supplier_id")',
   'CREATE INDEX IF NOT EXISTS "idx_purchase_voucher_items_voucher_id" ON "purchase_voucher_items" ("purchase_voucher_id")',
+];
+
+const String _createPurchaseItemHuidTableSql = '''
+CREATE TABLE IF NOT EXISTS "purchase_item_huids" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "purchase_voucher_id" INTEGER NOT NULL,
+  "purchase_voucher_item_id" INTEGER,
+  "stock_item_id" INTEGER,
+  "line_no" INTEGER NOT NULL,
+  "piece_no" INTEGER NOT NULL,
+  "huid" TEXT NOT NULL,
+  "created_at" INTEGER NOT NULL,
+  FOREIGN KEY ("purchase_voucher_id") REFERENCES "purchase_vouchers" ("id") ON DELETE CASCADE
+)
+''';
+
+const List<String> _purchaseItemHuidIndexSql = [
+  'CREATE INDEX IF NOT EXISTS "idx_purchase_item_huids_huid" ON "purchase_item_huids" ("huid")',
+  'CREATE INDEX IF NOT EXISTS "idx_purchase_item_huids_voucher" ON "purchase_item_huids" ("purchase_voucher_id")',
+  'CREATE INDEX IF NOT EXISTS "idx_purchase_item_huids_stock_item" ON "purchase_item_huids" ("stock_item_id")',
 ];
 
 const String _createCustomerAccountLedgerTableSql = '''

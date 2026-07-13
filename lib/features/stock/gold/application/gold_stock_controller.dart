@@ -281,7 +281,8 @@ class GoldStockController extends AddStockController {
       row.description = rowModel.categoryLabel;
       row.subCategory = _mapGoldSubCategory(rowModel.categoryLabel);
       row.subCategoryLabel = rowModel.categoryLabel;
-      row.huid = rowModel.huid;
+      row.huids = rowModel.huidValues;
+      row.huid = rowModel.huidValues.isEmpty ? '' : rowModel.huidValues.first;
       row.grossWeight = rowModel.grossWeight / lotDivisor;
       row.stoneWeight = rowModel.lessWeight / lotDivisor;
       row.touchPercent = rowModel.effectiveTotalPurityPercent;
@@ -390,11 +391,16 @@ class GoldStockController extends AddStockController {
     if (row.makingValue < 0) {
       return 'Making charge cannot be negative';
     }
-    if (row.huid.isNotEmpty && row.huid.length != 6) {
+    final huids = row.huidValues;
+    final invalidHuid = huids.any((value) => value.length != 6);
+    if (invalidHuid) {
       return 'HUID must be exactly 6 characters';
     }
-    if (row.huid.isNotEmpty && row.pieces != 1) {
-      return 'HUID item must have quantity 1';
+    if (huids.length > row.pieces) {
+      return 'HUID count cannot exceed pieces';
+    }
+    if (huids.toSet().length != huids.length) {
+      return 'Duplicate HUID found in the same item row';
     }
     return null;
   }
@@ -547,6 +553,10 @@ class GoldStockController extends AddStockController {
               huid: row.huid.trim().isEmpty
                   ? null
                   : row.huid.trim().toUpperCase(),
+              huids: row.huids
+                  .map((value) => value.trim().toUpperCase())
+                  .where((value) => value.isNotEmpty)
+                  .toList(growable: false),
               hsnCode: row.hsnCode.trim().isEmpty
                   ? defaultHsnCode
                   : row.hsnCode.trim(),

@@ -65,6 +65,7 @@ class _GoldItemRowState extends State<GoldItemRow> {
       child: ListenableBuilder(
         listenable: widget.model,
         builder: (context, _) {
+          widget.model.syncHuidInputsWithPieces();
           return MouseRegion(
             onEnter: (_) => setState(() => _isHovered = true),
             onExit: (_) => setState(() => _isHovered = false),
@@ -99,28 +100,30 @@ class _GoldItemRowState extends State<GoldItemRow> {
                       focusNode: widget.model.itemNameFocus,
                       hint: 'Item name',
                       textInputAction: TextInputAction.next,
-                      onSubmitted: (_) => widget.model.huidFocus.requestFocus(),
+                      onSubmitted: (_) =>
+                          widget.model.piecesFocus.requestFocus(),
                     ),
                   ),
                   const SizedBox(width: 6),
                   Expanded(
-                    flex: 3,
+                    flex: 2,
                     child: _GoldTextField(
-                      controller: widget.model.huidCtrl,
-                      focusNode: widget.model.huidFocus,
-                      hint: 'HUID',
-                      textCapitalization: TextCapitalization.characters,
+                      controller: widget.model.piecesCtrl,
+                      focusNode: widget.model.piecesFocus,
+                      hint: 'PCS',
+                      isNumber: true,
+                      textAlign: TextAlign.center,
                       textInputAction: TextInputAction.next,
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r'[a-zA-Z0-9]'),
-                        ),
-                        LengthLimitingTextInputFormatter(6),
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(2),
                       ],
                       onSubmitted: (_) =>
-                          widget.model.grossFocus.requestFocus(),
+                          widget.model.huidFocusNodes.first.requestFocus(),
                     ),
                   ),
+                  const SizedBox(width: 6),
+                  Expanded(flex: 5, child: _buildHuidFields()),
                   const SizedBox(width: 6),
                   Expanded(
                     flex: 2,
@@ -215,6 +218,44 @@ class _GoldItemRowState extends State<GoldItemRow> {
                   Expanded(flex: 2, child: _buildRowActions()),
                 ],
               ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildHuidFields() {
+    final controllers = widget.model.huidControllers;
+    final focusNodes = widget.model.huidFocusNodes;
+
+    return SizedBox(
+      height: _invoiceFieldHeight,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: controllers.length > 2
+            ? const BouncingScrollPhysics()
+            : const NeverScrollableScrollPhysics(),
+        itemCount: controllers.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 5),
+        itemBuilder: (context, index) {
+          final isLast = index == controllers.length - 1;
+          return SizedBox(
+            width: controllers.length == 1 ? 150 : 92,
+            child: _GoldTextField(
+              controller: controllers[index],
+              focusNode: focusNodes[index],
+              hint: controllers.length == 1 ? 'HUID' : 'HUID ${index + 1}',
+              textCapitalization: TextCapitalization.characters,
+              textInputAction:
+                  isLast ? TextInputAction.next : TextInputAction.next,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                LengthLimitingTextInputFormatter(6),
+              ],
+              onSubmitted: (_) => isLast
+                  ? widget.model.grossFocus.requestFocus()
+                  : focusNodes[index + 1].requestFocus(),
             ),
           );
         },

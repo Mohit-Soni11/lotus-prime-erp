@@ -19,6 +19,19 @@ class GoldItemModel extends ChangeNotifier {
     'Other',
   ];
 
+  static const List<String> segmentPresets = [
+    'Ladies',
+    'Gents',
+    'Kids',
+    'Unisex',
+    'Bridal',
+    'Regular',
+    'Designer',
+    'Traditional',
+    'Daily Wear',
+    'Custom',
+  ];
+
   static const List<String> purityPresets = [
     '24KT (999)',
     '22KT (916)',
@@ -31,9 +44,11 @@ class GoldItemModel extends ChangeNotifier {
   final String id;
 
   final TextEditingController categoryCtrl = TextEditingController();
+  final TextEditingController segmentCtrl = TextEditingController();
   final TextEditingController itemNameCtrl = TextEditingController();
   final TextEditingController piecesCtrl = TextEditingController();
   final TextEditingController huidCtrl = TextEditingController();
+  final List<TextEditingController> _extraHuidCtrls = [];
   final TextEditingController grossCtrl = TextEditingController();
   final TextEditingController lessCtrl = TextEditingController();
   final TextEditingController purityCtrl = TextEditingController();
@@ -42,9 +57,11 @@ class GoldItemModel extends ChangeNotifier {
   final TextEditingController makingCtrl = TextEditingController();
 
   final FocusNode categoryFocus = FocusNode();
+  final FocusNode segmentFocus = FocusNode();
   final FocusNode itemNameFocus = FocusNode();
   final FocusNode piecesFocus = FocusNode();
   final FocusNode huidFocus = FocusNode();
+  final List<FocusNode> _extraHuidFocusNodes = [];
   final FocusNode grossFocus = FocusNode();
   final FocusNode lessFocus = FocusNode();
   final FocusNode purityFocus = FocusNode();
@@ -61,8 +78,9 @@ class GoldItemModel extends ChangeNotifier {
     int initialPieces = 1,
   }) {
     categoryCtrl.addListener(_fieldChanged);
+    segmentCtrl.addListener(_fieldChanged);
     itemNameCtrl.addListener(_fieldChanged);
-    piecesCtrl.addListener(_weightPurityFieldChanged);
+    piecesCtrl.addListener(_piecesFieldChanged);
     huidCtrl.addListener(_fieldChanged);
     grossCtrl.addListener(_weightPurityFieldChanged);
     lessCtrl.addListener(_weightPurityFieldChanged);
@@ -94,9 +112,22 @@ class GoldItemModel extends ChangeNotifier {
       (grossWeight - lessWeight).clamp(0.0, double.infinity);
 
   String get categoryLabel => categoryCtrl.text.trim();
+  String get segmentLabel => segmentCtrl.text.trim();
   String get itemName => itemNameCtrl.text.trim();
-  int get pieces => _parseWholeNumber(piecesCtrl.text);
+  int get pieces {
+    final value = _parseWholeNumber(piecesCtrl.text);
+    return value <= 0 ? 1 : value;
+  }
+
   String get huid => huidCtrl.text.trim().toUpperCase();
+  List<String> get huidValues => huidControllers
+      .map((controller) => controller.text.trim().toUpperCase())
+      .where((value) => value.isNotEmpty)
+      .toList(growable: false);
+  List<TextEditingController> get huidControllers =>
+      List.unmodifiable([huidCtrl, ..._extraHuidCtrls]);
+  List<FocusNode> get huidFocusNodes =>
+      List.unmodifiable([huidFocus, ..._extraHuidFocusNodes]);
   String get purityLabel => purityCtrl.text.trim().toUpperCase();
 
   double get basePurityPercent => _purityLabelToPercent(purityLabel);
@@ -131,6 +162,7 @@ class GoldItemModel extends ChangeNotifier {
 
   bool get hasAnyInput =>
       categoryLabel.isNotEmpty ||
+      segmentLabel.isNotEmpty ||
       itemName.isNotEmpty ||
       _hasMeaningfulPiecesInput ||
       huid.isNotEmpty ||
@@ -197,6 +229,25 @@ class GoldItemModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void syncHuidInputsWithPieces() {
+    final requiredCount = pieces.clamp(1, 12);
+    while (huidControllers.length < requiredCount) {
+      final controller = TextEditingController();
+      final focusNode = FocusNode();
+      controller.addListener(_fieldChanged);
+      _extraHuidCtrls.add(controller);
+      _extraHuidFocusNodes.add(focusNode);
+    }
+
+    while (huidControllers.length > requiredCount) {
+      final controller = _extraHuidCtrls.removeLast();
+      final focusNode = _extraHuidFocusNodes.removeLast();
+      controller.removeListener(_fieldChanged);
+      controller.dispose();
+      focusNode.dispose();
+    }
+  }
+
   String get makingTypeSymbol {
     return switch (makingChargesType) {
       MakingChargesType.perGram => '/g',
@@ -215,9 +266,13 @@ class GoldItemModel extends ChangeNotifier {
 
   void disposeAll() {
     categoryCtrl.removeListener(_fieldChanged);
+    segmentCtrl.removeListener(_fieldChanged);
     itemNameCtrl.removeListener(_fieldChanged);
-    piecesCtrl.removeListener(_weightPurityFieldChanged);
+    piecesCtrl.removeListener(_piecesFieldChanged);
     huidCtrl.removeListener(_fieldChanged);
+    for (final controller in _extraHuidCtrls) {
+      controller.removeListener(_fieldChanged);
+    }
     grossCtrl.removeListener(_weightPurityFieldChanged);
     lessCtrl.removeListener(_weightPurityFieldChanged);
     purityCtrl.removeListener(_weightPurityFieldChanged);
@@ -226,9 +281,13 @@ class GoldItemModel extends ChangeNotifier {
     makingCtrl.removeListener(_fieldChanged);
 
     categoryCtrl.dispose();
+    segmentCtrl.dispose();
     itemNameCtrl.dispose();
     piecesCtrl.dispose();
     huidCtrl.dispose();
+    for (final controller in _extraHuidCtrls) {
+      controller.dispose();
+    }
     grossCtrl.dispose();
     lessCtrl.dispose();
     purityCtrl.dispose();
@@ -237,9 +296,13 @@ class GoldItemModel extends ChangeNotifier {
     makingCtrl.dispose();
 
     categoryFocus.dispose();
+    segmentFocus.dispose();
     itemNameFocus.dispose();
     piecesFocus.dispose();
     huidFocus.dispose();
+    for (final focusNode in _extraHuidFocusNodes) {
+      focusNode.dispose();
+    }
     grossFocus.dispose();
     lessFocus.dispose();
     purityFocus.dispose();
@@ -250,6 +313,11 @@ class GoldItemModel extends ChangeNotifier {
   }
 
   void _fieldChanged() => notifyListeners();
+
+  void _piecesFieldChanged() {
+    syncHuidInputsWithPieces();
+    notifyListeners();
+  }
 
   void _weightPurityFieldChanged() => notifyListeners();
 

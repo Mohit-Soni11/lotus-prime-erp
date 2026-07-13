@@ -42,6 +42,7 @@ class PurchaseVoucherItemDraft {
   final double lineAmount;
   final String subCategory;
   final String? huid;
+  final List<String> huids;
   final String? hsnCode;
   final double labourCharge;
   final MakingChargesType labourType;
@@ -62,6 +63,7 @@ class PurchaseVoucherItemDraft {
     required this.lineAmount,
     this.subCategory = 'Purchase Inward',
     this.huid,
+    this.huids = const [],
     this.hsnCode,
     this.labourCharge = 0.0,
     this.labourType = MakingChargesType.perGram,
@@ -330,6 +332,7 @@ class PurchaseEntryRepository {
               createdAtMs,
             ],
           );
+          final purchaseVoucherItemId = await _lastInsertRowId();
 
           final stockItemId = await _db.into(_db.stockItems).insert(
                 StockItemsCompanion(
@@ -378,7 +381,7 @@ class PurchaseEntryRepository {
                   mrp: drift.Value(
                     item.lineAmount / (item.quantity > 0 ? item.quantity : 1),
                   ),
-                  huid: drift.Value(item.huid),
+                  huid: drift.Value(_primaryHuid(item)),
                   hsnCode: drift.Value(
                     item.hsnCode?.trim().isEmpty ?? true ? null : item.hsnCode,
                   ),
@@ -393,6 +396,14 @@ class PurchaseEntryRepository {
                   gstRate: drift.Value(item.gstRate),
                 ),
               );
+          await _insertPurchaseItemHuids(
+            voucherId: voucherId,
+            purchaseVoucherItemId: purchaseVoucherItemId,
+            stockItemId: stockItemId,
+            lineNo: index + 1,
+            item: item,
+            createdAtMs: createdAtMs,
+          );
           await _insertStockMovement(
             stockItemId: stockItemId,
             movementType: 'IN',
@@ -566,6 +577,25 @@ class PurchaseEntryRepository {
         'quantity': 'INTEGER NOT NULL DEFAULT 1',
       },
     );
+    await _db.customStatement('''
+      CREATE TABLE IF NOT EXISTS "purchase_item_huids" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "purchase_voucher_id" INTEGER NOT NULL,
+        "purchase_voucher_item_id" INTEGER,
+        "stock_item_id" INTEGER,
+        "line_no" INTEGER NOT NULL,
+        "piece_no" INTEGER NOT NULL,
+        "huid" TEXT NOT NULL,
+        "created_at" INTEGER NOT NULL,
+        FOREIGN KEY ("purchase_voucher_id") REFERENCES "purchase_vouchers" ("id") ON DELETE CASCADE
+      )
+    ''');
+    await _db.customStatement(
+      'CREATE INDEX IF NOT EXISTS "idx_purchase_item_huids_huid" ON "purchase_item_huids" ("huid")',
+    );
+    await _db.customStatement(
+      'CREATE INDEX IF NOT EXISTS "idx_purchase_item_huids_voucher" ON "purchase_item_huids" ("purchase_voucher_id")',
+    );
   }
 
   Future<void> _insertStockMovement({
@@ -627,6 +657,72 @@ class PurchaseEntryRepository {
         occurredAt.millisecondsSinceEpoch,
       ],
     );
+  }
+
+  Future<int> _lastInsertRowId() async {
+    final row =
+        await _db.customSelect('SELECT last_insert_rowid() AS id').getSingle();
+    return row.read<int>('id');
+  }
+
+  String? _primaryHuid(PurchaseVoucherItemDraft item) {
+    final values = _normalizedHuids(item);
+    if (values.isNotEmpty) {
+      return values.first;
+    }
+    final fallback = item.huid?.trim().toUpperCase();
+    return fallback == null || fallback.isEmpty ? null : fallback;
+  }
+
+  List<String> _normalizedHuids(PurchaseVoucherItemDraft item) {
+    final values = <String>[
+      ...item.huids,
+      if ((item.huid ?? '').trim().isNotEmpty) item.huid!,
+    ];
+    final seen = <String>{};
+    return values
+        .map((value) => value.trim().toUpperCase())
+        .where((value) => value.isNotEmpty && seen.add(value))
+        .toList(growable: false);
+  }
+
+  Future<void> _insertPurchaseItemHuids({
+    required int voucherId,
+    required int purchaseVoucherItemId,
+    required int stockItemId,
+    required int lineNo,
+    required PurchaseVoucherItemDraft item,
+    required int createdAtMs,
+  }) async {
+    final huids = _normalizedHuids(item);
+    if (huids.isEmpty) {
+      return;
+    }
+
+    for (var index = 0; index < huids.length; index++) {
+      await _db.customStatement(
+        '''
+        INSERT INTO purchase_item_huids (
+          purchase_voucher_id,
+          purchase_voucher_item_id,
+          stock_item_id,
+          line_no,
+          piece_no,
+          huid,
+          created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''',
+        [
+          voucherId,
+          purchaseVoucherItemId,
+          stockItemId,
+          lineNo,
+          index + 1,
+          huids[index],
+          createdAtMs,
+        ],
+      );
+    }
   }
 
   Future<void> _ensureTableColumns(

@@ -17,6 +17,7 @@ class StockRowEntry {
   StockSubCategory subCategory = StockSubCategory.ring;
   String subCategoryLabel = '';
   String huid = '';
+  List<String> huids = [];
   String hsnCode;
 
   double grossWeight = 0.0;
@@ -92,6 +93,7 @@ class StockRowEntry {
     return itemName.trim().isNotEmpty ||
         description.trim().isNotEmpty ||
         huid.trim().isNotEmpty ||
+        huids.any((value) => value.trim().isNotEmpty) ||
         grossWeight > 0 ||
         stoneWeight > 0 ||
         stoneValue > 0 ||
@@ -1018,10 +1020,21 @@ class AddStockController extends ChangeNotifier {
     if (row.gstRate < 0 || row.gstRate > 100) {
       return AddStockStrings.errGstRange;
     }
-    if (row.huid.trim().isNotEmpty && row.huid.trim().length != 6) {
+    final rowHuids = row.huids.isNotEmpty
+        ? row.huids
+        : [
+            if (row.huid.trim().isNotEmpty) row.huid.trim(),
+          ];
+    final invalidHuid = rowHuids
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .any((value) => value.length != 6);
+    if (invalidHuid) {
       return AddStockStrings.errHuidLength;
     }
-    if (row.huid.trim().isNotEmpty && row.quantity != 1) {
+    if (_selectedMetal != StockCategory.gold &&
+        row.huid.trim().isNotEmpty &&
+        row.quantity != 1) {
       return 'HUID item must have quantity 1';
     }
     return null;
@@ -1059,14 +1072,28 @@ class AddStockController extends ChangeNotifier {
         return 'Row ${index + 1}: $error';
       }
 
-      final huid = row.huid.trim().toUpperCase();
-      if (huid.isNotEmpty && !seenBatchHuids.add(huid)) {
-        return 'Row ${index + 1}: ${AddStockStrings.errDuplicateHuidInBatch}';
+      final rowHuids = row.huids.isNotEmpty
+          ? row.huids
+          : [
+              if (row.huid.trim().isNotEmpty) row.huid,
+            ];
+      for (final huidValue in rowHuids) {
+        final huid = huidValue.trim().toUpperCase();
+        if (huid.isNotEmpty && !seenBatchHuids.add(huid)) {
+          return 'Row ${index + 1}: ${AddStockStrings.errDuplicateHuidInBatch}';
+        }
       }
     }
 
     final huidValues = rowsToSave
-        .map((row) => row.huid.trim().toUpperCase())
+        .expand(
+          (row) => row.huids.isNotEmpty
+              ? row.huids
+              : [
+                  if (row.huid.trim().isNotEmpty) row.huid,
+                ],
+        )
+        .map((value) => value.trim().toUpperCase())
         .where((value) => value.isNotEmpty)
         .toSet()
         .toList();
@@ -1080,6 +1107,23 @@ class AddStockController extends ChangeNotifier {
         final duplicate = existing.first.huid ?? huidValues.first;
         return '${AddStockStrings.errDuplicateHuidInStock} ($duplicate)';
       }
+
+      try {
+        final placeholders = List.filled(huidValues.length, '?').join(', ');
+        final serialRows = await _db.customSelect(
+          '''
+          SELECT huid
+          FROM purchase_item_huids
+          WHERE huid IN ($placeholders)
+          LIMIT 1
+          ''',
+          variables: huidValues.map(drift.Variable.withString).toList(),
+        ).get();
+        if (serialRows.isNotEmpty) {
+          final duplicate = serialRows.first.read<String>('huid');
+          return '${AddStockStrings.errDuplicateHuidInStock} ($duplicate)';
+        }
+      } catch (_) {}
     }
 
     return null;
