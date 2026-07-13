@@ -32,6 +32,7 @@ class PurchaseVoucherPartyDraft {
 class PurchaseVoucherItemDraft {
   final PurchaseMetalType metal;
   final String description;
+  final String segmentLabel;
   final int quantity;
   final double grossWeight;
   final double lessWeight;
@@ -53,6 +54,7 @@ class PurchaseVoucherItemDraft {
   const PurchaseVoucherItemDraft({
     required this.metal,
     required this.description,
+    this.segmentLabel = '',
     this.quantity = 1,
     required this.grossWeight,
     required this.lessWeight,
@@ -304,6 +306,7 @@ class PurchaseEntryRepository {
               sku,
               metal_type,
               item_description,
+              item_segment,
               gross_weight,
               less_weight,
               net_weight,
@@ -313,7 +316,7 @@ class PurchaseEntryRepository {
               quantity,
               line_amount,
               created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''',
             [
               voucherId,
@@ -321,6 +324,7 @@ class PurchaseEntryRepository {
               sku,
               item.metal.displayName,
               item.description,
+              item.segmentLabel.trim(),
               item.grossWeight,
               item.lessWeight,
               item.netWeight,
@@ -346,6 +350,7 @@ class PurchaseEntryRepository {
                     _buildStockDescription(
                       voucherNo: draft.voucherNo,
                       partyName: draft.party.name,
+                      segmentLabel: item.segmentLabel,
                       purityLabel: item.purityLabel.isEmpty
                           ? _purityLabel(item)
                           : item.purityLabel,
@@ -575,6 +580,7 @@ class PurchaseEntryRepository {
       'purchase_voucher_items',
       const {
         'quantity': 'INTEGER NOT NULL DEFAULT 1',
+        'item_segment': 'TEXT',
       },
     );
     await _db.customStatement('''
@@ -870,12 +876,14 @@ class PurchaseEntryRepository {
   String _buildStockDescription({
     required String voucherNo,
     required String partyName,
+    required String segmentLabel,
     required String purityLabel,
     required double labourCharge,
     required MakingChargesType labourType,
   }) {
     final parts = <String>[
       'Purchased via $voucherNo from $partyName',
+      if (segmentLabel.trim().isNotEmpty) 'Segment ${segmentLabel.trim()}',
       if (purityLabel.isNotEmpty) purityLabel,
       if (labourCharge > 0)
         'Labour ${labourType.label}: ${labourCharge.toStringAsFixed(2)}',

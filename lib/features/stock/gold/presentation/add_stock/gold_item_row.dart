@@ -93,6 +93,8 @@ class _GoldItemRowState extends State<GoldItemRow> {
                   const SizedBox(width: 6),
                   Expanded(flex: 3, child: _buildCategoryField()),
                   const SizedBox(width: 6),
+                  Expanded(flex: 3, child: _buildSegmentField()),
+                  const SizedBox(width: 6),
                   Expanded(
                     flex: 4,
                     child: _GoldTextField(
@@ -285,6 +287,35 @@ class _GoldItemRowState extends State<GoldItemRow> {
         }
 
         _setText(widget.model.categoryCtrl, value);
+        widget.model.segmentFocus.requestFocus();
+      },
+      textInputAction: TextInputAction.next,
+      onSubmitted: (_) => widget.model.segmentFocus.requestFocus(),
+    );
+  }
+
+  Widget _buildSegmentField() {
+    return _GoldPopupField(
+      controller: widget.model.segmentCtrl,
+      focusNode: widget.model.segmentFocus,
+      hint: 'Segment',
+      popupItems: GoldItemModel.segmentPresets,
+      onSelected: (value) {
+        if (value == 'Custom') {
+          if (GoldItemModel.segmentPresets.contains(
+            widget.model.segmentCtrl.text.trim(),
+          )) {
+            widget.model.segmentCtrl.clear();
+          }
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              widget.model.segmentFocus.requestFocus();
+            }
+          });
+          return;
+        }
+
+        _setText(widget.model.segmentCtrl, value);
         widget.model.itemNameFocus.requestFocus();
       },
       textInputAction: TextInputAction.next,

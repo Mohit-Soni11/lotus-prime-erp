@@ -281,6 +281,7 @@ class GoldStockController extends AddStockController {
       row.description = rowModel.categoryLabel;
       row.subCategory = _mapGoldSubCategory(rowModel.categoryLabel);
       row.subCategoryLabel = rowModel.categoryLabel;
+      row.segmentLabel = rowModel.segmentLabel;
       row.huids = rowModel.huidValues;
       row.huid = rowModel.huidValues.isEmpty ? '' : rowModel.huidValues.first;
       row.grossWeight = rowModel.grossWeight / lotDivisor;
@@ -535,6 +536,7 @@ class GoldStockController extends AddStockController {
             (row) => PurchaseVoucherItemDraft(
               metal: PurchaseMetalType.gold,
               description: row.itemName.trim(),
+              segmentLabel: row.segmentLabel.trim(),
               quantity: row.quantity,
               grossWeight: row.grossWeight,
               lessWeight: row.lessWeight,

@@ -688,6 +688,17 @@ class AppDatabase extends _$AppDatabase {
             await _ensurePurchaseItemHuidSchema();
             AppLogger.info('v35 purchase item HUID serial schema applied.');
           }
+
+          if (from < 36) {
+            try {
+              await customStatement(
+                'ALTER TABLE "purchase_voucher_items" ADD COLUMN "item_segment" TEXT',
+              );
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
+            AppLogger.info('v36 purchase item segment field applied.');
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -1461,6 +1472,7 @@ const String _createPurchaseVoucherItemsTableSql = '''
     "sku" TEXT,
     "metal_type" TEXT NOT NULL,
     "item_description" TEXT,
+    "item_segment" TEXT,
     "gross_weight" REAL NOT NULL DEFAULT 0.0,
     "less_weight" REAL NOT NULL DEFAULT 0.0,
     "net_weight" REAL NOT NULL DEFAULT 0.0,
