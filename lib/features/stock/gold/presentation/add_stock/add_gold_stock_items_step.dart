@@ -3,9 +3,9 @@ import 'package:lotus_erp/features/stock/gold/application/gold_stock_controller.
 import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_batch_overview_card.dart';
 import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_intake_workflow_card.dart';
 import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_invoice_card.dart';
-import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_invoice_summary_panel.dart';
 import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_items_table.dart';
-import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_payment_record_card.dart';
+import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_purchase_valuation_card.dart';
+import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_settlement_method_card.dart';
 
 class AddGoldStockItemsStep extends StatelessWidget {
   final GoldStockController ctrl;
@@ -115,9 +115,9 @@ class _GoldSettlementWorkspace extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // ✨ FIXED: Updated Constructor Parameter
-          GoldPaymentRecordCard(ctrl: ctrl),
+          GoldPurchaseValuationCard(ctrl: ctrl),
           const SizedBox(height: 16),
-          GoldInvoiceSummaryPanel(ctrl: ctrl),
+          GoldSettlementMethodCard(ctrl: ctrl),
         ],
       );
     }
@@ -131,9 +131,9 @@ class _GoldSettlementWorkspace extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ✨ FIXED: Updated Constructor Parameter
-              GoldPaymentRecordCard(ctrl: ctrl),
+              GoldPurchaseValuationCard(ctrl: ctrl),
               const SizedBox(height: 16),
-              GoldInvoiceSummaryPanel(ctrl: ctrl),
+              GoldSettlementMethodCard(ctrl: ctrl),
             ],
           );
         }
@@ -142,12 +142,12 @@ class _GoldSettlementWorkspace extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              flex: 58,
+              flex: 42,
               // ✨ FIXED: Updated Constructor Parameter
-              child: GoldPaymentRecordCard(ctrl: ctrl),
+              child: GoldPurchaseValuationCard(ctrl: ctrl),
             ),
             const SizedBox(width: 16),
-            Expanded(flex: 42, child: GoldInvoiceSummaryPanel(ctrl: ctrl)),
+            Expanded(flex: 58, child: GoldSettlementMethodCard(ctrl: ctrl)),
           ],
         );
       },
