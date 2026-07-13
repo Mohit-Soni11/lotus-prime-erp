@@ -1,11 +1,3 @@
-// =============================================================================
-// FILE        : Gold_stock_card.dart
-// MODULE      : Stock & Inventory (Gold)
-// LAYER       : UI / Hub Card
-// DESCRIPTION : Hub screen card for Gold â€” navigates to GoldStockScreen.
-//               DO NOT put GoldStockScreen code here.
-// =============================================================================
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';

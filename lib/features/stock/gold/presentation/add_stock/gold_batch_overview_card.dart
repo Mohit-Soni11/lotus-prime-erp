@@ -11,7 +11,7 @@ class GoldBatchOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
+    final createdAt = ctrl.batchCreatedAt;
     final grade = ctrl.purityDisplay.trim().isEmpty
         ? 'Grade Pending'
         : ctrl.purityDisplay.trim();
@@ -64,7 +64,7 @@ class GoldBatchOverviewCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          'Gold intake • ${ctrl.enteredRowCount} entered row${ctrl.enteredRowCount == 1 ? '' : 's'}',
+                          'Gold intake - ${ctrl.enteredRowCount} entered row${ctrl.enteredRowCount == 1 ? '' : 's'}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: _bodyStyle(12),
@@ -86,19 +86,21 @@ class GoldBatchOverviewCard extends StatelessWidget {
                   final metrics = [
                     _MetricData(
                       label: 'Batch Code',
-                      value: ctrl.batchCode,
+                      value: ctrl.isLoadingBatchCode
+                          ? '${ctrl.batchCode}...'
+                          : ctrl.batchCode,
                       icon: GoldStockIcons.invoiceSystem,
                       tone: GoldStockColors.paymentPrimary,
                     ),
                     _MetricData(
                       label: 'Date',
-                      value: DateFormat('dd MMM yyyy').format(now),
+                      value: DateFormat('dd MMM yyyy').format(createdAt),
                       icon: Icons.calendar_today_rounded,
                       tone: GoldStockColors.accentCompliance,
                     ),
                     _MetricData(
                       label: 'Time',
-                      value: DateFormat('hh:mm a').format(now),
+                      value: DateFormat('hh:mm a').format(createdAt),
                       icon: Icons.access_time_rounded,
                       tone: GoldStockColors.success,
                     ),

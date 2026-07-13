@@ -5,9 +5,11 @@ import 'package:drift/drift.dart' as drift;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/stock/gold/application/gold_batch_code_generator.dart';
 import 'package:lotus_erp/features/stock/shared/application/add_stock_controller.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_invoice_summary_logic.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_payment_controller.dart';
+import 'package:lotus_erp/features/stock/gold/application/gold_supplier_invoice_policy.dart';
 import 'package:lotus_erp/models/purchase/purchase_enums/purchase_enums.dart';
 import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
@@ -21,8 +23,13 @@ import 'package:lotus_erp/features/stock/gold/domain/models/gold_item_model.dart
 import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
 
 class GoldStockController extends AddStockController {
-  String _goldBatchCode;
+  String _goldBatchCode = '';
+  DateTime _goldBatchCreatedAt = DateTime.now();
   final AppDatabase _rateDb = AppDatabase();
+  late final GoldBatchCodeGenerator _batchCodeGenerator =
+      GoldBatchCodeGenerator(_rateDb);
+  late final GoldSupplierInvoicePolicy _supplierInvoicePolicy =
+      GoldSupplierInvoicePolicy(_rateDb);
 
   /// ✅ Payment controller — wired to this batch lifecycle
   final GoldPaymentController payment = GoldPaymentController();
@@ -41,16 +48,19 @@ class GoldStockController extends AddStockController {
   double _goldRatePer10g = 0.0;
   DateTime? _goldRateDate;
   bool _isLoadingGoldRate = false;
+  bool _isLoadingBatchCode = false;
 
-  GoldStockController()
-      : _goldBatchCode = _generateGoldBatchCode(),
-        super(initialMetal: StockCategory.gold) {
+  GoldStockController() : super(initialMetal: StockCategory.gold) {
+    _startNewBatchIdentity(notify: false);
     payment.addListener(_handlePaymentChanged);
     _loadGoldRateSnapshot();
   }
 
   @override
   String get batchCode => _goldBatchCode;
+
+  DateTime get batchCreatedAt => _goldBatchCreatedAt;
+  bool get isLoadingBatchCode => _isLoadingBatchCode;
 
   List<GoldItemModel> get goldRows => List.unmodifiable(_goldRows);
 
@@ -192,7 +202,8 @@ class GoldStockController extends AddStockController {
 
     try {
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
+        type: FileType.custom,
+        allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
         allowMultiple: false,
       );
       final sourcePath = result?.files.single.path;
@@ -393,6 +404,17 @@ class GoldStockController extends AddStockController {
     if (rowsToSave.isEmpty) {
       return null;
     }
+    final supplierValidation = await _supplierInvoicePolicy.validate(
+      supplierId: linkedSupplier?.id ?? sessionSupplierId,
+      gstEnabled: gstEnabled,
+      supplierGstin: supplierGstCtrl.text,
+      supplierInvoiceNo: supplierInvoiceNumberCtrl.text,
+      hasBillAttachment: hasBillPhoto,
+      currentBatchCode: batchCode,
+    );
+    if (supplierValidation != null) {
+      return supplierValidation;
+    }
     if (payment.todayRatePer10g <= 0) {
       return 'Enter the Gold invoice rate before saving this batch.';
     }
@@ -409,22 +431,28 @@ class GoldStockController extends AddStockController {
 
     final snapshot = paymentSnapshot;
     final sequenceNo = await getNextPurchaseSequence();
+    await _ensureCurrentBatchCodeIsAvailable();
+    final invoiceCategory = _supplierInvoicePolicy.categoryFor(
+      gstEnabled: gstEnabled,
+    );
+    final creditStatus = _supplierInvoicePolicy.creditStatusFor(
+      gstEnabled: gstEnabled,
+    );
     final supplierName = supplierDisplayName.trim().isNotEmpty
         ? supplierDisplayName.trim()
         : supplierNameCtrl.text.trim();
 
     return PurchaseVoucherDraft(
       sequenceNo: sequenceNo,
-      voucherNo:
-          'GSTOCK-${DateTime.now().year}-${sequenceNo.toString().padLeft(4, '0')}',
+      voucherNo: batchCode,
       supplierInvoiceNo: supplierInvoiceNumberCtrl.text.trim().isEmpty
           ? null
           : supplierInvoiceNumberCtrl.text.trim(),
       source: PurchaseSource.fromSupplier,
       taxType: gstEnabled ? PurchaseTaxType.gst : PurchaseTaxType.normal,
       discountType: PurchaseDiscountType.flatAmount,
-      discountValue: 0.0,
-      discountAmount: 0.0,
+      discountValue: snapshot.cashDiscountAmount,
+      discountAmount: snapshot.cashDiscountAmount,
       grossAmount: invoiceSummary.itemSnapshotAmount,
       taxableAmount: snapshot.subtotalAmount,
       gstAmount: snapshot.appliedGstAmount,
@@ -451,6 +479,13 @@ class GoldStockController extends AddStockController {
       paymentMeta: jsonEncode({
         'mode': snapshot.paymentMode.name,
         'taxMode': payment.taxMode.name,
+        'purchaseCategory': invoiceCategory.storageValue,
+        'purchaseCategoryLabel': invoiceCategory.label,
+        'inputCreditStatus': creditStatus.storageValue,
+        'inputCreditStatusLabel': creditStatus.label,
+        'supplierInvoiceNo': supplierInvoiceNumberCtrl.text.trim(),
+        'supplierBillAttachmentPath': _billPhotoPath,
+        'supplierBillAttachmentRequired': gstEnabled,
         'discountMode': payment.discountMode.name,
         'fineDiscountWeight': snapshot.fineDiscountWeight,
         'cashDiscountAmount': snapshot.cashDiscountAmount,
@@ -467,7 +502,6 @@ class GoldStockController extends AddStockController {
         'metalFineShortageValue': snapshot.metalFineShortageValue,
         'metalFineExcessValue': snapshot.metalFineExcessValue,
         'balanceLabel': snapshot.balanceLabel,
-        'billPhotoPath': _billPhotoPath,
         'oldDueBefore': snapshot.previousSupplierDue,
         'oldDueAdjustedAmount': snapshot.previousSupplierDueAdjustment,
         'oldDueFineEquivalent': snapshot.previousSupplierDueFineEquivalent,
@@ -648,7 +682,7 @@ class GoldStockController extends AddStockController {
 
   @override
   void resetForNewBatch() {
-    _goldBatchCode = _generateGoldBatchCode();
+    _startNewBatchIdentity(notify: false);
     supplierInvoiceNumberCtrl.clear();
     _billPhotoPath = null;
     _supplierLedger = null;
@@ -657,6 +691,43 @@ class GoldStockController extends AddStockController {
     _clearGoldRows();
     super.resetForNewBatch();
     _loadGoldRateSnapshot();
+  }
+
+  void _startNewBatchIdentity({bool notify = true}) {
+    _goldBatchCreatedAt = DateTime.now();
+    _goldBatchCode = GoldBatchCodeGenerator.previewCode(_goldBatchCreatedAt);
+    _refreshBatchCode();
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
+  Future<void> _refreshBatchCode() async {
+    _isLoadingBatchCode = true;
+    notifyListeners();
+    try {
+      final nextCode = await _batchCodeGenerator.nextCodeFor(
+        _goldBatchCreatedAt,
+      );
+      if (nextCode.trim().isNotEmpty) {
+        _goldBatchCode = nextCode;
+      }
+    } finally {
+      _isLoadingBatchCode = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _ensureCurrentBatchCodeIsAvailable() async {
+    final nextCode = await _batchCodeGenerator.nextAvailableCodeFor(
+      _goldBatchCreatedAt,
+      _goldBatchCode,
+    );
+    if (_goldBatchCode == nextCode) {
+      return;
+    }
+    _goldBatchCode = nextCode;
+    notifyListeners();
   }
 
   void _clearGoldRows() {
@@ -824,16 +895,5 @@ class GoldStockController extends AddStockController {
       return 0.0;
     }
     return (value * 1000).roundToDouble() / 1000.0;
-  }
-
-  static String _generateGoldBatchCode() {
-    final now = DateTime.now();
-    final datePart = '${now.year.toString().substring(2)}'
-        '${now.month.toString().padLeft(2, '0')}'
-        '${now.day.toString().padLeft(2, '0')}';
-    final timePart = '${now.hour.toString().padLeft(2, '0')}'
-        '${now.minute.toString().padLeft(2, '0')}'
-        '${now.second.toString().padLeft(2, '0')}';
-    return 'GOL-$datePart-$timePart';
   }
 }

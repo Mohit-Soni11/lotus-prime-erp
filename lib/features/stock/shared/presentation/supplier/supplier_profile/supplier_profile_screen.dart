@@ -57,7 +57,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
   void initState() {
     super.initState();
     _logic = SupplierProfileLogic(supplierId: widget.supplierId);
-    _tabCtrl = TabController(length: 3, vsync: this);
+    _tabCtrl = TabController(length: 5, vsync: this);
     _pageAnim = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 480),
@@ -692,6 +692,8 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
             child: TabBar(
               controller: _tabCtrl,
               onTap: _logic.setTab,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
               indicator: BoxDecoration(
                 color: SupplierProfileColors.bodyPanelBg,
                 borderRadius: BorderRadius.circular(10),
@@ -705,7 +707,9 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
               unselectedLabelColor: SupplierProfileColors.bodyTextMuted,
               labelStyle: SupplierProfileStyles.chipText,
               tabs: const [
-                Tab(text: SupplierProfileStrings.secPurchases),
+                Tab(text: 'All Purchases'),
+                Tab(text: 'GST Purchases'),
+                Tab(text: 'Non-GST'),
                 Tab(text: SupplierProfileStrings.secMetal),
                 Tab(text: SupplierProfileStrings.secDocuments),
               ],
@@ -715,8 +719,10 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 220),
             child: switch (_logic.activeTab) {
-              1 => _buildMetalList(profile),
-              2 => _buildDocumentsList(profile),
+              1 => _buildGstPurchaseList(profile),
+              2 => _buildNonGstPurchaseList(profile),
+              3 => _buildMetalList(profile),
+              4 => _buildDocumentsList(profile),
               _ => _buildPurchaseList(profile),
             },
           ),
@@ -726,17 +732,50 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
   }
 
   Widget _buildPurchaseList(SupplierProfileModel profile) {
-    if (profile.purchases.isEmpty) {
-      return const _EmptyState(
+    return _buildPurchaseListFor(
+      items: profile.purchases,
+      emptyTitle: SupplierProfileStrings.noPurchases,
+      emptySubtitle: SupplierProfileStrings.noPurchasesSub,
+      keyValue: 'purchase-list',
+    );
+  }
+
+  Widget _buildGstPurchaseList(SupplierProfileModel profile) {
+    return _buildPurchaseListFor(
+      items: profile.gstPurchases,
+      emptyTitle: 'No GST purchases yet',
+      emptySubtitle: 'GST purchase vouchers will appear here separately.',
+      keyValue: 'gst-purchase-list',
+    );
+  }
+
+  Widget _buildNonGstPurchaseList(SupplierProfileModel profile) {
+    return _buildPurchaseListFor(
+      items: profile.nonGstPurchases,
+      emptyTitle: 'No Non-GST purchases yet',
+      emptySubtitle: 'No-ITC purchase vouchers will appear here separately.',
+      keyValue: 'non-gst-purchase-list',
+    );
+  }
+
+  Widget _buildPurchaseListFor({
+    required List<SupplierProfilePurchaseModel> items,
+    required String emptyTitle,
+    required String emptySubtitle,
+    required String keyValue,
+  }) {
+    if (items.isEmpty) {
+      return _EmptyState(
+        key: ValueKey('$keyValue-empty'),
         icon: SupplierProfileIcons.empty,
-        title: SupplierProfileStrings.noPurchases,
-        subtitle: SupplierProfileStrings.noPurchasesSub,
+        title: emptyTitle,
+        subtitle: emptySubtitle,
       );
     }
     return Column(
-      key: const ValueKey('purchase-list'),
+      key: ValueKey(keyValue),
       children: [
-        for (final item in profile.purchases) ...[
+        for (final item in items) ...[
           _PurchaseHistoryCard(item: item),
           const SizedBox(height: 10),
         ],
@@ -1382,6 +1421,9 @@ class _PurchaseHistoryCard extends StatelessWidget {
     final dueColor = item.hasDue
         ? SupplierProfileColors.warning
         : SupplierProfileColors.success;
+    final taxColor = item.isGstPurchase
+        ? SupplierProfileColors.info
+        : SupplierProfileColors.bodyTextMuted;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: SupplierProfileStyles.softPanelDecoration,
@@ -1404,6 +1446,11 @@ class _PurchaseHistoryCard extends StatelessWidget {
                         style: SupplierProfileStyles.historyTitle,
                       ),
                     ),
+                    _MiniBadge(
+                      item.isGstPurchase ? 'GST' : 'No ITC',
+                      taxColor,
+                    ),
+                    const SizedBox(width: 8),
                     _MiniBadge(item.statusLabel, dueColor),
                   ],
                 ),

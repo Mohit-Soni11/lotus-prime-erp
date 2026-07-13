@@ -114,7 +114,6 @@ class _GoldSettlementWorkspace extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ✨ FIXED: Updated Constructor Parameter
           GoldPurchaseValuationCard(ctrl: ctrl),
           const SizedBox(height: 16),
           GoldSettlementMethodCard(ctrl: ctrl),
@@ -130,7 +129,6 @@ class _GoldSettlementWorkspace extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ✨ FIXED: Updated Constructor Parameter
               GoldPurchaseValuationCard(ctrl: ctrl),
               const SizedBox(height: 16),
               GoldSettlementMethodCard(ctrl: ctrl),
@@ -143,7 +141,6 @@ class _GoldSettlementWorkspace extends StatelessWidget {
           children: [
             Expanded(
               flex: 42,
-              // ✨ FIXED: Updated Constructor Parameter
               child: GoldPurchaseValuationCard(ctrl: ctrl),
             ),
             const SizedBox(width: 16),

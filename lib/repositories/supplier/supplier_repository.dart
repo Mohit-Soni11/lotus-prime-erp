@@ -75,6 +75,7 @@ class SupplierRepository {
         id,
         voucher_no,
         supplier_invoice_no,
+        tax_type,
         party_name,
         gross_amount,
         grand_total,
@@ -223,6 +224,13 @@ class SupplierRepository {
       voucherId: row.read<int>('id'),
       voucherNo: row.read<String>('voucher_no'),
       supplierInvoiceNo: row.readNullable<String>('supplier_invoice_no'),
+      taxType: row.readNullable<String>('tax_type') ?? 'NORMAL',
+      purchaseCategory: (meta['purchaseCategory'] as String?) ??
+          _categoryFromTaxType(
+            row.readNullable<String>('tax_type'),
+          ),
+      inputCreditStatus: (meta['inputCreditStatus'] as String?) ??
+          _creditStatusFromTaxType(row.readNullable<String>('tax_type')),
       partyName: row.read<String>('party_name'),
       grossAmount: row.read<double>('gross_amount'),
       grandTotal: row.read<double>('grand_total'),
@@ -239,7 +247,8 @@ class SupplierRepository {
       paymentStatus: row.read<String>('payment_status'),
       stockEntryCount: row.read<int>('stock_entry_count'),
       createdAt: _dateFromMillis(row.read<int>('created_at')) ?? DateTime.now(),
-      billPhotoPath: meta['billPhotoPath'] as String?,
+      billPhotoPath: (meta['supplierBillAttachmentPath'] as String?) ??
+          meta['billPhotoPath'] as String?,
       oldDueBefore: _readDouble(meta['oldDueBefore']),
       oldDueAdjustedAmount: _readDouble(meta['oldDueAdjustedAmount']),
       metalLineCount: (meta['metalLines'] as List?)?.length ?? 0,
@@ -266,6 +275,16 @@ class SupplierRepository {
       return double.tryParse(value) ?? 0.0;
     }
     return 0.0;
+  }
+
+  String _categoryFromTaxType(String? taxType) {
+    return taxType?.trim().toUpperCase() == 'GST'
+        ? 'GST_PURCHASE'
+        : 'NON_GST_PURCHASE';
+  }
+
+  String _creditStatusFromTaxType(String? taxType) {
+    return taxType?.trim().toUpperCase() == 'GST' ? 'ITC_ELIGIBLE' : 'NO_ITC';
   }
 
   DateTime? _dateFromMillis(int? millis) {
@@ -361,6 +380,9 @@ class SupplierPurchaseHistoryItem {
   final int voucherId;
   final String voucherNo;
   final String? supplierInvoiceNo;
+  final String taxType;
+  final String purchaseCategory;
+  final String inputCreditStatus;
   final String partyName;
   final double grossAmount;
   final double grandTotal;
@@ -386,6 +408,9 @@ class SupplierPurchaseHistoryItem {
     required this.voucherId,
     required this.voucherNo,
     this.supplierInvoiceNo,
+    required this.taxType,
+    required this.purchaseCategory,
+    required this.inputCreditStatus,
     required this.partyName,
     required this.grossAmount,
     required this.grandTotal,
@@ -409,4 +434,9 @@ class SupplierPurchaseHistoryItem {
   });
 
   bool get hasBillPhoto => billPhotoPath != null && billPhotoPath!.isNotEmpty;
+  bool get isGstPurchase =>
+      purchaseCategory.trim().toUpperCase() == 'GST_PURCHASE' ||
+      taxType.trim().toUpperCase() == 'GST';
+  bool get isInputCreditEligible =>
+      inputCreditStatus.trim().toUpperCase() == 'ITC_ELIGIBLE';
 }

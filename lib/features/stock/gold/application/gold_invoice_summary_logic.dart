@@ -3,7 +3,6 @@ import 'package:lotus_erp/features/stock/gold/application/gold_stock_controller.
 import 'package:lotus_erp/features/stock/gold/domain/models/gold_item_model.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 
-// ✨ Added Missing Snapshot Class to bridge the logic
 class GoldPaymentSnapshot {
   final PaymentMode paymentMode;
   final DueReturnType settlementPreference;

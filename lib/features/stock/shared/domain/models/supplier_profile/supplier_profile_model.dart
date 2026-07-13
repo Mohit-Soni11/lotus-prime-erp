@@ -30,6 +30,9 @@ class SupplierProfilePurchaseModel {
   final int voucherId;
   final String voucherNo;
   final String? supplierInvoiceNo;
+  final String taxType;
+  final String purchaseCategory;
+  final String inputCreditStatus;
   final String partyName;
   final double grossAmount;
   final double grandTotal;
@@ -55,6 +58,9 @@ class SupplierProfilePurchaseModel {
     required this.voucherId,
     required this.voucherNo,
     this.supplierInvoiceNo,
+    this.taxType = 'NORMAL',
+    this.purchaseCategory = 'NON_GST_PURCHASE',
+    this.inputCreditStatus = 'NO_ITC',
     required this.partyName,
     required this.grossAmount,
     required this.grandTotal,
@@ -78,6 +84,12 @@ class SupplierProfilePurchaseModel {
   });
 
   bool get hasBillPhoto => billPhotoPath != null && billPhotoPath!.isNotEmpty;
+  bool get isGstPurchase =>
+      purchaseCategory.trim().toUpperCase() == 'GST_PURCHASE' ||
+      taxType.trim().toUpperCase() == 'GST';
+  bool get isNonGstPurchase => !isGstPurchase;
+  bool get isInputCreditEligible =>
+      inputCreditStatus.trim().toUpperCase() == 'ITC_ELIGIBLE';
   bool get hasDue => balanceDue > 0.005;
   bool get hasOldDueAdjustment => oldDueAdjustedAmount > 0.005;
   bool get hasMetalSettlement =>
@@ -168,6 +180,8 @@ class SupplierProfileModel {
       SupplierLedgerHealth.calculate(outstandingDue);
 
   int get purchaseCount => purchases.length;
+  int get gstPurchaseCount => gstPurchases.length;
+  int get nonGstPurchaseCount => nonGstPurchases.length;
   int get totalStockEntries =>
       purchases.fold(0, (sum, item) => sum + item.stockEntryCount);
   int get dueVoucherCount =>
@@ -178,6 +192,10 @@ class SupplierProfileModel {
 
   double get totalPurchaseValue =>
       purchases.fold(0.0, (sum, item) => sum + item.grandTotal);
+  double get totalGstPurchaseValue =>
+      gstPurchases.fold(0.0, (sum, item) => sum + item.grandTotal);
+  double get totalNonGstPurchaseValue =>
+      nonGstPurchases.fold(0.0, (sum, item) => sum + item.grandTotal);
   double get totalPaidValue =>
       purchases.fold(0.0, (sum, item) => sum + item.totalPaid);
   double get totalMetalFine =>
@@ -187,6 +205,10 @@ class SupplierProfileModel {
 
   List<SupplierProfilePurchaseModel> get duePurchases =>
       purchases.where((item) => item.hasDue).toList(growable: false);
+  List<SupplierProfilePurchaseModel> get gstPurchases =>
+      purchases.where((item) => item.isGstPurchase).toList(growable: false);
+  List<SupplierProfilePurchaseModel> get nonGstPurchases =>
+      purchases.where((item) => item.isNonGstPurchase).toList(growable: false);
   List<SupplierProfilePurchaseModel> get metalSettlements => purchases
       .where((item) => item.hasMetalSettlement)
       .toList(growable: false);

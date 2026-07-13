@@ -820,7 +820,7 @@ class _PurchaseTypeSelector extends StatelessWidget {
               Expanded(
                 child: _PurchaseTypeButton(
                   selected: !gstEnabled,
-                  label: 'Non-GST',
+                  label: 'Non-GST / No ITC',
                   icon: Icons.receipt_outlined,
                   onTap: () => onChanged(false),
                 ),
@@ -979,6 +979,7 @@ class _BillPhotoPicker extends StatelessWidget {
     final photoPath = ctrl.billPhotoPath;
     final hasPhoto = photoPath != null && photoPath.isNotEmpty;
     final canPreview = hasPhoto && File(photoPath).existsSync();
+    final isPdf = hasPhoto && photoPath.toLowerCase().endsWith('.pdf');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1017,7 +1018,7 @@ class _BillPhotoPicker extends StatelessWidget {
                       color: accent,
                     ),
                   )
-                else if (canPreview)
+                else if (canPreview && !isPdf)
                   Container(
                     width: 22,
                     height: 22,
@@ -1027,12 +1028,14 @@ class _BillPhotoPicker extends StatelessWidget {
                     ),
                     child: Image.file(File(photoPath), fit: BoxFit.cover),
                   )
+                else if (isPdf)
+                  Icon(Icons.picture_as_pdf_rounded, size: 17, color: accent)
                 else
                   Icon(Icons.upload_file_rounded, size: 17, color: accent),
                 const SizedBox(width: 7),
                 Flexible(
                   child: Text(
-                    hasPhoto ? 'Change Supplier Bill' : 'Upload Supplier Bill',
+                    hasPhoto ? 'Change Bill File' : 'Upload Bill / PDF',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
@@ -1087,8 +1090,8 @@ class _Note extends StatelessWidget {
         Expanded(
           child: Text(
             gstEnabled
-                ? 'GST purchase will calculate tax in the final valuation and settlement.'
-                : 'Supplier profile is still required for stock ledger and purchase history.',
+                ? 'GST purchase requires supplier GSTIN, invoice number and bill photo/PDF for ITC-safe records.'
+                : 'Non-GST purchases stay separate as No ITC records in supplier history.',
             style: GoogleFonts.inter(
               fontSize: 10,
               fontWeight: FontWeight.w700,
