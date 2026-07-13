@@ -1,7 +1,7 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'shop_database_schema.dart';
 
 /// Data access for the Shop Profile master configuration.

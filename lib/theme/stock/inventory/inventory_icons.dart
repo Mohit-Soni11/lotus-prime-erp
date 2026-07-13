@@ -24,6 +24,7 @@ class InvIcons {
 
   // ── SECTIONS & EMPTY STATE ────────────────────────────────────────────────
   static const IconData stockList = Icons.inventory_2_outlined;
+  static const IconData movementLedger = Icons.timeline_rounded;
   static const IconData emptyState = Icons.inventory_2_outlined;
 
   // ── CATEGORIES (METAL TYPES) ──────────────────────────────────────────────

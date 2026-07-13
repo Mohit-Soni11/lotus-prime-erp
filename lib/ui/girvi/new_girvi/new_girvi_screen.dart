@@ -29,7 +29,7 @@ import 'package:printing/printing.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../constants/app_routes.dart';
-import '../../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../logic/dashboard/date_card/date_card_logic.dart';
 import '../../../logic/girvi/new_girvi_controller.dart';
 import '../../../models/girvi/girvi_enums.dart';

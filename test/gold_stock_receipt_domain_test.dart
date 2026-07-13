@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lotus_erp/features/gold_stock_receipts/domain/entities/gold_stock_receipt.dart';
-import 'package:lotus_erp/features/gold_stock_receipts/domain/services/gold_stock_receipt_validator.dart';
-import 'package:lotus_erp/features/gold_stock_receipts/domain/value_objects/gold_purity.dart';
-import 'package:lotus_erp/features/gold_stock_receipts/domain/value_objects/gold_weight.dart';
-import 'package:lotus_erp/features/gold_stock_receipts/domain/value_objects/money.dart';
+import 'package:lotus_erp/features/stock/gold/domain/receipts/gold_stock_receipt.dart';
+import 'package:lotus_erp/features/stock/gold/domain/receipts/gold_stock_receipt_validator.dart';
+import 'package:lotus_erp/features/stock/gold/domain/receipts/gold_purity.dart';
+import 'package:lotus_erp/features/stock/gold/domain/receipts/gold_weight.dart';
+import 'package:lotus_erp/features/stock/gold/domain/receipts/money.dart';
 
 void main() {
   group('GoldStockReceiptLine', () {

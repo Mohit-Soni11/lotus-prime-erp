@@ -32,7 +32,7 @@ import '../dashboard/payment_status_card.dart';
 import '../dashboard/daily_counter_card.dart';
 import '../dashboard/cash_register_card.dart';
 import '../dashboard/counter_security_card.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(String routeId) onNavigate;

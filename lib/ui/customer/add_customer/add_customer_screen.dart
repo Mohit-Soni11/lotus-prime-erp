@@ -16,7 +16,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-//import '../../../database/db/app_database.dart';
+//import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../logic/customer/add_customer_logic.dart';
 import '../../../models/customer/customer_enums/add_customer_enums.dart';
 import '../../../models/customer/add_customer/add_customer_form_model.dart';

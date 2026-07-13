@@ -2,10 +2,10 @@ import 'package:drift/drift.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
 
 import '../../database/local_database/shop_database_helper.dart';
-import '../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/finance/due_collection_entry/due_collection_entry_model.dart';
 import '../setting/shop_setup/shop_session_manager.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class DueCollectionEntryRepository {
   final AppDatabase _db;

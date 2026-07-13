@@ -18,7 +18,7 @@
 // =============================================================================
 
 import 'package:drift/drift.dart';
-import '../base_table.dart';
+import 'package:lotus_erp/database/tables/base_table.dart';
 import 'bank_accounts.dart';
 
 @DataClassName('BankTransaction')

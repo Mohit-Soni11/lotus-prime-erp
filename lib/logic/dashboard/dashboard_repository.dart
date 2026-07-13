@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:drift/drift.dart';
-import '../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/dashboard/user_profile.dart';
 import '../../models/dashboard/shop_profile_model.dart'; // Import for Shop Card
 import '../../models/dashboard/search_result.dart';
@@ -9,7 +9,7 @@ import '../../models/dashboard/customer_stats_model.dart';
 import '../../constants/enums.dart';
 import '../../database/local_database/shop_database_helper.dart';
 import '../../repositories/setting/shop_setup/shop_session_manager.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class DashboardRepository {
   DashboardRepository({

@@ -15,7 +15,7 @@ import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_hold_bill_model.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_stock_lookup_model.dart';
-import '../../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../models/customer/customer_list/customer_list_ui_model.dart';
 import '../../../models/customer/customer_enums/customer_list_enums.dart';
 

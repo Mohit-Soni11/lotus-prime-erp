@@ -16,7 +16,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import '../../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../logic/karigar/receive_karigar_controller.dart';
 import '../../../models/karigar/karigar_enums/karigar_enums.dart';
 import '../../../models/karigar/karigar_issue_model.dart';

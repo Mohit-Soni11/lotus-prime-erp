@@ -13,14 +13,14 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_persistence_models.dart';
 import '../../models/setting/billing_setup/girvi_billing_model.dart';
 import '../../repositories/girvi/girvi_details_repository.dart';
 import '../../repositories/girvi/girvi_repository.dart';
 import '../../repositories/setting/billing_setup/girvi_billing_repo.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class NewGirviController extends ChangeNotifier {
   final AppDatabase _db;

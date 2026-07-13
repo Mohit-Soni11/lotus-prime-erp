@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/logging/app_logger.dart';
-import '../../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import '../../customer/add_customer/add_customer_screen.dart';
 

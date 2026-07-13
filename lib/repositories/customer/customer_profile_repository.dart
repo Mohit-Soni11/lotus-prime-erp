@@ -8,7 +8,7 @@ import 'package:lotus_erp/database/db/app_database.dart';
 
 import '../../models/customer/customer_profile/customer_profile_model.dart';
 import '../../models/girvi/girvi_invoice_draft.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class CustomerProfileRepository {
   final AppDatabase _db;

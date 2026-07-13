@@ -29,17 +29,17 @@ import '../../ui/sales_orders/sales_pos/pos_master_sale_screen.dart';
 import '../../ui/booking_advance/booking_advance_screen.dart';
 import '../../ui/sales_orders/delivery/delivery_management_screen.dart';
 
-import '../../ui/stock/add_stock/add_stock_hub_screen.dart';
-import '../../ui/stock/inventory/inventory_screen.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/add_stock/add_stock_hub_screen.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/inventory/inventory_screen.dart';
 
 import '../../ui/customer/customer_list/customer_list_screen.dart';
 import '../../ui/customer/add_customer/add_customer_screen.dart';
 import '../../ui/customer/customer_profile/customer_profile_screen.dart';
 import '../../ui/customer/defaulter/defaulter_list_screen.dart';
 
-import '../../ui/stock/supplier/supplier_list/supplier_list_screen.dart';
-import '../../ui/stock/supplier/add_supplier/add_supplier_screen.dart';
-import '../../ui/stock/supplier/supplier_profile/supplier_profile_screen.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/supplier/supplier_list/supplier_list_screen.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/supplier/add_supplier/add_supplier_screen.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/supplier/supplier_profile/supplier_profile_screen.dart';
 
 import '../../ui/purchase_orders/purchase_entry/purchase_entry_screen.dart';
 

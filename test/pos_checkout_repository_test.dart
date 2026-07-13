@@ -10,7 +10,7 @@ import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.da
     as pos;
 import 'package:lotus_erp/models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_models/sales_pos_models.dart';
-import 'package:lotus_erp/models/stock/stock_item_model/stock_enums.dart'
+import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart'
     as stock;
 import 'package:lotus_erp/repositories/booking_advance/booking_advance_repository.dart';
 import 'package:lotus_erp/repositories/sales_orders/pos/pos_checkout_repository.dart';
@@ -97,6 +97,7 @@ void main() {
             ..where((tbl) => tbl.billId.equals(result.billId)))
           .get();
       final stockRow = await _stockById(db, stockId);
+      final stockMovements = await _stockMovementsFor(db, stockId);
       final cashRows = await db.select(db.cashTransactions).get();
 
       expect(result.invoiceNumber, 'INV-LJ-2026-0001');
@@ -111,12 +112,80 @@ void main() {
       expect(oldGoldRows.single.lineAmount, 90);
       expect(stockRow.quantity, 0);
       expect(stockRow.status, stock.StockStatus.sold.label);
+      expect(stockMovements, hasLength(1));
+      expect(stockMovements.single.movementType, 'SALE');
+      expect(stockMovements.single.sourceNumber, 'INV-LJ-2026-0001');
+      expect(stockMovements.single.sourceLineNo, 1);
+      expect(stockMovements.single.quantityDelta, -1);
+      expect(stockMovements.single.grossWeightDelta, -10);
+      expect(stockMovements.single.netWeightDelta, -10);
       expect(cashRows, hasLength(1));
       expect(cashRows.single.referenceId, 'INV-LJ-2026-0001#CASH');
       expect(cashRows.single.amount, 910);
       expect(cashRows.single.isVoided, isFalse);
 
       _disposeItems(saleItems: [saleItem], oldGoldItems: [oldGoldItem]);
+    },
+  );
+
+  test(
+    'finalizeSale maps each linked stock movement to its bill item line number',
+    () async {
+      final firstStockId = await _insertStockItem(db, sku: 'GOLD-LINE-001');
+      final secondStockId = await _insertStockItem(db, sku: 'GOLD-LINE-002');
+      final firstItem = _saleItem(
+        stockItemId: firstStockId,
+        sku: 'GOLD-LINE-001',
+        grossWeight: 8,
+        rate: 100,
+      );
+      final secondItem = _saleItem(
+        stockItemId: secondStockId,
+        sku: 'GOLD-LINE-002',
+        grossWeight: 12,
+        rate: 100,
+      );
+      final invoice = _invoice(
+        invoiceNumber: 'INV-LJ-2026-0001',
+        saleItems: [firstItem, secondItem],
+        cashPaid: 2000,
+      );
+
+      final result = await repository.finalizeSale(
+        invoice: invoice,
+        customerId: null,
+      );
+
+      final billItems = await (db.select(db.billItems)
+            ..where((tbl) => tbl.billId.equals(result.billId))
+            ..orderBy([(tbl) => drift.OrderingTerm.asc(tbl.lineNo)]))
+          .get();
+      final firstMovements = await _stockMovementsFor(db, firstStockId);
+      final secondMovements = await _stockMovementsFor(db, secondStockId);
+      final printableItems =
+          await repository.fetchPrintableSaleItems(result.billId);
+
+      expect(billItems.map((row) => row.lineNo), [1, 2]);
+      expect(billItems.map((row) => row.linkedStockSku), [
+        'GOLD-LINE-001',
+        'GOLD-LINE-002',
+      ]);
+      expect(firstMovements.single.sourceLineNo, billItems.first.lineNo);
+      expect(secondMovements.single.sourceLineNo, billItems.last.lineNo);
+      expect(firstMovements.single.skuSnapshot, billItems.first.linkedStockSku);
+      expect(secondMovements.single.skuSnapshot, billItems.last.linkedStockSku);
+      expect(printableItems, hasLength(2));
+      expect(printableItems.map((item) => item.linkedStockSku), [
+        'GOLD-LINE-001',
+        'GOLD-LINE-002',
+      ]);
+      expect(printableItems.map((item) => item.huidCtrl.text), [
+        'GOLD-LINE-001',
+        'GOLD-LINE-002',
+      ]);
+      expect(printableItems.map((item) => item.grossCtrl.text), ['8', '12']);
+
+      _disposeItems(saleItems: [firstItem, secondItem, ...printableItems]);
     },
   );
 
@@ -378,6 +447,18 @@ void main() {
       expect(secondStock.status, stock.StockStatus.sold.label);
       expect(secondStock.isActive, isFalse);
 
+      final firstStockMovements = await _stockMovementsFor(db, firstStockId);
+      final secondStockMovements = await _stockMovementsFor(db, secondStockId);
+      expect(firstStockMovements.map((row) => row.movementType), [
+        'SALE',
+        'SALE_RESTORE',
+      ]);
+      expect(firstStockMovements.map((row) => row.quantityDelta), [-1, 1]);
+      expect(firstStockMovements.map((row) => row.sourceLineNo), [1, 1]);
+      expect(secondStockMovements.map((row) => row.movementType), ['SALE']);
+      expect(secondStockMovements.single.quantityDelta, -1);
+      expect(secondStockMovements.single.sourceLineNo, 1);
+
       final billItems = await (db.select(db.billItems)
             ..where((tbl) => tbl.billId.equals(result.billId)))
           .get();
@@ -589,6 +670,13 @@ Future<int> _insertStockItem(AppDatabase db, {required String sku}) {
 Future<StockItem> _stockById(AppDatabase db, int id) {
   return (db.select(db.stockItems)..where((tbl) => tbl.id.equals(id)))
       .getSingle();
+}
+
+Future<List<StockMovement>> _stockMovementsFor(AppDatabase db, int stockId) {
+  return (db.select(db.stockMovements)
+        ..where((tbl) => tbl.stockItemId.equals(stockId))
+        ..orderBy([(tbl) => drift.OrderingTerm.asc(tbl.id)]))
+      .get();
 }
 
 SaleItemModel _manualSaleItem({

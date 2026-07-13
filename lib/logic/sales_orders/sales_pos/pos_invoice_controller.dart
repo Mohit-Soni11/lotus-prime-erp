@@ -1,5 +1,5 @@
 //  Database persistence dependencies
-import '../../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../features/sales_pos/application/pdf/pos_invoice_pdf_builder.dart';
 import '../../../features/sales_pos/application/pdf/pos_invoice_print_config.dart';
@@ -10,6 +10,7 @@ import '../../../features/settings/billing_setup/shop_info/domain/shop_print_inf
 
 import '../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
+import '../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../repositories/sales_orders/pos/pos_checkout_repository.dart';
 import '../../../models/setting/billing_setup/sales_billing_model.dart';
@@ -715,6 +716,54 @@ class PosInvoiceController extends ChangeNotifier {
     );
   }
 
+  PosInvoiceModel _copyInvoiceWithSaleItems(
+    PosInvoiceModel source,
+    List<SaleItemModel> saleItems,
+  ) {
+    return PosInvoiceModel(
+      invoiceNumber: source.invoiceNumber,
+      invoiceDate: source.invoiceDate,
+      billType: source.billType,
+      billingMode: source.billingMode,
+      shopName: source.shopName,
+      shopAddress: source.shopAddress,
+      shopPhone: source.shopPhone,
+      shopGstin: source.shopGstin,
+      shopLogoPath: source.shopLogoPath,
+      shopLogoShape: source.shopLogoShape,
+      shopPrintFields: source.shopPrintFields,
+      shopPrintProfileApplied: source.shopPrintProfileApplied,
+      shopSignaturePath: source.shopSignaturePath,
+      shopSignatureShape: source.shopSignatureShape,
+      customerName: source.customerName,
+      customerMobile: source.customerMobile,
+      customerCity: source.customerCity,
+      customerPan: source.customerPan,
+      customerGstin: source.customerGstin,
+      oldGoldMode: source.oldGoldMode,
+      saleItems: saleItems,
+      oldGoldItems: source.oldGoldItems,
+      grossAmount: source.grossAmount,
+      discountAmount: source.discountAmount,
+      taxableAmount: source.taxableAmount,
+      cgst: source.cgst,
+      sgst: source.sgst,
+      totalGst: source.totalGst,
+      totalOldGoldDeduction: source.totalOldGoldDeduction,
+      grandTotal: source.grandTotal,
+      cashPaid: source.cashPaid,
+      upiPaid: source.upiPaid,
+      cardPaid: source.cardPaid,
+      advancePaid: source.advancePaid,
+      balanceDue: source.balanceDue,
+      totalMakingCharge: source.totalMakingCharge,
+      changeSettlementMethod: source.changeSettlementMethod,
+      changeSettlementAmount: source.changeSettlementAmount,
+      changeSettlementPaymentMode: source.changeSettlementPaymentMode,
+      promiseDate: source.promiseDate,
+    );
+  }
+
   Future<void> _saveBillToDatabase(PosInvoiceModel inv) async {
     if (isSavedToDb) return;
 
@@ -726,6 +775,8 @@ class PosInvoiceController extends ChangeNotifier {
         customerId: billing.selectedCustomer?.id,
       );
       savedBillDbId = editingBillId;
+      invoice = inv;
+      await _syncPrintableInvoiceLinesFromDatabase();
       billing.markCurrentSaleCommitted(inv.invoiceNumber);
       isSavedToDb = true;
       return;
@@ -736,6 +787,9 @@ class PosInvoiceController extends ChangeNotifier {
             ..where((tbl) => tbl.billNo.equals(inv.invoiceNumber)))
           .getSingleOrNull();
       savedBillDbId = existingBill?.id;
+      if (savedBillDbId != null) {
+        await _syncPrintableInvoiceLinesFromDatabase();
+      }
       isSavedToDb = true;
       return;
     }
@@ -782,10 +836,28 @@ class PosInvoiceController extends ChangeNotifier {
 
     if (result.invoiceNumber != inv.invoiceNumber) {
       invoice = _copyInvoiceWithNumber(inv, result.invoiceNumber);
-      await _refreshActivePreviewPdf();
+    } else {
+      invoice = inv;
     }
+    await _syncPrintableInvoiceLinesFromDatabase();
+    await _refreshActivePreviewPdf();
 
     isSavedToDb = true;
+  }
+
+  Future<void> _syncPrintableInvoiceLinesFromDatabase() async {
+    final billId = savedBillDbId;
+    final currentInvoice = invoice;
+    if (billId == null || currentInvoice == null) {
+      return;
+    }
+
+    final persistedItems = await _checkoutRepo.fetchPrintableSaleItems(billId);
+    if (persistedItems.isEmpty) {
+      return;
+    }
+
+    invoice = _copyInvoiceWithSaleItems(currentInvoice, persistedItems);
   }
 
   Future<void> finalizeInvoiceIfNeeded() async {

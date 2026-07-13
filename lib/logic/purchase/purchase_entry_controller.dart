@@ -2,18 +2,18 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../helpers/search/fuzzy_search_helper.dart';
 import '../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../models/customer/customer_list/customer_list_ui_model.dart';
 import '../../models/purchase/purchase_enums/purchase_enums.dart';
 import '../../models/purchase/purchase_entry/purchase_item_model.dart';
 import '../../models/setting/metal_rate/metal_rate_model.dart';
-import '../../models/stock/supplier_model/supplier_model.dart';
+import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
 import '../../repositories/purchase/purchase_entry_repository.dart';
 import '../../repositories/setting/metal_rate/metal_rate_quote_service.dart';
-import '../../repositories/supplier/supplier_repository.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/repositories/supplier/supplier_repository.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class PurchaseEntryController extends ChangeNotifier {
   PurchaseEntryController() {

@@ -10,11 +10,11 @@
 
 import 'package:drift/drift.dart' as drift;
 
-import '../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/karigar/karigar_enums/karigar_enums.dart';
 import '../../models/karigar/karigar_issue_model.dart';
 import '../../models/karigar/karigar_stats_model.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class KarigarRepository {
   final AppDatabase _db;

@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart' as drift;
 
-import '../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_persistence_models.dart';
 
 class GirviLoanItemDetails {

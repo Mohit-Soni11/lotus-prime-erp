@@ -12,7 +12,7 @@
 // =============================================================================
 
 import 'package:drift/drift.dart';
-import '../base_table.dart';
+import 'package:lotus_erp/database/tables/base_table.dart';
 
 @DataClassName('BankAccount')
 @TableIndex(name: 'idx_bank_acc_number', columns: {#accountNumber})

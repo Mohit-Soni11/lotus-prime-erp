@@ -34,7 +34,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
-import '../../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../models/dashboard/alert_card_model.dart';
 import '../../../constants/app_routes.dart';
 import '../../../core/logging/app_logger.dart';

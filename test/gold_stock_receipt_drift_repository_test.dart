@@ -1,11 +1,11 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
-import 'package:lotus_erp/features/gold_stock_receipts/data/drift/drift_gold_stock_receipt_repository.dart';
-import 'package:lotus_erp/features/gold_stock_receipts/domain/entities/gold_stock_receipt.dart';
-import 'package:lotus_erp/features/gold_stock_receipts/domain/value_objects/gold_purity.dart';
-import 'package:lotus_erp/features/gold_stock_receipts/domain/value_objects/gold_weight.dart';
-import 'package:lotus_erp/features/gold_stock_receipts/domain/value_objects/money.dart';
+import 'package:lotus_erp/features/stock/gold/data/receipts/drift_gold_stock_receipt_repository.dart';
+import 'package:lotus_erp/features/stock/gold/domain/receipts/gold_stock_receipt.dart';
+import 'package:lotus_erp/features/stock/gold/domain/receipts/gold_purity.dart';
+import 'package:lotus_erp/features/stock/gold/domain/receipts/gold_weight.dart';
+import 'package:lotus_erp/features/stock/gold/domain/receipts/money.dart';
 
 void main() {
   late AppDatabase database;

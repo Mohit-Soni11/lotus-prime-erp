@@ -10,11 +10,11 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 
-import '../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/karigar/karigar_directory/karigar_directory_enums.dart';
 import '../../models/karigar/karigar_directory/karigar_directory_ui_model.dart';
 import '../../repositories/karigar/karigar_directory_repository.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class KarigarDirectoryLogic extends ChangeNotifier {
   final KarigarDirectoryRepository _repo;

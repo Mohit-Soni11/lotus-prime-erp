@@ -9,8 +9,8 @@ import 'dart:math' as math;
 
 import 'package:drift/drift.dart';
 
-import '../../core/logging/app_logger.dart';
-import '../../database/db/app_database.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../logic/girvi/girvi_risk_policy.dart';
 import '../../models/customer/defaulter_model.dart';
 import '../../models/girvi/girvi_enums.dart';

@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../../core/logging/app_logger.dart';
-import '../../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../models/setting/billing_setup/girvi_billing_model.dart';
 
 class GirviBillingRepo {

@@ -15,7 +15,7 @@ import 'package:flutter/material.dart';
 import '../../models/booking_advance/booking_advance/booking_advance_model.dart';
 import '../../repositories/booking_advance/booking_advance_repository.dart';
 import '../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 enum BookingType { open, locked }
 

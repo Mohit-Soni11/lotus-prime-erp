@@ -1,11 +1,11 @@
 import 'package:drift/drift.dart' as drift;
 
-import '../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/finance/bank_book/bank_book_enums.dart';
 import '../../models/finance/cash_book/cash_book_enums.dart';
 import '../../models/purchase/purchase_enums/purchase_enums.dart';
-import '../../models/stock/stock_item_model/stock_enums.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class PurchaseVoucherPartyDraft {
   final int? customerId;
@@ -331,7 +331,7 @@ class PurchaseEntryRepository {
             ],
           );
 
-          await _db.into(_db.stockItems).insert(
+          final stockItemId = await _db.into(_db.stockItems).insert(
                 StockItemsCompanion(
                   sku: drift.Value(sku),
                   itemName: drift.Value(
@@ -393,6 +393,28 @@ class PurchaseEntryRepository {
                   gstRate: drift.Value(item.gstRate),
                 ),
               );
+          await _insertStockMovement(
+            stockItemId: stockItemId,
+            movementType: 'IN',
+            sourceType: 'PURCHASE',
+            sourceId: voucherId.toString(),
+            sourceLineNo: index + 1,
+            sourceNumber: draft.voucherNo,
+            skuSnapshot: sku,
+            metalTypeSnapshot: item.metal.displayName,
+            itemNameSnapshot: item.description.isNotEmpty
+                ? item.description
+                : '${item.subCategory} Purchase Item',
+            quantityDelta: item.quantity > 0 ? item.quantity : 1,
+            grossWeightDelta:
+                item.grossWeight * (item.quantity > 0 ? item.quantity : 1),
+            netWeightDelta:
+                item.netWeight * (item.quantity > 0 ? item.quantity : 1),
+            fineWeightDelta:
+                item.fineWeight * (item.quantity > 0 ? item.quantity : 1),
+            reason: 'Purchase stock inward',
+            occurredAt: now,
+          );
           stockEntryCount++;
         }
 
@@ -543,6 +565,67 @@ class PurchaseEntryRepository {
       const {
         'quantity': 'INTEGER NOT NULL DEFAULT 1',
       },
+    );
+  }
+
+  Future<void> _insertStockMovement({
+    required int stockItemId,
+    required String movementType,
+    required String sourceType,
+    required String sourceId,
+    required int? sourceLineNo,
+    required String? sourceNumber,
+    required String skuSnapshot,
+    required String metalTypeSnapshot,
+    required String itemNameSnapshot,
+    required int quantityDelta,
+    required double grossWeightDelta,
+    required double netWeightDelta,
+    required double fineWeightDelta,
+    required String reason,
+    required DateTime occurredAt,
+  }) {
+    return _db.customStatement(
+      '''
+      INSERT INTO stock_movements (
+        stock_item_id,
+        movement_type,
+        source_type,
+        source_id,
+        source_line_no,
+        source_number,
+        sku_snapshot,
+        metal_type_snapshot,
+        item_name_snapshot,
+        quantity_delta,
+        gross_weight_delta,
+        net_weight_delta,
+        fine_weight_delta,
+        reason,
+        occurred_at,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
+      [
+        stockItemId,
+        movementType,
+        sourceType,
+        sourceId,
+        sourceLineNo,
+        sourceNumber,
+        skuSnapshot,
+        metalTypeSnapshot,
+        itemNameSnapshot,
+        quantityDelta,
+        grossWeightDelta,
+        netWeightDelta,
+        fineWeightDelta,
+        reason,
+        occurredAt.millisecondsSinceEpoch,
+        occurredAt.millisecondsSinceEpoch,
+        occurredAt.millisecondsSinceEpoch,
+      ],
     );
   }
 

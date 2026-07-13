@@ -20,11 +20,11 @@
 import 'package:drift/drift.dart';
 import 'package:intl/intl.dart';
 
-import '../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/finance/bank_book/bank_book_enums.dart';
 import '../../models/finance/bank_book/bank_account_model.dart';
 import '../../models/finance/bank_book/bank_book_summary_model.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class BankBookRepository {
   final AppDatabase _db;

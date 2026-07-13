@@ -4,10 +4,10 @@ import 'package:flutter/services.dart';
 import '../../../logic/purchase/purchase_entry_controller.dart';
 import '../../../models/customer/customer_list/customer_list_ui_model.dart';
 import '../../../models/purchase/purchase_enums/purchase_enums.dart';
-import '../../../models/stock/supplier_model/supplier_model.dart';
+import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
 import '../../../theme/purchase/purchase_entry/purchase_entry_theme.dart';
 import '../../customer/add_customer/add_customer_screen.dart';
-import '../../stock/supplier/add_supplier/add_supplier_screen.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/supplier/add_supplier/add_supplier_screen.dart';
 
 class PurchaseCustomerPanel extends StatefulWidget {
   final PurchaseEntryController ctrl;

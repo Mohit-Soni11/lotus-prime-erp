@@ -1,8 +1,8 @@
 import 'package:drift/drift.dart';
 
-import '../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/finance/due_receipt_history/due_receipt_history_model.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class DueReceiptHistoryRepository {
   final AppDatabase _db;

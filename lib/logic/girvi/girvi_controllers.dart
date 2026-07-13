@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
-import '../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../repositories/girvi/girvi_repository.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 export 'interest_entry/girvi_interest_entry_controller.dart';
 

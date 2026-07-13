@@ -11,7 +11,8 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../helpers/search/fuzzy_search_helper.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_stock_lookup_model.dart';
-import '../../../models/stock/stock_item_model/stock_enums.dart' as stock;
+import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart'
+    as stock;
 
 class PosStockLookupRepository {
   final AppDatabase _db;

@@ -11781,6 +11781,873 @@ class StockItemsCompanion extends UpdateCompanion<StockItem> {
   }
 }
 
+class $StockMovementsTable extends StockMovements
+    with TableInfo<$StockMovementsTable, StockMovement> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $StockMovementsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _stockItemIdMeta =
+      const VerificationMeta('stockItemId');
+  @override
+  late final GeneratedColumn<int> stockItemId = GeneratedColumn<int>(
+      'stock_item_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES stock_items (id) ON DELETE RESTRICT'));
+  static const VerificationMeta _movementTypeMeta =
+      const VerificationMeta('movementType');
+  @override
+  late final GeneratedColumn<String> movementType = GeneratedColumn<String>(
+      'movement_type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _sourceTypeMeta =
+      const VerificationMeta('sourceType');
+  @override
+  late final GeneratedColumn<String> sourceType = GeneratedColumn<String>(
+      'source_type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _sourceIdMeta =
+      const VerificationMeta('sourceId');
+  @override
+  late final GeneratedColumn<String> sourceId = GeneratedColumn<String>(
+      'source_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _sourceLineNoMeta =
+      const VerificationMeta('sourceLineNo');
+  @override
+  late final GeneratedColumn<int> sourceLineNo = GeneratedColumn<int>(
+      'source_line_no', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _sourceNumberMeta =
+      const VerificationMeta('sourceNumber');
+  @override
+  late final GeneratedColumn<String> sourceNumber = GeneratedColumn<String>(
+      'source_number', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _skuSnapshotMeta =
+      const VerificationMeta('skuSnapshot');
+  @override
+  late final GeneratedColumn<String> skuSnapshot = GeneratedColumn<String>(
+      'sku_snapshot', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _metalTypeSnapshotMeta =
+      const VerificationMeta('metalTypeSnapshot');
+  @override
+  late final GeneratedColumn<String> metalTypeSnapshot =
+      GeneratedColumn<String>('metal_type_snapshot', aliasedName, false,
+          type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _itemNameSnapshotMeta =
+      const VerificationMeta('itemNameSnapshot');
+  @override
+  late final GeneratedColumn<String> itemNameSnapshot = GeneratedColumn<String>(
+      'item_name_snapshot', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _quantityDeltaMeta =
+      const VerificationMeta('quantityDelta');
+  @override
+  late final GeneratedColumn<int> quantityDelta = GeneratedColumn<int>(
+      'quantity_delta', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _grossWeightDeltaMeta =
+      const VerificationMeta('grossWeightDelta');
+  @override
+  late final GeneratedColumn<double> grossWeightDelta = GeneratedColumn<double>(
+      'gross_weight_delta', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _netWeightDeltaMeta =
+      const VerificationMeta('netWeightDelta');
+  @override
+  late final GeneratedColumn<double> netWeightDelta = GeneratedColumn<double>(
+      'net_weight_delta', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _fineWeightDeltaMeta =
+      const VerificationMeta('fineWeightDelta');
+  @override
+  late final GeneratedColumn<double> fineWeightDelta = GeneratedColumn<double>(
+      'fine_weight_delta', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _reasonMeta = const VerificationMeta('reason');
+  @override
+  late final GeneratedColumn<String> reason = GeneratedColumn<String>(
+      'reason', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _occurredAtMeta =
+      const VerificationMeta('occurredAt');
+  @override
+  late final GeneratedColumn<DateTime> occurredAt = GeneratedColumn<DateTime>(
+      'occurred_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        stockItemId,
+        movementType,
+        sourceType,
+        sourceId,
+        sourceLineNo,
+        sourceNumber,
+        skuSnapshot,
+        metalTypeSnapshot,
+        itemNameSnapshot,
+        quantityDelta,
+        grossWeightDelta,
+        netWeightDelta,
+        fineWeightDelta,
+        reason,
+        occurredAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'stock_movements';
+  @override
+  VerificationContext validateIntegrity(Insertable<StockMovement> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('stock_item_id')) {
+      context.handle(
+          _stockItemIdMeta,
+          stockItemId.isAcceptableOrUnknown(
+              data['stock_item_id']!, _stockItemIdMeta));
+    } else if (isInserting) {
+      context.missing(_stockItemIdMeta);
+    }
+    if (data.containsKey('movement_type')) {
+      context.handle(
+          _movementTypeMeta,
+          movementType.isAcceptableOrUnknown(
+              data['movement_type']!, _movementTypeMeta));
+    } else if (isInserting) {
+      context.missing(_movementTypeMeta);
+    }
+    if (data.containsKey('source_type')) {
+      context.handle(
+          _sourceTypeMeta,
+          sourceType.isAcceptableOrUnknown(
+              data['source_type']!, _sourceTypeMeta));
+    } else if (isInserting) {
+      context.missing(_sourceTypeMeta);
+    }
+    if (data.containsKey('source_id')) {
+      context.handle(_sourceIdMeta,
+          sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta));
+    } else if (isInserting) {
+      context.missing(_sourceIdMeta);
+    }
+    if (data.containsKey('source_line_no')) {
+      context.handle(
+          _sourceLineNoMeta,
+          sourceLineNo.isAcceptableOrUnknown(
+              data['source_line_no']!, _sourceLineNoMeta));
+    }
+    if (data.containsKey('source_number')) {
+      context.handle(
+          _sourceNumberMeta,
+          sourceNumber.isAcceptableOrUnknown(
+              data['source_number']!, _sourceNumberMeta));
+    }
+    if (data.containsKey('sku_snapshot')) {
+      context.handle(
+          _skuSnapshotMeta,
+          skuSnapshot.isAcceptableOrUnknown(
+              data['sku_snapshot']!, _skuSnapshotMeta));
+    } else if (isInserting) {
+      context.missing(_skuSnapshotMeta);
+    }
+    if (data.containsKey('metal_type_snapshot')) {
+      context.handle(
+          _metalTypeSnapshotMeta,
+          metalTypeSnapshot.isAcceptableOrUnknown(
+              data['metal_type_snapshot']!, _metalTypeSnapshotMeta));
+    } else if (isInserting) {
+      context.missing(_metalTypeSnapshotMeta);
+    }
+    if (data.containsKey('item_name_snapshot')) {
+      context.handle(
+          _itemNameSnapshotMeta,
+          itemNameSnapshot.isAcceptableOrUnknown(
+              data['item_name_snapshot']!, _itemNameSnapshotMeta));
+    } else if (isInserting) {
+      context.missing(_itemNameSnapshotMeta);
+    }
+    if (data.containsKey('quantity_delta')) {
+      context.handle(
+          _quantityDeltaMeta,
+          quantityDelta.isAcceptableOrUnknown(
+              data['quantity_delta']!, _quantityDeltaMeta));
+    } else if (isInserting) {
+      context.missing(_quantityDeltaMeta);
+    }
+    if (data.containsKey('gross_weight_delta')) {
+      context.handle(
+          _grossWeightDeltaMeta,
+          grossWeightDelta.isAcceptableOrUnknown(
+              data['gross_weight_delta']!, _grossWeightDeltaMeta));
+    }
+    if (data.containsKey('net_weight_delta')) {
+      context.handle(
+          _netWeightDeltaMeta,
+          netWeightDelta.isAcceptableOrUnknown(
+              data['net_weight_delta']!, _netWeightDeltaMeta));
+    }
+    if (data.containsKey('fine_weight_delta')) {
+      context.handle(
+          _fineWeightDeltaMeta,
+          fineWeightDelta.isAcceptableOrUnknown(
+              data['fine_weight_delta']!, _fineWeightDeltaMeta));
+    }
+    if (data.containsKey('reason')) {
+      context.handle(_reasonMeta,
+          reason.isAcceptableOrUnknown(data['reason']!, _reasonMeta));
+    }
+    if (data.containsKey('occurred_at')) {
+      context.handle(
+          _occurredAtMeta,
+          occurredAt.isAcceptableOrUnknown(
+              data['occurred_at']!, _occurredAtMeta));
+    } else if (isInserting) {
+      context.missing(_occurredAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  StockMovement map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return StockMovement(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      stockItemId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}stock_item_id'])!,
+      movementType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}movement_type'])!,
+      sourceType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source_type'])!,
+      sourceId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source_id'])!,
+      sourceLineNo: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}source_line_no']),
+      sourceNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source_number']),
+      skuSnapshot: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sku_snapshot'])!,
+      metalTypeSnapshot: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}metal_type_snapshot'])!,
+      itemNameSnapshot: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}item_name_snapshot'])!,
+      quantityDelta: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}quantity_delta'])!,
+      grossWeightDelta: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}gross_weight_delta'])!,
+      netWeightDelta: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}net_weight_delta'])!,
+      fineWeightDelta: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}fine_weight_delta'])!,
+      reason: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}reason']),
+      occurredAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}occurred_at'])!,
+    );
+  }
+
+  @override
+  $StockMovementsTable createAlias(String alias) {
+    return $StockMovementsTable(attachedDatabase, alias);
+  }
+}
+
+class StockMovement extends DataClass implements Insertable<StockMovement> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final int stockItemId;
+  final String movementType;
+  final String sourceType;
+  final String sourceId;
+  final int? sourceLineNo;
+  final String? sourceNumber;
+  final String skuSnapshot;
+  final String metalTypeSnapshot;
+  final String itemNameSnapshot;
+  final int quantityDelta;
+  final double grossWeightDelta;
+  final double netWeightDelta;
+  final double fineWeightDelta;
+  final String? reason;
+  final DateTime occurredAt;
+  const StockMovement(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.stockItemId,
+      required this.movementType,
+      required this.sourceType,
+      required this.sourceId,
+      this.sourceLineNo,
+      this.sourceNumber,
+      required this.skuSnapshot,
+      required this.metalTypeSnapshot,
+      required this.itemNameSnapshot,
+      required this.quantityDelta,
+      required this.grossWeightDelta,
+      required this.netWeightDelta,
+      required this.fineWeightDelta,
+      this.reason,
+      required this.occurredAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['stock_item_id'] = Variable<int>(stockItemId);
+    map['movement_type'] = Variable<String>(movementType);
+    map['source_type'] = Variable<String>(sourceType);
+    map['source_id'] = Variable<String>(sourceId);
+    if (!nullToAbsent || sourceLineNo != null) {
+      map['source_line_no'] = Variable<int>(sourceLineNo);
+    }
+    if (!nullToAbsent || sourceNumber != null) {
+      map['source_number'] = Variable<String>(sourceNumber);
+    }
+    map['sku_snapshot'] = Variable<String>(skuSnapshot);
+    map['metal_type_snapshot'] = Variable<String>(metalTypeSnapshot);
+    map['item_name_snapshot'] = Variable<String>(itemNameSnapshot);
+    map['quantity_delta'] = Variable<int>(quantityDelta);
+    map['gross_weight_delta'] = Variable<double>(grossWeightDelta);
+    map['net_weight_delta'] = Variable<double>(netWeightDelta);
+    map['fine_weight_delta'] = Variable<double>(fineWeightDelta);
+    if (!nullToAbsent || reason != null) {
+      map['reason'] = Variable<String>(reason);
+    }
+    map['occurred_at'] = Variable<DateTime>(occurredAt);
+    return map;
+  }
+
+  StockMovementsCompanion toCompanion(bool nullToAbsent) {
+    return StockMovementsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      stockItemId: Value(stockItemId),
+      movementType: Value(movementType),
+      sourceType: Value(sourceType),
+      sourceId: Value(sourceId),
+      sourceLineNo: sourceLineNo == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceLineNo),
+      sourceNumber: sourceNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceNumber),
+      skuSnapshot: Value(skuSnapshot),
+      metalTypeSnapshot: Value(metalTypeSnapshot),
+      itemNameSnapshot: Value(itemNameSnapshot),
+      quantityDelta: Value(quantityDelta),
+      grossWeightDelta: Value(grossWeightDelta),
+      netWeightDelta: Value(netWeightDelta),
+      fineWeightDelta: Value(fineWeightDelta),
+      reason:
+          reason == null && nullToAbsent ? const Value.absent() : Value(reason),
+      occurredAt: Value(occurredAt),
+    );
+  }
+
+  factory StockMovement.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return StockMovement(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      stockItemId: serializer.fromJson<int>(json['stockItemId']),
+      movementType: serializer.fromJson<String>(json['movementType']),
+      sourceType: serializer.fromJson<String>(json['sourceType']),
+      sourceId: serializer.fromJson<String>(json['sourceId']),
+      sourceLineNo: serializer.fromJson<int?>(json['sourceLineNo']),
+      sourceNumber: serializer.fromJson<String?>(json['sourceNumber']),
+      skuSnapshot: serializer.fromJson<String>(json['skuSnapshot']),
+      metalTypeSnapshot: serializer.fromJson<String>(json['metalTypeSnapshot']),
+      itemNameSnapshot: serializer.fromJson<String>(json['itemNameSnapshot']),
+      quantityDelta: serializer.fromJson<int>(json['quantityDelta']),
+      grossWeightDelta: serializer.fromJson<double>(json['grossWeightDelta']),
+      netWeightDelta: serializer.fromJson<double>(json['netWeightDelta']),
+      fineWeightDelta: serializer.fromJson<double>(json['fineWeightDelta']),
+      reason: serializer.fromJson<String?>(json['reason']),
+      occurredAt: serializer.fromJson<DateTime>(json['occurredAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'stockItemId': serializer.toJson<int>(stockItemId),
+      'movementType': serializer.toJson<String>(movementType),
+      'sourceType': serializer.toJson<String>(sourceType),
+      'sourceId': serializer.toJson<String>(sourceId),
+      'sourceLineNo': serializer.toJson<int?>(sourceLineNo),
+      'sourceNumber': serializer.toJson<String?>(sourceNumber),
+      'skuSnapshot': serializer.toJson<String>(skuSnapshot),
+      'metalTypeSnapshot': serializer.toJson<String>(metalTypeSnapshot),
+      'itemNameSnapshot': serializer.toJson<String>(itemNameSnapshot),
+      'quantityDelta': serializer.toJson<int>(quantityDelta),
+      'grossWeightDelta': serializer.toJson<double>(grossWeightDelta),
+      'netWeightDelta': serializer.toJson<double>(netWeightDelta),
+      'fineWeightDelta': serializer.toJson<double>(fineWeightDelta),
+      'reason': serializer.toJson<String?>(reason),
+      'occurredAt': serializer.toJson<DateTime>(occurredAt),
+    };
+  }
+
+  StockMovement copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          int? stockItemId,
+          String? movementType,
+          String? sourceType,
+          String? sourceId,
+          Value<int?> sourceLineNo = const Value.absent(),
+          Value<String?> sourceNumber = const Value.absent(),
+          String? skuSnapshot,
+          String? metalTypeSnapshot,
+          String? itemNameSnapshot,
+          int? quantityDelta,
+          double? grossWeightDelta,
+          double? netWeightDelta,
+          double? fineWeightDelta,
+          Value<String?> reason = const Value.absent(),
+          DateTime? occurredAt}) =>
+      StockMovement(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        stockItemId: stockItemId ?? this.stockItemId,
+        movementType: movementType ?? this.movementType,
+        sourceType: sourceType ?? this.sourceType,
+        sourceId: sourceId ?? this.sourceId,
+        sourceLineNo:
+            sourceLineNo.present ? sourceLineNo.value : this.sourceLineNo,
+        sourceNumber:
+            sourceNumber.present ? sourceNumber.value : this.sourceNumber,
+        skuSnapshot: skuSnapshot ?? this.skuSnapshot,
+        metalTypeSnapshot: metalTypeSnapshot ?? this.metalTypeSnapshot,
+        itemNameSnapshot: itemNameSnapshot ?? this.itemNameSnapshot,
+        quantityDelta: quantityDelta ?? this.quantityDelta,
+        grossWeightDelta: grossWeightDelta ?? this.grossWeightDelta,
+        netWeightDelta: netWeightDelta ?? this.netWeightDelta,
+        fineWeightDelta: fineWeightDelta ?? this.fineWeightDelta,
+        reason: reason.present ? reason.value : this.reason,
+        occurredAt: occurredAt ?? this.occurredAt,
+      );
+  StockMovement copyWithCompanion(StockMovementsCompanion data) {
+    return StockMovement(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      stockItemId:
+          data.stockItemId.present ? data.stockItemId.value : this.stockItemId,
+      movementType: data.movementType.present
+          ? data.movementType.value
+          : this.movementType,
+      sourceType:
+          data.sourceType.present ? data.sourceType.value : this.sourceType,
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
+      sourceLineNo: data.sourceLineNo.present
+          ? data.sourceLineNo.value
+          : this.sourceLineNo,
+      sourceNumber: data.sourceNumber.present
+          ? data.sourceNumber.value
+          : this.sourceNumber,
+      skuSnapshot:
+          data.skuSnapshot.present ? data.skuSnapshot.value : this.skuSnapshot,
+      metalTypeSnapshot: data.metalTypeSnapshot.present
+          ? data.metalTypeSnapshot.value
+          : this.metalTypeSnapshot,
+      itemNameSnapshot: data.itemNameSnapshot.present
+          ? data.itemNameSnapshot.value
+          : this.itemNameSnapshot,
+      quantityDelta: data.quantityDelta.present
+          ? data.quantityDelta.value
+          : this.quantityDelta,
+      grossWeightDelta: data.grossWeightDelta.present
+          ? data.grossWeightDelta.value
+          : this.grossWeightDelta,
+      netWeightDelta: data.netWeightDelta.present
+          ? data.netWeightDelta.value
+          : this.netWeightDelta,
+      fineWeightDelta: data.fineWeightDelta.present
+          ? data.fineWeightDelta.value
+          : this.fineWeightDelta,
+      reason: data.reason.present ? data.reason.value : this.reason,
+      occurredAt:
+          data.occurredAt.present ? data.occurredAt.value : this.occurredAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StockMovement(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('stockItemId: $stockItemId, ')
+          ..write('movementType: $movementType, ')
+          ..write('sourceType: $sourceType, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('sourceLineNo: $sourceLineNo, ')
+          ..write('sourceNumber: $sourceNumber, ')
+          ..write('skuSnapshot: $skuSnapshot, ')
+          ..write('metalTypeSnapshot: $metalTypeSnapshot, ')
+          ..write('itemNameSnapshot: $itemNameSnapshot, ')
+          ..write('quantityDelta: $quantityDelta, ')
+          ..write('grossWeightDelta: $grossWeightDelta, ')
+          ..write('netWeightDelta: $netWeightDelta, ')
+          ..write('fineWeightDelta: $fineWeightDelta, ')
+          ..write('reason: $reason, ')
+          ..write('occurredAt: $occurredAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      createdAt,
+      updatedAt,
+      stockItemId,
+      movementType,
+      sourceType,
+      sourceId,
+      sourceLineNo,
+      sourceNumber,
+      skuSnapshot,
+      metalTypeSnapshot,
+      itemNameSnapshot,
+      quantityDelta,
+      grossWeightDelta,
+      netWeightDelta,
+      fineWeightDelta,
+      reason,
+      occurredAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is StockMovement &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.stockItemId == this.stockItemId &&
+          other.movementType == this.movementType &&
+          other.sourceType == this.sourceType &&
+          other.sourceId == this.sourceId &&
+          other.sourceLineNo == this.sourceLineNo &&
+          other.sourceNumber == this.sourceNumber &&
+          other.skuSnapshot == this.skuSnapshot &&
+          other.metalTypeSnapshot == this.metalTypeSnapshot &&
+          other.itemNameSnapshot == this.itemNameSnapshot &&
+          other.quantityDelta == this.quantityDelta &&
+          other.grossWeightDelta == this.grossWeightDelta &&
+          other.netWeightDelta == this.netWeightDelta &&
+          other.fineWeightDelta == this.fineWeightDelta &&
+          other.reason == this.reason &&
+          other.occurredAt == this.occurredAt);
+}
+
+class StockMovementsCompanion extends UpdateCompanion<StockMovement> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<int> stockItemId;
+  final Value<String> movementType;
+  final Value<String> sourceType;
+  final Value<String> sourceId;
+  final Value<int?> sourceLineNo;
+  final Value<String?> sourceNumber;
+  final Value<String> skuSnapshot;
+  final Value<String> metalTypeSnapshot;
+  final Value<String> itemNameSnapshot;
+  final Value<int> quantityDelta;
+  final Value<double> grossWeightDelta;
+  final Value<double> netWeightDelta;
+  final Value<double> fineWeightDelta;
+  final Value<String?> reason;
+  final Value<DateTime> occurredAt;
+  const StockMovementsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.stockItemId = const Value.absent(),
+    this.movementType = const Value.absent(),
+    this.sourceType = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.sourceLineNo = const Value.absent(),
+    this.sourceNumber = const Value.absent(),
+    this.skuSnapshot = const Value.absent(),
+    this.metalTypeSnapshot = const Value.absent(),
+    this.itemNameSnapshot = const Value.absent(),
+    this.quantityDelta = const Value.absent(),
+    this.grossWeightDelta = const Value.absent(),
+    this.netWeightDelta = const Value.absent(),
+    this.fineWeightDelta = const Value.absent(),
+    this.reason = const Value.absent(),
+    this.occurredAt = const Value.absent(),
+  });
+  StockMovementsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required int stockItemId,
+    required String movementType,
+    required String sourceType,
+    required String sourceId,
+    this.sourceLineNo = const Value.absent(),
+    this.sourceNumber = const Value.absent(),
+    required String skuSnapshot,
+    required String metalTypeSnapshot,
+    required String itemNameSnapshot,
+    required int quantityDelta,
+    this.grossWeightDelta = const Value.absent(),
+    this.netWeightDelta = const Value.absent(),
+    this.fineWeightDelta = const Value.absent(),
+    this.reason = const Value.absent(),
+    required DateTime occurredAt,
+  })  : stockItemId = Value(stockItemId),
+        movementType = Value(movementType),
+        sourceType = Value(sourceType),
+        sourceId = Value(sourceId),
+        skuSnapshot = Value(skuSnapshot),
+        metalTypeSnapshot = Value(metalTypeSnapshot),
+        itemNameSnapshot = Value(itemNameSnapshot),
+        quantityDelta = Value(quantityDelta),
+        occurredAt = Value(occurredAt);
+  static Insertable<StockMovement> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? stockItemId,
+    Expression<String>? movementType,
+    Expression<String>? sourceType,
+    Expression<String>? sourceId,
+    Expression<int>? sourceLineNo,
+    Expression<String>? sourceNumber,
+    Expression<String>? skuSnapshot,
+    Expression<String>? metalTypeSnapshot,
+    Expression<String>? itemNameSnapshot,
+    Expression<int>? quantityDelta,
+    Expression<double>? grossWeightDelta,
+    Expression<double>? netWeightDelta,
+    Expression<double>? fineWeightDelta,
+    Expression<String>? reason,
+    Expression<DateTime>? occurredAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (stockItemId != null) 'stock_item_id': stockItemId,
+      if (movementType != null) 'movement_type': movementType,
+      if (sourceType != null) 'source_type': sourceType,
+      if (sourceId != null) 'source_id': sourceId,
+      if (sourceLineNo != null) 'source_line_no': sourceLineNo,
+      if (sourceNumber != null) 'source_number': sourceNumber,
+      if (skuSnapshot != null) 'sku_snapshot': skuSnapshot,
+      if (metalTypeSnapshot != null) 'metal_type_snapshot': metalTypeSnapshot,
+      if (itemNameSnapshot != null) 'item_name_snapshot': itemNameSnapshot,
+      if (quantityDelta != null) 'quantity_delta': quantityDelta,
+      if (grossWeightDelta != null) 'gross_weight_delta': grossWeightDelta,
+      if (netWeightDelta != null) 'net_weight_delta': netWeightDelta,
+      if (fineWeightDelta != null) 'fine_weight_delta': fineWeightDelta,
+      if (reason != null) 'reason': reason,
+      if (occurredAt != null) 'occurred_at': occurredAt,
+    });
+  }
+
+  StockMovementsCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<int>? stockItemId,
+      Value<String>? movementType,
+      Value<String>? sourceType,
+      Value<String>? sourceId,
+      Value<int?>? sourceLineNo,
+      Value<String?>? sourceNumber,
+      Value<String>? skuSnapshot,
+      Value<String>? metalTypeSnapshot,
+      Value<String>? itemNameSnapshot,
+      Value<int>? quantityDelta,
+      Value<double>? grossWeightDelta,
+      Value<double>? netWeightDelta,
+      Value<double>? fineWeightDelta,
+      Value<String?>? reason,
+      Value<DateTime>? occurredAt}) {
+    return StockMovementsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      stockItemId: stockItemId ?? this.stockItemId,
+      movementType: movementType ?? this.movementType,
+      sourceType: sourceType ?? this.sourceType,
+      sourceId: sourceId ?? this.sourceId,
+      sourceLineNo: sourceLineNo ?? this.sourceLineNo,
+      sourceNumber: sourceNumber ?? this.sourceNumber,
+      skuSnapshot: skuSnapshot ?? this.skuSnapshot,
+      metalTypeSnapshot: metalTypeSnapshot ?? this.metalTypeSnapshot,
+      itemNameSnapshot: itemNameSnapshot ?? this.itemNameSnapshot,
+      quantityDelta: quantityDelta ?? this.quantityDelta,
+      grossWeightDelta: grossWeightDelta ?? this.grossWeightDelta,
+      netWeightDelta: netWeightDelta ?? this.netWeightDelta,
+      fineWeightDelta: fineWeightDelta ?? this.fineWeightDelta,
+      reason: reason ?? this.reason,
+      occurredAt: occurredAt ?? this.occurredAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (stockItemId.present) {
+      map['stock_item_id'] = Variable<int>(stockItemId.value);
+    }
+    if (movementType.present) {
+      map['movement_type'] = Variable<String>(movementType.value);
+    }
+    if (sourceType.present) {
+      map['source_type'] = Variable<String>(sourceType.value);
+    }
+    if (sourceId.present) {
+      map['source_id'] = Variable<String>(sourceId.value);
+    }
+    if (sourceLineNo.present) {
+      map['source_line_no'] = Variable<int>(sourceLineNo.value);
+    }
+    if (sourceNumber.present) {
+      map['source_number'] = Variable<String>(sourceNumber.value);
+    }
+    if (skuSnapshot.present) {
+      map['sku_snapshot'] = Variable<String>(skuSnapshot.value);
+    }
+    if (metalTypeSnapshot.present) {
+      map['metal_type_snapshot'] = Variable<String>(metalTypeSnapshot.value);
+    }
+    if (itemNameSnapshot.present) {
+      map['item_name_snapshot'] = Variable<String>(itemNameSnapshot.value);
+    }
+    if (quantityDelta.present) {
+      map['quantity_delta'] = Variable<int>(quantityDelta.value);
+    }
+    if (grossWeightDelta.present) {
+      map['gross_weight_delta'] = Variable<double>(grossWeightDelta.value);
+    }
+    if (netWeightDelta.present) {
+      map['net_weight_delta'] = Variable<double>(netWeightDelta.value);
+    }
+    if (fineWeightDelta.present) {
+      map['fine_weight_delta'] = Variable<double>(fineWeightDelta.value);
+    }
+    if (reason.present) {
+      map['reason'] = Variable<String>(reason.value);
+    }
+    if (occurredAt.present) {
+      map['occurred_at'] = Variable<DateTime>(occurredAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StockMovementsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('stockItemId: $stockItemId, ')
+          ..write('movementType: $movementType, ')
+          ..write('sourceType: $sourceType, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('sourceLineNo: $sourceLineNo, ')
+          ..write('sourceNumber: $sourceNumber, ')
+          ..write('skuSnapshot: $skuSnapshot, ')
+          ..write('metalTypeSnapshot: $metalTypeSnapshot, ')
+          ..write('itemNameSnapshot: $itemNameSnapshot, ')
+          ..write('quantityDelta: $quantityDelta, ')
+          ..write('grossWeightDelta: $grossWeightDelta, ')
+          ..write('netWeightDelta: $netWeightDelta, ')
+          ..write('fineWeightDelta: $fineWeightDelta, ')
+          ..write('reason: $reason, ')
+          ..write('occurredAt: $occurredAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $DailyRatesTable extends DailyRates
     with TableInfo<$DailyRatesTable, DailyRate> {
   @override
@@ -35203,6 +36070,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LoansTable loans = $LoansTable(this);
   late final $NotificationsTable notifications = $NotificationsTable(this);
   late final $StockItemsTable stockItems = $StockItemsTable(this);
+  late final $StockMovementsTable stockMovements = $StockMovementsTable(this);
   late final $DailyRatesTable dailyRates = $DailyRatesTable(this);
   late final $CashTransactionsTable cashTransactions =
       $CashTransactionsTable(this);
@@ -35293,6 +36161,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       'CREATE INDEX idx_stock_status ON stock_items (status)');
   late final Index idxStockSupplier = Index('idx_stock_supplier',
       'CREATE INDEX idx_stock_supplier ON stock_items (supplier_id)');
+  late final Index idxStockMovementItem = Index('idx_stock_movement_item',
+      'CREATE INDEX idx_stock_movement_item ON stock_movements (stock_item_id)');
+  late final Index idxStockMovementSource = Index('idx_stock_movement_source',
+      'CREATE INDEX idx_stock_movement_source ON stock_movements (source_type, source_id)');
+  late final Index idxStockMovementOccurred = Index(
+      'idx_stock_movement_occurred',
+      'CREATE INDEX idx_stock_movement_occurred ON stock_movements (occurred_at)');
   late final Index idxCashTxnDate = Index('idx_cash_txn_date',
       'CREATE INDEX idx_cash_txn_date ON cash_transactions (txn_date)');
   late final Index idxCashTxnType = Index('idx_cash_txn_type',
@@ -35427,6 +36302,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         loans,
         notifications,
         stockItems,
+        stockMovements,
         dailyRates,
         cashTransactions,
         bankAccounts,
@@ -35476,6 +36352,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         idxStockMetal,
         idxStockStatus,
         idxStockSupplier,
+        idxStockMovementItem,
+        idxStockMovementSource,
+        idxStockMovementOccurred,
         idxCashTxnDate,
         idxCashTxnType,
         idxCashTxnRef,
@@ -41969,6 +42848,21 @@ final class $$StockItemsTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: [item]));
   }
+
+  static MultiTypedResultKey<$StockMovementsTable, List<StockMovement>>
+      _stockMovementsRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.stockMovements,
+              aliasName: $_aliasNameGenerator(
+                  db.stockItems.id, db.stockMovements.stockItemId));
+
+  $$StockMovementsTableProcessedTableManager get stockMovementsRefs {
+    final manager = $$StockMovementsTableTableManager($_db, $_db.stockMovements)
+        .filter((f) => f.stockItemId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_stockMovementsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$StockItemsTableFilterComposer
@@ -42095,6 +42989,27 @@ class $$StockItemsTableFilterComposer
                   $removeJoinBuilderFromRootComposer,
             ));
     return composer;
+  }
+
+  Expression<bool> stockMovementsRefs(
+      Expression<bool> Function($$StockMovementsTableFilterComposer f) f) {
+    final $$StockMovementsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.stockMovements,
+        getReferencedColumn: (t) => t.stockItemId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$StockMovementsTableFilterComposer(
+              $db: $db,
+              $table: $db.stockMovements,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
   }
 }
 
@@ -42353,6 +43268,27 @@ class $$StockItemsTableAnnotationComposer
             ));
     return composer;
   }
+
+  Expression<T> stockMovementsRefs<T extends Object>(
+      Expression<T> Function($$StockMovementsTableAnnotationComposer a) f) {
+    final $$StockMovementsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.stockMovements,
+        getReferencedColumn: (t) => t.stockItemId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$StockMovementsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.stockMovements,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$StockItemsTableTableManager extends RootTableManager<
@@ -42366,7 +43302,7 @@ class $$StockItemsTableTableManager extends RootTableManager<
     $$StockItemsTableUpdateCompanionBuilder,
     (StockItem, $$StockItemsTableReferences),
     StockItem,
-    PrefetchHooks Function({bool supplierId})> {
+    PrefetchHooks Function({bool supplierId, bool stockMovementsRefs})> {
   $$StockItemsTableTableManager(_$AppDatabase db, $StockItemsTable table)
       : super(TableManagerState(
           db: db,
@@ -42523,10 +43459,13 @@ class $$StockItemsTableTableManager extends RootTableManager<
                     $$StockItemsTableReferences(db, table, e)
                   ))
               .toList(),
-          prefetchHooksCallback: ({supplierId = false}) {
+          prefetchHooksCallback: (
+              {supplierId = false, stockMovementsRefs = false}) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [],
+              explicitlyWatchedTables: [
+                if (stockMovementsRefs) db.stockMovements
+              ],
               addJoins: <
                   T extends TableManagerState<
                       dynamic,
@@ -42554,7 +43493,20 @@ class $$StockItemsTableTableManager extends RootTableManager<
                 return state;
               },
               getPrefetchedDataCallback: (items) async {
-                return [];
+                return [
+                  if (stockMovementsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$StockItemsTableReferences
+                            ._stockMovementsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$StockItemsTableReferences(db, table, p0)
+                                .stockMovementsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.stockItemId == item.id),
+                        typedResults: items)
+                ];
               },
             );
           },
@@ -42572,7 +43524,487 @@ typedef $$StockItemsTableProcessedTableManager = ProcessedTableManager<
     $$StockItemsTableUpdateCompanionBuilder,
     (StockItem, $$StockItemsTableReferences),
     StockItem,
-    PrefetchHooks Function({bool supplierId})>;
+    PrefetchHooks Function({bool supplierId, bool stockMovementsRefs})>;
+typedef $$StockMovementsTableCreateCompanionBuilder = StockMovementsCompanion
+    Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required int stockItemId,
+  required String movementType,
+  required String sourceType,
+  required String sourceId,
+  Value<int?> sourceLineNo,
+  Value<String?> sourceNumber,
+  required String skuSnapshot,
+  required String metalTypeSnapshot,
+  required String itemNameSnapshot,
+  required int quantityDelta,
+  Value<double> grossWeightDelta,
+  Value<double> netWeightDelta,
+  Value<double> fineWeightDelta,
+  Value<String?> reason,
+  required DateTime occurredAt,
+});
+typedef $$StockMovementsTableUpdateCompanionBuilder = StockMovementsCompanion
+    Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<int> stockItemId,
+  Value<String> movementType,
+  Value<String> sourceType,
+  Value<String> sourceId,
+  Value<int?> sourceLineNo,
+  Value<String?> sourceNumber,
+  Value<String> skuSnapshot,
+  Value<String> metalTypeSnapshot,
+  Value<String> itemNameSnapshot,
+  Value<int> quantityDelta,
+  Value<double> grossWeightDelta,
+  Value<double> netWeightDelta,
+  Value<double> fineWeightDelta,
+  Value<String?> reason,
+  Value<DateTime> occurredAt,
+});
+
+final class $$StockMovementsTableReferences
+    extends BaseReferences<_$AppDatabase, $StockMovementsTable, StockMovement> {
+  $$StockMovementsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $StockItemsTable _stockItemIdTable(_$AppDatabase db) =>
+      db.stockItems.createAlias($_aliasNameGenerator(
+          db.stockMovements.stockItemId, db.stockItems.id));
+
+  $$StockItemsTableProcessedTableManager? get stockItemId {
+    if ($_item.stockItemId == null) return null;
+    final manager = $$StockItemsTableTableManager($_db, $_db.stockItems)
+        .filter((f) => f.id($_item.stockItemId!));
+    final item = $_typedResult.readTableOrNull(_stockItemIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$StockMovementsTableFilterComposer
+    extends Composer<_$AppDatabase, $StockMovementsTable> {
+  $$StockMovementsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get movementType => $composableBuilder(
+      column: $table.movementType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get sourceType => $composableBuilder(
+      column: $table.sourceType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get sourceId => $composableBuilder(
+      column: $table.sourceId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get sourceLineNo => $composableBuilder(
+      column: $table.sourceLineNo, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get sourceNumber => $composableBuilder(
+      column: $table.sourceNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get skuSnapshot => $composableBuilder(
+      column: $table.skuSnapshot, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get metalTypeSnapshot => $composableBuilder(
+      column: $table.metalTypeSnapshot,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get itemNameSnapshot => $composableBuilder(
+      column: $table.itemNameSnapshot,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get quantityDelta => $composableBuilder(
+      column: $table.quantityDelta, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get grossWeightDelta => $composableBuilder(
+      column: $table.grossWeightDelta,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get netWeightDelta => $composableBuilder(
+      column: $table.netWeightDelta,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get fineWeightDelta => $composableBuilder(
+      column: $table.fineWeightDelta,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get reason => $composableBuilder(
+      column: $table.reason, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get occurredAt => $composableBuilder(
+      column: $table.occurredAt, builder: (column) => ColumnFilters(column));
+
+  $$StockItemsTableFilterComposer get stockItemId {
+    final $$StockItemsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.stockItemId,
+        referencedTable: $db.stockItems,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$StockItemsTableFilterComposer(
+              $db: $db,
+              $table: $db.stockItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$StockMovementsTableOrderingComposer
+    extends Composer<_$AppDatabase, $StockMovementsTable> {
+  $$StockMovementsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get movementType => $composableBuilder(
+      column: $table.movementType,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get sourceType => $composableBuilder(
+      column: $table.sourceType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get sourceId => $composableBuilder(
+      column: $table.sourceId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get sourceLineNo => $composableBuilder(
+      column: $table.sourceLineNo,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get sourceNumber => $composableBuilder(
+      column: $table.sourceNumber,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get skuSnapshot => $composableBuilder(
+      column: $table.skuSnapshot, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get metalTypeSnapshot => $composableBuilder(
+      column: $table.metalTypeSnapshot,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get itemNameSnapshot => $composableBuilder(
+      column: $table.itemNameSnapshot,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get quantityDelta => $composableBuilder(
+      column: $table.quantityDelta,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get grossWeightDelta => $composableBuilder(
+      column: $table.grossWeightDelta,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get netWeightDelta => $composableBuilder(
+      column: $table.netWeightDelta,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get fineWeightDelta => $composableBuilder(
+      column: $table.fineWeightDelta,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get reason => $composableBuilder(
+      column: $table.reason, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get occurredAt => $composableBuilder(
+      column: $table.occurredAt, builder: (column) => ColumnOrderings(column));
+
+  $$StockItemsTableOrderingComposer get stockItemId {
+    final $$StockItemsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.stockItemId,
+        referencedTable: $db.stockItems,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$StockItemsTableOrderingComposer(
+              $db: $db,
+              $table: $db.stockItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$StockMovementsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $StockMovementsTable> {
+  $$StockMovementsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get movementType => $composableBuilder(
+      column: $table.movementType, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceType => $composableBuilder(
+      column: $table.sourceType, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceId =>
+      $composableBuilder(column: $table.sourceId, builder: (column) => column);
+
+  GeneratedColumn<int> get sourceLineNo => $composableBuilder(
+      column: $table.sourceLineNo, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceNumber => $composableBuilder(
+      column: $table.sourceNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get skuSnapshot => $composableBuilder(
+      column: $table.skuSnapshot, builder: (column) => column);
+
+  GeneratedColumn<String> get metalTypeSnapshot => $composableBuilder(
+      column: $table.metalTypeSnapshot, builder: (column) => column);
+
+  GeneratedColumn<String> get itemNameSnapshot => $composableBuilder(
+      column: $table.itemNameSnapshot, builder: (column) => column);
+
+  GeneratedColumn<int> get quantityDelta => $composableBuilder(
+      column: $table.quantityDelta, builder: (column) => column);
+
+  GeneratedColumn<double> get grossWeightDelta => $composableBuilder(
+      column: $table.grossWeightDelta, builder: (column) => column);
+
+  GeneratedColumn<double> get netWeightDelta => $composableBuilder(
+      column: $table.netWeightDelta, builder: (column) => column);
+
+  GeneratedColumn<double> get fineWeightDelta => $composableBuilder(
+      column: $table.fineWeightDelta, builder: (column) => column);
+
+  GeneratedColumn<String> get reason =>
+      $composableBuilder(column: $table.reason, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get occurredAt => $composableBuilder(
+      column: $table.occurredAt, builder: (column) => column);
+
+  $$StockItemsTableAnnotationComposer get stockItemId {
+    final $$StockItemsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.stockItemId,
+        referencedTable: $db.stockItems,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$StockItemsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.stockItems,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$StockMovementsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $StockMovementsTable,
+    StockMovement,
+    $$StockMovementsTableFilterComposer,
+    $$StockMovementsTableOrderingComposer,
+    $$StockMovementsTableAnnotationComposer,
+    $$StockMovementsTableCreateCompanionBuilder,
+    $$StockMovementsTableUpdateCompanionBuilder,
+    (StockMovement, $$StockMovementsTableReferences),
+    StockMovement,
+    PrefetchHooks Function({bool stockItemId})> {
+  $$StockMovementsTableTableManager(
+      _$AppDatabase db, $StockMovementsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$StockMovementsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$StockMovementsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$StockMovementsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<int> stockItemId = const Value.absent(),
+            Value<String> movementType = const Value.absent(),
+            Value<String> sourceType = const Value.absent(),
+            Value<String> sourceId = const Value.absent(),
+            Value<int?> sourceLineNo = const Value.absent(),
+            Value<String?> sourceNumber = const Value.absent(),
+            Value<String> skuSnapshot = const Value.absent(),
+            Value<String> metalTypeSnapshot = const Value.absent(),
+            Value<String> itemNameSnapshot = const Value.absent(),
+            Value<int> quantityDelta = const Value.absent(),
+            Value<double> grossWeightDelta = const Value.absent(),
+            Value<double> netWeightDelta = const Value.absent(),
+            Value<double> fineWeightDelta = const Value.absent(),
+            Value<String?> reason = const Value.absent(),
+            Value<DateTime> occurredAt = const Value.absent(),
+          }) =>
+              StockMovementsCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            stockItemId: stockItemId,
+            movementType: movementType,
+            sourceType: sourceType,
+            sourceId: sourceId,
+            sourceLineNo: sourceLineNo,
+            sourceNumber: sourceNumber,
+            skuSnapshot: skuSnapshot,
+            metalTypeSnapshot: metalTypeSnapshot,
+            itemNameSnapshot: itemNameSnapshot,
+            quantityDelta: quantityDelta,
+            grossWeightDelta: grossWeightDelta,
+            netWeightDelta: netWeightDelta,
+            fineWeightDelta: fineWeightDelta,
+            reason: reason,
+            occurredAt: occurredAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required int stockItemId,
+            required String movementType,
+            required String sourceType,
+            required String sourceId,
+            Value<int?> sourceLineNo = const Value.absent(),
+            Value<String?> sourceNumber = const Value.absent(),
+            required String skuSnapshot,
+            required String metalTypeSnapshot,
+            required String itemNameSnapshot,
+            required int quantityDelta,
+            Value<double> grossWeightDelta = const Value.absent(),
+            Value<double> netWeightDelta = const Value.absent(),
+            Value<double> fineWeightDelta = const Value.absent(),
+            Value<String?> reason = const Value.absent(),
+            required DateTime occurredAt,
+          }) =>
+              StockMovementsCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            stockItemId: stockItemId,
+            movementType: movementType,
+            sourceType: sourceType,
+            sourceId: sourceId,
+            sourceLineNo: sourceLineNo,
+            sourceNumber: sourceNumber,
+            skuSnapshot: skuSnapshot,
+            metalTypeSnapshot: metalTypeSnapshot,
+            itemNameSnapshot: itemNameSnapshot,
+            quantityDelta: quantityDelta,
+            grossWeightDelta: grossWeightDelta,
+            netWeightDelta: netWeightDelta,
+            fineWeightDelta: fineWeightDelta,
+            reason: reason,
+            occurredAt: occurredAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$StockMovementsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({stockItemId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (stockItemId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.stockItemId,
+                    referencedTable:
+                        $$StockMovementsTableReferences._stockItemIdTable(db),
+                    referencedColumn: $$StockMovementsTableReferences
+                        ._stockItemIdTable(db)
+                        .id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$StockMovementsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $StockMovementsTable,
+    StockMovement,
+    $$StockMovementsTableFilterComposer,
+    $$StockMovementsTableOrderingComposer,
+    $$StockMovementsTableAnnotationComposer,
+    $$StockMovementsTableCreateCompanionBuilder,
+    $$StockMovementsTableUpdateCompanionBuilder,
+    (StockMovement, $$StockMovementsTableReferences),
+    StockMovement,
+    PrefetchHooks Function({bool stockItemId})>;
 typedef $$DailyRatesTableCreateCompanionBuilder = DailyRatesCompanion Function({
   Value<int> id,
   Value<DateTime> createdAt,
@@ -55442,6 +56874,8 @@ class $AppDatabaseManager {
       $$NotificationsTableTableManager(_db, _db.notifications);
   $$StockItemsTableTableManager get stockItems =>
       $$StockItemsTableTableManager(_db, _db.stockItems);
+  $$StockMovementsTableTableManager get stockMovements =>
+      $$StockMovementsTableTableManager(_db, _db.stockMovements);
   $$DailyRatesTableTableManager get dailyRates =>
       $$DailyRatesTableTableManager(_db, _db.dailyRates);
   $$CashTransactionsTableTableManager get cashTransactions =>

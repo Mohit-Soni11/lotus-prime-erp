@@ -10,7 +10,7 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
 import '../../../constants/app_routes.dart';
-import '../../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../logic/girvi/girvi_account_detail_controller.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../logic/girvi/girvi_payment_record_pdf_service.dart';

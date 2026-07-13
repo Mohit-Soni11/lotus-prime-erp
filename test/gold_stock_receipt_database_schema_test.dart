@@ -22,6 +22,7 @@ void main() {
         'gold_receipt_settlements',
         'gold_receipt_attachments',
         'gold_receipt_audit_events',
+        'stock_movements',
       }),
     );
   });

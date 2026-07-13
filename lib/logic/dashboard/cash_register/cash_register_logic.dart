@@ -25,7 +25,7 @@ import 'package:intl/intl.dart';
 // FIX: Added drift import to access ComparableExpr extension methods
 import 'package:drift/drift.dart';
 
-import '../../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../models/finance/cash_book/cash_book_enums.dart';
 import '../../../models/dashboard/cash_register_model.dart';
 import '../../../core/logging/app_logger.dart';

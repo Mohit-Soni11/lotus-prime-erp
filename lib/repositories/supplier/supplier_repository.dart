@@ -10,9 +10,9 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart' as drift;
 
-import '../../database/db/app_database.dart';
-import '../../models/stock/supplier_model/supplier_model.dart';
-import '../../models/stock/supplier_model/supplier_enums.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
+import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_enums.dart';
 
 class SupplierRepository {
   final AppDatabase _db;

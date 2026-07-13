@@ -8,7 +8,7 @@
 
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
-import '../../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../models/setting/metal_rate/metal_rate_model.dart';
 import '../../../models/setting/metal_costing/metal_costing_model.dart';
 import '../../../repositories/setting/metal_costing/metal_costing_repository.dart';

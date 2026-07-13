@@ -1,4 +1,4 @@
-import '../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../database/local_database/shop_database_helper.dart';
 import '../../features/settings/billing_setup/shop_info/data/shop_print_information_repository.dart';
 import '../../features/settings/billing_setup/shop_info/domain/shop_print_information.dart';

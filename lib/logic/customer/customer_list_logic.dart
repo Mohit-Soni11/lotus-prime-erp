@@ -11,7 +11,7 @@ import 'package:flutter/foundation.dart';
 import '../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../models/customer/customer_list/customer_list_ui_model.dart';
 import '../../repositories/customer/customer_list_repository.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class CustomerListLogic extends ChangeNotifier {
   final CustomerListRepository _repo;

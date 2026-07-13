@@ -10,7 +10,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 import '../../models/customer/defaulter_model.dart';
 import '../../repositories/customer/defaulter_repository.dart';
 

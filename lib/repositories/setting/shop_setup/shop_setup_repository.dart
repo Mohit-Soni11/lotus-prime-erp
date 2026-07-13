@@ -17,7 +17,7 @@ import '../../../models/setting/shop_setup/tabs/shop_master_payload_model.dart';
 import '../../../database/local_database/shop_database_helper.dart';
 
 // ✅ DRIFT DB — Dashboard ShopCard ke liye sync
-import '../../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:drift/drift.dart';
 
 import 'shop_session_manager.dart';

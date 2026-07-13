@@ -11,9 +11,9 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/foundation.dart';
 
-import '../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../repositories/karigar/karigar_repository.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class KarigarMasterController extends ChangeNotifier {
   final KarigarRepository _repo;

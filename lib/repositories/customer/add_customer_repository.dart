@@ -3,7 +3,7 @@ import 'package:lotus_erp/database/db/app_database.dart';
 
 import '../../models/customer/add_customer/add_customer_form_model.dart';
 import '../../models/customer/customer_enums/add_customer_enums.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class AddCustomerRepository {
   final AppDatabase _db;

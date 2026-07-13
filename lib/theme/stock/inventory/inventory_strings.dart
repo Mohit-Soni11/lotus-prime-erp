@@ -45,6 +45,9 @@ class InvStrings {
   // ── SECTION ───────────────────────────────────────────────────
   static const String secStockList = 'Stock Items';
   static const String secListSubtitle = 'Category se filter karo';
+  static const String secMovementLedger = 'Recent Stock Movements';
+  static const String secMovementSubtitle =
+      'Purchase, sale aur restore ka live audit trail';
 
   // ── ITEM CARD ────────────────────────────────────────────────
   static const String lblSku = 'SKU';

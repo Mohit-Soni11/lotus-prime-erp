@@ -1,8 +1,7 @@
-
-import '../../database/db/app_database.dart';
-import '../../models/stock/supplier_profile/supplier_profile_model.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/stock/shared/domain/models/supplier_profile/supplier_profile_model.dart';
 import 'supplier_repository.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class SupplierProfileRepository {
   final AppDatabase _db;

@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 
-import '../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
 
 class GirviNoticeActionRepository {

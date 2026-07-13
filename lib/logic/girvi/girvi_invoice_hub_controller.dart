@@ -10,7 +10,7 @@ import '../../models/setting/billing_setup/girvi_billing_model.dart';
 import '../../repositories/girvi/girvi_invoice_branding_repository.dart';
 import '../../repositories/setting/billing_setup/girvi_billing_repo.dart';
 import 'girvi_invoice_pdf_service.dart';
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 enum GirviInvoiceHubState { idle, generating, ready, error }
 

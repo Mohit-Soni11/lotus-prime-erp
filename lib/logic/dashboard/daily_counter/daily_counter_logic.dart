@@ -29,7 +29,7 @@ import 'dart:async';
 import 'package:drift/drift.dart';
 import 'package:intl/intl.dart';
 
-import '../../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../models/dashboard/daily_counter_model.dart';
 import '../../../core/logging/app_logger.dart';
 

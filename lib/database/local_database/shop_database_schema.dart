@@ -1,6 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 
-import '../../core/logging/app_logger.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 /// Defines the isolated Shop Profile database schema and upgrades.
 ///

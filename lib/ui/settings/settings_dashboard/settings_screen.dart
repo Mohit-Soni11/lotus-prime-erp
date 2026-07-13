@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../constants/app_routes.dart';
-import '../../../database/db/app_database.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 
 import '../../../theme/settings/settings_dashboard/settings_theme.dart';
 import 'data/settings_data.dart';

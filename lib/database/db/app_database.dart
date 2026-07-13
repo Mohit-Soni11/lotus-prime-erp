@@ -7,8 +7,8 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../config/db_config.dart';
 import '../../config/env_config.dart';
-import '../../core/logging/app_logger.dart';
-import '../../features/gold_stock_receipts/data/drift/gold_stock_receipt_tables.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
+import 'package:lotus_erp/features/stock/gold/data/receipts/gold_stock_receipt_tables.dart';
 import '../tables/bill_items.dart';
 import '../tables/bill_old_gold_items.dart';
 import '../tables/bills.dart';
@@ -33,8 +33,9 @@ import '../tables/loans.dart';
 import '../tables/notifications.dart';
 import '../tables/sales_orders.dart';
 import '../tables/shop_profile_table.dart';
-import '../tables/stock/stock_items.dart';
-import '../tables/stock/suppliers.dart';
+import 'package:lotus_erp/features/stock/shared/data/tables/stock_items.dart';
+import 'package:lotus_erp/features/stock/shared/data/tables/stock_movements.dart';
+import 'package:lotus_erp/features/stock/shared/data/tables/suppliers.dart';
 import '../tables/setting/billing/sales_billing_settings.dart';
 import '../tables/setting/billing/purchase_billing_settings.dart';
 import '../tables/setting/billing/girvi_billing_settings.dart';
@@ -60,6 +61,7 @@ part 'app_database.g.dart';
     Loans,
     Notifications,
     StockItems,
+    StockMovements,
     DailyRates,
     CashTransactions,
     BankAccounts,
@@ -670,6 +672,15 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(goldReceiptAttachments);
             await m.createTable(goldReceiptAuditEvents);
             AppLogger.info('v33 Gold stock receipt schema applied.');
+          }
+
+          if (from < 34) {
+            try {
+              await m.createTable(stockMovements);
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
+            AppLogger.info('v34 stock movement ledger applied.');
           }
         },
         beforeOpen: (details) async {
