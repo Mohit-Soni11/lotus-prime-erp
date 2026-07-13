@@ -88,7 +88,7 @@ class _GoldItemRowState extends State<GoldItemRow> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Expanded(flex: 1, child: _buildSNo()),
+                  Expanded(flex: 2, child: _buildSNo()),
                   const SizedBox(width: 6),
                   Expanded(flex: 3, child: _buildCategoryField()),
                   const SizedBox(width: 6),
@@ -99,28 +99,12 @@ class _GoldItemRowState extends State<GoldItemRow> {
                       focusNode: widget.model.itemNameFocus,
                       hint: 'Item name',
                       textInputAction: TextInputAction.next,
-                      onSubmitted: (_) =>
-                          widget.model.piecesFocus.requestFocus(),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    flex: 2,
-                    child: _GoldTextField(
-                      controller: widget.model.piecesCtrl,
-                      focusNode: widget.model.piecesFocus,
-                      hint: 'PCS',
-                      isNumber: true,
-                      allowDecimal: false,
-                      textAlign: TextAlign.center,
-                      textInputAction: TextInputAction.next,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       onSubmitted: (_) => widget.model.huidFocus.requestFocus(),
                     ),
                   ),
                   const SizedBox(width: 6),
                   Expanded(
-                    flex: 2,
+                    flex: 3,
                     child: _GoldTextField(
                       controller: widget.model.huidCtrl,
                       focusNode: widget.model.huidFocus,
@@ -202,26 +186,8 @@ class _GoldItemRowState extends State<GoldItemRow> {
                   const SizedBox(width: 6),
                   Expanded(
                     flex: 2,
-                    child: Tooltip(
-                      message:
-                          'Total purity = Base purity ${widget.model.basePurityPercent.toStringAsFixed(2)}% + Wastage ${widget.model.wastagePercent.toStringAsFixed(2)}%',
-                      waitDuration: const Duration(milliseconds: 400),
-                      child: _buildAutoCell(
-                        value: widget.model.effectiveTotalPurityLabel == '--'
-                            ? '--'
-                            : '${widget.model.effectiveTotalPurityLabel}%',
-                        color: widget.model.hasValidTotalPurity
-                            ? GoldStockColors.brandGold
-                            : GoldStockColors.danger,
-                        align: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    flex: 2,
                     child: _buildAutoCell(
-                      value: widget.model.fineWeight.toStringAsFixed(3),
+                      value: _actualFineWeight().toStringAsFixed(3),
                       color: GoldStockColors.success,
                       align: TextAlign.center,
                       isBold: true,
@@ -246,7 +212,7 @@ class _GoldItemRowState extends State<GoldItemRow> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Expanded(flex: 1, child: _buildDeleteBtn()),
+                  Expanded(flex: 2, child: _buildRowActions()),
                 ],
               ),
             ),
@@ -292,21 +258,27 @@ class _GoldItemRowState extends State<GoldItemRow> {
     );
   }
 
+  double _actualFineWeight() {
+    final fine =
+        widget.model.netWeight * (widget.model.basePurityPercent / 100);
+    return double.parse(fine.toStringAsFixed(3));
+  }
+
   Widget _buildSNo() {
     return Center(
       child: Container(
-        width: _invoiceFieldHeight,
+        width: 54,
         height: _invoiceFieldHeight,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: GoldStockColors.brandGold.withValues(alpha: 0.12),
+          color: GoldStockColors.brandGold.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(_invoiceFieldRadius),
           border: Border.all(
             color: GoldStockColors.brandGold.withValues(alpha: 0.35),
           ),
         ),
         child: Text(
-          '${widget.index + 1}',
+          (widget.index + 1).toString().padLeft(2, '0'),
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w900,
@@ -404,7 +376,7 @@ class _GoldItemRowState extends State<GoldItemRow> {
     );
   }
 
-  Widget _buildDeleteBtn() {
+  Widget _buildRowActions() {
     return Center(
       child: Tooltip(
         message: 'Remove item',
@@ -416,10 +388,10 @@ class _GoldItemRowState extends State<GoldItemRow> {
             width: _invoiceFieldHeight,
             height: _invoiceFieldHeight,
             decoration: BoxDecoration(
-              color: GoldStockColors.danger.withValues(alpha: 0.12),
+              color: GoldStockColors.danger.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(_invoiceFieldRadius),
               border: Border.all(
-                color: GoldStockColors.danger.withValues(alpha: 0.35),
+                color: GoldStockColors.danger.withValues(alpha: 0.32),
               ),
             ),
             child: const Icon(
@@ -439,7 +411,6 @@ class _GoldTextField extends StatelessWidget {
   final FocusNode? focusNode;
   final String hint;
   final bool isNumber;
-  final bool allowDecimal;
   final TextInputAction textInputAction;
   final ValueChanged<String>? onSubmitted;
   final TextCapitalization textCapitalization;
@@ -451,7 +422,6 @@ class _GoldTextField extends StatelessWidget {
     required this.hint,
     this.focusNode,
     this.isNumber = false,
-    this.allowDecimal = true,
     this.textInputAction = TextInputAction.next,
     this.onSubmitted,
     this.textCapitalization = TextCapitalization.none,
@@ -481,18 +451,16 @@ class _GoldTextField extends StatelessWidget {
           controller: controller,
           focusNode: focusNode,
           keyboardType: isNumber
-              ? TextInputType.numberWithOptions(decimal: allowDecimal)
+              ? const TextInputType.numberWithOptions(decimal: true)
               : TextInputType.text,
           textCapitalization: textCapitalization,
           inputFormatters: inputFormatters ??
               (isNumber
-                  ? (allowDecimal
-                      ? [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d*\.?\d*'),
-                          ),
-                        ]
-                      : [FilteringTextInputFormatter.digitsOnly])
+                  ? [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d*\.?\d*'),
+                      ),
+                    ]
                   : null),
           textInputAction: textInputAction,
           textAlign: textAlign,

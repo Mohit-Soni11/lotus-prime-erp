@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_gold/gold_stock_colors.dart';
 
 import 'gold_item_row.dart';
 
 class GoldItemsTable extends StatelessWidget {
-  static const double _minTableWidth = 1700;
+  static const double _minTableWidth = 1660;
 
   final GoldStockController ctrl;
 
@@ -56,32 +57,34 @@ class GoldItemsTable extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildHeader(rows.length, needsHorizontalScroll),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        physics: needsHorizontalScroll
-                            ? const BouncingScrollPhysics()
-                            : const NeverScrollableScrollPhysics(),
-                        child: SizedBox(
-                          width: tableWidth,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (rows.isNotEmpty) _buildColumnRow(),
-                              rows.isEmpty
-                                  ? _buildEmptyState()
-                                  : ListView.builder(
-                                      shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      itemCount: rows.length,
-                                      itemBuilder: (_, i) => GoldItemRow(
-                                        key: ObjectKey(rows[i]),
-                                        index: i,
-                                        model: rows[i],
-                                        ctrl: ctrl,
+                      ClipRRect(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: needsHorizontalScroll
+                              ? const BouncingScrollPhysics()
+                              : const NeverScrollableScrollPhysics(),
+                          child: SizedBox(
+                            width: tableWidth,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (rows.isNotEmpty) _buildColumnRow(),
+                                rows.isEmpty
+                                    ? _buildEmptyState()
+                                    : ListView.builder(
+                                        shrinkWrap: true,
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        itemCount: rows.length,
+                                        itemBuilder: (_, i) => GoldItemRow(
+                                          key: ObjectKey(rows[i]),
+                                          index: i,
+                                          model: rows[i],
+                                          ctrl: ctrl,
+                                        ),
                                       ),
-                                    ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -99,12 +102,12 @@ class GoldItemsTable extends StatelessWidget {
 
   Widget _buildHeader(int count, bool needsHorizontalScroll) {
     return Container(
-      decoration: BoxDecoration(
-        color: GoldStockColors.brandGold.withValues(alpha: 0.06),
-        border: const Border(
+      decoration: const BoxDecoration(
+        color: GoldStockColors.cardBg,
+        border: Border(
           bottom: BorderSide(color: GoldStockColors.cardBorder, width: 1.5),
         ),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Row(
@@ -134,27 +137,27 @@ class GoldItemsTable extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'INVOICE ITEMS',
+                Text(
+                  '3. Item Entry',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 1.4,
+                    letterSpacing: 0.3,
                     color: GoldStockColors.textDark,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   needsHorizontalScroll
-                      ? 'Scroll to review every column. Capture pieces, lot weight and flat less weight.'
-                      : 'Enter total pieces and combined lot weight. Less Weight is deducted once from the lot.',
+                      ? 'Scroll horizontally to review serial, HUID, weight, purity, making and amount.'
+                      : 'Enter each stock item with serial number, HUID, weight, purity, making and valuation.',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: GoldStockColors.textMuted,
                   ),
                 ),
@@ -188,10 +191,10 @@ class GoldItemsTable extends StatelessWidget {
                   'ITEMS : $count',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
+                    letterSpacing: 0.4,
                     color: GoldStockColors.textDark,
                   ),
                 ),
@@ -205,9 +208,9 @@ class GoldItemsTable extends StatelessWidget {
 
   Widget _buildColumnRow() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: const BoxDecoration(
-        color: GoldStockColors.bodyBg,
+        color: Color(0xFFFFFCF5),
         border: Border(
           bottom: BorderSide(color: GoldStockColors.cardBorder, width: 1.5),
         ),
@@ -215,35 +218,31 @@ class GoldItemsTable extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _h('NO.', flex: 1, center: true),
+          _h('SERIAL NO.', flex: 2, center: true),
           const SizedBox(width: 6),
           _h('ITEM TYPE', flex: 3),
           const SizedBox(width: 6),
           _h('ITEM NAME', flex: 4),
           const SizedBox(width: 6),
-          _h('PCS', flex: 2, center: true),
+          _h('HUID / SERIAL NO.', flex: 3),
           const SizedBox(width: 6),
-          _h('HUID', flex: 2),
+          _h('GROSS WT (g)', flex: 2, center: true),
           const SizedBox(width: 6),
-          _h('GROSS', flex: 2),
+          _h('LESS WT (g)', flex: 2, center: true),
           const SizedBox(width: 6),
-          _h('LESS WT', flex: 2),
+          _h('NET WT (g)', flex: 2, center: true),
           const SizedBox(width: 6),
-          _h('NET', flex: 2, center: true),
+          _h('PURITY (%)', flex: 2, center: true),
           const SizedBox(width: 6),
-          _h('PURITY', flex: 2, center: true),
+          _h('WASTAGE (%)', flex: 2, center: true),
           const SizedBox(width: 6),
-          _h('WASTAGE', flex: 2, center: true),
+          _h('ACTUAL FINE (g)', flex: 2, center: true),
           const SizedBox(width: 6),
-          _h('TOTAL PURITY', flex: 2, center: true),
+          _h('MAKING', flex: 3, center: true),
           const SizedBox(width: 6),
-          _h('FINE', flex: 2, center: true),
+          _h('AMOUNT (Rs)', flex: 3, right: true),
           const SizedBox(width: 6),
-          _h('MAKING', flex: 3),
-          const SizedBox(width: 6),
-          _h('AMOUNT', flex: 3, right: true),
-          const SizedBox(width: 6),
-          _h('ACT', flex: 1, center: true),
+          _h('ACTION', flex: 2, center: true),
         ],
       ),
     );
@@ -262,11 +261,11 @@ class GoldItemsTable extends StatelessWidget {
         textAlign: right
             ? TextAlign.right
             : (center ? TextAlign.center : TextAlign.left),
-        style: const TextStyle(
+        style: GoogleFonts.inter(
           fontSize: 11,
-          fontWeight: FontWeight.w800,
-          color: GoldStockColors.textMuted,
-          letterSpacing: 0.7,
+          fontWeight: FontWeight.w900,
+          color: GoldStockColors.textDark,
+          letterSpacing: 0.35,
         ),
       ),
     );
@@ -297,21 +296,21 @@ class GoldItemsTable extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
-            const Text(
-              'NO Gold ITEMS YET',
-              style: TextStyle(
+            Text(
+              'No Gold Items Yet',
+              style: GoogleFonts.inter(
                 color: GoldStockColors.textDark,
                 fontSize: 17,
                 fontWeight: FontWeight.w900,
-                letterSpacing: 1.5,
+                letterSpacing: 0.4,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Press F2 or click ADD NEW ITEM to begin Gold stock entry',
-              style: TextStyle(
+            Text(
+              'Press F2 or click Add New Item to begin gold stock entry.',
+              style: GoogleFonts.inter(
                 fontSize: 13,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 color: GoldStockColors.textMuted,
               ),
             ),
@@ -325,7 +324,7 @@ class GoldItemsTable extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: const BoxDecoration(
-        color: GoldStockColors.bodyBg,
+        color: GoldStockColors.cardBg,
         border: Border(
           top: BorderSide(color: GoldStockColors.cardBorder, width: 1.5),
         ),
@@ -386,7 +385,7 @@ class GoldItemsTable extends StatelessWidget {
       onTap: () => ctrl.addRow(requestFocus: true),
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: GoldStockColors.success.withValues(alpha: 0.08),
           border: Border.all(
@@ -404,13 +403,13 @@ class GoldItemsTable extends StatelessWidget {
               size: 20,
             ),
             const SizedBox(width: 8),
-            const Text(
-              'ADD NEW ITEM',
-              style: TextStyle(
+            Text(
+              'Add New Item',
+              style: GoogleFonts.inter(
                 color: GoldStockColors.success,
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w900,
-                letterSpacing: 0.8,
+                letterSpacing: 0.1,
               ),
             ),
             const SizedBox(width: 14),
@@ -420,9 +419,9 @@ class GoldItemsTable extends StatelessWidget {
                 color: GoldStockColors.success.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: const Text(
+              child: Text(
                 '[F2]',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: GoldStockColors.success,
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
@@ -439,41 +438,43 @@ class GoldItemsTable extends StatelessWidget {
   List<Widget> _buildFooterStats() {
     return [
       _buildTotalBox(
-        'ROWS',
-        '${ctrl.enteredRowCount}',
+        'TOTAL ROWS',
+        ctrl.enteredRowCount.toString(),
         GoldStockColors.textDark,
       ),
       const SizedBox(width: 12),
       _buildTotalBox(
-        'PCS',
-        '${ctrl.totalQuantity}',
-        GoldStockColors.accentPricing,
+        'ACTUAL FINE',
+        '${_totalActualFineWeight().toStringAsFixed(3)} g',
+        GoldStockColors.success,
       ),
       const SizedBox(width: 12),
       _buildTotalBox(
-        'NET WT',
-        '${ctrl.totalNetWeight.toStringAsFixed(3)} g',
-        GoldStockColors.brandGold,
+        'MAKING',
+        'Rs ${ctrl.totalMakingAmount.toStringAsFixed(2)}',
+        GoldStockColors.textDark,
       ),
       const SizedBox(width: 12),
       _buildTotalBox(
-        'FINE WT',
-        '${ctrl.totalFineWeight.toStringAsFixed(3)} g',
-        GoldStockColors.accentPricing,
-      ),
-      const SizedBox(width: 12),
-      _buildTotalBox(
-        'BATCH TOTAL',
+        'TOTAL AMOUNT',
         'Rs ${ctrl.totalEstimatedCost.toStringAsFixed(2)}',
         GoldStockColors.success,
       ),
     ];
   }
 
+  double _totalActualFineWeight() {
+    final total = ctrl.enteredGoldRows.fold<double>(
+      0,
+      (sum, row) => sum + (row.netWeight * (row.basePurityPercent / 100)),
+    );
+    return double.parse(total.toStringAsFixed(3));
+  }
+
   Widget _buildTotalBox(String label, String value, Color color) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 66, maxWidth: 132),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      constraints: const BoxConstraints(minWidth: 92, maxWidth: 152),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
         border: Border.all(color: color.withValues(alpha: 0.30), width: 1.5),
@@ -486,7 +487,7 @@ class GoldItemsTable extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
+            style: GoogleFonts.inter(
               fontWeight: FontWeight.w900,
               fontSize: 10,
               color: color,
@@ -501,7 +502,7 @@ class GoldItemsTable extends StatelessWidget {
               value,
               maxLines: 1,
               softWrap: false,
-              style: TextStyle(
+              style: GoogleFonts.manrope(
                 fontWeight: FontWeight.w900,
                 fontSize: 14,
                 color: color,

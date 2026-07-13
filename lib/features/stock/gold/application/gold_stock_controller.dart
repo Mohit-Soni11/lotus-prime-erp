@@ -137,17 +137,13 @@ class GoldStockController extends AddStockController {
 
   @override
   void setPurity(String option) {
-    final previousDefault = _defaultGoldPurityLabel();
     super.setPurity(option);
-    _syncGoldRowsWithBatchPurity(previousDefault);
     _loadGoldRateSnapshot();
   }
 
   @override
   void setCustomPurity(String value) {
-    final previousDefault = _defaultGoldPurityLabel();
     super.setCustomPurity(value);
-    _syncGoldRowsWithBatchPurity(previousDefault);
     _loadGoldRateSnapshot();
   }
 
@@ -550,7 +546,7 @@ class GoldStockController extends AddStockController {
     final id = DateTime.now().microsecondsSinceEpoch.toString();
     final model = GoldItemModel(
       id: id,
-      initialPurityLabel: _defaultGoldPurityLabel(),
+      initialPurityLabel: '',
       initialWastagePercent: 0.0,
       initialPurchaseRate: _activeInvoiceRatePerGram,
       initialPieces: 1,
@@ -625,24 +621,6 @@ class GoldStockController extends AddStockController {
           row.applyPurchaseRate(ratePerGram, onlyIfEmpty: false) || changed;
     }
     return changed;
-  }
-
-  void _syncGoldRowsWithBatchPurity(String previousDefault) {
-    final nextDefault = _defaultGoldPurityLabel();
-    if (nextDefault.trim().isEmpty) {
-      return;
-    }
-
-    for (final row in _goldRows) {
-      final current = row.purityLabel;
-      if (current.isEmpty || current == previousDefault) {
-        row.applyPurityDefaults(
-          nextDefault,
-          wastagePercent: 0.0,
-          overwriteWhenBlank: false,
-        );
-      }
-    }
   }
 
   void completeRowAndAdvanceGold(String rowId) {
@@ -742,24 +720,6 @@ class GoldStockController extends AddStockController {
 
     _isLoadingGoldRate = false;
     notifyListeners();
-  }
-
-  String _defaultGoldPurityLabel() {
-    final trimmed = purityDisplay.trim().toUpperCase();
-    final normalized = trimmed.replaceAll('KT', 'K');
-    if (trimmed.isEmpty) {
-      return '22KT';
-    }
-    final karatMatch = RegExp(r'\b(\d{1,2})\s*K\b').firstMatch(normalized);
-    if (karatMatch != null) {
-      return '${karatMatch.group(1)!}KT';
-    }
-    final hallmarkMatch =
-        RegExp(r'\b(999|916|833|750|585|375)\b').firstMatch(trimmed);
-    if (hallmarkMatch != null) {
-      return hallmarkMatch.group(1)!;
-    }
-    return trimmed;
   }
 
   String _normaliseGoldRateKey(String value) {
