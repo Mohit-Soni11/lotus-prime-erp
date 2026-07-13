@@ -20,11 +20,11 @@ class GoldItemModel extends ChangeNotifier {
   ];
 
   static const List<String> purityPresets = [
-    '24K (999)',
-    '22K (916)',
-    '18K (750)',
-    '14K (585)',
-    '9K (375)',
+    '24KT (999)',
+    '22KT (916)',
+    '18KT (750)',
+    '14KT (585)',
+    '9KT (375)',
     'Other',
   ];
 
@@ -254,13 +254,13 @@ class GoldItemModel extends ChangeNotifier {
   void _weightPurityFieldChanged() => notifyListeners();
 
   double _purityLabelToPercent(String rawPurity) {
-    final value = rawPurity.trim().toUpperCase();
+    final value = rawPurity.trim().toUpperCase().replaceAll('KT', 'K');
     if (value.isEmpty) {
       return 0.0;
     }
 
     final hallmarkMatch =
-        RegExp(r'\b(999|995|916|900|750|585|375)\b').firstMatch(value);
+        RegExp(r'\b(999|995|916|900|833|750|585|375)\b').firstMatch(value);
     if (hallmarkMatch != null) {
       final code = double.tryParse(hallmarkMatch.group(1) ?? '');
       if (code != null) {
@@ -268,7 +268,7 @@ class GoldItemModel extends ChangeNotifier {
       }
     }
 
-    final karatMatch = RegExp(r'\b(24|22|18|14|9)\s*K\b').firstMatch(value);
+    final karatMatch = RegExp(r'\b(\d{1,2})\s*K\b').firstMatch(value);
     if (karatMatch != null) {
       final karat = double.tryParse(karatMatch.group(1) ?? '');
       if (karat != null) {

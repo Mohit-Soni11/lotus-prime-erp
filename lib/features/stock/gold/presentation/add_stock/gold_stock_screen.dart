@@ -7,6 +7,7 @@ import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_gold/gold_stock_theme.dart';
 import 'package:lotus_erp/features/stock/gold/presentation/add_stock/add_gold_stock_items_step.dart';
 import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_app_bar.dart';
+import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_batch_action_bar.dart';
 import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_purity_step.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
@@ -51,6 +52,13 @@ class _GoldStockScreenState extends State<GoldStockScreen> {
               ctrl: _ctrl,
               onBack: _handleBackPressed,
             ),
+            bottomNavigationBar: _ctrl.step == AddStockStep.items
+                ? GoldBatchActionBar(
+                    ctrl: _ctrl,
+                    onSave: _onSave,
+                    onResetBatch: _showResetDialog,
+                  )
+                : null,
             body: AnimatedSwitcher(
               duration: const Duration(milliseconds: 260),
               switchInCurve: Curves.easeOutQuart,

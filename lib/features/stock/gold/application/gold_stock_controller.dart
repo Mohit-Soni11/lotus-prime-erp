@@ -746,15 +746,16 @@ class GoldStockController extends AddStockController {
 
   String _defaultGoldPurityLabel() {
     final trimmed = purityDisplay.trim().toUpperCase();
+    final normalized = trimmed.replaceAll('KT', 'K');
     if (trimmed.isEmpty) {
-      return '22K';
+      return '22KT';
     }
-    final karatMatch = RegExp(r'\b(24|22|18|14|9)\s*K\b').firstMatch(trimmed);
+    final karatMatch = RegExp(r'\b(\d{1,2})\s*K\b').firstMatch(normalized);
     if (karatMatch != null) {
-      return '${karatMatch.group(1)!}K';
+      return '${karatMatch.group(1)!}KT';
     }
     final hallmarkMatch =
-        RegExp(r'\b(999|916|750|585|375)\b').firstMatch(trimmed);
+        RegExp(r'\b(999|916|833|750|585|375)\b').firstMatch(trimmed);
     if (hallmarkMatch != null) {
       return hallmarkMatch.group(1)!;
     }
@@ -762,21 +763,21 @@ class GoldStockController extends AddStockController {
   }
 
   String _normaliseGoldRateKey(String value) {
-    final normalized = value.trim().toUpperCase();
+    final normalized = value.trim().toUpperCase().replaceAll('KT', 'K');
     if (normalized.isEmpty) {
       return '22K';
     }
-    final karatMatch =
-        RegExp(r'\b(24|22|18|14|9)\s*K\b').firstMatch(normalized);
+    final karatMatch = RegExp(r'\b(\d{1,2})\s*K\b').firstMatch(normalized);
     if (karatMatch != null) {
       return '${karatMatch.group(1)!}K';
     }
     final hallmarkMatch =
-        RegExp(r'\b(999|916|750|585|375)\b').firstMatch(normalized);
+        RegExp(r'\b(999|916|833|750|585|375)\b').firstMatch(normalized);
     if (hallmarkMatch != null) {
       return switch (hallmarkMatch.group(1)!) {
         '999' => '24K',
         '916' => '22K',
+        '833' => '20K',
         '750' => '18K',
         '585' => '14K',
         '375' => '9K',
@@ -790,6 +791,7 @@ class GoldStockController extends AddStockController {
       if (percent != null) {
         if (percent >= 99.5) return '24K';
         if ((percent - 91.6).abs() <= 0.4) return '22K';
+        if ((percent - 83.3).abs() <= 0.4) return '20K';
         if ((percent - 75.0).abs() <= 0.4) return '18K';
         if ((percent - 58.5).abs() <= 0.4) return '14K';
         if ((percent - 37.5).abs() <= 0.4) return '9K';

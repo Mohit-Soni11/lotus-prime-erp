@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import 'package:lotus_erp/features/stock/gold/application/gold_purity_catalog_controller.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_stock_controller.dart';
+import 'package:lotus_erp/features/stock/gold/domain/models/gold_purity_profile.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_gold/gold_stock_theme.dart';
 
 class GoldPurityStep extends StatefulWidget {
@@ -15,65 +16,31 @@ class GoldPurityStep extends StatefulWidget {
 
 class _GoldPurityStepState extends State<GoldPurityStep>
     with SingleTickerProviderStateMixin {
-  late final TextEditingController _customCtrl;
+  late final GoldPurityCatalogController _catalog;
+  late final TextEditingController _customNameCtrl;
+  late final TextEditingController _customKaratCtrl;
+  late final TextEditingController _customHallmarkCtrl;
+  late final TextEditingController _customPercentCtrl;
+  late final TextEditingController _customDescriptionCtrl;
   late final AnimationController _animCtrl;
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
 
-  static const List<_GoldPurityOption> _presets = [
-    _GoldPurityOption(
-      label: '24K Fine',
-      value: '24K (999)',
-      detail: 'Fine bullion, coins and bars',
-      icon: Icons.workspace_premium_rounded,
-      accent: Color(0xFFD4AF37),
-    ),
-    _GoldPurityOption(
-      label: '22K Hallmark',
-      value: '22K (916)',
-      detail: 'Hallmarked jewellery standard',
-      icon: Icons.verified_rounded,
-      accent: Color(0xFFB88718),
-    ),
-    _GoldPurityOption(
-      label: '18K Studded',
-      value: '18K (750)',
-      detail: 'Diamond and gemstone jewellery',
-      icon: Icons.diamond_rounded,
-      accent: Color(0xFF2563EB),
-    ),
-    _GoldPurityOption(
-      label: '14K Light',
-      value: '14K (585)',
-      detail: 'Lightweight modern jewellery',
-      icon: Icons.auto_awesome_rounded,
-      accent: Color(0xFF0F8A72),
-    ),
-    _GoldPurityOption(
-      label: '9K / Low Karat',
-      value: '9K (375)',
-      detail: 'Imported or repair stock',
-      icon: Icons.category_rounded,
-      accent: Color(0xFF8B5CF6),
-    ),
-    _GoldPurityOption(
-      label: 'Custom',
-      value: 'Custom',
-      detail: 'Enter karat, hallmark or percent',
-      icon: Icons.edit_rounded,
-      accent: Color(0xFF64748B),
-    ),
-  ];
+  bool _showCustomBuilder = false;
+  String? _customError;
 
   @override
   void initState() {
     super.initState();
-    _customCtrl = TextEditingController(
-      text: widget.ctrl.isCustomPurity ? widget.ctrl.purityDisplay : '',
-    );
+    _catalog = GoldPurityCatalogController()..load();
+    _customNameCtrl = TextEditingController();
+    _customKaratCtrl = TextEditingController();
+    _customHallmarkCtrl = TextEditingController();
+    _customPercentCtrl = TextEditingController();
+    _customDescriptionCtrl = TextEditingController();
     _animCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 460),
+      duration: const Duration(milliseconds: 420),
     );
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic);
     _slideAnim = Tween<Offset>(
@@ -84,17 +51,13 @@ class _GoldPurityStepState extends State<GoldPurityStep>
   }
 
   @override
-  void didUpdateWidget(covariant GoldPurityStep oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.ctrl.isCustomPurity &&
-        _customCtrl.text != widget.ctrl.purityDisplay) {
-      _customCtrl.text = widget.ctrl.purityDisplay;
-    }
-  }
-
-  @override
   void dispose() {
-    _customCtrl.dispose();
+    _catalog.dispose();
+    _customNameCtrl.dispose();
+    _customKaratCtrl.dispose();
+    _customHallmarkCtrl.dispose();
+    _customPercentCtrl.dispose();
+    _customDescriptionCtrl.dispose();
     _animCtrl.dispose();
     super.dispose();
   }
@@ -152,88 +115,45 @@ class _GoldPurityStepState extends State<GoldPurityStep>
           _HeroBanner(ctrl: ctrl),
           const SizedBox(height: 24),
           Text(
-            'Select Stock Grade',
-            style: GoldStockStyles.pageTitle,
+            'Select Gold Purity Grade',
+            style: _titleStyle(24),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
-            'Choose the base purity for this Gold batch. Item rows can still add wastage, and the final purity is used for billing and stock classification.',
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              height: 1.6,
-              color: GoldStockColors.textBody,
-            ),
+            'Choose the base purity for this gold stock batch. Item rows can add wastage later, and the final purity will be used for valuation, billing and inventory classification.',
+            style: _bodyStyle(14),
           ),
           const SizedBox(height: 22),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final columns = constraints.maxWidth >= 960
-                  ? 3
-                  : constraints.maxWidth >= 620
-                      ? 2
-                      : 1;
-              final itemWidth =
-                  (constraints.maxWidth - ((columns - 1) * 12)) / columns;
-
-              return Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: _presets.map((preset) {
-                  final isCustom = preset.value == 'Custom';
-                  final isSelected = isCustom
-                      ? ctrl.isCustomPurity
-                      : ctrl.purityDisplay == preset.value;
-
-                  return SizedBox(
-                    width: itemWidth,
-                    child: _PurityCard(
-                      preset: preset,
-                      isSelected: isSelected,
-                      onTap: () {
-                        ctrl.setPurity(preset.value);
-                        if (isCustom) {
-                          _customCtrl.clear();
-                        }
-                        setState(() {});
-                      },
-                    ),
-                  );
-                }).toList(),
-              );
-            },
+          AnimatedBuilder(
+            animation: _catalog,
+            builder: (_, __) => _buildProfileGrid(),
           ),
-          if (ctrl.isCustomPurity) ...[
-            const SizedBox(height: 20),
-            Text('Custom Purity', style: GoldStockStyles.inputLabel),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _customCtrl,
-              onChanged: ctrl.setCustomPurity,
-              style: GoldStockStyles.inputText,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                hintText: 'Enter purity percentage, e.g. 76.50%',
-                hintStyle: GoldStockStyles.fieldHint,
-                prefixIcon: const Icon(
-                  Icons.percent_rounded,
-                  color: GoldStockColors.brandGold,
-                  size: 18,
-                ),
-                suffixText: '%',
-                filled: true,
-                fillColor: GoldStockColors.inputBg,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                border: _inputBorder(GoldStockColors.borderLight),
-                enabledBorder: _inputBorder(GoldStockColors.borderLight),
-                focusedBorder: _inputBorder(
-                  GoldStockColors.brandGold,
-                  width: 1.5,
-                ),
-              ),
-            ),
-          ],
+          const SizedBox(height: 14),
+          _CreateCustomGradeButton(
+            expanded: _showCustomBuilder,
+            onTap: () => setState(() {
+              _showCustomBuilder = !_showCustomBuilder;
+              _customError = null;
+            }),
+          ),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            child: _showCustomBuilder
+                ? Padding(
+                    key: const ValueKey('custom-grade-builder'),
+                    padding: const EdgeInsets.only(top: 14),
+                    child: _CustomGradePanel(
+                      nameCtrl: _customNameCtrl,
+                      karatCtrl: _customKaratCtrl,
+                      hallmarkCtrl: _customHallmarkCtrl,
+                      percentCtrl: _customPercentCtrl,
+                      descriptionCtrl: _customDescriptionCtrl,
+                      errorText: _customError,
+                      onCreate: _createCustomProfile,
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
           const SizedBox(height: 24),
           ListenableBuilder(
             listenable: ctrl,
@@ -256,34 +176,76 @@ class _GoldPurityStepState extends State<GoldPurityStep>
                 label: Text(
                   'Continue to Item Entry',
                   style: GoogleFonts.manrope(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
             ),
           ),
-          ListenableBuilder(
-            listenable: ctrl,
-            builder: (_, __) {
-              if (ctrl.canProceedFromPurity) {
-                return const SizedBox.shrink();
-              }
-              return Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Text(
-                  'Select a stock grade to continue.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: GoldStockColors.textMuted,
-                  ),
-                ),
-              );
-            },
-          ),
+          if (!ctrl.canProceedFromPurity) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Select a gold purity grade to continue.',
+              style: _bodyStyle(13),
+            ),
+          ],
         ],
       ),
+    );
+  }
+
+  Widget _buildProfileGrid() {
+    if (_catalog.isLoading) {
+      return const SizedBox(
+        height: 120,
+        child: Center(
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: GoldStockColors.brandGold,
+          ),
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 960
+            ? 3
+            : constraints.maxWidth >= 620
+                ? 2
+                : 1;
+        final itemWidth =
+            (constraints.maxWidth - ((columns - 1) * 12)) / columns;
+
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: _catalog.profiles.map((profile) {
+            return SizedBox(
+              width: itemWidth,
+              child: _PurityCard(
+                profile: profile,
+                tone: _toneFor(profile),
+                icon: _iconFor(profile),
+                isSelected: _isSelected(profile),
+                onTap: () {
+                  widget.ctrl.setPurity(profile.displayValue);
+                  setState(() => _customError = null);
+                },
+                onDelete: profile.isCustom
+                    ? () async {
+                        if (_isSelected(profile)) {
+                          widget.ctrl.setPurity('');
+                        }
+                        await _catalog.deleteCustomProfile(profile.id);
+                      }
+                    : null,
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 
@@ -306,23 +268,15 @@ class _GoldPurityStepState extends State<GoldPurityStep>
               Expanded(
                 child: Text(
                   'Gold Stock Summary',
-                  style: GoogleFonts.manrope(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: GoldStockColors.textDark,
-                  ),
+                  style: _titleStyle(16),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             'Available inventory grouped by business grade with total fine weight.',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              height: 1.5,
-              color: GoldStockColors.textMuted,
-            ),
+            style: _bodyStyle(12),
           ),
           const SizedBox(height: 14),
           ListenableBuilder(
@@ -362,16 +316,13 @@ class _GoldPurityStepState extends State<GoldPurityStep>
           const SizedBox(height: 16),
           Text(
             'Classification Rules',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: GoldStockColors.brandGold,
-            ),
+            style: _titleStyle(14).copyWith(color: GoldStockColors.brandGold),
           ),
           const SizedBox(height: 10),
-          _guideline('24K: 999 fine gold, coins and bullion.'),
-          _guideline('22K: 916 hallmarked jewellery stock.'),
-          _guideline('18K and 14K: studded, diamond and lightweight articles.'),
+          _guideline('24KT: 999 fine gold, coins and bullion.'),
+          _guideline('22KT: 916 hallmarked jewellery stock.'),
+          _guideline(
+              '18KT and 14KT: studded, diamond and lightweight articles.'),
           _guideline(
               'Custom karat, hallmark or percentage grades remain traceable.'),
         ],
@@ -379,11 +330,82 @@ class _GoldPurityStepState extends State<GoldPurityStep>
     );
   }
 
-  OutlineInputBorder _inputBorder(Color color, {double width = 1}) {
-    return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: BorderSide(color: color, width: width),
+  Future<void> _createCustomProfile() async {
+    final profile = await _catalog.createCustomProfile(
+      name: _customNameCtrl.text,
+      karatText: _customKaratCtrl.text,
+      hallmarkText: _customHallmarkCtrl.text,
+      purityPercentText: _customPercentCtrl.text,
+      description: _customDescriptionCtrl.text,
     );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (profile == null) {
+      setState(() {
+        _customError =
+            'Enter a profile name and a valid karat, hallmark or purity percent.';
+      });
+      return;
+    }
+
+    widget.ctrl.setPurity(profile.displayValue);
+    _customNameCtrl.clear();
+    _customKaratCtrl.clear();
+    _customHallmarkCtrl.clear();
+    _customPercentCtrl.clear();
+    _customDescriptionCtrl.clear();
+    setState(() {
+      _showCustomBuilder = false;
+      _customError = null;
+    });
+  }
+
+  bool _isSelected(GoldPurityProfile profile) {
+    return widget.ctrl.purityDisplay.trim().toUpperCase() ==
+        profile.displayValue.trim().toUpperCase();
+  }
+
+  Color _toneFor(GoldPurityProfile profile) {
+    final percent = profile.purityPercent;
+    if (profile.isCustom) {
+      return GoldStockColors.textDark;
+    }
+    if (percent >= 99) {
+      return const Color(0xFFD4AF37);
+    }
+    if (percent >= 90) {
+      return const Color(0xFFB88718);
+    }
+    if (percent >= 73) {
+      return const Color(0xFF2563EB);
+    }
+    if (percent >= 56) {
+      return const Color(0xFF0F8A72);
+    }
+    return const Color(0xFF8B5CF6);
+  }
+
+  IconData _iconFor(GoldPurityProfile profile) {
+    final percent = profile.purityPercent;
+    if (profile.isCustom) {
+      return Icons.tune_rounded;
+    }
+    if (percent >= 99) {
+      return Icons.workspace_premium_rounded;
+    }
+    if (percent >= 90) {
+      return Icons.verified_rounded;
+    }
+    if (percent >= 73) {
+      return Icons.diamond_rounded;
+    }
+    if (percent >= 56) {
+      return Icons.auto_awesome_rounded;
+    }
+    return Icons.category_rounded;
   }
 
   Widget _guideline(String text) {
@@ -395,7 +417,7 @@ class _GoldPurityStepState extends State<GoldPurityStep>
           Container(
             width: 6,
             height: 6,
-            margin: const EdgeInsets.only(top: 6),
+            margin: const EdgeInsets.only(top: 7),
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: GoldStockColors.brandGold,
@@ -403,14 +425,7 @@ class _GoldPurityStepState extends State<GoldPurityStep>
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              text,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                height: 1.5,
-                color: GoldStockColors.textBody,
-              ),
-            ),
+            child: Text(text, style: _bodyStyle(12)),
           ),
         ],
       ),
@@ -420,40 +435,40 @@ class _GoldPurityStepState extends State<GoldPurityStep>
   List<_StockGroup> _stockGroups(Map<String, double> summary) {
     final groups = <_StockGroup>[
       const _StockGroup(
-        label: '24K Fine',
+        label: '24KT Fine Gold',
         description: '999 fine grade',
         icon: Icons.workspace_premium_rounded,
         color: Color(0xFFD4AF37),
       ),
       const _StockGroup(
-        label: '22K Hallmark',
+        label: '22KT Hallmark Gold',
         description: '916 jewellery',
         icon: Icons.verified_rounded,
         color: Color(0xFFB88718),
       ),
       const _StockGroup(
-        label: '18K Studded',
+        label: '18KT Studded Gold',
         description: '750 jewellery',
         icon: Icons.diamond_rounded,
         color: Color(0xFF2563EB),
       ),
       const _StockGroup(
-        label: '14K Light',
+        label: '14KT Lightweight Gold',
         description: '585 jewellery',
         icon: Icons.auto_awesome_rounded,
         color: Color(0xFF0F8A72),
       ),
       const _StockGroup(
-        label: '9K / Low Karat',
+        label: '9KT Low Karat Gold',
         description: '375 and lower',
         icon: Icons.category_rounded,
         color: Color(0xFF8B5CF6),
       ),
       const _StockGroup(
-        label: 'Other',
-        description: 'Needs review',
-        icon: Icons.category_rounded,
-        color: Color(0xFF64748B),
+        label: 'Custom Gold Grade',
+        description: 'Custom purity stock',
+        icon: Icons.tune_rounded,
+        color: Color(0xFF0F172A),
       ),
     ];
 
@@ -471,26 +486,16 @@ class _GoldPurityStepState extends State<GoldPurityStep>
   }
 
   String _bucketFor(double percent) {
-    if (percent >= 99.5) {
-      return '24K Fine';
-    }
-    if (percent >= 90.0) {
-      return '22K Hallmark';
-    }
-    if (percent >= 73.0) {
-      return '18K Studded';
-    }
-    if (percent >= 56.0) {
-      return '14K Light';
-    }
-    if (percent > 0) {
-      return '9K / Low Karat';
-    }
-    return 'Other';
+    if (percent >= 99.5) return '24KT Fine Gold';
+    if (percent >= 90.0) return '22KT Hallmark Gold';
+    if (percent >= 73.0) return '18KT Studded Gold';
+    if (percent >= 56.0) return '14KT Lightweight Gold';
+    if (percent > 0) return '9KT Low Karat Gold';
+    return 'Custom Gold Grade';
   }
 
   double _extractPurityPercent(String raw) {
-    final value = raw.toUpperCase();
+    final value = raw.toUpperCase().replaceAll('KT', 'K');
     final touchMatch =
         RegExp(r'(\d{1,3}(?:\.\d+)?)\s*%\s*TOUCH').firstMatch(value);
     if (touchMatch != null) {
@@ -505,25 +510,16 @@ class _GoldPurityStepState extends State<GoldPurityStep>
     }
 
     final codeMatch =
-        RegExp(r'\b(999|995|916|900|750|585|375)\b').firstMatch(value);
+        RegExp(r'\b(999|995|916|900|833|750|585|375)\b').firstMatch(value);
     if (codeMatch != null) {
       final code = double.tryParse(codeMatch.group(1) ?? '');
-      if (code != null) {
-        return code / 10.0;
-      }
+      if (code != null) return code / 10.0;
     }
 
-    final karatMatch = RegExp(r'\b(24|22|18|14|9)\s*K\b').firstMatch(value);
+    final karatMatch = RegExp(r'\b(\d{1,2})\s*K\b').firstMatch(value);
     if (karatMatch != null) {
       final karat = double.tryParse(karatMatch.group(1) ?? '');
-      if (karat != null) {
-        return karat / 24.0 * 100.0;
-      }
-    }
-
-    final numericMatch = RegExp(r'\b(\d{2}(?:\.\d+)?)\b').firstMatch(value);
-    if (numericMatch != null) {
-      return double.tryParse(numericMatch.group(1) ?? '') ?? 0.0;
+      if (karat != null) return karat / 24.0 * 100.0;
     }
 
     return 0.0;
@@ -580,20 +576,21 @@ class _HeroBanner extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.manrope(
-                    fontSize: 21,
+                    fontSize: 22,
                     fontWeight: FontWeight.w900,
                     color: const Color(0xFF3D2800),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 5),
                 Text(
-                  'Set the batch grade before entering items, wastage and supplier settlement.',
+                  'Set the purity grade before entering item rows, wastage and supplier settlement.',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    fontSize: 12,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                     height: 1.45,
-                    color: const Color(0xFF3D2800).withValues(alpha: 0.72),
+                    color: const Color(0xFF3D2800),
                   ),
                 ),
               ],
@@ -611,7 +608,7 @@ class _HeroBanner extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: FontWeight.w900,
                 color: const Color(0xFF3D2800),
               ),
@@ -624,14 +621,20 @@ class _HeroBanner extends StatelessWidget {
 }
 
 class _PurityCard extends StatelessWidget {
-  final _GoldPurityOption preset;
+  final GoldPurityProfile profile;
+  final Color tone;
+  final IconData icon;
   final bool isSelected;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   const _PurityCard({
-    required this.preset,
+    required this.profile,
+    required this.tone,
+    required this.icon,
     required this.isSelected,
     required this.onTap,
+    this.onDelete,
   });
 
   @override
@@ -641,24 +644,24 @@ class _PurityCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
-        splashColor: preset.accent.withValues(alpha: 0.12),
+        splashColor: tone.withValues(alpha: 0.12),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          constraints: const BoxConstraints(minHeight: 112),
+          constraints: const BoxConstraints(minHeight: 126),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: isSelected
-                ? preset.accent.withValues(alpha: 0.10)
-                : GoldStockColors.inputBg,
+                ? tone.withValues(alpha: 0.10)
+                : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: isSelected ? preset.accent : GoldStockColors.borderLight,
-              width: isSelected ? 1.6 : 1.0,
+              color: isSelected ? tone : GoldStockColors.borderLight,
+              width: isSelected ? 1.7 : 1.0,
             ),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: preset.accent.withValues(alpha: 0.13),
+                      color: tone.withValues(alpha: 0.13),
                       blurRadius: 14,
                       offset: const Offset(0, 5),
                     ),
@@ -670,51 +673,233 @@ class _PurityCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  _IconBadge(icon: preset.icon, color: preset.accent),
+                  _IconBadge(icon: icon, color: tone),
                   const Spacer(),
-                  if (isSelected)
-                    Icon(
-                      Icons.check_circle_rounded,
-                      size: 18,
-                      color: preset.accent,
-                    ),
+                  if (onDelete != null)
+                    IconButton(
+                      tooltip: 'Delete custom grade',
+                      onPressed: onDelete,
+                      icon: const Icon(Icons.delete_outline_rounded),
+                      color: GoldStockColors.danger,
+                      iconSize: 18,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 30,
+                        minHeight: 30,
+                      ),
+                    )
+                  else if (isSelected)
+                    Icon(Icons.check_circle_rounded, size: 18, color: tone),
                 ],
               ),
               const SizedBox(height: 12),
               Text(
-                preset.label,
+                profile.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                style: _titleStyle(16),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                profile.displayValue,
                 style: GoogleFonts.manrope(
-                  fontSize: 15,
+                  fontSize: 22,
                   fontWeight: FontWeight.w900,
-                  color: GoldStockColors.textDark,
+                  color: tone,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
               Text(
-                preset.value,
-                style: GoogleFonts.manrope(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: preset.accent,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                preset.detail,
+                profile.description,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  height: 1.35,
-                  color: GoldStockColors.textMuted,
-                ),
+                style: _bodyStyle(12),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _CreateCustomGradeButton extends StatelessWidget {
+  final bool expanded;
+  final VoidCallback onTap;
+
+  const _CreateCustomGradeButton({
+    required this.expanded,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(expanded ? Icons.close_rounded : Icons.add_rounded),
+      label: Text(
+          expanded ? 'Close Custom Grade Builder' : 'Create Custom Gold Grade'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: GoldStockColors.textDark,
+        side: const BorderSide(color: GoldStockColors.cardBorder),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        textStyle: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w900,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+}
+
+class _CustomGradePanel extends StatelessWidget {
+  final TextEditingController nameCtrl;
+  final TextEditingController karatCtrl;
+  final TextEditingController hallmarkCtrl;
+  final TextEditingController percentCtrl;
+  final TextEditingController descriptionCtrl;
+  final String? errorText;
+  final VoidCallback onCreate;
+
+  const _CustomGradePanel({
+    required this.nameCtrl,
+    required this.karatCtrl,
+    required this.hallmarkCtrl,
+    required this.percentCtrl,
+    required this.descriptionCtrl,
+    required this.errorText,
+    required this.onCreate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: GoldStockColors.cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+            color: GoldStockColors.brandGold.withValues(alpha: 0.30)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Custom Gold Grade', style: _titleStyle(17)),
+          const SizedBox(height: 6),
+          Text(
+            'Create a reusable purity card. After creation, it appears with the system grades and can be selected for stock entry or deleted later.',
+            style: _bodyStyle(13),
+          ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final twoColumn = constraints.maxWidth >= 720;
+              final fields = [
+                _builderField(
+                    'Grade Name', 'Example: 20KT Special Gold', nameCtrl),
+                _builderField('Karat', 'Example: 20KT', karatCtrl),
+                _builderField('Hallmark Code', 'Example: 833', hallmarkCtrl),
+                _builderField('Purity Percent', 'Example: 83.30', percentCtrl),
+              ];
+
+              if (!twoColumn) {
+                return Column(
+                  children: fields
+                      .map((field) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: field,
+                          ))
+                      .toList(),
+                );
+              }
+
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: fields
+                    .map(
+                      (field) => SizedBox(
+                        width: (constraints.maxWidth - 12) / 2,
+                        child: field,
+                      ),
+                    )
+                    .toList(),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _builderField(
+            'Description',
+            'Example: Custom order jewellery stock',
+            descriptionCtrl,
+          ),
+          if (errorText != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              errorText!,
+              style: _bodyStyle(13).copyWith(color: GoldStockColors.danger),
+            ),
+          ],
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 46,
+            child: ElevatedButton.icon(
+              onPressed: onCreate,
+              icon: const Icon(Icons.add_circle_outline_rounded),
+              label: const Text('Create Grade Card'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: GoldStockColors.shellBg,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                textStyle: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _builderField(
+    String label,
+    String hint,
+    TextEditingController controller,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: _titleStyle(13)),
+        const SizedBox(height: 7),
+        TextField(
+          controller: controller,
+          style: _bodyStyle(14).copyWith(fontWeight: FontWeight.w800),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: _bodyStyle(13).copyWith(color: GoldStockColors.textBody),
+            filled: true,
+            fillColor: const Color(0xFFF8FAFC),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 13, vertical: 13),
+            border: _fieldBorder(GoldStockColors.borderLight),
+            enabledBorder: _fieldBorder(GoldStockColors.borderLight),
+            focusedBorder: _fieldBorder(GoldStockColors.brandGold, width: 1.6),
+          ),
+        ),
+      ],
+    );
+  }
+
+  OutlineInputBorder _fieldBorder(Color color, {double width = 1}) {
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: color, width: width),
     );
   }
 }
@@ -742,27 +927,9 @@ class _StockGroupRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  group.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.manrope(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    color: GoldStockColors.textDark,
-                  ),
-                ),
+                Text(group.label, style: _titleStyle(13)),
                 const SizedBox(height: 2),
-                Text(
-                  group.description,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: GoldStockColors.textMuted,
-                  ),
-                ),
+                Text(group.description, style: _bodyStyle(11)),
               ],
             ),
           ),
@@ -780,22 +947,13 @@ class _StockGroupRow extends StatelessWidget {
                     maxLines: 1,
                     softWrap: false,
                     style: GoogleFonts.manrope(
-                      fontSize: 13,
+                      fontSize: 14,
                       fontWeight: FontWeight.w900,
                       color: group.color,
                     ),
                   ),
                 ),
-                Text(
-                  'Total Fine',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: GoldStockColors.textMuted,
-                  ),
-                ),
+                Text('Total Fine', style: _bodyStyle(10)),
               ],
             ),
           ),
@@ -823,27 +981,19 @@ class _EmptyStockState extends StatelessWidget {
           Icon(
             Icons.inventory_outlined,
             size: 28,
-            color: GoldStockColors.brandGold.withValues(alpha: 0.55),
+            color: GoldStockColors.brandGold.withValues(alpha: 0.70),
           ),
           const SizedBox(height: 8),
           Text(
-            'No Gold stock recorded yet.',
+            'No gold stock recorded yet.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: GoldStockColors.textMuted,
-            ),
+            style: _titleStyle(13),
           ),
           const SizedBox(height: 4),
           Text(
             'Saved batches will appear here by business grade.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              height: 1.5,
-              color: GoldStockColors.textHint,
-            ),
+            style: _bodyStyle(11),
           ),
         ],
       ),
@@ -871,22 +1021,6 @@ class _IconBadge extends StatelessWidget {
   }
 }
 
-class _GoldPurityOption {
-  final String label;
-  final String value;
-  final String detail;
-  final IconData icon;
-  final Color accent;
-
-  const _GoldPurityOption({
-    required this.label,
-    required this.value,
-    required this.detail,
-    required this.icon,
-    required this.accent,
-  });
-}
-
 class _StockGroup {
   final String label;
   final String description;
@@ -911,4 +1045,21 @@ class _StockGroup {
       fineWeight: fineWeight ?? this.fineWeight,
     );
   }
+}
+
+TextStyle _titleStyle(double size) {
+  return GoogleFonts.manrope(
+    fontSize: size,
+    fontWeight: FontWeight.w900,
+    color: GoldStockColors.textDark,
+  );
+}
+
+TextStyle _bodyStyle(double size) {
+  return GoogleFonts.inter(
+    fontSize: size,
+    fontWeight: FontWeight.w700,
+    height: 1.45,
+    color: GoldStockColors.textDark,
+  );
 }

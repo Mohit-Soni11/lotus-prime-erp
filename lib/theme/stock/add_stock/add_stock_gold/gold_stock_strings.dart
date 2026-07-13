@@ -16,7 +16,7 @@ class GoldStockStrings {
   static const String systemOnline = 'SYSTEM ONLINE';
 
   // ── TOP HEADER (Batch Code Row) ───────────────────────────────
-  static const String headerTitle = 'Gold';
+  static const String headerTitle = 'Gold Stock Intake';
   static const String headerSubtitle = 'ADD STOCK • BATCH:';
   static const String statTotalItems = 'TOTAL ITEMS';
   static const String statNetWeight = 'NET WEIGHT';
@@ -28,7 +28,7 @@ class GoldStockStrings {
   // ── PURITY STEP ──────────────────────────────────────────────
   static const String purityQuestion = 'Select Purity Grade';
   static const String purityCustomLabel = 'Enter Custom Purity';
-  static const String purityCustomHint = 'e.g. 22K, 916, 18K or 75%';
+  static const String purityCustomHint = 'e.g. 22KT, 916, 18KT or 75%';
   static const String btnNextItems = 'Continue to Item Entry';
 
   // ── BATCH CONFIGURATION PANEL ────────────────────────────────
@@ -174,7 +174,7 @@ class GoldStockStrings {
   static const String lblSupplierRow = 'Supplier (Item-specific)';
 
   // ── HINT TEXTS ───────────────────────────────────────────────
-  static const String hintItemName = 'e.g. 22K Gold Kangan';
+  static const String hintItemName = 'e.g. 22KT Gold Kangan';
   static const String hintSku = 'Auto-generated';
   static const String hintDescription =
       'Optional — Floral design, wedding set, pooja item…';

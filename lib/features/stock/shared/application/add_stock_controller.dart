@@ -144,11 +144,11 @@ class AddStockController extends ChangeNotifier {
     switch (_selectedMetal) {
       case StockCategory.gold:
         return [
-          '24K (999)',
-          '22K (916)',
-          '18K (750)',
-          '14K (585)',
-          '9K (375)',
+          '24KT (999)',
+          '22KT (916)',
+          '18KT (750)',
+          '14KT (585)',
+          '9KT (375)',
           'Custom',
         ];
       case StockCategory.silver:
@@ -1300,26 +1300,27 @@ class AddStockController extends ChangeNotifier {
   }
 
   String _shortPurityLabel(String value) {
-    final match = RegExp(r'(\d{1,2}K)').firstMatch(value.toUpperCase());
+    final normalized = value.toUpperCase().replaceAll('KT', 'K');
+    final match = RegExp(r'(\d{1,2}K)').firstMatch(normalized);
     if (match != null) {
       return match.group(1)!;
     }
-    if (value.contains('999')) {
+    if (normalized.contains('999')) {
       return '24K';
     }
-    if (value.contains('916')) {
+    if (normalized.contains('916')) {
       return '22K';
     }
-    if (value.contains('750')) {
+    if (normalized.contains('750')) {
       return '18K';
     }
-    if (value.contains('585')) {
+    if (normalized.contains('585')) {
       return '14K';
     }
-    if (value.contains('375')) {
+    if (normalized.contains('375')) {
       return '9K';
     }
-    if (value.contains('417')) {
+    if (normalized.contains('417')) {
       return '10K';
     }
     return value.trim();
@@ -1340,7 +1341,7 @@ class AddStockController extends ChangeNotifier {
   }
 
   double _resolvePurityPercent(String value) {
-    final normalized = value.toUpperCase();
+    final normalized = value.toUpperCase().replaceAll('KT', 'K');
 
     final karatMatch = RegExp(r'(\d{1,2})K').firstMatch(normalized);
     if (karatMatch != null) {

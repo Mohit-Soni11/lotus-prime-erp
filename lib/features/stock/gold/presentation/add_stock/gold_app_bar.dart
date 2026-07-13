@@ -1,13 +1,3 @@
-// =============================================================================
-// FILE        : Gold_app_bar.dart
-// MODULE      : Stock & Inventory (Gold)
-// LAYER       : UI / Components
-// DESCRIPTION : Premium App Bar for Gold Stock module.
-//               âœ… 100% Isolated Gold Theme.
-//               âœ… Stepper Removed completely (Purity/Items/Save).
-//               âœ… SYSTEM ONLINE green dot radar widget.
-// =============================================================================
-
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_gold/gold_stock_theme.dart';
@@ -23,8 +13,7 @@ class GoldAppBar extends StatefulWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize =>
-      const Size.fromHeight(70.0); // Strict 70px height, no stepper
+  Size get preferredSize => const Size.fromHeight(70);
 
   @override
   State<GoldAppBar> createState() => _GoldAppBarState();
@@ -51,43 +40,174 @@ class _GoldAppBarState extends State<GoldAppBar>
 
   @override
   Widget build(BuildContext context) {
+    final title = _moduleTitle();
     return Container(
       width: double.infinity,
-      height: 70.0,
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      height: 70,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: const BoxDecoration(
-        color: GoldStockColors.shellBg,
+        color: GoldStockColors.shellPanelBg,
         border: Border(
           bottom: BorderSide(
-            color: GoldStockColors.borderLight,
-            width: 0.5,
+            color: GoldStockColors.shellBorder,
+            width: 1,
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          // â”€â”€ BACK BUTTON â”€â”€
-          _buildBackButton(),
-          const SizedBox(width: 16),
-
-          // â”€â”€ TITLE â”€â”€
-          Expanded(
-            child: Text(
-              GoldStockStrings.headerTitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoldStockStyles.shellTitle,
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          // â”€â”€ SYSTEM ONLINE RADAR â”€â”€
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 180),
-            child: _buildSystemOnlineBadge(),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x26000000),
+            blurRadius: 16,
+            offset: Offset(0, 4),
           ),
         ],
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _buildBackButton(),
+            const SizedBox(width: 18),
+            _buildVerticalDivider(),
+            const SizedBox(width: 18),
+            _buildModuleIcon(),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                title.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoldStockStyles.shellTitle.copyWith(
+                  fontSize: 18,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 180),
+              child: _buildSystemOnlineBadge(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModuleIcon() {
+    final tone = _moduleTone();
+    return Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            tone.withValues(alpha: 0.42),
+            tone,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: tone.withValues(alpha: 0.5),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Icon(
+        _moduleIcon(),
+        color: Colors.white,
+        size: 18,
+      ),
+    );
+  }
+
+  String _moduleTitle() {
+    final purity = widget.ctrl.purityDisplay.trim().toUpperCase();
+    if (purity.isEmpty) {
+      return GoldStockStrings.headerTitle;
+    }
+
+    final normalized = purity.replaceAll('KT', 'K');
+    if (normalized.contains('24K') || normalized.contains('999')) {
+      return '24KT Fine Gold Stock';
+    }
+    if (normalized.contains('22K') || normalized.contains('916')) {
+      return '22KT Hallmark Gold Stock';
+    }
+    if (normalized.contains('18K') || normalized.contains('750')) {
+      return '18KT Studded Gold Stock';
+    }
+    if (normalized.contains('14K') || normalized.contains('585')) {
+      return '14KT Lightweight Gold Stock';
+    }
+    if (normalized.contains('9K') || normalized.contains('375')) {
+      return '9KT Low Karat Gold Stock';
+    }
+    return '$purity Gold Stock';
+  }
+
+  IconData _moduleIcon() {
+    final purity = widget.ctrl.purityDisplay.trim().toUpperCase();
+    final normalized = purity.replaceAll('KT', 'K');
+    if (normalized.contains('22K') || normalized.contains('916')) {
+      return Icons.verified_rounded;
+    }
+    if (normalized.contains('18K') || normalized.contains('750')) {
+      return Icons.diamond_rounded;
+    }
+    if (normalized.contains('14K') || normalized.contains('585')) {
+      return Icons.auto_awesome_rounded;
+    }
+    if (normalized.contains('9K') || normalized.contains('375')) {
+      return Icons.category_rounded;
+    }
+    if (purity.isNotEmpty &&
+        !(normalized.contains('24K') || normalized.contains('999'))) {
+      return Icons.tune_rounded;
+    }
+    return Icons.workspace_premium_rounded;
+  }
+
+  Color _moduleTone() {
+    final purity = widget.ctrl.purityDisplay.trim().toUpperCase();
+    final normalized = purity.replaceAll('KT', 'K');
+    if (normalized.contains('18K') || normalized.contains('750')) {
+      return const Color(0xFF2563EB);
+    }
+    if (normalized.contains('14K') || normalized.contains('585')) {
+      return const Color(0xFF0F8A72);
+    }
+    if (normalized.contains('9K') || normalized.contains('375')) {
+      return const Color(0xFF8B5CF6);
+    }
+    if (purity.isNotEmpty &&
+        !(normalized.contains('24K') ||
+            normalized.contains('999') ||
+            normalized.contains('22K') ||
+            normalized.contains('916'))) {
+      return const Color(0xFF64748B);
+    }
+    return GoldStockColors.brandGold;
+  }
+
+  Widget _buildVerticalDivider() {
+    return Container(
+      width: 1.5,
+      height: 32,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent,
+            GoldStockColors.shellBorder,
+            Colors.transparent,
+          ],
+        ),
       ),
     );
   }
@@ -125,8 +245,8 @@ class _GoldAppBarState extends State<GoldAppBar>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: GoldStockColors.shellBg,
-        borderRadius: BorderRadius.circular(20),
+        color: GoldStockColors.success.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(30),
         border: Border.all(
           color: GoldStockColors.success.withValues(alpha: 0.3),
         ),
