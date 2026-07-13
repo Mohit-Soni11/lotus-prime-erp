@@ -270,7 +270,6 @@ class _GoldInvoiceCardState extends State<GoldInvoiceCard> {
 
                           final purchaseType = _PurchaseTypeSelector(
                             gstEnabled: ctrl.gstEnabled,
-                            gstRate: ctrl.gstRate,
                             onChanged: ctrl.toggleGst,
                           );
                           final invoiceInput = _SupplierInvoiceInput(
@@ -778,12 +777,10 @@ class _SupplierLookupDropdown extends StatelessWidget {
 
 class _PurchaseTypeSelector extends StatelessWidget {
   final bool gstEnabled;
-  final double gstRate;
   final ValueChanged<bool> onChanged;
 
   const _PurchaseTypeSelector({
     required this.gstEnabled,
-    required this.gstRate,
     required this.onChanged,
   });
 
@@ -815,7 +812,6 @@ class _PurchaseTypeSelector extends StatelessWidget {
                 child: _PurchaseTypeButton(
                   selected: gstEnabled,
                   label: 'GST Purchase',
-                  helper: '${gstRate.toStringAsFixed(0)}%',
                   icon: Icons.verified_user_outlined,
                   onTap: () => onChanged(true),
                 ),
@@ -825,7 +821,6 @@ class _PurchaseTypeSelector extends StatelessWidget {
                 child: _PurchaseTypeButton(
                   selected: !gstEnabled,
                   label: 'Non-GST',
-                  helper: 'Estimate',
                   icon: Icons.receipt_outlined,
                   onTap: () => onChanged(false),
                 ),
@@ -841,14 +836,12 @@ class _PurchaseTypeSelector extends StatelessWidget {
 class _PurchaseTypeButton extends StatelessWidget {
   final bool selected;
   final String label;
-  final String helper;
   final IconData icon;
   final VoidCallback onTap;
 
   const _PurchaseTypeButton({
     required this.selected,
     required this.label,
-    required this.helper,
     required this.icon,
     required this.onTap,
   });
@@ -883,27 +876,6 @@ class _PurchaseTypeButton extends StatelessWidget {
                   ),
                 ),
               ),
-              if (selected) ...[
-                const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    helper,
-                    style: GoogleFonts.inter(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
-                      color: foreground,
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
